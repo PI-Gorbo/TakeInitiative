@@ -1,0 +1,37 @@
+using System.Net;
+using FastEndpoints;
+using FastEndpoints.Security;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
+using TakeInitiative.Api.Bootstrap;
+using TakeInitiative.Api.Models;
+
+namespace TakeInitiative.Api.Controllers;
+public class Login(
+	IOptions<JWTOptions> JWTOptions,
+	UserManager<ApplicationUser> UserManager,
+	SignInManager<ApplicationUser> SignInManager) : Endpoint<LoginRequest, LoginResponse>
+{
+	public override void Configure()
+	{
+		Put("/api/login");
+		AllowAnonymous();
+	}
+	public override async Task HandleAsync(LoginRequest req, CancellationToken ct)
+	{
+		var user = await UserManager.FindByEmailAsync(req.Email);
+		if (user == null) {
+			ThrowError("Invalid username or password", (int)HttpStatusCode.Unauthorized);
+		}
+
+		var jwtToken = JWTBearer.CreateToken(
+			JWTOptions.Value.JWTSigningKey, 
+			expireAt: DateTime.UtcNow.AddDays(3),
+			privileges: u => {
+				u["UserId"] = user.Id.ToString();
+			});
+		await SendAsync(new() {
+			Token = jwtToken,
+		});
+	}
+}
