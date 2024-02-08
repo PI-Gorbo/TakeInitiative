@@ -1,8 +1,7 @@
-using CSharpFunctionalExtensions;
+using Marten;
 
 namespace TakeInitiative.Data.Commands;
-public class DeleteCampaignRequest 
+public record DeleteCampaignRequest
 {
-    public required Guid UserId { get; set; }
     public required Guid CampaignId { get; set; }
 }
