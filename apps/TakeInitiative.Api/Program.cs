@@ -1,4 +1,5 @@
 using FastEndpoints;
+using Marten;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,8 +25,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseFastEndpoints()
-	.UseAuthentication()
-	.UseAuthorization();
+    .UseAuthentication()
+    .UseAuthorization();
 
 app.UseHealthChecks("/healthz");
 app.Run();

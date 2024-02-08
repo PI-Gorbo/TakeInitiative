@@ -11,7 +11,7 @@ public class PutPlannedCombat(IDocumentStore Store) : Endpoint<PutPlannedCombatR
 {
 	public override void Configure()
 	{
-		Post("/api/campaign/planned-combat");
+		Put("/api/campaign/planned-combat");
 		AuthSchemes(JwtBearerDefaults.AuthenticationScheme);
 		Policies(TakePolicies.UserExists);
 	}
