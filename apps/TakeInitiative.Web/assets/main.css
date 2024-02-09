@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+    font-family: "NovaCut";
+    src: url("~/assets/NovaCut-Regular.ttf");
+}
+
+@font-face {
+    font-family: "Overpass";
+    src: url("~/assets/Overpass-VariableFont_wght.ttf");
+}

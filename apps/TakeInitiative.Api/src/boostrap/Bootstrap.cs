@@ -89,14 +89,14 @@ public class RequireUserToExistInDatabaseAuthorizationHandler(IDocumentStore Sto
 	protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, RequireUserToExistInDatabaseAuthorizationRequirement requirement)
 	{
 		// Validate the user's existence in the database.
-		Result<ApplicationUser> userExistsResult = await Result.SuccessIf(
+		Result<bool> userExistsResult = await Result.SuccessIf(
 			Guid.TryParse(context.User.Claims.Single(x => x.Type == "UserId").Value, out Guid parsedValue),
 			parsedValue,
 			"Failed to parse UserId in Claims as Guid.")
 		.Bind((id) => Store.Try(async (session) =>
 		{
-			return await session.LoadAsync<ApplicationUser>(id);
-		})).EnsureNotNull("User does not exist.");
+			return await session.Query<ApplicationUser>().AnyAsync(x => x.Id == id);
+		})).Ensure(userExists => userExists == true);
 
 		if (userExistsResult.IsFailure)
 		{

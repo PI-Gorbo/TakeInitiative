@@ -1,5 +1,5 @@
 {
-	"workbench.colorCustomizations": {
+    "workbench.colorCustomizations": {
 		"activityBar.activeBackground": "#283f22",
 		"activityBar.background": "#283f22",
 		"activityBar.foreground": "#e7e7e7",
@@ -18,5 +18,6 @@
 		"titleBar.inactiveBackground": "#131e1099",
 		"titleBar.inactiveForeground": "#e7e7e799"
 	},
-	"peacock.color": "#131e10"
+    "peacock.color": "#131e10",
+    "vue3snippets.enable-compile-vue-file-on-did-save-code": true
 }
