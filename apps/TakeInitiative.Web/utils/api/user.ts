@@ -1,19 +1,42 @@
-const { $axios } = useNuxtApp();
-import type { AxiosResponse } from "axios";
+
+import type { AxiosInstance, AxiosResponse } from "axios";
 import * as yup from "yup";
 
+
+// Get User
 const getUserCampaignDto = yup.object({
-	campaignName: yup.string(),
-	campaignId: yup.string()
+	campaignName: yup.string().required(),
+	campaignId: yup.string().required()
 })
 const getUserResponseSchema = yup.object({
-	dmCampaigns: yup.array(getUserCampaignDto),
-	memberCampaigns: yup.array(getUserCampaignDto)
+	userId: yup.string().required(),
+	userName: yup.string().required(),
+	dmCampaigns: yup.array(getUserCampaignDto).required(),
+	memberCampaigns: yup.array(getUserCampaignDto).required()
 });
 export type GetUserResponse = yup.InferType<typeof getUserResponseSchema>
-export const user = {
-    async getUser() : Promise<GetUserResponse> {
-        return $axios.get("/api/user")
+function getUserRequest(axios: AxiosInstance) {
+	return async function getUser() : Promise<GetUserResponse> {
+		return axios.get("/api/user")
 			.then(response => getUserResponseSchema.validate(response.data));   
-    },
+	}
+}
+
+// Sign Ups
+const signUpResponseSchema = yup.object({
+	token: yup.string().required()
+})
+export type SignUpResponse = yup.InferType<typeof signUpResponseSchema>
+function signUpRequest(axios: AxiosInstance) {
+	return async function signUp(email: string, username: string, password: string) : Promise<SignUpResponse> {
+		return await axios.post("/api/signup", {email, username, password})
+			.then(response => signUpResponseSchema.validate(response.data))
+	}
+}
+
+export const user = (axios: AxiosInstance) => {
+	return {
+		getUser: getUserRequest(axios),
+		signUp: signUpRequest(axios)
+	}
 };

@@ -3,7 +3,7 @@ import axios from "axios";
 export default defineNuxtPlugin((nuxtApp) => {
     // Destructure the environment variables to get axios config
     const {
-        public: { axios: axiosConfig },
+        public: {axios: axiosConfig}
     } = useRuntimeConfig();
 
     // Register axios
@@ -11,9 +11,9 @@ export default defineNuxtPlugin((nuxtApp) => {
     const Axios: AxiosInstance = axios.create(defaultAxios);
 
     // Register to use an auth token if there is one.
-    const userStore = useUserStore();
     Axios.interceptors.request.use((config) => {
-        const jwt = userStore.getJwt();
+		const userStore = useUserStore();
+        const jwt = jwtUtils.getJwt();
         if (jwt != null) {
             config.headers["Authorization"] = `Barer ${jwt}`;
         }

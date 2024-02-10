@@ -1,12 +1,23 @@
-export const LocalStorageJwtKey = "TakeInitiative_Token";
+export const localStorageJwtKey = "TakeInitiative_Token";
 export default {
-    LocalStorageJwtKey: "TakeInitiative_Token",
+    localStorageJwtKey,
+	getJwt() {
+		return window.localStorage.getItem(localStorageJwtKey);
+	},
+	setJwt(jwt: string) : boolean {
+		if (!this.isValidJwt(jwt)) {
+			return false;
+		}
+		window.localStorage.setItem(localStorageJwtKey, jwt)
+		return true;
+	},
     isValidJwt(jwt: string): boolean {
         if (jwt == null) {
             return false;
         }
-
-        return this.parseJwt(jwt) == true;
+		const parseJwtResult = this.parseJwt(jwt)
+		console.log("Result of parsing the jwt.",parseJwtResult)
+        return parseJwtResult == true;
     },
     parseJwt(jwt: string): boolean | null {
         debugger;

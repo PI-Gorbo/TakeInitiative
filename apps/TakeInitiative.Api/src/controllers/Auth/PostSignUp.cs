@@ -8,18 +8,18 @@ using TakeInitiative.Api.Models;
 
 namespace TakeInitiative.Api.Controllers;
 
-public class PostRegister(
+public class PostSignUp(
 	IOptions<JWTOptions> JWTOptions,
 	UserManager<ApplicationUser> UserManager,
 	SignInManager<ApplicationUser> SignInManager
-	) : Endpoint<PostRegisterRequest, PostRegisterResponse>
+	) : Endpoint<PostSignUpRequest, PostSignUpResponse>
 {
 	public override void Configure()
 	{
-		Post("/api/register");
+		Post("/api/signup");
 		AllowAnonymous();
 	}
-	public override async Task HandleAsync(PostRegisterRequest req, CancellationToken ct)
+	public override async Task HandleAsync(PostSignUpRequest req, CancellationToken ct)
 	{
 		if (await UserManager.FindByEmailAsync(req.Email) != null)
 		{

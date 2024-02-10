@@ -43,6 +43,8 @@ public class GetUser(IDocumentStore Store) : EndpointWithoutRequest<GetUserRespo
 
 				return new GetUserResponse()
 				{
+					UserId = user.Id,
+					Username = user.UserName,
 					DmCampaigns = dmCampaigns,
 					MemberCampaigns = memberCampaigns
 				};

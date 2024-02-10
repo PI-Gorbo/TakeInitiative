@@ -39,7 +39,6 @@ import { useForm } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/yup";
 import * as yup from "yup";
 definePageMeta({
-    name: "Login",
     requiresAuth: false,
     layout: "auth",
 });

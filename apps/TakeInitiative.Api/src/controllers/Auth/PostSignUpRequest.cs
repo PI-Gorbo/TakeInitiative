@@ -1,6 +1,6 @@
 namespace TakeInitiative.Api.Controllers;
 
-public record PostRegisterRequest
+public record PostSignUpRequest
 {
     public required string Username { get; set; }
     public required string Email { get; set; }
