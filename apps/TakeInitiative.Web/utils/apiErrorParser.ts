@@ -15,7 +15,7 @@ const apiErrorSchema = yup.object({
     message: yup.string(),
     errors: yup.object().required(),
 });
-export function parseAsApiError<TRequest extends {}>(
+export async function parseAsApiError<TRequest extends {}>(
     error: AxiosError<any>,
 ): Promise<ApiError<TRequest>> {
     try {
@@ -38,21 +38,14 @@ export function parseAsApiError<TRequest extends {}>(
     }
 }
 
-export function validateWithSchema<T extends {}>(
+export async function validateWithSchema<T extends {}>(
     data: any,
     schema: {
         validate: (data: any) => Promise<T>;
     },
 ): Promise<T> {
-    return schema.validate(data).catch((validationError) => {
-        console.log("A validation error occured");
-        console.log(validationError);
-    });
-    // try {
-    //     const validateResult = await schema.validate(data);
-    //     return validateResult;
-    // } catch (error) {
-    //     console.log(error);
-    //     throw error;
-    // }
+    return await schema.validate(data)
+	.catch((validationError) => {
+        console.log("API VALIDATION ERROR: ",validationError);
+    }).then(data => (data as unknown as T)); // Typescript workaround.
 }

@@ -29,7 +29,6 @@ export default {
             return false;
         }
 		const parseJwtResult = this.parseJwt(jwt)
-		console.log("Result of parsing the jwt.",parseJwtResult)
 		if (parseJwtResult == null) {
 			return false
 		}

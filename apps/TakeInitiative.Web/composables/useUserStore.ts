@@ -1,7 +1,8 @@
 import { useTakeInitApi } from "~/utils/api/takeInitaitiveApi";
-import type { GetUserResponse, SignUpRequest } from "~/utils/api/user";
+import type { SignUpRequest } from "~/utils/api/user/signUpRequest";
+import type { GetUserResponse } from "~/utils/api/user/getUserRequest";
 import type { Campaign } from "~/utils/types/models";
-import { campaign, type CreateCampaignRequest } from "../utils/api/campaign";
+import { type CreateCampaignRequest } from "~/utils/api/campaign/createCampaignRequest";
 
 type User = GetUserResponse;
 export const useUserStore = defineStore("userStore", () => {
@@ -10,6 +11,10 @@ export const useUserStore = defineStore("userStore", () => {
     const state = reactive({
         user: null as User | null,
     });
+
+	async function init() : Promise<void> {
+		return await isLoggedIn().then();
+	}
 
     async function fetchUser(): Promise<User> {
         // fetch the user.
@@ -36,7 +41,6 @@ export const useUserStore = defineStore("userStore", () => {
             .signUp(signUpRequest)
             .then((response) => {
                 jwtUtils.setJwt(response.token);
-                console.log("signed up!");
             })
             .then(async () => {
                 await navigateTo("/");
@@ -54,6 +58,7 @@ export const useUserStore = defineStore("userStore", () => {
     // Helper functions
     return {
         state,
+		init,
         login,
         signUp,
         isLoggedIn,
