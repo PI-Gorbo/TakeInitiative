@@ -35,9 +35,15 @@
                 v-bind="confirmPasswordProps"
             />
 
+            <div v-if="formState.submitError?.errors.generalErrors" class="text-take-red">
+                {{ formState.submitError?.errors.generalErrors[0] }}
+            </div>
+
+            <div v-if="formState.success" class="text-take-yellow">Signing in...</div>
+
             <div class="flex justify-center">
                 <button
-                    class="w-full bg-take-red my-2 py-4 rounded-md hover:brightness-75 text-white"
+                    class="w-full bg-take-yellow my-2 py-4 rounded-md hover:brightness-75 text-take-navy"
                     type="submit"
                 >
                     Sign Up
@@ -51,12 +57,17 @@
 import { useForm } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/yup";
 import * as yup from "yup";
+import type { SignUpRequest, SignUpResponse } from "~/utils/api/user";
 definePageMeta({
     requiresAuth: false,
     layout: "auth",
 });
 
 // Form Definition
+const formState = reactive({
+    submitError: null as ApiError<SignUpRequest> | null,
+    success: false,
+});
 const { values, errors, defineField, validate } = useForm({
     validationSchema: toTypedSchema(
         yup.object({
@@ -77,18 +88,20 @@ const { values, errors, defineField, validate } = useForm({
     ),
 });
 const [email, emailInputProps] = defineField("email", {
-    props: (state) => ({
-        errorMessage: state.errors[0],
-    }),
+    props: (state) => {
+        return {
+            errorMessage: formState?.submitError?.getErrorFor("email") ?? state.errors[0],
+        };
+    },
 });
 const [username, usernameInputProps] = defineField("username", {
     props: (state) => ({
-        errorMessage: state.errors[0],
+        errorMessage: formState.submitError?.getErrorFor("username") ?? state.errors[0],
     }),
 });
 const [password, passwordInputProps] = defineField("password", {
     props: (state) => ({
-        errorMessage: state.errors[0],
+        errorMessage: formState.submitError?.getErrorFor("password") ?? state.errors[0],
     }),
 });
 const [confirmPassword, confirmPasswordProps] = defineField("confirmPassword", {
@@ -100,15 +113,38 @@ const [confirmPassword, confirmPasswordProps] = defineField("confirmPassword", {
 // Form Submit
 const userStore = useUserStore();
 async function onSignUp() {
+    formState.submitError = null; // Reset the submit error.
     const validation = await validate();
     if (validation.valid == false) {
         return;
     }
 
     await userStore
-        .signUp(email.value!, username.value!, password.value!)
-        .catch((error) => {
-            console.log("THERE WAS AN ERROR", error);
+        .signUp({
+            email: email.value!,
+            username: username.value!,
+            password: password.value!,
+        })
+        .then(() => (formState.success = true))
+        .catch(async (error) => {
+            console.log(error);
+            try {
+                console.log("attemping to parse");
+                formState.submitError = await parseAsApiError<SignUpRequest>(error);
+            } catch {
+                console.log("setting general error");
+                formState.submitError = {
+                    statusCode: 500,
+                    message: "Something went wrong while trying to sign in.",
+                    errors: {
+                        generalErrors: ["Something went wrong while trying to sign in."],
+                    },
+                    getErrorFor: (error) =>
+                        error == "generalErrors"
+                            ? "Something went wrong while trying to sign in."
+                            : null,
+                };
+            }
         });
 }
 </script>

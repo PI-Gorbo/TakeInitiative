@@ -1,26 +1,55 @@
 export const localStorageJwtKey = "TakeInitiative_Token";
+export type TakeInitJWT = {
+	UserId: string,
+	exp: number, // Expiration time
+	iat: number, // Issued At Time
+	nbf: number // Not Before Time
+}
 export default {
     localStorageJwtKey,
-	getJwt() {
+	getJwtAsString() {
 		return window.localStorage.getItem(localStorageJwtKey);
 	},
+	getJwt() : TakeInitJWT | false {
+		const jwtAsString = this.getJwtAsString()
+		if (jwtAsString == null) {
+			return false
+		}
+		return this.validateJwt(jwtAsString)
+	},
 	setJwt(jwt: string) : boolean {
-		if (!this.isValidJwt(jwt)) {
+		if (!this.validateJwt(jwt)) {
 			return false;
 		}
 		window.localStorage.setItem(localStorageJwtKey, jwt)
 		return true;
 	},
-    isValidJwt(jwt: string): boolean {
+    validateJwt(jwt: string): TakeInitJWT | false {
         if (jwt == null) {
             return false;
         }
 		const parseJwtResult = this.parseJwt(jwt)
 		console.log("Result of parsing the jwt.",parseJwtResult)
-        return parseJwtResult == true;
+		if (parseJwtResult == null) {
+			return false
+		}
+
+		const time = new Date().getTime() / 1000; // Get into seconds
+		if (parseJwtResult.exp <= time) {
+			return false
+		}
+
+		if (parseJwtResult.iat > time) {
+			return false;
+		}
+
+		if (parseJwtResult.nbf > time) {
+			return false;
+		}
+
+        return parseJwtResult;
     },
-    parseJwt(jwt: string): boolean | null {
-        debugger;
+    parseJwt(jwt: string): TakeInitJWT | null {
         try {
             var base64Url = jwt.split(".")[1];
             var base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
@@ -36,7 +65,7 @@ export default {
                     })
                     .join(""),
             );
-            return JSON.parse(jsonPayload);
+            return JSON.parse(jsonPayload) as TakeInitJWT;
         } catch {
             return null;
         }

@@ -7,7 +7,7 @@
             >
         </div>
 
-        <form class="flex flex-col gap-4" @submit.prevent @submit="onLogin">
+        <Form class="flex flex-col gap-4" @submit.prevent @submit="onLogin">
             <FormInput
                 v-model:value="email"
                 label="Email"
@@ -30,11 +30,12 @@
                     Login
                 </button>
             </div>
-        </form>
+        </Form>
     </section>
 </template>
 
 <script setup lang="ts">
+import { Form } from "vee-validate";
 import { useForm } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/yup";
 import * as yup from "yup";

@@ -1,5 +1,5 @@
 import { useTakeInitApi } from "~/utils/api/takeInitaitiveApi";
-import type { GetUserResponse } from "~/utils/api/user";
+import type { GetUserResponse, SignUpRequest } from "~/utils/api/user";
 
 type User = GetUserResponse;
 export const useUserStore = defineStore("userStore", () => {
@@ -11,40 +11,41 @@ export const useUserStore = defineStore("userStore", () => {
 
     async function fetchUser(): Promise<User> {
         // fetch the user.
-        try {
-            state.user = await api.user.getUser();
-            return state.user;
-        } catch {
-            return Promise.reject();
-        }
+		return api.user.getUser()
+			.then(user => state.user = user)
     }
 
     async function isLoggedIn(): Promise<Boolean> {
-        const token = jwtUtils.getJwt();
-        if (token == null || !jwtUtils.isValidJwt(token)) {
-            return false;
-        }
+        const jwt = jwtUtils.getJwt()
+		if (jwt == false) {
+			return false;
+		}
 
-        return fetchUser().then(() => true);
+       if (state.user == null || state.user.userId != jwt.UserId) {
+		   return await fetchUser().then(() => true);
+	   }
+
+	   return true;
     }
 
     async function login(email: string, password: string): Promise<void> {}
 
     async function signUp(
-        email: string,
-        username: string,
-        password: string,
+        signUpRequest: SignUpRequest,
     ): Promise<void> {
         return await api.user
-            .signUp(email, username, password)
+            .signUp(signUpRequest)
             .then((response) => {
                 jwtUtils.setJwt(response.token);
 				console.log("signed up!")
-            });
+            }).then(async () => { await navigateTo("/")});
     }
+
+	async function createCampaign()
 
     // Helper functions
     return {
+		state,
         login,
         signUp,
         isLoggedIn,

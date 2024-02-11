@@ -4,7 +4,10 @@
 </template>
 
 <script setup lang="ts">
+import redirectToCreateOrJoinCampaign from "~/middleware/redirectToCreateOrJoinCampaign";
+
 definePageMeta({
     requiresAuth: true,
+    middleware: [redirectToCreateOrJoinCampaign],
 });
 </script>

@@ -27,7 +27,7 @@ public class PutLogin(
 
 		var jwtToken = JWTBearer.CreateToken(
 			JWTOptions.Value.JWTSigningKey,
-			expireAt: DateTime.UtcNow.AddDays(3),
+			expireAt: DateTime.UtcNow.AddDays(7),
 			privileges: u =>
 			{
 				u["UserId"] = user.Id.ToString();

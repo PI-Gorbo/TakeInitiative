@@ -5,6 +5,7 @@ using Marten;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Serilog;
 using TakeInitiative.Api.Bootstrap;
 using TakeInitiative.Api.Models;
 using TakeInitiative.Setup.Database;
@@ -13,7 +14,6 @@ using Weasel.Postgresql;
 
 public static class Bootstrap
 {
-
 	public static WebApplicationBuilder AddMartenDB(this WebApplicationBuilder builder)
 	{
 
@@ -46,7 +46,15 @@ public static class Bootstrap
 	public static WebApplicationBuilder AddIdentityAuthenticationAndAuthorization(this WebApplicationBuilder builder)
 	{
 		builder.Services
-			.AddIdentity<ApplicationUser, ApplicationUserRole>()
+			.AddIdentity<ApplicationUser, ApplicationUserRole>(opts => {
+				opts.Password = new PasswordOptions() {
+					RequireDigit = true,
+					RequiredLength = 6,
+					RequireLowercase = true,
+					RequireUppercase = true,
+					RequireNonAlphanumeric = true
+				};
+			})
 			.AddUserStore<MartenUserStore>()
 			.AddRoleStore<MartenRoleStore>()
 			.AddSignInManager() // Sign in manager allows users to sign in and out, and validates these operations.
@@ -71,6 +79,16 @@ public static class Bootstrap
 		return builder;
 	}
 
+	public static WebApplicationBuilder AddSerilog(this WebApplicationBuilder builder) {
+		Log.Logger = new LoggerConfiguration()
+			.MinimumLevel.Information()
+			.WriteTo.Console()
+			.CreateLogger();
+
+		builder.Services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog()); // Uses the static logger.
+		return builder;
+	}
+
 	public static WebApplicationBuilder AddOptionObjects(this WebApplicationBuilder builder)
 	{
 		builder.Services.Configure<JWTOptions>(builder.Configuration);
@@ -90,9 +108,9 @@ public class RequireUserToExistInDatabaseAuthorizationHandler(IDocumentStore Sto
 	{
 		// Validate the user's existence in the database.
 		Result<bool> userExistsResult = await Result.SuccessIf(
-			Guid.TryParse(context.User.Claims.Single(x => x.Type == "UserId").Value, out Guid parsedValue),
+			Guid.TryParse(context.User.Claims.SingleOrDefault(x => x.Type == "UserId")?.Value, out Guid parsedValue),
 			parsedValue,
-			"Failed to parse UserId in Claims as Guid.")
+			"Failed to parse UserId in claims as Guid.")
 		.Bind((id) => Store.Try(async (session) =>
 		{
 			return await session.Query<ApplicationUser>().AnyAsync(x => x.Id == id);

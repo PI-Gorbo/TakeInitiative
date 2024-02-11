@@ -13,9 +13,9 @@ export default defineNuxtPlugin((nuxtApp) => {
     // Register to use an auth token if there is one.
     Axios.interceptors.request.use((config) => {
 		const userStore = useUserStore();
-        const jwt = jwtUtils.getJwt();
+        const jwt = jwtUtils.getJwtAsString();
         if (jwt != null) {
-            config.headers["Authorization"] = `Barer ${jwt}`;
+            config.headers["authorization"] = `Bearer ${jwt}`;
         }
         return config;
     });
