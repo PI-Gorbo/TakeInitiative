@@ -1,8 +1,8 @@
 <template>
     <section class="w-full">
-        <div class="w-full flex flex-col justify-center">
-            <h1 class="text-xl text-center">Sign Up</h1>
-            <NuxtLink to="/login" class="underline text-sm text-center">
+        <div class="flex w-full flex-col justify-center">
+            <h1 class="text-center text-xl">Sign Up</h1>
+            <NuxtLink to="/login" class="text-center text-sm underline">
                 Login instead</NuxtLink
             >
         </div>
@@ -35,29 +35,35 @@
                 v-bind="confirmPasswordProps"
             />
 
-            <div v-if="formState.submitError?.errors.generalErrors" class="text-take-red">
+            <div
+                v-if="formState.submitError?.errors.generalErrors"
+                class="text-take-red"
+            >
                 {{ formState.submitError?.errors.generalErrors[0] }}
             </div>
 
-            <div v-if="formState.success" class="text-take-yellow">Signing in...</div>
+            <div v-if="formState.success" class="text-take-yellow">
+                Signing in...
+            </div>
 
             <div class="flex justify-center">
-                <button
-                    class="w-full bg-take-yellow my-2 py-4 rounded-md hover:brightness-75 text-take-navy"
-                    type="submit"
-                >
-                    Sign Up
-                </button>
+                <FormButton
+                    label="Sign Up"
+                    loadingLabel="Signing Up..."
+                    :isLoading="formState.submitting"
+                />
             </div>
         </form>
     </section>
 </template>
 
 <script setup lang="ts">
+import { Form } from "vee-validate";
 import { useForm } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/yup";
 import * as yup from "yup";
 import type { SignUpRequest, SignUpResponse } from "~/utils/api/user";
+import { formatDiagnosticsWithColorAndContext } from "typescript";
 definePageMeta({
     requiresAuth: false,
     layout: "auth",
@@ -67,6 +73,7 @@ definePageMeta({
 const formState = reactive({
     submitError: null as ApiError<SignUpRequest> | null,
     success: false,
+    submitting: false as boolean,
 });
 const { values, errors, defineField, validate } = useForm({
     validationSchema: toTypedSchema(
@@ -80,28 +87,34 @@ const { values, errors, defineField, validate } = useForm({
                 .test("matches password", function (value) {
                     const { path, createError } = this;
                     if (value != password.value) {
-                        createError({ path, message: "Passwords do not match." });
+                        createError({
+                            path,
+                            message: "Passwords do not match.",
+                        });
                     }
                     return true;
                 }),
-        })
+        }),
     ),
 });
 const [email, emailInputProps] = defineField("email", {
     props: (state) => {
         return {
-            errorMessage: formState?.submitError?.getErrorFor("email") ?? state.errors[0],
+            errorMessage:
+                formState?.submitError?.getErrorFor("email") ?? state.errors[0],
         };
     },
 });
 const [username, usernameInputProps] = defineField("username", {
     props: (state) => ({
-        errorMessage: formState.submitError?.getErrorFor("username") ?? state.errors[0],
+        errorMessage:
+            formState.submitError?.getErrorFor("username") ?? state.errors[0],
     }),
 });
 const [password, passwordInputProps] = defineField("password", {
     props: (state) => ({
-        errorMessage: formState.submitError?.getErrorFor("password") ?? state.errors[0],
+        errorMessage:
+            formState.submitError?.getErrorFor("password") ?? state.errors[0],
     }),
 });
 const [confirmPassword, confirmPasswordProps] = defineField("confirmPassword", {
@@ -114,8 +127,10 @@ const [confirmPassword, confirmPasswordProps] = defineField("confirmPassword", {
 const userStore = useUserStore();
 async function onSignUp() {
     formState.submitError = null; // Reset the submit error.
+    formState.submitting = true;
     const validation = await validate();
     if (validation.valid == false) {
+        formState.submitting = false;
         return;
     }
 
@@ -130,14 +145,17 @@ async function onSignUp() {
             console.log(error);
             try {
                 console.log("attemping to parse");
-                formState.submitError = await parseAsApiError<SignUpRequest>(error);
+                formState.submitError =
+                    await parseAsApiError<SignUpRequest>(error);
             } catch {
                 console.log("setting general error");
                 formState.submitError = {
                     statusCode: 500,
                     message: "Something went wrong while trying to sign in.",
                     errors: {
-                        generalErrors: ["Something went wrong while trying to sign in."],
+                        generalErrors: [
+                            "Something went wrong while trying to sign in.",
+                        ],
                     },
                     getErrorFor: (error) =>
                         error == "generalErrors"
@@ -145,6 +163,7 @@ async function onSignUp() {
                             : null,
                 };
             }
-        });
+        })
+        .finally(() => (formState.submitting = false));
 }
 </script>

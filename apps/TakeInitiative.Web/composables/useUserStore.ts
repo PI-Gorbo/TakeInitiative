@@ -1,5 +1,7 @@
 import { useTakeInitApi } from "~/utils/api/takeInitaitiveApi";
 import type { GetUserResponse, SignUpRequest } from "~/utils/api/user";
+import type { Campaign } from "~/utils/types/models";
+import { campaign, type CreateCampaignRequest } from "../utils/api/campaign";
 
 type User = GetUserResponse;
 export const useUserStore = defineStore("userStore", () => {
@@ -11,43 +13,50 @@ export const useUserStore = defineStore("userStore", () => {
 
     async function fetchUser(): Promise<User> {
         // fetch the user.
-		return api.user.getUser()
-			.then(user => state.user = user)
+        return api.user.getUser().then((user) => (state.user = user));
     }
 
     async function isLoggedIn(): Promise<Boolean> {
-        const jwt = jwtUtils.getJwt()
-		if (jwt == false) {
-			return false;
-		}
+        const jwt = jwtUtils.getJwt();
+        if (jwt == false) {
+            return false;
+        }
 
-       if (state.user == null || state.user.userId != jwt.UserId) {
-		   return await fetchUser().then(() => true);
-	   }
+        if (state.user == null || state.user.userId != jwt.UserId) {
+            return await fetchUser().then(() => true);
+        }
 
-	   return true;
+        return true;
     }
 
     async function login(email: string, password: string): Promise<void> {}
 
-    async function signUp(
-        signUpRequest: SignUpRequest,
-    ): Promise<void> {
+    async function signUp(signUpRequest: SignUpRequest): Promise<void> {
         return await api.user
             .signUp(signUpRequest)
             .then((response) => {
                 jwtUtils.setJwt(response.token);
-				console.log("signed up!")
-            }).then(async () => { await navigateTo("/")});
+                console.log("signed up!");
+            })
+            .then(async () => {
+                await navigateTo("/");
+            });
     }
 
-	async function createCampaign()
+    async function createCampaign(
+        request: CreateCampaignRequest,
+    ): Promise<Campaign> {
+        return await api.campaign
+            .create(request)
+            .then((campaign) => fetchUser().then(() => campaign));
+    }
 
     // Helper functions
     return {
-		state,
+        state,
         login,
         signUp,
         isLoggedIn,
+        createCampaign,
     };
 });
