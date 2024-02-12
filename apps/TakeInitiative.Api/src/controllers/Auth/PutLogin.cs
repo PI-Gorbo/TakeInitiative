@@ -25,6 +25,13 @@ public class PutLogin(
 			ThrowError("Invalid username or password", (int)HttpStatusCode.Unauthorized);
 		}
 
+		await CookieAuth.SignInAsync(u =>
+		{
+			//indexer based claim setting
+			u["UserId"] = user.Id.ToString();
+		});
+
+
 		var jwtToken = JWTBearer.CreateToken(
 			JWTOptions.Value.JWTSigningKey,
 			expireAt: DateTime.UtcNow.AddDays(7),

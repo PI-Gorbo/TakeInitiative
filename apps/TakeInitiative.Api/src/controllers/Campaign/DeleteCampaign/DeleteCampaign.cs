@@ -2,6 +2,7 @@ using System.Net;
 using CSharpFunctionalExtensions;
 using FastEndpoints;
 using Marten;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using TakeInitiative.Api.Models;
 using TakeInitiative.Utilities.Extensions;
@@ -13,7 +14,7 @@ public class DeleteCampaign(IDocumentStore Store) : Endpoint<DeleteCampaignReque
     public override void Configure()
     {
         Delete("/api/campaign");
-        AuthSchemes(JwtBearerDefaults.AuthenticationScheme);
+        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
         Policies(TakePolicies.UserExists);
     }
     public override async Task HandleAsync(DeleteCampaignRequest req, CancellationToken ct)

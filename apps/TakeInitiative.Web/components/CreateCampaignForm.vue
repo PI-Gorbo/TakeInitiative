@@ -30,7 +30,7 @@ const { values, errors, defineField, validate } = useForm({
     validationSchema: toTypedSchema(
         yup.object({
             campaignName: yup.string().required(),
-        }),
+        })
     ),
 });
 const [campaignName, campaignNameInputProps] = defineField("campaignName", {
@@ -51,11 +51,9 @@ async function onSubmit(): Promise<void> {
             campaignName: campaignName.value ?? "",
         })
         .then((campaign) => {
-            debugger;
             // Set the campaign as the current campaign
         })
         .then(async () => {
-            console.log("here");
             await navigateTo("/");
         })
         .finally(() => {

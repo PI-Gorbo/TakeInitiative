@@ -11,14 +11,14 @@ export default defineNuxtPlugin((nuxtApp) => {
     const Axios: AxiosInstance = axios.create(defaultAxios);
 
     // Register to use an auth token if there is one.
-    Axios.interceptors.request.use((config) => {
-		const userStore = useUserStore();
-        const jwt = jwtUtils.getJwtAsString();
-        if (jwt != null) {
-            config.headers["authorization"] = `Bearer ${jwt}`;
-        }
-        return config;
-    });
+	// const persistence = useAuthPersistence(); 
+    // Axios.interceptors.request.use((config) => {
+    //     const jwt = persistence.getTokenAsString(); 	
+    //     if (jwt != null) {
+    //         config.headers["authorization"] = `Bearer ${jwt}`;
+    //     }
+    //     return config;
+    // });
 
     return {
         provide: {

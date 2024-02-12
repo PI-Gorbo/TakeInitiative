@@ -2,6 +2,7 @@ using System.Net;
 using CSharpFunctionalExtensions;
 using FastEndpoints;
 using Marten;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using TakeInitiative.Api.Models;
 using TakeInitiative.Utilities.Extensions;
@@ -18,7 +19,7 @@ public class DeletePlayerCharacter(IDocumentStore Store) : Endpoint<DeletePlayer
 	public override void Configure()
 	{
 		Delete("/api/campaign/member/character");
-		AuthSchemes(JwtBearerDefaults.AuthenticationScheme);
+		AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
 		Policies(TakePolicies.UserExists);
 	}
 

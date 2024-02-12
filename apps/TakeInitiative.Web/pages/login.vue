@@ -7,7 +7,7 @@
             >
         </div>
 
-        <Form class="flex flex-col gap-4" @submit.prevent @submit="onLogin">
+        <form class="flex flex-col gap-4" @submit.prevent @submit="onLogin">
             <FormInput
                 v-model:value="email"
                 label="Email"
@@ -22,23 +22,31 @@
                 v-bind="passwordInputProps"
             />
 
-            <div class="flex justify-center">
-                <button
-                    class="w-full bg-take-yellow my-2 py-4 rounded-md hover:brightness-75 text-take-navy"
-                    type="submit"
-                >
-                    Login
-                </button>
+            <div v-if="state.errorObject" class="text-take-red">
+                {{ state.errorObject.getErrorFor("generalErrors") }}
             </div>
-        </Form>
+
+            <div class="flex justify-center">
+                <FormButton
+                    label="Login"
+                    loadingLabel="Logging in..."
+                    :isLoading="state.isSubmitting"
+                />
+            </div>
+        </form>
     </section>
 </template>
 
 <script setup lang="ts">
-import { Form } from "vee-validate";
 import { useForm } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/yup";
 import * as yup from "yup";
+import type { LoginRequest } from "~/utils/api/user/loginRequest";
+const state = reactive({
+    isSubmitting: false,
+    errorObject: null as null | ApiError<LoginRequest>,
+});
+
 definePageMeta({
     requiresAuth: false,
     layout: "auth",
@@ -65,10 +73,24 @@ const [password, passwordInputProps] = defineField("password", {
 });
 
 // Form Submit
+const userStore = useUserStore();
 async function onLogin() {
+    state.errorObject = null;
+    state.isSubmitting = true;
     const validation = await validate();
     if (validation.valid == false) {
+        state.isSubmitting = false;
         return;
     }
+
+    await userStore
+        .login({ email: email.value ?? "", password: password.value ?? "" })
+        .then(async () => {
+            await navigateTo("/");
+        })
+        .catch(async (error) => {
+            state.errorObject = await parseAsApiError(error);
+        })
+        .finally(() => (state.isSubmitting = false));
 }
 </script>
