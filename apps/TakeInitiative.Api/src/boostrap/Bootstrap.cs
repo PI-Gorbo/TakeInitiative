@@ -46,8 +46,10 @@ public static class Bootstrap
 	public static WebApplicationBuilder AddIdentityAuthenticationAndAuthorization(this WebApplicationBuilder builder)
 	{
 		builder.Services
-			.AddIdentity<ApplicationUser, ApplicationUserRole>(opts => {
-				opts.Password = new PasswordOptions() {
+			.AddIdentity<ApplicationUser, ApplicationUserRole>(opts =>
+			{
+				opts.Password = new PasswordOptions()
+				{
 					RequireDigit = true,
 					RequiredLength = 6,
 					RequireLowercase = true,
@@ -79,7 +81,8 @@ public static class Bootstrap
 		return builder;
 	}
 
-	public static WebApplicationBuilder AddSerilog(this WebApplicationBuilder builder) {
+	public static WebApplicationBuilder AddSerilog(this WebApplicationBuilder builder)
+	{
 		Log.Logger = new LoggerConfiguration()
 			.MinimumLevel.Information()
 			.WriteTo.Console()
@@ -114,7 +117,10 @@ public class RequireUserToExistInDatabaseAuthorizationHandler(IDocumentStore Sto
 		.Bind((id) => Store.Try(async (session) =>
 		{
 			return await session.Query<ApplicationUser>().AnyAsync(x => x.Id == id);
-		})).Ensure(userExists => userExists == true);
+		})).Ensure(userExists =>
+		{
+			return userExists;
+		}, "User does not exist.");
 
 		if (userExistsResult.IsFailure)
 		{
