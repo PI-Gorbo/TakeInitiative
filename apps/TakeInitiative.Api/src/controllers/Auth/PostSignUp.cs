@@ -59,6 +59,12 @@ public class PostSignUp(
 				u["UserId"] = user.Id.ToString();
 			});
 
+		await CookieAuth.SignInAsync(u =>
+		{
+			//indexer based claim setting
+			u["UserId"] = user.Id.ToString();
+		});
+
 		await SendAsync(new()
 		{
 			Token = jwtToken,

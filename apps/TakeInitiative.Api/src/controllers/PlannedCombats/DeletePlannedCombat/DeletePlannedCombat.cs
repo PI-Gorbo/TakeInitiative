@@ -2,6 +2,7 @@ using System.Net;
 using CSharpFunctionalExtensions;
 using FastEndpoints;
 using Marten;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using TakeInitiative.Api.Models;
 using TakeInitiative.Utilities.Extensions;
@@ -12,7 +13,7 @@ public class DeletePlannedCombat(IDocumentStore Store) : Endpoint<DeletePlannedC
 	public override void Configure()
 	{
 		Delete("/api/campaign/planned-combat");
-		AuthSchemes(JwtBearerDefaults.AuthenticationScheme);
+		AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
 		Policies(TakePolicies.UserExists);
 	}
 

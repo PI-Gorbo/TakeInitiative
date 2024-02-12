@@ -1,12 +1,13 @@
-import { useTakeInitApi } from "~/utils/api/takeInitaitiveApi";
 import type { SignUpRequest } from "~/utils/api/user/signUpRequest";
 import type { GetUserResponse } from "~/utils/api/user/getUserRequest";
 import type { Campaign } from "~/utils/types/models";
 import { type CreateCampaignRequest } from "~/utils/api/campaign/createCampaignRequest";
+import type { LoginRequest } from "~/utils/api/user/loginRequest";
 
 type User = GetUserResponse;
 export const useUserStore = defineStore("userStore", () => {
-    const api = useTakeInitApi();
+	const authPersistence = useAuthPersistence()
+    const api = useApi();
 
     const state = reactive({
         user: null as User | null,
@@ -22,30 +23,41 @@ export const useUserStore = defineStore("userStore", () => {
     }
 
     async function isLoggedIn(): Promise<Boolean> {
-        const jwt = jwtUtils.getJwt();
-        if (jwt == false) {
+        const token = authPersistence.getToken();
+        if (token == false) {
             return false;
         }
 
-        if (state.user == null || state.user.userId != jwt.UserId) {
+        if (state.user == null || state.user.userId != token.UserId) {
             return await fetchUser().then(() => true);
         }
 
         return true;
     }
 
-    async function login(email: string, password: string): Promise<void> {}
+    async function login(request : LoginRequest): Promise<void> {
+		return await api.user
+			.login(request)
+			.then((response) => {authPersistence.setToken(response.token)})
+			.then(fetchUser)
+			.then()
+	}
 
     async function signUp(signUpRequest: SignUpRequest): Promise<void> {
         return await api.user
             .signUp(signUpRequest)
             .then((response) => {
-                jwtUtils.setJwt(response.token);
+                authPersistence.setToken(response.token)
             })
             .then(async () => {
                 await navigateTo("/");
             });
     }
+
+	async function signOut() : Promise<void> {
+		authPersistence.clearToken()
+		await navigateTo("/login")
+	}
 
     async function createCampaign(
         request: CreateCampaignRequest,
@@ -63,5 +75,6 @@ export const useUserStore = defineStore("userStore", () => {
         signUp,
         isLoggedIn,
         createCampaign,
+		signOut
     };
 });

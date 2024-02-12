@@ -4,6 +4,7 @@ using System.Net;
 using CSharpFunctionalExtensions;
 using FastEndpoints;
 using Marten;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using TakeInitiative.Api.Models;
 using TakeInitiative.Utilities;
@@ -16,7 +17,7 @@ public class PostJoinCampaign(IDocumentStore Store) : Endpoint<JoinCampaignByJoi
 	public override void Configure()
 	{
 		Post("/api/campaign/join");
-		AuthSchemes(JwtBearerDefaults.AuthenticationScheme);
+		AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
 		Policies(TakePolicies.UserExists);
 	}
 

@@ -1,5 +1,3 @@
-import jwtUtils from "~/utils/jwtUtils";
-
 export default defineNuxtRouteMiddleware(async (to) => {
   	const userStore = useUserStore();
 	if (userStore.state.user == null) {

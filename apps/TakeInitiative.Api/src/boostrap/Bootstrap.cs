@@ -2,9 +2,11 @@ using System.Security.Claims;
 using CSharpFunctionalExtensions;
 using FastEndpoints.Security;
 using Marten;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using TakeInitiative.Api.Bootstrap;
 using TakeInitiative.Api.Models;
@@ -46,8 +48,10 @@ public static class Bootstrap
 	public static WebApplicationBuilder AddIdentityAuthenticationAndAuthorization(this WebApplicationBuilder builder)
 	{
 		builder.Services
-			.AddIdentity<ApplicationUser, ApplicationUserRole>(opts => {
-				opts.Password = new PasswordOptions() {
+			.AddIdentityCore<ApplicationUser>(opts =>
+			{
+				opts.Password = new PasswordOptions()
+				{
 					RequireDigit = true,
 					RequiredLength = 6,
 					RequireLowercase = true,
@@ -55,6 +59,7 @@ public static class Bootstrap
 					RequireNonAlphanumeric = true
 				};
 			})
+			.AddRoles<ApplicationUserRole>()
 			.AddUserStore<MartenUserStore>()
 			.AddRoleStore<MartenRoleStore>()
 			.AddSignInManager() // Sign in manager allows users to sign in and out, and validates these operations.
@@ -62,6 +67,10 @@ public static class Bootstrap
 
 		builder.Services
 			.AddSingleton<IAuthorizationHandler, RequireUserToExistInDatabaseAuthorizationHandler>()
+			.AddCookieAuth(validFor: TimeSpan.FromMinutes(10), opts => {
+				opts.LoginPath = "/api/login";
+				opts.LogoutPath = "/api/signOut";
+			})
 			.AddAuthorization(opts =>
 			{
 				opts.AddPolicy("UserExists",
@@ -71,15 +80,17 @@ public static class Bootstrap
 					.Build()
 				);
 			})
-			.AddJWTBearerAuth(builder.Configuration.GetValue<string>("JWTSigningKey") ?? throw new OperationCanceledException("Required configuration 'JWTSigningKey' is missing"))
 			.AddAuthentication(opts =>
 			{
-
+				opts.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+				opts.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+				opts.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
 			});
 		return builder;
 	}
 
-	public static WebApplicationBuilder AddSerilog(this WebApplicationBuilder builder) {
+	public static WebApplicationBuilder AddSerilog(this WebApplicationBuilder builder)
+	{
 		Log.Logger = new LoggerConfiguration()
 			.MinimumLevel.Information()
 			.WriteTo.Console()

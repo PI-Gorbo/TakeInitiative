@@ -5,6 +5,7 @@ using FastEndpoints.Security;
 using Marten;
 using Marten.Linq.MatchesSql;
 using Marten.Services;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using TakeInitiative.Api.Controllers;
 using TakeInitiative.Api.Models;
@@ -18,7 +19,7 @@ public class PostCreateCampaign(IDocumentStore Store) : Endpoint<PostCreateCampa
 	public override void Configure()
 	{
 		Post("/api/campaign");
-		AuthSchemes(JwtBearerDefaults.AuthenticationScheme);
+		AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
 		Policies(TakePolicies.UserExists);
 	}
 	public override async Task HandleAsync(PostCreateCampaignRequest req, CancellationToken ct)

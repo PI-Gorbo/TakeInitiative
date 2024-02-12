@@ -6,6 +6,7 @@ using FastEndpoints;
 using FastEndpoints.Security;
 using Marten;
 using Marten.Services;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using TakeInitiative.Api.Models;
 using TakeInitiative.Utilities.Extensions;
@@ -17,7 +18,7 @@ public class PutCampaignDetails(IDocumentStore Store) : Endpoint<PutCampaignDeta
     public override void Configure()
     {
         Put("/api/campaign");
-        AuthSchemes(JwtBearerDefaults.AuthenticationScheme);
+        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
         Policies(TakePolicies.UserExists);
     }
     public override async Task HandleAsync(PutCampaignDetailsRequest req, CancellationToken ct)

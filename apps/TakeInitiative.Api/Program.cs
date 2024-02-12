@@ -1,4 +1,5 @@
 using FastEndpoints;
+using FastEndpoints.Security;
 using Marten;
 using Microsoft.Net.Http.Headers;
 using Serilog;
@@ -15,7 +16,6 @@ internal class Program
         builder.Services.AddSwaggerGen();
         builder.Services.AddHealthChecks();
         builder.Services.AddFastEndpoints();
-        builder.Services.AddMvc(options => options.EnableEndpointRouting = false);
 
         // Custom Injection
         builder.AddMartenDB();
@@ -45,7 +45,6 @@ internal class Program
             .UseFastEndpoints()
             .UseAuthentication()
             .UseAuthorization();
-
 
         app.UseHealthChecks("/healthz");
         app.Run();
