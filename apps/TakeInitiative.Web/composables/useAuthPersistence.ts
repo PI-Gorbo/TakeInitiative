@@ -67,7 +67,6 @@ export const useAuthPersistence = () => {
 			return validateToken(jwtAsString)
 		},
 		setToken(jwt: string) : boolean {
-			debugger;
 			if (!validateToken(jwt)) {
 				return false;
 			}
