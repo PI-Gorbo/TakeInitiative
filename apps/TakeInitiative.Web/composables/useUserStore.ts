@@ -6,58 +6,47 @@ import type { LoginRequest } from "~/utils/api/user/loginRequest";
 
 type User = GetUserResponse;
 export const useUserStore = defineStore("userStore", () => {
-	const authPersistence = useAuthPersistence()
     const api = useApi();
 
     const state = reactive({
         user: null as User | null,
     });
 
-	async function init() : Promise<void> {
-		return await isLoggedIn().then();
-	}
+    async function init(): Promise<void> {
+        return await isLoggedIn().then();
+    }
 
     async function fetchUser(): Promise<User> {
         // fetch the user.
-        return api.user.getUser().then((user) => (state.user = user));
+        return await api.user.getUser().then((user) => (state.user = user));
     }
 
     async function isLoggedIn(): Promise<Boolean> {
-        const token = authPersistence.getToken();
-        if (token == false) {
-            return false;
+        if (state.user != null) {
+            return true;
         }
 
-        if (state.user == null || state.user.userId != token.UserId) {
-            return await fetchUser().then(() => true);
-        }
-
-        return true;
+        return await fetchUser()
+            .then(() => true)
+            .catch(() => false);
     }
 
-    async function login(request : LoginRequest): Promise<void> {
-		return await api.user
-			.login(request)
-			.then((response) => {authPersistence.setToken(response.token)})
-			.then(fetchUser)
-			.then()
-	}
+    async function login(request: LoginRequest): Promise<void> {
+        return await api.user
+            .login(request)
+            .then(async () => await fetchUser)
+            .then();
+    }
 
     async function signUp(signUpRequest: SignUpRequest): Promise<void> {
-        return await api.user
-            .signUp(signUpRequest)
-            .then((response) => {
-                authPersistence.setToken(response.token)
-            })
-            .then(async () => {
-                await navigateTo("/");
-            });
+        return await api.user.signUp(signUpRequest).then(async () => {
+            await navigateTo("/");
+        });
     }
 
-	async function signOut() : Promise<void> {
-		authPersistence.clearToken()
-		await navigateTo("/login")
-	}
+    async function signOut(): Promise<void> {
+        await navigateTo("/login");
+    }
 
     async function createCampaign(
         request: CreateCampaignRequest,
@@ -70,11 +59,12 @@ export const useUserStore = defineStore("userStore", () => {
     // Helper functions
     return {
         state,
-		init,
+        init,
         login,
         signUp,
         isLoggedIn,
         createCampaign,
-		signOut
+        signOut,
+        username: computed(() => state.user?.username),
     };
 });

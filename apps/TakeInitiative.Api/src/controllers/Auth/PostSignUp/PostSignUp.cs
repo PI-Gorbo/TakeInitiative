@@ -12,7 +12,7 @@ public class PostSignUp(
 	IOptions<JWTOptions> JWTOptions,
 	UserManager<ApplicationUser> UserManager,
 	SignInManager<ApplicationUser> SignInManager
-	) : Endpoint<PostSignUpRequest, PostSignUpResponse>
+	) : Endpoint<PostSignUpRequest>
 {
 	public override void Configure()
 	{
@@ -20,7 +20,7 @@ public class PostSignUp(
 		AllowAnonymous();
 	}
 	public override async Task HandleAsync(PostSignUpRequest req, CancellationToken ct)
-	{		
+	{
 		var user = new ApplicationUser();
 		if (await UserManager.FindByEmailAsync(req.Email) != null)
 		{
@@ -31,12 +31,15 @@ public class PostSignUp(
 		{
 			AddError((req) => req.Username, "This username is already registered to another account.");
 		}
-	
+
 		// Check the users password by applying the password validators.
-		foreach (IPasswordValidator<ApplicationUser> validator in UserManager.PasswordValidators) {
+		foreach (IPasswordValidator<ApplicationUser> validator in UserManager.PasswordValidators)
+		{
 			var validationResult = await validator.ValidateAsync(UserManager, user, req.Password);
-			if (!validationResult.Succeeded) {
-				foreach (var error in validationResult.Errors) {
+			if (!validationResult.Succeeded)
+			{
+				foreach (var error in validationResult.Errors)
+				{
 					AddError(req => req.Password, error.Description);
 				}
 			}
@@ -44,20 +47,12 @@ public class PostSignUp(
 
 		ThrowIfAnyErrors();
 		await UserManager.SetEmailAsync(user, req.Email);
-		await UserManager.SetUserNameAsync(user, req.Username);	
+		await UserManager.SetUserNameAsync(user, req.Username);
 		var result = await UserManager.CreateAsync(user, req.Password);
 		if (!result.Succeeded)
 		{
 			ThrowError($"Failed to register new account! {String.Join(", ", result.Errors.Select(x => x.Description))}", (int)HttpStatusCode.BadRequest);
 		}
-
-		var jwtToken = JWTBearer.CreateToken(
-			JWTOptions.Value.JWTSigningKey,
-			expireAt: DateTime.UtcNow.AddDays(7),
-			privileges: u =>
-			{
-				u["UserId"] = user.Id.ToString();
-			});
 
 		await CookieAuth.SignInAsync(u =>
 		{
@@ -65,9 +60,6 @@ public class PostSignUp(
 			u["UserId"] = user.Id.ToString();
 		});
 
-		await SendAsync(new()
-		{
-			Token = jwtToken,
-		});
+		await SendOkAsync(ct);
 	}
 }

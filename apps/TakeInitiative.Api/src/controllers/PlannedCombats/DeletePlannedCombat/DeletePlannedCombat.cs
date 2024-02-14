@@ -19,15 +19,11 @@ public class DeletePlannedCombat(IDocumentStore Store) : Endpoint<DeletePlannedC
 
 	public override async Task HandleAsync(DeletePlannedCombatRequest req, CancellationToken ct)
 	{
-		var userIdResult = this.User.GetUserId();
-		if (userIdResult.IsFailure)
-		{
-			ThrowError(userIdResult.Error, (int)HttpStatusCode.Unauthorized);
-		}
 
+		var userId = this.GetUserIdOrThrowUnauthorized();
 		var result = await Store.Try(async session =>
 		{
-			var campaignMember = await session.Query<CampaignMember>().GetCampaignMemberForUserAndCampaign(userIdResult.Value, req.CampaignId);
+			var campaignMember = await session.Query<CampaignMember>().GetCampaignMemberForUserAndCampaign(userId, req.CampaignId);
 			if (campaignMember == null)
 			{
 				ThrowError("Cannot add a planned combat to a campaign you are not a member of.", (int)HttpStatusCode.NotFound);

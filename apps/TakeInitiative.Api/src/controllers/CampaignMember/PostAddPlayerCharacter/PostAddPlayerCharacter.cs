@@ -20,15 +20,12 @@ public class PostAddPlayerCharacter(IDocumentStore Store) : Endpoint<AddPlayerCh
 
 	public override async Task HandleAsync(AddPlayerCharacterRequest req, CancellationToken ct)
 	{
-		var userIdResult = this.User.GetUserId();
-		if (userIdResult.IsFailure)
-		{
-			ThrowError(userIdResult.Error, (int)HttpStatusCode.Unauthorized);
-		}
+
+		var userId = this.GetUserIdOrThrowUnauthorized();
 
 		// Construct new player character 
 		PlayerCharacter newCharacter = PlayerCharacter.
-			New(userIdResult.Value, req.PlayerCharacter.Name, req.PlayerCharacter.Initiative, req.PlayerCharacter.ArmorClass, req.PlayerCharacter.Health);
+			New(userId, req.PlayerCharacter.Name, req.PlayerCharacter.Initiative, req.PlayerCharacter.ArmorClass, req.PlayerCharacter.Health);
 
 		var result = await Store.Try(async session =>
 		{
@@ -38,7 +35,7 @@ public class PostAddPlayerCharacter(IDocumentStore Store) : Endpoint<AddPlayerCh
 				ThrowError("No Campaign Member with the given id exists.", (int)HttpStatusCode.NotFound);
 			}
 
-			if (campaignMember.UserId != userIdResult.Value)
+			if (campaignMember.UserId != userId)
 			{
 				ThrowError("Cannot edit Campaign Member details of others", (int)HttpStatusCode.Unauthorized);
 			}

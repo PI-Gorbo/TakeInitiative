@@ -25,11 +25,7 @@ public class DeletePlayerCharacter(IDocumentStore Store) : Endpoint<DeletePlayer
 
 	public override async Task HandleAsync(DeletePlayerCharacterRequest req, CancellationToken ct)
 	{
-		var userIdResult = this.User.GetUserId();
-		if (userIdResult.IsFailure)
-		{
-			ThrowError(userIdResult.Error, (int)HttpStatusCode.Unauthorized);
-		}
+		var userId = this.GetUserIdOrThrowUnauthorized();
 
 		var result = await Store.Try(async session =>
 		{
@@ -40,7 +36,7 @@ public class DeletePlayerCharacter(IDocumentStore Store) : Endpoint<DeletePlayer
 			}
 
 			// Ensure only the owner of the campaign member details can edit
-			if (campaignMember.UserId != userIdResult.Value)
+			if (campaignMember.UserId != userId)
 			{
 				ThrowError("Cannot edit Campaign Member details of others", (int)HttpStatusCode.Unauthorized);
 			}

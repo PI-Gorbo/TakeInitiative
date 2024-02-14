@@ -20,9 +20,8 @@ public class GetUser(IDocumentStore Store) : EndpointWithoutRequest<GetUserRespo
 
 	public override async Task HandleAsync(CancellationToken ct)
 	{
-		var result = await this.User.GetUserId()
-			.Bind(async (Guid userId) =>
-				await Store.Try(async (IDocumentSession session) =>
+		var userId = this.GetUserIdOrThrowUnauthorized();
+		var result = await Store.Try(async (IDocumentSession session) =>
 			{
 				var user = await session.LoadAsync<ApplicationUser>(userId);
 				var campaigns = await session.LoadManyAsync<Campaign>(user!.Campaigns);
@@ -49,8 +48,7 @@ public class GetUser(IDocumentStore Store) : EndpointWithoutRequest<GetUserRespo
 					DmCampaigns = dmCampaigns,
 					MemberCampaigns = memberCampaigns
 				};
-			}));
-
+			});
 
 		if (result.IsFailure)
 		{

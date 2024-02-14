@@ -7,16 +7,9 @@ export type SignUpRequest = {
     username: string;
     password: string;
 };
-const signUpResponseSchema = yup.object({
-    token: yup.string().required(),
-});
-export type SignUpResponse = yup.InferType<typeof signUpResponseSchema>;
+
 export function signUpRequest(axios: AxiosInstance) {
-    return async function signUp(
-        signUpRequest: SignUpRequest,
-    ): Promise<SignUpResponse> {
-        return await axios
-            .post("/api/signup", signUpRequest)
-            .then((response) => signUpResponseSchema.validate(response.data));
+    return async function signUp(signUpRequest: SignUpRequest): Promise<void> {
+        return await axios.post("/api/signup", signUpRequest);
     };
 }

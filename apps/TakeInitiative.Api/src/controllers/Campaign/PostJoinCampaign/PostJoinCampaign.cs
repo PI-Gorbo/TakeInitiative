@@ -23,11 +23,7 @@ public class PostJoinCampaign(IDocumentStore Store) : Endpoint<JoinCampaignByJoi
 
 	public override async Task HandleAsync(JoinCampaignByJoinCodeRequest req, CancellationToken ct)
 	{
-		var userIdResult = this.User.GetUserId();
-		if (userIdResult.IsFailure)
-		{
-			ThrowError(userIdResult.Error, (int)HttpStatusCode.Unauthorized);
-		}
+		var userId = this.GetUserIdOrThrowUnauthorized();
 
 		var result = await CampaignIdShortener.ToId(req.JoinCode)
 			.Bind((Guid campaignId) => Store.Try(async session =>
@@ -36,24 +32,24 @@ public class PostJoinCampaign(IDocumentStore Store) : Endpoint<JoinCampaignByJoi
 				var campaign = await session.LoadAsync<Campaign>(campaignId, ct);
 				if (campaign == null)
 				{
-					return Result.Failure<Campaign>("Join code is invalid.");
+					ThrowError(x => x.JoinCode, "Join code is invalid.");
 				}
 
 				// Check if the user is already a member of the campaign.
-				if (campaign.CampaignMemberInfo.Select(x => x.UserId).Contains(userIdResult.Value))
+				if (campaign.CampaignMemberInfo.Select(x => x.UserId).Contains(userId))
 				{
-					return Result.Failure<Campaign>("User is already part of the campaign");
+					ThrowError("User is already part of the campaign", (int)HttpStatusCode.BadRequest);
 				}
 
 				// Add the user to the campaign's list, and create a CampaignMember entity.
-				CampaignMember member = CampaignMember.New(campaignId, userIdResult.Value);
+				CampaignMember member = CampaignMember.New(campaignId, userId);
 				session.Store(member);
 
 				campaign.CampaignMemberInfo.Add(CampaignMemberInfo.FromMember(member));
 				session.Store(campaign);
 
 				// Add a reference to the campaign on the application user
-				var user = await session.LoadAsync<ApplicationUser>(userIdResult.Value);
+				var user = await session.LoadAsync<ApplicationUser>(userId);
 				user?.Campaigns.Add(campaign.Id);
 				session.Store(user!);
 

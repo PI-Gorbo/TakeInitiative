@@ -23,11 +23,11 @@ public class PutCampaignDetails(IDocumentStore Store) : Endpoint<PutCampaignDeta
     }
     public override async Task HandleAsync(PutCampaignDetailsRequest req, CancellationToken ct)
     {
-        var result = await this.User.GetUserId()
-            .Bind(async userId => await Store.Try(async (session) =>
+        var userId = this.GetUserIdOrThrowUnauthorized();
+        var result = await Store.Try(async (session) =>
             {
                 var campaign = await session.LoadAsync<Campaign>(req.CampaignId);
-                if (userId != campaign.OwnerId)
+                if (userId != campaign?.OwnerId)
                 {
                     return Result.Failure<Campaign>("Only the owner of the campaign can update the details.");
                 }
@@ -38,7 +38,7 @@ public class PutCampaignDetails(IDocumentStore Store) : Endpoint<PutCampaignDeta
                 session.Store(campaign);
                 await session.SaveChangesAsync(ct);
                 return campaign;
-            }));
+            });
 
         if (result.IsFailure)
         {

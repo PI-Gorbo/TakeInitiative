@@ -10,7 +10,7 @@
                 v-for="tab in tabs.filter((x) => x.show)"
                 :key="tab.name"
                 :class="[
-                    'cursor-pointer select-none p-2 rounded-md hover:bg-take-yellow hover:text-take-navy-dark',
+                    ' cursor-pointer select-none rounded-md p-2 text-center transition-colors hover:bg-take-yellow hover:text-take-navy-dark',
                     state.lastClickedTab.name == tab.name
                         ? `bg-${props.selectedTabColour}`
                         : `bg-${props.notSelectedTabColour}`,
@@ -22,7 +22,11 @@
                 </div>
             </div>
         </nav>
-        <Transition name="slide-fade" mode="out-in">
+        <Transition
+            name="slide-fade"
+            mode="out-in"
+            class="flex-1 overflow-auto"
+        >
             <slot :name="selectedTab.name" />
         </Transition>
     </main>
@@ -51,7 +55,7 @@ const props = withDefaults(
         backgroundColour: "take-navy",
         selectedTabColour: "take-navy-light",
         notSelectedTabColour: "take-navy-medium",
-    }
+    },
 );
 
 const tabs: ComputedRef<Tab[]> = computed(() => {
@@ -72,7 +76,7 @@ const selectedTab = computed(
     () =>
         tabs.value.find((x) => x.name == state.lastClickedTab.name) ??
         tabs.value.filter((x) => x.show)[0] ??
-        {}
+        {},
 );
 </script>
 <style>
@@ -81,11 +85,11 @@ const selectedTab = computed(
   durations and timing functions.
 */
 .slide-fade-enter-active {
-    transition: all 0.1s ease-out;
+    transition: all 0.2s ease-out;
 }
 
 .slide-fade-leave-active {
-    transition: all 0.1s cubic-bezier(1, 0.5, 0.8, 1);
+    transition: all 0.2s cubic-bezier(1, 0.5, 0.8, 1);
 }
 
 .slide-fade-enter-from,

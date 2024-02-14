@@ -10,7 +10,7 @@ namespace TakeInitiative.Api.Controllers;
 public class PutLogin(
 	IOptions<JWTOptions> JWTOptions,
 	UserManager<ApplicationUser> UserManager,
-	SignInManager<ApplicationUser> SignInManager) : Endpoint<PutLoginRequest, PutLoginResponse>
+	SignInManager<ApplicationUser> SignInManager) : Endpoint<PutLoginRequest>
 {
 	public override void Configure()
 	{
@@ -27,21 +27,9 @@ public class PutLogin(
 
 		await CookieAuth.SignInAsync(u =>
 		{
-			//indexer based claim setting
 			u["UserId"] = user.Id.ToString();
 		});
 
-
-		var jwtToken = JWTBearer.CreateToken(
-			JWTOptions.Value.JWTSigningKey,
-			expireAt: DateTime.UtcNow.AddDays(7),
-			privileges: u =>
-			{
-				u["UserId"] = user.Id.ToString();
-			});
-		await SendAsync(new()
-		{
-			Token = jwtToken,
-		});
+		await SendOkAsync(ct);
 	}
 }

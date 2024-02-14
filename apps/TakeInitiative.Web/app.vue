@@ -1,7 +1,6 @@
 <template>
-    <div class="h-[100vh] w-[100vw]">
-        <NuxtLayout>
-            <NuxtPage />
-        </NuxtLayout>
-    </div>
+    <NuxtLoadingIndicator />
+    <NuxtLayout>
+        <NuxtPage />
+    </NuxtLayout>
 </template>

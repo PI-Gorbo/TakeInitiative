@@ -21,17 +21,13 @@ public class GetCampaignMember(IDocumentStore Store) : Endpoint<GetCampaignMembe
 
 	public override async Task HandleAsync(GetCampaignMemberRequest req, CancellationToken ct)
 	{
-		var userIdResult = this.User.GetUserId();
-		if (userIdResult.IsFailure)
-		{
-			ThrowError(userIdResult.Error, (int)HttpStatusCode.Unauthorized);
-		}
 
+		var userId = this.GetUserIdOrThrowUnauthorized();
 		var result = await Store.Try(async session =>
 		{
 			// Check that the user is part of the campaign.
 			var campaignMember = await session.LoadAsync<CampaignMember>(req.CampaignMemberId);
-			var userIsPartOfCampaign = await session.Query<CampaignMember>().Where(x => x.CampaignId == campaignMember.CampaignId && x.UserId == userIdResult.Value)
+			var userIsPartOfCampaign = await session.Query<CampaignMember>().Where(x => x.CampaignId == campaignMember.CampaignId && x.UserId == userId)
 				.CountAsync() == 1;
 
 			if (!userIsPartOfCampaign)

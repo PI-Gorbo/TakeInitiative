@@ -44,8 +44,10 @@ export async function validateWithSchema<T extends {}>(
         validate: (data: any) => Promise<T>;
     },
 ): Promise<T> {
-    return await schema.validate(data)
-	.catch((validationError) => {
-        console.log("API VALIDATION ERROR: ",validationError);
-    }).then(data => (data as unknown as T)); // Typescript workaround.
+    return await schema
+        .validate(data)
+        .catch((validationError) => {
+            console.error("API VALIDATION ERROR: ", validationError);
+        })
+        .then((data) => data as unknown as T); // Typescript workaround.
 }

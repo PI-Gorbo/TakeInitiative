@@ -20,12 +20,8 @@ public class PutSetCurrentCharacter(IDocumentStore Store) : Endpoint<SetCurrentC
 
 	public override async Task HandleAsync(SetCurrentCharacterRequest req, CancellationToken ct)
 	{
-		var userIdResult = this.User.GetUserId();
-		if (userIdResult.IsFailure)
-		{
-			ThrowError(userIdResult.Error, (int)HttpStatusCode.Unauthorized);
-		}
 
+		var userId = this.GetUserIdOrThrowUnauthorized();
 		var result = await Store.Try(async session =>
 		{
 			var campaignMember = await session.LoadAsync<CampaignMember>(req.MemberId);
@@ -34,7 +30,7 @@ public class PutSetCurrentCharacter(IDocumentStore Store) : Endpoint<SetCurrentC
 				ThrowError("No Campaign Member with the given id exists.", (int)HttpStatusCode.NotFound);
 			}
 
-			if (campaignMember.UserId != userIdResult.Value)
+			if (campaignMember.UserId != userId)
 			{
 				ThrowError("Cannot edit Campaign Member details of others", (int)HttpStatusCode.Unauthorized);
 			}

@@ -19,8 +19,8 @@ public class DeleteCampaign(IDocumentStore Store) : Endpoint<DeleteCampaignReque
     }
     public override async Task HandleAsync(DeleteCampaignRequest req, CancellationToken ct)
     {
-        var result = await this.User.GetUserId()
-            .Bind(async userId => await Store.Try(async (session) =>
+        var userId = this.GetUserIdOrThrowUnauthorized();
+        var result = await Store.Try(async (session) =>
             {
                 var campaign = await session.LoadAsync<Campaign>(req.CampaignId);
                 if (campaign == null)
@@ -36,7 +36,7 @@ public class DeleteCampaign(IDocumentStore Store) : Endpoint<DeleteCampaignReque
                 session.Delete(campaign);
                 await session.SaveChangesAsync(ct);
                 return campaign;
-            }));
+            });
 
         if (result.IsFailure)
         {

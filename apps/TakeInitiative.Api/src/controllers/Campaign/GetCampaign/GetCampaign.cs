@@ -20,8 +20,8 @@ public class GetCampaign(IDocumentStore Store) : Endpoint<GetCampaignRequest, Ca
 
 	public override async Task HandleAsync(GetCampaignRequest req, CancellationToken ct)
 	{
-		var result = await this.User.GetUserId()
-		.Bind((userId) => Store.Try(
+		var userId = this.GetUserIdOrThrowUnauthorized();
+		var result = await Store.Try(
 			async (session) =>
 			{
 				var campaign = await session.LoadAsync<Campaign>(req.CampaignId, ct);
@@ -34,15 +34,15 @@ public class GetCampaign(IDocumentStore Store) : Endpoint<GetCampaignRequest, Ca
 				var userIsAMember = campaign.CampaignMemberInfo.Any(x => x.UserId == userId);
 				if (!userIsAMember)
 				{
-					ThrowError("You cannot retrieve a campaign you are not apart of.", (int)HttpStatusCode.Unauthorized);
+					ThrowError("You cannot retrieve a campaign you are not apart of.", (int)HttpStatusCode.BadRequest);
 				}
 
 				return campaign;
-			}));
+			});
 
 		if (result.IsFailure)
 		{
-			ThrowError(result.Error, (int)HttpStatusCode.BadRequest);
+			ThrowError(result.Error, (int)HttpStatusCode.ServiceUnavailable);
 		}
 
 		await SendAsync(result.Value);

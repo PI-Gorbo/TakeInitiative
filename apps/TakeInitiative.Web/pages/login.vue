@@ -1,8 +1,8 @@
 <template>
     <section class="w-full">
-        <div class="w-full flex flex-col justify-center">
-            <h1 class="text-xl text-center">Log In</h1>
-            <NuxtLink to="/signup" class="underline text-sm text-center">
+        <div class="flex w-full flex-col justify-center">
+            <h1 class="text-center text-xl">Log In</h1>
+            <NuxtLink to="/signup" class="text-center text-sm underline">
                 Sign up instead</NuxtLink
             >
         </div>
@@ -42,6 +42,7 @@ import { useForm } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/yup";
 import * as yup from "yup";
 import type { LoginRequest } from "~/utils/api/user/loginRequest";
+import { getDefaultLibFileName } from "typescript";
 const state = reactive({
     isSubmitting: false,
     errorObject: null as null | ApiError<LoginRequest>,
@@ -58,7 +59,7 @@ const { values, errors, defineField, validate } = useForm({
         yup.object({
             email: yup.string().required().email(),
             password: yup.string().required(),
-        })
+        }),
     ),
 });
 const [email, emailInputProps] = defineField("email", {
@@ -75,6 +76,7 @@ const [password, passwordInputProps] = defineField("password", {
 // Form Submit
 const userStore = useUserStore();
 async function onLogin() {
+    debugger;
     state.errorObject = null;
     state.isSubmitting = true;
     const validation = await validate();

@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+#__nuxt {
+    width: 100vw;
+    height: 100vh;
+    overflow-y: auto;
+}
+
 @font-face {
     font-family: "NovaCut";
     src: url("~/assets/NovaCut-Regular.ttf");

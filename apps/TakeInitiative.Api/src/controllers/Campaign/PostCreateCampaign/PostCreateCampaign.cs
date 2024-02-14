@@ -24,39 +24,38 @@ public class PostCreateCampaign(IDocumentStore Store) : Endpoint<PostCreateCampa
 	}
 	public override async Task HandleAsync(PostCreateCampaignRequest req, CancellationToken ct)
 	{
-		var result = await this.User.GetUserId()
-			.Bind(async userId => await Store.Try(async (session) =>
+		var userId = this.GetUserIdOrThrowUnauthorized();
+		var result = await Store.Try(async (session) =>
+		{
+			var campaign = Campaign.CreateNewCampaign(userId, req.CampaignName);
+			var alreadyCampaignWithName = await session.Query<Campaign>()
+				.Where(x => x.OwnerId == userId && x.CampaignName == req.CampaignName)
+				.AnyAsync();
+
+			if (alreadyCampaignWithName)
 			{
-				var campaign = Campaign.CreateNewCampaign(userId, req.CampaignName);
-				var alreadyCampaignWithName = await session.Query<Campaign>()
-					.Where(x => x.OwnerId == userId && x.CampaignName == req.CampaignName)
-					.AnyAsync();
+				ThrowError("You already own a campaign with that name.", (int)HttpStatusCode.BadRequest);
+			}
 
-				if (alreadyCampaignWithName)
-				{
-					ThrowError("You already own a campaign with that name.");
-				}
+			// Add the owner as a member in the campaign, set as the dungeon master.
+			CampaignMember dungeonMaster = CampaignMember.New(
+				CampaignId: campaign.Id,
+				UserId: userId,
+				IsDungeonMaster: true
+			);
+			campaign.AddCampaignMemberReference(CampaignMemberInfo.FromMember(dungeonMaster));
 
-				// Add the owner as a member in the campaign, set as the dungeon master.
-				CampaignMember dungeonMaster = CampaignMember.New(
-					CampaignId: campaign.Id,
-					UserId: userId,
-					IsDungeonMaster: true
-				);
-				campaign.AddCampaignMemberReference(CampaignMemberInfo.FromMember(dungeonMaster));
+			session.Store(campaign);
+			session.Store(dungeonMaster);
 
-				session.Store(campaign);
-				session.Store(dungeonMaster);
+			// Add a reference to the Application User.
+			var user = await session.LoadAsync<ApplicationUser>(userId, ct);
+			user?.Campaigns.Add(campaign.Id);
+			session.Store(user!);
 
-				// Add a reference to the Application User.
-				var user = await session.LoadAsync<ApplicationUser>(userId, ct);
-				user?.Campaigns.Add(campaign.Id);
-				session.Store(user!);
-
-
-				await session.SaveChangesAsync(ct);
-				return campaign;
-			}));
+			await session.SaveChangesAsync(ct);
+			return campaign;
+		});
 
 		if (result.IsFailure)
 		{
