@@ -9,7 +9,7 @@ using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Data.Commands;
 
-public class GetCampaign(IDocumentStore Store) : Endpoint<GetCampaignRequest, Campaign>
+public class GetCampaign(IDocumentStore Store) : Endpoint<GetCampaignRequest, GetCampaignResponse>
 {
 	public override void Configure()
 	{
@@ -37,7 +37,39 @@ public class GetCampaign(IDocumentStore Store) : Endpoint<GetCampaignRequest, Ca
 					ThrowError("You cannot retrieve a campaign you are not apart of.", (int)HttpStatusCode.BadRequest);
 				}
 
-				return campaign;
+				// Retrieve all campaign members in the campaign
+				var campaignMembers = await session.LoadManyAsync<CampaignMember>(campaign.CampaignMemberInfo.Select(x => x.MemberId));
+				if (campaignMembers == null)
+				{
+					ThrowError("Failed to retrieve campaign members for the campaign.", (int)HttpStatusCode.NotFound);
+				}
+
+				var userCampaignMember = campaignMembers?.SingleOrDefault(x => x.UserId == userId);
+				if (userCampaignMember == null)
+				{
+					ThrowError("Could not find user campaign member info.", (int)HttpStatusCode.NotFound);
+				}
+
+				// Retrieve all application user instances.
+				var otherUserIds = campaignMembers.Where(x => x.Id != userId).Select(x => x.UserId).ToList();
+				var userDtos = await session.Query<ApplicationUser>()
+					.Where(x => x.Id.IsOneOf(otherUserIds))
+					.Select(x => new { x.UserName, x.Id })
+					.ToListAsync();
+
+				var nonUserCampaignMemberDtos = campaignMembers.Where(x => x.UserId != userId)
+					.Select(member => CampaignMemberDto.FromMember(member, userDtos.Single(x => x.Id == member.Id).UserName));
+
+				// If the user is a dm, retrieve all the planned combats.
+				var plannedCombats = userCampaignMember.IsDungeonMaster ? await session.LoadManyAsync<PlannedCombat>(campaign.PlannedCombatIds) : null;
+
+				return new GetCampaignResponse()
+				{
+					Campaign = campaign,
+					NonUserCampaignMembers = nonUserCampaignMemberDtos.ToArray(),
+					UserCampaignMember = userCampaignMember,
+					PlannedCombats = plannedCombats.ToArray()
+				};
 			});
 
 		if (result.IsFailure)

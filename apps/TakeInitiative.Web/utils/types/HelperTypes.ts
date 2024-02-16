@@ -1,3 +1,6 @@
+import * as yupPkg from "yup";
+export const yup = yupPkg;
+
 export type TakeInitColour =
     | "take-navy"
     | "take-navy-light"
@@ -11,7 +14,7 @@ export type TakeInitColour =
     | "take-grey-light"
     | "take-grey-dark";
 
-export type FrontAwesomeIconSize =
+export type FontAwesomeIconSize =
     | "2xs"
     | "xs"
     | "sm"

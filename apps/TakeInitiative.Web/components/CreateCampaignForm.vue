@@ -8,7 +8,7 @@
         <div class="flex w-full justify-center">
             <FormButton
                 label="Create"
-                loadingLabel="Creating..."
+                loadingDisplay="Creating..."
                 :isLoading="formState.isSubmitting"
                 buttonColour="take-yellow-dark"
             />
@@ -30,7 +30,7 @@ const { values, errors, defineField, validate } = useForm({
     validationSchema: toTypedSchema(
         yup.object({
             campaignName: yup.string().required(),
-        })
+        }),
     ),
 });
 const [campaignName, campaignNameInputProps] = defineField("campaignName", {

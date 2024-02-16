@@ -4,7 +4,7 @@ namespace TakeInitiative.Api.Models;
 
 public record CampaignMember
 {
-    public Guid Id { get; set; }
+    public Guid Id { get; set; } = Guid.NewGuid();
     public required Guid UserId { get; set; }
     public required Guid CampaignId { get; set; }
     public required bool IsDungeonMaster { get; set; }

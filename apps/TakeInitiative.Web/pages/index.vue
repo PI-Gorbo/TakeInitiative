@@ -16,32 +16,28 @@
                     />
                     Take Initiative
                 </h1>
-                <section class="flex min-h-0 flex-1 basis-0 justify-end gap-2">
+                <section class="flex flex-1 justify-end gap-2">
                     <div
                         class="flex items-center px-2 py-1 font-NovaCut text-xl text-take-yellow"
                     >
                         <label>{{ userStore.username }}</label>
                     </div>
-                    <div class="h-full min-w-fit self-center">
-                        <!-- <DropDown
-                            Items="Items"
-                            DisplayFunc="((item) => item.CampaignName)"
-                            IdFunc="((item) => item.Id.ToString())"
-                            CategoryFunc="CategorizeByIfUserOwnsCampaign"
-                            CurrentlySelectedItem="CurrentlySelectedCampaign"
-                            ItemSelected="(Campaign campaign) => CampaignStore.SetCurrentCampaign(campaign)"
-                        /> -->
-                    </div>
                     <div class="flex items-center">
-                        <IconButton
-                            IconName="fa-share-from-square"
-                            OnClick="SharedContext.ShowShareModal"
+                        <FormButton
+                            icon="share-from-square"
+                            iconSize="sm"
+                            buttonColour="take-navy-light"
+                            hoverButtonColour="take-yellow"
+                            class="h-3/4 w-3/4"
                         />
                     </div>
                     <div class="flex items-center">
-                        <IconButton
-                            IconName="fa-user-gear"
-                            OnClick="SharedContext.ShowUserStateModal"
+                        <FormButton
+                            icon="user-gear"
+                            iconSize="sm"
+                            buttonColour="take-navy-light"
+                            hoverButtonColour="take-yellow"
+                            class="h-3/4 w-3/4"
                         />
                     </div>
                 </section>
@@ -55,19 +51,23 @@
                 PlannedCombats: 'Planned Combats',
             }"
             :showTabs="{
-                PlannedCombats: () => campaignStore.state.isDm,
+                PlannedCombats: () => campaignStore.isDm,
             }"
         >
             <template #Summary>
-                <IndexSummary class="px-4" />
+                <IndexSummarySection />
             </template>
-            <template #Characters></template>
+            <template #Characters>
+                <IndexPlannedCombatsSection />
+            </template>
             <template #PlannedCombats></template>
         </Tabs>
     </div>
 </template>
 
 <script setup lang="ts">
+import { toTypedSchema } from "@vee-validate/yup";
+import { useForm } from "vee-validate";
 import redirectToCreateOrJoinCampaign from "~/middleware/redirectToCreateOrJoinCampaign";
 const userStore = useUserStore();
 const campaignStore = useCampaignStore();

@@ -10,10 +10,10 @@
             v-model:value="joinCode"
             v-bind="joinCodeInputProps"
         />
-        <div class="w-full flex justify-center">
+        <div class="flex w-full justify-center">
             <FormButton
                 label="Join"
-                loadingLabel="Joining..."
+                loadingDisplay="Joining..."
                 :isLoading="isSubmitting"
                 buttonColour="take-yellow-dark"
             />
@@ -32,7 +32,7 @@ const { values, errors, defineField, validate } = useForm({
     validationSchema: toTypedSchema(
         yup.object({
             joinCode: yup.string().required(),
-        })
+        }),
     ),
 });
 const [joinCode, joinCodeInputProps] = defineField("joinCode", {

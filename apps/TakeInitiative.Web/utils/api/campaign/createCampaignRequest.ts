@@ -4,18 +4,20 @@ import { campaignValidator } from "../../types/models";
 
 // Create Campaign
 export type CreateCampaignRequest = {
-	campaignName: string;
+    campaignName: string;
 };
 const createCampaignResponseSchema = campaignValidator;
 export type CreateCampaignResponse = yup.InferType<
-	typeof createCampaignResponseSchema
+    typeof createCampaignResponseSchema
 >;
 export function createCampaignRequest(axios: AxiosInstance) {
-	return async function (
-		request: CreateCampaignRequest
-	): Promise<CreateCampaignResponse> {
-		return await axios
-			.post("/api/campaign", request)
-			.then(async (response) => validateWithSchema(response.data, createCampaignResponseSchema));
-	};
+    return async function (
+        request: CreateCampaignRequest,
+    ): Promise<CreateCampaignResponse> {
+        return await axios
+            .post("/api/campaign", request)
+            .then(async (response) =>
+                validateWithSchema(response.data, createCampaignResponseSchema),
+            );
+    };
 }

@@ -1,42 +1,71 @@
 <template>
     <button
         :class="[
-            `w-full px-4 text-lg transition-opacity bg-${props.buttonColour} my-2 rounded-md py-4 hover:bg-${props.hoverColour} text-${props.textColour}`,
-            {
-                ' bg-take-grey-dark hover:bg-take-grey-dark': props.disabled,
-            },
+            `flex justify-center rounded-md px-4 py-4  text-lg transition-colors text-${props.textColour}`,
+            props.disabled
+                ? 'bg-take-grey-dark hover:bg-take-grey-dark'
+                : `bg-${props.buttonColour} hover:bg-${props.hoverButtonColour} hover:text-${$props.hoverTextColour}`,
         ]"
         type="submit"
         :disabled="props.disabled"
+        @click="emit('clicked')"
     >
         <slot>
-            {{ props.isLoading ? props.loadingLabel : props.label }}
-            <FontAwesomeIcon
-                v-if="props.icon"
-                :icon="['fas', props.icon]"
-                :size="props.iconSize"
-            />
+            <div
+                v-if="!props.isLoading"
+                class="text-centre flex justify-center"
+            >
+                <label v-if="props.label">{{ props.label }}</label>
+                <div class="flex items-center justify-center text-center">
+                    <FontAwesomeIcon
+                        v-if="props.icon"
+                        :icon="props.icon"
+                        :size="props.iconSize"
+                    />
+                </div>
+            </div>
+            <div v-else-if="props.loadingDisplay" class="flex justify-center">
+                <label
+                    v-if="
+                        props.loadingLabel &&
+                        typeof props.loadingDisplay === 'string'
+                    "
+                    >{{ props.loadingLabel }}
+                </label>
+                <div
+                    v-else
+                    class="flex items-center justify-center text-center"
+                >
+                    <FontAwesomeIcon
+                        class="fa-spin"
+                        icon="circle-notch"
+                        :size="props.iconSize"
+                    />
+                </div>
+            </div>
         </slot>
     </button>
 </template>
 
 <script setup lang="ts">
 import type {
-    FrontAwesomeIconSize,
+    FontAwesomeIconSize as FontAwesomeIconSize,
     TakeInitColour,
 } from "~/utils/types/HelperTypes";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 
+export type LoadingDisplay = string | { showSpinner: true };
 const props = withDefaults(
     defineProps<{
         label?: string;
-        loadingLabel?: string | null;
+        loadingDisplay?: LoadingDisplay | null;
         isLoading?: boolean;
         buttonColour?: TakeInitColour;
-        hoverColour?: TakeInitColour;
+        hoverButtonColour?: TakeInitColour;
         textColour?: TakeInitColour;
+        hoverTextColour?: TakeInitColour;
         icon?: string;
-        iconSize?: FrontAwesomeIconSize;
+        iconSize?: FontAwesomeIconSize;
         disabled?: boolean;
     }>(),
     {
@@ -44,11 +73,16 @@ const props = withDefaults(
         loadingLabel: "Submitting",
         isLoading: false,
         buttonColour: "take-yellow-dark",
-        hoverColour: "take-yellow-light",
+        hoverButtonColour: "take-yellow-light",
         textColour: "take-navy-dark",
+        hoverTextColour: "take-navy-dark",
         icon: undefined,
         iconSize: "lg",
         disabled: false,
     },
 );
+
+const emit = defineEmits<{
+    (e: "clicked"): void;
+}>();
 </script>

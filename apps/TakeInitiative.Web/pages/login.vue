@@ -29,7 +29,7 @@
             <div class="flex justify-center">
                 <FormButton
                     label="Login"
-                    loadingLabel="Logging in..."
+                    loadingDisplay="Logging in..."
                     :isLoading="state.isSubmitting"
                 />
             </div>

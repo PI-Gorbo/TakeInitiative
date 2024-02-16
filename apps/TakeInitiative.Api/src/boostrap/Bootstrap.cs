@@ -67,10 +67,11 @@ public static class Bootstrap
 
 		builder.Services
 			.AddSingleton<IAuthorizationHandler, RequireUserToExistInDatabaseAuthorizationHandler>()
-			.AddCookieAuth(validFor: TimeSpan.FromMinutes(10), opts =>
+			.AddCookieAuth(validFor: TimeSpan.FromHours(1), opts =>
 			{
 				opts.LoginPath = "/api/login";
 				opts.LogoutPath = "/api/signOut";
+
 			})
 			.AddAuthorization(opts =>
 			{
