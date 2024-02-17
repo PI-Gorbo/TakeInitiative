@@ -59,7 +59,7 @@ const { values, errors, defineField, validate } = useForm({
         yup.object({
             email: yup.string().required().email(),
             password: yup.string().required(),
-        }),
+        })
     ),
 });
 const [email, emailInputProps] = defineField("email", {
@@ -76,7 +76,6 @@ const [password, passwordInputProps] = defineField("password", {
 // Form Submit
 const userStore = useUserStore();
 async function onLogin() {
-    debugger;
     state.errorObject = null;
     state.isSubmitting = true;
     const validation = await validate();

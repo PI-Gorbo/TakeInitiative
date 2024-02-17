@@ -8,10 +8,10 @@
         >
             <div
                 v-for="tab in tabs.filter((x) => x.show)"
-                :key="tab.name"
+                :key="tab.slotName"
                 :class="[
                     ' cursor-pointer select-none rounded-md p-2 text-center transition-colors hover:bg-take-yellow hover:text-take-navy-dark',
-                    state.lastClickedTab.name == tab.name
+                    state.lastClickedTab.slotName == tab.slotName
                         ? `bg-${props.selectedTabColour}`
                         : `bg-${props.notSelectedTabColour}`,
                 ]"
@@ -22,13 +22,20 @@
                 </div>
             </div>
         </nav>
-        <Transition
-            name="slide-fade"
-            mode="out-in"
-            class="flex-1 overflow-auto"
-        >
-            <slot :name="selectedTab.name" />
-        </Transition>
+        <TransitionGroup name="fade" class="flex-1 overflow-y-hidden" tag="section">
+            <div
+                v-for="tab in tabs.filter(
+                    (x) => x.slotName == state.lastClickedTab.slotName
+                )"
+                :key="tab.slotName"
+                class="w-full h-full"
+            >
+                <slot
+                    :name="selectedTab.slotName"
+                    v-if="tab.slotName == state.lastClickedTab.slotName"
+                />
+            </div>
+        </TransitionGroup>
     </main>
 </template>
 <script setup lang="ts">
@@ -37,6 +44,7 @@ import type { TakeInitColour } from "~/utils/types/HelperTypes";
 
 const slots = useSlots();
 type Tab = {
+    slotName: string;
     name: string;
     show: boolean;
 };
@@ -55,13 +63,14 @@ const props = withDefaults(
         backgroundColour: "take-navy",
         selectedTabColour: "take-navy-light",
         notSelectedTabColour: "take-navy-medium",
-    },
+    }
 );
 
 const tabs: ComputedRef<Tab[]> = computed(() => {
     return Object.keys(slots).map((slotName) => {
         const showTabFunction = props.showTabs[slotName];
         return {
+            slotName,
             name: props.renameTabs[slotName] ?? slotName,
             show: showTabFunction != null ? showTabFunction() : true,
         };
@@ -76,7 +85,7 @@ const selectedTab = computed(
     () =>
         tabs.value.find((x) => x.name == state.lastClickedTab.name) ??
         tabs.value.filter((x) => x.show)[0] ??
-        {},
+        {}
 );
 </script>
 <style>
@@ -84,16 +93,17 @@ const selectedTab = computed(
   Enter and leave animations can use different
   durations and timing functions.
 */
-.slide-fade-enter-active {
-    transition: all 0.2s ease-out;
+.fade-enter-active,
+.fade-leave-active {
+    transition: all 0.15s ease-out;
 }
 
-.slide-fade-leave-active {
-    transition: all 0.2s cubic-bezier(1, 0.5, 0.8, 1);
+.fade-enter-active {
+    transition-delay: 0.15s;
 }
 
-.slide-fade-enter-from,
-.slide-fade-leave-to {
+.fade-enter-from,
+.fade-leave-to {
     opacity: 0;
 }
 </style>

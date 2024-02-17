@@ -14,7 +14,7 @@ export const useCampaignStore = defineStore("campaignStore", () => {
     const api = useApi();
     const userStore = useUserStore();
     const state = reactive({
-        campaign: undefined as Campaign | null,
+        campaign: undefined as Campaign | undefined,
         userCampaignMember: undefined as CampaignMember | undefined,
         nonUserCampaignMembers: undefined as CampaignMemberDto[] | undefined,
         plannedCombats: undefined as PlannedCombat[] | undefined,

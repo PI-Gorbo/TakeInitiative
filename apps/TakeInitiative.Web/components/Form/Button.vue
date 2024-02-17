@@ -1,20 +1,17 @@
 <template>
     <button
         :class="[
-            `flex justify-center rounded-md px-4 py-4  text-lg transition-colors text-${props.textColour}`,
+            `flex justify-center rounded-md px-4 py-4  text-lg transition-colors`,
             props.disabled
                 ? 'bg-take-grey-dark hover:bg-take-grey-dark'
-                : `bg-${props.buttonColour} hover:bg-${props.hoverButtonColour} hover:text-${$props.hoverTextColour}`,
+                : `bg-${props.buttonColour} hover:bg-${props.hoverButtonColour} text-${props.textColour} hover:text-${$props.hoverTextColour}`,
         ]"
         type="submit"
         :disabled="props.disabled"
         @click="emit('clicked')"
     >
         <slot>
-            <div
-                v-if="!props.isLoading"
-                class="text-centre flex justify-center"
-            >
+            <div v-if="!props.isLoading" class="text-centre flex justify-center">
                 <label v-if="props.label">{{ props.label }}</label>
                 <div class="flex items-center justify-center text-center">
                     <FontAwesomeIcon
@@ -26,16 +23,10 @@
             </div>
             <div v-else-if="props.loadingDisplay" class="flex justify-center">
                 <label
-                    v-if="
-                        props.loadingLabel &&
-                        typeof props.loadingDisplay === 'string'
-                    "
+                    v-if="props.loadingLabel && typeof props.loadingDisplay === 'string'"
                     >{{ props.loadingLabel }}
                 </label>
-                <div
-                    v-else
-                    class="flex items-center justify-center text-center"
-                >
+                <div v-else class="flex items-center justify-center text-center">
                     <FontAwesomeIcon
                         class="fa-spin"
                         icon="circle-notch"
@@ -79,7 +70,7 @@ const props = withDefaults(
         icon: undefined,
         iconSize: "lg",
         disabled: false,
-    },
+    }
 );
 
 const emit = defineEmits<{
