@@ -8,30 +8,19 @@ using TakeInitiative.Api.Bootstrap;
 using TakeInitiative.Api.Models;
 
 namespace TakeInitiative.Api.Controllers;
-
-public class PostLogout(
+public class GetAuthenticated(
 	IOptions<JWTOptions> JWTOptions,
 	UserManager<ApplicationUser> UserManager,
-	SignInManager<ApplicationUser> SignInManager
-	) : Endpoint<PostSignUpRequest>
+	SignInManager<ApplicationUser> SignInManager) : EndpointWithoutRequest
 {
 	public override void Configure()
 	{
-		Post("/api/logout");
+		Get("/api/authenticated");
 		AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
 		Policies(TakePolicies.UserExists);
 	}
-	public override async Task HandleAsync(PostSignUpRequest req, CancellationToken ct)
+	public override async Task HandleAsync(CancellationToken ct)
 	{
-		try
-		{
-			await CookieAuth.SignOutAsync();
-		}
-		catch (InvalidOperationException e)
-		{
-			ThrowError("User is not logged in", (int)HttpStatusCode.Unauthorized);
-		}
-
-		await SendOkAsync();
+		await SendOkAsync(ct);
 	}
 }
