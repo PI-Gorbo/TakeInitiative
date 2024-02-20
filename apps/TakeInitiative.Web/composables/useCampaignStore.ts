@@ -1,3 +1,4 @@
+import { usePlannedCombatStore } from './usePlannedCombatStore';
 import type {
     CampaignMemberDto,
     GetCampaignResponse,
@@ -14,12 +15,12 @@ import type { CreatePlannedCombatRequest } from "~/utils/api/plannedCombat/creat
 export const useCampaignStore = defineStore("campaignStore", () => {
     const api = useApi();
     const userStore = useUserStore();
+	const plannedCombatStore = usePlannedCombatStore()
     const state = reactive({
         campaign: undefined as Campaign | undefined,
         userCampaignMember: undefined as CampaignMember | undefined,
         nonUserCampaignMembers: undefined as CampaignMemberDto[] | undefined,
         plannedCombats: undefined as PlannedCombat[] | undefined,
-        selectedPlannedCombat: undefined as PlannedCombat | undefined,
     });
 
     async function init(): Promise<void> {
@@ -93,9 +94,9 @@ export const useCampaignStore = defineStore("campaignStore", () => {
     }
 
     async function setPlannedCombat(combatId: string) {
-        state.selectedPlannedCombat = state.plannedCombats?.find(
+        plannedCombatStore.setPlannedCombat(state.plannedCombats?.find(
             (x) => x.id == combatId,
-        );
+        ));
     }
 
     async function deletePlannedCombat(plannedCombatId: string) {
@@ -116,12 +117,12 @@ export const useCampaignStore = defineStore("campaignStore", () => {
                         );
                 }
 
-                if (state.selectedPlannedCombat?.id == plannedCombatId) {
+                if (plannedCombatStore.selectedPlannedCombat.id == plannedCombatId) {
                     if ((state.plannedCombats?.length ?? 0) > 0) {
-                        state.selectedPlannedCombat = state.plannedCombats![0];
+                        plannedCombatStore.setPlannedCombat(state.plannedCombats![0]);
                     }
                 } else {
-                    state.selectedPlannedCombat = undefined;
+					plannedCombatStore.setPlannedCombat(null);
                 }
             });
     }

@@ -25,9 +25,7 @@
                 v-for="stage in plannedCombat.stages"
                 :key="stage.id"
             >
-                <div
-                    class="w-full rounded-xl border-2 border-take-navy-light p-2"
-                >
+                <div class="w-full rounded-xl border-2 border-take-navy-light p-2">
                     <div class="mb-2 flex w-full flex-row gap-2">
                         <div class="flex-1 text-take-yellow">
                             {{ stage.name }}
@@ -106,7 +104,10 @@
         </footer>
 
         <Modal ref="createNpcFormModal" title="Create NPC">
-            <CreateNpcForm />
+            <CreateNpcForm
+                :stage="lastedClickedStage!"
+                :onSubmit="(stage, npc) => addNpc(stage, npc)"
+            />
         </Modal>
     </main>
 </template>
@@ -122,23 +123,27 @@ import type { ButtonLoadingControl } from "../Form/Button.vue";
 import Modal from "~/components/Modal.vue";
 
 const createNpcFormModal = ref<InstanceType<typeof Modal> | null>(null);
-
 const campaignStore = useCampaignStore();
 const plannedCombat = computed(() => campaignStore.state.selectedPlannedCombat);
+
 const emit = defineEmits<{
     (e: "DeleteCombat", loadingCtrl: ButtonLoadingControl): void;
     (e: "UpdateCombat", plannedCombat: PlannedCombat): void;
 }>();
 
 // Create NPC
+const lastedClickedStage = ref<PlannedCombatStage | null>(null);
 function showCreateNpcModal(stage: PlannedCombatStage) {
+    lastedClickedStage.value = stage;
     createNpcFormModal.value?.show();
 }
 
-function editNpc(
-    stage: PlannedCombatStage,
-    npc: PlannedCombatNonPlayerCharacter,
+async function addNpc(
+    stage: PlannedCombat,
+    nonPlayerCharacter: PlannedCombatNonPlayerCharacter
 ) {}
+
+function editNpc(stage: PlannedCombatStage, npc: PlannedCombatNonPlayerCharacter) {}
 
 function deleteStage(stage: PlannedCombatStage) {}
 
