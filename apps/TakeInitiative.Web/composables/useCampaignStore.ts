@@ -9,6 +9,7 @@ import type {
 } from "./../utils/types/models";
 import type { CampaignMember } from "../utils/types/models";
 import type { UpdateCampaignDetailsRequest } from "~/utils/api/campaign/updateCampaignDetailsRequest";
+import type { CreatePlannedCombatRequest } from "~/utils/api/plannedCombat/createPlannedCombatRequest";
 
 export const useCampaignStore = defineStore("campaignStore", () => {
     const api = useApi();
@@ -18,6 +19,7 @@ export const useCampaignStore = defineStore("campaignStore", () => {
         userCampaignMember: undefined as CampaignMember | undefined,
         nonUserCampaignMembers: undefined as CampaignMemberDto[] | undefined,
         plannedCombats: undefined as PlannedCombat[] | undefined,
+        selectedPlannedCombat: undefined as PlannedCombat | undefined,
     });
 
     async function init(): Promise<void> {
@@ -67,13 +69,64 @@ export const useCampaignStore = defineStore("campaignStore", () => {
         return await api.campaign
             .update({
                 ...request,
-                campaignId: state.campaign.id,
+                campaignId: state.campaign?.id!,
             })
             .then((campaign) => {
                 state.campaign = campaign;
             });
     }
 
+    // Planned Combats
+    async function createPlannedCombat(
+        request: Omit<CreatePlannedCombatRequest, "campaignId">,
+    ): Promise<PlannedCombat> {
+        return await api.plannedCombat
+            .create({
+                ...request,
+                campaignId: state.campaign?.id!,
+            })
+            .then((combat) => {
+                state.campaign?.plannedCombatIds?.push(combat.id);
+                state.plannedCombats?.push(combat);
+                return combat;
+            });
+    }
+
+    async function setPlannedCombat(combatId: string) {
+        state.selectedPlannedCombat = state.plannedCombats?.find(
+            (x) => x.id == combatId,
+        );
+    }
+
+    async function deletePlannedCombat(plannedCombatId: string) {
+        return await api.plannedCombat
+            .delete({
+                campaignId: state.campaign!.id,
+                combatId: plannedCombatId,
+            })
+            .then(() => {
+                state.plannedCombats = state.plannedCombats?.filter(
+                    (x) => x.id != plannedCombatId,
+                );
+
+                if (state.campaign?.plannedCombatIds) {
+                    state.campaign.plannedCombatIds =
+                        state.campaign.plannedCombatIds?.filter(
+                            (x) => x != plannedCombatId,
+                        );
+                }
+
+                if (state.selectedPlannedCombat?.id == plannedCombatId) {
+                    if ((state.plannedCombats?.length ?? 0) > 0) {
+                        state.selectedPlannedCombat = state.plannedCombats![0];
+                    }
+                } else {
+                    state.selectedPlannedCombat = undefined;
+                }
+            });
+    }
+
+    // Member Details
     const memberDtos = computed(() => {
         if (
             state.nonUserCampaignMembers == undefined ||
@@ -108,6 +161,9 @@ export const useCampaignStore = defineStore("campaignStore", () => {
         setCampaign,
         setCampaignById,
         updateCampaignDetails,
+        createPlannedCombat,
+        setPlannedCombat,
+        deletePlannedCombat,
         isDm: computed(
             () => state.userCampaignMember?.isDungeonMaster ?? false,
         ),

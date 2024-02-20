@@ -1,104 +1,146 @@
 <template>
-    <!-- <main class="w-full overflow-auto px-4 py-2">
-        <div class="mb-2 flex select-none flex-row text-take-yellow">
-            <div @onclick="@(() => SelectFight(null))">
-                <IconButton
-                    IconName="fa-arrow-left"
-                    Colour="TakeInitiativeColour.TakeNavyLight"
-                >
-                    <label class="cursor-pointer select-none"> Back </label>
-                </IconButton>
-            </div>
-            <div class="flex flex-1 justify-center">
-                <label>@SelectedCombat.CombatName</label>
-            </div>
-            <div @onclick="() => DeleteCombat(SelectedCombat)">
-                <IconButton
-                    IconName="fa-trash"
-                    Colour="TakeInitiativeColour.TakeNavyLight"
-                />
-            </div>
-        </div>
+    <main class="w-full overflow-auto py-2 pl-4" v-if="plannedCombat">
+        <Teleport to="#IndexPageTabs">
+            <header class="mb-2 flex select-none flex-row text-take-yellow">
+                <div class="flex flex-1 justify-center">
+                    <label class="flex items-center">
+                        {{ plannedCombat.combatName }}</label
+                    >
+                </div>
+                <div>
+                    <FormButton
+                        icon="trash"
+                        textColour="white"
+                        buttonColour="take-navy-light"
+                        hoverButtonColour="take-red"
+                        @clicked="(ctrl) => emit('DeleteCombat', ctrl)"
+                    />
+                </div>
+            </header>
+        </Teleport>
 
-        <div class="flex flex-col gap-4">
-            @foreach (var stage in SelectedCombat.Stages) {
-            <div class="flex w-full justify-center">
+        <body class="flex flex-col gap-4">
+            <div
+                class="flex w-full justify-center"
+                v-for="stage in plannedCombat.stages"
+                :key="stage.id"
+            >
                 <div
-                    class="w-4/5 rounded-xl border-2 border-take-navy-light p-2"
+                    class="w-full rounded-xl border-2 border-take-navy-light p-2"
                 >
-                    <div class="mb-2 flex w-full flex-row">
-                        <div class="flex-1 text-take-yellow">@stage.Name</div>
-                        
-                        <div @onclick="() => ShowCreateNpcModal(stage)">
-                            <IconButton
-                                IconName="fa-plus"
-                                Colour="TakeInitiativeColour.TakeNavyMedium"
-                            />
+                    <div class="mb-2 flex w-full flex-row gap-2">
+                        <div class="flex-1 text-take-yellow">
+                            {{ stage.name }}
                         </div>
-                        <div
-                            @onclick="() => DeleteStage(SelectedCombat, stage)"
-                        >
-                            <IconButton
-                                IconName="fa-trash"
-                                Colour="TakeInitiativeColour.TakeNavyMedium"
-                                HighlighTextColour="TakeInitiativeColour.TakeRed"
-                            />
-                        </div>
+
+                        <FormButton
+                            icon="plus"
+                            buttonColour="take-navy-medium"
+                            textColour="white"
+                            @click="() => showCreateNpcModal(stage)"
+                            size="sm"
+                        />
+
+                        <FormButton
+                            icon="trash"
+                            buttonColour="take-navy-medium"
+                            textColour="white"
+                            hoverButtonColour="take-red"
+                            @clicked="() => deleteStage(stage)"
+                            size="sm"
+                        />
                     </div>
                     <div class="overflow flex gap-2 overflow-x-auto pb-4">
-                        @foreach (var npc in stage.NPCs) {
                         <section
+                            v-for="npc in stage.NPCs"
+                            :key="npc.name"
                             class="min-w-fit cursor-pointer rounded-xl border border-take-navy-light p-2 hover:border-take-yellow"
-                            @onclick="() => EditNpc(SelectedCombat, stage, npc)"
+                            @onclick="() => editNpc(stage, npc)"
                         >
-                            <label class="cursor-pointer"
-                                >@npc.Name (@npc.Quantity)</label
-                            >
+                            <label class="cursor-pointer">
+                                {{ npc.name }} x {{ npc.quantity }}
+                            </label>
                             <div class="flex justify-between gap-2">
-                                @if (npc.CharacterHealth != null) {
-                                <div class="min-w-fit">
-                                    <FontAwesomeIcon Icon="fa-droplet" />
-                                    @npc.CharacterHealth.CurrentHealth/@npc.CharacterHealth.MaxHealth
+                                <div class="min-w-fit" v-if="npc.health">
+                                    <FontAwesomeIcon icon="droplet" />
+                                    {{ npc.health.currentHealth }}
+                                    {{
+                                        npc.health.maxHealth
+                                            ? `/ ${npc.health.maxHealth}`
+                                            : ""
+                                    }}
                                 </div>
-                                } @if (npc.ArmorClass != null) {
-                                <div class="min-w-fit">
-                                    <FontAwesomeIcon Icon="fa-shield-halved" />
-                                    @npc.ArmorClass
+                                <div class="min-w-fit" v-if="npc.armorClass">
+                                    <FontAwesomeIcon icon="shield-halved" />
+                                    {{ npc.armorClass }}
                                 </div>
-                                }
                                 <div class="min-w-fit">
-                                    <FontAwesomeIcon Icon="fa-shoe-prints" />
-                                    @npc.CharacterInitiative.ToString()
+                                    <FontAwesomeIcon icon="shoe-prints" />
+                                    {{ npc.initiative }}
                                 </div>
                             </div>
                         </section>
-                        }
-                        
+
                         <section
                             class="min-w-fit cursor-pointer rounded-xl border-2 border-dashed border-take-navy-light p-2 hover:border-take-yellow"
-                            @onclick="() => ShowCreateNpcModal(stage)"
+                            @click="() => showCreateNpcModal(stage)"
                         >
                             <div class="p-2">
-                                <FontAwesomeIcon Icon="fa-plus" />
+                                <FontAwesomeIcon icon="plus" />
                             </div>
                         </section>
                     </div>
                 </div>
             </div>
-            }
-        </div>
+        </body>
 
-        
-        <div class="flex justify-center">
+        <footer class="flex justify-center">
             <div
                 class="w-fullrounded-xl min-h-2em my-3 flex cursor-pointer justify-center border-2 border-dashed border-take-navy-light hover:border-take-yellow"
-                @onclick="ShowCreateStageModal"
+                @click="createStage"
             >
                 <div class="p-2">
-                    <FontAwesomeIcon Icon="fa-plus" />
+                    <FontAwesomeIcon icon="plus" />
                 </div>
             </div>
-        </div>
-    </main> -->
+        </footer>
+
+        <Modal ref="createNpcFormModal" title="Create NPC">
+            <CreateNpcForm />
+        </Modal>
+    </main>
 </template>
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+import type {
+    PlannedCombat,
+    PlannedCombatNonPlayerCharacter,
+    PlannedCombatStage,
+} from "~/utils/types/models";
+import type ConfirmModalVue from "../ConfirmModal.vue";
+import type { ButtonLoadingControl } from "../Form/Button.vue";
+import Modal from "~/components/Modal.vue";
+
+const createNpcFormModal = ref<InstanceType<typeof Modal> | null>(null);
+
+const campaignStore = useCampaignStore();
+const plannedCombat = computed(() => campaignStore.state.selectedPlannedCombat);
+const emit = defineEmits<{
+    (e: "DeleteCombat", loadingCtrl: ButtonLoadingControl): void;
+    (e: "UpdateCombat", plannedCombat: PlannedCombat): void;
+}>();
+
+// Create NPC
+function showCreateNpcModal(stage: PlannedCombatStage) {
+    createNpcFormModal.value?.show();
+}
+
+function editNpc(
+    stage: PlannedCombatStage,
+    npc: PlannedCombatNonPlayerCharacter,
+) {}
+
+function deleteStage(stage: PlannedCombatStage) {}
+
+function createStage() {}
+</script>

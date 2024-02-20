@@ -1,5 +1,8 @@
 <template>
-    <div v-if="!pending && !error" class="flex h-full w-full flex-col overflow-auto">
+    <div
+        v-if="!pending && !error"
+        class="flex h-full w-full flex-col overflow-auto"
+    >
         <header>
             <div
                 class="flex cursor-pointer items-center border-b-2 border-take-yellow bg-take-navy-medium px-4 py-1"
@@ -7,7 +10,10 @@
                 <h1
                     class="flex items-center gap-2 font-NovaCut text-2xl font-bold text-take-yellow sm:text-3xl md:text-4xl"
                 >
-                    <img class="h-[1.5em] w-[1.5em]" src="~assets/yellowDice.png" />
+                    <img
+                        class="h-[1.5em] w-[1.5em]"
+                        src="~assets/yellowDice.png"
+                    />
                     Take Initiative
                 </h1>
                 <section class="flex flex-1 justify-end gap-2">
@@ -19,7 +25,8 @@
                     <div class="flex items-center">
                         <FormButton
                             icon="share-from-square"
-                            iconSize="sm"
+                            textColour="white"
+                            size="sm"
                             buttonColour="take-navy-light"
                             hoverButtonColour="take-yellow"
                             class="h-3/4 w-3/4"
@@ -28,7 +35,8 @@
                     <div class="flex items-center">
                         <FormButton
                             icon="user-gear"
-                            iconSize="sm"
+                            size="sm"
+                            textColour="white"
                             buttonColour="take-navy-light"
                             hoverButtonColour="take-yellow"
                             class="h-3/4 w-3/4"
@@ -49,6 +57,7 @@
                     return campaignStore.isDm;
                 },
             }"
+            negativeSectionId="IndexPageTabs"
         >
             <template #Summary>
                 <IndexSummarySection />
@@ -73,7 +82,7 @@ const { refresh, pending, error } = useAsyncData(
     () => {
         return campaignStore.init().then(() => true);
     },
-    { watch: [state.value] }
+    { watch: [state.value] },
 ); // Return something so that nuxt does not recall this on this client
 
 definePageMeta({

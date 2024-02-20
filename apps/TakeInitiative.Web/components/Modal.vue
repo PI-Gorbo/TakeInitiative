@@ -2,10 +2,13 @@
     <dialog
         ref="dialog"
         @click="onModalClick"
-        class="w-1/2 h-1/2 bg-take-navy-light rounded-xl p-2"
+        class="rounded-xl bg-take-navy-medium p-5"
     >
-        <div class="flex mx-1 my-1">
-            <h1 v-if="props.title" class="text-xl text-white flex items-center">
+        <div class="flex gap-4 pb-5">
+            <h1
+                v-if="props.title"
+                class="flex w-max items-center text-xl text-white"
+            >
                 {{ props.title }}
             </h1>
             <div class="flex flex-1 justify-end">
@@ -13,7 +16,7 @@
                     class=""
                     icon="xmark"
                     @clicked="hide"
-                    iconSize="sm"
+                    size="sm"
                     buttonColour="take-navy-light"
                     hoverButtonColour="take-yellow"
                     hoverTextColour="take-grey"
@@ -36,8 +39,12 @@ const emits = defineEmits<{
 }>();
 
 function onModalClick(event: MouseEvent) {
-    const modal = event.target as HTMLDialogElement;
-    var rect = modal.getBoundingClientRect();
+    const element = event.target as HTMLDialogElement;
+    if (element != dialog.value) {
+        return;
+    }
+
+    var rect = element.getBoundingClientRect();
     var isInDialog =
         rect.top <= event.clientY &&
         event.clientY <= rect.top + rect.height &&
@@ -63,3 +70,10 @@ defineExpose({
     hide,
 });
 </script>
+
+<style>
+::backdrop {
+    background-color: black;
+    opacity: 0.75;
+}
+</style>

@@ -1,18 +1,25 @@
 <template>
     <button
         :class="[
-            `flex justify-center rounded-md px-4 py-4  text-lg transition-colors`,
+            `flex cursor-pointer justify-center rounded-md  transition-colors`,
             props.disabled
                 ? 'bg-take-grey-dark hover:bg-take-grey-dark'
                 : `bg-${props.buttonColour} hover:bg-${props.hoverButtonColour} text-${props.textColour} hover:text-${$props.hoverTextColour}`,
+            size == 'sm' ? 'px-4 py-4 text-sm' : '',
+            size != 'sm' ? 'px-4 py-4 text-lg' : '',
         ]"
         type="submit"
         :disabled="props.disabled"
-        @click="emit('clicked')"
+        @click="emit('clicked', loadingControls)"
     >
         <slot>
-            <div v-if="!props.isLoading" class="text-centre flex justify-center">
-                <label v-if="props.label">{{ props.label }}</label>
+            <div
+                v-if="!props.isLoading"
+                class="text-centre flex justify-center"
+            >
+                <label v-if="props.label" class="cursor-pointer">{{
+                    props.label
+                }}</label>
                 <div class="flex items-center justify-center text-center">
                     <FontAwesomeIcon
                         v-if="props.icon"
@@ -23,14 +30,20 @@
             </div>
             <div v-else-if="props.loadingDisplay" class="flex justify-center">
                 <label
-                    v-if="props.loadingLabel && typeof props.loadingDisplay === 'string'"
+                    v-if="
+                        props.loadingLabel &&
+                        typeof props.loadingDisplay === 'string'
+                    "
                     >{{ props.loadingLabel }}
                 </label>
-                <div v-else class="flex items-center justify-center text-center">
+                <div
+                    v-else
+                    class="flex items-center justify-center text-center"
+                >
                     <FontAwesomeIcon
                         class="fa-spin"
                         icon="circle-notch"
-                        :size="props.iconSize"
+                        :size="props.size"
                     />
                 </div>
             </div>
@@ -56,12 +69,14 @@ const props = withDefaults(
         textColour?: TakeInitColour;
         hoverTextColour?: TakeInitColour;
         icon?: string;
-        iconSize?: FontAwesomeIconSize;
+        size?: FontAwesomeIconSize;
         disabled?: boolean;
     }>(),
     {
         label: undefined,
-        loadingLabel: "Submitting",
+        loadingDisplay: {
+            showSpinner: true,
+        },
         isLoading: false,
         buttonColour: "take-yellow-dark",
         hoverButtonColour: "take-yellow-light",
@@ -70,10 +85,25 @@ const props = withDefaults(
         icon: undefined,
         iconSize: "lg",
         disabled: false,
-    }
+    },
 );
 
+const state = reactive({
+    isLoading: false,
+});
+const isLoading = computed(() => props.isLoading || state.isLoading);
+const loadingControls = {
+    setLoading: () => {
+        state.isLoading = true;
+    },
+    setLoaded: () => {
+        state.isLoading = false;
+    },
+};
+
+export type ButtonLoadingControl = typeof loadingControls;
+
 const emit = defineEmits<{
-    (e: "clicked"): void;
+    (e: "clicked", loadingCtrl: ButtonLoadingControl): void;
 }>();
 </script>

@@ -1,85 +1,177 @@
 <template>
     <div class="h-full w-full">
-        <div
-            v-if="!state.selectedPlannedCombat"
-            class="flex h-full w-full justify-center"
+        <section
+            class="grid h-full w-full grid-cols-8"
+            v-if="plannedCombats && plannedCombats.length > 0"
         >
-            <div class="flex h-full w-full justify-center py-2">
-                <div class="flex h-full w-full flex-col gap-4">
-                    <div @onclick="showCreatePlannedCombatModal" class="flex justify-end">
-                        <IconButton
-                            IconName="fa-plus"
-                            Colour="TakeInitiativeColour.TakeNavyMedium"
-                        />
-                    </div>
-
-                    <div
-                        v-for="combat in plannedCombats"
-                        :key="combat.id"
-                        class="group flex cursor-pointer select-none gap-4 rounded-xl border-2 border-take-navy-light border-opacity-100 transition-colors hover:border-take-yellow"
-                        @click="() => setCombat(combat)"
-                    >
-                        <h3
-                            class="rounded-l-lg-fix flex w-1/6 items-center justify-center bg-take-navy-light text-lg transition-colors group-hover:bg-take-yellow group-hover:text-take-navy"
-                        >
-                            {{ combat.combatName }}
-                        </h3>
-                        <div class="flex items-center justify-center py-2">
-                            {{ combat.stages?.length }}
-                        </div>
-                        <div class="flex items-center justify-center py-2">NPC COUNT</div>
-                        <div class="flex flex-1 items-center justify-end py-2">
-                            <FormButton
-                                icon="trash"
-                                buttonColour="take-navy-light"
-                                hoverButtonColour="take-red"
-                                hoverTextColour="take-navy"
-                                @clicked="() => showDeleteCombatModal(combat)"
-                            />
-                        </div>
-                    </div>
-
-                    <div
-                        class="group flex w-full cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-take-navy-light py-2 transition-colors hover:border-take-yellow"
-                        @click="showCreatePlannedCombatModal"
-                    >
-                        <FormButton
-                            @clicked="showCreatePlannedCombatModal"
-                            class="group-hover:text-take-yellow"
-                            buttonColour="take-navy"
-                            hoverButtonColour="take-navy"
-                            textColour="take-grey"
-                            hoverTextColour="take-yellow"
-                            icon="plus"
-                            iconSize="lg"
-                        />
-                    </div>
+            <aside
+                class="col-span-2 flex flex-col gap-2 overflow-y-auto rounded-xl border border-take-navy-medium px-2 py-1"
+            >
+                <div
+                    v-for="combat in plannedCombats"
+                    :key="combat.id"
+                    :class="[
+                        'group flex cursor-pointer select-none gap-4 rounded-xl border border-take-navy-medium border-opacity-100 bg-take-navy-medium p-1 transition-colors hover:border-take-yellow',
+                        {
+                            'border-take-yellow':
+                                combat.id ==
+                                campaignStore.state.selectedPlannedCombat?.id,
+                        },
+                    ]"
+                    @click="() => setCombat(combat)"
+                >
+                    {{ combat.combatName }}
                 </div>
-            </div>
-        </div>
-        <div v-else>
-            <IndexPlannedCombatSection />
-        </div>
+                <div
+                    :class="[
+                        'group flex w-full cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-take-navy-light transition-colors hover:border-take-yellow',
+                    ]"
+                    @click="showCreatePlannedCombatModal"
+                >
+                    <FormButton
+                        @clicked="showCreatePlannedCombatModal"
+                        class="group-hover:text-take-yellow"
+                        buttonColour="take-navy"
+                        hoverButtonColour="take-navy"
+                        textColour="take-grey"
+                        hoverTextColour="take-yellow"
+                        icon="plus"
+                        size="sm"
+                    />
+                </div>
+            </aside>
+            <section class="col-span-6">
+                <IndexPlannedCombatSection
+                    :plannedCombat="campaignStore.state.selectedPlannedCombat!"
+                    @deleteCombat="
+                        (ctrl: ButtonLoadingControl) =>
+                            showDeleteCombatModal(
+                                ctrl,
+                                campaignStore.state.selectedPlannedCombat!,
+                            )
+                    "
+                />
+            </section>
+        </section>
+        <section class="flex flex-col items-center px-2" v-else>
+            <h2 class="w-full text-center text-xl">
+                Create your first planned combat
+            </h2>
+            <CreatePlannedCombatForm
+                :onCreatePlannedCombat="onCreatePlannedCombat"
+                v-model:campaignName="
+                    createPlannedCombatForm.combatName.value.value
+                "
+                :inputProps="createPlannedCombatForm.combatName.props.value"
+            />
+        </section>
 
         <Modal ref="createPlannedCombatModal" title="Create a planned combat">
-            <div>This is a test modal</div>
+            <CreatePlannedCombatForm
+                class="h-full w-full"
+                :onCreatePlannedCombat="onCreatePlannedCombat"
+                v-model:campaignName="
+                    createPlannedCombatForm.combatName.value.value
+                "
+                :inputProps="createPlannedCombatForm.combatName.props.value"
+            />
         </Modal>
+
+        <ConfirmModal
+            ref="deleteCombatModal"
+            confirmText="Delete"
+            confirmColour="take-red"
+            :closeOnConfirm="false"
+            @Confirm="
+                (ctrls) =>
+                    deleteCombat(
+                        ctrls,
+                        campaignStore.state.selectedPlannedCombat,
+                    )
+            "
+            cancelText="Cancel"
+            cancelColour="take-yellow"
+            bodyText="Delete this planned combat?"
+        />
     </div>
 </template>
 <script setup lang="ts">
+import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import type { PlannedCombat } from "~/utils/types/models.ts";
 import Modal from "~/components/Modal.vue";
+import ConfirmModal from "~/components/ConfirmModal.vue";
+import type { ButtonLoadingControl } from "../Form/Button.vue";
+
+const deleteCombatModal = ref<InstanceType<typeof ConfirmModal> | null>(null);
+const createPlannedCombatModal = ref<InstanceType<typeof Modal> | null>(null);
+
 const campaignStore = useCampaignStore();
 const plannedCombats = computed(() => campaignStore.state.plannedCombats);
 const state = reactive({
     selectedPlannedCombat: null as PlannedCombat | null,
 });
-const createPlannedCombatModal = ref<InstanceType<typeof Modal> | null>(null);
+
+async function setCombat(combat: PlannedCombat) {
+    campaignStore.setPlannedCombat(combat.id);
+}
+
+// Create planned combat
+const createPlannedCombatForm = useCreatePlannedCombatForm();
 async function showCreatePlannedCombatModal() {
     createPlannedCombatModal.value?.show();
 }
 
-async function setCombat(combat: PlannedCombat) {}
+async function onCreatePlannedCombat() {
+    return await createPlannedCombatForm
+        .submit()
+        .then((plannedCombat) => {
+            return campaignStore.setPlannedCombat(plannedCombat.id);
+        })
+        .then(() => createPlannedCombatModal.value?.hide())
+        .catch();
+}
 
-async function showDeleteCombatModal(combat: PlannedCombat) {}
+// Delete combat
+async function showDeleteCombatModal(
+    loadingCtrl: ButtonLoadingControl,
+    combat: PlannedCombat,
+) {
+    // If the combat has no stages, or all the stages are empty, then just delete without showing the modal.
+    if (
+        combat.stages?.length == 0 ||
+        combat.stages?.flatMap((x) => x.NPCs).filter((x) => x != null).length ==
+            0
+    ) {
+        await deleteCombat(loadingCtrl, combat);
+        return;
+    }
+
+    // Show the delete confirmation modal.
+    if (deleteCombatModal.value) {
+        deleteCombatModal.value?.show();
+    }
+}
+
+async function deleteCombat(
+    loadingCtrl: ButtonLoadingControl,
+    combat: PlannedCombat,
+) {
+    console.log("Before loading control is used");
+    loadingCtrl.setLoading();
+    return await campaignStore.deletePlannedCombat(combat.id).then(() => {
+        console.log("Finished deleting combat");
+        loadingCtrl.setLoaded();
+        deleteCombatModal.value?.hide();
+    });
+}
+
+onMounted(() => {
+    if (
+        plannedCombats.value &&
+        plannedCombats.value.length > 0 &&
+        campaignStore.state.selectedPlannedCombat == null
+    ) {
+        campaignStore.setPlannedCombat(plannedCombats.value[0].id);
+    }
+});
 </script>

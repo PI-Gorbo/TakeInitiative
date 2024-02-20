@@ -1,34 +1,46 @@
 <template>
     <main class="flex h-full w-full flex-col">
-        <nav
-            :class="[
-                'mb-2 flex w-max flex-row gap-4 overflow-x-auto overflow-y-hidden rounded-lg px-4 py-2',
-                `bg-${props.backgroundColour}`,
-            ]"
+        <div class="flex gap-2">
+            <nav
+                :class="[
+                    'mb-2 flex w-max flex-row gap-4 overflow-x-auto overflow-y-hidden rounded-lg px-4 py-2',
+                    `bg-${props.backgroundColour}`,
+                ]"
+            >
+                <div
+                    v-for="tab in tabs.filter((x) => x.show)"
+                    :key="tab.slotName"
+                    :class="[
+                        ' cursor-pointer select-none rounded-md p-2 text-center transition-colors hover:bg-take-yellow hover:text-take-navy-dark',
+                        state.lastClickedTab.slotName == tab.slotName
+                            ? `bg-${props.selectedTabColour}`
+                            : `bg-${props.notSelectedTabColour}`,
+                    ]"
+                    @click="() => (state.lastClickedTab = tab)"
+                >
+                    <div>
+                        {{ tab.name }}
+                    </div>
+                </div>
+            </nav>
+
+            <div
+                v-if="props.negativeSectionId"
+                :id="props.negativeSectionId"
+                class="flex-1"
+            ></div>
+        </div>
+        <TransitionGroup
+            name="fade"
+            class="flex-1 overflow-y-hidden"
+            tag="section"
         >
             <div
-                v-for="tab in tabs.filter((x) => x.show)"
-                :key="tab.slotName"
-                :class="[
-                    ' cursor-pointer select-none rounded-md p-2 text-center transition-colors hover:bg-take-yellow hover:text-take-navy-dark',
-                    state.lastClickedTab.slotName == tab.slotName
-                        ? `bg-${props.selectedTabColour}`
-                        : `bg-${props.notSelectedTabColour}`,
-                ]"
-                @click="() => (state.lastClickedTab = tab)"
-            >
-                <div>
-                    {{ tab.name }}
-                </div>
-            </div>
-        </nav>
-        <TransitionGroup name="fade" class="flex-1 overflow-y-hidden" tag="section">
-            <div
                 v-for="tab in tabs.filter(
-                    (x) => x.slotName == state.lastClickedTab.slotName
+                    (x) => x.slotName == state.lastClickedTab.slotName,
                 )"
                 :key="tab.slotName"
-                class="w-full h-full"
+                class="h-full w-full"
             >
                 <slot
                     :name="selectedTab.slotName"
@@ -56,6 +68,7 @@ const props = withDefaults(
         backgroundColour?: TakeInitColour;
         notSelectedTabColour?: TakeInitColour;
         selectedTabColour?: TakeInitColour;
+        negativeSectionId?: string;
     }>(),
     {
         showTabs: {},
@@ -63,7 +76,7 @@ const props = withDefaults(
         backgroundColour: "take-navy",
         selectedTabColour: "take-navy-light",
         notSelectedTabColour: "take-navy-medium",
-    }
+    },
 );
 
 const tabs: ComputedRef<Tab[]> = computed(() => {
@@ -85,7 +98,7 @@ const selectedTab = computed(
     () =>
         tabs.value.find((x) => x.name == state.lastClickedTab.name) ??
         tabs.value.filter((x) => x.show)[0] ??
-        {}
+        {},
 );
 </script>
 <style>

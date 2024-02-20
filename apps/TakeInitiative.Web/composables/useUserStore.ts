@@ -28,7 +28,9 @@ export const useUserStore = defineStore("userStore", () => {
 
         return await fetchUser()
             .then(() => true)
-            .catch(() => false);
+            .catch((error) => {
+                return false;
+            });
     }
 
     async function login(request: LoginRequest): Promise<void> {

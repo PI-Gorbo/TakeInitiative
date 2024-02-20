@@ -20,7 +20,7 @@
                         >
                             {{
                                 format(
-                                    parseISO(campaign?.createdTimestamp),
+                                    parseISO(campaign?.createdTimestamp ?? ""),
                                     "PPPP",
                                 )
                             }}
@@ -133,8 +133,9 @@ onMounted(() => {
 
 const hasChanges = computed(() => {
     return (
-        campaignStore.state.campaign.campaignDescription != description.value ||
-        campaignStore.state.campaign.campaignResources != resources.value
+        campaignStore.state.campaign?.campaignDescription !=
+            description.value ||
+        campaignStore.state.campaign?.campaignResources != resources.value
     );
 });
 

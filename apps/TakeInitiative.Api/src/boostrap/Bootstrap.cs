@@ -69,17 +69,17 @@ public static class Bootstrap
 			.AddSingleton<IAuthorizationHandler, RequireUserToExistInDatabaseAuthorizationHandler>()
 			.AddCookieAuth(validFor: TimeSpan.FromHours(1), opts =>
 			{
-                opts.Events.OnRedirectToLogin = ctx =>
-                {
-                    ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                    return Task.CompletedTask;
-                };
-				
-                opts.Events.OnRedirectToAccessDenied = ctx =>
-                {
-                    ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
-                    return Task.CompletedTask;
-                };
+				opts.Events.OnRedirectToLogin = ctx =>
+				{
+					ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
+					return Task.CompletedTask;
+				};
+
+				opts.Events.OnRedirectToAccessDenied = ctx =>
+				{
+					ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
+					return Task.CompletedTask;
+				};
 			})
 			.AddAuthorization(opts =>
 			{

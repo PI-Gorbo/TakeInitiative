@@ -12,7 +12,8 @@ export type TakeInitColour =
     | "take-yellow-dark"
     | "take-grey"
     | "take-grey-light"
-    | "take-grey-dark";
+    | "take-grey-dark"
+    | "white";
 
 export type FontAwesomeIconSize =
     | "2xs"

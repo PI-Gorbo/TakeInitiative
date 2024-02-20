@@ -43,7 +43,7 @@ public class PostPlannedCombat(IDocumentStore Store) : Endpoint<PostPlannedComba
 				.CountAsync() == 0;
 			if (!nameIsUnique)
 			{
-				ThrowError("There is already another planned combat with that name");
+				ThrowError((req) => req.CombatName, "There is already another planned combat with that name");
 			}
 
 			// Add a reference to the campaign.

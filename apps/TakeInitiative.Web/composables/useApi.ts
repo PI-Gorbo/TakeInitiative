@@ -2,6 +2,9 @@ import { createCampaignRequest } from "~/utils/api/campaign/createCampaignReques
 import { getCampaignRequest } from "~/utils/api/campaign/getCampaignRequest";
 import { joinCampaignRequest } from "~/utils/api/campaign/joinCampaignRequest";
 import { updateCampaignDetailsRequest } from "~/utils/api/campaign/updateCampaignDetailsRequest";
+import { createPlannedCombatRequest } from "~/utils/api/plannedCombat/createPlannedCombatRequest";
+import { deletePlannedCombatRequest } from "~/utils/api/plannedCombat/deletePlannedCombatRequest";
+import { getPlannedCombatsRequest } from "~/utils/api/plannedCombat/getPlannedCombatsRequest";
 import { getUserRequest } from "~/utils/api/user/getUserRequest";
 import { loginRequest } from "~/utils/api/user/loginRequest";
 import { signUpRequest } from "~/utils/api/user/signUpRequest";
@@ -12,13 +15,18 @@ export const useApi = () => {
         user: {
             getUser: getUserRequest($axios),
             signUp: signUpRequest($axios),
-			login: loginRequest($axios)
+            login: loginRequest($axios),
         },
         campaign: {
             create: createCampaignRequest($axios),
             join: joinCampaignRequest($axios),
             update: updateCampaignDetailsRequest($axios),
-			get: getCampaignRequest($axios)
+            get: getCampaignRequest($axios),
+        },
+        plannedCombat: {
+            create: createPlannedCombatRequest($axios),
+            getAll: getPlannedCombatsRequest($axios),
+            delete: deletePlannedCombatRequest($axios),
         },
     };
 };

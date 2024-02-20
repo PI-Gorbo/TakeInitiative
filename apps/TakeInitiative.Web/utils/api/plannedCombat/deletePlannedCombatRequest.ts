@@ -1,0 +1,20 @@
+import type { AxiosInstance } from "axios";
+import * as yup from "yup";
+import { plannedCombatValidator } from "~/utils/types/models";
+
+// Get User
+export const deletePlannedCombatRequestValidator = yup.object({
+    campaignId: yup.string().required(),
+    combatId: yup.string().required(),
+});
+export type DeletePlannedCombatRequest = yup.InferType<
+    typeof deletePlannedCombatRequestValidator
+>;
+
+export function deletePlannedCombatRequest(axios: AxiosInstance) {
+    return async function getUser(
+        request: DeletePlannedCombatRequest,
+    ): Promise<void> {
+        return axios.delete("/api/campaign/planned-combat", { data: request });
+    };
+}

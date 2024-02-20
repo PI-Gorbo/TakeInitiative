@@ -1,5 +1,5 @@
 <template>
-    <form @submit.prevent @submit="submit">
+    <form @submit.prevent="true" @submit="submit">
         <slot :submitting="state.submitting" />
     </form>
 </template>

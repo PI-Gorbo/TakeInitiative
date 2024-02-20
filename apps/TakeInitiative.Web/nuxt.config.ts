@@ -2,7 +2,7 @@ import type { CreateAxiosDefaults } from "axios";
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-    // devtools: { enabled: true, timeline: {enabled: true} },
+    devtools: { enabled: true },
     typescript: {},
     runtimeConfig: {
         public: {
@@ -11,6 +11,12 @@ export default defineNuxtConfig({
                 baseURL: process.env.apiUrl,
             },
         },
+    },
+    build: {
+        transpile: [
+            "@fortawesome/vue-fontawesome",
+            "@fortawesome/fontawesome-svg-core",
+        ],
     },
     css: ["~/assets/main.css", "@fortawesome/fontawesome-svg-core/styles.css"],
     postcss: {

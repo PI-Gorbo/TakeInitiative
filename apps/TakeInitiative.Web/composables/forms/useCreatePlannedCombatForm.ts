@@ -1,44 +1,64 @@
+import { toTypedSchema } from "@vee-validate/yup";
+import type { AxiosError } from "axios";
+import { useForm } from "vee-validate";
+import type { CreatePlannedCombatRequest } from "~/utils/api/plannedCombat/createPlannedCombatRequest";
+import { yup } from "~/utils/types/HelperTypes";
+import type { PlannedCombat } from "~/utils/types/models";
+
 export const useCreatePlannedCombatForm = () => {
-	
-	// Form Definition
-	const { values, errors, defineField, validate } = use    Form({
-		validationSchema: toTypedSchema(
-			yup.object({
-				email: yup.string().required().email(),
-				password: yup.string().required(),
-			})
-		),
-	});
-	const [email, emailInputProps] = defineField("email", {
-		props: (state) => ({
-			errorMessage: state.errors[0],
-		}),
-	});
-	const [password, passwordInputProps] = defineField("password", {
-		props: (state) => ({
-			errorMessage: state.errors[0],
-		}),
-	});
+    const formState = reactive({
+        error: null as ApiError<CreatePlannedCombatRequest> | null,
+    });
 
-	// Form Submit
-	const userStore = useUserStore();
-	async function onLogin() {
-		state.errorObject = null;
-		state.isSubmitting = true;
-		const validation = await validate();
-		if (validation.valid == false) {
-			state.isSubmitting = false;
-			return;
-		}
+    // Form Definition
+    const { values, errors, defineField, validate } = useForm({
+        validationSchema: toTypedSchema(
+            yup.object({
+                combatName: yup.string().required(),
+            }),
+        ),
+    });
 
-		await userStore
-			.login({ email: email.value ?? "", password: password.value ?? "" })
-			.then(async () => {
-				await navigateTo("/");
-			})
-			.catch(async (error) => {
-				state.errorObject = await parseAsApiError(error);
-			})
-			.finally(() => (state.isSubmitting = false));
-	}
-}
+    const [combatName, combatNameInputProps] = defineField("combatName", {
+        props: (state) => ({
+            errorMessage:
+                formState.error?.getErrorFor("combatName") ?? state.errors[0],
+        }),
+    });
+
+    // Form Submit
+    const campaignStore = useCampaignStore();
+    async function submit(): Promise<PlannedCombat> {
+        formState.error = null;
+        const validation = await validate();
+        if (validation.valid == false) {
+            Promise.reject(validation.errors);
+        }
+
+        return await campaignStore
+            .createPlannedCombat({
+                combatName: combatName.value!,
+            })
+            .catch(async (error) => {
+                console.log(error);
+                const parsedError =
+                    await parseAsApiError<CreatePlannedCombatRequest>(
+                        error as AxiosError,
+                    );
+                console.log(parsedError);
+
+                formState.error = parsedError;
+                throw error;
+            });
+    }
+
+    return {
+        validate,
+        errors,
+        combatName: {
+            value: combatName,
+            props: combatNameInputProps,
+        },
+        submit,
+    };
+};
