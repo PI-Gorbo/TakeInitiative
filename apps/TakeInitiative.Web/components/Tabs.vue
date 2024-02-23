@@ -3,7 +3,7 @@
         <div class="flex gap-2">
             <nav
                 :class="[
-                    'mb-2 flex w-max flex-row gap-4 overflow-auto rounded-lg px-4 py-2',
+                    'mb-4 flex w-max flex-row gap-6 overflow-auto rounded-lg px-2 py-2 ',
                     `bg-${props.backgroundColour}`,
                 ]"
             >
@@ -11,16 +11,20 @@
                     v-for="tab in tabs.filter((x) => x.show)"
                     :key="tab.slotName"
                     :class="[
-                        ' cursor-pointer select-none rounded-md p-2 text-center transition-colors hover:bg-take-yellow hover:text-take-navy-dark',
                         state.lastClickedTab.slotName == tab.slotName
-                            ? `bg-${props.selectedTabColour}`
-                            : `bg-${props.notSelectedTabColour}`,
+                            ? `bg-${props.selectedTabColour} text-${
+                                  TakeInitContrastColour[props.selectedTabColour]
+                              }`
+                            : `bg-${props.notSelectedTabColour} text-take-navy-light`, // PLEASE CHANGE TO MANUALLY CONTROLLED TEXT COLOUR
+                        `cursor-pointer select-none rounded-md px-2 py-1 flex items-center md:text-xl  transition-colors hover:bg-${
+                            props.hoveredTabColour
+                        } hover:text-${
+                            TakeInitContrastColour[props.hoveredTabColour]
+                        }  font-NovaCut`,
                     ]"
                     @click="() => (state.lastClickedTab = tab)"
                 >
-                    <div>
-                        {{ tab.name }}
-                    </div>
+                    <div>{{ tab.name }}</div>
                 </div>
             </nav>
 
@@ -33,7 +37,7 @@
         <TransitionGroup name="fade" class="flex-1 overflow-auto" tag="section">
             <div
                 v-for="tab in tabs.filter(
-                    (x) => x.slotName == state.lastClickedTab.slotName,
+                    (x) => x.slotName == state.lastClickedTab.slotName
                 )"
                 :key="tab.slotName"
                 class="h-full w-full"
@@ -49,6 +53,7 @@
 <script setup lang="ts">
 import { ObjectSchema } from "yup";
 import type { TakeInitColour } from "~/utils/types/HelperTypes";
+import { TakeInitContrastColour } from "~/utils/types/HelperTypes";
 
 const slots = useSlots();
 type Tab = {
@@ -64,15 +69,17 @@ const props = withDefaults(
         backgroundColour?: TakeInitColour;
         notSelectedTabColour?: TakeInitColour;
         selectedTabColour?: TakeInitColour;
+        hoveredTabColour?: TakeInitColour;
         negativeSectionId?: string;
     }>(),
     {
         showTabs: {},
         renameTabs: {},
         backgroundColour: "take-navy",
+        hoveredTabColour: "take-yellow",
         selectedTabColour: "take-navy-light",
         notSelectedTabColour: "take-navy-medium",
-    },
+    }
 );
 
 const tabs: ComputedRef<Tab[]> = computed(() => {
@@ -94,7 +101,7 @@ const selectedTab = computed(
     () =>
         tabs.value.find((x) => x.name == state.lastClickedTab.name) ??
         tabs.value.filter((x) => x.show)[0] ??
-        {},
+        {}
 );
 </script>
 <style>

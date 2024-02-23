@@ -1,8 +1,5 @@
 <template>
-    <div
-        v-if="!pending && !error"
-        class="flex h-full w-full flex-col overflow-auto"
-    >
+    <div v-if="!pending && !error" class="flex h-full w-full flex-col overflow-auto">
         <header>
             <div
                 class="flex cursor-pointer items-center border-b-2 border-take-yellow bg-take-navy-medium px-4 py-1"
@@ -10,10 +7,7 @@
                 <h1
                     class="flex items-center gap-2 font-NovaCut text-2xl font-bold text-take-yellow sm:text-3xl md:text-4xl"
                 >
-                    <img
-                        class="h-[1.5em] w-[1.5em]"
-                        src="~assets/yellowDice.png"
-                    />
+                    <img class="h-[1.5em] w-[1.5em]" src="~assets/yellowDice.png" />
                     Take Initiative
                 </h1>
                 <section class="flex flex-1 justify-end gap-2">
@@ -47,7 +41,7 @@
         </header>
         <Tabs
             class="flex-1 p-4"
-            backgroundColour="take-navy-medium"
+            backgroundColour="take-navy"
             notSelectedTabColour="take-navy"
             :renameTabs="{
                 PlannedCombats: 'Planned Combats',
@@ -82,7 +76,7 @@ const { refresh, pending, error } = useAsyncData(
     () => {
         return campaignStore.init().then(() => true);
     },
-    { watch: [state.value] },
+    { watch: [state.value] }
 ); // Return something so that nuxt does not recall this on this client
 
 useHead({

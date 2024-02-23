@@ -1,11 +1,11 @@
 <template>
     <div class="h-full w-full">
         <section
-            class="grid h-full w-full grid-cols-8"
+            class="grid h-full w-full grid-cols-9"
             v-if="plannedCombats && plannedCombats.length > 0"
         >
             <aside
-                class="col-span-2 flex flex-col gap-2 overflow-y-auto rounded-xl border border-take-navy-medium px-2 py-1"
+                class="col-span-3 flex flex-col gap-2 overflow-y-auto rounded-xl border border-take-navy-medium px-2 py-1"
             >
                 <div
                     v-for="combat in plannedCombats"
@@ -13,7 +13,7 @@
                     :class="[
                         'group flex cursor-pointer select-none gap-4 rounded-xl border border-take-navy-medium border-opacity-100 bg-take-navy-medium p-1 transition-colors hover:border-take-yellow',
                         {
-                            'border-take-yellow':
+                            'border-take-navy-light':
                                 combat.id == selectedPlannedCombat?.id,
                         },
                     ]"
@@ -45,19 +45,15 @@
                         (ctrl) =>
                             showDeleteCombatModal(
                                 ctrl,
-                                plannedCombatStore.selectedPlannedCombat,
+                                plannedCombatStore.selectedPlannedCombat
                             )
                     "
                 />
             </section>
         </section>
         <section class="flex flex-col items-center px-2" v-else>
-            <h2 class="w-full text-center text-xl">
-                Create your first planned combat
-            </h2>
-            <CreatePlannedCombatForm
-                :onCreatePlannedCombat="onCreatePlannedCombat"
-            />
+            <h2 class="w-full text-center text-xl">Create your first planned combat</h2>
+            <CreatePlannedCombatForm :onCreatePlannedCombat="onCreatePlannedCombat" />
         </section>
 
         <Modal ref="createPlannedCombatModal" title="Create a planned combat">
@@ -93,9 +89,7 @@ const createPlannedCombatModal = ref<InstanceType<typeof Modal> | null>(null);
 const campaignStore = useCampaignStore();
 const plannedCombatStore = usePlannedCombatStore();
 const plannedCombats = computed(() => campaignStore.state.plannedCombats);
-const selectedPlannedCombat = computed(
-    () => plannedCombatStore.selectedPlannedCombat,
-);
+const selectedPlannedCombat = computed(() => plannedCombatStore.selectedPlannedCombat);
 
 async function setCombat(combat: PlannedCombat) {
     campaignStore.setPlannedCombat(combat.id);
@@ -107,7 +101,7 @@ async function showCreatePlannedCombatModal() {
 }
 
 async function onCreatePlannedCombat(
-    input: void | Omit<CreatePlannedCombatRequest, "campaignId">,
+    input: void | Omit<CreatePlannedCombatRequest, "campaignId">
 ) {
     return await campaignStore
         .createPlannedCombat(input!)
@@ -120,14 +114,13 @@ async function onCreatePlannedCombat(
 // Delete combat
 async function showDeleteCombatModal(
     loadingCtrl: ButtonLoadingControl,
-    combat: PlannedCombat,
+    combat: PlannedCombat
 ) {
     loadingCtrl.setLoaded();
     // If the combat has no stages, or all the stages are empty, then just delete without showing the modal.
     if (
         combat.stages?.length == 0 ||
-        combat.stages?.flatMap((x) => x.NPCs).filter((x) => x != null).length ==
-            0
+        combat.stages?.flatMap((x) => x.NPCs).filter((x) => x != null).length == 0
     ) {
         loadingCtrl.setLoaded();
         await deleteCombat(loadingCtrl, combat);
@@ -140,10 +133,7 @@ async function showDeleteCombatModal(
     }
 }
 
-async function deleteCombat(
-    loadingCtrl: ButtonLoadingControl,
-    combat: PlannedCombat,
-) {
+async function deleteCombat(loadingCtrl: ButtonLoadingControl, combat: PlannedCombat) {
     console.log("Before loading control is used");
     loadingCtrl.setLoading();
     return await campaignStore.deletePlannedCombat(combat.id).then(() => {

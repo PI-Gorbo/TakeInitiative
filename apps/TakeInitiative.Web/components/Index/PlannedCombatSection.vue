@@ -1,6 +1,6 @@
 <template>
     <main class="w-full overflow-auto py-2 pl-4" v-if="plannedCombat">
-        <Teleport to="#IndexPageTabs">
+        <body class="flex flex-col gap-4 overflow-y-auto">
             <header class="mb-2 flex select-none flex-row text-take-yellow">
                 <div class="flex flex-1 justify-center">
                     <label class="flex items-center">
@@ -17,17 +17,12 @@
                     />
                 </div>
             </header>
-        </Teleport>
-
-        <body class="flex flex-col gap-4 overflow-y-auto">
             <div
                 class="flex w-full justify-center overflow-y-auto"
                 v-for="stage in plannedCombat.stages"
                 :key="stage.id"
             >
-                <div
-                    class="w-full rounded-xl border-2 border-take-navy-light p-2"
-                >
+                <div class="w-full rounded-xl border-2 border-take-navy-light p-2">
                     <div class="mb-2 flex w-full flex-row gap-2">
                         <div class="flex-1 text-take-yellow">
                             {{ stage.name }}
@@ -156,7 +151,7 @@ function showCreateStageModal() {
 }
 
 async function createStage(
-    input: void | Omit<CreatePlannedCombatStageRequest, "combatId">,
+    input: void | Omit<CreatePlannedCombatStageRequest, "combatId">
 ) {
     return await plannedCombatStore
         .addStage(input!)
@@ -165,13 +160,10 @@ async function createStage(
 
 async function addNpc(
     stage: PlannedCombat,
-    nonPlayerCharacter: PlannedCombatNonPlayerCharacter,
+    nonPlayerCharacter: PlannedCombatNonPlayerCharacter
 ) {}
 
-function editNpc(
-    stage: PlannedCombatStage,
-    npc: PlannedCombatNonPlayerCharacter,
-) {}
+function editNpc(stage: PlannedCombatStage, npc: PlannedCombatNonPlayerCharacter) {}
 
 function deleteStage(stage: PlannedCombatStage) {}
 </script>
