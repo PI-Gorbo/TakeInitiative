@@ -46,7 +46,7 @@
             </div>
         </header>
         <Tabs
-            class="flex-1 overflow-auto p-4"
+            class="flex-1 p-4"
             backgroundColour="take-navy-medium"
             notSelectedTabColour="take-navy"
             :renameTabs="{
@@ -84,6 +84,10 @@ const { refresh, pending, error } = useAsyncData(
     },
     { watch: [state.value] },
 ); // Return something so that nuxt does not recall this on this client
+
+useHead({
+    title: "Take Initiative",
+});
 
 definePageMeta({
     requiresAuth: true,

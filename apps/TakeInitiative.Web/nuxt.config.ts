@@ -2,6 +2,12 @@ import type { CreateAxiosDefaults } from "axios";
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+    app: {
+        head: {
+            link: [{ rel: "icon", type: "image/png", href: "/yellowDice.png" }],
+            title: "Take Initiative",
+        },
+    },
     devtools: { enabled: true },
     typescript: {},
     runtimeConfig: {

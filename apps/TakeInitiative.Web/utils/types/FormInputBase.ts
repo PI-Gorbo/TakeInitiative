@@ -1,5 +1,5 @@
 export type FormInputProps<T> = {
     label?: string;
     value: T;
-    errorMessage: string | undefined | null;
+    errorMessage?: string | undefined | null;
 };

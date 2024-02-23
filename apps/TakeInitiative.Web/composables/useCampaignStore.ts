@@ -1,4 +1,4 @@
-import { usePlannedCombatStore } from './usePlannedCombatStore';
+import { usePlannedCombatStore } from "./usePlannedCombatStore";
 import type {
     CampaignMemberDto,
     GetCampaignResponse,
@@ -15,7 +15,8 @@ import type { CreatePlannedCombatRequest } from "~/utils/api/plannedCombat/creat
 export const useCampaignStore = defineStore("campaignStore", () => {
     const api = useApi();
     const userStore = useUserStore();
-	const plannedCombatStore = usePlannedCombatStore()
+    const plannedCombatStore = usePlannedCombatStore();
+
     const state = reactive({
         campaign: undefined as Campaign | undefined,
         userCampaignMember: undefined as CampaignMember | undefined,
@@ -94,9 +95,9 @@ export const useCampaignStore = defineStore("campaignStore", () => {
     }
 
     async function setPlannedCombat(combatId: string) {
-        plannedCombatStore.setPlannedCombat(state.plannedCombats?.find(
-            (x) => x.id == combatId,
-        ));
+        plannedCombatStore.setPlannedCombat(
+            state.plannedCombats?.find((x) => x.id == combatId),
+        );
     }
 
     async function deletePlannedCombat(plannedCombatId: string) {
@@ -117,12 +118,19 @@ export const useCampaignStore = defineStore("campaignStore", () => {
                         );
                 }
 
-                if (plannedCombatStore.selectedPlannedCombat.id == plannedCombatId) {
+                // If the plannedCombatStore has the planned combat as the selected combat, then
+                // change it.
+                if (
+                    plannedCombatStore.selectedPlannedCombat?.id ==
+                    plannedCombatId
+                ) {
                     if ((state.plannedCombats?.length ?? 0) > 0) {
-                        plannedCombatStore.setPlannedCombat(state.plannedCombats![0]);
+                        plannedCombatStore.setPlannedCombat(
+                            state.plannedCombats![0],
+                        );
                     }
                 } else {
-					plannedCombatStore.setPlannedCombat(null);
+                    plannedCombatStore.setPlannedCombat(null);
                 }
             });
     }

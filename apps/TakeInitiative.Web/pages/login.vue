@@ -29,6 +29,7 @@
             <div class="flex justify-center">
                 <FormButton
                     label="Login"
+                    type="submit"
                     loadingDisplay="Logging in..."
                     :isLoading="state.isSubmitting"
                 />
@@ -59,7 +60,7 @@ const { values, errors, defineField, validate } = useForm({
         yup.object({
             email: yup.string().required().email(),
             password: yup.string().required(),
-        })
+        }),
     ),
 });
 const [email, emailInputProps] = defineField("email", {

@@ -34,7 +34,18 @@ export async function parseAsApiError<TRequest extends {}>(
             },
         } satisfies ApiError<TRequest>;
     } catch {
-        throw new Error("Could not parse api error");
+        return {
+            generalErrors: [JSON.stringify(error.body)],
+            getErrorFor: (error) => {
+                const errorList = (errorObject as ApiError<TRequest>).errors[
+                    error
+                ];
+                if (errorList == null || errorList.length == 0) {
+                    return null;
+                }
+                return errorList[0];
+            },
+        };
     }
 }
 

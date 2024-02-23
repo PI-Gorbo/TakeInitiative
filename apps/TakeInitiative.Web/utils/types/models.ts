@@ -61,13 +61,7 @@ export enum InitiativeStrategy {
 // Character Initiative
 export const characterInitiativeValidator = yup.object({
     strategy: yup.mixed().oneOf(Object.values(InitiativeStrategy)),
-    value: yup.string()
-		.when('strategy', {
-			is: (v) => v == InitiativeStrategy.Fixed,
-			then: (s) => s.test('isNumber','Must be a number', function (val) {
-					return !Number.isNaN(Number(val));
-				}),
-		})
+    value: yup.string().required(),
 });
 export type CharacterInitiative = InferType<
     typeof characterInitiativeValidator
@@ -79,7 +73,7 @@ export const plannedCombatNonPlayerCharacterValidator = yup.object({
     health: characterHealthValidator.nullable(),
     armorClass: yup.number().nullable(),
     initiative: characterInitiativeValidator,
-    quantity: yup.number().min(1, "Must be at least 1"),
+    quantity: yup.number(),
 });
 export type PlannedCombatNonPlayerCharacter = InferType<
     typeof plannedCombatNonPlayerCharacterValidator

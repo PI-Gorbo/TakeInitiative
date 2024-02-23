@@ -5,6 +5,8 @@ import { updateCampaignDetailsRequest } from "~/utils/api/campaign/updateCampaig
 import { createPlannedCombatRequest } from "~/utils/api/plannedCombat/createPlannedCombatRequest";
 import { deletePlannedCombatRequest } from "~/utils/api/plannedCombat/deletePlannedCombatRequest";
 import { getPlannedCombatsRequest } from "~/utils/api/plannedCombat/getPlannedCombatsRequest";
+import { createPlannedCombatStageRequest } from "~/utils/api/plannedCombat/stages/createPlannedCombatStageRequest";
+import { deletePlannedCombatStageRequest } from "~/utils/api/plannedCombat/stages/deletePlannedCombatStageRequest";
 import { getUserRequest } from "~/utils/api/user/getUserRequest";
 import { loginRequest } from "~/utils/api/user/loginRequest";
 import { signUpRequest } from "~/utils/api/user/signUpRequest";
@@ -27,6 +29,10 @@ export const useApi = () => {
             create: createPlannedCombatRequest($axios),
             getAll: getPlannedCombatsRequest($axios),
             delete: deletePlannedCombatRequest($axios),
+            stage: {
+                create: createPlannedCombatStageRequest($axios),
+                delete: deletePlannedCombatStageRequest($axios),
+            },
         },
     };
 };

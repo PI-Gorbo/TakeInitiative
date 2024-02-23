@@ -45,6 +45,7 @@ const props = withDefaults(
         colour: "take-navy-light",
         textColour: "white",
         autoFocus: false,
+        errorMessage: null,
     },
 );
 

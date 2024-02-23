@@ -1,3 +1,4 @@
+using CSharpFunctionalExtensions;
 using FluentValidation;
 
 namespace TakeInitiative.Api.Models;
@@ -17,15 +18,55 @@ public record PlannedCombat
 			CombatName = CombatName,
 			CampaignId = CampaignId,
 			Stages = new() {
-				new() {Name = "Stage One"}
+				new() {Id= Guid.NewGuid(),Name = "Stage One", NPCs= []}
 			}
 		};
+	}
+
+	public Result<PlannedCombat> AddStage(PlannedCombatStage stage)
+	{
+		return Result.FailureIf(this.Stages.Any(x => x.Name == stage.Name), $"The combat already contains a stage with the name {stage.Name}.")
+			.Map(() =>
+			{
+				this.Stages.Add(stage);
+				return this;
+			});
+	}
+
+	public Result<PlannedCombat> RemoveStage(Guid stageId)
+	{
+		// Check the stage exists
+		if (!this.Stages.Any(x => x.Id == stageId))
+		{
+			return Result.Failure<PlannedCombat>($"There is no stage with the id {stageId}");
+		}
+
+		Stages = Stages.Where(x => x.Id != stageId).ToList();
+
+		return this;
+	}
+
+	public Result<PlannedCombat> AddNpcToStage(Guid stageId, PlannedCombatNonPlayerCharacter npc)
+	{
+		var stage = this.Stages.SingleOrDefault(x => x.Id == stageId);
+		if (stage == null)
+		{
+			return Result.Failure<PlannedCombat>("Stage does not exist");
+		}
+
+		return Result.FailureIf(stage.NPCs.Any(x => x.Name == npc.Name), "There is already an NPC with that name.")
+			.Map(() =>
+			{
+				stage.NPCs.Add(npc);
+				return this;
+			});
 	}
 }
 
 public class PlannedCombatValidator : AbstractValidator<PlannedCombat>
 {
-	public PlannedCombatValidator() {
+	public PlannedCombatValidator()
+	{
 		ClassLevelCascadeMode = CascadeMode.Stop;
 		RuleFor(x => x.Id).NotEmpty();
 		RuleFor(x => x.CampaignId).NotEmpty();
@@ -35,6 +76,7 @@ public class PlannedCombatValidator : AbstractValidator<PlannedCombat>
 	}
 }
 
-public class PlannedCombatStageValidator : AbstractValidator<PlannedCombatStage> {
-	
+public class PlannedCombatStageValidator : AbstractValidator<PlannedCombatStage>
+{
+
 }

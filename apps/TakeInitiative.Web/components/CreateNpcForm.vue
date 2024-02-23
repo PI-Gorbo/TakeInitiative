@@ -1,5 +1,9 @@
 <template>
-    <FormBase class="flex flex-col gap-2" :onSubmit="onSubmit" v-slot="{ submitting }">
+    <FormBase
+        class="flex flex-col gap-2"
+        :onSubmit="onSubmit"
+        v-slot="{ submitting }"
+    >
         <FormInput
             textColour="white"
             label="Name"
@@ -21,7 +25,12 @@
                 <select
                     name="Initiative Strategy"
                     :value="initiativeStrategy"
-                    @input="(e: Event) => initiativeStrategy = (e.target as HTMLSelectElement).value"
+                    @input="
+                        (e: Event) =>
+                            (initiativeStrategy = (
+                                e.target as HTMLSelectElement
+                            ).value)
+                    "
                     class="rounded-l-lg bg-take-grey-dark py-1 pl-2 pr-1"
                 >
                     <option :value="InitiativeStrategy.Fixed">Fixed</option>
@@ -32,9 +41,15 @@
                     type="text"
                     class="flex-1 rounded-r-lg bg-take-navy-light px-1 text-white"
                     :value="initiativeValue"
-                    @input="(e) => initiativeValue = (e.target as HTMLInputElement).value"
+                    @input="
+                        (e) =>
+                            (initiativeValue = (e.target as HTMLInputElement)
+                                .value)
+                    "
                     :placeholder="
-                        initiativeStrategy == InitiativeStrategy.Fixed ? '+5' : '1d20 + 5'
+                        initiativeStrategy == InitiativeStrategy.Fixed
+                            ? '+5'
+                            : '1d20 + 5'
                     "
                 />
             </div>
@@ -65,13 +80,16 @@ import * as yup from "yup";
 import {
     InitiativeStrategy,
     plannedCombatNonPlayerCharacterValidator,
-type PlannedCombatNonPlayerCharacter,
-type PlannedCombatStage,
+    type PlannedCombatNonPlayerCharacter,
+    type PlannedCombatStage,
 } from "~/utils/types/models";
 
 const props = defineProps<{
-	stage: PlannedCombatStage,
-    onSubmit: (stage: PlannedCombatStage, plannedCombatNonPlayerCharacter: PlannedCombatNonPlayerCharacter) => Promise<void>;
+    stage: PlannedCombatStage;
+    onSubmit: (
+        stage: PlannedCombatStage,
+        plannedCombatNonPlayerCharacter: PlannedCombatNonPlayerCharacter,
+    ) => Promise<void>;
 }>();
 
 // Form Definition
@@ -96,14 +114,17 @@ const [initiativeStrategy, initiativeStrategyInputProps] = defineField(
         props: (state) => ({
             errorMessage: state.errors[0],
         }),
-    }
+    },
 );
 
-const [initiativeValue, initiativeValueInputProps] = defineField("initiative.value", {
-    props: (state) => ({
-        errorMessage: state.errors[0],
-    }),
-});
+const [initiativeValue, initiativeValueInputProps] = defineField(
+    "initiative.value",
+    {
+        props: (state) => ({
+            errorMessage: state.errors[0],
+        }),
+    },
+);
 
 onMounted(() => {
     initiativeStrategy.value = InitiativeStrategy.Roll;
@@ -117,7 +138,9 @@ async function onSubmit() {
         return;
     }
 
-    return await props.onSubmit({...values} as PlannedCombatNonPlayerCharacter)
+    return await props.onSubmit({
+        ...values,
+    } as PlannedCombatNonPlayerCharacter);
 }
 
 // async function onSubmit(): Promise<void> {

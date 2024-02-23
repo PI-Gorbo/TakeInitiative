@@ -10,7 +10,7 @@ const state = reactive({
 });
 
 const props = defineProps<{
-    onSubmit: () => Promise<void>;
+    onSubmit: () => Promise<any>;
 }>();
 
 async function submit() {

@@ -1,16 +1,21 @@
 <template>
     <FormBase
-        :onSubmit="onCreatePlannedCombat"
+        :onSubmit="submit"
         v-slot="{ submitting }"
         class="flex w-1/2 flex-col gap-4"
     >
         <FormInput
             class="text-white"
             label="Combat Name"
-            :value="props.campaignName"
-            v-bind="props.inputProps"
-            @update:value="(val) => emit('update:campaignName', val)"
+            v-bind="createPlannedCombatForm.combatName.props"
+            :value="createPlannedCombatForm.combatName.value.value"
+            @update:value="
+                (val) =>
+                    (createPlannedCombatForm.combatName.value.value =
+                        String(val) ?? '')
+            "
             colour="take-navy-light"
+            :autoFocus="true"
         />
         <div class="flex justify-center">
             <FormButton
@@ -25,15 +30,25 @@
 
 <script setup lang="ts">
 // TODO : Refactor to be the smae as the CreateCampaignForm
-import FormInput from "~/components/Form/Input.vue";
 type FormInputProps = InstanceType<typeof FormInput>["$props"];
+import FormInput from "~/components/Form/Input.vue";
+import type { GetCampaignRequest } from "~/utils/api/campaign/getCampaignRequest";
+import type { CreatePlannedCombatRequest } from "~/utils/api/plannedCombat/createPlannedCombatRequest";
+const createPlannedCombatForm = useCreatePlannedCombatForm();
+
 const props = defineProps<{
-    onCreatePlannedCombat: () => Promise<void | undefined>;
-    campaignName: string | undefined;
-    inputProps: Omit<FormInputProps, "value">;
+    onCreatePlannedCombat: (
+        input: void | Omit<CreatePlannedCombatRequest, "campaignId">,
+    ) => Promise<any>;
 }>();
 
 const emit = defineEmits<{
     (e: "update:campaignName", campaignName: string | undefined): void;
 }>();
+
+async function submit(): ReturnType<typeof createPlannedCombatForm.submit> {
+    return await createPlannedCombatForm
+        .submit()
+        .then(props.onCreatePlannedCombat);
+}
 </script>

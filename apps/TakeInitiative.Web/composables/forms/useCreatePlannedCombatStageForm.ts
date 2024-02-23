@@ -2,35 +2,35 @@ import { toTypedSchema } from "@vee-validate/yup";
 import type { AxiosError } from "axios";
 import { useForm } from "vee-validate";
 import type { CreatePlannedCombatRequest } from "~/utils/api/plannedCombat/createPlannedCombatRequest";
+import type { CreatePlannedCombatStageRequest } from "~/utils/api/plannedCombat/stages/createPlannedCombatStageRequest";
 import { yup } from "~/utils/types/HelperTypes";
 import type { PlannedCombat } from "~/utils/types/models";
 
-export const useCreatePlannedCombatForm = () => {
+export const useCreatePlannedCombatStageForm = () => {
     const formState = reactive({
-        error: null as ApiError<CreatePlannedCombatRequest> | null,
+        error: null as ApiError<CreatePlannedCombatStageRequest> | null,
     });
 
     // Form Definition
-    const { values, errors, defineField, validate } = useForm({
+    const { values, errors, defineField, validate, setFieldError } = useForm({
         validationSchema: toTypedSchema(
             yup.object({
-                combatName: yup.string().required(),
+                name: yup.string().required(),
             }),
         ),
     });
 
-    const [combatName, combatNameInputProps] = defineField("combatName", {
+    const [name, nameInputProps] = defineField("name", {
         props: (state) => ({
             errorMessage:
-                formState.error?.getErrorFor("combatName") ?? state.errors[0],
+                formState.error?.getErrorFor("name") ?? state.errors[0],
         }),
     });
 
     // Form Submit
-    const campaignStore = useCampaignStore();
     async function submit(): Promise<void | Omit<
-        CreatePlannedCombatRequest,
-        "campaignId"
+        CreatePlannedCombatStageRequest,
+        "combatId"
     >> {
         formState.error = null;
         return await validate()
@@ -39,7 +39,7 @@ export const useCreatePlannedCombatForm = () => {
                     Promise.reject(result.errors);
                 }
             })
-            .then(() => ({ combatName: combatName.value! }))
+            .then(() => ({ name: name.value! }))
             .catch(async (error) => {
                 formState.error = await parseAsApiError(error);
             });
@@ -48,10 +48,15 @@ export const useCreatePlannedCombatForm = () => {
     return {
         validate,
         errors,
-        combatName: {
-            value: combatName,
-            props: combatNameInputProps,
+        name: {
+            value: name,
+            props: nameInputProps,
         },
         submit,
+        setError(error: ApiError<CreatePlannedCombatStageRequest>) {
+            formState.error = error;
+            setFieldError("name", "bad");
+            console.log("Set field error to bad");
+        },
     };
 };

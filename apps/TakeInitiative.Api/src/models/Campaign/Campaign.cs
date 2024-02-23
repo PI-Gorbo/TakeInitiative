@@ -28,6 +28,17 @@ public record Campaign
         this.CampaignMemberInfo.Add(campaignMemberInfo);
         return this;
     }
+
+    public bool isDm(Guid userId)
+    {
+        var memberInfo = CampaignMemberInfo.SingleOrDefault(x => x.UserId == userId);
+        if (memberInfo == null)
+        {
+            return false;
+        }
+
+        return memberInfo.IsDungeonMaster;
+    }
 }
 
 

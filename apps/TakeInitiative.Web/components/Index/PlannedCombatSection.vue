@@ -19,13 +19,15 @@
             </header>
         </Teleport>
 
-        <body class="flex flex-col gap-4">
+        <body class="flex flex-col gap-4 overflow-y-auto">
             <div
-                class="flex w-full justify-center"
+                class="flex w-full justify-center overflow-y-auto"
                 v-for="stage in plannedCombat.stages"
                 :key="stage.id"
             >
-                <div class="w-full rounded-xl border-2 border-take-navy-light p-2">
+                <div
+                    class="w-full rounded-xl border-2 border-take-navy-light p-2"
+                >
                     <div class="mb-2 flex w-full flex-row gap-2">
                         <div class="flex-1 text-take-yellow">
                             {{ stage.name }}
@@ -94,14 +96,21 @@
 
         <footer class="flex justify-center">
             <div
-                class="w-fullrounded-xl min-h-2em my-3 flex cursor-pointer justify-center border-2 border-dashed border-take-navy-light hover:border-take-yellow"
-                @click="createStage"
+                class="min-w-fit cursor-pointer rounded-xl border-2 border-dashed border-take-navy-light p-2 hover:border-take-yellow"
+                @click="showCreateStageModal"
             >
                 <div class="p-2">
                     <FontAwesomeIcon icon="plus" />
                 </div>
             </div>
         </footer>
+
+        <Modal ref="createStageModal" title="Create Stage">
+            <CreatePlannedCombatStageForm
+                :stage="lastedClickedStage!"
+                :onSubmit="createStage"
+            />
+        </Modal>
 
         <Modal ref="createNpcFormModal" title="Create NPC">
             <CreateNpcForm
@@ -121,10 +130,14 @@ import type {
 import type ConfirmModalVue from "../ConfirmModal.vue";
 import type { ButtonLoadingControl } from "../Form/Button.vue";
 import Modal from "~/components/Modal.vue";
+import type { CreatePlannedCombatRequest } from "~/utils/api/plannedCombat/createPlannedCombatRequest";
+import type { CreatePlannedCombatStageRequest } from "~/utils/api/plannedCombat/stages/createPlannedCombatStageRequest";
 
 const createNpcFormModal = ref<InstanceType<typeof Modal> | null>(null);
+const createStageModal = ref<InstanceType<typeof Modal> | null>(null);
 const campaignStore = useCampaignStore();
-const plannedCombat = computed(() => campaignStore.state.selectedPlannedCombat);
+const plannedCombatStore = usePlannedCombatStore();
+const plannedCombat = computed(() => plannedCombatStore.selectedPlannedCombat);
 
 const emit = defineEmits<{
     (e: "DeleteCombat", loadingCtrl: ButtonLoadingControl): void;
@@ -138,14 +151,27 @@ function showCreateNpcModal(stage: PlannedCombatStage) {
     createNpcFormModal.value?.show();
 }
 
+function showCreateStageModal() {
+    createStageModal.value?.show();
+}
+
+async function createStage(
+    input: void | Omit<CreatePlannedCombatStageRequest, "combatId">,
+) {
+    return await plannedCombatStore
+        .addStage(input!)
+        .then(() => createStageModal.value?.hide());
+}
+
 async function addNpc(
     stage: PlannedCombat,
-    nonPlayerCharacter: PlannedCombatNonPlayerCharacter
+    nonPlayerCharacter: PlannedCombatNonPlayerCharacter,
 ) {}
 
-function editNpc(stage: PlannedCombatStage, npc: PlannedCombatNonPlayerCharacter) {}
+function editNpc(
+    stage: PlannedCombatStage,
+    npc: PlannedCombatNonPlayerCharacter,
+) {}
 
 function deleteStage(stage: PlannedCombatStage) {}
-
-function createStage() {}
 </script>

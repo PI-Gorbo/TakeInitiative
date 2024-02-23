@@ -14,8 +14,7 @@
                         'group flex cursor-pointer select-none gap-4 rounded-xl border border-take-navy-medium border-opacity-100 bg-take-navy-medium p-1 transition-colors hover:border-take-yellow',
                         {
                             'border-take-yellow':
-                                combat.id ==
-                                campaignStore.state.selectedPlannedCombat?.id,
+                                combat.id == selectedPlannedCombat?.id,
                         },
                     ]"
                     @click="() => setCombat(combat)"
@@ -40,14 +39,13 @@
                     />
                 </div>
             </aside>
-            <section class="col-span-6">
+            <section class="col-span-6 overflow-y-auto">
                 <IndexPlannedCombatSection
-                    :plannedCombat="campaignStore.state.selectedPlannedCombat!"
-                    @deleteCombat="
-                        (ctrl: ButtonLoadingControl) =>
+                    @DeleteCombat="
+                        (ctrl) =>
                             showDeleteCombatModal(
                                 ctrl,
-                                campaignStore.state.selectedPlannedCombat!,
+                                plannedCombatStore.selectedPlannedCombat,
                             )
                     "
                 />
@@ -59,10 +57,6 @@
             </h2>
             <CreatePlannedCombatForm
                 :onCreatePlannedCombat="onCreatePlannedCombat"
-                v-model:campaignName="
-                    createPlannedCombatForm.combatName.value.value
-                "
-                :inputProps="createPlannedCombatForm.combatName.props.value"
             />
         </section>
 
@@ -70,10 +64,6 @@
             <CreatePlannedCombatForm
                 class="h-full w-full"
                 :onCreatePlannedCombat="onCreatePlannedCombat"
-                v-model:campaignName="
-                    createPlannedCombatForm.combatName.value.value
-                "
-                :inputProps="createPlannedCombatForm.combatName.props.value"
             />
         </Modal>
 
@@ -82,13 +72,7 @@
             confirmText="Delete"
             confirmColour="take-red"
             :closeOnConfirm="false"
-            @Confirm="
-                (ctrls) =>
-                    deleteCombat(
-                        ctrls,
-                        campaignStore.state.selectedPlannedCombat,
-                    )
-            "
+            @Confirm="(ctrls) => deleteCombat(ctrls, selectedPlannedCombat)"
             cancelText="Cancel"
             cancelColour="take-yellow"
             bodyText="Delete this planned combat?"
@@ -97,38 +81,40 @@
 </template>
 <script setup lang="ts">
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import type { PlannedCombat } from "~/utils/types/models.ts";
 import Modal from "~/components/Modal.vue";
 import ConfirmModal from "~/components/ConfirmModal.vue";
 import type { ButtonLoadingControl } from "../Form/Button.vue";
+import type { PlannedCombat } from "~/utils/types/models";
+import type { CreatePlannedCombatRequest } from "~/utils/api/plannedCombat/createPlannedCombatRequest";
 
 const deleteCombatModal = ref<InstanceType<typeof ConfirmModal> | null>(null);
 const createPlannedCombatModal = ref<InstanceType<typeof Modal> | null>(null);
 
 const campaignStore = useCampaignStore();
+const plannedCombatStore = usePlannedCombatStore();
 const plannedCombats = computed(() => campaignStore.state.plannedCombats);
-const state = reactive({
-    selectedPlannedCombat: null as PlannedCombat | null,
-});
+const selectedPlannedCombat = computed(
+    () => plannedCombatStore.selectedPlannedCombat,
+);
 
 async function setCombat(combat: PlannedCombat) {
     campaignStore.setPlannedCombat(combat.id);
 }
 
 // Create planned combat
-const createPlannedCombatForm = useCreatePlannedCombatForm();
 async function showCreatePlannedCombatModal() {
     createPlannedCombatModal.value?.show();
 }
 
-async function onCreatePlannedCombat() {
-    return await createPlannedCombatForm
-        .submit()
+async function onCreatePlannedCombat(
+    input: void | Omit<CreatePlannedCombatRequest, "campaignId">,
+) {
+    return await campaignStore
+        .createPlannedCombat(input!)
         .then((plannedCombat) => {
             return campaignStore.setPlannedCombat(plannedCombat.id);
         })
-        .then(() => createPlannedCombatModal.value?.hide())
-        .catch();
+        .then(() => createPlannedCombatModal.value?.hide());
 }
 
 // Delete combat
@@ -136,12 +122,14 @@ async function showDeleteCombatModal(
     loadingCtrl: ButtonLoadingControl,
     combat: PlannedCombat,
 ) {
+    loadingCtrl.setLoaded();
     // If the combat has no stages, or all the stages are empty, then just delete without showing the modal.
     if (
         combat.stages?.length == 0 ||
         combat.stages?.flatMap((x) => x.NPCs).filter((x) => x != null).length ==
             0
     ) {
+        loadingCtrl.setLoaded();
         await deleteCombat(loadingCtrl, combat);
         return;
     }
@@ -169,7 +157,7 @@ onMounted(() => {
     if (
         plannedCombats.value &&
         plannedCombats.value.length > 0 &&
-        campaignStore.state.selectedPlannedCombat == null
+        selectedPlannedCombat.value == null
     ) {
         campaignStore.setPlannedCombat(plannedCombats.value[0].id);
     }

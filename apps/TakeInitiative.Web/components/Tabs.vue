@@ -1,9 +1,9 @@
 <template>
-    <main class="flex h-full w-full flex-col">
+    <main class="flex h-full w-full flex-col overflow-auto">
         <div class="flex gap-2">
             <nav
                 :class="[
-                    'mb-2 flex w-max flex-row gap-4 overflow-x-auto overflow-y-hidden rounded-lg px-4 py-2',
+                    'mb-2 flex w-max flex-row gap-4 overflow-auto rounded-lg px-4 py-2',
                     `bg-${props.backgroundColour}`,
                 ]"
             >
@@ -30,11 +30,7 @@
                 class="flex-1"
             ></div>
         </div>
-        <TransitionGroup
-            name="fade"
-            class="flex-1 overflow-y-hidden"
-            tag="section"
-        >
+        <TransitionGroup name="fade" class="flex-1 overflow-auto" tag="section">
             <div
                 v-for="tab in tabs.filter(
                     (x) => x.slotName == state.lastClickedTab.slotName,
