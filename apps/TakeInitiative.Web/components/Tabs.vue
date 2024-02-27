@@ -34,13 +34,13 @@
                 class="flex-1"
             ></div>
         </div>
-        <TransitionGroup name="fade" class="flex-1 overflow-auto" tag="section">
+        <TransitionGroup name="fade" class="flex-1 overflow-hidden" tag="section">
             <div
                 v-for="tab in tabs.filter(
                     (x) => x.slotName == state.lastClickedTab.slotName
                 )"
                 :key="tab.slotName"
-                class="h-full w-full"
+                class="h-full w-full overflow-hidden"
             >
                 <slot
                     :name="selectedTab.slotName"
@@ -112,14 +112,17 @@ const selectedTab = computed(
 .fade-enter-active,
 .fade-leave-active {
     transition: all 0.15s ease-out;
+    overflow: hidden;
 }
 
 .fade-enter-active {
     transition-delay: 0.15s;
+    overflow: hidden;
 }
 
 .fade-enter-from,
 .fade-leave-to {
     opacity: 0;
+    overflow: hidden;
 }
 </style>

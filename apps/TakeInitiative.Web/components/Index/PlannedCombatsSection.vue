@@ -7,20 +7,40 @@
             <aside
                 class="col-span-3 flex flex-col gap-2 overflow-y-auto rounded-xl border border-take-navy-medium px-2 py-1"
             >
-                <div
-                    v-for="combat in plannedCombats"
-                    :key="combat.id"
-                    :class="[
-                        'group flex cursor-pointer select-none gap-4 rounded-xl border border-take-navy-medium border-opacity-100 bg-take-navy-medium p-1 transition-colors hover:border-take-yellow',
-                        {
-                            'border-take-navy-light':
-                                combat.id == selectedPlannedCombat?.id,
-                        },
-                    ]"
-                    @click="() => setCombat(combat)"
-                >
-                    {{ combat.combatName }}
-                </div>
+                <TransitionGroup name="fade" class="flex gap-2 flex-col" tag="section">
+                    <div
+                        v-for="combat in plannedCombats"
+                        :key="combat.id"
+                        :class="[
+                            'group flex cursor-pointer select-none gap-4 rounded-xl border border-take-navy-medium border-opacity-100 bg-take-navy-medium p-1 transition-colors ',
+                            {
+                                'border-take-yellow':
+                                    combat.id == selectedPlannedCombat?.id,
+                                'hover:border-take-navy-light':
+                                    combat.id != selectedPlannedCombat?.id,
+                            },
+                        ]"
+                        @click="() => setCombat(combat)"
+                    >
+                        <div class="flex w-full items-center">
+                            <span
+                                for="Planned Combat"
+                                class="flex flex-1 align-middle px-2"
+                            >
+                                {{ combat.combatName }}
+                            </span>
+                            <FormButton
+                                class="px-1"
+                                icon="trash"
+                                textColour="white"
+                                buttonColour="take-navy-light"
+                                hoverButtonColour="take-red"
+                                size="sm"
+                                @clicked="(ctrl) => showDeleteCombatModal(ctrl, combat)"
+                            />
+                        </div>
+                    </div>
+                </TransitionGroup>
                 <div
                     :class="[
                         'group flex w-full cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-take-navy-light transition-colors hover:border-take-yellow',
@@ -40,15 +60,7 @@
                 </div>
             </aside>
             <section class="col-span-6 overflow-y-auto">
-                <IndexPlannedCombatSection
-                    @DeleteCombat="
-                        (ctrl) =>
-                            showDeleteCombatModal(
-                                ctrl,
-                                plannedCombatStore.selectedPlannedCombat
-                            )
-                    "
-                />
+                <IndexPlannedCombatSection />
             </section>
         </section>
         <section class="flex flex-col items-center px-2" v-else>

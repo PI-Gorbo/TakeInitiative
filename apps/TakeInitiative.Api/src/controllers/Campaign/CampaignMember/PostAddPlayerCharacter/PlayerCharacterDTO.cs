@@ -2,7 +2,7 @@ using TakeInitiative.Api.Models;
 
 namespace TakeInitiative.Api.Controllers;
 
-public record PlayerCharacterDTO : ICharacter
+public record PlayerCharacterDTO : TCharacter
 {
     public required string Name { get; set; }
     public required CharacterInitiative Initiative { get; set; }

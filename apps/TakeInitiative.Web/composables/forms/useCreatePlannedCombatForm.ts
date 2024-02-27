@@ -28,21 +28,18 @@ export const useCreatePlannedCombatForm = () => {
 
     // Form Submit
     const campaignStore = useCampaignStore();
-    async function submit(): Promise<void | Omit<
+	function submit(): Promise<void | Omit<
         CreatePlannedCombatRequest,
         "campaignId"
     >> {
         formState.error = null;
-        return await validate()
+        return validate()
             .then((result) => {
                 if (!result.valid) {
                     Promise.reject(result.errors);
                 }
             })
             .then(() => ({ combatName: combatName.value! }))
-            .catch(async (error) => {
-                formState.error = await parseAsApiError(error);
-            });
     }
 
     return {
@@ -53,5 +50,8 @@ export const useCreatePlannedCombatForm = () => {
             props: combatNameInputProps,
         },
         submit,
+		setError(error: ApiError<CreatePlannedCombatRequest>) {
+            formState.error = error;
+        },
     };
 };

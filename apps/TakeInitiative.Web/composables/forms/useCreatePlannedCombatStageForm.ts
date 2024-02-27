@@ -40,9 +40,6 @@ export const useCreatePlannedCombatStageForm = () => {
                 }
             })
             .then(() => ({ name: name.value! }))
-            .catch(async (error) => {
-                formState.error = await parseAsApiError(error);
-            });
     }
 
     return {
@@ -55,8 +52,6 @@ export const useCreatePlannedCombatStageForm = () => {
         submit,
         setError(error: ApiError<CreatePlannedCombatStageRequest>) {
             formState.error = error;
-            setFieldError("name", "bad");
-            console.log("Set field error to bad");
         },
     };
 };

@@ -7,12 +7,11 @@
         <FormInput
             class="text-white"
             label="Combat Name"
-            v-bind="createPlannedCombatForm.combatName.props"
+            v-bind="createPlannedCombatForm.combatName.props.value"
             :value="createPlannedCombatForm.combatName.value.value"
             @update:value="
                 (val) =>
-                    (createPlannedCombatForm.combatName.value.value =
-                        String(val) ?? '')
+                    (createPlannedCombatForm.combatName.value.value = String(val) ?? '')
             "
             colour="take-navy-light"
             :autoFocus="true"
@@ -38,7 +37,7 @@ const createPlannedCombatForm = useCreatePlannedCombatForm();
 
 const props = defineProps<{
     onCreatePlannedCombat: (
-        input: void | Omit<CreatePlannedCombatRequest, "campaignId">,
+        input: void | Omit<CreatePlannedCombatRequest, "campaignId">
     ) => Promise<any>;
 }>();
 
@@ -49,6 +48,9 @@ const emit = defineEmits<{
 async function submit(): ReturnType<typeof createPlannedCombatForm.submit> {
     return await createPlannedCombatForm
         .submit()
-        .then(props.onCreatePlannedCombat);
+        .then(props.onCreatePlannedCombat)
+        .catch(async (error) =>
+            createPlannedCombatForm.setError(await parseAsApiError(error))
+        );
 }
 </script>

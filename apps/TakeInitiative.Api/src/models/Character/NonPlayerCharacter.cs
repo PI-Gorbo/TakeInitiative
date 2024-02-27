@@ -1,5 +1,5 @@
 namespace TakeInitiative.Api.Models;
-public record NonPlayerCharacter : ICharacter
+public record NonPlayerCharacter : TCharacter
 {
     public required string Name { get; set; }
     public required CharacterHealth? Health { get; set; } = null;

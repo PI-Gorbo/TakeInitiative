@@ -17,3 +17,20 @@
     font-family: "Overpass";
     src: url("~/assets/Overpass-VariableFont_wght.ttf");
 }
+
+.fade-enter-active,
+.fade-leave-active {
+    transition: all 0.1s ease-out;
+    overflow: hidden;
+}
+
+.fade-enter-active {
+    transition-delay: 0.1s;
+    overflow: hidden;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+    overflow: hidden;
+}

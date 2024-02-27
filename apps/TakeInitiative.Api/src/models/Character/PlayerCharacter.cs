@@ -1,5 +1,5 @@
 namespace TakeInitiative.Api.Models;
-public record PlayerCharacter : ICharacter
+public record PlayerCharacter : TCharacter
 {
     public Guid Id { get; init; } = Guid.NewGuid();
     public required Guid PlayerId { get; set; }

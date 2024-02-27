@@ -22,9 +22,7 @@ export const usePlannedCombatStore = defineStore("plannedCombatStore", () => {
                 ...request,
                 combatId: state.plannedCombat?.id!,
             })
-            .then((plannedCombat) => {
-                state.plannedCombat = plannedCombat;
-            });
+            .then(setPlannedCombat);
     }
 
     async function addNpc(
@@ -32,7 +30,12 @@ export const usePlannedCombatStore = defineStore("plannedCombatStore", () => {
         npc: PlannedCombatNonPlayerCharacter,
     ) {}
 
-    async function removeStage(stageId: string) {}
+    async function removeStage(stageId: string) {
+		return await api.plannedCombat.stage.delete({
+			combatId: state.plannedCombat?.id!,
+			stageId: stageId
+		}).then(setPlannedCombat)
+	}
 
     async function removeNpc(stage: PlannedCombatStage, npcId: string) {}
 
@@ -40,5 +43,6 @@ export const usePlannedCombatStore = defineStore("plannedCombatStore", () => {
         selectedPlannedCombat: computed(() => state.plannedCombat),
         setPlannedCombat,
         addStage,
+		removeStage
     };
 });

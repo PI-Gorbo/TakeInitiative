@@ -13,31 +13,26 @@
         @click="emit('clicked', loadingControls)"
     >
         <slot>
-            <div
-                v-if="!props.isLoading"
-                class="text-centre flex justify-center"
-            >
-                <label v-if="props.label" class="cursor-pointer">{{
-                    props.label
-                }}</label>
-                <div class="flex items-center justify-center text-center">
+            <div v-if="!props.isLoading" class="text-centre flex justify-center gap-1">
+                <div
+                    v-if="props.icon"
+                    class="flex items-center justify-center text-center"
+                >
                     <FontAwesomeIcon
                         v-if="props.icon"
                         :icon="props.icon"
                         :size="props.iconSize"
                     />
                 </div>
+                <label v-if="props.label" class="cursor-pointer">{{ props.label }}</label>
             </div>
             <div v-else-if="props.loadingDisplay" class="flex justify-center">
                 <label
-                    v-if="
-                        props.loadingLabel &&
-                        typeof props.loadingDisplay === 'string'
-                    "
+                    v-if="props.loadingLabel && typeof props.loadingDisplay === 'string'"
                     >{{ props.loadingLabel }}
                 </label>
                 <div
-                    v-else
+                    v-else-if="props.icon"
                     class="flex items-center justify-center text-center"
                 >
                     <FontAwesomeIcon
@@ -79,13 +74,13 @@ const props = withDefaults(
         },
         isLoading: false,
         buttonColour: "take-yellow-dark",
-        hoverButtonColour: "take-yellow-light",
+        hoverButtonColour: "take-yellow",
         textColour: "take-navy-dark",
         hoverTextColour: "take-navy-dark",
         icon: undefined,
         iconSize: "lg",
         disabled: false,
-    },
+    }
 );
 
 const state = reactive({

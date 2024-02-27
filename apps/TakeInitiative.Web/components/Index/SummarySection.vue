@@ -41,12 +41,16 @@
                     :onSubmit="submitDetails"
                     v-slot="{ submitting }"
                 >
-                    <div class="flex w-full flex-1 flex-col overflow-y-auto">
-                        <div class="w-full font-NovaCut">Campaign Description</div>
-                        <div class="flex-1 px-3 py-2">
+                    <div class="flex w-full font-NovaCut">
+                        <label>Description</label>
+                    </div>
+                    <div class="flex w-full flex-1 flex-col overflow-y-auto px-3 py-2">
+                        <div
+                            class="flex flex-1 gap-2 flex-row rounded-xl bg-take-navy-medium p-1"
+                        >
                             <textarea
-                                class="h-full w-full rounded-lg bg-take-navy-medium p-1"
                                 :value="description"
+                                class="h-full w-full rounded-xl bg-take-navy-medium p-1 ring-0"
                                 @input="
                                     (e) =>
                                         (description = (
@@ -54,20 +58,18 @@
                                         ).value)
                                 "
                             />
+                            <div>
+                                <FormButton
+                                    type="submit"
+                                    class="text-sm disabled:bg-take-navy-medium"
+                                    icon="floppy-disk"
+                                    :loadingDisplay="{ showSpinner: true }"
+                                    :disabled="!descriptionHasChanges"
+                                    :isLoading="submitting"
+                                />
+                            </div>
                         </div>
                     </div>
-                    <!-- <div class="flex w-full justify-end">
-						<div>
-							<FormButton
-								type="submit"
-								class="h-3/4 w-3/4 text-sm"
-								icon="floppy-disk"
-								:loadingDisplay="{ showSpinner: true }"
-								:disabled="!hasChanges"
-								:isLoading="submitting"
-							/>
-						</div>
-					</div> -->
                 </FormBase>
                 <FormBase
                     class="col-span-6 flex flex-1 flex-col rounded-xl border border-take-navy-medium px-2 py-1"
@@ -79,7 +81,7 @@
                     </div>
                     <div class="flex w-full flex-1 flex-col overflow-y-auto px-3 py-2">
                         <div
-                            class="flex flex-1 flex-row rounded-xl bg-take-navy-medium p-1"
+                            class="flex flex-1 gap-2 flex-row rounded-xl bg-take-navy-medium p-1"
                         >
                             <textarea
                                 :value="resources"
@@ -94,10 +96,10 @@
                             <div>
                                 <FormButton
                                     type="submit"
-                                    class="px-1 text-sm disabled:bg-take-navy-medium"
+                                    class="text-sm disabled:bg-take-navy-medium"
                                     icon="floppy-disk"
                                     :loadingDisplay="{ showSpinner: true }"
-                                    :disabled="!hasChanges"
+                                    :disabled="!resourcesHasChanges"
                                     :isLoading="submitting"
                                 />
                             </div>
@@ -138,11 +140,12 @@ onMounted(() => {
     resources.value = campaign.value?.campaignResources ?? "";
 });
 
-const hasChanges = computed(() => {
-    return (
-        campaignStore.state.campaign?.campaignDescription != description.value ||
-        campaignStore.state.campaign?.campaignResources != resources.value
-    );
+const descriptionHasChanges = computed(() => {
+    return campaignStore.state.campaign?.campaignDescription != description.value;
+});
+
+const resourcesHasChanges = computed(() => {
+    return campaignStore.state.campaign?.campaignResources != resources.value;
 });
 
 async function submitDetails(): Promise<void> {
