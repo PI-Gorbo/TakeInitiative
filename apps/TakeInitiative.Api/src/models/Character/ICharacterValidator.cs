@@ -9,10 +9,11 @@ public abstract class TCharacterValidator<TCharacter> : AbstractValidator<TChara
 	{
 		RuleFor(x => x.Name)
 			.NotEmpty();
+			
 		RuleFor(x => x.Health.CurrentHealth)
 			.NotEmpty()
 			.When(x => x.Health != null);
-
+			
 		RuleFor(x => x.Initiative)
 			.NotEmpty()
 			.SetValidator(new CharacterInitiativeValidator());

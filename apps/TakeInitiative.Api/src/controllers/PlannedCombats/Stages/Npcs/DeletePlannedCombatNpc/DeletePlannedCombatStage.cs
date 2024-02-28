@@ -1,6 +1,7 @@
 using System.Net;
 using CSharpFunctionalExtensions;
 using FastEndpoints;
+using FluentValidation;
 using Marten;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -9,18 +10,18 @@ using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Controllers;
 
-public class PostPlannedCombatNpc(IDocumentStore Store) : Endpoint<PostPlannedCombatNpcRequest, PlannedCombat>
+
+public class DeletePlannedCombatNpc(IDocumentStore Store) : Endpoint<DeletePlannedCombatNpcRequest, PlannedCombat>
 {
 	public override void Configure()
 	{
-		Post("/api/campaign/planned-combat/stage/npc");
+		Delete("/api/campaign/planned-combat/stage/npc");
 		AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
 		Policies(TakePolicies.UserExists);
 	}
 
-	public override async Task HandleAsync(PostPlannedCombatNpcRequest req, CancellationToken ct)
+	public override async Task HandleAsync(DeletePlannedCombatNpcRequest req, CancellationToken ct)
 	{
-
 		var userId = this.GetUserIdOrThrowUnauthorized();
 
 		var result = await Store.Try(async session =>
@@ -48,18 +49,11 @@ public class PostPlannedCombatNpc(IDocumentStore Store) : Endpoint<PostPlannedCo
 				ThrowError(x => x.StageId, "There is no stage with the given id.");
 			}
 
-			var npc = PlannedCombatNonPlayerCharacter.New(
-				Name: req.Name, 
-				Initiative: req.Initiative, 
-				ArmorClass: req.ArmorClass, 
-				Health: req.Health
-			);
-			var validator = new PlannedCombatNonPlayerCharacterValidator();
-			var validationResult = await validator.ValidateAsync(npc, ct);
-			if (!validationResult.IsValid) {
-				ThrowError(validationResult.ToString(", "));
+			if (!stage.NPCs.Any(x => x.Id == req.NpcId)) {
+				ThrowError(x => x.NpcId, "No NPC corresponds to the given id.");
 			}
-			stage.NPCs.Add(npc);
+
+			stage.NPCs = stage.NPCs.Where(x => x.Id != req.NpcId).ToList();
 			
 			session.Store(combat);
 			await session.SaveChangesAsync();

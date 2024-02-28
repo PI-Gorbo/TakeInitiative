@@ -1,12 +1,17 @@
-using FluentValidation;
-
 namespace TakeInitiative.Api.Models;
 
 public record PlannedCombatNonPlayerCharacter : NonPlayerCharacter
 {
-    public uint Quantity { get; set; } = 1;
-}
+    public required uint Quantity { get; set; } 
 
-public class PlannedCombatNonPlayerCharacterValidator : TCharacterValidator {
-
+	public static PlannedCombatNonPlayerCharacter New(string Name, CharacterInitiative Initiative, int? ArmorClass = null, CharacterHealth? Health = null, uint Quantity = 1) {
+		return new PlannedCombatNonPlayerCharacter() {
+			Id = Guid.NewGuid(),
+			Initiative = Initiative,
+			Name = Name,
+			ArmorClass = ArmorClass,
+			Health = Health,
+			Quantity = Quantity
+		};
+	}
 }

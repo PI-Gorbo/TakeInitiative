@@ -1,5 +1,5 @@
 namespace TakeInitiative.Api.Models;
-public interface TCharacter
+public interface ICharacter
 {
     public string Name { get; set; }
     public CharacterHealth? Health { get; set; }

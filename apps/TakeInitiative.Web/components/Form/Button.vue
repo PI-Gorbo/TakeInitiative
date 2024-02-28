@@ -27,9 +27,8 @@
                 <label v-if="props.label" class="cursor-pointer">{{ props.label }}</label>
             </div>
             <div v-else-if="props.loadingDisplay" class="flex justify-center">
-                <label
-                    v-if="props.loadingLabel && typeof props.loadingDisplay === 'string'"
-                    >{{ props.loadingLabel }}
+                <label v-if="typeof props.loadingDisplay === 'string'"
+                    >{{ props.loadingDisplay }}
                 </label>
                 <div
                     v-else-if="props.icon"

@@ -1,11 +1,5 @@
 namespace TakeInitiative.Api.Models;
 
-public enum InitiativeStrategy
-{
-    Fixed = 0,
-    Roll = 1
-}
-
 public record CharacterInitiative
 {
     public required InitiativeStrategy Strategy { get; set; }

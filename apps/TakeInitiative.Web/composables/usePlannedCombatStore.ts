@@ -4,6 +4,8 @@ import type {
     PlannedCombatNonPlayerCharacter,
     PlannedCombatStage,
 } from "./../utils/types/models";
+import type { CreatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
+import type { UpdatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
 export const usePlannedCombatStore = defineStore("plannedCombatStore", () => {
     const api = useApi();
     const state = reactive({
@@ -25,24 +27,53 @@ export const usePlannedCombatStore = defineStore("plannedCombatStore", () => {
             .then(setPlannedCombat);
     }
 
+    async function removeStage(stageId: string) {
+        return await api.plannedCombat.stage
+            .delete({
+                combatId: state.plannedCombat?.id!,
+                stageId: stageId,
+            })
+            .then(setPlannedCombat);
+    }
+
     async function addNpc(
         stage: PlannedCombatStage,
-        npc: PlannedCombatNonPlayerCharacter,
-    ) {}
+        npc: Omit<CreatePlannedCombatNpcRequest, "combatId" | "stageId">,
+    ) {
+        return await api.plannedCombat.stage.npc
+            .create({
+                combatId: state.plannedCombat?.id!,
+                stageId: stage.id,
+                ...npc,
+            })
+            .then(setPlannedCombat);
+    }
 
-    async function removeStage(stageId: string) {
-		return await api.plannedCombat.stage.delete({
-			combatId: state.plannedCombat?.id!,
-			stageId: stageId
-		}).then(setPlannedCombat)
+    async function removeNpc(stage: PlannedCombatStage, npcId: string) {
+		return await api.plannedCombat.stage.npc
+			.delete({
+				combatId: state.plannedCombat?.id!,
+				stageId: stage.id,
+				npcId: npcId,
+			}).then(setPlannedCombat)
 	}
 
-    async function removeNpc(stage: PlannedCombatStage, npcId: string) {}
+	async function updateNpc(stage: PlannedCombatStage, npc: Omit<UpdatePlannedCombatNpcRequest, "combatId" | "stageId">) {
+		return await api.plannedCombat.stage.npc
+			.delete({
+				combatId: state.plannedCombat?.id!,
+                stageId: stage.id,
+                ...npc,
+			}).then(setPlannedCombat)
+	}
 
     return {
         selectedPlannedCombat: computed(() => state.plannedCombat),
         setPlannedCombat,
         addStage,
-		removeStage
+        removeStage,
+        addNpc,
+		removeNpc,
+		updateNpc
     };
 });

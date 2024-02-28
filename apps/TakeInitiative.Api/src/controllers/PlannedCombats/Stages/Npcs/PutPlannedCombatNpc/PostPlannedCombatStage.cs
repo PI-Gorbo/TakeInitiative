@@ -1,7 +1,9 @@
 using System.Net;
 using CSharpFunctionalExtensions;
 using FastEndpoints;
+using FluentValidation;
 using Marten;
+using Marten.Schema.Identity;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using TakeInitiative.Api.Models;
@@ -9,16 +11,16 @@ using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Controllers;
 
-public class PostPlannedCombatNpc(IDocumentStore Store) : Endpoint<PostPlannedCombatNpcRequest, PlannedCombat>
+public class PutPlannedCombatNpc(IDocumentStore Store) : Endpoint<PutPlannedCombatNpcRequest, PlannedCombat>
 {
 	public override void Configure()
 	{
-		Post("/api/campaign/planned-combat/stage/npc");
+		Put("/api/campaign/planned-combat/stage/npc");
 		AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
 		Policies(TakePolicies.UserExists);
 	}
 
-	public override async Task HandleAsync(PostPlannedCombatNpcRequest req, CancellationToken ct)
+	public override async Task HandleAsync(PutPlannedCombatNpcRequest req, CancellationToken ct)
 	{
 
 		var userId = this.GetUserIdOrThrowUnauthorized();
@@ -48,18 +50,26 @@ public class PostPlannedCombatNpc(IDocumentStore Store) : Endpoint<PostPlannedCo
 				ThrowError(x => x.StageId, "There is no stage with the given id.");
 			}
 
-			var npc = PlannedCombatNonPlayerCharacter.New(
-				Name: req.Name, 
-				Initiative: req.Initiative, 
-				ArmorClass: req.ArmorClass, 
-				Health: req.Health
-			);
+			var npc = stage.NPCs.FirstOrDefault(x => x.Id == req.NpcId);
+			if (npc == null) {
+				ThrowError(x => x.NpcId, "There is no npc with the given id.");
+			}
+
+			npc = npc with {
+				Name = req.Name,
+				ArmorClass = req.ArmorClass,
+				Health = req.Health,
+				Initiative = req.Initiative,
+				Quantity = req.Quantity
+			};
+
 			var validator = new PlannedCombatNonPlayerCharacterValidator();
 			var validationResult = await validator.ValidateAsync(npc, ct);
 			if (!validationResult.IsValid) {
 				ThrowError(validationResult.ToString(", "));
 			}
-			stage.NPCs.Add(npc);
+
+			stage.NPCs = stage.NPCs.Where(x => x.Id != req.NpcId).Append(npc).ToList();
 			
 			session.Store(combat);
 			await session.SaveChangesAsync();

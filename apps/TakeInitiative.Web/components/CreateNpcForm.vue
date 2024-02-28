@@ -1,9 +1,5 @@
 <template>
-    <FormBase
-        class="flex flex-col gap-2"
-        :onSubmit="onSubmit"
-        v-slot="{ submitting }"
-    >
+    <FormBase class="flex flex-col gap-2" :onSubmit="onSubmit" v-slot="{ submitting }">
         <FormInput
             textColour="white"
             label="Name"
@@ -47,9 +43,7 @@
                                 .value)
                     "
                     :placeholder="
-                        initiativeStrategy == InitiativeStrategy.Fixed
-                            ? '+5'
-                            : '1d20 + 5'
+                        initiativeStrategy == InitiativeStrategy.Fixed ? '+5' : '1d20 + 5'
                     "
                 />
             </div>
@@ -83,12 +77,15 @@ import {
     type PlannedCombatNonPlayerCharacter,
     type PlannedCombatStage,
 } from "~/utils/types/models";
+import type {CreatePlannedCombatNpcRequest} from "~/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest"
+
+const formState = reactive({
+	error: null as ApiError<CreatePlannedCombatNpcRequest> | null
+})
 
 const props = defineProps<{
-    stage: PlannedCombatStage;
     onSubmit: (
-        stage: PlannedCombatStage,
-        plannedCombatNonPlayerCharacter: PlannedCombatNonPlayerCharacter,
+        request: Omit<CreatePlannedCombatNpcRequest, 'combatId' | 'stageId'>,
     ) => Promise<void>;
 }>();
 
@@ -98,13 +95,13 @@ const { values, errors, defineField, validate } = useForm({
 });
 const [name, nameInputProps] = defineField("name", {
     props: (state) => ({
-        errorMessage: state.errors[0],
+        errorMessage: formState.error?.getErrorFor('name') ?? state.errors[0],
     }),
 });
 
 const [quantity, quantityInputProps] = defineField("quantity", {
     props: (state) => ({
-        errorMessage: state.errors[0],
+        errorMessage: formState.error?.getErrorFor('quantity') ?? state.errors[0],
     }),
 });
 
@@ -112,7 +109,7 @@ const [initiativeStrategy, initiativeStrategyInputProps] = defineField(
     "initiative.strategy",
     {
         props: (state) => ({
-            errorMessage: state.errors[0],
+            errorMessage: formState.error?.getErrorFor('initiative.strategy') ?? state.errors[0],
         }),
     },
 );
@@ -121,7 +118,7 @@ const [initiativeValue, initiativeValueInputProps] = defineField(
     "initiative.value",
     {
         props: (state) => ({
-            errorMessage: state.errors[0],
+            errorMessage: formState.error?.getErrorFor('initiative.value') ?? state.errors[0],
         }),
     },
 );
@@ -139,29 +136,17 @@ async function onSubmit() {
     }
 
     return await props.onSubmit({
-        ...values,
-    } as PlannedCombatNonPlayerCharacter);
+		health: null,
+		initiative: {
+			strategy: initiativeStrategy.value!,
+			value: initiativeValue.value!
+		},
+		name: name.value!,
+		quantity: quantity.value!,
+		armourClass: null
+	}).catch(async error => {
+		const parsedError = await parseAsApiError(error)
+
+	});
 }
-
-// async function onSubmit(): Promise<void> {
-//     formState.isSubmitting = true;
-//     const validateResult = await validate();
-//     if (!validateResult.valid) {
-//         return Promise.resolve();
-//     }
-
-//     await useUserStore()
-//         .createCampaign({
-//             campaignName: campaignName.value ?? "",
-//         })
-//         .then((campaign) => {
-//             // Set the campaign as the current campaign
-//         })
-//         .then(async () => {
-//             await navigateTo("/");
-//         })
-//         .finally(() => {
-//             formState.isSubmitting = false;
-//         });
-// }
 </script>

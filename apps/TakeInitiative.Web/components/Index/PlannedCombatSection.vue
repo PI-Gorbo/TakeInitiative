@@ -105,10 +105,7 @@
                 />
             </Modal>
             <Modal ref="createNpcFormModal" title="Create NPC">
-                <CreateNpcForm
-                    :stage="lastedClickedStage!"
-                    :onSubmit="(stage, npc) => addNpc(stage, npc)"
-                />
+                <CreateNpcForm :onSubmit="addNpc" />
             </Modal>
         </main>
     </Transition>
@@ -125,6 +122,8 @@ import type { ButtonLoadingControl } from "../Form/Button.vue";
 import Modal from "~/components/Modal.vue";
 import type { CreatePlannedCombatRequest } from "~/utils/api/plannedCombat/createPlannedCombatRequest";
 import type { CreatePlannedCombatStageRequest } from "~/utils/api/plannedCombat/stages/createPlannedCombatStageRequest";
+import type { CreatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
+import type { UpdatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
 
 const createNpcFormModal = ref<InstanceType<typeof Modal> | null>(null);
 const createStageModal = ref<InstanceType<typeof Modal> | null>(null);
@@ -157,11 +156,18 @@ async function createStage(
 }
 
 async function addNpc(
-    stage: PlannedCombat,
-    nonPlayerCharacter: PlannedCombatNonPlayerCharacter
-) {}
+    nonPlayerCharacter: Omit<CreatePlannedCombatNpcRequest, "combatId" | "stageId">
+) {
+    return await plannedCombatStore
+        .addNpc(lastedClickedStage.value!, nonPlayerCharacter)
+        .then(() => createNpcFormModal.value?.hide())
+        .catch(() => createNpcFormModal.value);
+}
 
-function editNpc(stage: PlannedCombatStage, npc: PlannedCombatNonPlayerCharacter) {}
+function editNpc(
+    stage: PlannedCombatStage,
+    npc: Omit<UpdatePlannedCombatNpcRequest, "combatId" | "stageId">
+) {}
 
 async function deleteStage(stage: PlannedCombatStage) {
     return await plannedCombatStore.removeStage(stage.id);

@@ -8,10 +8,12 @@ public class CharacterInitiativeValidator : AbstractValidator<CharacterInitiativ
 	{
 		RuleFor(x => x.Fixed)
 			.NotEmpty()
-			.When(x => x.Strategy == InitiativeStrategy.Fixed);
+			.When(x => x.Strategy == InitiativeStrategy.Fixed)
+			.WithMessage("Must provide for 'Fixed' value when the strategy is 'Fixed'.");
 		
 		RuleFor(x => x.Roll)
 			.NotEmpty()
-			.When(x => x.Strategy == InitiativeStrategy.Roll);
+			.When(x => x.Strategy == InitiativeStrategy.Roll)
+			.WithMessage("Must provide for 'Roll' value when the strategy is 'Roll'.");
 	}
 }
