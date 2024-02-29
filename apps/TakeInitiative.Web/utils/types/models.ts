@@ -69,9 +69,10 @@ export type CharacterInitiative = InferType<
 
 // Planned Combat NPC
 export const plannedCombatNonPlayerCharacterValidator = yup.object({
+	id: yup.string(),
     name: yup.string().required("Please provide a name"),
-    health: characterHealthValidator.nullable(),
-    armorClass: yup.number().nullable(),
+    health: characterHealthValidator.notRequired(),
+    armorClass: yup.number().notRequired(),
     initiative: characterInitiativeValidator,
     quantity: yup.number(),
 });
@@ -83,7 +84,7 @@ export type PlannedCombatNonPlayerCharacter = InferType<
 export const plannedCombatStageValidator = yup.object({
     id: yup.string().required(),
     name: yup.string().required(),
-    NPCs: yup.array(plannedCombatNonPlayerCharacterValidator),
+    npcs: yup.array(plannedCombatNonPlayerCharacterValidator),
 });
 export type PlannedCombatStage = InferType<typeof plannedCombatStageValidator>;
 

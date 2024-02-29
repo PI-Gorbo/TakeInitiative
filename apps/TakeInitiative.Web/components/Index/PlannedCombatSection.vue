@@ -38,13 +38,13 @@
                         </div>
                         <section class="overflow flex gap-2 overflow-x-auto pb-4">
                             <section
-                                v-for="npc in stage.NPCs"
-                                :key="npc.name"
-                                class="min-w-fit cursor-pointer rounded-xl border border-take-navy-light p-2 hover:border-take-yellow"
-                                @onclick="() => editNpc(stage, npc)"
+                                v-for="npc in stage.npcs"
+                                :key="npc.id"
+                                class="min-w-fit cursor-pointer rounded-xl border border-take-navy-light p-2 hover:border-take-yellow select-none"
+                                @click="() => showEditNpcModal(stage)"
                             >
                                 <label class="cursor-pointer">
-                                    {{ npc.name }} x {{ npc.quantity }}
+                                    {{ npc.name }} (x {{ npc.quantity }})
                                 </label>
                                 <div class="flex justify-between gap-2">
                                     <div class="min-w-fit" v-if="npc.health">
@@ -62,7 +62,7 @@
                                     </div>
                                     <div class="min-w-fit">
                                         <FontAwesomeIcon icon="shoe-prints" />
-                                        {{ npc.initiative }}
+                                        {{ npc.initiative.value }}
                                     </div>
                                 </div>
                             </section>
@@ -100,12 +100,15 @@
             </footer>
             <Modal ref="createStageModal" title="Create Stage">
                 <CreatePlannedCombatStageForm
-                    :stage="lastedClickedStage!"
+                    :stage="createNpcModalStage!"
                     :onSubmit="createStage"
                 />
             </Modal>
             <Modal ref="createNpcFormModal" title="Create NPC">
                 <CreateNpcForm :onSubmit="addNpc" />
+            </Modal>
+            <Modal ref="editNpcFormModal" title="Edit NPC">
+                <EditNpcForm :onSubmit="editNpc" />
             </Modal>
         </main>
     </Transition>
@@ -125,7 +128,6 @@ import type { CreatePlannedCombatStageRequest } from "~/utils/api/plannedCombat/
 import type { CreatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
 import type { UpdatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
 
-const createNpcFormModal = ref<InstanceType<typeof Modal> | null>(null);
 const createStageModal = ref<InstanceType<typeof Modal> | null>(null);
 const campaignStore = useCampaignStore();
 const plannedCombatStore = usePlannedCombatStore();
@@ -137,9 +139,10 @@ const emit = defineEmits<{
 }>();
 
 // Create NPC
-const lastedClickedStage = ref<PlannedCombatStage | null>(null);
+const createNpcFormModal = ref<InstanceType<typeof Modal> | null>(null);
+const createNpcModalStage = ref<PlannedCombatStage | null>(null);
 function showCreateNpcModal(stage: PlannedCombatStage) {
-    lastedClickedStage.value = stage;
+    createNpcModalStage.value = stage;
     createNpcFormModal.value?.show();
 }
 
@@ -159,9 +162,17 @@ async function addNpc(
     nonPlayerCharacter: Omit<CreatePlannedCombatNpcRequest, "combatId" | "stageId">
 ) {
     return await plannedCombatStore
-        .addNpc(lastedClickedStage.value!, nonPlayerCharacter)
+        .addNpc(createNpcModalStage.value!, nonPlayerCharacter)
         .then(() => createNpcFormModal.value?.hide())
         .catch(() => createNpcFormModal.value);
+}
+
+// Edit npc
+const editNpcFormModal = ref<InstanceType<typeof Modal> | null>(null);
+const editNpcModalStage = ref<PlannedCombatStage | null>(null);
+function showEditNpcModal(stage: PlannedCombatStage) {
+    editNpcModalStage.value = stage;
+    editNpcFormModal.value?.show();
 }
 
 function editNpc(

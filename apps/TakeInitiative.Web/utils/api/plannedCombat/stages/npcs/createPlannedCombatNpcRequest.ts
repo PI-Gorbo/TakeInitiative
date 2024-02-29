@@ -7,8 +7,8 @@ export const createPlannedCombatNpcRequestValidator = yup.object({
     combatId: yup.string().required(),
 	stageId: yup.string().required(),
 	name: yup.string().required(),
-	health: characterHealthValidator.nullable(),
-	armourClass: yup.number().nullable(),
+	health: characterHealthValidator.required().nullable(),
+	armourClass: yup.number().required().nullable(),
 	initiative: characterInitiativeValidator.required(),
 	quantity: yup.number().required().min(1)	
 });
@@ -24,11 +24,14 @@ export type createPlannedCombatStageResponse = yup.InferType<
 >;
 
 export function createPlannedCombatNpcRequest(axios: AxiosInstance) {
-    return async function getUser(
+    return function getUser(
         request: CreatePlannedCombatNpcRequest,
     ): Promise<createPlannedCombatStageResponse> {
+		console.log(request)
         return axios
-            .post("/api/campaign/planned-combat/stage/npc", request)
+            .post("/api/campaign/planned-combat/stage/npc", {
+				...request,
+			} satisfies CreatePlannedCombatNpcRequest)
             .then(async function (response) {
                 const result =
                     await createPlannedCombatNpcResponseValidator.validate(

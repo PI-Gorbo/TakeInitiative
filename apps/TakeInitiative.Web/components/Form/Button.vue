@@ -1,5 +1,6 @@
 <template>
     <button
+        ref="buttonRef"
         :class="[
             `flex cursor-pointer justify-center rounded-md  transition-colors`,
             props.disabled
@@ -13,7 +14,15 @@
         @click="emit('clicked', loadingControls)"
     >
         <slot>
-            <div v-if="!props.isLoading" class="text-centre flex justify-center gap-1">
+            <div
+                v-if="
+                    !props.isLoading ||
+                    (props.isLoading &&
+                        typeof props.isLoading == 'object' &&
+                        props.isLoading.submitterId != buttonRef?.id)
+                "
+                class="text-centre flex justify-center gap-1"
+            >
                 <div
                     v-if="props.icon"
                     class="flex items-center justify-center text-center"
@@ -51,13 +60,16 @@ import type {
     TakeInitColour,
 } from "~/utils/types/HelperTypes";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+import type { SubmittingState } from "./Base.vue";
 
+const buttonRef = ref<HTMLButtonElement | null>(null);
 export type LoadingDisplay = string | { showSpinner: true };
 const props = withDefaults(
     defineProps<{
+        name?: string;
         label?: string;
         loadingDisplay?: LoadingDisplay | null;
-        isLoading?: boolean;
+        isLoading?: SubmittingState | boolean | null;
         buttonColour?: TakeInitColour;
         hoverButtonColour?: TakeInitColour;
         textColour?: TakeInitColour;
@@ -67,6 +79,7 @@ const props = withDefaults(
         disabled?: boolean;
     }>(),
     {
+        name: undefined,
         label: undefined,
         loadingDisplay: {
             showSpinner: true,
@@ -81,6 +94,7 @@ const props = withDefaults(
         disabled: false,
     }
 );
+const buttonName = computed(() => props.name ?? props.label);
 
 const state = reactive({
     isLoading: false,

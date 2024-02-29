@@ -49,11 +49,11 @@ public class DeletePlannedCombatNpc(IDocumentStore Store) : Endpoint<DeletePlann
 				ThrowError(x => x.StageId, "There is no stage with the given id.");
 			}
 
-			if (!stage.NPCs.Any(x => x.Id == req.NpcId)) {
+			if (!stage.Npcs.Any(x => x.Id == req.NpcId)) {
 				ThrowError(x => x.NpcId, "No NPC corresponds to the given id.");
 			}
 
-			stage.NPCs = stage.NPCs.Where(x => x.Id != req.NpcId).ToList();
+			stage.Npcs = stage.Npcs.Where(x => x.Id != req.NpcId).ToList();
 			
 			session.Store(combat);
 			await session.SaveChangesAsync();

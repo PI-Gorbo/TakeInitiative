@@ -6,21 +6,28 @@
 
 <script setup lang="ts">
 const state = reactive({
-    submitting: false,
+    submitting: null as null | SubmittingState,
 });
 
 const props = defineProps<{
     onSubmit: () => Promise<any>;
 }>();
 
-async function submit() {
-    state.submitting = true;
+export type SubmittingState = {
+    submitterId: string;
+};
+
+async function submit(event: SubmitEvent) {
+    const submitter = event.submitter as HTMLButtonElement;
+
+    console.log(event);
+    state.submitting = { submitterId: submitter.id };
     await Promise.resolve(props.onSubmit()).finally(() => {
-        state.submitting = false;
+        state.submitting = null;
     });
 }
 
 defineSlots<{
-    default(props: { submitting: boolean }): any;
+    default(props: { submitting: null | SubmittingState }): any;
 }>();
 </script>

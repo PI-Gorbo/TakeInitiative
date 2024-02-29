@@ -50,7 +50,7 @@ public class PutPlannedCombatNpc(IDocumentStore Store) : Endpoint<PutPlannedComb
 				ThrowError(x => x.StageId, "There is no stage with the given id.");
 			}
 
-			var npc = stage.NPCs.FirstOrDefault(x => x.Id == req.NpcId);
+			var npc = stage.Npcs.FirstOrDefault(x => x.Id == req.NpcId);
 			if (npc == null) {
 				ThrowError(x => x.NpcId, "There is no npc with the given id.");
 			}
@@ -69,7 +69,7 @@ public class PutPlannedCombatNpc(IDocumentStore Store) : Endpoint<PutPlannedComb
 				ThrowError(validationResult.ToString(", "));
 			}
 
-			stage.NPCs = stage.NPCs.Where(x => x.Id != req.NpcId).Append(npc).ToList();
+			stage.Npcs = stage.Npcs.Where(x => x.Id != req.NpcId).Append(npc).ToList();
 			
 			session.Store(combat);
 			await session.SaveChangesAsync();

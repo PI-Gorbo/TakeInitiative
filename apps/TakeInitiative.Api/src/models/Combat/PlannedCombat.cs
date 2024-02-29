@@ -18,7 +18,7 @@ public record PlannedCombat
 			CombatName = CombatName,
 			CampaignId = CampaignId,
 			Stages = new() {
-				new() {Id= Guid.NewGuid(),Name = "Stage One", NPCs= []}
+				new() {Id= Guid.NewGuid(),Name = "Stage One", Npcs= []}
 			}
 		};
 	}
@@ -54,10 +54,10 @@ public record PlannedCombat
 			return Result.Failure<PlannedCombat>("Stage does not exist");
 		}
 
-		return Result.FailureIf(stage.NPCs.Any(x => x.Name == npc.Name), "There is already an NPC with that name.")
+		return Result.FailureIf(stage.Npcs.Any(x => x.Name == npc.Name), "There is already an NPC with that name.")
 			.Map(() =>
 			{
-				stage.NPCs.Add(npc);
+				stage.Npcs.Add(npc);
 				return this;
 			});
 	}

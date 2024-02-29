@@ -63,8 +63,14 @@
 
         <div class="flex w-full justify-center">
             <FormButton
-                label="Create"
-                loadingDisplay="Creating..."
+                label="Save"
+                loadingDisplay="Saving..."
+                :isLoading="submitting"
+                buttonColour="take-yellow-dark"
+            />
+            <FormButton
+                label="Delete"
+                loadingDisplay="Delete..."
                 :isLoading="submitting"
                 buttonColour="take-yellow-dark"
             />
@@ -148,27 +154,38 @@ onMounted(() => {
 });
 
 async function onSubmit() {
-    formState.error = null;
-    const validateResult = await validate();
-    if (!validateResult.valid) {
-        console.log(validateResult);
-        return;
-    }
 
-    console.log("Submitting!");
-    return await props
-        .onSubmit({
-            health: null,
-            initiative: {
-                strategy: initiativeStrategy.value!,
-                value: initiativeValue.value!,
-            },
-            name: name.value!,
-            quantity: quantity.value!,
-            armourClass: null,
-        })
-        .catch(async (error) => {
-            formState.error = await parseAsApiError(error);
-        });
+	await new Promise((resolve) => setTimeout(resolve ,() => {
+	console.log("Delayed for 1 second.");
+	}, 1000))
+
+
+
+    // formState.error = null;
+    // const validateResult = await validate();
+    // if (!validateResult.valid) {
+    //     console.log(validateResult);
+    //     return;
+    // }
+
+    // console.log("Submitting!");
+    // return await props
+    //     .onSubmit({
+    //         health: null,
+    //         initiative: {
+    //             strategy: initiativeStrategy.value!,
+    //             value: initiativeValue.value!,
+    //         },
+    //         name: name.value!,
+    //         quantity: quantity.value!,
+    //         armourClass: null,
+    //     })
+    //     .catch(async (error) => {
+    //         formState.error = await parseAsApiError(error);
+    //     });
+}
+
+async function onDelete() {
+
 }
 </script>

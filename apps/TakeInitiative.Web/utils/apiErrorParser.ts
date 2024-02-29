@@ -25,9 +25,13 @@ export async function parseAsApiError<TRequest extends {}>(
         return {
             ...errorObject,
             getErrorFor: (error) => {
-                const errorList = (errorObject as ApiError<TRequest>).errors[
-                    error
-                ];
+
+				const accessors = error.split('.');
+                const errorList = (errorObject as ApiError<TRequest>).errors
+				for (let index = 0; index < accessors.length; index++) {
+					const errorList = errorList[accessors[index]]
+				}
+				
                 if (errorList == null || errorList.length == 0) {
                     return null;
                 }
@@ -40,13 +44,7 @@ export async function parseAsApiError<TRequest extends {}>(
 				generalErrors: [JSON.stringify(error.body)],
 			},
             getErrorFor: (error) => {
-                const errorList = (errorObject as ApiError<TRequest>).errors[
-                    error
-                ];
-                if (errorList == null || errorList.length == 0) {
-                    return null;
-                }
-                return errorList[0];
+                return null
             },
         };
     }

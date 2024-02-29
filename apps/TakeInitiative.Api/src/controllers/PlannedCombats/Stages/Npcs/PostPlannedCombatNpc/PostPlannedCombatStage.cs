@@ -43,7 +43,7 @@ public class PostPlannedCombatNpc(IDocumentStore Store) : Endpoint<PostPlannedCo
 				ThrowError("Planned combats can only be edited by DMs.");
 			}
 
-			var stage = combat.Stages.FirstOrDefault(x => x.Id == req.CombatId);
+			var stage = combat.Stages.FirstOrDefault(x => x.Id == req.StageId);
 			if (stage == null) {
 				ThrowError(x => x.StageId, "There is no stage with the given id.");
 			}
@@ -59,7 +59,7 @@ public class PostPlannedCombatNpc(IDocumentStore Store) : Endpoint<PostPlannedCo
 			if (!validationResult.IsValid) {
 				ThrowError(validationResult.ToString(", "));
 			}
-			stage.NPCs.Add(npc);
+			stage.Npcs.Add(npc);
 			
 			session.Store(combat);
 			await session.SaveChangesAsync();
