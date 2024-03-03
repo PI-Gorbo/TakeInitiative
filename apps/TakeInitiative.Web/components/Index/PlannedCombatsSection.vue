@@ -56,6 +56,7 @@
                         textColour="take-grey"
                         hoverTextColour="take-yellow"
                         icon="plus"
+                        label="Add Combat"
                         size="sm"
                     />
                 </div>

@@ -1,7 +1,7 @@
 <template>
     <div v-if="!pending && !error" class="flex h-full w-full flex-col overflow-auto">
         <Tabs
-            class="flex-1 p-4"
+            class="flex-1 py-4"
             backgroundColour="take-navy"
             notSelectedTabColour="take-navy"
             :renameTabs="{

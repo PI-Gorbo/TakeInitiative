@@ -1,18 +1,18 @@
 <template>
     <Transition name="fade" mode="out-in">
         <main
-            class="flex h-full w-full flex-col gap-2 overflow-auto py-2 pl-4"
+            class="flex h-full w-full flex-col gap-4 overflow-auto py-2 pl-4"
             v-if="plannedCombat"
             :key="plannedCombat.id"
         >
             <TransitionGroup
                 v-if="plannedCombat?.stages?.length != 0"
-                class="flex flex-1 flex-col gap-4"
+                class="flex flex-col gap-4"
                 tag="body"
                 name="fade"
             >
                 <div
-                    class="flex flex-1 w-full justify-center"
+                    class="flex w-full flex-1 justify-center"
                     v-for="stage in plannedCombat.stages"
                     :key="stage.id"
                 >
