@@ -1,12 +1,12 @@
 <template>
-    <main class="h-full w-full flex flex-col overflow-auto bg-take-navy text-white">
+    <main class="flex h-full w-full flex-col overflow-auto bg-take-navy text-white">
         <header>
             <div
-                class="flex cursor-pointer items-center border-b-2 border-take-yellow bg-take-navy-medium px-4 py-1 select-none"
+                class="flex select-none items-center border-b-2 border-take-yellow bg-take-navy-medium px-4 py-1"
             >
                 <h1
                     @click="() => navigateTo('/')"
-                    class="flex items-center gap-2 font-NovaCut text-2xl font-bold text-take-yellow sm:text-3xl md:text-4xl"
+                    class="flex cursor-pointer items-center gap-2 font-NovaCut text-2xl font-bold text-take-yellow sm:text-3xl md:text-4xl"
                 >
                     <img class="h-[1.5em] w-[1.5em]" src="~assets/yellowDice.png" />
                     Take Initiative

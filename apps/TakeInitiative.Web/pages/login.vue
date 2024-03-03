@@ -60,7 +60,7 @@ const { values, errors, defineField, validate } = useForm({
         yup.object({
             email: yup.string().required().email(),
             password: yup.string().required(),
-        }),
+        })
     ),
 });
 const [email, emailInputProps] = defineField("email", {

@@ -1,5 +1,5 @@
 <template>
-    <Default>
+    <main class="h-full w-full flex flex-col overflow-auto bg-take-navy text-white">
         <main class="bg-take-navy">
             <section class="shadow-sm p-4 w-full flex justify-center">
                 <div
@@ -19,8 +19,6 @@
                 </div>
             </section>
         </main>
-    </Default>
+    </main>
 </template>
-<script setup lang="ts">
-import Default from "./default.vue";
-</script>
+<script setup lang="ts"></script>

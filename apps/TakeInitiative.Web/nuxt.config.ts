@@ -7,6 +7,7 @@ export default defineNuxtConfig({
             link: [{ rel: "icon", type: "image/png", href: "/yellowDice.png" }],
             title: "Take Initiative",
         },
+        pageTransition: { name: "fade", mode: "out-in" },
     },
     devtools: { enabled: true },
     typescript: {},
