@@ -154,4 +154,3 @@ async function onSignUp() {
         .finally(() => (formState.submitting = false));
 }
 </script>
-~/utils/api/user/user

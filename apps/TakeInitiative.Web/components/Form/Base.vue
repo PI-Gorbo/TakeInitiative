@@ -10,19 +10,18 @@ const state = reactive({
 });
 
 const props = defineProps<{
-    onSubmit: () => Promise<any>;
+    onSubmit: (state: SubmittingState) => Promise<any>;
 }>();
 
 export type SubmittingState = {
     submitterId: string;
+    submitterName: string;
 };
 
 async function submit(event: SubmitEvent) {
     const submitter = event.submitter as HTMLButtonElement;
-
-    console.log(event);
-    state.submitting = { submitterId: submitter.id };
-    await Promise.resolve(props.onSubmit()).finally(() => {
+    state.submitting = { submitterId: submitter.id, submitterName: submitter.name };
+    await Promise.resolve(props.onSubmit(state.submitting)).finally(() => {
         state.submitting = null;
     });
 }

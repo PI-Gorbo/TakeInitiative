@@ -1,6 +1,7 @@
 <template>
-    <div class="h-full w-full">
+    <TransitionGroup name="fade" class="h-full w-full">
         <section
+            key="plannedCombatList"
             class="grid h-full w-full grid-cols-9"
             v-if="plannedCombats && plannedCombats.length > 0"
         >
@@ -63,12 +64,16 @@
                 <IndexPlannedCombatSection />
             </section>
         </section>
-        <section class="flex flex-col items-center px-2" v-else>
+        <section class="flex flex-col items-center px-2" v-else key="addPlannedCombat">
             <h2 class="w-full text-center text-xl">Create your first planned combat</h2>
             <CreatePlannedCombatForm :onCreatePlannedCombat="onCreatePlannedCombat" />
         </section>
 
-        <Modal ref="createPlannedCombatModal" title="Create a planned combat">
+        <Modal
+            ref="createPlannedCombatModal"
+            title="Create a planned combat"
+            key="CreatePlannedCombatModal"
+        >
             <CreatePlannedCombatForm
                 class="h-full w-full"
                 :onCreatePlannedCombat="onCreatePlannedCombat"
@@ -76,6 +81,7 @@
         </Modal>
 
         <ConfirmModal
+            key="ConfirmModal"
             ref="deleteCombatModal"
             confirmText="Delete"
             confirmColour="take-red"
@@ -85,7 +91,7 @@
             cancelColour="take-yellow"
             bodyText="Delete this planned combat?"
         />
-    </div>
+    </TransitionGroup>
 </template>
 <script setup lang="ts">
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
@@ -146,10 +152,8 @@ async function showDeleteCombatModal(
 }
 
 async function deleteCombat(loadingCtrl: ButtonLoadingControl, combat: PlannedCombat) {
-    console.log("Before loading control is used");
     loadingCtrl.setLoading();
     return await campaignStore.deletePlannedCombat(combat.id).then(() => {
-        console.log("Finished deleting combat");
         loadingCtrl.setLoaded();
         deleteCombatModal.value?.hide();
     });

@@ -7,11 +7,9 @@
         >
             <div class="flex items-center gap-2 text-center">
                 <FontAwesomeIcon
-                    v-if="!member.isDungeonMaster"
                     class="text-take-yellow"
-                    icon="user-large"
+                    :icon="!member.isDungeonMaster ? 'user-large' : 'crown'"
                 />
-                <FontAwesomeIcon v-else class="text-take-yellow" icon="crown" />
                 <label class="select-none">{{ member.username }}</label>
             </div>
             <label class="select-none truncate">{{
@@ -32,6 +30,6 @@ const props = withDefaults(
     defineProps<{
         campaignMemberDtos: CampaignMemberDto[];
     }>(),
-    {},
+    {}
 );
 </script>

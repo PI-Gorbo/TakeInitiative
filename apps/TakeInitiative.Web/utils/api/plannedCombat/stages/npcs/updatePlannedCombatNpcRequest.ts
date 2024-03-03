@@ -8,8 +8,8 @@ export const updatePlannedCombatNpcRequestValidator = yup.object({
 	stageId: yup.string().required(),
 	npcId: yup.string().required(),
 	name: yup.string().required(),
-	health: characterHealthValidator.nullable(),
-	armourClass: yup.number().nullable(),
+	health: characterHealthValidator.notRequired(),
+	armourClass: yup.number().notRequired(),
 	initiative: characterInitiativeValidator.required(),
 	quantity: yup.number().required().min(1)	
 });

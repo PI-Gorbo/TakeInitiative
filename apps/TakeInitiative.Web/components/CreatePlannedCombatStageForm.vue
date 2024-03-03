@@ -28,12 +28,9 @@
 </template>
 
 <script setup lang="ts">
-// TODO : Refactor to be the smae as the CreateCampaignForm
-type FormInputProps = InstanceType<typeof FormInput>["$props"];
 import FormInput from "~/components/Form/Input.vue";
 import type { CreatePlannedCombatStageRequest } from "~/utils/api/plannedCombat/stages/createPlannedCombatStageRequest";
 const createPlannedCombatStageForm = useCreatePlannedCombatStageForm();
-
 const props = defineProps<{
     onSubmit: (
         input: void | Omit<CreatePlannedCombatStageRequest, "combatId">

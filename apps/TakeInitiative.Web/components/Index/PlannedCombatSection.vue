@@ -1,92 +1,33 @@
 <template>
     <Transition name="fade" mode="out-in">
         <main
-            class="flex w-full flex-col gap-2 overflow-auto py-2 pl-4"
+            class="flex h-full w-full flex-col gap-2 overflow-auto py-2 pl-4"
             v-if="plannedCombat"
             :key="plannedCombat.id"
         >
             <TransitionGroup
-                class="flex flex-col gap-4 overflow-y-auto overflow-x-hidden"
+                v-if="plannedCombat?.stages?.length != 0"
+                class="flex flex-1 flex-col gap-4"
                 tag="body"
                 name="fade"
             >
                 <div
-                    class="flex w-full justify-center overflow-y-auto"
+                    class="flex flex-1 w-full justify-center"
                     v-for="stage in plannedCombat.stages"
                     :key="stage.id"
                 >
-                    <div class="w-full rounded-xl border-2 border-take-navy-light p-2">
-                        <div class="mb-2 flex w-full flex-row gap-2">
-                            <div class="flex-1 text-take-yellow">
-                                {{ stage.name }}
-                            </div>
-                            <FormButton
-                                icon="plus"
-                                buttonColour="take-navy-medium"
-                                textColour="white"
-                                @click="() => showCreateNpcModal(stage)"
-                                size="sm"
-                            />
-                            <FormButton
-                                icon="trash"
-                                buttonColour="take-navy-medium"
-                                textColour="white"
-                                hoverButtonColour="take-red"
-                                @clicked="() => deleteStage(stage)"
-                                size="sm"
-                            />
-                        </div>
-                        <section class="overflow flex gap-2 overflow-x-auto pb-4">
-                            <section
-                                v-for="npc in stage.npcs"
-                                :key="npc.id"
-                                class="min-w-fit cursor-pointer rounded-xl border border-take-navy-light p-2 hover:border-take-yellow select-none"
-                                @click="() => showEditNpcModal(stage)"
-                            >
-                                <label class="cursor-pointer">
-                                    {{ npc.name }} (x {{ npc.quantity }})
-                                </label>
-                                <div class="flex justify-between gap-2">
-                                    <div class="min-w-fit" v-if="npc.health">
-                                        <FontAwesomeIcon icon="droplet" />
-                                        {{ npc.health.currentHealth }}
-                                        {{
-                                            npc.health.maxHealth
-                                                ? `/ ${npc.health.maxHealth}`
-                                                : ""
-                                        }}
-                                    </div>
-                                    <div class="min-w-fit" v-if="npc.armorClass">
-                                        <FontAwesomeIcon icon="shield-halved" />
-                                        {{ npc.armorClass }}
-                                    </div>
-                                    <div class="min-w-fit">
-                                        <FontAwesomeIcon icon="shoe-prints" />
-                                        {{ npc.initiative.value }}
-                                    </div>
-                                </div>
-                            </section>
-                            <section
-                                class="min-w-fit cursor-pointer rounded-xl border-2 border-dashed border-take-navy-light p-2 hover:border-take-yellow group transition-colors"
-                                @click="() => showCreateNpcModal(stage)"
-                            >
-                                <FormButton
-                                    class="group-hover:text-take-yellow"
-                                    icon="plus"
-                                    label="Add NPC"
-                                    buttonColour="take-navy"
-                                    hoverButtonColour="take-navy"
-                                    textColour="white"
-                                    hoverTextColour="take-yellow"
-                                />
-                            </section>
-                        </section>
-                    </div>
+                    <PlannedCombatStageDisplay
+                        :stage="stage"
+                        :deleteStage="() => deleteStage(stage)"
+                        :createNpc="(request) => addNpc(stage, request)"
+                        :updateNpc="(request) => updateNpc(stage, request)"
+                        :deleteNpc="(request) => deleteNpc(stage, request)"
+                    />
                 </div>
             </TransitionGroup>
             <footer
-                class="flex w-full cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-take-navy-light p-2 hover:border-take-yellow group transition-colors"
-                @click="showCreateStageModal"
+                class="group flex w-full cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-take-navy-light p-2 transition-colors hover:border-take-yellow"
+                @click="createStageModal?.show()"
             >
                 <FormButton
                     class="group-hover:text-take-yellow"
@@ -99,16 +40,7 @@
                 />
             </footer>
             <Modal ref="createStageModal" title="Create Stage">
-                <CreatePlannedCombatStageForm
-                    :stage="createNpcModalStage!"
-                    :onSubmit="createStage"
-                />
-            </Modal>
-            <Modal ref="createNpcFormModal" title="Create NPC">
-                <CreateNpcForm :onSubmit="addNpc" />
-            </Modal>
-            <Modal ref="editNpcFormModal" title="Edit NPC">
-                <EditNpcForm :onSubmit="editNpc" />
+                <CreatePlannedCombatStageForm :onSubmit="createStage" />
             </Modal>
         </main>
     </Transition>
@@ -127,8 +59,9 @@ import type { CreatePlannedCombatRequest } from "~/utils/api/plannedCombat/creat
 import type { CreatePlannedCombatStageRequest } from "~/utils/api/plannedCombat/stages/createPlannedCombatStageRequest";
 import type { CreatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
 import type { UpdatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
+import PlannedCombatStageDisplay from "./PlannedCombatStageDisplay.vue";
+import type { DeletePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/deletePlannedCombatNpcRequest";
 
-const createStageModal = ref<InstanceType<typeof Modal> | null>(null);
 const campaignStore = useCampaignStore();
 const plannedCombatStore = usePlannedCombatStore();
 const plannedCombat = computed(() => plannedCombatStore.selectedPlannedCombat);
@@ -138,18 +71,7 @@ const emit = defineEmits<{
     (e: "UpdateCombat", plannedCombat: PlannedCombat): void;
 }>();
 
-// Create NPC
-const createNpcFormModal = ref<InstanceType<typeof Modal> | null>(null);
-const createNpcModalStage = ref<PlannedCombatStage | null>(null);
-function showCreateNpcModal(stage: PlannedCombatStage) {
-    createNpcModalStage.value = stage;
-    createNpcFormModal.value?.show();
-}
-
-function showCreateStageModal() {
-    createStageModal.value?.show();
-}
-
+const createStageModal = ref<InstanceType<typeof Modal> | null>(null);
 async function createStage(
     input: void | Omit<CreatePlannedCombatStageRequest, "combatId">
 ) {
@@ -159,26 +81,25 @@ async function createStage(
 }
 
 async function addNpc(
+    stage: PlannedCombatStage,
     nonPlayerCharacter: Omit<CreatePlannedCombatNpcRequest, "combatId" | "stageId">
 ) {
-    return await plannedCombatStore
-        .addNpc(createNpcModalStage.value!, nonPlayerCharacter)
-        .then(() => createNpcFormModal.value?.hide())
-        .catch(() => createNpcFormModal.value);
+    return await plannedCombatStore.addNpc(stage, nonPlayerCharacter);
 }
 
-// Edit npc
-const editNpcFormModal = ref<InstanceType<typeof Modal> | null>(null);
-const editNpcModalStage = ref<PlannedCombatStage | null>(null);
-function showEditNpcModal(stage: PlannedCombatStage) {
-    editNpcModalStage.value = stage;
-    editNpcFormModal.value?.show();
-}
-
-function editNpc(
+async function updateNpc(
     stage: PlannedCombatStage,
     npc: Omit<UpdatePlannedCombatNpcRequest, "combatId" | "stageId">
-) {}
+) {
+    return await plannedCombatStore.updateNpc(stage, npc);
+}
+
+async function deleteNpc(
+    stage: PlannedCombatStage,
+    npc: Omit<DeletePlannedCombatNpcRequest, "combatId" | "stageId">
+) {
+    return await plannedCombatStore.removeNpc(stage, npc.npcId);
+}
 
 async function deleteStage(stage: PlannedCombatStage) {
     return await plannedCombatStore.removeStage(stage.id);

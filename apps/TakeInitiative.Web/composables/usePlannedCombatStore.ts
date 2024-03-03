@@ -60,10 +60,11 @@ export const usePlannedCombatStore = defineStore("plannedCombatStore", () => {
 
 	async function updateNpc(stage: PlannedCombatStage, npc: Omit<UpdatePlannedCombatNpcRequest, "combatId" | "stageId">) {
 		return await api.plannedCombat.stage.npc
-			.delete({
+			.update({
+                ...npc,
+				armourClass: npc.armourClass,
 				combatId: state.plannedCombat?.id!,
                 stageId: stage.id,
-                ...npc,
 			}).then(setPlannedCombat)
 	}
 

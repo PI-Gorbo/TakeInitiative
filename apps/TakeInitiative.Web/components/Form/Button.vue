@@ -1,12 +1,13 @@
 <template>
     <button
         ref="buttonRef"
+        :name="props.label ?? props.icon"
         :class="[
             `flex cursor-pointer justify-center rounded-md  transition-colors`,
             props.disabled
                 ? 'bg-take-grey-dark hover:bg-take-grey-dark'
                 : `bg-${props.buttonColour} hover:bg-${props.hoverButtonColour} text-${props.textColour} hover:text-${$props.hoverTextColour}`,
-            size == 'sm' ? 'px-4 py-4 text-sm' : '',
+            size == 'sm' ? 'px-2.5 py-2.5 text-sm' : '',
             size != 'sm' ? 'px-4 py-4 text-lg' : '',
         ]"
         type="submit"

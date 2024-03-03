@@ -3,12 +3,12 @@ import type { extendNuxtSchema } from "nuxt/kit";
 import type { Path, YupSchema } from "vee-validate";
 import * as yup from "yup";
 
+
+
+
 export type ApiError<TRequest extends {}> = {
     statusCode: number;
     message: string;
-    errors: {
-        generalErrors?: string[];
-    } & Partial<Record<Path<TRequest>, string[]>>;
     getErrorFor: <TPath extends Path<TRequest>>(key: TPath | "generalErrors") => string | null;
 };
 const apiErrorSchema = yup.object({
@@ -25,27 +25,29 @@ export async function parseAsApiError<TRequest extends {}>(
         return {
             ...errorObject,
             getErrorFor: (error) => {
-
-				const accessors = error.split('.');
-                const errorList = (errorObject as ApiError<TRequest>).errors
-				for (let index = 0; index < accessors.length; index++) {
-					const errorList = errorList[accessors[index]]
+				try {
+					const accessors = error.split('.');
+					let errorValue = errorObject.errors
+					for (let index = 0; index < accessors.length; index++) {
+						errorValue = errorValue[accessors[index]]
+					}
+					
+					if (errorValue == null || errorValue.length == 0) {
+						return null;
+					}
+					return errorValue[0];
+				} catch {
+					return null;
 				}
-				
-                if (errorList == null || errorList.length == 0) {
-                    return null;
-                }
-                return errorList[0];
             },
         } satisfies ApiError<TRequest>;
     } catch {
         return {
-			errors: {
-				generalErrors: [JSON.stringify(error.body)],
+			statusCode: 500,
+			message: "Something went wrong.",
+			getErrorFor: (error) => {
+				return null
 			},
-            getErrorFor: (error) => {
-                return null
-            },
         };
     }
 }

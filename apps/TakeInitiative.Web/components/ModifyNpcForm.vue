@@ -1,11 +1,11 @@
 <template>
     <FormBase class="flex flex-col gap-2" :onSubmit="onSubmit" v-slot="{ submitting }">
         <FormInput
+            :autoFocus="true"
             textColour="white"
             label="Name"
             v-model:value="name"
             v-bind="nameInputProps"
-            :autoFocus="true"
         />
         <FormInput
             label="Quantity"
@@ -61,12 +61,26 @@
             </label>
         </section>
 
-        <div class="flex w-full justify-center">
+        <div class="flex w-full justify-center" v-if="!props.npc">
             <FormButton
                 label="Create"
                 loadingDisplay="Creating..."
-                :isLoading="submitting"
+                :isLoading="submitting && submitting.submitterName == 'Create'"
                 buttonColour="take-yellow-dark"
+            />
+        </div>
+        <div v-else class="flex gap-2 justify-between">
+            <FormButton
+                label="Save"
+                loadingDisplay="Saving..."
+                :isLoading="submitting && submitting.submitterName == 'Save'"
+                buttonColour="take-yellow-dark"
+            />
+            <FormButton
+                icon="trash"
+                :isLoading="submitting && submitting.submitterName == 'trash'"
+                buttonColour="take-navy-light"
+                hoverButtonColour="take-red"
             />
         </div>
     </FormBase>
@@ -85,14 +99,24 @@ import {
 characterInitiativeValidator,
 } from "~/utils/types/models";
 import type { CreatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
+import type { UpdatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
+import type { DeletePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/deletePlannedCombatNpcRequest";
+import type { SubmittingState } from "./Form/Base.vue";
 
 const formState = reactive({
     error: null as ApiError<CreatePlannedCombatNpcRequest> | null,
 });
 
 const props = defineProps<{
-    onSubmit: (
+	npc?: PlannedCombatNonPlayerCharacter
+    onCreate?: (
         request: Omit<CreatePlannedCombatNpcRequest, "combatId" | "stageId">,
+    ) => Promise<void>,
+	onEdit?: (
+        request: Omit<UpdatePlannedCombatNpcRequest, "combatId" | "stageId">,
+    ) => Promise<void>;
+	onDelete?: (
+        request: Omit<DeletePlannedCombatNpcRequest, "combatId" | "stageId">,
     ) => Promise<void>;
 }>();
 
@@ -142,22 +166,79 @@ const [initiativeValue, initiativeValueInputProps] = defineField(
 );
 
 onMounted(() => {
-    initiativeStrategy.value = InitiativeStrategy.Roll;
-    initiativeValue.value = "1d20 + 1";
-    quantity.value = 1;
+	if (!props.npc) {
+		initiativeStrategy.value = InitiativeStrategy.Roll;
+		initiativeValue.value = "1d20 + 1";
+		quantity.value = 1;
+	} else {
+		initiativeStrategy.value = props.npc?.initiative.strategy
+		initiativeValue.value = props.npc.initiative.value
+		quantity.value = props.npc.quantity
+		name.value = props.npc.name
+	}
 });
 
-async function onSubmit() {
-    formState.error = null;
+async function onSubmit(formSubmittingState: SubmittingState) {
+	if (formSubmittingState.submitterName == 'Create') {
+		await onCreate()
+	}
+
+	if (formSubmittingState.submitterName == "trash") {
+		await onDelete()
+	}
+
+	if (formSubmittingState.submitterName == "Save") {
+		await onEdit()
+	}
+}
+
+async function onDelete() {
+	if (!props.onDelete) return
+	return await props.onDelete({npcId: props.npc?.id!})
+		.catch(async err => {
+			formState.error = await parseAsApiError(err)
+		})
+}
+
+async function onEdit() {
+	if (!props.onEdit) return;
+
+	formState.error = null;
     const validateResult = await validate();
     if (!validateResult.valid) {
         console.log(validateResult);
         return;
     }
 
-    console.log("Submitting!");
     return await props
-        .onSubmit({
+        .onEdit({
+            health: null,
+            initiative: {
+                strategy: initiativeStrategy.value!,
+                value: initiativeValue.value!,
+            },
+            name: name.value!,
+            quantity: quantity.value!,
+            armourClass: null,
+			npcId: props.npc?.id!
+        })
+        .catch(async (error) => {
+            formState.error = await parseAsApiError(error);
+        });
+}
+
+async function onCreate() {
+	if (!props.onCreate) return;
+
+	formState.error = null;
+    const validateResult = await validate();
+    if (!validateResult.valid) {
+        console.log(validateResult);
+        return;
+    }
+
+    return await props
+        .onCreate({
             health: null,
             initiative: {
                 strategy: initiativeStrategy.value!,

@@ -27,7 +27,6 @@ export function createPlannedCombatNpcRequest(axios: AxiosInstance) {
     return function getUser(
         request: CreatePlannedCombatNpcRequest,
     ): Promise<createPlannedCombatStageResponse> {
-		console.log(request)
         return axios
             .post("/api/campaign/planned-combat/stage/npc", {
 				...request,

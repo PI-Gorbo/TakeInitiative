@@ -3,6 +3,7 @@ import type { GetUserResponse } from "~/utils/api/user/getUserRequest";
 import type { Campaign } from "~/utils/types/models";
 import { type CreateCampaignRequest } from "~/utils/api/campaign/createCampaignRequest";
 import type { LoginRequest } from "~/utils/api/user/loginRequest";
+import type { UpdateCampaignDetailsRequest } from "~/utils/api/campaign/updateCampaignDetailsRequest";
 
 type User = GetUserResponse;
 export const useUserStore = defineStore("userStore", () => {
@@ -58,6 +59,15 @@ export const useUserStore = defineStore("userStore", () => {
             .then((campaign) => fetchUser().then(() => campaign));
     }
 
+	async function updateCampaign(
+        request: UpdateCampaignDetailsRequest,
+    ): Promise<Campaign> {
+        return await api.campaign
+            .update(request)
+            .then((campaign) => fetchUser().then(() => campaign));
+    }
+
+
     // Helper functions
     return {
         state,
@@ -66,6 +76,7 @@ export const useUserStore = defineStore("userStore", () => {
         signUp,
         isLoggedIn,
         createCampaign,
+		updateCampaign,
         signOut,
         username: computed(() => state.user?.username),
     };

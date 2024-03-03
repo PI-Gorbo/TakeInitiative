@@ -6,8 +6,9 @@ import { campaignValidator } from "../../types/models";
 
 export type UpdateCampaignDetailsRequest = {
 	campaignId: string;
-	campaignDescription: string;
-	campaignResources: string;
+	campaignDescription?: string;
+	campaignResources?: string;
+	campaignName?: string;
 };
 const updateCampaignDetailsRequestSchema = campaignValidator;
 export type UpdateCampaignResponse = yup.InferType<

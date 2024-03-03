@@ -152,6 +152,7 @@ async function submitDetails(): Promise<void> {
     return await campaignStore.updateCampaignDetails({
         campaignDescription: description.value ?? "",
         campaignResources: resources.value ?? "",
+		
     });
 }
 </script>

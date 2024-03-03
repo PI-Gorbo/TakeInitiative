@@ -1,9 +1,8 @@
 <template>
     <div class="flex flex-col">
-        <label
-            :class="[`text-${props.textColour} block text-sm font-medium`]"
-            >{{ props.label }}</label
-        >
+        <label :class="[`text-${props.textColour} block text-sm font-medium`]">{{
+            props.label
+        }}</label>
         <input
             :autofocus="props.autoFocus"
             :class="[
@@ -46,7 +45,7 @@ const props = withDefaults(
         textColour: "white",
         autoFocus: false,
         errorMessage: null,
-    },
+    }
 );
 
 const emits = defineEmits<{
