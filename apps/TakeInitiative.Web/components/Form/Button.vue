@@ -12,7 +12,7 @@
         ]"
         type="submit"
         :disabled="props.disabled"
-        @click="emit('clicked', loadingControls)"
+        @click="onClick"
     >
         <slot>
             <div
@@ -22,7 +22,7 @@
                         typeof props.isLoading == 'object' &&
                         props.isLoading.submitterId != buttonRef?.id)
                 "
-                class="text-centre flex justify-center gap-1"
+                class="text-centre flex select-none justify-center gap-1"
             >
                 <div
                     v-if="props.icon"
@@ -34,7 +34,9 @@
                         :size="props.iconSize"
                     />
                 </div>
-                <label v-if="props.label" class="cursor-pointer">{{ props.label }}</label>
+                <div v-if="props.label" class="cursor-pointer" @click="onClick">
+                    {{ props.label }}
+                </div>
             </div>
             <div v-else-if="props.loadingDisplay" class="flex justify-center">
                 <label v-if="typeof props.loadingDisplay === 'string'"
@@ -78,6 +80,7 @@ const props = withDefaults(
         icon?: string;
         size?: FontAwesomeIconSize;
         disabled?: boolean;
+        click?: () => Promise<any>;
     }>(),
     {
         name: undefined,
@@ -93,7 +96,8 @@ const props = withDefaults(
         icon: undefined,
         iconSize: "lg",
         disabled: false,
-    }
+        click: undefined,
+    },
 );
 const buttonName = computed(() => props.name ?? props.label);
 
@@ -111,7 +115,15 @@ const loadingControls = {
 };
 
 export type ButtonLoadingControl = typeof loadingControls;
+async function onClick(event: Event) {
+    emit("clicked", loadingControls);
+    if (props.click == undefined) {
+        return;
+    }
 
+    state.isLoading = true;
+    await props.click().finally(() => (state.isLoading = false));
+}
 const emit = defineEmits<{
     (e: "clicked", loadingCtrl: ButtonLoadingControl): void;
 }>();

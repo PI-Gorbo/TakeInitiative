@@ -1,4 +1,6 @@
 import { createCampaignRequest } from "~/utils/api/campaign/createCampaignRequest";
+import { deleteCampaignRequest } from "~/utils/api/campaign/deleteCampaignRequest";
+
 import { getCampaignRequest } from "~/utils/api/campaign/getCampaignRequest";
 import { joinCampaignRequest } from "~/utils/api/campaign/joinCampaignRequest";
 import { updateCampaignDetailsRequest } from "~/utils/api/campaign/updateCampaignDetailsRequest";
@@ -27,6 +29,7 @@ export const useApi = () => {
             join: joinCampaignRequest($axios),
             update: updateCampaignDetailsRequest($axios),
             get: getCampaignRequest($axios),
+            delete: deleteCampaignRequest($axios),
         },
         plannedCombat: {
             create: createPlannedCombatRequest($axios),
@@ -35,11 +38,11 @@ export const useApi = () => {
             stage: {
                 create: createPlannedCombatStageRequest($axios),
                 delete: deletePlannedCombatStageRequest($axios),
-				npc: {
-					create: createPlannedCombatNpcRequest($axios),
-					update: updatePlannedCombatNpcRequest($axios),
-					delete: deletePlannedCombatNpcRequest($axios)
-				}
+                npc: {
+                    create: createPlannedCombatNpcRequest($axios),
+                    update: updatePlannedCombatNpcRequest($axios),
+                    delete: deletePlannedCombatNpcRequest($axios),
+                },
             },
         },
     };

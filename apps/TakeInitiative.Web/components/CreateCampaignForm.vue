@@ -1,19 +1,34 @@
 <template>
-    <form @submit="onSubmit" @submit.prevent="true" class="flex flex-col gap-2">
+    <FormBase
+        @submit="onSubmit"
+        v-slot="{ submitting }"
+        class="flex flex-col gap-2"
+    >
         <FormInput
             label="Campaign name"
             v-model:value="campaignName"
             v-bind="campaignNameInputProps"
+            :autoFocus="true"
         />
+        <div
+            v-if="
+                formState.formError &&
+                formState.formError.getErrorFor('generalErrors')
+            "
+        >
+            <label class="text-take-red">
+                {{ formState.formError.getErrorFor("generalErrors") }}
+            </label>
+        </div>
         <div class="flex w-full justify-center">
             <FormButton
                 label="Create"
                 loadingDisplay="Creating..."
-                :isLoading="formState.isSubmitting"
+                :isLoading="submitting"
                 buttonColour="take-yellow-dark"
             />
         </div>
-    </form>
+    </FormBase>
 </template>
 
 <script setup lang="ts">
@@ -21,11 +36,15 @@ import { Form } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/yup";
 import { useForm } from "vee-validate";
 import * as yup from "yup";
-
-// Form Definition
+import type { CreateCampaignRequest } from "~/utils/api/campaign/createCampaignRequest";
 const formState = reactive({
-    isSubmitting: false,
+    formError: null as null | ApiError<CreateCampaignRequest>,
 });
+
+const props = defineProps<{
+    submit: (req: CreateCampaignRequest) => Promise<any>;
+}>();
+
 const { values, errors, defineField, validate } = useForm({
     validationSchema: toTypedSchema(
         yup.object({
@@ -35,29 +54,21 @@ const { values, errors, defineField, validate } = useForm({
 });
 const [campaignName, campaignNameInputProps] = defineField("campaignName", {
     props: (state) => ({
-        errorMessage: state.errors[0],
+        errorMessage:
+            formState.formError == null
+                ? state.errors[0]
+                : formState.formError?.getErrorFor("campaignName"),
     }),
 });
 
 async function onSubmit(): Promise<void> {
-    formState.isSubmitting = true;
+    formState.formError = null;
     const validateResult = await validate();
     if (!validateResult.valid) {
         return Promise.resolve();
     }
-
-    await useUserStore()
-        .createCampaign({
-            campaignName: campaignName.value ?? "",
-        })
-        .then((campaign) => {
-            // Set the campaign as the current campaign
-        })
-        .then(async () => {
-            await navigateTo("/");
-        })
-        .finally(() => {
-            formState.isSubmitting = false;
-        });
+    return await props
+        .submit({ campaignName: campaignName.value ?? "" })
+        .catch(async (e) => (formState.formError = await parseAsApiError(e)));
 }
 </script>

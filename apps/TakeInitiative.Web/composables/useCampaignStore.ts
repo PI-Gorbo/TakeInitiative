@@ -31,19 +31,13 @@ export const useCampaignStore = defineStore("campaignStore", () => {
             }
 
             // Initialize Dependencies.
-            const memberDetails = userStore.state.user?.dmCampaigns.concat(
-                userStore.state.user.memberCampaigns,
-            )[0];
-            const campaignId: string | undefined =
-                state.campaign?.id ?? memberDetails?.campaignId;
-
-            if (campaignId == null) {
+            if (userStore.state.selectedCampaignId == null) {
                 return Promise.reject(
                     "User store is empty. Cannot initialize the campaign store.",
                 );
             }
 
-            return await setCampaignById(campaignId);
+            return await setCampaignById(userStore.state.selectedCampaignId);
         });
     }
 

@@ -1,9 +1,10 @@
-import type { SignUpRequest } from "~/utils/api/user/signUpRequest";
-import type { GetUserResponse } from "~/utils/api/user/getUserRequest";
-import type { Campaign } from "~/utils/types/models";
-import { type CreateCampaignRequest } from "~/utils/api/campaign/createCampaignRequest";
-import type { LoginRequest } from "~/utils/api/user/loginRequest";
+import type { CreateCampaignRequest } from "~/utils/api/campaign/createCampaignRequest";
+import type { DeleteCampaignRequest } from "~/utils/api/campaign/deleteCampaignRequest";
 import type { UpdateCampaignDetailsRequest } from "~/utils/api/campaign/updateCampaignDetailsRequest";
+import type { GetUserResponse } from "~/utils/api/user/getUserRequest";
+import type { LoginRequest } from "~/utils/api/user/loginRequest";
+import type { SignUpRequest } from "~/utils/api/user/signUpRequest";
+import type { Campaign } from "~/utils/types/models";
 
 type User = GetUserResponse;
 export const useUserStore = defineStore("userStore", () => {
@@ -11,15 +12,38 @@ export const useUserStore = defineStore("userStore", () => {
 
     const state = reactive({
         user: null as User | null,
+        selectedCampaignId: null as string | null,
     });
 
     async function init(): Promise<void> {
-        return await isLoggedIn().then();
+        return await isLoggedIn().then(() => {});
     }
 
     async function fetchUser(): Promise<User> {
         // fetch the user.
-        return await api.user.getUser().then((user) => (state.user = user));
+        return await api.user
+            .getUser()
+            .then((user) => (state.user = user))
+            .then((user) => {
+                if (
+                    campaignList.value?.find(
+                        (x) => x.campaignId == state.selectedCampaignId,
+                    ) != null
+                ) {
+                    return user;
+                }
+
+                state.selectedCampaignId =
+                    campaignList.value && campaignList.value.length != 0
+                        ? campaignList.value[0].campaignId
+                        : null;
+
+                return user;
+            });
+    }
+
+    function setSelectedCampaign(campaignId: string) {
+        state.selectedCampaignId = campaignId;
     }
 
     async function isLoggedIn(): Promise<Boolean> {
@@ -59,7 +83,13 @@ export const useUserStore = defineStore("userStore", () => {
             .then((campaign) => fetchUser().then(() => campaign));
     }
 
-	async function updateCampaign(
+    async function joinCampaign(request: JoinCampaignForm): Promise<Campaign> {
+        return await api.campaign
+            .create(request)
+            .then((campaign) => fetchUser().then(() => campaign));
+    }
+
+    async function updateCampaign(
         request: UpdateCampaignDetailsRequest,
     ): Promise<Campaign> {
         return await api.campaign
@@ -67,6 +97,32 @@ export const useUserStore = defineStore("userStore", () => {
             .then((campaign) => fetchUser().then(() => campaign));
     }
 
+    async function deleteCampaign(
+        request: DeleteCampaignRequest,
+    ): Promise<void> {
+        return await api.campaign
+            .delete(request)
+            .then((campaign) => fetchUser().then(() => campaign));
+    }
+    const username = computed(() => state.user?.username);
+
+    const campaignCount = computed(() => {
+        if (state.user == null) {
+            return 0;
+        }
+
+        return (
+            state.user.dmCampaigns.length + state.user.memberCampaigns.length
+        );
+    });
+
+    const campaignList = computed(() => {
+        return state.user?.dmCampaigns
+            .map((campaign) => ({ ...campaign, isDm: true }))
+            .concat(
+                state.user.memberCampaigns.map((c) => ({ ...c, isDm: false })),
+            );
+    });
 
     // Helper functions
     return {
@@ -76,8 +132,13 @@ export const useUserStore = defineStore("userStore", () => {
         signUp,
         isLoggedIn,
         createCampaign,
-		updateCampaign,
+        updateCampaign,
+        deleteCampaign,
         signOut,
-        username: computed(() => state.user?.username),
+        setSelectedCampaign,
+        joinCampaign,
+        username,
+        campaignCount,
+        campaignList,
     };
 });
