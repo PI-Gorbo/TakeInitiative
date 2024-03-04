@@ -15,15 +15,41 @@
                     <section class="flex flex-1 justify-end gap-2">
                         <div class="flex items-center gap-2">
                             <Transition name="fade">
-                                <FormButton
-                                    v-if="isIndexRoute"
-                                    icon="share-from-square"
-                                    textColour="white"
-                                    size="sm"
-                                    buttonColour="take-navy-light"
-                                    hoverButtonColour="take-yellow"
-                                    @clicked="() => shareCampaignModal?.show()"
-                                />
+                                <div v-if="isIndexRoute" class="flex items-center gap-2">
+                                    <article class="flex flex-row items-center gap-1">
+                                        <label
+                                            for="campaigns"
+                                            class="font-NovaCut text-take-yellow"
+                                            >Campaigns:</label
+                                        >
+                                        <select
+                                            name="campaigns"
+                                            id="campaigns"
+                                            class="rounded-lg bg-take-navy p-2"
+                                            :value="userStore.state.selectedCampaignId"
+                                            @change="(e) => {
+												const campaignId = (e.target as HTMLSelectElement).value
+												userStore.state.selectedCampaignId = campaignId
+											}"
+                                        >
+                                            <option
+                                                v-for="c in userStore.campaignList"
+                                                :key="c.campaignId"
+                                                :value="c.campaignId"
+                                            >
+                                                {{ c.campaignName }}
+                                            </option>
+                                        </select>
+                                    </article>
+                                    <FormButton
+                                        icon="share-from-square"
+                                        textColour="white"
+                                        size="sm"
+                                        buttonColour="take-navy-light"
+                                        hoverButtonColour="take-yellow"
+                                        @clicked="() => shareCampaignModal?.show()"
+                                    />
+                                </div>
                             </Transition>
                             <Transition name="fade">
                                 <FormButton
@@ -65,20 +91,20 @@
                 </main>
             </Modal>
             <Modal ref="shareCampaignModal" title="Share">
-                <main class="text-white flex flex-col gap-4">
-                    <div class="flex gap-2 flex-col">
+                <main class="flex flex-col gap-4 text-white">
+                    <div class="flex flex-col gap-2">
                         <label>Code</label>
                         <div
-                            class="w-full text-center bg-take-navy rounded-lg text-xl p-1"
+                            class="w-full rounded-lg bg-take-navy p-1 text-center text-xl"
                         >
                             {{ userStore.selectedCampaignDto?.joinCode }}
                         </div>
                     </div>
 
-                    <div class="flex gap-2 flex-col">
+                    <div class="flex flex-col gap-2">
                         <label>Join Url</label>
                         <div
-                            class="w-full text-center bg-take-navy rounded-lg text-xl p-1 px-2"
+                            class="w-full rounded-lg bg-take-navy p-1 px-2 text-center text-xl"
                         >
                             {{
                                 `${config.public.webUrl}/join/${userStore.selectedCampaignDto?.joinCode}`
