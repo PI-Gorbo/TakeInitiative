@@ -66,9 +66,10 @@ public class GetCampaign(IDocumentStore Store) : Endpoint<GetCampaignRequest, Ge
 				return new GetCampaignResponse()
 				{
 					Campaign = campaign,
+					JoinCode = campaign.GetJoinCode(),
 					NonUserCampaignMembers = nonUserCampaignMemberDtos.ToArray(),
 					UserCampaignMember = userCampaignMember,
-					PlannedCombats = plannedCombats.ToArray()
+					PlannedCombats = plannedCombats.ToArray(),
 				};
 			});
 

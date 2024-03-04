@@ -33,11 +33,11 @@ public class GetUser(IDocumentStore Store) : EndpointWithoutRequest<GetUserRespo
 					var member = campaign.CampaignMemberInfo.SingleOrDefault(x => x.UserId == userId);
 					if (member!.IsDungeonMaster)
 					{
-						dmCampaigns.Add(new GetUserCampaignDto(campaign.CampaignName, campaign.Id));
+						dmCampaigns.Add(new GetUserCampaignDto(campaign.CampaignName, campaign.Id, campaign.GetJoinCode()));
 					}
 					else
 					{
-						memberCampaigns.Add(new GetUserCampaignDto(campaign.CampaignName, campaign.Id));
+						memberCampaigns.Add(new GetUserCampaignDto(campaign.CampaignName, campaign.Id, campaign.GetJoinCode()));
 					}
 				}
 

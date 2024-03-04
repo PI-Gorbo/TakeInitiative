@@ -13,7 +13,7 @@ public class PostLogout(
 	IOptions<JWTOptions> JWTOptions,
 	UserManager<ApplicationUser> UserManager,
 	SignInManager<ApplicationUser> SignInManager
-	) : Endpoint<PostSignUpRequest>
+	) : EndpointWithoutRequest
 {
 	public override void Configure()
 	{
@@ -21,7 +21,7 @@ public class PostLogout(
 		AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
 		Policies(TakePolicies.UserExists);
 	}
-	public override async Task HandleAsync(PostSignUpRequest req, CancellationToken ct)
+	public override async Task HandleAsync(CancellationToken ct)
 	{
 		try
 		{

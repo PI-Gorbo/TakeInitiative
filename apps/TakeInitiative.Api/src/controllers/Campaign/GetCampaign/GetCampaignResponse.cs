@@ -8,4 +8,5 @@ public record GetCampaignResponse
     public required CampaignMember UserCampaignMember { get; set; }
     public required CampaignMemberDto[] NonUserCampaignMembers { get; set; }
     public required PlannedCombat[]? PlannedCombats { get; set; }
+	public required string JoinCode {get; set;}
 }

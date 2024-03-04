@@ -84,10 +84,11 @@ async function onLogin() {
         state.isSubmitting = false;
         return;
     }
-
+	
     await userStore
         .login({ email: email.value ?? "", password: password.value ?? "" })
         .then(async () => {
+            console.log("Navigating to root");
             await navigateTo("/");
         })
         .catch(async (error) => {

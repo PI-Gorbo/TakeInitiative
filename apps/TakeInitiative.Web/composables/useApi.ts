@@ -14,6 +14,7 @@ import { deletePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/
 import { updatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
 import { getUserRequest } from "~/utils/api/user/getUserRequest";
 import { loginRequest } from "~/utils/api/user/loginRequest";
+import { logoutRequest } from "~/utils/api/user/logoutRequest";
 import { signUpRequest } from "~/utils/api/user/signUpRequest";
 
 export const useApi = () => {
@@ -23,6 +24,7 @@ export const useApi = () => {
             getUser: getUserRequest($axios),
             signUp: signUpRequest($axios),
             login: loginRequest($axios),
+			logout: logoutRequest($axios)
         },
         campaign: {
             create: createCampaignRequest($axios),

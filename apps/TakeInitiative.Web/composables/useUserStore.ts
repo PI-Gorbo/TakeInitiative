@@ -1,5 +1,6 @@
 import type { CreateCampaignRequest } from "~/utils/api/campaign/createCampaignRequest";
 import type { DeleteCampaignRequest } from "~/utils/api/campaign/deleteCampaignRequest";
+import type { JoinCampaignRequest } from "~/utils/api/campaign/joinCampaignRequest";
 import type { UpdateCampaignDetailsRequest } from "~/utils/api/campaign/updateCampaignDetailsRequest";
 import type { GetUserResponse } from "~/utils/api/user/getUserRequest";
 import type { LoginRequest } from "~/utils/api/user/loginRequest";
@@ -21,6 +22,7 @@ export const useUserStore = defineStore("userStore", () => {
 
     async function fetchUser(): Promise<User> {
         // fetch the user.
+		console.log("Fetching user!")
         return await api.user
             .getUser()
             .then((user) => (state.user = user))
@@ -61,7 +63,7 @@ export const useUserStore = defineStore("userStore", () => {
     async function login(request: LoginRequest): Promise<void> {
         return await api.user
             .login(request)
-            .then(async () => await fetchUser)
+            .then(async () => await fetchUser())
             .then();
     }
 
@@ -71,8 +73,13 @@ export const useUserStore = defineStore("userStore", () => {
         });
     }
 
-    async function signOut(): Promise<void> {
-        await navigateTo("/login");
+    async function logout(): Promise<void> {
+        await api.user.logout()
+			.then(() => {
+				state.selectedCampaignId = null
+				state.user = null
+			})
+			.then(async () => await navigateTo("/login"))
     }
 
     async function createCampaign(
@@ -83,9 +90,9 @@ export const useUserStore = defineStore("userStore", () => {
             .then((campaign) => fetchUser().then(() => campaign));
     }
 
-    async function joinCampaign(request: JoinCampaignForm): Promise<Campaign> {
+    async function joinCampaign(request: JoinCampaignRequest): Promise<Campaign> {
         return await api.campaign
-            .create(request)
+            .join(request)
             .then((campaign) => fetchUser().then(() => campaign));
     }
 
@@ -134,11 +141,12 @@ export const useUserStore = defineStore("userStore", () => {
         createCampaign,
         updateCampaign,
         deleteCampaign,
-        signOut,
+        logout,
         setSelectedCampaign,
         joinCampaign,
         username,
         campaignCount,
         campaignList,
+		selectedCampaignDto: computed(() => campaignList.value?.find(x => x.campaignId == state.selectedCampaignId))
     };
 });

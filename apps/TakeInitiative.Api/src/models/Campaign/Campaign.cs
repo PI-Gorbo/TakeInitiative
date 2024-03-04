@@ -1,3 +1,5 @@
+using TakeInitiative.Utilities;
+
 namespace TakeInitiative.Api.Models;
 
 public record Campaign
@@ -39,6 +41,8 @@ public record Campaign
 
         return memberInfo.IsDungeonMaster;
     }
+
+	public string GetJoinCode() => CampaignIdShortener.ToShortId(this.Id);
 }
 
 

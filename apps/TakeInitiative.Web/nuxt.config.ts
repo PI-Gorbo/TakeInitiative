@@ -17,6 +17,7 @@ export default defineNuxtConfig({
             axios: <CreateAxiosDefaults>{
                 baseURL: process.env.apiUrl,
             },
+			webUrl: process.env.webUrl,
         },
     },
     build: {
