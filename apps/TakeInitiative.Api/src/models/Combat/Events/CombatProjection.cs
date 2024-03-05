@@ -16,7 +16,7 @@ public class CombatProjection : SingleStreamProjection<Combat>
 		{
 			CombatLogs = [$"{user?.UserName} joined the combat at {eventDetails.Timestamp:R}"],
 			CurrentPlayers = Combat.CurrentPlayers?.Add(
-				new PlayerDto(@event.UserId, @event.MemberId)
+				new PlayerDto(@event.UserId)
 			),
 		};
 	}
