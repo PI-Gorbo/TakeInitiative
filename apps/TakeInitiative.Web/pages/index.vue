@@ -7,11 +7,12 @@
             <header
                 v-if="campaignStore.state.combatDto"
                 :class="[
-                    'rounded-lg  px-4 py-3 text-center text-xl text-take-navy',
+                    'rounded-lg  px-4 py-3 text-center text-xl text-take-navy select-none cursor-pointer',
                     campaignStore.state.combatDto.state == CombatState.Open
                         ? 'bg-take-yellow-dark'
                         : 'bg-take-red',
                 ]"
+                @click="() => navigateTo(`/combat/${campaignStore.state.combatDto?.id}`)"
             >
                 <div v-if="campaignStore.state.combatDto.state == CombatState.Open">
                     {{ openCombatText }}

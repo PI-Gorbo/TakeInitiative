@@ -15,6 +15,21 @@
                     <section class="flex flex-1 justify-end gap-2">
                         <div class="flex items-center gap-2">
                             <Transition name="fade">
+                                <div v-if="isCombatRoute" class="flex items-center gap-2">
+                                    <article>
+                                        <label
+                                            class="text-take-yellow font-NovaCut text-lg"
+                                        >
+                                            {{
+                                                campaignStore.state.campaign?.campaignName
+                                            }}
+                                            <span class="text-white">-</span>
+                                            {{ combatStore.state.combat?.combatName }}
+                                        </label>
+                                    </article>
+                                </div>
+                            </Transition>
+                            <Transition name="fade">
                                 <div v-if="isIndexRoute" class="flex items-center gap-2">
                                     <article class="flex flex-row items-center gap-1">
                                         <label
@@ -124,9 +139,18 @@ import Modal from "~/components/Modal.vue";
 const manageUserModal = ref<InstanceType<typeof Modal> | null>(null);
 const shareCampaignModal = ref<InstanceType<typeof Modal> | null>(null);
 const userStore = useUserStore();
+const combatStore = useCombatStore();
+const campaignStore = useCampaignStore();
 const routeInfo = useRoute();
 const isIndexRoute = computed(() => routeInfo.name == "index");
 const isCampaignsRoute = computed(() => routeInfo.name == "campaigns");
+const isCombatRoute = computed(() => routeInfo.name == "combat-id");
+const joinCode = computed(() => {
+    if (isIndexRoute) {
+        return userStore.selectedCampaignDto?.joinCode;
+    }
+});
+
 const config = useRuntimeConfig();
 const manageUserState = reactive({
     loggingOut: false,

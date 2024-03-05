@@ -107,7 +107,7 @@ export enum CombatState {
 
 export const combatTimingRecordValidator = yup.object({
     startTime: yup.string(),
-    endTime: yup.string(),
+    endTime: yup.string().nullable(),
 });
 export type CombatTiming = InferType<typeof combatTimingRecordValidator>;
 export const playerDtoValidator = yup.object({
@@ -123,7 +123,7 @@ export const combatValidator = yup.object({
     combatName: yup.string().required(),
     dungeonMaster: yup.string().required(),
     timing: yup.array(combatTimingRecordValidator).required(),
-    combatLots: yup.array(yup.string()).required(),
+    combatLogs: yup.array(yup.string()).required(),
     currentPlayers: yup.array(playerDtoValidator).required(),
     plannedStages: yup.array(plannedCombatStageValidator).required(),
     initiativeList: yup.array(),
