@@ -1,31 +1,49 @@
 <template>
     <TransitionGroup name="fade" tag="main" class="flex h-full flex-col items-center">
-        <Tabs
+        <div
             v-if="(!pending && !error) || userStore.state.selectedCampaignId == null"
-            class="max-w-[1200px] flex-1 flex-col overflow-auto py-4 sm:w-full md:w-4/5 2xl:w-full"
-            backgroundColour="take-navy"
-            notSelectedTabColour="take-navy"
-            :renameTabs="{
-                PlannedCombats: 'Planned Combats',
-            }"
-            :showTabs="{
-                PlannedCombats: () => {
-                    return campaignStore.isDm;
-                },
-            }"
-            negativeSectionId="IndexPageTabs"
+            class="flex max-w-[1200px] flex-1 flex-col overflow-auto py-4 sm:w-full md:w-4/5 2xl:w-full"
         >
-            <template #Summary>
-                <IndexSummarySection />
-            </template>
-            <template #Characters> Characters... </template>
-            <template #PlannedCombats>
-                <IndexPlannedCombatsSection />
-            </template>
-        </Tabs>
-        <div v-else class="w-full h-full flex items-center justify-center">
-            {{ pending }}
-            {{ error }}
+            <header
+                v-if="campaignStore.state.combatDto"
+                :class="[
+                    'rounded-lg  px-4 py-3 text-center text-xl text-take-navy',
+                    campaignStore.state.combatDto.state == CombatState.Open
+                        ? 'bg-take-yellow-dark'
+                        : 'bg-take-red',
+                ]"
+            >
+                <div v-if="campaignStore.state.combatDto.state == CombatState.Open">
+                    {{ openCombatText }}
+                </div>
+                <div v-else>
+                    {{ combatStartedText }}
+                </div>
+            </header>
+            <Tabs
+                class="flex-1 flex-col overflow-auto py-4"
+                backgroundColour="take-navy"
+                notSelectedTabColour="take-navy"
+                :renameTabs="{
+                    PlannedCombats: 'Planned Combats',
+                }"
+                :showTabs="{
+                    PlannedCombats: () => {
+                        return campaignStore.isDm;
+                    },
+                }"
+                negativeSectionId="IndexPageTabs"
+            >
+                <template #Summary>
+                    <IndexSummarySection />
+                </template>
+                <template #Characters> Characters... </template>
+                <template #PlannedCombats>
+                    <IndexPlannedCombatsSection />
+                </template>
+            </Tabs>
+        </div>
+        <div v-else class="flex h-full w-full items-center justify-center">
             <FontAwesomeIcon class="fa-spin" icon="circle-notch" size="10x" />
         </div>
     </TransitionGroup>
@@ -36,6 +54,7 @@ import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { toTypedSchema } from "@vee-validate/yup";
 import { useForm } from "vee-validate";
 import redirectToCreateOrJoinCampaign from "~/middleware/redirectToCreateOrJoinCampaign";
+import { CombatState } from "~/utils/types/models";
 
 const userStore = useUserStore();
 const { state } = storeToRefs(userStore);
@@ -56,4 +75,20 @@ definePageMeta({
     requiresAuth: true,
     middleware: [redirectToCreateOrJoinCampaign],
 });
+
+const openCombatText = computed(() => {
+    const combatOpenedByUser = campaignStore.state.nonUserCampaignMembers
+        ?.concat([
+            {
+                userId: userStore.state.user?.userId!,
+                username: userStore.username!,
+            } satisfies {
+				userId: string,
+				username: string
+			},
+        ])
+        .find((x) => x.userId == campaignStore.state.combatDto?.dungeonMaster)?.username;
+    return `There is an combat opened by ${combatOpenedByUser}! Click to join before it starts...`;
+});
+const combatStartedText = computed(() => {});
 </script>

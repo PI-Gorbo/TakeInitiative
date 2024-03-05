@@ -5,6 +5,17 @@
             v-if="plannedCombat"
             :key="plannedCombat.id"
         >
+            <header>
+                <FormButton
+                    label="Open Combat"
+                    @clicked="
+                        () => {
+                            campaignStore.openCombat(plannedCombat?.id!);
+                        }
+                    "
+                    size="sm"
+                />
+            </header>
             <TransitionGroup
                 v-if="plannedCombat?.stages?.length != 0"
                 class="flex flex-col gap-4"
@@ -73,7 +84,7 @@ const emit = defineEmits<{
 
 const createStageModal = ref<InstanceType<typeof Modal> | null>(null);
 async function createStage(
-    input: void | Omit<CreatePlannedCombatStageRequest, "combatId">
+    input: void | Omit<CreatePlannedCombatStageRequest, "combatId">,
 ) {
     return await plannedCombatStore
         .addStage(input!)
@@ -82,21 +93,24 @@ async function createStage(
 
 async function addNpc(
     stage: PlannedCombatStage,
-    nonPlayerCharacter: Omit<CreatePlannedCombatNpcRequest, "combatId" | "stageId">
+    nonPlayerCharacter: Omit<
+        CreatePlannedCombatNpcRequest,
+        "combatId" | "stageId"
+    >,
 ) {
     return await plannedCombatStore.addNpc(stage, nonPlayerCharacter);
 }
 
 async function updateNpc(
     stage: PlannedCombatStage,
-    npc: Omit<UpdatePlannedCombatNpcRequest, "combatId" | "stageId">
+    npc: Omit<UpdatePlannedCombatNpcRequest, "combatId" | "stageId">,
 ) {
     return await plannedCombatStore.updateNpc(stage, npc);
 }
 
 async function deleteNpc(
     stage: PlannedCombatStage,
-    npc: Omit<DeletePlannedCombatNpcRequest, "combatId" | "stageId">
+    npc: Omit<DeletePlannedCombatNpcRequest, "combatId" | "stageId">,
 ) {
     return await plannedCombatStore.removeNpc(stage, npc.npcId);
 }

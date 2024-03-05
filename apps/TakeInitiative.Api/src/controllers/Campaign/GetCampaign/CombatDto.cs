@@ -8,5 +8,5 @@ public record CombatDto
 	public required CombatState State { get; set; }
 	public required string? CombatName { get; set; }
 	public required Guid DungeonMaster { get; set; }
-	public required List<PlayerDto>? CurrentPlayers { get; set; }
+	public required List<PlayerDto> CurrentPlayers { get; set; }
 }

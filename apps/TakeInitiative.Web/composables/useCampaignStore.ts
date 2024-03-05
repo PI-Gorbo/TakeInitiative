@@ -1,6 +1,7 @@
 import { usePlannedCombatStore } from "./usePlannedCombatStore";
 import type {
     CampaignMemberDto,
+    CombatDto,
     GetCampaignResponse,
 } from "~/utils/api/campaign/getCampaignRequest";
 import type {
@@ -18,10 +19,11 @@ export const useCampaignStore = defineStore("campaignStore", () => {
     const plannedCombatStore = usePlannedCombatStore();
 
     const state = reactive({
-        campaign: undefined as Campaign | undefined,
-        userCampaignMember: undefined as CampaignMember | undefined,
-        nonUserCampaignMembers: undefined as CampaignMemberDto[] | undefined,
-        plannedCombats: undefined as PlannedCombat[] | undefined,
+        campaign: null as Campaign | null,
+        userCampaignMember: null as CampaignMember | null,
+        nonUserCampaignMembers: null as CampaignMemberDto[] | null,
+        plannedCombats: null as PlannedCombat[] | null,
+        combatDto: null as CombatDto | null,
     });
 
     async function init(): Promise<void> {
@@ -54,9 +56,10 @@ export const useCampaignStore = defineStore("campaignStore", () => {
         campaignDetails: GetCampaignResponse,
     ): Promise<void> {
         state.campaign = campaignDetails.campaign;
-        state.nonUserCampaignMembers = campaignDetails.nonUserCampaignMembers;
-        state.plannedCombats = campaignDetails.plannedCombats;
+        state.nonUserCampaignMembers = campaignDetails.nonUserCampaignMembers!;
+        state.plannedCombats = campaignDetails.plannedCombats!;
         state.userCampaignMember = campaignDetails.userCampaignMember;
+        state.combatDto = campaignDetails.combatDto;
     }
 
     async function updateCampaignDetails(
@@ -129,6 +132,10 @@ export const useCampaignStore = defineStore("campaignStore", () => {
             });
     }
 
+    async function openCombat(plannedCombatId: string) {
+        return await await api.combat.open({ plannedCombatId });
+    }
+
     // Member Details
     const memberDtos = computed(() => {
         if (
@@ -171,5 +178,6 @@ export const useCampaignStore = defineStore("campaignStore", () => {
             () => state.userCampaignMember?.isDungeonMaster ?? false,
         ),
         memberDtos,
+        openCombat,
     };
 });

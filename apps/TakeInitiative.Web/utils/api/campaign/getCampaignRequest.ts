@@ -1,10 +1,12 @@
 import type { AxiosInstance } from "axios";
 import * as yup from "yup";
 import {
+    CombatState,
     campaignMemberValidator,
     campaignValidator,
     plannedCombatValidator,
     playerCharacterValidator,
+    playerDtoValidator,
 } from "../../types/models";
 
 // Create Campaign
@@ -18,6 +20,17 @@ const campaignMemberDtoValidator = yup.object({
     isDungeonMaster: yup.boolean().required(),
     currentCharacter: playerCharacterValidator.nullable(),
 });
+
+const combatDtoValidator = yup.object({
+    id: yup.string().required(),
+    state: yup.mixed().oneOf(Object.values(CombatState)).required(),
+    combatName: yup.string().required(),
+    dungeonMaster: yup.string().required(),
+    currentPlayers: yup.array(playerDtoValidator).required(),
+});
+
+export type CombatDto = yup.InferType<typeof combatDtoValidator>;
+
 export type CampaignMemberDto = yup.InferType<
     typeof campaignMemberDtoValidator
 >;
@@ -26,7 +39,8 @@ const getCampaignResponseSchema = yup.object({
     userCampaignMember: campaignMemberValidator,
     nonUserCampaignMembers: yup.array(campaignMemberDtoValidator),
     plannedCombats: yup.array(plannedCombatValidator).nullable(),
-	joinCode: yup.string().required(),
+    joinCode: yup.string().required(),
+    combatDto: combatDtoValidator.nullable(),
 });
 export type GetCampaignResponse = yup.InferType<
     typeof getCampaignResponseSchema

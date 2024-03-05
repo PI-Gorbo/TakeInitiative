@@ -11,17 +11,11 @@ using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Controllers;
 
-public record PostOpenCombatRequest
-{
-	public Guid CampaignId { get; set; }
-	public Guid PlannedCombatId { get; set; }
-}
-
-public class PostOpenCombat(IDocumentStore Store) : Endpoint<PostOpenCombatRequest, ActiveCombatResponse>
+public class PostOpenCombat(IDocumentStore Store) : Endpoint<PostOpenCombatRequest, CombatResponse>
 {
 	public override void Configure()
 	{
-		Get("/api/combat/open");
+		Post("/api/combat/open");
 		AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
 		Policies(TakePolicies.UserExists);
 	}
@@ -33,10 +27,17 @@ public class PostOpenCombat(IDocumentStore Store) : Endpoint<PostOpenCombatReque
 		var result = await Store.Try(
 			async (session) =>
 			{
-				var campaign = await session.LoadAsync<Campaign>(req.CampaignId, ct);
+				// Retrieve the planned combat
+				var plannedCombat = await session.LoadAsync<PlannedCombat>(req.PlannedCombatId, ct);
+				if (plannedCombat == null)
+				{
+					ThrowError("There is no planned combat with the given id.", (int)HttpStatusCode.NotFound);
+				}
+
+				var campaign = await session.LoadAsync<Campaign>(plannedCombat.CampaignId, ct);
 				if (campaign == null)
 				{
-					ThrowError(x => x.CampaignId, "Cannot open a combat in a campaign that does not exist", (int)HttpStatusCode.NotFound);
+					ThrowError("Cannot open a combat in a campaign that does not exist", (int)HttpStatusCode.NotFound);
 				}
 
 				// Check the user is a dm. 
@@ -45,23 +46,16 @@ public class PostOpenCombat(IDocumentStore Store) : Endpoint<PostOpenCombatReque
 					ThrowError("Only dungeon masters can open combats.", (int)HttpStatusCode.BadRequest);
 				}
 
-				// Retrieve the planned combat
-				var plannedCombat = await session.LoadAsync<PlannedCombat>(req.PlannedCombatId, ct);
-				if (plannedCombat == null)
-				{
-					ThrowError("There is no planned combat with the given id.", (int)HttpStatusCode.NotFound);
-				}
-
 				// publish the event
 				var openEvent = new CombatOpenedEvent()
 				{
 					UserId = userId,
-					CampaignId = req.CampaignId,
+					CampaignId = plannedCombat.CampaignId,
 					CombatName = plannedCombat.CombatName,
 					Stages = plannedCombat.Stages,
 				};
 
-				var existingActiveCombat = await session.Query<Combat>().AnyAsync(activeCombat => activeCombat.CampaignId == openEvent.CampaignId);
+				var existingActiveCombat = await session.Query<Combat>().AnyAsync(activeCombat => activeCombat.CampaignId == openEvent.CampaignId, ct);
 				if (existingActiveCombat)
 				{
 					ThrowError("There is already an active combat.");
@@ -81,7 +75,7 @@ public class PostOpenCombat(IDocumentStore Store) : Endpoint<PostOpenCombatReque
 				await session.SaveChangesAsync(ct);
 
 				var combat = await session.LoadAsync<Combat>(stream.Id, ct);
-				return new ActiveCombatResponse()
+				return new CombatResponse()
 				{
 					Combat = combat!
 				};

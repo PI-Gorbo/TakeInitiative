@@ -70,16 +70,7 @@ public class GetCampaign(IDocumentStore Store) : Endpoint<GetCampaignRequest, Ge
 					? null
 					: await session.Query<Combat>()
 						.Where(x => x.Id == campaign.ActiveCombatId)
-						.Select(x => new CombatDto
-						{
-							Id = x.Id,
-							State = x.State,
-							CombatName = x.CombatName,
-							DungeonMaster = x.DungeonMaster,
-							CurrentPlayers = x.CurrentPlayers == null
-								? null
-								: x.CurrentPlayers.ToList()
-						}).SingleOrDefaultAsync();
+						.SingleOrDefaultAsync();
 
 				return new GetCampaignResponse()
 				{
@@ -88,7 +79,14 @@ public class GetCampaign(IDocumentStore Store) : Endpoint<GetCampaignRequest, Ge
 					NonUserCampaignMembers = nonUserCampaignMemberDtos.ToArray(),
 					UserCampaignMember = userCampaignMember,
 					PlannedCombats = plannedCombats,
-					CombatDto = dto
+					CombatDto = new CombatDto()
+					{
+						CombatName = dto.CombatName,
+						CurrentPlayers = dto.CurrentPlayers.ToList(),
+						DungeonMaster = dto.DungeonMaster,
+						Id = dto.Id,
+						State = dto.State
+					}
 				};
 			});
 

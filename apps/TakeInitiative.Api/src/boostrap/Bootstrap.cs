@@ -3,6 +3,7 @@ using CSharpFunctionalExtensions;
 using FastEndpoints.Security;
 using Marten;
 using Marten.Events.Projections;
+using Marten.Services.Json;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -24,6 +25,9 @@ public static class Bootstrap
 		{
 			opts.Connection(builder.Configuration.GetConnectionString("TakeDB") ?? throw new OperationCanceledException("Required Configuration 'ConnectionStrings:Marten' is missing."));
 
+			// Use system.text.json
+			opts.UseDefaultSerialization(serializerType: SerializerType.SystemTextJson);
+
 			opts.Schema.For<ApplicationUser>();
 			opts.Schema.For<ApplicationUserRole>();
 			opts.Schema.For<Campaign>()
@@ -44,9 +48,6 @@ public static class Bootstrap
 			// Event Projections
 			opts.Projections
 				.Add(new CombatProjection(), ProjectionLifecycle.Inline, null);
-
-			// Serialization settings
-			opts.
 		});
 
 		if (builder.Environment.IsDevelopment())
