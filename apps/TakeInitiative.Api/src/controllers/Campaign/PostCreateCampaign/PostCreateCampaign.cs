@@ -11,7 +11,7 @@ using TakeInitiative.Api.Controllers;
 using TakeInitiative.Api.Models;
 using TakeInitiative.Utilities.Extensions;
 
-namespace TakeInitiative.Data.Commands;
+namespace TakeInitiative.Api.Controllers;
 
 
 public class PostCreateCampaign(IDocumentStore Store) : Endpoint<PostCreateCampaignRequest, Campaign>

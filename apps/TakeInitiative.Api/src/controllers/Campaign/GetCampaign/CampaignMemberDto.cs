@@ -1,6 +1,6 @@
 using TakeInitiative.Api.Models;
 
-namespace TakeInitiative.Data.Commands;
+namespace TakeInitiative.Api.Controllers;
 
 public record CampaignMemberDto
 {

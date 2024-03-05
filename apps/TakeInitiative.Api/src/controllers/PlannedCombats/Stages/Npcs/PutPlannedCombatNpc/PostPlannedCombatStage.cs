@@ -46,16 +46,19 @@ public class PutPlannedCombatNpc(IDocumentStore Store) : Endpoint<PutPlannedComb
 			}
 
 			var stage = combat.Stages.FirstOrDefault(x => x.Id == req.StageId);
-			if (stage == null) {
+			if (stage == null)
+			{
 				ThrowError(x => x.StageId, "There is no stage with the given id.");
 			}
 
 			var npc = stage.Npcs.FirstOrDefault(x => x.Id == req.NpcId);
-			if (npc == null) {
+			if (npc == null)
+			{
 				ThrowError(x => x.NpcId, "There is no npc with the given id.");
 			}
 
-			npc = npc with {
+			npc = npc with
+			{
 				Name = req.Name,
 				ArmorClass = req.ArmorClass,
 				Health = req.Health,
@@ -63,14 +66,15 @@ public class PutPlannedCombatNpc(IDocumentStore Store) : Endpoint<PutPlannedComb
 				Quantity = req.Quantity
 			};
 
-			var validator = new PlannedCombatNonPlayerCharacterValidator();
+			var validator = new PlannedCombatNpcValidator();
 			var validationResult = await validator.ValidateAsync(npc, ct);
-			if (!validationResult.IsValid) {
+			if (!validationResult.IsValid)
+			{
 				ThrowError(validationResult.ToString(", "));
 			}
 
 			stage.Npcs = stage.Npcs.Where(x => x.Id != req.NpcId).Append(npc).ToList();
-			
+
 			session.Store(combat);
 			await session.SaveChangesAsync();
 

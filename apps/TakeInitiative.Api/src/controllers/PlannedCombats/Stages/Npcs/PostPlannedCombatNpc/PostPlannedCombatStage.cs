@@ -44,23 +44,26 @@ public class PostPlannedCombatNpc(IDocumentStore Store) : Endpoint<PostPlannedCo
 			}
 
 			var stage = combat.Stages.FirstOrDefault(x => x.Id == req.StageId);
-			if (stage == null) {
+			if (stage == null)
+			{
 				ThrowError(x => x.StageId, "There is no stage with the given id.");
 			}
 
-			var npc = PlannedCombatNonPlayerCharacter.New(
-				Name: req.Name, 
-				Initiative: req.Initiative, 
-				ArmorClass: req.ArmorClass, 
+			var npc = PlannedCombatNpc.New(
+				StageId: stage.Id,
+				Name: req.Name,
+				Initiative: req.Initiative,
+				ArmorClass: req.ArmorClass,
 				Health: req.Health
 			);
-			var validator = new PlannedCombatNonPlayerCharacterValidator();
+			var validator = new PlannedCombatNpcValidator();
 			var validationResult = await validator.ValidateAsync(npc, ct);
-			if (!validationResult.IsValid) {
+			if (!validationResult.IsValid)
+			{
 				ThrowError(validationResult.ToString(", "));
 			}
 			stage.Npcs.Add(npc);
-			
+
 			session.Store(combat);
 			await session.SaveChangesAsync();
 

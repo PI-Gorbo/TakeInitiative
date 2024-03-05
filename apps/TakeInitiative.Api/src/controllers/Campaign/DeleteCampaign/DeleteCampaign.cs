@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using TakeInitiative.Api.Models;
 using TakeInitiative.Utilities.Extensions;
 
-namespace TakeInitiative.Data.Commands;
+namespace TakeInitiative.Api.Controllers;
 
 public class DeleteCampaign(IDocumentStore Store) : Endpoint<DeleteCampaignRequest>
 {

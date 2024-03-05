@@ -22,7 +22,6 @@ export const useUserStore = defineStore("userStore", () => {
 
     async function fetchUser(): Promise<User> {
         // fetch the user.
-		console.log("Fetching user!")
         return await api.user
             .getUser()
             .then((user) => (state.user = user))

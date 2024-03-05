@@ -10,7 +10,7 @@ using TakeInitiative.Api.Models;
 using TakeInitiative.Utilities;
 using TakeInitiative.Utilities.Extensions;
 
-namespace TakeInitiative.Data.Commands;
+namespace TakeInitiative.Api.Controllers;
 
 public class PostJoinCampaign(IDocumentStore Store) : Endpoint<JoinCampaignByJoinCodeRequest, Campaign>
 {

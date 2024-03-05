@@ -1,5 +1,5 @@
 <template>
-    <main class="flex h-full flex-col items-center">
+    <TransitionGroup name="fade" tag="main" class="flex h-full flex-col items-center">
         <Tabs
             v-if="(!pending && !error) || userStore.state.selectedCampaignId == null"
             class="max-w-[1200px] flex-1 flex-col overflow-auto py-4 sm:w-full md:w-4/5 2xl:w-full"
@@ -24,9 +24,11 @@
             </template>
         </Tabs>
         <div v-else class="w-full h-full flex items-center justify-center">
+            {{ pending }}
+            {{ error }}
             <FontAwesomeIcon class="fa-spin" icon="circle-notch" size="10x" />
         </div>
-    </main>
+    </TransitionGroup>
 </template>
 
 <script setup lang="ts">

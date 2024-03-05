@@ -1,11 +1,15 @@
 namespace TakeInitiative.Api.Models;
 
-public record PlannedCombatNonPlayerCharacter : NonPlayerCharacter
+public record PlannedCombatNpc : Npc
 {
-    public required uint Quantity { get; set; } 
+	public required Guid StageId { get; set; }
+	public required uint Quantity { get; set; }
 
-	public static PlannedCombatNonPlayerCharacter New(string Name, CharacterInitiative Initiative, int? ArmorClass = null, CharacterHealth? Health = null, uint Quantity = 1) {
-		return new PlannedCombatNonPlayerCharacter() {
+	public static PlannedCombatNpc New(Guid StageId, string Name, CharacterInitiative Initiative, int? ArmorClass = null, CharacterHealth? Health = null, uint Quantity = 1)
+	{
+		return new PlannedCombatNpc()
+		{
+			StageId = StageId,
 			Id = Guid.NewGuid(),
 			Initiative = Initiative,
 			Name = Name,

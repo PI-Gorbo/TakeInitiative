@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Net;
 using CSharpFunctionalExtensions;
 using FastEndpoints;
@@ -7,7 +8,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using TakeInitiative.Api.Models;
 using TakeInitiative.Utilities.Extensions;
 
-namespace TakeInitiative.Data.Commands;
+namespace TakeInitiative.Api.Controllers;
 
 public class GetCampaign(IDocumentStore Store) : Endpoint<GetCampaignRequest, GetCampaignResponse>
 {
@@ -21,6 +22,7 @@ public class GetCampaign(IDocumentStore Store) : Endpoint<GetCampaignRequest, Ge
 	public override async Task HandleAsync(GetCampaignRequest req, CancellationToken ct)
 	{
 		var userId = this.GetUserIdOrThrowUnauthorized();
+
 		var result = await Store.Try(
 			async (session) =>
 			{
@@ -51,17 +53,33 @@ public class GetCampaign(IDocumentStore Store) : Endpoint<GetCampaignRequest, Ge
 				}
 
 				// Retrieve all application user instances.
-				var otherUserIds = campaignMembers.Where(x => x.Id != userId).Select(x => x.UserId).ToList();
+				var otherUserIds = campaignMembers.Where(x => x.UserId != userId).Select(x => x.UserId).ToList();
 				var userDtos = await session.Query<ApplicationUser>()
 					.Where(x => x.Id.IsOneOf(otherUserIds))
 					.Select(x => new { x.UserName, x.Id })
 					.ToListAsync();
 
 				var nonUserCampaignMemberDtos = campaignMembers.Where(x => x.UserId != userId)
-					.Select(member => CampaignMemberDto.FromMember(member, userDtos.Single(x => x.Id == member.Id).UserName));
+					.Select(member => CampaignMemberDto.FromMember(member, userDtos.Single(x => x.Id == member.UserId).UserName));
 
 				// If the user is a dm, retrieve all the planned combats.
-				var plannedCombats = userCampaignMember.IsDungeonMaster ? await session.LoadManyAsync<PlannedCombat>(campaign.PlannedCombatIds) : null;
+				var plannedCombats = userCampaignMember.IsDungeonMaster ? (await session.LoadManyAsync<PlannedCombat>(campaign.PlannedCombatIds)).ToArray() : null;
+
+				// If there is a active combat, load it
+				var dto = campaign.ActiveCombatId == null
+					? null
+					: await session.Query<Combat>()
+						.Where(x => x.Id == campaign.ActiveCombatId)
+						.Select(x => new CombatDto
+						{
+							Id = x.Id,
+							State = x.State,
+							CombatName = x.CombatName,
+							DungeonMaster = x.DungeonMaster,
+							CurrentPlayers = x.CurrentPlayers == null
+								? null
+								: x.CurrentPlayers.ToList()
+						}).SingleOrDefaultAsync();
 
 				return new GetCampaignResponse()
 				{
@@ -69,7 +87,8 @@ public class GetCampaign(IDocumentStore Store) : Endpoint<GetCampaignRequest, Ge
 					JoinCode = campaign.GetJoinCode(),
 					NonUserCampaignMembers = nonUserCampaignMemberDtos.ToArray(),
 					UserCampaignMember = userCampaignMember,
-					PlannedCombats = plannedCombats.ToArray(),
+					PlannedCombats = plannedCombats,
+					CombatDto = dto
 				};
 			});
 

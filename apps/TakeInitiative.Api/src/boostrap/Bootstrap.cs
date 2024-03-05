@@ -2,6 +2,7 @@ using System.Security.Claims;
 using CSharpFunctionalExtensions;
 using FastEndpoints.Security;
 using Marten;
+using Marten.Events.Projections;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -35,12 +36,25 @@ public static class Bootstrap
 			opts.Schema.For<PlannedCombat>()
 				.Index(x => x.CombatName)
 				.ForeignKey<Campaign>(x => x.CampaignId, fk => fk.OnDelete = CascadeAction.Cascade);
+
+			// Events
+			opts.Events.AddEventTypes([typeof(PlayerJoinedEvent)]);
+
+
+			// Event Projections
+			opts.Projections
+				.Add(new CombatProjection(), ProjectionLifecycle.Inline, null);
+
+			// Serialization settings
+			opts.
 		});
 
 		if (builder.Environment.IsDevelopment())
 		{
 			martenOpts.ApplyAllDatabaseChangesOnStartup();
 		}
+
+		martenOpts.UseLightweightSessions();
 
 		return builder;
 	}

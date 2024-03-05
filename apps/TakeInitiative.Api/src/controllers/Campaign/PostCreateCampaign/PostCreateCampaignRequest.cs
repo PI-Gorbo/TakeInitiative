@@ -1,4 +1,4 @@
-namespace TakeInitiative.Data.Commands;
+namespace TakeInitiative.Api.Controllers;
 
 public class PostCreateCampaignRequest
 {

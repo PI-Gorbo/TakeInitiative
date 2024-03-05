@@ -69,7 +69,7 @@ export type CharacterInitiative = InferType<
 
 // Planned Combat NPC
 export const plannedCombatNonPlayerCharacterValidator = yup.object({
-	id: yup.string(),
+    id: yup.string(),
     name: yup.string().required("Please provide a name"),
     health: characterHealthValidator.notRequired(),
     armorClass: yup.number().notRequired(),
@@ -96,3 +96,36 @@ export const plannedCombatValidator = yup.object({
     stages: yup.array(plannedCombatStageValidator),
 });
 export type PlannedCombat = InferType<typeof plannedCombatValidator>;
+
+// Combat
+export enum CombatState {
+    Open = 0,
+    Started = 1,
+    Paused = 2,
+    Finished = 3,
+}
+
+export const combatTimingRecordValidator = yup.object({
+    startTime: yup.string(),
+    endTime: yup.string(),
+});
+export type CombatTiming = InferType<typeof combatTimingRecordValidator>;
+export const playerDtoValidator = yup.object({
+    userId: yup.string().required(),
+    memberId: yup.string().required(),
+});
+export type PlayerDto = InferType<typeof playerDtoValidator>;
+
+export const combatValidator = yup.object({
+    id: yup.string().required(),
+    campaignId: yup.string().required(),
+    state: yup.mixed().oneOf(Object.values(CombatState)),
+    combatName: yup.string().required(),
+    dungeonMaster: yup.string().required(),
+    timing: yup.array(combatTimingRecordValidator).required(),
+    combatLots: yup.array(yup.string()).required(),
+    currentPlayers: yup.array(playerDtoValidator).required(),
+    plannedStages: yup.array(plannedCombatStageValidator).required(),
+    initiativeList: yup.array(),
+});
+export type Combat = InferType<typeof combatValidator>;

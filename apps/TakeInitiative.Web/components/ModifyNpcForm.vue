@@ -1,5 +1,9 @@
 <template>
-    <FormBase class="flex flex-col gap-2" :onSubmit="onSubmit" v-slot="{ submitting }">
+    <FormBase
+        class="flex flex-col gap-2"
+        :onSubmit="onSubmit"
+        v-slot="{ submitting }"
+    >
         <FormInput
             :autoFocus="true"
             textColour="white"
@@ -24,9 +28,9 @@
                     :value="initiativeStrategy"
                     @input="
                         (e: Event) =>
-                            (initiativeStrategy = Number((
-                                e.target as HTMLSelectElement
-                            ).value))
+                            (initiativeStrategy = Number(
+                                (e.target as HTMLSelectElement).value,
+                            ))
                     "
                     class="rounded-l-lg bg-take-grey-dark py-1 pl-2 pr-1"
                 >
@@ -44,7 +48,9 @@
                                 .value)
                     "
                     :placeholder="
-                        initiativeStrategy == InitiativeStrategy.Fixed ? '+5' : '1d20 + 5'
+                        initiativeStrategy == InitiativeStrategy.Fixed
+                            ? '+5'
+                            : '1d20 + 5'
                     "
                 />
             </div>
@@ -69,7 +75,7 @@
                 buttonColour="take-yellow-dark"
             />
         </div>
-        <div v-else class="flex gap-2 justify-between">
+        <div v-else class="flex justify-between gap-2">
             <FormButton
                 label="Save"
                 loadingDisplay="Saving..."
@@ -96,7 +102,7 @@ import {
     plannedCombatNonPlayerCharacterValidator,
     type PlannedCombatNonPlayerCharacter,
     type PlannedCombatStage,
-characterInitiativeValidator,
+    characterInitiativeValidator,
 } from "~/utils/types/models";
 import type { CreatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
 import type { UpdatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
@@ -108,14 +114,14 @@ const formState = reactive({
 });
 
 const props = defineProps<{
-	npc?: PlannedCombatNonPlayerCharacter
+    npc?: PlannedCombatNonPlayerCharacter;
     onCreate?: (
         request: Omit<CreatePlannedCombatNpcRequest, "combatId" | "stageId">,
-    ) => Promise<void>,
-	onEdit?: (
+    ) => Promise<void>;
+    onEdit?: (
         request: Omit<UpdatePlannedCombatNpcRequest, "combatId" | "stageId">,
     ) => Promise<void>;
-	onDelete?: (
+    onDelete?: (
         request: Omit<DeletePlannedCombatNpcRequest, "combatId" | "stageId">,
     ) => Promise<void>;
 }>();
@@ -166,47 +172,47 @@ const [initiativeValue, initiativeValueInputProps] = defineField(
 );
 
 onMounted(() => {
-	if (!props.npc) {
-		initiativeStrategy.value = InitiativeStrategy.Roll;
-		initiativeValue.value = "1d20 + 1";
-		quantity.value = 1;
-	} else {
-		initiativeStrategy.value = props.npc?.initiative.strategy
-		initiativeValue.value = props.npc.initiative.value
-		quantity.value = props.npc.quantity
-		name.value = props.npc.name
-	}
+    if (!props.npc) {
+        initiativeStrategy.value = InitiativeStrategy.Roll;
+        initiativeValue.value = "1d20 + 1";
+        quantity.value = 1;
+    } else {
+        initiativeStrategy.value = props.npc?.initiative.strategy;
+        initiativeValue.value = props.npc.initiative.value;
+        quantity.value = props.npc.quantity;
+        name.value = props.npc.name;
+    }
 });
 
 async function onSubmit(formSubmittingState: SubmittingState) {
-	if (formSubmittingState.submitterName == 'Create') {
-		await onCreate()
-	}
+    if (formSubmittingState.submitterName == "Create") {
+        await onCreate();
+    }
 
-	if (formSubmittingState.submitterName == "trash") {
-		await onDelete()
-	}
+    if (formSubmittingState.submitterName == "trash") {
+        await onDelete();
+    }
 
-	if (formSubmittingState.submitterName == "Save") {
-		await onEdit()
-	}
+    if (formSubmittingState.submitterName == "Save") {
+        await onEdit();
+    }
 }
 
 async function onDelete() {
-	if (!props.onDelete) return
-	return await props.onDelete({npcId: props.npc?.id!})
-		.catch(async err => {
-			formState.error = await parseAsApiError(err)
-		})
+    if (!props.onDelete) return;
+    return await props
+        .onDelete({ npcId: props.npc?.id! })
+        .catch(async (err) => {
+            formState.error = await parseAsApiError(err);
+        });
 }
 
 async function onEdit() {
-	if (!props.onEdit) return;
+    if (!props.onEdit) return;
 
-	formState.error = null;
+    formState.error = null;
     const validateResult = await validate();
     if (!validateResult.valid) {
-        console.log(validateResult);
         return;
     }
 
@@ -220,7 +226,7 @@ async function onEdit() {
             name: name.value!,
             quantity: quantity.value!,
             armourClass: null,
-			npcId: props.npc?.id!
+            npcId: props.npc?.id!,
         })
         .catch(async (error) => {
             formState.error = await parseAsApiError(error);
@@ -228,9 +234,9 @@ async function onEdit() {
 }
 
 async function onCreate() {
-	if (!props.onCreate) return;
+    if (!props.onCreate) return;
 
-	formState.error = null;
+    formState.error = null;
     const validateResult = await validate();
     if (!validateResult.valid) {
         console.log(validateResult);

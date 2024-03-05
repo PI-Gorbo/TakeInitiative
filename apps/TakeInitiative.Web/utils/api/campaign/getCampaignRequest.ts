@@ -25,7 +25,7 @@ const getCampaignResponseSchema = yup.object({
     campaign: campaignValidator,
     userCampaignMember: campaignMemberValidator,
     nonUserCampaignMembers: yup.array(campaignMemberDtoValidator),
-    plannedCombats: yup.array(plannedCombatValidator),
+    plannedCombats: yup.array(plannedCombatValidator).nullable(),
 	joinCode: yup.string().required(),
 });
 export type GetCampaignResponse = yup.InferType<

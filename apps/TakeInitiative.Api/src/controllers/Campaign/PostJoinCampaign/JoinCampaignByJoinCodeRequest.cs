@@ -1,6 +1,6 @@
 using FluentValidation.Results;
 
-namespace TakeInitiative.Data.Commands;
+namespace TakeInitiative.Api.Controllers;
 
 
 public class JoinCampaignByJoinCodeRequest
