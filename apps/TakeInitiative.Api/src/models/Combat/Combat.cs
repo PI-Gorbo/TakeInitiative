@@ -11,7 +11,11 @@ public record Combat
 	public Guid DungeonMaster { get; init; }
 	public ImmutableList<CombatTimingRecord>? Timing { get; init; }
 	public ImmutableList<string>? CombatLogs { get; set; }
-	public ImmutableList<PlayerDto>? CurrentPlayers { get; set; }
+	public ImmutableList<PlayerDto>? CurrentPlayers { get; set; }	
+	
 	public ImmutableList<PlannedCombatStage>? PlannedStages { get; set; }
 	public ImmutableList<ICombatCharacter>? InitiativeList { get; set; }
+
+	public ImmutableDictionary<Guid, ImmutableList<ICombatCharacter>>? PlayerCharacters {get; set;}
+	
 }

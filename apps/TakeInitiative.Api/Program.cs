@@ -1,9 +1,7 @@
 using FastEndpoints;
-using FastEndpoints.Security;
-using Marten;
-using Microsoft.Net.Http.Headers;
-using Serilog;
-
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.SignalR;
+using TakeInitiative.Api.Controllers;
 internal class Program
 {
 	private static void Main(string[] args)
@@ -16,6 +14,7 @@ internal class Program
 		builder.Services.AddSwaggerGen();
 		builder.Services.AddHealthChecks();
 		builder.Services.AddFastEndpoints();
+		builder.Services.AddSignalR();
 
 		// Custom Injection
 		builder.AddMartenDB();
@@ -23,6 +22,7 @@ internal class Program
 		builder.AddIdentityAuthenticationAndAuthorization();
 		builder.AddOptionObjects();
 
+		// Cors
 		var cors = (builder.Configuration.GetValue<string>("CORS") ?? throw new MissingMemberException("Missing configuration for value 'CORS'."))
 						.Split(";").ToArray();
 
@@ -32,6 +32,7 @@ internal class Program
 				.AllowAnyMethod()
 				.AllowCredentials()
 			));
+			
 		var app = builder.Build();
 
 		// Configure the HTTP request pipeline.
@@ -40,6 +41,9 @@ internal class Program
 			app.UseSwagger();
 			app.UseSwaggerUI();
 		}
+
+		// Map SignalR Hubs
+		app.MapHub<CombatHub>("/combatHub");
 
 		app.UseCors("ApiCORS")
 			.UseFastEndpoints()
