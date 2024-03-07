@@ -1,6 +1,7 @@
 using FluentValidation;
-
+using TakeInitiative.Api.Models;
 namespace TakeInitiative.Api.Controllers;
+
 
 public class PutSetOpenCombatPlayerCharactersRequestValidator : AbstractValidator<PutSetOpenCombatPlayerCharactersRequest>
 {
