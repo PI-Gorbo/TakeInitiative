@@ -41,10 +41,6 @@ public static class Bootstrap
 				.Index(x => x.CombatName)
 				.ForeignKey<Campaign>(x => x.CampaignId, fk => fk.OnDelete = CascadeAction.Cascade);
 
-			// Events
-			opts.Events.AddEventTypes([typeof(PlayerJoinedEvent)]);
-
-
 			// Event Projections
 			opts.Projections
 				.Add(new CombatProjection(), ProjectionLifecycle.Inline, null);

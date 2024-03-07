@@ -2,7 +2,7 @@ using FluentValidation;
 
 namespace TakeInitiative.Api.Models;
 
-public class PlannedCombatNpcValidator : TCharacterValidator<PlannedCombatNpc>
+public class PlannedCombatNpcValidator : CharacterValidator<PlannedCombatNpc>
 {
 	public PlannedCombatNpcValidator()
 	{

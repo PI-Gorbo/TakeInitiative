@@ -112,7 +112,6 @@ export const combatTimingRecordValidator = yup.object({
 export type CombatTiming = InferType<typeof combatTimingRecordValidator>;
 export const playerDtoValidator = yup.object({
     userId: yup.string().required(),
-    memberId: yup.string().required(),
 });
 export type PlayerDto = InferType<typeof playerDtoValidator>;
 

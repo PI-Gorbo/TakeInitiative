@@ -1,6 +1,6 @@
 namespace TakeInitiative.Api.Models;
 
-public record PlannedCombatNpc : Npc
+public record PlannedCombatNpc : Character
 {
 	public required Guid StageId { get; set; }
 	public required uint Quantity { get; set; }

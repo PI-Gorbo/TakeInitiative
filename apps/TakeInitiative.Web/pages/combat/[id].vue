@@ -1,5 +1,6 @@
 <template>
-    <div class="w-full h-full">
+    <div class="w-full h-full cursor-pointer">
+        <FormButton @clicked="() => refresh()" />
         <textarea
             disabled
             :value="JSON.stringify(combatStore.state, null, '\t')"
@@ -16,6 +17,10 @@ const combatId = route.params.id;
 
 const { refresh, pending, error } = useAsyncData("Combat", () => {
     return combatStore.setCombat(combatId as string).then(() => true);
+});
+
+onUnmounted(async () => {
+    await combatStore.leaveCombat();
 });
 
 definePageMeta({

@@ -1,7 +1,13 @@
+using FluentValidation;
+
 namespace TakeInitiative.Api.Models;
 
-public record CombatPlayerCharacter : PlayerCharacter, ICombatCharacter
+public record CombatPlayerCharacter : CombatCharacter
 {
-	public int InitiativeValue { get; init; }
-	public bool Hidden { get; init; }
+	public required Guid PlayerId { get; set; }
+}
+
+public class CombatPlayerCharacterValidator : BaseCombatCharacterValidator<CombatPlayerCharacter>
+{
+
 }
