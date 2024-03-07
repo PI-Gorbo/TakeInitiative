@@ -1,5 +1,3 @@
-SHELL := pwsh -NoProfile
-
 ## Database
 db:
 	docker run -p 5432:5432 --name takedb -e POSTGRES_PASSWORD=postgres -d postgres 
