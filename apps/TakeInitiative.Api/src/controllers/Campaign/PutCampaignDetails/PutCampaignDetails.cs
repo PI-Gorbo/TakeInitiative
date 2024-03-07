@@ -3,11 +3,8 @@
 using System.Net;
 using CSharpFunctionalExtensions;
 using FastEndpoints;
-using FastEndpoints.Security;
 using Marten;
-using Marten.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using TakeInitiative.Api.Models;
 using TakeInitiative.Utilities.Extensions;
 
@@ -32,17 +29,20 @@ public class PutCampaignDetails(IDocumentStore Store) : Endpoint<PutCampaignDeta
                     return Result.Failure<Campaign>("Only the owner of the campaign can update the details.");
                 }
 
-				if (req.CampaignDescription != null) {
-                	campaign.CampaignDescription = req.CampaignDescription;
-				}
+                if (req.CampaignDescription != null)
+                {
+                    campaign.CampaignDescription = req.CampaignDescription;
+                }
 
-				if (req.CampaignResources != null) {
-                	campaign.CampaignResources = req.CampaignResources;
-				}
+                if (req.CampaignResources != null)
+                {
+                    campaign.CampaignResources = req.CampaignResources;
+                }
 
-				if (req.CampaignName != null) {
-                	campaign.CampaignName = req.CampaignName;
-				}
+                if (req.CampaignName != null)
+                {
+                    campaign.CampaignName = req.CampaignName;
+                }
 
                 session.Store(campaign);
                 await session.SaveChangesAsync(ct);

@@ -1,5 +1,3 @@
-using FluentValidation;
-
 namespace TakeInitiative.Api.Models;
 
 public record CampaignMember

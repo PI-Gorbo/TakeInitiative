@@ -1,9 +1,7 @@
 using System.Net;
-using CSharpFunctionalExtensions;
 using FastEndpoints;
 using Marten;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using TakeInitiative.Api.Models;
 using TakeInitiative.Utilities.Extensions;
 

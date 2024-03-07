@@ -1,13 +1,8 @@
 using System.Net;
 using CSharpFunctionalExtensions;
 using FastEndpoints;
-using FastEndpoints.Security;
 using Marten;
-using Marten.Linq.MatchesSql;
-using Marten.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using TakeInitiative.Api.Controllers;
 using TakeInitiative.Api.Models;
 using TakeInitiative.Utilities.Extensions;
 

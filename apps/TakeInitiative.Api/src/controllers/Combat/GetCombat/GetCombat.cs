@@ -1,16 +1,12 @@
 using System.Net;
-using CSharpFunctionalExtensions;
 using FastEndpoints;
-using JasperFx.Core;
 using Marten;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Server.HttpSys;
 using TakeInitiative.Api.Models;
 using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Controllers;
-public class GetCombat(IDocumentStore Store) : Endpoint<GetCombatRequest,CombatResponse>
+public class GetCombat(IDocumentStore Store) : Endpoint<GetCombatRequest, CombatResponse>
 {
 	public override void Configure()
 	{
@@ -19,7 +15,7 @@ public class GetCombat(IDocumentStore Store) : Endpoint<GetCombatRequest,CombatR
 		Policies(TakePolicies.UserExists);
 	}
 
-	public override async Task HandleAsync(GetCombatRequest request,CancellationToken ct)
+	public override async Task HandleAsync(GetCombatRequest request, CancellationToken ct)
 	{
 		var userId = this.GetUserIdOrThrowUnauthorized();
 
@@ -27,7 +23,8 @@ public class GetCombat(IDocumentStore Store) : Endpoint<GetCombatRequest,CombatR
 			async (session) =>
 			{
 				var combat = await session.LoadAsync<Combat>(request.Id, ct);
-				if (combat == null) {
+				if (combat == null)
+				{
 					ThrowError(x => x.Id, "There is no combat with the given id.");
 				}
 
@@ -35,7 +32,8 @@ public class GetCombat(IDocumentStore Store) : Endpoint<GetCombatRequest,CombatR
 				var userIsInCampaign = await session.Query<CampaignMember>()
 					.AnyAsync(x => x.CampaignId == combat.CampaignId && x.UserId == userId);
 
-				if (!userIsInCampaign) {
+				if (!userIsInCampaign)
+				{
 					ThrowError("You cannot view combats of a campaign you are not apart of.");
 				}
 
