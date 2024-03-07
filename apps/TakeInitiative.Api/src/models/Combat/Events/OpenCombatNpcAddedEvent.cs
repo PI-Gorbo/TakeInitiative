@@ -1,5 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
-
 namespace TakeInitiative.Api.Models;
 
 public record OpenCombatNpcAddedEvent

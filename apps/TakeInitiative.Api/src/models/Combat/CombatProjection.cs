@@ -1,6 +1,4 @@
 using System.Collections.Immutable;
-using System.Diagnostics.CodeAnalysis;
-using FastEndpoints;
 using Marten;
 using Marten.Events;
 using Marten.Events.Aggregation;

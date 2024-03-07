@@ -1,13 +1,9 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using CSharpFunctionalExtensions;
 using FastEndpoints;
 using FluentValidation;
-using JasperFx.Core;
 using Marten;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Server.HttpSys;
 using Microsoft.AspNetCore.SignalR;
 using TakeInitiative.Api.Models;
 using TakeInitiative.Utilities.Extensions;
@@ -44,7 +40,8 @@ public class PutSetOpenCombatPlayerCharacters(IDocumentStore Store, IHubContext<
 					ThrowError(x => x.CombatId, "There is no combat with the given id");
 				}
 
-				if (result.State > CombatState.Open) {
+				if (result.State > CombatState.Open)
+				{
 					ThrowError("Can only set queued player characters when the combat is open.", (int)HttpStatusCode.BadRequest);
 				}
 

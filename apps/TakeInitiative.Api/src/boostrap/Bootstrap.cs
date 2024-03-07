@@ -1,14 +1,11 @@
-using System.Security.Claims;
 using CSharpFunctionalExtensions;
 using FastEndpoints.Security;
 using Marten;
 using Marten.Events.Projections;
 using Marten.Services.Json;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using TakeInitiative.Api.Bootstrap;
 using TakeInitiative.Api.Models;
