@@ -34,6 +34,7 @@ export const useCombatStore = defineStore("combatStore", () => {
 				await campaignStore.setCampaignById(resp.combat.campaignId)
 				if (!connection.connectionId) {
 					await connection.start().catch((error) => state.signalRError = error)
+						.then(() => joinCombat())
 				}
 			})
 	}
