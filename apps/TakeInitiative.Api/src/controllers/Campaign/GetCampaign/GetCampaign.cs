@@ -79,7 +79,7 @@ public class GetCampaign(IDocumentStore Store) : Endpoint<GetCampaignRequest, Ge
 					NonUserCampaignMembers = nonUserCampaignMemberDtos.ToArray(),
 					UserCampaignMember = userCampaignMember,
 					PlannedCombats = plannedCombats,
-					CombatDto = new CombatDto()
+					CombatDto = dto == null ? null : new CombatDto()
 					{
 						CombatName = dto.CombatName,
 						CurrentPlayers = dto.CurrentPlayers.ToList(),

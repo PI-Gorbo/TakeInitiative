@@ -13,9 +13,10 @@ public record Combat
 	public ImmutableList<string>? CombatLogs { get; set; }
 	public ImmutableList<PlayerDto>? CurrentPlayers { get; set; }	
 	
-	public ImmutableList<PlannedCombatStage>? PlannedStages { get; set; }
-	public ImmutableList<ICombatCharacter>? InitiativeList { get; set; }
+	// Actual Initiative List
+	public ImmutableList<CombatCharacter>? InitiativeList { get; set; }
 
-	public ImmutableDictionary<Guid, ImmutableList<ICombatCharacter>>? PlayerCharacters {get; set;}
-	
+	// Planning 
+	public ImmutableList<PlannedCombatStage>? PlannedStages { get; set; }
+	 
 }

@@ -34,3 +34,20 @@
     opacity: 0;
     overflow: hidden;
 }
+
+.delayedFade-enter-active,
+.delayedFade-leave-active {
+    transition: all 0.1s ease-out;
+    overflow: hidden;
+}
+
+.delayedFade-enter-active {
+    transition-delay: 0.12s;
+    overflow: hidden;
+}
+
+.delayedFade-enter-from,
+.delayedFade-leave-to {
+    opacity: 0;
+    overflow: hidden;
+}

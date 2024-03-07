@@ -2,15 +2,17 @@ using FluentValidation;
 
 namespace TakeInitiative.Api.Models;
 
-public abstract class TCharacterValidator<TCharacter> : AbstractValidator<TCharacter>
-	where TCharacter : ICharacter
+public class CharacterValidator<TCharacter> : AbstractValidator<TCharacter>
+	where TCharacter : Character
 {
-	protected TCharacterValidator()
+	protected CharacterValidator()
 	{
+		RuleFor(x => x.Id).NotEmpty();
+
 		RuleFor(x => x.Name)
 			.NotEmpty();
 			
-		RuleFor(x => x.Health.CurrentHealth)
+		RuleFor(x => x.Health!.CurrentHealth)
 			.NotEmpty()
 			.When(x => x.Health != null);
 			

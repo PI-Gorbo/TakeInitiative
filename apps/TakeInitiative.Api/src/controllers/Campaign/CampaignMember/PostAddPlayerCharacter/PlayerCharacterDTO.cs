@@ -2,10 +2,10 @@ using TakeInitiative.Api.Models;
 
 namespace TakeInitiative.Api.Controllers;
 
-public record PlayerCharacterDTO : ICharacter
+public record PlayerCharacterDTO
 {
-    public required string Name { get; set; }
-    public required CharacterInitiative Initiative { get; set; }
-    public CharacterHealth? Health { get; set; } = null;
-    public int? ArmorClass { get; set; } = null;
+	public required string Name { get; set; }
+	public required CharacterHealth? Health { get; set; }
+	public required CharacterInitiative Initiative { get; set; }
+	public required int? ArmorClass { get; set; }
 }

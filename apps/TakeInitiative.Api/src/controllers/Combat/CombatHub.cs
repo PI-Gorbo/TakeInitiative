@@ -8,6 +8,15 @@ using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Controllers;
 
+public static class CombatHubContextExtensions
+{
+	public static Task NotifyCombatUpdated(this IHubContext<CombatHub> hubContext, Combat combat)
+	{
+		return hubContext.Clients.Group(combat.Id.ToString())
+			.SendAsync("combatUpdated", combat);
+	}
+}
+
 public class CombatHub : Hub
 {
 	public Task NotifyCombatUpdated(Combat combat)
@@ -96,5 +105,5 @@ public class CombatHub : Hub
 		}
 
 		return;
-	} 
+	}
 }

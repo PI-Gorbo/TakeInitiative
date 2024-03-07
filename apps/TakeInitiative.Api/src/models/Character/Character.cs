@@ -1,15 +1,15 @@
 namespace TakeInitiative.Api.Models;
-public record Npc : ICharacter
+public record Character
 {
 	public required Guid Id { get; set; }
 	public required string Name { get; set; }
-	public required CharacterHealth? Health { get; set; } = null;
-	public required int? ArmorClass { get; set; } = null;
+	public required CharacterHealth? Health { get; set; }
 	public required CharacterInitiative Initiative { get; set; }
+	public required int? ArmorClass { get; set; }
 
-	public static Npc New(string Name, CharacterInitiative initiative, int? ArmorClass = null, CharacterHealth? Health = null)
+	public static Character New(string Name, CharacterInitiative initiative, int? ArmorClass = null, CharacterHealth? Health = null)
 	{
-		return new Npc()
+		return new Character()
 		{
 			Id = Guid.NewGuid(),
 			Initiative = initiative,
@@ -19,4 +19,3 @@ public record Npc : ICharacter
 		};
 	}
 }
-

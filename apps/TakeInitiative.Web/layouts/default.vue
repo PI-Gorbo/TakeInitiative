@@ -14,11 +14,15 @@
                     </h1>
                     <section class="flex flex-1 justify-end gap-2">
                         <div class="flex items-center gap-2">
-                            <Transition name="fade">
-                                <div v-if="isCombatRoute" class="flex items-center gap-2">
+                            <TransitionGroup name="delayedFade">
+                                <div
+                                    v-if="isCombatRoute"
+                                    class="flex items-center gap-2"
+                                    key="CombatRoute"
+                                >
                                     <article>
                                         <label
-                                            class="text-take-yellow font-NovaCut text-lg"
+                                            class="font-NovaCut text-lg text-take-yellow"
                                         >
                                             {{
                                                 campaignStore.state.campaign?.campaignName
@@ -28,9 +32,12 @@
                                         </label>
                                     </article>
                                 </div>
-                            </Transition>
-                            <Transition name="fade">
-                                <div v-if="isIndexRoute" class="flex items-center gap-2">
+
+                                <div
+                                    v-if="isIndexRoute"
+                                    class="flex items-center gap-2"
+                                    key="IndexRoute"
+                                >
                                     <article class="flex flex-row items-center gap-1">
                                         <label
                                             for="campaigns"
@@ -42,10 +49,15 @@
                                             id="campaigns"
                                             class="rounded-lg bg-take-navy p-2"
                                             :value="userStore.state.selectedCampaignId"
-                                            @change="(e) => {
-												const campaignId = (e.target as HTMLSelectElement).value
-												userStore.state.selectedCampaignId = campaignId
-											}"
+                                            @change="
+                                                (e) => {
+                                                    const campaignId = (
+                                                        e.target as HTMLSelectElement
+                                                    ).value;
+                                                    userStore.state.selectedCampaignId =
+                                                        campaignId;
+                                                }
+                                            "
                                         >
                                             <option
                                                 v-for="c in userStore.campaignList"
@@ -65,9 +77,8 @@
                                         @clicked="() => shareCampaignModal?.show()"
                                     />
                                 </div>
-                            </Transition>
-                            <Transition name="fade">
                                 <FormButton
+                                    key="CampaignsRoute"
                                     v-if="!isCampaignsRoute"
                                     @clicked="() => navigateTo('/campaigns')"
                                     icon="flag-checkered"
@@ -76,7 +87,7 @@
                                     buttonColour="take-navy-light"
                                     hoverButtonColour="take-yellow"
                                 />
-                            </Transition>
+                            </TransitionGroup>
                             <FormButton
                                 icon="user-gear"
                                 size="sm"
