@@ -4,7 +4,6 @@ using FastEndpoints;
 using FluentValidation;
 using Marten;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using TakeInitiative.Api.Models;
 using TakeInitiative.Utilities.Extensions;
 
@@ -45,16 +44,18 @@ public class DeletePlannedCombatNpc(IDocumentStore Store) : Endpoint<DeletePlann
 			}
 
 			var stage = combat.Stages.FirstOrDefault(x => x.Id == req.StageId);
-			if (stage == null) {
+			if (stage == null)
+			{
 				ThrowError(x => x.StageId, "There is no stage with the given id.");
 			}
 
-			if (!stage.Npcs.Any(x => x.Id == req.NpcId)) {
+			if (!stage.Npcs.Any(x => x.Id == req.NpcId))
+			{
 				ThrowError(x => x.NpcId, "No NPC corresponds to the given id.");
 			}
 
 			stage.Npcs = stage.Npcs.Where(x => x.Id != req.NpcId).ToList();
-			
+
 			session.Store(combat);
 			await session.SaveChangesAsync();
 

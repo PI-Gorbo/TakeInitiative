@@ -3,9 +3,7 @@ using CSharpFunctionalExtensions;
 using FastEndpoints;
 using FluentValidation;
 using Marten;
-using Marten.Schema.Identity;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using TakeInitiative.Api.Models;
 using TakeInitiative.Utilities.Extensions;
 

@@ -1,5 +1,3 @@
-using Marten;
-
 namespace TakeInitiative.Api.Controllers;
 public record DeleteCampaignRequest
 {
