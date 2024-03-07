@@ -20,7 +20,8 @@ services:
             - "5000:8080"
         environment:
             - "ConnectionStrings:TakeDB=User ID=postgres;Password=postgres;Host=postgres;Port=5432;Database=postgres;"
-            - "CORS=https://take-initiative.com;https://take-initiative.com;https://api.take-initiative.com;https://api.take-initiative.com"
+            - "CORS=https://take-initiative.com;https://take-initiative.com"
+            - "AllowedHosts=api.take-initiative.com"
         restart: always
     web:
         build: takeinitiative-web:latest

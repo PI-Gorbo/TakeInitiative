@@ -38,9 +38,3 @@ docker.build: docker.api docker.web
 docker.compose: docker.build
 	docker compose up -d
 docker.drop: docker.drop.web docker.drop.api dropdb
-	
-
-
-
-	
-
