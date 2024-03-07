@@ -1,5 +1,6 @@
 import type { Combat } from "~/utils/types/models";
 import * as signalR from "@microsoft/signalr";
+import { connect } from "http2";
 
 export const useCombatStore = defineStore("combatStore", () => {
 	const userStore = useUserStore()
@@ -12,6 +13,10 @@ export const useCombatStore = defineStore("combatStore", () => {
 		.build();
 
 	connection.on("combatUpdated", (combat: Combat) => state.combat = combat)
+
+	connection.onclose(async function() {
+		await leaveCombat();
+	});
 	
 	const state = reactive<{
 		combat: Combat | null
