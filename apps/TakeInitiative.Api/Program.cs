@@ -1,7 +1,9 @@
 using FastEndpoints;
 using FastEndpoints.Security;
 using Marten;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Net.Http.Headers;
+using Newtonsoft.Json;
 using Serilog;
 
 internal class Program
@@ -9,6 +11,15 @@ internal class Program
 	private static void Main(string[] args)
 	{
 		var builder = WebApplication.CreateBuilder(args);
+
+		// Build config
+		var configBuilder = builder.Configuration
+			.AddJsonFile("appsettings.json", optional: false);
+		if (!builder.Environment.IsProduction())
+		{
+			configBuilder = configBuilder.AddJsonFile("appsettings.json", optional: true);
+		}
+		configBuilder.AddEnvironmentVariables();
 
 		// Add services to the container.
 		// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -47,6 +58,7 @@ internal class Program
 			.UseAuthorization();
 
 		app.UseHealthChecks("/healthz");
+		app.MapGet("/devInfo", ([FromServices] IConfiguration config) => ((IConfigurationRoot)config).GetDebugView());
 		app.Run();
 	}
 }

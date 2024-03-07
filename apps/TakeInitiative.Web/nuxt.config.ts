@@ -15,9 +15,9 @@ export default defineNuxtConfig({
         public: {
             // https://medium.com/@hackcharms/how-to-use-axios-in-nuxt3-same-as	-nuxt2-with-typescript-3f4daf524cdd
             axios: <CreateAxiosDefaults>{
-                baseURL: process.env.apiUrl,
+                baseURL: process.env.API_URL,
             },
-			webUrl: process.env.webUrl,
+            webUrl: process.env.WEB_URL,
         },
     },
     build: {
