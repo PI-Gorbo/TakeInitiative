@@ -18,12 +18,12 @@ services:
             - "5000:8080"
         environment:
             - "ConnectionStrings:TakeDB=User ID=postgres;Password=postgres;Host=postgres;Port=5432;Database=postgres;"
-            - "CORS=https://localhost:3000;http://localhost:3000"
+            - "CORS=https://take-initiative.com;https://take-initiative.com"
         restart: always
     web:
         build: takeinitiative-web:latest
         ports:
             - "3000:3000"
         environment:
-            - "NUXT_PUBLIC_AXIOS_BASE_URL=http://localhost:5000"
+            - "NUXT_PUBLIC_AXIOS_BASE_URL=https://api.take-initiative.com"
         restart: always
