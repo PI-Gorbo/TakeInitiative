@@ -14,7 +14,11 @@
                     </h1>
                     <section class="flex flex-1 justify-end gap-2">
                         <div class="flex items-center gap-2">
-                            <TransitionGroup name="delayedFade">
+                            <TransitionGroup
+                                name="delayedFade"
+                                tag="div"
+                                class="flex flex-row gap-2"
+                            >
                                 <div
                                     v-if="isCombatRoute"
                                     class="flex items-center gap-2"

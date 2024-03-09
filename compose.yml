@@ -30,4 +30,5 @@ services:
             - "3000:3000"
         environment:
             - "NUXT_PUBLIC_AXIOS_BASE_URL=https://api.take-initiative.com"
+            - "NUXT_PUBLIC_WEB_URL=https://take-initiative.com"
         restart: always

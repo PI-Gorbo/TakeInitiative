@@ -5,13 +5,6 @@
             v-if="plannedCombat"
             :key="plannedCombat.id"
         >
-            <header>
-                <FormButton
-                    label="Open Combat"
-                    @clicked="() => onOpenCombat(plannedCombat?.id!)"
-                    size="sm"
-                />
-            </header>
             <TransitionGroup
                 v-if="plannedCombat?.stages?.length != 0"
                 class="flex flex-col gap-4"
@@ -110,12 +103,6 @@ async function deleteNpc(
 
 async function deleteStage(stage: PlannedCombatStage) {
     return await plannedCombatStore.removeStage(stage.id);
-}
-
-async function onOpenCombat(plannedCombatId: string) {
-    return await campaignStore
-        .openCombat(plannedCombatId)
-        .then(async (c) => await navigateTo(`/combats/${c.combat.id}`));
 }
 </script>
 

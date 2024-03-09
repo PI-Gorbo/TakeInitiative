@@ -60,7 +60,7 @@ import { CombatState } from "~/utils/types/models";
 const userStore = useUserStore();
 const { state } = storeToRefs(userStore);
 const campaignStore = useCampaignStore();
-const { refresh, pending, error } = useAsyncData(
+const { refresh, pending, error } = await useAsyncData(
     "Campaign",
     () => {
         return campaignStore.init().then(() => true);

@@ -5,60 +5,75 @@
             class="grid h-full w-full grid-cols-9"
             v-if="plannedCombats && plannedCombats.length > 0"
         >
-            <aside
-                class="col-span-3 flex flex-col gap-2 overflow-y-auto rounded-xl border border-take-navy-medium px-2 py-1"
-            >
-                <TransitionGroup name="fade" class="flex gap-2 flex-col" tag="section">
-                    <div
-                        v-for="combat in plannedCombats"
-                        :key="combat.id"
-                        :class="[
-                            'group flex cursor-pointer select-none gap-4 rounded-xl border border-take-navy-medium border-opacity-100 bg-take-navy-medium p-1 transition-colors ',
-                            {
-                                'border-take-yellow':
-                                    combat.id == selectedPlannedCombat?.id,
-                                'hover:border-take-navy-light':
-                                    combat.id != selectedPlannedCombat?.id,
-                            },
-                        ]"
-                        @click="() => setCombat(combat)"
-                    >
-                        <div class="flex w-full items-center">
-                            <span
-                                for="Planned Combat"
-                                class="flex flex-1 align-middle px-2"
-                            >
-                                {{ combat.combatName }}
-                            </span>
-                            <FormButton
-                                class="px-1"
-                                icon="trash"
-                                textColour="white"
-                                buttonColour="take-navy-light"
-                                hoverButtonColour="take-red"
-                                size="sm"
-                                @clicked="(ctrl) => showDeleteCombatModal(ctrl, combat)"
-                            />
-                        </div>
-                    </div>
-                </TransitionGroup>
-                <div
-                    :class="[
-                        'group flex w-full cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-take-navy-light transition-colors hover:border-take-yellow',
-                    ]"
-                    @click="showCreatePlannedCombatModal"
-                >
+            <aside class="col-span-3 flex flex-col gap-2 px-2 py-1">
+                <header v-if="hasActiveCombat == false">
                     <FormButton
-                        @clicked="showCreatePlannedCombatModal"
-                        class="group-hover:text-take-yellow"
-                        buttonColour="take-navy"
-                        hoverButtonColour="take-navy"
-                        textColour="take-grey"
-                        hoverTextColour="take-yellow"
-                        icon="plus"
-                        label="Add Combat"
+                        label="Open Combat"
+                        @clicked="() => onOpenCombat(selectedPlannedCombat?.id!)"
                         size="sm"
                     />
+                </header>
+                <div
+                    class="flex flex-1 flex-col gap-2 overflow-y-auto rounded-xl border border-take-navy-medium"
+                >
+                    <TransitionGroup
+                        name="fade"
+                        class="flex flex-col gap-2"
+                        tag="section"
+                    >
+                        <div
+                            v-for="combat in plannedCombats"
+                            :key="combat.id"
+                            :class="[
+                                'group flex cursor-pointer select-none gap-4 rounded-xl border border-take-navy-medium border-opacity-100 bg-take-navy-medium p-1 transition-colors ',
+                                {
+                                    'border-take-yellow':
+                                        combat.id == selectedPlannedCombat?.id,
+                                    'hover:border-take-navy-light':
+                                        combat.id != selectedPlannedCombat?.id,
+                                },
+                            ]"
+                            @click="() => setCombat(combat)"
+                        >
+                            <div class="flex w-full items-center">
+                                <span
+                                    for="Planned Combat"
+                                    class="flex flex-1 px-2 align-middle"
+                                >
+                                    {{ combat.combatName }}
+                                </span>
+                                <FormButton
+                                    class="px-1"
+                                    icon="trash"
+                                    textColour="white"
+                                    buttonColour="take-navy-light"
+                                    hoverButtonColour="take-red"
+                                    size="sm"
+                                    @clicked="
+                                        (ctrl) => showDeleteCombatModal(ctrl, combat)
+                                    "
+                                />
+                            </div>
+                        </div>
+                    </TransitionGroup>
+                    <div
+                        :class="[
+                            'group flex w-full cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-take-navy-light transition-colors hover:border-take-yellow',
+                        ]"
+                        @click="showCreatePlannedCombatModal"
+                    >
+                        <FormButton
+                            @clicked="showCreatePlannedCombatModal"
+                            class="group-hover:text-take-yellow"
+                            buttonColour="take-navy"
+                            hoverButtonColour="take-navy"
+                            textColour="take-grey"
+                            hoverTextColour="take-yellow"
+                            icon="plus"
+                            label="Add Combat"
+                            size="sm"
+                        />
+                    </div>
                 </div>
             </aside>
             <section class="col-span-6 overflow-y-auto">
@@ -106,6 +121,7 @@ const deleteCombatModal = ref<InstanceType<typeof ConfirmModal> | null>(null);
 const createPlannedCombatModal = ref<InstanceType<typeof Modal> | null>(null);
 
 const campaignStore = useCampaignStore();
+const hasActiveCombat = computed(() => campaignStore.state.combatDto != null);
 const plannedCombatStore = usePlannedCombatStore();
 const plannedCombats = computed(() => campaignStore.state.plannedCombats);
 const selectedPlannedCombat = computed(() => plannedCombatStore.selectedPlannedCombat);
@@ -158,6 +174,12 @@ async function deleteCombat(loadingCtrl: ButtonLoadingControl, combat: PlannedCo
         loadingCtrl.setLoaded();
         deleteCombatModal.value?.hide();
     });
+}
+
+async function onOpenCombat(plannedCombatId: string) {
+    return await campaignStore
+        .openCombat(plannedCombatId)
+        .then(async (c) => await navigateTo(`/combats/${c.combat.id}`));
 }
 
 onMounted(() => {

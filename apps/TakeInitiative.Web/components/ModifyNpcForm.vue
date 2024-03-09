@@ -239,7 +239,6 @@ async function onCreate() {
     formState.error = null;
     const validateResult = await validate();
     if (!validateResult.valid) {
-        console.log(validateResult);
         return;
     }
 
