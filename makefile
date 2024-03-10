@@ -9,10 +9,6 @@ dropdb:
 refreshdb: dropdb updb
 
 ## Api
-api:
-	dotnet run --project ./apps/TakeInitiative.Api
-watchApi: 
-	dotnet watch run --project ./apps/TakeInitiative.Api
 docker.api:
 	docker build -t takeinitiative-api:latest ./apps/TakeInitiative.Api/
 docker.drop.api:
