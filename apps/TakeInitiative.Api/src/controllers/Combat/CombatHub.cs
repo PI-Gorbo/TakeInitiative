@@ -1,5 +1,6 @@
 using CSharpFunctionalExtensions;
 using Marten;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using TakeInitiative.Api.Models;
 using TakeInitiative.Utilities.Extensions;
@@ -8,13 +9,13 @@ namespace TakeInitiative.Api.Controllers;
 
 public static class CombatHubContextExtensions
 {
-	public static Task NotifyCombatUpdated(this IHubContext<CombatHub>  hubContext, Combat combat)
+	public static Task NotifyCombatUpdated(this IHubContext<CombatHub> hubContext, Combat combat)
 	{
 		return hubContext.Clients.Group(combat.Id.ToString())
 			.SendAsync("combatUpdated", combat);
 	}
 }
-
+[Authorize]
 public class CombatHub : Hub
 {
 	public Task NotifyCombatUpdated(Combat combat)
@@ -37,6 +38,7 @@ public class CombatHub : Hub
 			// Check if the user is already part of the combat.
 			if (combat.CurrentPlayers.Any(x => x.UserId == UserId))
 			{
+				await Groups.AddToGroupAsync(Context.ConnectionId, combat.Id.ToString());
 				return Result.Success(combat);
 			}
 
@@ -66,7 +68,7 @@ public class CombatHub : Hub
 
 		return;
 	}
-	
+
 	public async Task LeaveCombat(IDocumentStore Store, Guid UserId, Guid CombatId)
 	{
 		// Check the user can leave the combat. 
@@ -81,6 +83,7 @@ public class CombatHub : Hub
 			// Check if the user is already part of the combat.
 			if (!combat.CurrentPlayers.Any(x => x.UserId == UserId))
 			{
+				await Groups.RemoveFromGroupAsync(Context.ConnectionId, combat.Id.ToString());
 				return Result.Failure("User is not apart of the combat.");
 			}
 
@@ -116,7 +119,8 @@ public class CombatHub : Hub
 			}
 
 			// Check the state of the combat.
-			if (combat.State == CombatState.Paused || combat.State == CombatState.Finished) {
+			if (combat.State == CombatState.Paused || combat.State == CombatState.Finished)
+			{
 				return Result.Failure($"Cannot stage character because the combat is {combat.State.ToString().ToLower()}.");
 			}
 

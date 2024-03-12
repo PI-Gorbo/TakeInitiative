@@ -6,19 +6,20 @@ using TakeInitiative.Api.Models;
 using TakeInitiative.Utilities.Extensions;
 using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.SignalR;
+using System.ComponentModel;
 
 namespace TakeInitiative.Api.Controllers;
 
-public class DeleteStagedPlayerCharacter(IDocumentStore Store, IHubContext<CombatHub> hubContext) : Endpoint<DeleteStagedPlayerCharacterRequest, CombatResponse>
+public class DeleteStagedCharacter(IDocumentStore Store, IHubContext<CombatHub> hubContext) : Endpoint<DeleteStagedCharacterRequest, CombatResponse>
 {
 	public override void Configure()
 	{
-		Delete("/api/combat/stage/player-characters");
+		Delete("/api/combat/staged-character");
 		AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
 		Policies(TakePolicies.UserExists);
 	}
 
-	public override async Task HandleAsync(DeleteStagedPlayerCharacterRequest req, CancellationToken ct)
+	public override async Task HandleAsync(DeleteStagedCharacterRequest req, CancellationToken ct)
 	{
 		var userId = this.GetUserIdOrThrowUnauthorized();
 
@@ -39,7 +40,7 @@ public class DeleteStagedPlayerCharacter(IDocumentStore Store, IHubContext<Comba
 			// Check the user is part of the combat.
 			if (!combat.CurrentPlayers.Any(x => x.UserId == userId))
 			{
-				ThrowError("Must be a current player in order to stage enemies");
+				ThrowError("Must be a current player in order to delete staged characters");
 			}
 
 			var character = combat.StagedList.SingleOrDefault(x => x.Id == req.CharacterId);
@@ -48,12 +49,17 @@ public class DeleteStagedPlayerCharacter(IDocumentStore Store, IHubContext<Comba
 				ThrowError(x => x.CharacterId, "There is no character with the given id.");
 			}
 
-			// Unless the user is the dungeon master, then the 
+			// Check the player is authorized to delete the staged character.
+			bool isAuthorized = combat.DungeonMaster == userId || character.PlayerId == userId;
+			if (!isAuthorized)
+			{
+				ThrowError("Only the dungeon master or the player that made this character can delete it from the staged list.");
+			}
 
 			// Publish the event
 			StagedCharacterRemovedEvent removedEvent = new()
 			{
-				UserId = req.UserId,
+				UserId = userId,
 				CharacterId = req.CharacterId
 			};
 			session.Events.Append(req.CombatId, removedEvent);

@@ -1,10 +1,11 @@
+using FastEndpoints;
 using FluentValidation;
 
 namespace TakeInitiative.Api.Controllers;
 
-public class PutUpsertStagedPlayerCharacterRequestValidator : AbstractValidator<PutUpsertStagedPlayerCharacterRequest>
+public class PutUpsertStagedCharacterRequestValidator : Validator<PutUpsertStagedCharacterRequest>
 {
-	public PutUpsertStagedPlayerCharacterRequestValidator()
+	public PutUpsertStagedCharacterRequestValidator()
 	{
 
 		RuleFor(x => x.CombatId)

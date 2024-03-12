@@ -9,16 +9,16 @@ public record Combat
 	public CombatState State { get; set; }
 	public string? CombatName { get; init; }
 	public Guid DungeonMaster { get; init; }
-	public ImmutableList<CombatTimingRecord>? Timing { get; init; }
-	public ImmutableList<string>? CombatLogs { get; set; }
-	public ImmutableList<PlayerDto>? CurrentPlayers { get; set; }
+	public ImmutableList<CombatTimingRecord> Timing { get; init; } = null!;
+	public ImmutableList<string> CombatLogs { get; set; } = null!;
+	public ImmutableList<PlayerDto> CurrentPlayers { get; set; } = null!;
 
 	// Actual Initiative List
-	public ImmutableList<CombatCharacter>? StagedList { get; set; }
-	public ImmutableList<CombatCharacter>? InitiativeList { get; set; }
+	public ImmutableList<CombatCharacter> StagedList { get; set; } = null!; // Will never be null when the api has access to it.
+	public ImmutableList<CombatCharacter> InitiativeList { get; set; } = null!; // Will never be null when the api has access to it.
 
 	// Planning 
-	public ImmutableList<PlannedCombatStage>? PlannedStages { get; set; }
+	public ImmutableList<PlannedCombatStage> PlannedStages { get; set; } = null!; // Will never be null when the api has access to it.
 
 	public static Combat New(
 			Guid Id,

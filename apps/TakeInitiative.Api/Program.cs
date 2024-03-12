@@ -1,5 +1,6 @@
 using FastEndpoints;
 using Microsoft.AspNetCore.Mvc;
+using Python.Runtime;
 using TakeInitiative.Api.Controllers;
 internal class Program
 {
@@ -29,6 +30,7 @@ internal class Program
 		builder.AddSerilog();
 		builder.AddIdentityAuthenticationAndAuthorization();
 		builder.AddOptionObjects();
+		builder.AddPython();
 
 		// Cors
 		var cors = (builder.Configuration.GetValue<string>("CORS") ?? throw new MissingMemberException("Missing configuration for value 'CORS'."))

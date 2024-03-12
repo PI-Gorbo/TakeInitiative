@@ -8,6 +8,44 @@ namespace TakeInitiative.Api.Models;
 
 public class CombatProjection : SingleStreamProjection<Combat>
 {
+	public async Task<Combat> Apply(StagedCharacterActivatedEvent @event, Combat Combat, IEvent<StagedCharacterActivatedEvent> eventDetails, IQuerySession session)
+	{
+		var character = Combat.StagedList.SingleOrDefault(x => x.Id == @event.CharacterId);
+		if (character == null)
+		{
+			throw new OperationCanceledException("There is no staged character with the given id.");
+		}
+		var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
+
+		return Combat with
+		{
+			CombatLogs = [.. Combat.CombatLogs, $"{user?.UserName} rolled {character.Name}'s initiative with a result of {@event.Initiative} at {eventDetails.Timestamp:R}"],
+			StagedList = Combat.StagedList
+				.Remove(character),
+			InitiativeList = Combat.InitiativeList
+				.Add(character with
+				{
+					InitiativeValue = @event.Initiative
+				})
+		};
+	}
+
+	public async Task<Combat> Apply(StagedCharacterRemovedEvent @event, Combat Combat, IEvent<StagedCharacterRemovedEvent> eventDetails, IQuerySession session)
+	{
+		var character = Combat.StagedList.SingleOrDefault(x => x.Id == @event.CharacterId);
+		if (character == null)
+		{
+			throw new OperationCanceledException("There is no staged character with the given id.");
+		}
+		var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
+
+		return Combat with
+		{
+			CombatLogs = [.. Combat.CombatLogs, $"{user?.UserName} unstaged {character.Name} at {eventDetails.Timestamp:R}"],
+			StagedList = Combat.StagedList
+				.Remove(character)
+		};
+	}
 
 	public async Task<Combat> Apply(StagedCharacterEditedEvent @event, Combat Combat, IEvent<StagedCharacterEditedEvent> eventDetails, IQuerySession session)
 	{
@@ -37,7 +75,7 @@ public class CombatProjection : SingleStreamProjection<Combat>
 		return Combat with
 		{
 			CombatLogs = [.. Combat.CombatLogs, $"{user?.UserName} left the combat at {eventDetails.Timestamp:R}"],
-			CurrentPlayers = Combat.CurrentPlayers?.RemoveAll(
+			CurrentPlayers = Combat.CurrentPlayers.RemoveAll(
 				x => x.UserId == @event.UserId
 			),
 		};
@@ -49,7 +87,7 @@ public class CombatProjection : SingleStreamProjection<Combat>
 		return Combat with
 		{
 			CombatLogs = [.. Combat.CombatLogs, $"{user?.UserName} joined the combat at {eventDetails.Timestamp:R}"],
-			CurrentPlayers = Combat.CurrentPlayers?.Add(
+			CurrentPlayers = Combat.CurrentPlayers.Add(
 				new PlayerDto { UserId = @event.UserId }
 			),
 		};

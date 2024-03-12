@@ -9,7 +9,7 @@ using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Controllers;
 
-public class PutUpsertStagedPlayerCharacter(IDocumentStore Store, IHubContext<CombatHub> hubContext) : Endpoint<PutUpsertStagedPlayerCharacterRequest, CombatResponse>
+public class PutUpsertStagedCharacter(IDocumentStore Store, IHubContext<CombatHub> hubContext) : Endpoint<PutUpsertStagedCharacterRequest, CombatResponse>
 {
 	public override void Configure()
 	{
@@ -18,7 +18,7 @@ public class PutUpsertStagedPlayerCharacter(IDocumentStore Store, IHubContext<Co
 		Policies(TakePolicies.UserExists);
 	}
 
-	public override async Task HandleAsync(PutUpsertStagedPlayerCharacterRequest req, CancellationToken ct)
+	public override async Task HandleAsync(PutUpsertStagedCharacterRequest req, CancellationToken ct)
 	{
 		var userId = this.GetUserIdOrThrowUnauthorized();
 

@@ -6,6 +6,8 @@ using Marten.Services.Json;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.IdentityModel.Protocols.Configuration;
+using Python.Runtime;
 using Serilog;
 using TakeInitiative.Api.Bootstrap;
 using TakeInitiative.Api.Models;
@@ -121,6 +123,15 @@ public static class Bootstrap
 	public static WebApplicationBuilder AddOptionObjects(this WebApplicationBuilder builder)
 	{
 		builder.Services.Configure<JWTOptions>(builder.Configuration);
+		return builder;
+	}
+
+	public static WebApplicationBuilder AddPython(this WebApplicationBuilder builder)
+	{
+		var pythonConfig = builder.Configuration.GetValue<string>("PythonDLL") ?? throw new InvalidConfigurationException("There is no configuration value for PythonDLL. Please set a value.");
+		Runtime.PythonDLL = pythonConfig;
+		PythonEngine.Initialize();
+		PythonEngine.BeginAllowThreads();
 		return builder;
 	}
 
