@@ -1,4 +1,4 @@
 api:
-	dotnet run --project ./apps/TakeInitiative.Api
+	dotnet run
 watchApi: 
-	dotnet watch run --project ./apps/TakeInitiative.Api
+	dotnet watch run

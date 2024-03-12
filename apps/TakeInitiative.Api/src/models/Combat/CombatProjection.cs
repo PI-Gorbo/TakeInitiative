@@ -2,51 +2,32 @@ using System.Collections.Immutable;
 using Marten;
 using Marten.Events;
 using Marten.Events.Aggregation;
+using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Models;
 
 public class CombatProjection : SingleStreamProjection<Combat>
 {
-	public Combat Apply(OpenCombatNpcsAddedEvent @event, Combat Combat)
-	{
-		var idsToRemove = @event.Npcs.Select(x => x.Id).ToArray();
-		return Combat with
-		{
-			InitiativeList = Combat.InitiativeList!
-				.RemoveAll(x => x.Id.IsOneOf(idsToRemove))
-				.AddRange(@event.Npcs)
-		};
-	}
 
-	public Combat Apply(OpenCombatNpcRemovedEvent @event, Combat Combat)
-	{
-		return Combat with
-		{
-			InitiativeList = Combat.InitiativeList!
-				.RemoveAll(x => x.Id == @event.NpcId)
-		};
-	}
-
-	public Combat Apply(OpenCombatNpcAddedEvent @event, Combat Combat)
-	{
-		return Combat with
-		{
-			InitiativeList = Combat.InitiativeList!
-				.RemoveAll(x => x.Id == @event.Npc.Id)
-				.Add(@event.Npc)
-		};
-	}
-
-	public async Task<Combat> Apply(OpenCombatPlayerCharactersSetEvent @event, Combat Combat, IEvent<OpenCombatPlayerCharactersSetEvent> eventDetails, IQuerySession session)
+	public async Task<Combat> Apply(StagedCharacterEditedEvent @event, Combat Combat, IEvent<StagedCharacterEditedEvent> eventDetails, IQuerySession session)
 	{
 		var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
-		var characterNames = String.Join(", ", @event.Characters.Select(x => x.Name));
 		return Combat with
 		{
-			CombatLogs = [.. Combat.CombatLogs, $"{user?.UserName} plans to join the combat with the character(s) {characterNames}"],
-			InitiativeList = Combat.InitiativeList!
-				.RemoveAll(x => x is CombatPlayerCharacter combatPlayerCharacter && combatPlayerCharacter.PlayerId == @event.UserId)
-				.AddRange(@event.Characters)
+			CombatLogs = [.. Combat.CombatLogs, $"{user?.UserName} edited staged character {@event.Character.Name} at {eventDetails.Timestamp:R}"],
+			StagedList = Combat.StagedList!
+				.ReplaceOrInsert(x => x.Id == @event.Character.Id, @event.Character)
+		};
+	}
+
+	public async Task<Combat> Apply(StagedCharacterAddedEvent @event, Combat Combat, IEvent<StagedCharacterAddedEvent> eventDetails, IQuerySession session)
+	{
+		var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
+		return Combat with
+		{
+			CombatLogs = [.. Combat.CombatLogs, $"{user?.UserName} staged {@event.Character.Name} at {eventDetails.Timestamp:R}"],
+			StagedList = (Combat.StagedList ?? ImmutableList<CombatCharacter>.Empty)
+				.Add(@event.Character)
 		};
 	}
 
@@ -77,20 +58,21 @@ public class CombatProjection : SingleStreamProjection<Combat>
 	public async Task<Combat> Apply(CombatOpenedEvent @event, Combat Combat, IEvent<CombatOpenedEvent> eventDetails, IQuerySession session)
 	{
 		var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
-		return Combat with
-		{
-			CampaignId = @event.CampaignId,
-			CombatName = @event.CombatName,
-			State = CombatState.Open,
-			DungeonMaster = @event.UserId,
-			Timing = [
+		return Combat.New(
+			Id: Combat.Id,
+			CampaignId: @event.CampaignId,
+			CombatName: @event.CombatName,
+			State: CombatState.Open,
+			DungeonMaster: @event.UserId,
+			Timing: [
 				new CombatTimingRecord(StartTime: eventDetails.Timestamp, EndTime: null)
 			],
-			CombatLogs = [$"Combat started at {eventDetails.Timestamp:R} by {user?.UserName}."],
-			CurrentPlayers = [],
-			PlannedStages = @event.Stages.ToImmutableList(),
-			InitiativeList = [],
-		};
+			CombatLogs: [$"{user?.UserName} started the Combat at {eventDetails.Timestamp:R}"],
+			CurrentPlayers: [],
+			PlannedStages: @event.Stages.ToImmutableList(),
+			InitiativeList: [],
+			StagedList: []
+		);
 	}
 
 }

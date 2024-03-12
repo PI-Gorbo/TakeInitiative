@@ -8,7 +8,7 @@ namespace TakeInitiative.Api.Controllers;
 
 public static class CombatHubContextExtensions
 {
-	public static Task NotifyCombatUpdated(this IHubContext<CombatHub> hubContext, Combat combat)
+	public static Task NotifyCombatUpdated(this IHubContext<CombatHub>  hubContext, Combat combat)
 	{
 		return hubContext.Clients.Group(combat.Id.ToString())
 			.SendAsync("combatUpdated", combat);
@@ -66,7 +66,7 @@ public class CombatHub : Hub
 
 		return;
 	}
-
+	
 	public async Task LeaveCombat(IDocumentStore Store, Guid UserId, Guid CombatId)
 	{
 		// Check the user can leave the combat. 
@@ -100,6 +100,46 @@ public class CombatHub : Hub
 		if (leaveCombatResult.IsFailure)
 		{
 			throw new OperationCanceledException(leaveCombatResult.Error);
+		}
+
+		return;
+	}
+
+	public async Task StagePlayerCharacters(IDocumentStore Store, Guid UserId, Guid CombatId, CombatCharacter[] characters)
+	{
+		Result result = await Store.Try(async (session) =>
+		{
+			var combat = await session.LoadAsync<Combat>(CombatId);
+			if (combat == null)
+			{
+				return Result.Failure("Combat does not exist.");
+			}
+
+			// Check the state of the combat.
+			if (combat.State == CombatState.Paused || combat.State == CombatState.Finished) {
+				return Result.Failure($"Cannot stage character because the combat is {combat.State.ToString().ToLower()}.");
+			}
+
+			// Check the user is part of the combat.
+			if (!combat.CurrentPlayers.Any(x => x.UserId == UserId))
+			{
+				return Result.Failure("Must be a current player in order to stage enemies");
+			}
+
+			// Create a join campaign event.
+			PlayerJoinedEvent @event = new PlayerJoinedEvent() { UserId = UserId };
+			var stream = session.Events.Append(CombatId, @event);
+			await session.SaveChangesAsync();
+
+			combat = await session.LoadAsync<Combat>(CombatId);
+			await NotifyCombatUpdated(combat);
+
+			return Result.Success(combat);
+		});
+
+		if (result.IsFailure)
+		{
+			throw new OperationCanceledException(result.Error);
 		}
 
 		return;

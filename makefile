@@ -4,8 +4,8 @@ db:
 
 updb: db
 dropdb:
-	docker stop takedb
-	docker rm takedb
+	docker stop takedb-local
+	docker rm takedb-local
 refreshdb: dropdb updb
 
 ## Api
