@@ -126,5 +126,6 @@ export const combatValidator = yup.object({
     currentPlayers: yup.array(playerDtoValidator).required(),
     plannedStages: yup.array(plannedCombatStageValidator).required(),
     initiativeList: yup.array(),
+	stagedList: yup.array(),
 });
 export type Combat = InferType<typeof combatValidator>;

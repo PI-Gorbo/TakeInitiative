@@ -11,11 +11,11 @@ export default defineNuxtPlugin((nuxtApp) => {
     const Axios: AxiosInstance = axios.create(defaultAxios);
     // Register to use an auth token if there is one.
 
-    const aspNetCoreCookie = useCookie(".AspNetCore.Cookies"); // Axios does not attach the cookie on the first request. so we have to manually do it.
+    const aspNetCoreCookie = useCookie(".AspNetCore.Cookies").value; // Axios does not attach the cookie on the first request. so we have to manually do it.
     Axios.interceptors.request.use((config) => {
-        if (aspNetCoreCookie.value) {
+        if (aspNetCoreCookie) {
             config.headers["Cookie"] =
-                `.AspNetCore.Cookies=${aspNetCoreCookie.value}`;
+                `.AspNetCore.Cookies=${aspNetCoreCookie}`;
         }
         config.withCredentials = true; // Automatically adds cookies to every request.
         return config;

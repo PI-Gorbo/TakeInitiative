@@ -1,6 +1,5 @@
 import type { Combat } from "~/utils/types/models";
 import * as signalR from "@microsoft/signalr";
-import { connect } from "http2";
 
 export const useCombatStore = defineStore("combatStore", () => {
     const userStore = useUserStore();
@@ -9,10 +8,11 @@ export const useCombatStore = defineStore("combatStore", () => {
 
     // Start the connection.
     var connection = new signalR.HubConnectionBuilder()
-        .withUrl(`${useRuntimeConfig().public.axios.baseURL}/combatHub`)
+        .withUrl(`${useRuntimeConfig().public.axios.baseURL}/combatHub`, {
+            accessTokenFactory: () => useCookie(".AspNetCore.Cookies").value!,
+        })
         .build();
 
-    connection.on("combatUpdated", (combat: Combat) => (state.combat = combat));
 
     const state = reactive<{
         combat: Combat | null;
@@ -27,23 +27,19 @@ export const useCombatStore = defineStore("combatStore", () => {
             state.combat = resp.combat;
             userStore.setSelectedCampaign(resp.combat.campaignId);
             await campaignStore.setCampaignById(resp.combat.campaignId);
-            if (connection.state != signalR.HubConnectionState.Connected) {
-                await connection
-                    .start()
-                    .catch((error) => (state.signalRError = error));
-            }
         });
     }
 
     async function joinCombat(): Promise<void> {
-        if (connection.state != signalR.HubConnectionState.Connected) return;
-
-        const userId = userStore.state.user?.userId;
-        if (state.combat?.currentPlayers.find((x) => x.userId) != null) {
-            return Promise.resolve();
+        if (connection.state != signalR.HubConnectionState.Connected) {
+            await startConnection();
         }
 
-        return await connection.send("joinCombat", userId, state.combat?.id);
+        const userId = userStore.state.user?.userId;
+
+        return await connection
+            .send("joinCombat", userId, state.combat?.id)
+            .catch((error) => (state.signalRError = error));
     }
 
     async function leaveCombat(): Promise<void> {
@@ -53,12 +49,32 @@ export const useCombatStore = defineStore("combatStore", () => {
         if (state.combat?.currentPlayers.find((x) => x.userId) == null) {
             return Promise.resolve();
         }
+
         return await connection
             .send("leaveCombat", userId, state.combat?.id)
             .then(() => connection.stop());
     }
 
+    async function startConnection() {
+        if (
+            connection.state == signalR.HubConnectionState.Connecting ||
+            connection.state == signalR.HubConnectionState.Connected
+        ) {
+            return;
+        }
+
+        await connection.start().catch((error) => {
+            state.signalRError = error;
+            throw error;
+        });
+		connection.on("combatUpdated", (combat: Combat) => {
+			console.log("Combat Updated!");
+			return (state.combat = JSON.parse(JSON.stringify(combat)));
+		});
+    }
+
     return {
+        connection,
         state,
         setCombat,
         joinCombat,

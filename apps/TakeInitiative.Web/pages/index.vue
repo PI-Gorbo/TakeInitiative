@@ -7,12 +7,15 @@
             <header
                 v-if="campaignStore.state.combatDto"
                 :class="[
-                    'rounded-lg  px-4 py-3 text-center text-xl text-take-navy select-none cursor-pointer',
+                    'cursor-pointer  select-none rounded-lg px-4 py-3 text-center text-xl text-take-navy',
                     campaignStore.state.combatDto.state == CombatState.Open
                         ? 'bg-take-yellow-dark'
                         : 'bg-take-red',
                 ]"
-                @click="() => navigateTo(`/combat/${campaignStore.state.combatDto?.id}`)"
+                @click="
+                    async () =>
+                        await navigateTo(`/combat/${campaignStore.state.combatDto?.id}`)
+                "
             >
                 <div v-if="campaignStore.state.combatDto.state == CombatState.Open">
                     {{ openCombatText }}
@@ -65,7 +68,7 @@ const { refresh, pending, error } = await useAsyncData(
     () => {
         return campaignStore.init().then(() => true);
     },
-    { watch: [() => userStore.state.selectedCampaignId] }
+    { watch: [() => userStore.state.selectedCampaignId] },
 ); // Return something so that nuxt does not recall this on this client
 
 useHead({
@@ -84,11 +87,13 @@ const openCombatText = computed(() => {
                 userId: userStore.state.user?.userId!,
                 username: userStore.username!,
             } satisfies {
-				userId: string,
-				username: string
-			},
+                userId: string;
+                username: string;
+            },
         ])
-        .find((x) => x.userId == campaignStore.state.combatDto?.dungeonMaster)?.username;
+        .find(
+            (x) => x.userId == campaignStore.state.combatDto?.dungeonMaster,
+        )?.username;
     return `There is an combat opened by ${combatOpenedByUser}! Click to join before it starts...`;
 });
 const combatStartedText = computed(() => {});
