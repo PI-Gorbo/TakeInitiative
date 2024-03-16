@@ -20,7 +20,7 @@
         </div>
     </div>
     <Modal ref="editNpcFormModal" title="Edit NPC">
-        <ModifyNpcForm
+        <ModifyPlannedCharacterForm
             :npc="props.npc"
             :onEdit="
                 (request) => props.editNpc(request).then(() => editNpcFormModal?.hide())

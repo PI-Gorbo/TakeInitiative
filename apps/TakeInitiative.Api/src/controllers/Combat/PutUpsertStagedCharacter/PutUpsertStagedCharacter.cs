@@ -43,12 +43,6 @@ public class PutUpsertStagedCharacter(IDocumentStore Store, IHubContext<CombatHu
 			}
 
 			var existingCharacter = combat.StagedList.SingleOrDefault(x => x.Id == req.Character.Id);
-			var userIsAllowedToEditCharacter = existingCharacter?.PlayerId == userId || combat.DungeonMaster == userId;
-			if (!userIsAllowedToEditCharacter)
-			{
-				ThrowError(x => x.Character, "Only a dungeon master can edit this character.");
-			}
-
 			var character = new CombatCharacter()
 			{
 				Id = req.Character.Id,
@@ -63,6 +57,12 @@ public class PutUpsertStagedCharacter(IDocumentStore Store, IHubContext<CombatHu
 
 			if (existingCharacter != null)
 			{
+                var userIsAllowedToEditCharacter = existingCharacter?.PlayerId == userId || combat.DungeonMaster == userId;
+                if (!userIsAllowedToEditCharacter)
+                {
+                    ThrowError(x => x.Character, "Only a dungeon master can edit this character.");
+                }
+
 				// Create the edit user event
 				StagedCharacterEditedEvent editEvent = new()
 				{

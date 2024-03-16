@@ -7,7 +7,7 @@
         >
             <TransitionGroup
                 v-if="plannedCombat?.stages?.length != 0"
-                class="flex flex-col gap-4"
+                class="flex flex-col gap-4 flex-1"
                 tag="body"
                 name="fade"
             >

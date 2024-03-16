@@ -1,9 +1,5 @@
 <template>
-    <FormBase
-        class="flex flex-col gap-2"
-        :onSubmit="onSubmit"
-        v-slot="{ submitting }"
-    >
+    <FormBase class="flex flex-col gap-2" :onSubmit="onSubmit" v-slot="{ submitting }">
         <FormInput
             :autoFocus="true"
             textColour="white"
@@ -48,9 +44,7 @@
                                 .value)
                     "
                     :placeholder="
-                        initiativeStrategy == InitiativeStrategy.Fixed
-                            ? '+5'
-                            : '1d20 + 5'
+                        initiativeStrategy == InitiativeStrategy.Fixed ? '+5' : '1d20 + 5'
                     "
                 />
             </div>

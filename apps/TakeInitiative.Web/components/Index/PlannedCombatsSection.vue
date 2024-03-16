@@ -179,7 +179,8 @@ async function deleteCombat(loadingCtrl: ButtonLoadingControl, combat: PlannedCo
 async function onOpenCombat(plannedCombatId: string) {
     return await campaignStore
         .openCombat(plannedCombatId)
-        .then(async (c) => await navigateTo(`/combats/${c.combat.id}`));
+        .then(async (c) => await navigateTo(`/combats/${c.combat.id}`))
+        .then(() => console.log("navigating..."));
 }
 
 onMounted(() => {

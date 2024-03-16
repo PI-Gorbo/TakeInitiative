@@ -139,4 +139,6 @@ export const combatValidator = yup.object({
     initiativeList: yup.array(combatCharacterValidator).required(),
     stagedList: yup.array(combatCharacterValidator).required(),
 });
-export type Combat = InferType<typeof combatValidator>;
+export type Combat = Omit<InferType<typeof combatValidator>, 'state'> & {
+    state: CombatState
+};

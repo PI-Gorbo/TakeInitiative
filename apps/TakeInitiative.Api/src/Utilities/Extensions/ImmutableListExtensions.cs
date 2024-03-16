@@ -5,7 +5,7 @@ public static class ImmutableListExtensions
 {
 	public static ImmutableList<T> ReplaceOrInsert<T>(this ImmutableList<T> list, Predicate<T> predicate, T item)
 	{
-		var matchingIndexes = list.Where(x => predicate(x)).Select((x, index) => index).ToList();
+		var matchingIndexes = list.Select((item, index) => (item, index)).Where((x) => predicate(x.item)).ToList();
 		if (matchingIndexes.Count == 0)
 		{
 			throw new ArgumentException("Replace or Insert: Predicate matched no elements.");
@@ -15,7 +15,7 @@ public static class ImmutableListExtensions
 			throw new ArgumentException("Replace or Insert: Predicate matched more than one element.");
 		}
 
-		var matchingIndex = matchingIndexes[0];
+		var matchingIndex = matchingIndexes[0].index;
 		return list.SetItem(matchingIndex, item);
 	}
 }

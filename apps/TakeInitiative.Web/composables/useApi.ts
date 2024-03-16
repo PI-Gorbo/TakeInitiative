@@ -4,8 +4,10 @@ import { deleteCampaignRequest } from "~/utils/api/campaign/deleteCampaignReques
 import { getCampaignRequest } from "~/utils/api/campaign/getCampaignRequest";
 import { joinCampaignRequest } from "~/utils/api/campaign/joinCampaignRequest";
 import { updateCampaignDetailsRequest } from "~/utils/api/campaign/updateCampaignDetailsRequest";
+import { deleteStagedCharacter } from "~/utils/api/combat/deleteStagedCharacterRequest";
 import { getCombatRequest } from "~/utils/api/combat/getCombatRequest";
 import { openCombatRequest } from "~/utils/api/combat/openCombatRequest";
+import { putUpsertStagedCharacter } from "~/utils/api/combat/putUpsertStagedCharacter";
 import { createPlannedCombatRequest } from "~/utils/api/plannedCombat/createPlannedCombatRequest";
 import { deletePlannedCombatRequest } from "~/utils/api/plannedCombat/deletePlannedCombatRequest";
 import { getPlannedCombatsRequest } from "~/utils/api/plannedCombat/getPlannedCombatsRequest";
@@ -51,7 +53,9 @@ export const useApi = () => {
         },
         combat: {
             open: openCombatRequest($axios),
-			get: getCombatRequest($axios)
+			get: getCombatRequest($axios),
+            upsertStagedCharacter: putUpsertStagedCharacter($axios),
+            deleteStagedCharacter: deleteStagedCharacter($axios)
         },
     };
 };

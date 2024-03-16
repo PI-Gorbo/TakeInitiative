@@ -16,12 +16,12 @@
                 />
             </div>
         </div>
-        <slot />
+        <slot :key="id" />
     </dialog>
 </template>
 <script setup lang="ts">
 const dialog = ref<HTMLDialogElement | null>(null);
-
+const id = ref<number>(0);
 const props = defineProps<{
     title?: string;
 }>();
@@ -56,6 +56,7 @@ const show = () => {
 const hide = () => {
     dialog.value?.close();
     emits("HideModal");
+    id.value = id.value + 1;
 };
 
 defineExpose({

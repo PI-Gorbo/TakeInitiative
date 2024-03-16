@@ -81,6 +81,7 @@ const props = withDefaults(
         size?: FontAwesomeIconSize;
         disabled?: boolean;
         click?: () => Promise<any>;
+        preventClickBubbling?: boolean;
     }>(),
     {
         name: undefined,
@@ -97,7 +98,8 @@ const props = withDefaults(
         iconSize: "lg",
         disabled: false,
         click: undefined,
-    },
+        preventClickBubbling: true,
+    }
 );
 const buttonName = computed(() => props.name ?? props.label);
 
@@ -116,6 +118,10 @@ const loadingControls = {
 
 export type ButtonLoadingControl = typeof loadingControls;
 async function onClick(event: Event) {
+    if (props.preventClickBubbling) {
+        event.stopPropagation();
+    }
+
     emit("clicked", loadingControls);
     if (props.click == undefined) {
         return;

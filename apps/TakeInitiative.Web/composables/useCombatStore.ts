@@ -1,5 +1,8 @@
+import { StagedCharacterDTO } from './../utils/api/combat/putUpsertStagedCharacter';
 import type { Combat } from "~/utils/types/models";
 import * as signalR from "@microsoft/signalr";
+import type { UpsertStagedCharacterRequest } from "~/utils/api/combat/putUpsertStagedCharacter";
+import type { DeleteStagedCharacterRequest } from "~/utils/api/combat/deleteStagedCharacterRequest";
 
 export const useCombatStore = defineStore("combatStore", () => {
     const userStore = useUserStore();
@@ -73,9 +76,19 @@ export const useCombatStore = defineStore("combatStore", () => {
 		});
     }
 
+    async function upsertStagedCharacter(req: StagedCharacterDTO) {
+        return await api.combat.upsertStagedCharacter({ character: req, combatId: state.combat?.id!})
+    }
+
+    async function deleteStagedCharacter(req: Omit<DeleteStagedCharacterRequest, "combatId">) {
+        return await api.combat.deleteStagedCharacter({...req, combatId: state.combat?.id!})
+    }
+
     return {
         connection,
         state,
+        upsertStagedCharacter,
+        deleteStagedCharacter,
         setCombat,
         joinCombat,
         leaveCombat,

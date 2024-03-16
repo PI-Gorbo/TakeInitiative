@@ -5,10 +5,10 @@
         </h1>
         <Tabs notSelectedTabColour="take-navy-medium">
             <template #Create>
-                <CreateCampaignForm :submit="createCampaign" />
+                <CreateCampaignForm :submit="createCampaign" class="px-2" />
             </template>
             <template #Join>
-                <JoinCampaignForm :submit="joinCampaign" />
+                <JoinCampaignForm :submit="joinCampaign" class="px-2" />
             </template>
         </Tabs>
     </main>
