@@ -1,51 +1,76 @@
 <template>
-    <div class="flex h-full w-full flex-col p-2">
-        <header class="pb-2 text-center font-NovaCut text-xl text-take-yellow">
+    <div class="flex h-full w-full flex-col">
+        <header
+            class="text-center font-NovaCut text-xl text-take-yellow flex items-center justify-center py-2"
+        >
             {{ combat?.combatName }}
         </header>
-        <main :class="['h-full flex-1 flex flex-row justify-center']">
+        <main :class="['flex h-full flex-1 flex-row justify-center']">
             <section
-                class="flex-1 flex h-full max-w-[1200px] flex-col overflow-y-auto py-4"
+                class="flex h-full max-w-[1200px] flex-1 flex-col overflow-y-auto gap-2"
             >
-                <div>
-                    <label>Staged</label>
-                    <div class="rounded-lg border-2 border-take-yellow">
-                        <div
+                <div
+                    class="flex flex-1 flex-col px-2"
+                    v-if="combat?.initiativeList.length != 0"
+                >
+                    <Drop
+                        tag="ol"
+                        v-if="combat"
+                        class="flex-1 select-none rounded-lg border-2 border-take-navy-light h-full"
+                        @drop="onActiveCharacter"
+                    >
+                        <li v-for="item in combat?.initiativeList" :key="item.id">
+                            <idv class="item">{{ item }}</idv>
+                        </li>
+                    </Drop>
+                </div>
+                <div class="px-2 flex-1">
+                    <ul
+                        class="flex-1 select-none rounded-lg border-2 border-take-navy-light h-full p-2"
+                    >
+                        <Drag
                             v-for="stagedChar in combat?.stagedList"
                             :key="stagedChar.id"
+                            tag="li"
                         >
                             {{ stagedChar }}
-                        </div>
-                    </div>
-                </div>
-                <div class="flex flex-1 flex-col">
-                    <label>Initiative List</label>
-                    <ul class="flex-1 rounded-lg border-2 border-take-navy-light">
-                        <li
-                            v-for="activeChar in combat?.initiativeList"
-                            :key="activeChar.id"
-                        >
-                            {{ activeChar }}
+                        </Drag>
+                        <li>
+                            <div
+                                :class="[
+                                    'group flex w-full cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-take-navy-light transition-colors hover:border-take-yellow',
+                                ]"
+                            >
+                                <FormButton
+                                    class="group-hover:text-take-yellow"
+                                    buttonColour="take-navy"
+                                    hoverButtonColour="take-navy"
+                                    textColour="take-grey"
+                                    hoverTextColour="take-yellow"
+                                    icon="plus"
+                                    label="Stage character"
+                                    size="sm"
+                                />
+                            </div>
                         </li>
                     </ul>
                 </div>
+                <aside class="flex flex-col p-2">
+                    <textarea
+                        class="w-full overflow-y-auto rounded-lg bg-take-navy-medium p-2"
+                        ref="combatLogs"
+                        :value="joinedCombatLogs"
+                        rows="5"
+                        cols="50"
+                    />
+                </aside>
             </section>
-            <aside class="col-span-3 p-2 h-full flex flex-col items-end">
-                <div class="flex-1"></div>
-                <textarea
-                    class="bg-take-navy-medium p-2 rounded-lg w-full overflow-y-auto"
-                    ref="combatLogs"
-                    :value="joinedCombatLogs"
-                    rows="5"
-                    cols="50"
-                />
-            </aside>
         </main>
-        {{ combat?.combatLogs.length }}
     </div>
 </template>
 <script setup lang="ts">
-const { isMobile } = useDevice();
+import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+import { Drag, DropList, Drop } from "vue-easy-dnd";
 const combatLogs = ref<HTMLDivElement | null>(null);
 const route = useRoute();
 const combatId = route.params.id;
@@ -64,7 +89,6 @@ watch(
     (before, after) => {
         if (!combatLogs.value) return;
         combatLogs.value.scrollTop = 0;
-        // combatLogs.value?.offsetHeight + combatLogs.value?.scrollHeight;
     }
 );
 
@@ -75,15 +99,28 @@ const joinedCombatLogs = computed(() =>
         .join("\n")
 );
 
+async function onActiveCharacter() {}
+
 definePageMeta({
     requiresAuth: true,
     middleware: [
         function (to, from) {
-            console.log("Navigated to this page");
-            if (process.client) {
-                const combatStore = useCombatStore();
-                combatStore.joinCombat();
+            console.log("Navigated to this page, (to, from)");
+            if (!process.client || to.name !== "combat-id") {
+                return;
             }
+
+            const combatStore = useCombatStore();
+            combatStore.joinCombat();
+        },
+        function (to) {
+            console.log("Navigated to this page, (to)");
+            if (!process.client || to.name !== "combat-id") {
+                return;
+            }
+
+            const combatStore = useCombatStore();
+            combatStore.joinCombat();
         },
     ],
 });

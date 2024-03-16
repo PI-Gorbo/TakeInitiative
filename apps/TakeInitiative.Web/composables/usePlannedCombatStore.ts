@@ -1,7 +1,7 @@
 import type { CreatePlannedCombatStageRequest } from "~/utils/api/plannedCombat/stages/createPlannedCombatStageRequest";
 import type {
     PlannedCombat,
-    PlannedCombatNonPlayerCharacter,
+    PlannedCombatCharacter,
     PlannedCombatStage,
 } from "./../utils/types/models";
 import type { CreatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";

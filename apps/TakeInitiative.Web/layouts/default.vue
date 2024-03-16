@@ -14,46 +14,37 @@
                     </h1>
                     <section class="flex flex-1 justify-end gap-2">
                         <div class="flex items-center gap-2">
-                            <TransitionGroup
-                                name="delayedFade"
-                                tag="div"
-                                class="flex flex-row gap-2"
+                            <div
+                                v-if="isCombatRoute"
+                                class="flex items-center gap-2"
+                                key="CombatRoute"
                             >
-                                <div
-                                    v-if="isCombatRoute"
-                                    class="flex items-center gap-2"
-                                    key="CombatRoute"
-                                >
-                                    <article>
-                                        <label
-                                            class="font-NovaCut text-lg text-take-yellow"
-                                        >
-                                            {{
-                                                campaignStore.state.campaign?.campaignName
-                                            }}
-                                            <span class="text-white">-</span>
-                                            {{ combatStore.state.combat?.combatName }}
-                                        </label>
-                                    </article>
-                                </div>
+                                <article>
+                                    <label class="font-NovaCut text-lg text-take-yellow">
+                                        {{ campaignStore.state.campaign?.campaignName }}
+                                        <span class="text-white">-</span>
+                                        {{ combatStore.state.combat?.combatName }}
+                                    </label>
+                                </article>
+                            </div>
 
-                                <div
-                                    v-if="isIndexRoute"
-                                    class="flex items-center gap-2"
-                                    key="IndexRoute"
-                                >
-                                    <article class="flex flex-row items-center gap-1">
-                                        <label
-                                            for="campaigns"
-                                            class="font-NovaCut text-take-yellow"
-                                            >Campaigns:</label
-                                        >
-                                        <select
-                                            name="campaigns"
-                                            id="campaigns"
-                                            class="rounded-lg bg-take-navy p-2"
-                                            :value="userStore.state.selectedCampaignId"
-                                            @change="
+                            <div
+                                v-if="isIndexRoute"
+                                class="flex items-center gap-2"
+                                key="IndexRoute"
+                            >
+                                <article class="flex flex-row items-center gap-1">
+                                    <label
+                                        for="campaigns"
+                                        class="font-NovaCut text-take-yellow"
+                                        >Campaigns:</label
+                                    >
+                                    <select
+                                        name="campaigns"
+                                        id="campaigns"
+                                        class="rounded-lg bg-take-navy p-2"
+                                        :value="userStore.state.selectedCampaignId"
+                                        @change="
                                                 (e) => {
                                                     const campaignId = (
                                                         e.target as HTMLSelectElement
@@ -62,36 +53,36 @@
                                                         campaignId;
                                                 }
                                             "
+                                    >
+                                        <option
+                                            v-for="c in userStore.campaignList"
+                                            :key="c.campaignId"
+                                            :value="c.campaignId"
                                         >
-                                            <option
-                                                v-for="c in userStore.campaignList"
-                                                :key="c.campaignId"
-                                                :value="c.campaignId"
-                                            >
-                                                {{ c.campaignName }}
-                                            </option>
-                                        </select>
-                                    </article>
-                                    <FormButton
-                                        icon="share-from-square"
-                                        textColour="white"
-                                        size="sm"
-                                        buttonColour="take-navy-light"
-                                        hoverButtonColour="take-yellow"
-                                        @clicked="() => shareCampaignModal?.show()"
-                                    />
-                                </div>
+                                            {{ c.campaignName }}
+                                        </option>
+                                    </select>
+                                </article>
                                 <FormButton
-                                    key="CampaignsRoute"
-                                    v-if="!isCampaignsRoute"
-                                    @clicked="() => navigateTo('/campaigns')"
-                                    icon="flag-checkered"
-                                    size="sm"
+                                    icon="share-from-square"
                                     textColour="white"
+                                    size="sm"
                                     buttonColour="take-navy-light"
                                     hoverButtonColour="take-yellow"
+                                    @clicked="() => shareCampaignModal?.show()"
                                 />
-                            </TransitionGroup>
+                            </div>
+                            <FormButton
+                                key="CampaignsRoute"
+                                v-if="!isCampaignsRoute"
+                                @clicked="() => navigateTo('/campaigns')"
+                                icon="flag-checkered"
+                                size="sm"
+                                textColour="white"
+                                buttonColour="take-navy-light"
+                                hoverButtonColour="take-yellow"
+                            />
+
                             <FormButton
                                 icon="user-gear"
                                 size="sm"

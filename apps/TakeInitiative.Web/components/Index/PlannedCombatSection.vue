@@ -49,7 +49,7 @@
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import type {
     PlannedCombat,
-    PlannedCombatNonPlayerCharacter,
+    PlannedCombatCharacter,
     PlannedCombatStage,
 } from "~/utils/types/models";
 import type ConfirmModalVue from "../ConfirmModal.vue";

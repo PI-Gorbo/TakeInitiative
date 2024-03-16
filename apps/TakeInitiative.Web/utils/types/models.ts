@@ -68,7 +68,7 @@ export type CharacterInitiative = InferType<
 >;
 
 // Planned Combat NPC
-export const plannedCombatNonPlayerCharacterValidator = yup.object({
+export const plannedCombatCharacterValidator = yup.object({
     id: yup.string(),
     name: yup.string().required("Please provide a name"),
     health: characterHealthValidator.notRequired(),
@@ -76,15 +76,15 @@ export const plannedCombatNonPlayerCharacterValidator = yup.object({
     initiative: characterInitiativeValidator,
     quantity: yup.number(),
 });
-export type PlannedCombatNonPlayerCharacter = InferType<
-    typeof plannedCombatNonPlayerCharacterValidator
+export type PlannedCombatCharacter = InferType<
+    typeof plannedCombatCharacterValidator
 >;
 
 // Planned Combat Stage
 export const plannedCombatStageValidator = yup.object({
     id: yup.string().required(),
     name: yup.string().required(),
-    npcs: yup.array(plannedCombatNonPlayerCharacterValidator),
+    npcs: yup.array(plannedCombatCharacterValidator),
 });
 export type PlannedCombatStage = InferType<typeof plannedCombatStageValidator>;
 
@@ -114,6 +114,17 @@ export const playerDtoValidator = yup.object({
     userId: yup.string().required(),
 });
 export type PlayerDto = InferType<typeof playerDtoValidator>;
+export const combatCharacterValidator = yup.object({
+    playerId: yup.string().required(),
+    initiativeValue: yup.number().nullable(),
+    hidden: yup.boolean().required(),
+	id: yup.string().required(),
+	name: yup.string().required(),
+	health: characterHealthValidator.nullable(),
+	initiative: characterInitiativeValidator.required(),
+	armourClass: yup.number().nullable()
+});
+export type CombatCharacter = InferType<typeof combatCharacterValidator>	
 
 export const combatValidator = yup.object({
     id: yup.string().required(),
@@ -125,7 +136,7 @@ export const combatValidator = yup.object({
     combatLogs: yup.array(yup.string()).required(),
     currentPlayers: yup.array(playerDtoValidator).required(),
     plannedStages: yup.array(plannedCombatStageValidator).required(),
-    initiativeList: yup.array(),
-	stagedList: yup.array(),
+    initiativeList: yup.array(combatCharacterValidator).required(),
+    stagedList: yup.array(combatCharacterValidator).required(),
 });
 export type Combat = InferType<typeof combatValidator>;

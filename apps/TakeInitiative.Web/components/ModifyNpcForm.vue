@@ -99,8 +99,8 @@ import { useForm } from "vee-validate";
 import * as yup from "yup";
 import {
     InitiativeStrategy,
-    plannedCombatNonPlayerCharacterValidator,
-    type PlannedCombatNonPlayerCharacter,
+    plannedCombatCharacterValidator,
+    type PlannedCombatCharacter,
     type PlannedCombatStage,
     characterInitiativeValidator,
 } from "~/utils/types/models";
@@ -114,7 +114,7 @@ const formState = reactive({
 });
 
 const props = defineProps<{
-    npc?: PlannedCombatNonPlayerCharacter;
+    npc?: PlannedCombatCharacter;
     onCreate?: (
         request: Omit<CreatePlannedCombatNpcRequest, "combatId" | "stageId">,
     ) => Promise<void>;

@@ -68,8 +68,8 @@ export const useCombatStore = defineStore("combatStore", () => {
             throw error;
         });
 		connection.on("combatUpdated", (combat: Combat) => {
-			console.log("Combat Updated!");
-			return (state.combat = JSON.parse(JSON.stringify(combat)));
+			state.combat = combat
+			return;
 		});
     }
 

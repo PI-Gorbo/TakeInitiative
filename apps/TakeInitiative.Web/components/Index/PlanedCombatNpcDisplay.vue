@@ -35,13 +35,13 @@
 <script setup lang="ts">
 import type { CreatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
 import type { UpdatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
-import type { PlannedCombatNonPlayerCharacter } from "~/utils/types/models";
+import type { PlannedCombatCharacter } from "~/utils/types/models";
 import Modal from "~/components/Modal.vue";
 import type { DeletePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/deletePlannedCombatNpcRequest";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 const editNpcFormModal = ref<InstanceType<typeof Modal> | null>(null);
 const props = defineProps<{
-    npc: PlannedCombatNonPlayerCharacter;
+    npc: PlannedCombatCharacter;
     editNpc: (
         request: Omit<UpdatePlannedCombatNpcRequest, "combatId" | "stageId">
     ) => Promise<any>;
