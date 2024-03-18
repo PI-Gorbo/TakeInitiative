@@ -11,6 +11,8 @@ RUN dotnet restore
 # Copy the rest of the application code
 COPY . ./
 
+
+
 # Publish the application
 RUN dotnet publish -c Release -o out
 
@@ -19,11 +21,12 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR ./app
 COPY --from=build /app/out ./
 
-RUN apt-get update && apt-get install python3 -y
-ENV PythonDLL=/usr/bin/python3.dll
-
 # Expose the port the application will run on
 EXPOSE 80
+
+# Install python below.
+RUN apt-get update && apt-get install python3 python3-dev libffi-dev -y
+ENV PythonDLL=/usr/lib/python3.11/config-3.11-x86_64-linux-gnu/libpython3.11.so
 
 # Start the application
 ENTRYPOINT ["dotnet", "TakeInitiative.Api.dll"]
