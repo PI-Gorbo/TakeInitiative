@@ -26,7 +26,7 @@ EXPOSE 80
 
 # Install python below.
 RUN apt-get update && apt-get install python3 python3-dev libffi-dev -y
-RUN echo $(ls /usr/lib/python3.11)
+RUN echo $(ls /usr/lib/python3.11 )
 ENV PythonDLL=/usr/lib/python3.11/config-3.11-arm-linux-gnu/libpython3.11.so
 
 # Start the application
