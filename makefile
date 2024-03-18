@@ -1,36 +1,42 @@
-## Database
-db:
-	docker run -p 5432:5432 --name takedb-local -e POSTGRES_PASSWORD=postgres -d postgres 
-
-updb: db
-dropdb:
-	docker stop takedb-local
-	docker rm takedb-local
-refreshdb: dropdb updb
-
 ## Api
-docker.api:
+docker.build.api:
 	docker build -t takeinitiative-api:latest ./apps/TakeInitiative.Api/
 docker.drop.api:
 	docker stop takeapi
 	docker rm takeapi
 
 ## Web
-docker.web:
+docker.build.web:
 	docker build -t takeinitiative-web:latest ./apps/TakeInitiative.Web/
 docker.drop.web:
 	docker stop takeweb
 	docker rm takeweb
 
 ## Database
-docker.databsae:
+docker.isolated.database:
 	docker run -p 5432:5432 --name takedb -e POSTGRES_PASSWORD=postgres -d postgres 
 docker.drop.database:
 	docker stop takedb
 	docker rm takedb
 
-## Docker
-docker.build: docker.api docker.web
+# Compose
+docker.build: 
+	make docker.build.api
+	make docker.build.web
+
 docker.compose: docker.build
 	docker compose up -d
-docker.drop: docker.drop.web docker.drop.api dropdb
+
+docker.refresh.web: 
+	make docker.build.web 
+	make docker.drop.web 
+	make docker.compose
+
+docker.refresh.api: 
+	make docker.build.api 
+	make docker.drop.api 
+	make docker.compose
+
+docker.refresh.database:
+	make docker.drop.database
+	make docker.compose

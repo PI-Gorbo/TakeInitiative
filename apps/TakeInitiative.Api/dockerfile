@@ -19,6 +19,9 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR ./app
 COPY --from=build /app/out ./
 
+RUN apt-get update && apt-get install python3 -y
+ENV PythonDLL=/usr/bin/python3.dll
+
 # Expose the port the application will run on
 EXPOSE 80
 
