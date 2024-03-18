@@ -1,6 +1,7 @@
 using CSharpFunctionalExtensions;
 using FastEndpoints.Security;
 using Marten;
+using Marten.Events.Daemon.Resiliency;
 using Marten.Events.Projections;
 using Marten.Services.Json;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -43,7 +44,9 @@ public static class Bootstrap
 			// Event Projections
 			opts.Projections
 				.Add(new CombatProjection(), ProjectionLifecycle.Inline, null);
-		});
+
+            
+		}).AddAsyncDaemon(DaemonMode.Solo);
 
 		if (builder.Environment.IsDevelopment())
 		{

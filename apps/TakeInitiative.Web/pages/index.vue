@@ -10,7 +10,7 @@
                     'cursor-pointer  select-none rounded-lg px-4 py-3 text-center text-xl text-take-navy',
                     campaignStore.state.combatDto.state == CombatState.Open
                         ? 'bg-take-yellow-dark'
-                        : 'bg-take-red',
+                        : 'bg-take-red ',
                 ]"
                 @click="
                     async () =>
@@ -81,6 +81,7 @@ definePageMeta({
 });
 
 const openCombatText = computed(() => {
+    const combatDto = campaignStore.state.combatDto;
     const combatOpenedByUser = campaignStore.state.nonUserCampaignMembers
         ?.concat([
             {
@@ -92,9 +93,27 @@ const openCombatText = computed(() => {
             },
         ])
         .find(
-            (x) => x.userId == campaignStore.state.combatDto?.dungeonMaster,
+            (x) => x.userId == combatDto?.dungeonMaster,
         )?.username;
-    return `There is an combat opened by ${combatOpenedByUser}! Click to join before it starts...`;
+
+    return `The combat '${combatDto?.combatName}' has been opened by ${combatOpenedByUser}! Click to join or start watching before it starts...`;
 });
-const combatStartedText = computed(() => {});
+const combatStartedText = computed(() => {
+    const combatDto = campaignStore.state.combatDto;
+    const combatOpenedByUser = campaignStore.state.nonUserCampaignMembers
+        ?.concat([
+            {
+                userId: userStore.state.user?.userId!,
+                username: userStore.username!,
+            } satisfies {
+                userId: string;
+                username: string;
+            },
+        ])
+        .find(
+            (x) => x.userId == combatDto?.dungeonMaster,
+        )?.username;
+
+    return `The combat '${combatDto?.combatName}' has started! Click to join or watch.`;
+});
 </script>

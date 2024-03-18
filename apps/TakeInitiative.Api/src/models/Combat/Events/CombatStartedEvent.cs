@@ -1,6 +1,6 @@
 namespace TakeInitiative.Api.Models;
 
-public record CombatActivatedEvent
+public record CombatStartedEvent
 {
 	public required Guid UserId { get; init; }
 };

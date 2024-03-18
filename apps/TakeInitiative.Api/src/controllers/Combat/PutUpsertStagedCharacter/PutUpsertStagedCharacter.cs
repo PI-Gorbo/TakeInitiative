@@ -46,7 +46,7 @@ public class PutUpsertStagedCharacter(IDocumentStore Store, IHubContext<CombatHu
 			var character = new CombatCharacter()
 			{
 				Id = req.Character.Id,
-				PlayerId = userId,
+				PlayerId = existingCharacter?.PlayerId ?? userId,
 				Name = req.Character.Name,
 				Initiative = req.Character.Initiative,
 				Health = req.Character.Health,

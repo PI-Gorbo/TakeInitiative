@@ -7,6 +7,7 @@ import { updateCampaignDetailsRequest } from "~/utils/api/campaign/updateCampaig
 import { deleteStagedCharacter } from "~/utils/api/combat/deleteStagedCharacterRequest";
 import { getCombatRequest } from "~/utils/api/combat/getCombatRequest";
 import { openCombatRequest } from "~/utils/api/combat/openCombatRequest";
+import { postStartCombatRequest } from "~/utils/api/combat/postStartCombat";
 import { putUpsertStagedCharacter } from "~/utils/api/combat/putUpsertStagedCharacter";
 import { createPlannedCombatRequest } from "~/utils/api/plannedCombat/createPlannedCombatRequest";
 import { deletePlannedCombatRequest } from "~/utils/api/plannedCombat/deletePlannedCombatRequest";
@@ -52,10 +53,13 @@ export const useApi = () => {
             },
         },
         combat: {
+            start: postStartCombatRequest($axios),
             open: openCombatRequest($axios),
-			get: getCombatRequest($axios),
-            upsertStagedCharacter: putUpsertStagedCharacter($axios),
-            deleteStagedCharacter: deleteStagedCharacter($axios)
+            get: getCombatRequest($axios),
+            stagedCharacters: {
+                upsert: putUpsertStagedCharacter($axios),
+                delete: deleteStagedCharacter($axios),
+            },
         },
     };
 };

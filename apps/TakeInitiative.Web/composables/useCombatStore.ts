@@ -77,11 +77,15 @@ export const useCombatStore = defineStore("combatStore", () => {
     }
 
     async function upsertStagedCharacter(req: StagedCharacterDTO) {
-        return await api.combat.upsertStagedCharacter({ character: req, combatId: state.combat?.id!})
+        return await api.combat.stagedCharacters.upsert({ character: req, combatId: state.combat?.id!})
     }
 
     async function deleteStagedCharacter(req: Omit<DeleteStagedCharacterRequest, "combatId">) {
-        return await api.combat.deleteStagedCharacter({...req, combatId: state.combat?.id!})
+        return await api.combat.stagedCharacters.delete({...req, combatId: state.combat?.id!})
+    }
+
+    async function startCombat() {
+        return await api.combat.start({combatId: state.combat?.id!})
     }
 
     return {
@@ -92,5 +96,6 @@ export const useCombatStore = defineStore("combatStore", () => {
         setCombat,
         joinCombat,
         leaveCombat,
+        startCombat,
     };
 });

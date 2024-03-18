@@ -1,3 +1,4 @@
+import { CampaignMemberDto } from './../utils/api/campaign/getCampaignRequest';
 import { usePlannedCombatStore } from "./usePlannedCombatStore";
 import type {
     CampaignMemberDto,
@@ -6,6 +7,7 @@ import type {
 } from "~/utils/api/campaign/getCampaignRequest";
 import type {
     Campaign,
+    CampaignMemberInfo,
     PlannedCombat,
     PlayerCharacter,
 } from "./../utils/types/models";
@@ -137,7 +139,7 @@ export const useCampaignStore = defineStore("campaignStore", () => {
     }
 
     // Member Details
-    const memberDtos = computed(() => {
+    const memberDtos : ComputedRef<CampaignMemberDto[]> = computed(() => {
         if (
             state.nonUserCampaignMembers == undefined ||
             state.userCampaignMember == undefined
@@ -178,6 +180,7 @@ export const useCampaignStore = defineStore("campaignStore", () => {
             () => state.userCampaignMember?.isDungeonMaster ?? false,
         ),
         memberDtos,
+        getMemberDetailsFor: (id: string) : CampaignMemberDto | undefined => memberDtos.value.find(x => x.userId == id),
         openCombat,
     };
 });
