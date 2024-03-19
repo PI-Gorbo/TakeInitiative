@@ -1,4 +1,3 @@
-import { CampaignMemberDto } from './../utils/api/campaign/getCampaignRequest';
 import { usePlannedCombatStore } from "./usePlannedCombatStore";
 import type {
     CampaignMemberDto,
@@ -20,12 +19,14 @@ export const useCampaignStore = defineStore("campaignStore", () => {
     const userStore = useUserStore();
     const plannedCombatStore = usePlannedCombatStore();
 
-    const state = reactive({
-        campaign: null as Campaign | null,
-        userCampaignMember: null as CampaignMember | null,
-        nonUserCampaignMembers: null as CampaignMemberDto[] | null,
-        plannedCombats: null as PlannedCombat[] | null,
-        combatDto: null as CombatDto | null,
+    const state = reactive<GetCampaignResponse>({
+        campaign: null,
+        combatDto: null,
+        joinCode: null,
+        userCampaignMember: null,
+        finishedCombats: null,
+        nonUserCampaignMembers: null,
+        plannedCombats: null,
     });
 
     async function init(): Promise<void> {
@@ -57,11 +58,10 @@ export const useCampaignStore = defineStore("campaignStore", () => {
     async function setCampaign(
         campaignDetails: GetCampaignResponse,
     ): Promise<void> {
-        state.campaign = campaignDetails.campaign;
-        state.nonUserCampaignMembers = campaignDetails.nonUserCampaignMembers!;
-        state.plannedCombats = campaignDetails.plannedCombats!;
-        state.userCampaignMember = campaignDetails.userCampaignMember;
-        state.combatDto = campaignDetails.combatDto;
+        Object.keys(campaignDetails)
+            .forEach((key) => {
+                state[key] = campaignDetails[key]
+            })
     }
 
     async function updateCampaignDetails(
@@ -134,12 +134,8 @@ export const useCampaignStore = defineStore("campaignStore", () => {
             });
     }
 
-    async function openCombat(plannedCombatId: string) {
-        return await await api.combat.open({ plannedCombatId });
-    }
-
     // Member Details
-    const memberDtos : ComputedRef<CampaignMemberDto[]> = computed(() => {
+    const memberDtos: ComputedRef<CampaignMemberDto[]> = computed(() => {
         if (
             state.nonUserCampaignMembers == undefined ||
             state.userCampaignMember == undefined
@@ -180,7 +176,7 @@ export const useCampaignStore = defineStore("campaignStore", () => {
             () => state.userCampaignMember?.isDungeonMaster ?? false,
         ),
         memberDtos,
-        getMemberDetailsFor: (id: string) : CampaignMemberDto | undefined => memberDtos.value.find(x => x.userId == id),
-        openCombat,
+        getMemberDetailsFor: (id: string): CampaignMemberDto | undefined =>
+            memberDtos.value.find((x) => x.userId == id),
     };
 });

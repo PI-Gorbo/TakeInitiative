@@ -30,6 +30,7 @@
                 notSelectedTabColour="take-navy"
                 :renameTabs="{
                     PlannedCombats: 'Planned Combats',
+                    CombatHistory: 'Combat History',
                 }"
                 :showTabs="{
                     PlannedCombats: () => {
@@ -45,6 +46,10 @@
                 <template #PlannedCombats>
                     <IndexPlannedCombatsSection />
                 </template>
+                <template #CombatHistory>
+                    <IndexCombatHistorySection />
+                </template>
+                <template #Settings> Dungeon Master Settings </template>
             </Tabs>
         </div>
         <div v-else class="flex h-full w-full items-center justify-center">

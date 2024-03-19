@@ -7,6 +7,9 @@ import type {
 import type { CreatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
 import type { UpdatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
 export const usePlannedCombatStore = defineStore("plannedCombatStore", () => {
+
+    const campaignStore = useCampaignStore();
+
     const api = useApi();
     const state = reactive({
         plannedCombat: null as PlannedCombat | null | undefined,
@@ -68,6 +71,13 @@ export const usePlannedCombatStore = defineStore("plannedCombatStore", () => {
 			}).then(setPlannedCombat)
 	}
 
+    async function createOpenCombat() {
+
+        return api.combat.open({ plannedCombatId: state.plannedCombat?.id! })
+            .then(() => campaignStore.setCampaignById(state.plannedCombat?.campaignId))
+            .then(() => state.plannedCombat = null)
+    }
+
     return {
         selectedPlannedCombat: computed(() => state.plannedCombat),
         setPlannedCombat,
@@ -75,6 +85,7 @@ export const usePlannedCombatStore = defineStore("plannedCombatStore", () => {
         removeStage,
         addNpc,
 		removeNpc,
-		updateNpc
+		updateNpc,
+        createOpenCombat
     };
 });

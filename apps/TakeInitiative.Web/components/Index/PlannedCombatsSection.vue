@@ -9,7 +9,7 @@
                 <header v-if="hasActiveCombat == false">
                     <FormButton
                         label="Open Combat"
-                        @clicked="() => onOpenCombat(selectedPlannedCombat?.id!)"
+                        :click="() => onOpenCombat(selectedPlannedCombat?.id!)"
                         size="sm"
                     />
                 </header>
@@ -177,10 +177,7 @@ async function deleteCombat(loadingCtrl: ButtonLoadingControl, combat: PlannedCo
 }
 
 async function onOpenCombat(plannedCombatId: string) {
-    return await campaignStore
-        .openCombat(plannedCombatId)
-        .then(async (c) => await navigateTo(`/combats/${c.combat.id}`))
-        .then(() => console.log("navigating..."));
+    return await plannedCombatStore.createOpenCombat();
 }
 
 onMounted(() => {

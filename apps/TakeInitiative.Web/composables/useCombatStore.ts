@@ -88,6 +88,10 @@ export const useCombatStore = defineStore("combatStore", () => {
         return await api.combat.start({combatId: state.combat?.id!})
     }
 
+    async function finishCombat() {
+        return await api.combat.finish({combatId: state.combat?.id! })
+    }
+
     return {
         connection,
         state,
@@ -97,5 +101,6 @@ export const useCombatStore = defineStore("combatStore", () => {
         joinCombat,
         leaveCombat,
         startCombat,
+        finishCombat,
     };
 });

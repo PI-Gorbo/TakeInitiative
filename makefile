@@ -24,8 +24,12 @@ docker.build:
 	make docker.build.api
 	make docker.build.web
 
-docker.compose: docker.build
+docker.compose:
 	docker compose up -d
+
+docker.publish: 
+	make docker.build 
+	make docker.compose
 
 docker.refresh.web: 
 	make docker.build.web 

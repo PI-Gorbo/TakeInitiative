@@ -20,6 +20,13 @@
                     size="sm"
                     :click="combatStore.startCombat"
                 />
+                <FormButton
+                    v-if="userIsDm && combatIsStarted"
+                    label="Finish Combat"
+                    size="sm"
+                    buttonColour="take-navy-light"
+                    :click="combatStore.finishCombat"
+                />
             </div>
         </header>
         <main

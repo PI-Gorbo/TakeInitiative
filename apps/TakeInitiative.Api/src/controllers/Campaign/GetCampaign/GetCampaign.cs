@@ -70,6 +70,15 @@ public class GetCampaign(IDocumentStore Store) : Endpoint<GetCampaignRequest, Ge
 						.Where(x => x.Id == campaign.ActiveCombatId)
 						.SingleOrDefaultAsync();
 
+                // Get the finished combats for this campaign
+                var finishedCombats = await session.Query<Combat>()
+                    .Where(x => x.CampaignId == campaign.Id && x.State == CombatState.Finished)
+                    .Select(x => new FinishedCombatDto {
+                        CombatId = x.Id,
+                        Name = x.CombatName
+
+                    }).ToListAsync();
+
 				return new GetCampaignResponse()
 				{
 					Campaign = campaign,
@@ -84,7 +93,8 @@ public class GetCampaign(IDocumentStore Store) : Endpoint<GetCampaignRequest, Ge
 						DungeonMaster = dto.DungeonMaster,
 						Id = dto.Id,
 						State = dto.State
-					}
+					},
+                    FinishedCombats = finishedCombats.ToArray()
 				};
 			});
 
