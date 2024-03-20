@@ -21,7 +21,7 @@ public class CombatProjection : SingleStreamProjection<Combat>
             Timing: [
                 new CombatTimingRecord(StartTime: eventDetails.Timestamp, EndTime: null)
             ],
-            CombatLogs: [$"{user?.UserName} started the Combat at {eventDetails.Timestamp:R}"],
+            CombatLogs: [$"{user?.UserName} opened the Combat at {eventDetails.Timestamp:R}"],
             CurrentPlayers: [],
             PlannedStages: @event.Stages.ToImmutableList(),
             InitiativeList: [],
@@ -35,10 +35,8 @@ public class CombatProjection : SingleStreamProjection<Combat>
         var newInitiativeList = Combat.StagedList
                 .Select(x => x with
                 {
-                    InitiativeValue = x.Initiative.RollInitiative().GetValueOrDefault(-1)
-                })
-                .OrderByDescending(x => x.InitiativeValue)
-                .ToImmutableList();
+                    InitiativeValue = @event.InitiativeRolls[x.Id]
+                }).ToImmutableList();
         return Combat with
         {
             State = CombatState.Started,
@@ -46,7 +44,7 @@ public class CombatProjection : SingleStreamProjection<Combat>
             StagedList = [],
             InitiativeList = newInitiativeList,
             RoundNumber = 1,
-            InitiativeCount = newInitiativeList.FirstOrDefault().InitiativeValue ?? 0,
+            InitiativeCount = newInitiativeList.FirstOrDefault()?.InitiativeValue ?? 0,
         };
     }
 
@@ -56,6 +54,7 @@ public class CombatProjection : SingleStreamProjection<Combat>
         var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
         return Combat with
         {
+            Timing = Combat.Timing.Add(new(StartTime: eventDetails.Timestamp, EndTime: null)),
             State = CombatState.Started,
             CombatLogs = [.. Combat.CombatLogs, $"{user?.UserName} resumed the combat at {eventDetails.Timestamp:R}"],
         };
@@ -64,8 +63,23 @@ public class CombatProjection : SingleStreamProjection<Combat>
     public async Task<Combat> Apply(CombatPausedEvent @event, Combat Combat, IEvent<CombatPausedEvent> eventDetails, IQuerySession session)
     {
         var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
+        var latestTimingInstance = Combat.Timing.LastOrDefault();
+        if (latestTimingInstance == null)
+        {
+            throw new InvalidDataException("Combat is not in the correct state. The combat was paused with no entires in the timings list.");
+        }
+
+        var timing = Combat.Timing.SetItem(
+            Combat.Timing.Count - 1,
+            latestTimingInstance with
+            {
+                EndTime = eventDetails.Timestamp
+            }
+        );
+
         return Combat with
         {
+            Timing = timing,
             State = CombatState.Paused,
             CombatLogs = [.. Combat.CombatLogs, $"{user?.UserName} paused the combat at {eventDetails.Timestamp:R}"],
         };
@@ -74,8 +88,23 @@ public class CombatProjection : SingleStreamProjection<Combat>
     public async Task<Combat> Apply(CombatFinishedEvent @event, Combat Combat, IEvent<CombatFinishedEvent> eventDetails, IQuerySession session)
     {
         var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
+
+        var latestTimingInstance = Combat.Timing.LastOrDefault();
+        if (latestTimingInstance == null)
+        {
+            throw new InvalidDataException("Combat is not in the correct state. The combat was paused with no entires in the timings list.");
+        }
+
+        var timing = Combat.Timing.SetItem(
+          Combat.Timing.Count - 1,
+          latestTimingInstance with
+          {
+              EndTime = eventDetails.Timestamp
+          });
+
         return Combat with
         {
+            Timing = timing,
             State = CombatState.Finished,
             CombatLogs = [.. Combat.CombatLogs, $"{user?.UserName} finished the combat at {eventDetails.Timestamp:R}"],
         };
