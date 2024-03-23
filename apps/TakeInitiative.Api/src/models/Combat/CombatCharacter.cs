@@ -6,10 +6,8 @@ namespace TakeInitiative.Api.Models;
 public record CombatCharacter : Character
 {
 	public required Guid PlayerId { get; set; }
-	public required int? InitiativeValue { get; init; }
+	public required int[] InitiativeValue { get; init; }
 	public required bool Hidden { get; init; }
-
-
 }
 
 public class CombatCharacterValidator : CharacterValidator<CombatCharacter>

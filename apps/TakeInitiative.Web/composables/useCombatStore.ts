@@ -1,4 +1,4 @@
-import { StagedCharacterDTO } from './../utils/api/combat/putUpsertStagedCharacter';
+import { StagedCharacterDTO } from "./../utils/api/combat/putUpsertStagedCharacter";
 import type { Combat } from "~/utils/types/models";
 import * as signalR from "@microsoft/signalr";
 import type { UpsertStagedCharacterRequest } from "~/utils/api/combat/putUpsertStagedCharacter";
@@ -15,7 +15,6 @@ export const useCombatStore = defineStore("combatStore", () => {
             accessTokenFactory: () => useCookie(".AspNetCore.Cookies").value!,
         })
         .build();
-
 
     const state = reactive<{
         combat: Combat | null;
@@ -70,26 +69,38 @@ export const useCombatStore = defineStore("combatStore", () => {
             state.signalRError = error;
             throw error;
         });
-		connection.on("combatUpdated", (combat: Combat) => {
-			state.combat = combat
-			return;
-		});
+        connection.on("combatUpdated", (combat: Combat) => {
+            state.combat = combat;
+            return;
+        });
     }
 
     async function upsertStagedCharacter(req: StagedCharacterDTO) {
-        return await api.combat.stagedCharacters.upsert({ character: req, combatId: state.combat?.id!})
+        return await api.combat.stagedCharacters.upsert({
+            character: req,
+            combatId: state.combat?.id!,
+        });
     }
 
-    async function deleteStagedCharacter(req: Omit<DeleteStagedCharacterRequest, "combatId">) {
-        return await api.combat.stagedCharacters.delete({...req, combatId: state.combat?.id!})
+    async function deleteStagedCharacter(
+        req: Omit<DeleteStagedCharacterRequest, "combatId">,
+    ) {
+        return await api.combat.stagedCharacters.delete({
+            ...req,
+            combatId: state.combat?.id!,
+        });
     }
 
     async function startCombat() {
-        return await api.combat.start({combatId: state.combat?.id!})
+        return await api.combat.start({ combatId: state.combat?.id! });
     }
 
     async function finishCombat() {
-        return await api.combat.finish({combatId: state.combat?.id! })
+        return await api.combat.finish({ combatId: state.combat?.id! });
+    }
+
+    async function nextTurn() {
+        return await api.combat.nextTurn({ combatId: state.combat?.id! });
     }
 
     return {
@@ -102,5 +113,6 @@ export const useCombatStore = defineStore("combatStore", () => {
         leaveCombat,
         startCombat,
         finishCombat,
+        nextTurn,
     };
 });

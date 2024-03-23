@@ -1,28 +1,41 @@
 <template>
     <div class="flex h-full w-full flex-col items-center">
         <header class="grid w-full max-w-[1200px] grid-cols-3 py-2">
-            <div class="flex divide-x-2 divide-take-grey-dark">
-                <div class="pr-2" v-if="combatIsStarted">
+            <div class="flex items-center divide-x-2 divide-take-grey-dark">
+                <FormButton
+                    class="px-2"
+                    label="Next Turn"
+                    size="sm"
+                    :click="combatStore.nextTurn"
+                />
+                <label class="px-2" v-if="combatIsStarted">
                     Round: {{ combat?.roundNumber }}
-                </div>
-                <div class="pl-2" v-if="combatIsStarted">
-                    Turn Number: {{ combat?.initiativeCount }}
-                </div>
+                </label>
+                <label class="px-2" v-if="combatIsStarted">
+                    Current Initiative: {{ combat?.currentInitiative }}
+                </label>
             </div>
             <label
                 class="flex items-center justify-center text-center font-NovaCut text-xl text-take-yellow"
                 >{{ combat?.combatName }}</label
             >
             <div class="flex justify-end">
-                <FormButton
+                <ConfirmButton
                     v-if="userIsDm && combatIsOpen"
                     label="Start Combat"
+                    :loadingDisplay="{
+                        showSpinner: true,
+                        loadingText: 'Starting...',
+                    }"
                     size="sm"
                     :click="combatStore.startCombat"
                 />
-                <FormButton
+
+                <ConfirmButton
                     v-if="userIsDm && combatIsStarted"
                     label="Finish Combat"
+                    confirmText="Confirm Finish"
+                    confirmHoverColour="take-red"
                     size="sm"
                     buttonColour="take-navy-light"
                     :click="combatStore.finishCombat"
@@ -30,7 +43,9 @@
             </div>
         </header>
         <main
-            :class="['flex h-full w-full max-w-[1200px] flex-1 flex-row justify-center']"
+            :class="[
+                'flex h-full w-full max-w-[1200px] flex-1 flex-row justify-center',
+            ]"
         >
             <section class="flex h-full flex-1 flex-col gap-2 overflow-y-auto">
                 <div class="flex-1">
@@ -45,9 +60,11 @@
                                 'grid grid-cols-2 rounded-xl border-2 border-take-navy-light p-2 transition-colors',
                                 {
                                     'cursor-pointer hover:border-take-yellow':
-                                        isEditableForUser(charInfo) && combatIsOpen,
+                                        isEditableForUser(charInfo) &&
+                                        combatIsOpen,
                                     'border-take-yellow':
-                                        combatIsStarted && isCharactersTurn(charInfo),
+                                        combatIsStarted &&
+                                        isCharactersTurn(charInfo),
                                 },
                             ]"
                             @click="
@@ -66,9 +83,25 @@
                                                 isEditableForUser(charInfo) &&
                                                 combatIsOpen,
                                         },
+                                        'flex gap-2',
                                     ]"
                                 >
-                                    {{ charInfo.character.initiativeValue }}
+                                    <div
+                                        v-for="(value, index) in charInfo
+                                            .character.initiativeValue"
+                                        :class="[
+                                            'flex items-center rounded-lg  p-1',
+                                            {
+                                                'text-xs': index != 0,
+                                                'bg-take-navy-light':
+                                                    index == 0,
+                                                'bg-take-navy-medium':
+                                                    index != 0,
+                                            },
+                                        ]"
+                                    >
+                                        {{ value }}
+                                    </div>
                                 </div>
                                 <label
                                     :class="[
@@ -100,7 +133,9 @@
                                 <ol class="flex flex-row justify-end">
                                     <li v-if="combatIsOpen">
                                         <FontAwesomeIcon icon="shoe-prints" />
-                                        {{ charInfo.character.initiative.value }}
+                                        {{
+                                            charInfo.character.initiative.value
+                                        }}
                                     </li>
                                 </ol>
                             </body>
@@ -126,10 +161,18 @@
                             </div>
                         </li>
                     </TransitionGroup>
-                    <Modal ref="stageNewCharacterModal" title="Stage your Character">
-                        <CombatStageCharacterForm :onCreate="onUpsertStagedCharacter" />
+                    <Modal
+                        ref="stageNewCharacterModal"
+                        title="Stage your Character"
+                    >
+                        <CombatStageCharacterForm
+                            :onCreate="onUpsertStagedCharacter"
+                        />
                     </Modal>
-                    <Modal ref="editStagedCharacterModal" title="Edit staged Character">
+                    <Modal
+                        ref="editStagedCharacterModal"
+                        title="Edit staged Character"
+                    >
                         <CombatStageCharacterForm
                             :onEdit="onUpsertStagedCharacter"
                             :onDelete="onDeleteStagedCharacter"
@@ -139,7 +182,7 @@
                 </div>
             </section>
         </main>
-        <footer class="flex w-full flex-col py-2 max-w-[1200px]">
+        <footer class="flex w-full max-w-[1200px] flex-col py-2">
             <textarea
                 class="w-full overflow-y-auto rounded-lg bg-take-navy-medium p-2"
                 ref="combatLogs"
@@ -152,6 +195,7 @@
 </template>
 <script setup lang="ts">
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+import ConfirmButton from "~/components/Form/ConfirmButton.vue";
 import Modal from "~/components/Modal.vue";
 import type { CampaignMemberDto } from "~/utils/api/campaign/getCampaignRequest";
 import type { DeleteStagedCharacterRequest } from "~/utils/api/combat/deleteStagedCharacterRequest";
@@ -172,7 +216,6 @@ definePageMeta({
     requiresAuth: true,
     middleware: [
         function (to, from) {
-            console.log("Navigated to this page, (to, from)");
             if (!process.client || to.name !== "combat-id") {
                 return;
             }
@@ -181,7 +224,6 @@ definePageMeta({
             combatStore.joinCombat();
         },
         function (to) {
-            console.log("Navigated to this page, (to)");
             if (!process.client || to.name !== "combat-id") {
                 return;
             }
@@ -201,9 +243,13 @@ const combatStore = useCombatStore();
 const combat = computed(() => {
     return combatStore.state.combat;
 });
-const userIsDm = computed(() => userStore.state.user?.userId == combat.value?.dungeonMaster)
-const combatIsOpen = computed(() => combat.value?.state == CombatState.Open)
-const combatIsStarted = computed(() => combat.value?.state == CombatState.Started)
+const userIsDm = computed(
+    () => userStore.state.user?.userId == combat.value?.dungeonMaster,
+);
+const combatIsOpen = computed(() => combat.value?.state == CombatState.Open);
+const combatIsStarted = computed(
+    () => combat.value?.state == CombatState.Started,
+);
 
 // Main fetch
 const { refresh, pending, error } = await useAsyncData("Combat", async () => {
@@ -227,12 +273,11 @@ const joinedCombatLogs = computed(() =>
 );
 
 type PlayerDto = {
-    user: CampaignMemberDto,
-    character: CombatCharacter
-}
+    user: CampaignMemberDto;
+    character: CombatCharacter;
+};
 
 const characterList = computed(() => {
-
     const compareStrings = (a: string, b: string) => {
         let fa = a.toLowerCase(),
             fb = b.toLowerCase();
@@ -246,43 +291,51 @@ const characterList = computed(() => {
         return 0;
     };
 
-    const openCombatCharacterSortFunc = (a: PlayerDto, b: PlayerDto) : number => {
-            const aIsDungeonMaster = a.user?.isDungeonMaster;
-            const bIsDungeonMaster = b.user?.isDungeonMaster;
-            if (aIsDungeonMaster && !bIsDungeonMaster) {
-                return -1;
-            } else if (!aIsDungeonMaster && bIsDungeonMaster) {
-                return 1;
-            }
+    const openCombatCharacterSortFunc = (
+        a: PlayerDto,
+        b: PlayerDto,
+    ): number => {
+        const aIsDungeonMaster = a.user?.isDungeonMaster;
+        const bIsDungeonMaster = b.user?.isDungeonMaster;
+        if (aIsDungeonMaster && !bIsDungeonMaster) {
+            return -1;
+        } else if (!aIsDungeonMaster && bIsDungeonMaster) {
+            return 1;
+        }
 
-            // First sort by user,
-            let result = compareStrings(a.user?.username!, b.user?.username!);
-            if (result != 0) {
-                return result;
-            }
-
-            // Then sort by character id
-            result = compareStrings(a.character.id, b.character.id);
+        // First sort by user,
+        let result = compareStrings(a.user?.username!, b.user?.username!);
+        if (result != 0) {
             return result;
         }
 
-    const startedCombatSortFunc = (a : PlayerDto, b: PlayerDto) : number => {
-        return  b.character.initiativeValue! - a.character.initiativeValue!;
+        // Then sort by character id
+        result = compareStrings(a.character.id, b.character.id);
+        return result;
+    };
+
+    const list =
+        combat.value?.state == CombatState.Open
+            ? combat.value.stagedList
+            : combat.value?.initiativeList;
+    const sortFunc =
+        combat.value?.state == CombatState.Open
+            ? openCombatCharacterSortFunc
+            : null;
+
+    const playerDTOs = list!.map(
+        (x) =>
+            ({
+                user: campaignStore.getMemberDetailsFor(x.playerId)!,
+                character: x,
+            }) satisfies PlayerDto,
+    );
+
+    if (sortFunc) {
+        return playerDTOs.sort(sortFunc);
     }
 
-    const list = combat.value?.state == CombatState.Open
-        ? combat.value.stagedList
-        : combat.value?.initiativeList
-    const sortFunc = combat.value?.state == CombatState.Open
-        ? openCombatCharacterSortFunc
-        : startedCombatSortFunc
-
-    return list!
-        .map((x) => ({
-            user: campaignStore.getMemberDetailsFor(x.playerId)!,
-            character: x,
-        } satisfies PlayerDto))
-        .sort(sortFunc);
+    return playerDTOs;
 });
 
 const editStagedCharacterModal = ref<typeof Modal | null>(null);
@@ -349,6 +402,7 @@ function isEditableForUser(charInfo: {
 
 // Determine if it is the given character's turn
 function isCharactersTurn(charInfo: PlayerDto) {
-    return charInfo.character.initiativeValue == combat.value?.initiativeCount
+    const stringifiedValue = JSON.stringify(charInfo.character.initiativeValue);
+    return stringifiedValue == JSON.stringify(combat.value?.currentInitiative);
 }
 </script>

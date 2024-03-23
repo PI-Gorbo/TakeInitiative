@@ -6,7 +6,7 @@
             `flex cursor-pointer justify-center rounded-md  transition-colors`,
             props.disabled
                 ? 'bg-take-grey-dark hover:bg-take-grey-dark'
-                : `bg-${props.buttonColour} hover:bg-${props.hoverButtonColour} text-${props.textColour} hover:text-${$props.hoverTextColour}`,
+                : `bg-${props.buttonColour} hover:bg-${props.hoverButtonColour} text-${props.textColour ?? TakeInitContrastColour[props.buttonColour]} hover:text-${$props.hoverTextColour ?? TakeInitContrastColour[props.hoverButtonColour]}`,
             size == 'sm' ? 'px-2.5 py-2.5 text-sm' : '',
             size != 'sm' ? 'px-4 py-4 text-lg' : '',
         ]"
@@ -51,6 +51,9 @@
                         icon="circle-notch"
                         :size="props.size"
                     />
+                    <label v-if="props.loadingDisplay?.loadingText"
+                        >{{ props.loadingDisplay?.loadingText }}
+                    </label>
                 </div>
             </div>
         </slot>
@@ -64,43 +67,46 @@ import type {
 } from "~/utils/types/HelperTypes";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import type { SubmittingState } from "./Base.vue";
+import { TakeInitContrastColour } from "~/utils/types/HelperTypes";
 
 const buttonRef = ref<HTMLButtonElement | null>(null);
-export type LoadingDisplay = string | { showSpinner: true };
-const props = withDefaults(
-    defineProps<{
-        name?: string;
-        label?: string;
-        loadingDisplay?: LoadingDisplay | null;
-        isLoading?: SubmittingState | boolean | null;
-        buttonColour?: TakeInitColour;
-        hoverButtonColour?: TakeInitColour;
-        textColour?: TakeInitColour;
-        hoverTextColour?: TakeInitColour;
-        icon?: string;
-        size?: FontAwesomeIconSize;
-        disabled?: boolean;
-        click?: () => Promise<any>;
-        preventClickBubbling?: boolean;
-    }>(),
-    {
-        name: undefined,
-        label: undefined,
-        loadingDisplay: {
-            showSpinner: true,
-        },
-        isLoading: false,
-        buttonColour: "take-yellow-dark",
-        hoverButtonColour: "take-yellow",
-        textColour: "take-navy-dark",
-        hoverTextColour: "take-navy-dark",
-        icon: undefined,
-        iconSize: "lg",
-        disabled: false,
-        click: undefined,
-        preventClickBubbling: true,
-    }
-);
+export type LoadingDisplay =
+    | string
+    | { showSpinner: true; loadingText?: string };
+export type FromButtonProps = {
+    name?: string;
+    label?: string;
+    loadingDisplay?: LoadingDisplay | null;
+    isLoading?: SubmittingState | boolean | null;
+    buttonColour?: TakeInitColour;
+    hoverButtonColour?: TakeInitColour | undefined;
+    textColour?: TakeInitColour;
+    hoverTextColour?: TakeInitColour | undefined;
+    icon?: string;
+    size?: FontAwesomeIconSize;
+    disabled?: boolean;
+    click?: () => Promise<any>;
+    preventClickBubbling?: boolean;
+};
+
+const props = withDefaults(defineProps<FromButtonProps>(), {
+    name: undefined,
+    label: undefined,
+    loadingDisplay: {
+        showSpinner: true,
+        loadingText: "",
+    },
+    isLoading: false,
+    buttonColour: "take-yellow-dark",
+    hoverButtonColour: "take-yellow",
+    textColour: undefined,
+    hoverTextColour: undefined,
+    icon: undefined,
+    iconSize: "lg",
+    disabled: false,
+    click: undefined,
+    preventClickBubbling: true,
+});
 const buttonName = computed(() => props.name ?? props.label);
 
 const state = reactive({

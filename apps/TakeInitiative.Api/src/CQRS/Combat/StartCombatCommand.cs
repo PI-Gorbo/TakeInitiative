@@ -7,6 +7,7 @@ using Marten.Exceptions;
 using Microsoft.AspNet.SignalR;
 using TakeInitiative.Api.Controllers;
 using TakeInitiative.Api.Models;
+using TakeInitiative.Utilities;
 using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.CQRS;
@@ -47,24 +48,11 @@ public class StartCombatCommandHandler(IDocumentStore Store) : CommandHandler<St
                 {
                     ThrowError("Must be the dungeon master in order to start the combat.");
                 }
-                
 
-                Result<ImmutableDictionary<Guid, int>> computedInitiativeRolls = combat.StagedList.Select(x => (id: x.Id, roll: x.Initiative.RollInitiative()))
-                    .Aggregate(Result.Success(ImmutableDictionary<Guid, int>.Empty), (currentValue, nextValue) => {
-                        if (currentValue.IsFailure) {
-                            return currentValue.MapError(x => x + (nextValue.roll.IsFailure ? $", {nextValue.roll.Error}" : ""));
-                        }
-
-
-                        if (nextValue.roll.IsFailure) {
-                            return nextValue.roll.ConvertFailure<ImmutableDictionary<Guid, int>>();
-                        }
-
-                        return currentValue.Value.Add(nextValue.id, nextValue.roll.Value);
-                    });
-
-                if (computedInitiativeRolls.IsFailure) {
-                    ThrowError($"There was an issue while trying to compute the initiative rolls. {computedInitiativeRolls.Error}");
+                Result<List<(Guid id, int[] rolls)>> computedInitiativeRolls = DiceRoller.ComputeRolls(combat.StagedList);
+                if (computedInitiativeRolls.IsFailure)
+                {
+                    ThrowError($"There was an error while trying to compute the dice rolls. {computedInitiativeRolls.Error}");
                 }
 
                 // Publish the event

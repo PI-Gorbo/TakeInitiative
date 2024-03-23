@@ -15,22 +15,20 @@ export type TakeInitColour =
     | "take-grey-dark"
     | "white";
 
-export const TakeInitContrastColour : Record<TakeInitColour, string> = {
-	"take-navy": "white",
-	"take-navy-light": "white",
-	"take-navy-medium": "white",
-	"take-navy-dark": "white",
-	"take-red": "white",
-	"take-yellow-light": "take-navy",
-	"take-yellow": "take-navy",
-	"take-yellow-dark": "white",
-	"take-grey": "white",
-	"take-grey-light": "white",
-	"take-grey-dark": "white",
-	white: ""
-}
-
-
+export const TakeInitContrastColour: Record<TakeInitColour, string> = {
+    "take-navy": "white",
+    "take-navy-light": "white",
+    "take-navy-medium": "white",
+    "take-navy-dark": "white",
+    "take-red": "white",
+    "take-yellow-light": "take-navy",
+    "take-yellow": "take-navy",
+    "take-yellow-dark": "take-navy",
+    "take-grey": "white",
+    "take-grey-light": "white",
+    "take-grey-dark": "white",
+    white: "",
+};
 
 export type FontAwesomeIconSize =
     | "2xs"

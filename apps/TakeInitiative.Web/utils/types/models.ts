@@ -116,15 +116,15 @@ export const playerDtoValidator = yup.object({
 export type PlayerDto = InferType<typeof playerDtoValidator>;
 export const combatCharacterValidator = yup.object({
     playerId: yup.string().required(),
-    initiativeValue: yup.number().nullable(),
+    initiativeValue: yup.array(yup.number()).nullable(),
     hidden: yup.boolean().required(),
-	id: yup.string().required(),
-	name: yup.string().required(),
-	health: characterHealthValidator.nullable(),
-	initiative: characterInitiativeValidator.required(),
-	armourClass: yup.number().nullable()
+    id: yup.string().required(),
+    name: yup.string().required(),
+    health: characterHealthValidator.nullable(),
+    initiative: characterInitiativeValidator.required(),
+    armourClass: yup.number().nullable(),
 });
-export type CombatCharacter = InferType<typeof combatCharacterValidator>	
+export type CombatCharacter = InferType<typeof combatCharacterValidator>;
 
 export const combatValidator = yup.object({
     id: yup.string().required(),
@@ -138,9 +138,9 @@ export const combatValidator = yup.object({
     plannedStages: yup.array(plannedCombatStageValidator).required(),
     initiativeList: yup.array(combatCharacterValidator).required(),
     stagedList: yup.array(combatCharacterValidator).required(),
-    initiativeCount: yup.number().nullable(),
-    roundNumber: yup.string().nullable()
+    currentInitiative: yup.array(yup.number()).nullable(),
+    roundNumber: yup.string().nullable(),
 });
-export type Combat = Omit<InferType<typeof combatValidator>, 'state'> & {
-    state: CombatState
+export type Combat = Omit<InferType<typeof combatValidator>, "state"> & {
+    state: CombatState;
 };

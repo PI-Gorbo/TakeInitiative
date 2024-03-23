@@ -31,9 +31,11 @@ const combatDtoValidator = yup.object({
 
 const finishedCombatDtoValidator = yup.object({
     combatId: yup.string().required(),
-    name: yup.string().required()
-})
-export type FinishedCombatDto = yup.InferType<typeof finishedCombatDtoValidator>
+    name: yup.string().required(),
+});
+export type FinishedCombatDto = yup.InferType<
+    typeof finishedCombatDtoValidator
+>;
 
 export type CombatDto = yup.InferType<typeof combatDtoValidator>;
 export type CampaignMemberDto = yup.InferType<
@@ -46,7 +48,7 @@ const getCampaignResponseSchema = yup.object({
     plannedCombats: yup.array(plannedCombatValidator).nullable(),
     joinCode: yup.string().required(),
     combatDto: combatDtoValidator.nullable(),
-    finishedCombats: yup.array(finishedCombatDtoValidator)
+    finishedCombats: yup.array(finishedCombatDtoValidator),
 });
 export type GetCampaignResponse = yup.InferType<
     typeof getCampaignResponseSchema
@@ -59,9 +61,9 @@ export function getCampaignRequest(axios: AxiosInstance) {
             .get(`/api/campaign/${encodeURI(request.campaignId)}`)
             .then(async (response) =>
                 validateWithSchema(response.data, getCampaignResponseSchema),
-            ).then((resp) => {
-                console.log(resp)
-                return resp
+            )
+            .then((resp) => {
+                return resp;
             });
     };
 }

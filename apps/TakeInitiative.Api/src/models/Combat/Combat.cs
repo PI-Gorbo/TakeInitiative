@@ -16,7 +16,7 @@ public record Combat
     // Actual Initiative List
     public ImmutableList<CombatCharacter> StagedList { get; set; } = null!; // Will never be null when the api has access to it.
     public ImmutableList<CombatCharacter> InitiativeList { get; set; } = null!; // Will never be null when the api has access to it.
-    public int? InitiativeCount { get; set; }
+    public int[]? CurrentInitiative { get; set; } = null;
     public int? RoundNumber { get; set; }
 
     // Planning 
@@ -53,7 +53,7 @@ public record Combat
             StagedList = StagedList,
             InitiativeList = InitiativeList,
             PlannedStages = PlannedStages,
-            InitiativeCount = null,
+            CurrentInitiative = null,
             RoundNumber = null,
         };
     }

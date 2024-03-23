@@ -2,11 +2,12 @@ using System.Collections.Immutable;
 using Marten;
 using Marten.Events;
 using Marten.Events.Aggregation;
+using TakeInitiative.Utilities;
 using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Models;
 
-public class CombatProjection : SingleStreamProjection<Combat>
+public partial class CombatProjection : SingleStreamProjection<Combat>
 {
     // COMBAT LIFECYCLE //
     public async Task<Combat> Apply(CombatOpenedEvent @event, Combat Combat, IEvent<CombatOpenedEvent> eventDetails, IQuerySession session)
@@ -32,19 +33,24 @@ public class CombatProjection : SingleStreamProjection<Combat>
     public async Task<Combat> Apply(CombatStartedEvent @event, Combat Combat, IEvent<CombatStartedEvent> eventDetails, IQuerySession session)
     {
         var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
-        var newInitiativeList = Combat.StagedList
-                .Select(x => x with
-                {
-                    InitiativeValue = @event.InitiativeRolls[x.Id]
-                }).ToImmutableList();
+        var newInitiativeList = @event.InitiativeRolls.Select((charInitiative, index) =>
+        {
+            return Combat.StagedList.First(x => x.Id == charInitiative.id) with
+            {
+                InitiativeValue = charInitiative.rolls
+            };
+        })
+        .OrderByDescending(x => x.InitiativeValue, new InitiativeComparer())
+        .ToImmutableList();
+
         return Combat with
         {
             State = CombatState.Started,
-            CombatLogs = [.. Combat.CombatLogs, $"{user?.UserName} started the combat at {eventDetails.Timestamp:R}"],
+            CombatLogs = Combat.CombatLogs.Add($"{user?.UserName} started the combat at {eventDetails.Timestamp:R}"),
             StagedList = [],
             InitiativeList = newInitiativeList,
             RoundNumber = 1,
-            InitiativeCount = newInitiativeList.FirstOrDefault()?.InitiativeValue ?? 0,
+            CurrentInitiative = newInitiativeList.FirstOrDefault()?.InitiativeValue ?? [],
         };
     }
 
@@ -110,26 +116,14 @@ public class CombatProjection : SingleStreamProjection<Combat>
         };
     }
 
-    // STAGED CHARACTER MANAGEMENT //
-    public async Task<Combat> Apply(StagedCharacterActivatedEvent @event, Combat Combat, IEvent<StagedCharacterActivatedEvent> eventDetails, IQuerySession session)
+    // COMBAT TURN MANAGEMENT //
+    public async Task<Combat> Apply(TurnFinishedEvent @event, Combat Combat, IEvent<TurnFinishedEvent> eventDetails, IQuerySession session)
     {
-        var character = Combat.StagedList.SingleOrDefault(x => x.Id == @event.CharacterId);
-        if (character == null)
-        {
-            throw new OperationCanceledException("There is no staged character with the given id.");
-        }
         var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
 
         return Combat with
         {
-            CombatLogs = [.. Combat.CombatLogs, $"{user?.UserName} rolled {character.Name}'s initiative with a result of {@event.Initiative} at {eventDetails.Timestamp:R}"],
-            StagedList = Combat.StagedList
-                .Remove(character),
-            InitiativeList = Combat.InitiativeList
-                .Add(character with
-                {
-                    InitiativeValue = @event.Initiative
-                })
+            CombatLogs = Combat.CombatLogs.Add($"{user?.UserName} finished their turn at {eventDetails.Timestamp:R}"),
         };
     }
 
