@@ -1,22 +1,24 @@
 <template>
     <div class="flex h-full w-full flex-col items-center">
         <header class="grid w-full max-w-[1200px] grid-cols-3 py-2">
-            <div class="flex items-center divide-x-2 divide-take-grey-dark">
+            <div
+                class="flex items-center"
+                v-if="combatIsStarted"
+            >
                 <FormButton
                     class="px-2"
-                    label="Next Turn"
+                    label="End Turn"
                     size="sm"
-                    :click="combatStore.nextTurn"
+                    :click="combatStore.endTurn"
+                    :disabled="!isUsersTurn"
                 />
-                <label class="px-2" v-if="combatIsStarted">
-                    Round: {{ combat?.roundNumber }}
-                </label>
-                <label class="px-2" v-if="combatIsStarted">
-                    Current Initiative: {{ combat?.currentInitiative }}
+                <label class="px-2"> Round: {{ combat?.roundNumber }} </label>
+                <label class="px-2">
+                    Current Initiative: {{ combat?.initiativeIndex }}
                 </label>
             </div>
             <label
-                class="flex items-center justify-center text-center font-NovaCut text-xl text-take-yellow"
+                class="flex items-center justify-center text-center font-NovaCut text-xl text-take-yellow col-start-2"
                 >{{ combat?.combatName }}</label
             >
             <div class="flex justify-end">
@@ -52,9 +54,10 @@
                     <TransitionGroup
                         class="flex h-full flex-1 select-none flex-col gap-2 rounded-lg border-2 border-take-navy-light p-2"
                         tag="ul"
+                        name="shuffleList"
                     >
                         <li
-                            v-for="charInfo in characterList"
+                            v-for="(charInfo, index) in characterList"
                             :key="charInfo.character.id"
                             :class="[
                                 'grid grid-cols-2 rounded-xl border-2 border-take-navy-light p-2 transition-colors',
@@ -63,8 +66,7 @@
                                         isEditableForUser(charInfo) &&
                                         combatIsOpen,
                                     'border-take-yellow':
-                                        combatIsStarted &&
-                                        isCharactersTurn(charInfo),
+                                        combatIsStarted && index == combat?.initiativeIndex,
                                 },
                             ]"
                             @click="
@@ -76,7 +78,7 @@
                         >
                             <header class="flex items-center gap-2">
                                 <div
-                                    v-if="combatIsStarted"
+                                    v-if="!combatIsOpen"
                                     :class="[
                                         {
                                             'cursor-pointer':
@@ -250,11 +252,19 @@ const combatIsOpen = computed(() => combat.value?.state == CombatState.Open);
 const combatIsStarted = computed(
     () => combat.value?.state == CombatState.Started,
 );
+const combatIsFinished = computed(() => combat.value?.state == CombatState.Finished)
 
 // Main fetch
 const { refresh, pending, error } = await useAsyncData("Combat", async () => {
     return await combatStore.setCombat(combatId as string).then(() => true);
 });
+
+// Main fetch
+const {  } = await useAsyncData("JoinCombat", async () => {
+    console.log("Sending join request")
+    return await combatStore.joinCombat().then(() => true);
+}, {server: false});
+
 
 // Combat logs
 const combatLogs = ref<HTMLDivElement | null>(null);
@@ -375,9 +385,9 @@ function getIconForUser(charInfo: {
     character: CombatCharacter;
 }) {
     const currentUserId = userStore.state.user?.userId;
+
     if (
-        currentUserId == combat.value?.dungeonMaster &&
-        charInfo.user.userId == currentUserId
+        charInfo.user.userId == combat.value?.dungeonMaster
     ) {
         return "crown";
     }
@@ -400,9 +410,34 @@ function isEditableForUser(charInfo: {
     );
 }
 
-// Determine if it is the given character's turn
-function isCharactersTurn(charInfo: PlayerDto) {
-    const stringifiedValue = JSON.stringify(charInfo.character.initiativeValue);
-    return stringifiedValue == JSON.stringify(combat.value?.currentInitiative);
-}
+const isUsersTurn = computed(() => {
+    if (campaignStore.isDm) {
+        return true;
+    }
+
+    const characterWithCurrentInitiative = combat.value?.initiativeList[combat.value.initiativeIndex ?? 0]
+    if (characterWithCurrentInitiative?.playerId == userStore.state.user?.userId) {
+        return true;
+    }
+    return false;
+})
 </script>
+
+<style>
+.shuffleList-move, /* apply transition to moving elements */
+.shuffleList-enter-active,
+.shuffleList-leave-active {
+  transition: all 1s ease;
+}
+
+.shuffleList-enter-from,
+.shuffleList-leave-to {
+  opacity: 0;
+}
+
+/* ensure leaving items are taken out of layout flow so that moving
+   animations can be calculated correctly. */
+.shuffleList-leave-active {
+  position: absolute;
+}
+</style>

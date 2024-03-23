@@ -1,7 +1,14 @@
 <template>
-    <TransitionGroup name="fade" tag="main" class="flex h-full flex-col items-center">
+    <TransitionGroup
+        name="fade"
+        tag="main"
+        class="flex h-full flex-col items-center"
+    >
         <div
-            v-if="(!pending && !error) || userStore.state.selectedCampaignId == null"
+            v-if="
+                (!pending && !error) ||
+                userStore.state.selectedCampaignId == null
+            "
             class="flex max-w-[1200px] flex-1 flex-col overflow-auto py-4 sm:w-full md:w-4/5 2xl:w-full"
         >
             <header
@@ -14,10 +21,16 @@
                 ]"
                 @click="
                     async () =>
-                        await navigateTo(`/combat/${campaignStore.state.combatDto?.id}`)
+                        await navigateTo(
+                            `/combat/${campaignStore.state.combatDto?.id}`,
+                        )
                 "
             >
-                <div v-if="campaignStore.state.combatDto.state == CombatState.Open">
+                <div
+                    v-if="
+                        campaignStore.state.combatDto.state == CombatState.Open
+                    "
+                >
                     {{ openCombatText }}
                 </div>
                 <div v-else>
@@ -33,9 +46,10 @@
                     CombatHistory: 'Combat History',
                 }"
                 :showTabs="{
-                    PlannedCombats: () => {
-                        return campaignStore.isDm;
-                    },
+                    PlannedCombats: () => campaignStore.isDm,
+                    Settings: () => campaignStore.isDm,
+                    CombatHistory: () =>
+                        (campaignStore.state.finishedCombats?.length ?? 0) > 0,
                 }"
                 negativeSectionId="IndexPageTabs"
             >
@@ -97,9 +111,7 @@ const openCombatText = computed(() => {
                 username: string;
             },
         ])
-        .find(
-            (x) => x.userId == combatDto?.dungeonMaster,
-        )?.username;
+        .find((x) => x.userId == combatDto?.dungeonMaster)?.username;
 
     return `The combat '${combatDto?.combatName}' has been opened by ${combatOpenedByUser}! Click to join or start watching before it starts...`;
 });
@@ -115,9 +127,7 @@ const combatStartedText = computed(() => {
                 username: string;
             },
         ])
-        .find(
-            (x) => x.userId == combatDto?.dungeonMaster,
-        )?.username;
+        .find((x) => x.userId == combatDto?.dungeonMaster)?.username;
 
     return `The combat '${combatDto?.combatName}' has started! Click to join or watch.`;
 });

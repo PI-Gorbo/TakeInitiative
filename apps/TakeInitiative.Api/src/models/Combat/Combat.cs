@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using JasperFx.CodeGeneration;
 
 namespace TakeInitiative.Api.Models;
 
@@ -16,7 +17,7 @@ public record Combat
     // Actual Initiative List
     public ImmutableList<CombatCharacter> StagedList { get; set; } = null!; // Will never be null when the api has access to it.
     public ImmutableList<CombatCharacter> InitiativeList { get; set; } = null!; // Will never be null when the api has access to it.
-    public int[]? CurrentInitiative { get; set; } = null;
+    public int InitiativeIndex { get; set; } = -1;
     public int? RoundNumber { get; set; }
 
     // Planning 
@@ -53,7 +54,7 @@ public record Combat
             StagedList = StagedList,
             InitiativeList = InitiativeList,
             PlannedStages = PlannedStages,
-            CurrentInitiative = null,
+            InitiativeIndex = -1,
             RoundNumber = null,
         };
     }

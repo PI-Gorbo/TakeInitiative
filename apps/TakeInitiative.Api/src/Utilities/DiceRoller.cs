@@ -46,13 +46,13 @@ public static class DiceRoller
 			});
 	}
 
-	private static Result<List<(Guid id, int[] rolls)>> ComputeRolls_Recursive(IEnumerable<CombatCharacter> characters, bool isFirstRoll)
+	private static Result<List<CharacterInitiativeRoll>> ComputeRolls_Recursive(IEnumerable<CombatCharacter> characters, bool isFirstRoll)
 	{
 		// 1. For the input list, compute the rolls.
 		var computedRollsResult = ComputeRollsForGroup(characters, isFirstRoll);
 		if (computedRollsResult.IsFailure)
 		{
-			return computedRollsResult.ConvertFailure<List<(Guid id, int[] rolls)>>();
+			return computedRollsResult.ConvertFailure<List<CharacterInitiativeRoll>>();
 		}
 
 		// 2. Determine any groupings of those rolls.
@@ -62,7 +62,7 @@ public static class DiceRoller
 			{
 				if (group.Count() == 1)
 				{
-					return new List<(Guid id, int[] rolls)>() { (group.First().id, new[] { group.Key }) };
+					return new List<CharacterInitiativeRoll>() { new(group.First().id, new[] { group.Key }) };
 				}
 
 				var ids = group.Select(x => x.id).ToArray();
@@ -71,7 +71,7 @@ public static class DiceRoller
 				var recursivelyComputedRolls = ComputeRolls_Recursive(charactersOfGroup, false).GetValueOrDefault(new());
 				return group
 					.Select(groupedValue =>
-						(id: groupedValue.id, rolls: recursivelyComputedRolls.First(x => groupedValue.id == x.id).rolls.Prepend(groupedValue.roll).ToArray())
+						new CharacterInitiativeRoll(id: groupedValue.id, rolls: recursivelyComputedRolls.First(x => groupedValue.id == x.id).rolls.Prepend(groupedValue.roll).ToArray())
 					)
 					.ToList()!;
 			}).SelectMany(x => x)
@@ -79,7 +79,7 @@ public static class DiceRoller
 	}
 
 
-	public static Result<List<(Guid id, int[] rolls)>> ComputeRolls(IEnumerable<CombatCharacter> characters)
+	public static Result<List<CharacterInitiativeRoll>> ComputeRolls(IEnumerable<CombatCharacter> characters)
 	{
 		return ComputeRolls_Recursive(characters, isFirstRoll: true);
 	}

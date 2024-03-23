@@ -50,7 +50,7 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
             StagedList = [],
             InitiativeList = newInitiativeList,
             RoundNumber = 1,
-            CurrentInitiative = newInitiativeList.FirstOrDefault()?.InitiativeValue ?? [],
+            InitiativeIndex = 0,
         };
     }
 
@@ -117,13 +117,29 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
     }
 
     // COMBAT TURN MANAGEMENT //
-    public async Task<Combat> Apply(TurnFinishedEvent @event, Combat Combat, IEvent<TurnFinishedEvent> eventDetails, IQuerySession session)
+    public async Task<Combat> Apply(TurnEndedEvent @event, Combat Combat, IEvent<TurnEndedEvent> eventDetails, IQuerySession session)
     {
         var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
+        var dungeonMasterEndedTurn = user?.Id == Combat.DungeonMaster;
+        var isDungeonMastersTurn = Combat.InitiativeList[Combat.InitiativeIndex].PlayerId == user?.Id;
+        var consoleMessage = dungeonMasterEndedTurn && !isDungeonMastersTurn 
+            ? $"{user?.UserName} had their turn ended by the DM at {eventDetails.Timestamp:R}"
+            : $"{user?.UserName} ended their turn at {eventDetails.Timestamp:R}";
+        
+        var nextRoundNumber = Combat.RoundNumber;
+        var nextInitiativeIndex = Combat.InitiativeIndex;
+        if (nextInitiativeIndex + 1 == Combat.InitiativeList.Count) {
+            nextInitiativeIndex = 0;
+            nextRoundNumber++;
+        } else {
+            nextInitiativeIndex++;
+        }
 
         return Combat with
         {
-            CombatLogs = Combat.CombatLogs.Add($"{user?.UserName} finished their turn at {eventDetails.Timestamp:R}"),
+            InitiativeIndex = nextInitiativeIndex,
+            RoundNumber = nextRoundNumber,
+            CombatLogs = Combat.CombatLogs.Add(consoleMessage),
         };
     }
 

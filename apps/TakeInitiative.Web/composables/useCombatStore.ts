@@ -33,9 +33,7 @@ export const useCombatStore = defineStore("combatStore", () => {
     }
 
     async function joinCombat(): Promise<void> {
-        if (connection.state != signalR.HubConnectionState.Connected) {
-            await startConnection();
-        }
+        await startConnection();
 
         const userId = userStore.state.user?.userId;
 
@@ -99,8 +97,8 @@ export const useCombatStore = defineStore("combatStore", () => {
         return await api.combat.finish({ combatId: state.combat?.id! });
     }
 
-    async function nextTurn() {
-        return await api.combat.nextTurn({ combatId: state.combat?.id! });
+    async function endTurn() {
+        return await api.combat.endTurn({ combatId: state.combat?.id! });
     }
 
     return {
@@ -113,6 +111,6 @@ export const useCombatStore = defineStore("combatStore", () => {
         leaveCombat,
         startCombat,
         finishCombat,
-        nextTurn,
+        endTurn,
     };
 });

@@ -3,20 +3,20 @@ import * as yup from "yup";
 import { combatResponseValidator } from "./combatResponse";
 
 // Create Campaign
-export type PostNextTurn = {
+export type PostEndTurn = {
     combatId: string;
 };
 
-export type PostNextTurnResponse = yup.InferType<
+export type PostEndTurnResponse = yup.InferType<
     typeof combatResponseValidator
 >;
 
-export function postNextTurnRequest(axios: AxiosInstance) {
+export function postEndTurnRequest(axios: AxiosInstance) {
     return async function (
-        request: PostNextTurn,
-    ): Promise<PostNextTurnResponse> {
+        request: PostEndTurn,
+    ): Promise<PostEndTurnResponse> {
         return await axios
-            .post("/api/combat/next-turn", request)
+            .post("/api/combat/turn/end", request)
             .then(async (response) =>
                 validateWithSchema(response.data, combatResponseValidator),
             );

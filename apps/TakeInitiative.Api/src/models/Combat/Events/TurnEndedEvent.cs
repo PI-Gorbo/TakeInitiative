@@ -1,5 +1,5 @@
 namespace TakeInitiative.Api.Models;
-public record TurnFinishedEvent
+public record TurnEndedEvent
 {
     public required Guid UserId { get; set; }
 }

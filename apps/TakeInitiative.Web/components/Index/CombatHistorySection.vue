@@ -1,6 +1,5 @@
 <template>
     <main>
-        {{ campaignStore.state }}
         <section v-for="combat in previousCombats">
             {{ combat.name }}
         </section>
