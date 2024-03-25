@@ -235,7 +235,7 @@ async function onCreate() {
     if (!validateResult.valid) {
         return;
     }
-
+    console.log(quantity.value)
     return await props
         .onCreate({
             health: null,

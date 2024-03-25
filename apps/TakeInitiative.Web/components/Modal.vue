@@ -1,5 +1,9 @@
 <template>
-    <dialog ref="dialog" @click="onModalClick" class="rounded-xl bg-take-navy-medium p-5">
+    <dialog
+        ref="dialog"
+        @click="onModalClick"
+        class="rounded-xl bg-take-navy-medium p-5 mt-20"
+    >
         <div class="flex gap-4 pb-5">
             <h1 v-if="props.title" class="flex w-max items-center text-xl text-white">
                 {{ props.title }}

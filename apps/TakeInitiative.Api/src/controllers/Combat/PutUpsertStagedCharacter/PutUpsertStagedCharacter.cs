@@ -74,7 +74,7 @@ public class PutUpsertStagedCharacter(IDocumentStore Store, IHubContext<CombatHu
 			else
 			{
 				// Create the add user event
-				StagedCharacterAddedEvent addEvent = new()
+				StagedCharacterEvent addEvent = new()
 				{
 					UserId = userId,
 					Character = character

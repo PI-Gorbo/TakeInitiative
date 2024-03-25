@@ -37,6 +37,7 @@
                     hoverButtonColour="take-navy"
                     textColour="white"
                     hoverTextColour="take-yellow"
+                    @clicked="createStageModal?.show()"
                 />
             </footer>
             <Modal ref="createStageModal" title="Create Stage">

@@ -1,7 +1,9 @@
 using System.Collections.Immutable;
+using JasperFx.Core;
 using Marten;
 using Marten.Events;
 using Marten.Events.Aggregation;
+using Marten.Linq.SoftDeletes;
 using TakeInitiative.Utilities;
 using TakeInitiative.Utilities.Extensions;
 
@@ -122,16 +124,19 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
         var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
         var dungeonMasterEndedTurn = user?.Id == Combat.DungeonMaster;
         var isDungeonMastersTurn = Combat.InitiativeList[Combat.InitiativeIndex].PlayerId == user?.Id;
-        var consoleMessage = dungeonMasterEndedTurn && !isDungeonMastersTurn 
+        var consoleMessage = dungeonMasterEndedTurn && !isDungeonMastersTurn
             ? $"{user?.UserName} had their turn ended by the DM at {eventDetails.Timestamp:R}"
             : $"{user?.UserName} ended their turn at {eventDetails.Timestamp:R}";
-        
+
         var nextRoundNumber = Combat.RoundNumber;
         var nextInitiativeIndex = Combat.InitiativeIndex;
-        if (nextInitiativeIndex + 1 == Combat.InitiativeList.Count) {
+        if (nextInitiativeIndex + 1 == Combat.InitiativeList.Count)
+        {
             nextInitiativeIndex = 0;
             nextRoundNumber++;
-        } else {
+        }
+        else
+        {
             nextInitiativeIndex++;
         }
 
@@ -143,6 +148,7 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
         };
     }
 
+    // Staged Character management //
     public async Task<Combat> Apply(StagedCharacterRemovedEvent @event, Combat Combat, IEvent<StagedCharacterRemovedEvent> eventDetails, IQuerySession session)
     {
         var character = Combat.StagedList.SingleOrDefault(x => x.Id == @event.CharacterId);
@@ -171,7 +177,7 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
         };
     }
 
-    public async Task<Combat> Apply(StagedCharacterAddedEvent @event, Combat Combat, IEvent<StagedCharacterAddedEvent> eventDetails, IQuerySession session)
+    public async Task<Combat> Apply(StagedCharacterEvent @event, Combat Combat, IEvent<StagedCharacterEvent> eventDetails, IQuerySession session)
     {
         var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
         return Combat with
@@ -179,6 +185,97 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
             CombatLogs = [.. Combat.CombatLogs, $"{user?.UserName} staged {@event.Character.Name} at {eventDetails.Timestamp:R}"],
             StagedList = (Combat.StagedList ?? ImmutableList<CombatCharacter>.Empty)
                 .Add(@event.Character)
+        };
+    }
+
+    public async Task<Combat> Apply(StagedPlannedCharacterEvent @event, Combat Combat, IEvent<StagedCharacterEvent> eventDetails, IQuerySession session)
+    {
+        var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
+
+        List<PlannedCombatStage> plannedStages = new();
+        List<CombatCharacter> CharactersToStage = new();
+        foreach (var plannedStage in Combat.PlannedStages)
+        {
+
+            if (!@event.PlannedCharactersToStage.ContainsKey(plannedStage.Id))
+            {
+                plannedStages.Add(plannedStage);
+            }
+
+            var characterDTOsToStage = @event.PlannedCharactersToStage[plannedStage.Id];
+            IEnumerable<PlannedCombatCharacter> npcsToKeepInStage = Array.Empty<PlannedCombatCharacter>();
+            IEnumerable<PlannedCombatCharacter> npcsToStage = Array.Empty<PlannedCombatCharacter>(); 
+            if (characterDTOsToStage.Length == 0)
+            {
+                npcsToStage = plannedStage.Npcs;
+            }
+            else
+            {
+                foreach (var dto in characterDTOsToStage)
+                {
+                    var plannedCharacter = plannedStage.Npcs.First(x => x.Id == dto.CharacterId);
+                    if (plannedCharacter.Quantity == dto.Quantity) {
+                        npcsToStage.Append(plannedCharacter);
+                    } else {
+                        npcsToStage.Append(plannedCharacter with {
+                            Quantity = dto.Quantity
+                        });
+                        npcsToKeepInStage.Append(plannedCharacter with {
+                            Quantity = plannedCharacter.Quantity - dto.Quantity
+                        });
+                    }
+                }
+            }
+
+            // Map the Npcs to stage to combat characters.
+            CharactersToStage.AddRange(
+                npcsToStage.Select(npc => {
+                    // Check if there are any characters in the current initiative list with the same name as the npc to stage.
+                    var isMultipleQuantityCharacter = Combat.InitiativeList.Where(x => x.Name == npc.Name).Count() > 1 || npc.Quantity > 1;
+                    if (!isMultipleQuantityCharacter) {
+                        return [ new CombatCharacter() {
+                            Id = npc.Id,
+                            Name = npc.Name,
+                            Initiative = npc.Initiative,
+                            InitiativeValue = [],
+                            PlayerId = @event.UserId,
+                            ArmorClass = npc.ArmorClass,
+                            Health = npc.Health,
+                            Hidden = false,
+                            QuantityNumber = null
+                        }];
+                    }
+
+                    var nextQuantityNumber = Combat.InitiativeList.Where(x => x.Name == npc.Name)
+                        .Select(x => x.QuantityNumber)
+                        .Max() + 1;
+                    var combatCharactersToOutput = new List<CombatCharacter>();
+                    for(int i = 0; i < npc.Quantity; i++) {
+                        combatCharactersToOutput.Add(
+                            new CombatCharacter() {
+                                Id = npc.Id,
+                                Name = npc.Name,
+                                Initiative = npc.Initiative,
+                                InitiativeValue = [],
+                                PlayerId = @event.UserId,
+                                ArmorClass = npc.ArmorClass,
+                                Health = npc.Health,
+                                Hidden = false,
+                                QuantityNumber = nextQuantityNumber++
+                            }
+                        );
+                    }
+
+                    return combatCharactersToOutput;
+                }).SelectMany(x => x)
+            );
+        }
+
+        return Combat with
+        {
+            CombatLogs = Combat.CombatLogs.Add($"{user?.UserName} staged {CharactersToStage.Count} characters."),
+            StagedList = Combat.StagedList.AddRange(CharactersToStage),
+            PlannedStages = plannedStages.ToImmutableList()
         };
     }
 

@@ -46,7 +46,7 @@ public record PlannedCombat
 		return this;
 	}
 
-	public Result<PlannedCombat> AddNpcToStage(Guid stageId, PlannedCombatNpc npc)
+	public Result<PlannedCombat> AddNpcToStage(Guid stageId, PlannedCombatCharacter npc)
 	{
 		var stage = this.Stages.SingleOrDefault(x => x.Id == stageId);
 		if (stage == null)

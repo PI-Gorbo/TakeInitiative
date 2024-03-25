@@ -37,17 +37,14 @@
 
 .delayedFade-enter-active,
 .delayedFade-leave-active {
-    transition: all 0.1s ease-out;
-    overflow: hidden;
+    transition: all 0.5s ease-out;
 }
 
 .delayedFade-enter-active {
-    transition-delay: 0.12s;
-    overflow: hidden;
+    transition-delay: 0.1s;
 }
 
 .delayedFade-enter-from,
 .delayedFade-leave-to {
     opacity: 0;
-    overflow: hidden;
 }

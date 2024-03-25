@@ -64,7 +64,7 @@ public class PutPlannedCombatNpc(IDocumentStore Store) : Endpoint<PutPlannedComb
 				Quantity = req.Quantity
 			};
 
-			var validator = new PlannedCombatNpcValidator();
+			var validator = new PlannedCombatCharacterValidator();
 			var validationResult = await validator.ValidateAsync(npc, ct);
 			if (!validationResult.IsValid)
 			{

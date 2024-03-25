@@ -34,9 +34,9 @@
                 class="flex-1"
             ></div>
         </div>
-        <TransitionGroup name="fade" class="flex-1 overflow-hidden" tag="section">
+        <TransitionGroup name="tabFade" class="flex-1 overflow-hidden" tag="section">
             <div
-                v-for="tab in tabs.filter(
+                v-for="(tab, index) in tabs.filter(
                     (x) => x.slotName == state.lastClickedTab.slotName
                 )"
                 :key="tab.slotName"
@@ -54,6 +54,7 @@
 import { ObjectSchema } from "yup";
 import type { TakeInitColour } from "~/utils/types/HelperTypes";
 import { TakeInitContrastColour } from "~/utils/types/HelperTypes";
+import gsap from "gsap";
 
 const slots = useSlots();
 type Tab = {
@@ -109,19 +110,19 @@ const selectedTab = computed(
   Enter and leave animations can use different
   durations and timing functions.
 */
-.fade-enter-active,
-.fade-leave-active {
+.tabFade-enter-active,
+.tabFade-leave-active {
     transition: all 0.15s ease-out;
     overflow: hidden;
 }
 
-.fade-enter-active {
-    transition-delay: 0.15s;
+.tabFade-enter-active {
     overflow: hidden;
+    display: none;
 }
 
-.fade-enter-from,
-.fade-leave-to {
+.tabFade-enter-from,
+.tabFade-leave-to {
     opacity: 0;
     overflow: hidden;
 }

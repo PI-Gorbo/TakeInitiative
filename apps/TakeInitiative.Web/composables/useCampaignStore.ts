@@ -19,14 +19,14 @@ export const useCampaignStore = defineStore("campaignStore", () => {
     const userStore = useUserStore();
     const plannedCombatStore = usePlannedCombatStore();
 
-    const state = reactive<GetCampaignResponse>({
-        campaign: null,
-        combatDto: null,
-        joinCode: null,
-        userCampaignMember: null,
-        finishedCombats: null,
-        nonUserCampaignMembers: null,
-        plannedCombats: null,
+    const state = reactive<Partial<GetCampaignResponse>>({
+        campaign: undefined,
+        combatDto: undefined,
+        joinCode: undefined,
+        userCampaignMember: undefined,
+        finishedCombats: undefined,
+        nonUserCampaignMembers: undefined,
+        plannedCombats: undefined,
     });
 
     async function init(): Promise<void> {

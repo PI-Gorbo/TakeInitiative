@@ -2,9 +2,9 @@ using FluentValidation;
 
 namespace TakeInitiative.Api.Models;
 
-public class PlannedCombatNpcValidator : CharacterValidator<PlannedCombatNpc>
+public class PlannedCombatCharacterValidator : CharacterValidator<PlannedCombatCharacter>
 {
-	public PlannedCombatNpcValidator()
+	public PlannedCombatCharacterValidator()
 	{
 		RuleFor(x => x.Quantity)
 			.Must(quantity => quantity >= 1)

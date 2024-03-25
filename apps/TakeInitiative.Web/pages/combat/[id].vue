@@ -1,10 +1,7 @@
 <template>
     <div class="flex h-full w-full flex-col items-center">
         <header class="grid w-full max-w-[1200px] grid-cols-3 py-2">
-            <div
-                class="flex items-center"
-                v-if="combatIsStarted"
-            >
+            <div class="flex items-center" v-if="combatIsStarted">
                 <FormButton
                     class="px-2"
                     label="End Turn"
@@ -17,8 +14,18 @@
                     Current Initiative: {{ combat?.initiativeIndex }}
                 </label>
             </div>
+            <div class="flex items-center" v-else-if="combatIsOpen">
+                <FormButton
+                    class="px-2"
+                    label="Stage Character(s)"
+                    size="sm"
+                    buttonColour="take-navy-light"
+                    @clicked="onShowNewStagedCharacterModal"
+                    :disabled="!isUsersTurn"
+                />
+            </div>
             <label
-                class="flex items-center justify-center text-center font-NovaCut text-xl text-take-yellow col-start-2"
+                class="col-start-2 flex items-center justify-center text-center font-NovaCut text-xl text-take-yellow"
                 >{{ combat?.combatName }}</label
             >
             <div class="flex justify-end">
@@ -45,9 +52,7 @@
             </div>
         </header>
         <main
-            :class="[
-                'flex h-full w-full max-w-[1200px] flex-1 flex-row justify-center',
-            ]"
+            :class="['flex h-full w-full max-w-[1200px] flex-1 flex-row justify-center']"
         >
             <section class="flex h-full flex-1 flex-col gap-2 overflow-y-auto">
                 <div class="flex-1">
@@ -63,10 +68,10 @@
                                 'grid grid-cols-2 rounded-xl border-2 border-take-navy-light p-2 transition-colors',
                                 {
                                     'cursor-pointer hover:border-take-yellow':
-                                        isEditableForUser(charInfo) &&
-                                        combatIsOpen,
+                                        isEditableForUser(charInfo) && combatIsOpen,
                                     'border-take-yellow':
-                                        combatIsStarted && index == combat?.initiativeIndex,
+                                        combatIsStarted &&
+                                        index == combat?.initiativeIndex,
                                 },
                             ]"
                             @click="
@@ -89,16 +94,14 @@
                                     ]"
                                 >
                                     <div
-                                        v-for="(value, index) in charInfo
-                                            .character.initiativeValue"
+                                        v-for="(value, index) in charInfo.character
+                                            .initiativeValue"
                                         :class="[
                                             'flex items-center rounded-lg  p-1',
                                             {
                                                 'text-xs': index != 0,
-                                                'bg-take-navy-light':
-                                                    index == 0,
-                                                'bg-take-navy-medium':
-                                                    index != 0,
+                                                'bg-take-navy-light': index == 0,
+                                                'bg-take-navy-medium': index != 0,
                                             },
                                         ]"
                                     >
@@ -135,9 +138,7 @@
                                 <ol class="flex flex-row justify-end">
                                     <li v-if="combatIsOpen">
                                         <FontAwesomeIcon icon="shoe-prints" />
-                                        {{
-                                            charInfo.character.initiative.value
-                                        }}
+                                        {{ charInfo.character.initiative.value }}
                                     </li>
                                 </ol>
                             </body>
@@ -156,7 +157,7 @@
                                     textColour="take-grey"
                                     hoverTextColour="take-yellow"
                                     icon="plus"
-                                    label="Stage character"
+                                    label="Stage character(s)"
                                     size="sm"
                                     :preventClickBubbling="false"
                                 />
@@ -165,16 +166,36 @@
                     </TransitionGroup>
                     <Modal
                         ref="stageNewCharacterModal"
-                        title="Stage your Character"
+                        title="Stage your Characters"
+                        class="max-w-[1200px] w-full"
                     >
-                        <CombatStageCharacterForm
-                            :onCreate="onUpsertStagedCharacter"
-                        />
+                        <Tabs
+                            :showTabs="{
+                                Planned: () => userIsDm,
+                                Characters: () =>
+                                    (campaignStore.state.userCampaignMember?.characters
+                                        ?.length ?? 0) > 0,
+                            }"
+                            class="overflow-auto"
+                        >
+                            <template #Planned>
+                                <CombatPlannedStagesDisplay
+                                    :stages="combatStore.state.combat?.plannedStages!"
+                                />
+                            </template>
+                            <!-- <template #Characters>
+                                <CombatStageCharacterForm
+                                    :onCreate="onUpsertStagedCharacter"
+                                />
+                            </template> -->
+                            <template #Custom>
+                                <CombatStageCharacterForm
+                                    :onCreate="onUpsertStagedCharacter"
+                                />
+                            </template>
+                        </Tabs>
                     </Modal>
-                    <Modal
-                        ref="editStagedCharacterModal"
-                        title="Edit staged Character"
-                    >
+                    <Modal ref="editStagedCharacterModal" title="Edit staged Character">
                         <CombatStageCharacterForm
                             :onEdit="onUpsertStagedCharacter"
                             :onDelete="onDeleteStagedCharacter"
@@ -252,7 +273,9 @@ const combatIsOpen = computed(() => combat.value?.state == CombatState.Open);
 const combatIsStarted = computed(
     () => combat.value?.state == CombatState.Started,
 );
-const combatIsFinished = computed(() => combat.value?.state == CombatState.Finished)
+const combatIsFinished = computed(
+    () => combat.value?.state == CombatState.Finished,
+);
 
 // Main fetch
 const { refresh, pending, error } = await useAsyncData("Combat", async () => {
@@ -260,11 +283,14 @@ const { refresh, pending, error } = await useAsyncData("Combat", async () => {
 });
 
 // Main fetch
-const {  } = await useAsyncData("JoinCombat", async () => {
-    console.log("Sending join request")
-    return await combatStore.joinCombat().then(() => true);
-}, {server: false});
-
+const {} = await useAsyncData(
+    "JoinCombat",
+    async () => {
+        console.log("Sending join request");
+        return await combatStore.joinCombat().then(() => true);
+    },
+    { server: false },
+);
 
 // Combat logs
 const combatLogs = ref<HTMLDivElement | null>(null);
@@ -386,9 +412,7 @@ function getIconForUser(charInfo: {
 }) {
     const currentUserId = userStore.state.user?.userId;
 
-    if (
-        charInfo.user.userId == combat.value?.dungeonMaster
-    ) {
+    if (charInfo.user.userId == combat.value?.dungeonMaster) {
         return "crown";
     }
 
@@ -415,29 +439,32 @@ const isUsersTurn = computed(() => {
         return true;
     }
 
-    const characterWithCurrentInitiative = combat.value?.initiativeList[combat.value.initiativeIndex ?? 0]
-    if (characterWithCurrentInitiative?.playerId == userStore.state.user?.userId) {
+    const characterWithCurrentInitiative =
+        combat.value?.initiativeList[combat.value.initiativeIndex ?? 0];
+    if (
+        characterWithCurrentInitiative?.playerId == userStore.state.user?.userId
+    ) {
         return true;
     }
     return false;
-})
+});
 </script>
 
 <style>
 .shuffleList-move, /* apply transition to moving elements */
 .shuffleList-enter-active,
 .shuffleList-leave-active {
-  transition: all 1s ease;
+    transition: all 1s ease-in-out;
 }
 
 .shuffleList-enter-from,
 .shuffleList-leave-to {
-  opacity: 0;
+    opacity: 0;
 }
 
 /* ensure leaving items are taken out of layout flow so that moving
    animations can be calculated correctly. */
 .shuffleList-leave-active {
-  position: absolute;
+    position: absolute;
 }
 </style>
