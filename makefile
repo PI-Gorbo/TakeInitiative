@@ -27,6 +27,10 @@ docker.build:
 docker.compose:
 	docker compose up -d
 
+docker.dev.compose:
+	make docker.build
+	docker compose -f compose.dev.yml up -d
+
 docker.publish: 
 	make docker.build 
 	make docker.compose
