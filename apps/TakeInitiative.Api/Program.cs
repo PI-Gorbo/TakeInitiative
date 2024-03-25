@@ -13,7 +13,7 @@ internal class Program
 			.AddJsonFile("appsettings.json", optional: false);
 		if (!builder.Environment.IsProduction())
 		{
-			configBuilder = configBuilder.AddJsonFile("appsettings.json", optional: true);
+			configBuilder = configBuilder.AddJsonFile("appsettings.development.json", optional: true);
 		}
 		configBuilder.AddEnvironmentVariables();
 
