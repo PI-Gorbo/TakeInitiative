@@ -24,14 +24,36 @@ namespace TakeInitiative.BestiaryHandler.src.MartenDB
         public HP hp{ get; set; }
         public List<Action> action { get; set; }
 
-        public int cr { get; set; }
+        public string cr { get; set; }
 
     }
 
+    public class Fly {
+        public int number { get; set;}
+        public string condition {get; set;}
+    }
     public class Speed
     {
+
+        //THIS MIGHT NOT WORK
+        [JsonConstructor]
+        public Speed(JToken Jfly) {
+            if (Jfly.type == JTokenType.Integer) {
+                canHover = false;
+                fly = new Fly((integer)Jfly);
+            }
+            else {
+                fly = Jfly.ToObject<Fly>();
+            }
+        }
         public int walk { get; set; }
-        public string 
+
+        public Fly fly { get; set; }
+
+        [DefaultValue(false)]            
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate)]
+        public bool canHover {get; set;}
+  
     }
 
     public class HP
