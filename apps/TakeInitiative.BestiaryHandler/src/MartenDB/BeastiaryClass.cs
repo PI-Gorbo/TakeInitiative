@@ -25,6 +25,30 @@ namespace TakeInitiative.BestiaryHandler.src.MartenDB
         public List<Action> action { get; set; }
 
         public string cr { get; set; }
+        public int str  { get; set; }
+        public int dex  { get; set; }
+        public int con  { get; set; }
+
+        [JsonProperty(PropertyName = "int")]
+        public int intelligence  { get; set; }
+        public int wis  { get; set; }
+        public int cha  { get; set; }
+
+        public Save save { get; set; }
+
+
+    }
+
+    public class Save {
+        public string str  { get; set; }
+        public string dex  { get; set; }
+        public string con  { get; set; }
+
+        [JsonProperty(PropertyName = "int")]
+        public string intelligence  { get; set; }
+        public string wis  { get; set; }
+        public string cha  { get; set; }
+
 
     }
 
