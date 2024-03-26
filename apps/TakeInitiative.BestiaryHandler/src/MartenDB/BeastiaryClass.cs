@@ -1,4 +1,5 @@
 ﻿using JasperFx.Core;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,6 +9,7 @@ using System.Threading.Tasks;
 namespace TakeInitiative.BestiaryHandler.src.MartenDB
 {
     //[Obsolete("Don't use a class to represent the beast but do shit when you read it from the DB", true)]
+    //[JsonProperty(PropertyName = "FooBar")]
     public class Monster
     {
 
@@ -16,7 +18,7 @@ namespace TakeInitiative.BestiaryHandler.src.MartenDB
 
         public copy _copy { get; set; }
 
-        public List<ac> AC { get; set; }
+        public List<AC> ac { get; set; }
         public _type type { get; set; }
 
         public hp HP { get; set; }
@@ -39,9 +41,9 @@ namespace TakeInitiative.BestiaryHandler.src.MartenDB
         public required string name { get; init; }
         public List<string> entries { get; set; }//TODO: Represent actions with a class instead?
     }
-    public class ac
+    public class AC
     {
-        public required int Armour_Class { get; init; }
+        public required int ac { get; init; }
         public List<string> from { get; set; }
     }
 
@@ -50,17 +52,20 @@ namespace TakeInitiative.BestiaryHandler.src.MartenDB
         public required string name { get; init; }
         public required string source { get; init; }
 
-        public _mod mod { get; set; }
+        public Mod _mod { get; set; }
 
     }
 
-    public class _mod
+    public class Mod
     {
-        public List<modification> mods { get; set; }
+        [JsonProperty(PropertyName = "*")]
+        public Asterisk ast { get; set; }
+        public string action { get; set; }
 
     }
 
-    public class modification
+
+    public class Asterisk
     {
         public required string mode { get; init; }
         public required string replace { get; init; }
