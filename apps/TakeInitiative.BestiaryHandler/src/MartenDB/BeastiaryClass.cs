@@ -21,11 +21,20 @@ namespace TakeInitiative.BestiaryHandler.src.MartenDB
         public List<AC> ac { get; set; }
         public _type type { get; set; }
 
-        public hp HP { get; set; }
+        public HP hp{ get; set; }
+        public List<Action> action { get; set; }
+
+        public int cr { get; set; }
 
     }
 
-    public class hp
+    public class Speed
+    {
+        public int walk { get; set; }
+        public string 
+    }
+
+    public class HP
     {
         public int average { get; set; }
         public string formula { get; set; }
@@ -33,10 +42,10 @@ namespace TakeInitiative.BestiaryHandler.src.MartenDB
 
     public class _type
     {
-        public required string __type { get; init; }
+        public required string type { get; init; }
     }
 
-    public class action
+    public class Action
     {
         public required string name { get; init; }
         public List<string> entries { get; set; }//TODO: Represent actions with a class instead?
