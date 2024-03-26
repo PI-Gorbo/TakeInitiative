@@ -1,7 +1,6 @@
 using System.Net;
 using CSharpFunctionalExtensions;
 using FastEndpoints;
-using FluentValidation;
 using Marten;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.SignalR;
@@ -11,27 +10,11 @@ using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Controllers;
 
-public class PutStagePlannedCharactersRequest {
-    public Guid CombatId {get; set;}
-    
-    public Dictionary<Guid, StagePlannedCharacterDto[]> PlannedCharactersToStage {get; set;} = null!;
-}
-
-public class PutStagePlannedCharacterRequestValidator : Validator<PutStagePlannedCharactersRequest>
-{
-    public PutStagePlannedCharacterRequestValidator()
-    {
-        RuleFor(x => x.CombatId).NotEmpty();
-        RuleFor(x => x.PlannedCharactersToStage)
-            .NotEmpty();
-    }
-}
-
-public class PutStagePlannedCharacters(IDocumentStore Store, IHubContext<CombatHub> hubContext) : Endpoint<PutStagePlannedCharactersRequest, CombatResponse>
+public class PostStagePlannedCharacters(IDocumentStore Store, IHubContext<CombatHub> hubContext) : Endpoint<PutStagePlannedCharactersRequest, CombatResponse>
 {
 	public override void Configure()
 	{
-		Put("/api/combat/stage/planned");
+		Post("/api/combat/stage/planned-character");
 		AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
 		Policies(TakePolicies.UserExists);
 	}

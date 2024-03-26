@@ -14,7 +14,7 @@ public class DeleteStagedCharacter(IDocumentStore Store, IHubContext<CombatHub> 
 {
 	public override void Configure()
 	{
-		Delete("/api/combat/staged-character");
+		Delete("/api/combat/staged/character");
 		AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
 		Policies(TakePolicies.UserExists);
 	}

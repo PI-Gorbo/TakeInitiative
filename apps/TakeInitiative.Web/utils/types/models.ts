@@ -115,14 +115,16 @@ export const playerDtoValidator = yup.object({
 });
 export type PlayerDto = InferType<typeof playerDtoValidator>;
 export const combatCharacterValidator = yup.object({
+    id: yup.string().required(),
+    plannedCharacterId: yup.string().nullable(),
     playerId: yup.string().required(),
     initiativeValue: yup.array(yup.number()).nullable(),
     hidden: yup.boolean().required(),
-    id: yup.string().required(),
     name: yup.string().required(),
     health: characterHealthValidator.nullable(),
     initiative: characterInitiativeValidator.required(),
     armourClass: yup.number().nullable(),
+    copyNumber: yup.number().nullable(),
 });
 export type CombatCharacter = InferType<typeof combatCharacterValidator>;
 

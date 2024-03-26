@@ -26,7 +26,7 @@ export function putUpsertStagedCharacter(axios: AxiosInstance) {
         request: UpsertStagedCharacterRequest,
     ): Promise<UpsertStagedCharacterResponse> {
         return await axios
-            .put("/api/combat/staged-character", request)
+            .put("/api/combat/stage/character", request)
             .then(async (response) =>
                 validateWithSchema(response.data, combatResponseValidator),
             );

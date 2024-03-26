@@ -188,26 +188,27 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
         };
     }
 
-    public async Task<Combat> Apply(StagedPlannedCharacterEvent @event, Combat Combat, IEvent<StagedCharacterEvent> eventDetails, IQuerySession session)
+    public async Task<Combat> Apply(StagedPlannedCharacterEvent @event, Combat Combat, IEvent<StagedPlannedCharacterEvent> eventDetails, IQuerySession session)
     {
         var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
 
-        List<PlannedCombatStage> plannedStages = new();
-        List<CombatCharacter> CharactersToStage = new();
+        List<PlannedCombatStage> plannedStages = new(); // The new list of planned stages after the stage request is over.
+        List<CombatCharacter> CharactersToStage = new(); // The list of characters to put into the staged list, from the plannedStages list.
         foreach (var plannedStage in Combat.PlannedStages)
         {
-
+            
             if (!@event.PlannedCharactersToStage.ContainsKey(plannedStage.Id))
             {
                 plannedStages.Add(plannedStage);
+                continue;
             }
 
             var characterDTOsToStage = @event.PlannedCharactersToStage[plannedStage.Id];
-            IEnumerable<PlannedCombatCharacter> npcsToKeepInStage = Array.Empty<PlannedCombatCharacter>();
+            IEnumerable<PlannedCombatCharacter> npcsToKeepPlanned = Array.Empty<PlannedCombatCharacter>();
             IEnumerable<PlannedCombatCharacter> npcsToStage = Array.Empty<PlannedCombatCharacter>(); 
             if (characterDTOsToStage.Length == 0)
             {
-                npcsToStage = plannedStage.Npcs;
+                npcsToKeepPlanned = plannedStage.Npcs;
             }
             else
             {
@@ -215,16 +216,24 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
                 {
                     var plannedCharacter = plannedStage.Npcs.First(x => x.Id == dto.CharacterId);
                     if (plannedCharacter.Quantity == dto.Quantity) {
-                        npcsToStage.Append(plannedCharacter);
+                        npcsToStage = npcsToStage.Append(plannedCharacter);
                     } else {
-                        npcsToStage.Append(plannedCharacter with {
+                        npcsToStage = npcsToStage.Append(plannedCharacter with {
                             Quantity = dto.Quantity
                         });
-                        npcsToKeepInStage.Append(plannedCharacter with {
+                        npcsToKeepPlanned = npcsToKeepPlanned.Append(plannedCharacter with {
                             Quantity = plannedCharacter.Quantity - dto.Quantity
                         });
                     }
                 }
+            }
+
+            if (npcsToKeepPlanned.Count() > 0) {
+                plannedStages.Add(
+                    plannedStage with {
+                        Npcs = npcsToKeepPlanned.ToList()
+                    }
+                );
             }
 
             // Map the Npcs to stage to combat characters.
@@ -234,34 +243,36 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
                     var isMultipleQuantityCharacter = Combat.InitiativeList.Where(x => x.Name == npc.Name).Count() > 1 || npc.Quantity > 1;
                     if (!isMultipleQuantityCharacter) {
                         return [ new CombatCharacter() {
-                            Id = npc.Id,
+                            Id = Guid.NewGuid(),
+                            PlannedCharacterId = npc.Id,
                             Name = npc.Name,
                             Initiative = npc.Initiative,
                             InitiativeValue = [],
                             PlayerId = @event.UserId,
                             ArmorClass = npc.ArmorClass,
                             Health = npc.Health,
-                            Hidden = false,
-                            QuantityNumber = null
+                            Hidden = true,
+                            CopyNumber = null
                         }];
                     }
 
                     var nextQuantityNumber = Combat.InitiativeList.Where(x => x.Name == npc.Name)
-                        .Select(x => x.QuantityNumber)
-                        .Max() + 1;
+                        .Select(x => x.CopyNumber)
+                        .Max() + 1 ?? 1;
                     var combatCharactersToOutput = new List<CombatCharacter>();
                     for(int i = 0; i < npc.Quantity; i++) {
                         combatCharactersToOutput.Add(
                             new CombatCharacter() {
-                                Id = npc.Id,
+                                Id = Guid.NewGuid(),
+                                PlannedCharacterId = npc.Id,
                                 Name = npc.Name,
                                 Initiative = npc.Initiative,
                                 InitiativeValue = [],
                                 PlayerId = @event.UserId,
                                 ArmorClass = npc.ArmorClass,
                                 Health = npc.Health,
-                                Hidden = false,
-                                QuantityNumber = nextQuantityNumber++
+                                Hidden = true,
+                                CopyNumber = nextQuantityNumber++
                             }
                         );
                     }

@@ -39,7 +39,7 @@ public class StagePlannedCharactersCommandHandler(IDocumentStore Store) : Comman
                 // Validate the request.
                 var nonExistentPlannedCombatIds = command.PlannedCharactersToStage.Keys.Except(combat.PlannedStages.Select(x => x.Id));
                 if (nonExistentPlannedCombatIds.Any()) {
-                    ThrowError(x => x.PlannedCharactersToStage, $"One or more of the provided planned combat ids do not exist. {string.Join(", ", nonExistentPlannedCombatIds)}");
+                    ThrowError(x => x.PlannedCharactersToStage, $"One or more of the provided planned combat stage ids do not exist. {string.Join(", ", nonExistentPlannedCombatIds)}");
                 }
 
                 // Check, for each character referenced, that the character exists and the quantity is valid.

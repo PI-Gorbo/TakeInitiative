@@ -18,7 +18,7 @@ export function deleteStagedCharacter(axios: AxiosInstance) {
         request: DeleteStagedCharacterRequest,
     ): Promise<DeleteStagedCharacterResponse> {
         return await axios
-            .delete("/api/combat/staged-character", {data: request})
+            .delete("/api/combat/stage/character", {data: request})
             .then(async (response) =>
                 validateWithSchema(response.data, combatResponseValidator),
             );

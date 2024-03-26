@@ -82,6 +82,7 @@
                             "
                         >
                             <header class="flex items-center gap-2">
+                                <!-- Initiative -->
                                 <div
                                     v-if="!combatIsOpen"
                                     :class="[
@@ -108,6 +109,8 @@
                                         {{ value }}
                                     </div>
                                 </div>
+
+                                <!-- Username -->
                                 <label
                                     :class="[
                                         {
@@ -123,6 +126,8 @@
                                     />
                                     {{ charInfo.user?.username }}:</label
                                 >
+
+                                <!-- Character Name -->
                                 <label
                                     :class="[
                                         {
@@ -131,7 +136,12 @@
                                                 combatIsOpen,
                                         },
                                     ]"
-                                    >{{ charInfo.character.name }}</label
+                                    >{{ charInfo.character.name }}
+                                    {{
+                                        charInfo.character.copyNumber != null
+                                            ? `(${charInfo.character.copyNumber})`
+                                            : ""
+                                    }}</label
                                 >
                             </header>
                             <body>
@@ -167,7 +177,7 @@
                     <Modal
                         ref="stageNewCharacterModal"
                         title="Stage your Characters"
-                        class="max-w-[1200px] w-full"
+                        class="w-full max-w-[1200px]"
                     >
                         <Tabs
                             :showTabs="{
@@ -180,7 +190,9 @@
                         >
                             <template #Planned>
                                 <CombatPlannedStagesDisplay
-                                    :stages="combatStore.state.combat?.plannedStages!"
+                                    :stages="
+                                        combatStore.state.combat?.plannedStages!
+                                    "
                                 />
                             </template>
                             <!-- <template #Characters>
@@ -345,8 +357,18 @@ const characterList = computed(() => {
             return result;
         }
 
-        // Then sort by character id
-        result = compareStrings(a.character.id, b.character.id);
+        // Then sort by character name
+        result = compareStrings(a.character.name, b.character.name);
+        if (result != 0) {
+            return result;
+        }
+
+        // Sort by copy number
+        result =
+            (a.character.copyNumber ?? 0) < (b.character.copyNumber ?? 0)
+                ? -1
+                : 1;
+
         return result;
     };
 

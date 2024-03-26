@@ -13,7 +13,7 @@ public class PutUpsertStagedCharacter(IDocumentStore Store, IHubContext<CombatHu
 {
 	public override void Configure()
 	{
-		Put("/api/combat/staged-character");
+		Put("/api/combat/stage/character");
 		AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
 		Policies(TakePolicies.UserExists);
 	}
@@ -52,7 +52,9 @@ public class PutUpsertStagedCharacter(IDocumentStore Store, IHubContext<CombatHu
 				Health = req.Character.Health,
 				ArmorClass = req.Character.ArmorClass,
 				Hidden = req.Character.Hidden,
-				InitiativeValue = null
+				InitiativeValue = null,
+                PlannedCharacterId = null,
+                CopyNumber = null,
 			};
 
 			if (existingCharacter != null)
