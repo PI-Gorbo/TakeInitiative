@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TakeInitiative.BestiaryHandler.src.Json;
+using System.Collections;
 
 namespace TakeInitiative.BestiaryHandler.src.MartenDB
 {
@@ -26,6 +27,7 @@ namespace TakeInitiative.BestiaryHandler.src.MartenDB
         public copy _copy { get; set; }
         public List<Action> action { get; set; }
 
+        [JsonConverter(typeof(ACConverter))]
         public List<AC> ac { get; set; }
         [JsonConverter(typeof(ObjectOrStringConverter<Type>))]
         public object type { get; set; }
@@ -59,7 +61,7 @@ namespace TakeInitiative.BestiaryHandler.src.MartenDB
     public class Type
     {
         public string type { get; set; }
-        public List<string> tags { get; set; }
+        //public List<string> tags { get; set; }
     }
 
     public class Reaction {
@@ -96,7 +98,7 @@ namespace TakeInitiative.BestiaryHandler.src.MartenDB
     public class Speed
     {
 
-        //THIS MIGHT NOT WORK
+        //TODO: MAKE A PROPER CONVERTER IN JSON HELPERS FOR CONSISTENCY?
         [JsonConstructor]
         public Speed(JToken Jfly) {
             if (Jfly.Type == JTokenType.Integer) {
@@ -122,9 +124,6 @@ namespace TakeInitiative.BestiaryHandler.src.MartenDB
         public int average { get; set; }
         public string formula { get; set; }
     }
-
-    
-
     public class Action
     {
         public required string name { get; init; }
@@ -132,7 +131,12 @@ namespace TakeInitiative.BestiaryHandler.src.MartenDB
     }
     public class AC
     {
-        public required int ac { get; init; }
+        public AC(int ac)
+        {
+            this.ac = ac;
+        }
+        //public required int ac { get; init; } = ac;
+        public int ac { get; set; }
         public List<string> from { get; set; }
     }
 
@@ -157,6 +161,10 @@ namespace TakeInitiative.BestiaryHandler.src.MartenDB
                 ret += "*: ";
                 ret += ast.print_contents();
             }
+            if (possible_text_modifications == null)
+            {
+                return ret;
+            }
             foreach (var dict in possible_text_modifications)
             {
                 var dictstr = string.Join(Environment.NewLine, dict);
@@ -172,6 +180,7 @@ namespace TakeInitiative.BestiaryHandler.src.MartenDB
         }
         [JsonProperty(PropertyName = "*")]
         public Asterisk ast { get; set; }
+        //string would be trait or action or whatever
         public List<Dictionary<string, Copy_Mod_Object>> possible_text_modifications;
     }
 
@@ -193,15 +202,23 @@ namespace TakeInitiative.BestiaryHandler.src.MartenDB
 
     public class Copy_Mod_Object
     {
+        public Copy_Mod_Object()
+        {
+            this.items = new List<Item>();
+        }
         public override string ToString()
         {
-            var str = "mode: " + mode + "\n replace: " + replace + "\n items: " + items + "\n ";
+            var str = "mode: " + mode + "\n replace: " + (replace ?? "null replace") + "\nindex: " + index + "\n items: " + (string.Join(", ", items) ?? "null items") + "\n ";
             return str;
         }
 
         public string mode { get; set; }
         public string replace { get; set; }
-        public Item items { get; set; }
+        public int index { get; set; }
+        [JsonConverter(typeof(ItemConverter))]
+        public List<Item> items { get; set; }
+        //TODO: names can also be alist probably since these guys fuckign suck
+        public string names { get; set; }
     }
 
 
@@ -209,11 +226,24 @@ namespace TakeInitiative.BestiaryHandler.src.MartenDB
     //TODO: Many classes here are copies of this class
     public class Item
     {
+        //[JsonConstructor]
+        //public Item(JToken token)
+        //{ 
+        //    if (token.Type == JTokenType.String)
+        //    {
+        //        this.name = token.ToString();
+        //    }
+        //}
+        public Item(string name)
+        {
+            this.name = name;
+            this.entries = new List<string>();
+        }
         public override string ToString()
         {
-            return "name: " + name + "\n entries: "  + String.Join(", ", entries.ToArray()) + "\n ";
+            return "name: " + name + "\n entries: "  + (String.Join(", ", entries.ToArray()) ?? "null entries") + "\n ";
         }
-        public required string name { get; init; }
+        public string name { get; init; }
         public List<string> entries { get; set; }
     }
 
