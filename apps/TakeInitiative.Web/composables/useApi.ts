@@ -9,6 +9,7 @@ import { getCombatRequest } from "~/utils/api/combat/getCombatRequest";
 import { openCombatRequest } from "~/utils/api/combat/openCombatRequest";
 import { postFinishCombatRequest } from "~/utils/api/combat/postFinishCombatRequest";
 import { postEndTurnRequest } from "~/utils/api/combat/postNextTurn";
+import { postStagedPlannedCharactersRequest } from "~/utils/api/combat/postStagePlannedCharactersRequest";
 import { postStartCombatRequest } from "~/utils/api/combat/postStartCombat";
 import { putUpsertStagedCharacter } from "~/utils/api/combat/putUpsertStagedCharacter";
 import { createPlannedCombatRequest } from "~/utils/api/plannedCombat/createPlannedCombatRequest";
@@ -59,9 +60,12 @@ export const useApi = () => {
             finish: postFinishCombatRequest($axios),
             open: openCombatRequest($axios),
             get: getCombatRequest($axios),
-            stagedCharacters: {
-                upsert: putUpsertStagedCharacter($axios),
-                delete: deleteStagedCharacter($axios),
+            stage: {
+                character: {
+                    upsert: putUpsertStagedCharacter($axios),
+                    delete: deleteStagedCharacter($axios),
+                },
+                planned: postStagedPlannedCharactersRequest($axios),
             },
             endTurn: postEndTurnRequest($axios),
         },

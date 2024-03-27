@@ -52,7 +52,9 @@
             </div>
         </header>
         <main
-            :class="['flex h-full w-full max-w-[1200px] flex-1 flex-row justify-center']"
+            :class="[
+                'flex h-full w-full max-w-[1200px] flex-1 flex-row justify-center',
+            ]"
         >
             <section class="flex h-full flex-1 flex-col gap-2 overflow-y-auto">
                 <div class="flex-1">
@@ -68,7 +70,8 @@
                                 'grid grid-cols-2 rounded-xl border-2 border-take-navy-light p-2 transition-colors',
                                 {
                                     'cursor-pointer hover:border-take-yellow':
-                                        isEditableForUser(charInfo) && combatIsOpen,
+                                        isEditableForUser(charInfo) &&
+                                        combatIsOpen,
                                     'border-take-yellow':
                                         combatIsStarted &&
                                         index == combat?.initiativeIndex,
@@ -95,14 +98,16 @@
                                     ]"
                                 >
                                     <div
-                                        v-for="(value, index) in charInfo.character
-                                            .initiativeValue"
+                                        v-for="(value, index) in charInfo
+                                            .character.initiativeValue"
                                         :class="[
                                             'flex items-center rounded-lg  p-1',
                                             {
                                                 'text-xs': index != 0,
-                                                'bg-take-navy-light': index == 0,
-                                                'bg-take-navy-medium': index != 0,
+                                                'bg-take-navy-light':
+                                                    index == 0,
+                                                'bg-take-navy-medium':
+                                                    index != 0,
                                             },
                                         ]"
                                     >
@@ -148,7 +153,9 @@
                                 <ol class="flex flex-row justify-end">
                                     <li v-if="combatIsOpen">
                                         <FontAwesomeIcon icon="shoe-prints" />
-                                        {{ charInfo.character.initiative.value }}
+                                        {{
+                                            charInfo.character.initiative.value
+                                        }}
                                     </li>
                                 </ol>
                             </body>
@@ -183,31 +190,35 @@
                             :showTabs="{
                                 Planned: () => userIsDm,
                                 Characters: () =>
-                                    (campaignStore.state.userCampaignMember?.characters
-                                        ?.length ?? 0) > 0,
+                                    (campaignStore.state.userCampaignMember
+                                        ?.characters?.length ?? 0) > 0,
                             }"
                             class="overflow-auto"
                         >
-                            <template #Planned>
-                                <CombatPlannedStagesDisplay
-                                    :stages="
-                                        combatStore.state.combat?.plannedStages!
-                                    "
-                                />
-                            </template>
                             <!-- <template #Characters>
-                                <CombatStageCharacterForm
-                                    :onCreate="onUpsertStagedCharacter"
-                                />
-                            </template> -->
+                            <CombatStageCharacterForm
+                            :onCreate="onUpsertStagedCharacter"
+                            />
+                        </template> -->
                             <template #Custom>
                                 <CombatStageCharacterForm
                                     :onCreate="onUpsertStagedCharacter"
                                 />
                             </template>
+                            <template #Planned>
+                                <CombatPlannedStagesDisplay
+                                    :stages="
+                                        combatStore.state.combat?.plannedStages!
+                                    "
+                                    :submit="onStagePlannedCharacters"
+                                />
+                            </template>
                         </Tabs>
                     </Modal>
-                    <Modal ref="editStagedCharacterModal" title="Edit staged Character">
+                    <Modal
+                        ref="editStagedCharacterModal"
+                        title="Edit staged Character"
+                    >
                         <CombatStageCharacterForm
                             :onEdit="onUpsertStagedCharacter"
                             :onDelete="onDeleteStagedCharacter"
@@ -234,6 +245,7 @@ import ConfirmButton from "~/components/Form/ConfirmButton.vue";
 import Modal from "~/components/Modal.vue";
 import type { CampaignMemberDto } from "~/utils/api/campaign/getCampaignRequest";
 import type { DeleteStagedCharacterRequest } from "~/utils/api/combat/deleteStagedCharacterRequest";
+import type { PostStagePlannedCharactersRequest } from "~/utils/api/combat/postStagePlannedCharactersRequest";
 import type {
     StagedCharacterDTO,
     UpsertStagedCharacterRequest,
@@ -424,6 +436,14 @@ async function onUpsertStagedCharacter(req: StagedCharacterDTO) {
     return combatStore.upsertStagedCharacter(req).then(() => {
         stageNewCharacterModal.value?.hide();
         editStagedCharacterModal.value?.hide();
+    });
+}
+
+async function onStagePlannedCharacters(
+    req: PostStagePlannedCharactersRequest["plannedCharactersToStage"],
+) {
+    return combatStore.stagePlannedCharacters(req).then(() => {
+        stageNewCharacterModal.value?.hide();
     });
 }
 

@@ -1,8 +1,11 @@
-import { StagedCharacterDTO } from "./../utils/api/combat/putUpsertStagedCharacter";
 import type { Combat } from "~/utils/types/models";
 import * as signalR from "@microsoft/signalr";
-import type { UpsertStagedCharacterRequest } from "~/utils/api/combat/putUpsertStagedCharacter";
+import type {
+    StagedCharacterDTO,
+    UpsertStagedCharacterRequest,
+} from "~/utils/api/combat/putUpsertStagedCharacter";
 import type { DeleteStagedCharacterRequest } from "~/utils/api/combat/deleteStagedCharacterRequest";
+import type { PostStagePlannedCharactersRequest } from "~/utils/api/combat/postStagePlannedCharactersRequest";
 
 export const useCombatStore = defineStore("combatStore", () => {
     const userStore = useUserStore();
@@ -74,7 +77,7 @@ export const useCombatStore = defineStore("combatStore", () => {
     }
 
     async function upsertStagedCharacter(req: StagedCharacterDTO) {
-        return await api.combat.stagedCharacters.upsert({
+        return await api.combat.stage.character.upsert({
             character: req,
             combatId: state.combat?.id!,
         });
@@ -83,7 +86,7 @@ export const useCombatStore = defineStore("combatStore", () => {
     async function deleteStagedCharacter(
         req: Omit<DeleteStagedCharacterRequest, "combatId">,
     ) {
-        return await api.combat.stagedCharacters.delete({
+        return await api.combat.stage.character.delete({
             ...req,
             combatId: state.combat?.id!,
         });
@@ -101,11 +104,21 @@ export const useCombatStore = defineStore("combatStore", () => {
         return await api.combat.endTurn({ combatId: state.combat?.id! });
     }
 
+    async function stagePlannedCharacters(
+        req: PostStagePlannedCharactersRequest["plannedCharactersToStage"],
+    ) {
+        return await api.combat.stage.planned({
+            combatId: state.combat?.id!,
+            plannedCharactersToStage: req,
+        });
+    }
+
     return {
         connection,
         state,
         upsertStagedCharacter,
         deleteStagedCharacter,
+        stagePlannedCharacters,
         setCombat,
         joinCombat,
         leaveCombat,

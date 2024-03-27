@@ -9,12 +9,12 @@
                 (!pending && !error) ||
                 userStore.state.selectedCampaignId == null
             "
-            class="flex max-w-[1200px] flex-1 flex-col overflow-auto py-4 sm:w-full md:w-4/5 2xl:w-full"
+            class="flex max-w-[1200px] flex-1 flex-col overflow-auto sm:w-full md:w-4/5 2xl:w-full"
         >
             <header
                 v-if="campaignStore.state.combatDto"
                 :class="[
-                    'cursor-pointer  select-none rounded-lg px-4 py-3 text-center text-xl text-take-navy',
+                    'mt-3 cursor-pointer select-none rounded-lg px-4 py-3 text-center text-xl text-take-navy',
                     campaignStore.state.combatDto.state == CombatState.Open
                         ? 'bg-take-yellow-dark'
                         : 'bg-take-red ',

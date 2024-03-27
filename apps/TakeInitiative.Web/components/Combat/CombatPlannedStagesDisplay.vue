@@ -1,6 +1,7 @@
 <template>
     <div class="flex flex-col gap-2">
         <section
+            v-if="hasAnyValidStages"
             :key="index"
             v-for="(stage, index) in props.stages ?? []"
             class="text-white"
@@ -9,13 +10,12 @@
                 @click="(e) => onClickStage(e, stage.id)"
                 :class="[
                     'flex w-full cursor-pointer flex-col rounded-xl border-2 border-take-navy-light p-2 transition-colors',
-                    {
-                        'border-take-yellow':
-                            state.selectedStages[stage.id] != null &&
-                            state.selectedStages[stage.id].length ==
-                                props.stages.find((x) => (x.id = stage.id))?.npcs?.length,
-                        'hover:border-take-grey': state.selectedStages[stage.id] == null,
-                    },
+                    state.selectedStages[stage.id] != null &&
+                    state.selectedStages[stage.id]!.length ==
+                        props.stages.find((x) => (x.id = stage.id))?.npcs
+                            ?.length
+                        ? 'border-take-yellow'
+                        : 'hover:border-take-grey',
                 ]"
             >
                 <div class="mb-2 flex w-full flex-row gap-2">
@@ -24,7 +24,11 @@
                     </div>
                 </div>
                 <section class="flex flex-1 flex-col gap-2 pb-4">
-                    <div class="flex flex-1 flex-col gap-2" tag="section" name="fade">
+                    <div
+                        class="flex flex-1 flex-col gap-2"
+                        tag="section"
+                        name="fade"
+                    >
                         <section
                             v-for="npc in stage.npcs"
                             :key="npc.id"
@@ -33,11 +37,11 @@
                                 {
                                     'border-take-yellow':
                                         state.selectedStages[stage.id]?.find(
-                                            (x) => x.characterId == npc.id
+                                            (x) => x.characterId == npc.id,
                                         ) != null,
                                     'hover:border-take-grey':
                                         state.selectedStages[stage.id]?.find(
-                                            (x) => x.characterId == npc.id
+                                            (x) => x.characterId == npc.id,
                                         ) == null,
                                 },
                             ]"
@@ -69,7 +73,9 @@
                                             {{ npc.armorClass }}
                                         </div>
                                     </div>
-                                    <div class="flex select-none items-center gap-2">
+                                    <div
+                                        class="flex select-none items-center gap-2"
+                                    >
                                         <FontAwesomeIcon icon="shoe-prints" />
                                         <div>
                                             {{ npc.initiative.value }}
@@ -84,23 +90,37 @@
         </section>
         <Transition name="fade">
             <div class="flex w-full justify-end" v-if="canSubmit">
-                <FormButton label="Stage Characters" />
+                <FormButton
+                    label="Stage Characters"
+                    loadingDisplay="Staging..."
+                    :click="onSubmit"
+                />
             </div>
         </Transition>
+        <div v-if="!hasAnyValidStages" class="text-white">
+            Looks like all the stages for this combat are empty, or there are no
+            stages left!
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">
 import type { PlannedCombatStage } from "~/utils/types/models";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import type { PostStagePlannedCharactersRequest } from "~/utils/api/combat/postStagePlannedCharactersRequest";
+import type {
+    PostStagePlannedCharactersRequest,
+    StagePlannedCharacterDto,
+} from "~/utils/api/combat/postStagePlannedCharactersRequest";
 
 const props = defineProps<{
     stages: PlannedCombatStage[];
+    submit: (
+        plannedCharactersToStage: Record<string, StagePlannedCharacterDto[]>,
+    ) => Promise<any>;
 }>();
 
 const state = reactive<{
-    selectedStages: PostStagePlannedCharactersRequest["character"];
+    selectedStages: Record<string, StagePlannedCharacterDto[] | null>;
 }>({
     selectedStages: {},
 });
@@ -119,7 +139,11 @@ function onClickStage(event: MouseEvent, stageId: string) {
     }
 }
 
-function onClickCharacter(event: MouseEvent, stageId: string, characterId: string) {
+function onClickCharacter(
+    event: MouseEvent,
+    stageId: string,
+    characterId: string,
+) {
     event.stopPropagation();
     if (state.selectedStages[stageId] == null) {
         state.selectedStages[stageId] = [
@@ -134,24 +158,48 @@ function onClickCharacter(event: MouseEvent, stageId: string, characterId: strin
     }
 
     const characterExists =
-        state.selectedStages[stageId].find((x) => x.characterId == characterId) != null;
+        state.selectedStages[stageId]!.find(
+            (x) => x.characterId == characterId,
+        ) != null;
     if (!characterExists) {
-        state.selectedStages[stageId].push({
+        state.selectedStages[stageId]!.push({
             characterId: characterId,
             quantity: props.stages
                 .find((x) => x.id == stageId)
                 ?.npcs?.find((x) => x.id == characterId)?.quantity!,
         });
     } else {
-        state.selectedStages[stageId] = state.selectedStages[stageId].filter(
-            (x) => x.characterId != characterId
+        state.selectedStages[stageId] = state.selectedStages[stageId]!.filter(
+            (x) => x.characterId != characterId,
         );
 
-        if (state.selectedStages[stageId].length == 0) {
+        if (state.selectedStages[stageId]!.length == 0) {
             delete state.selectedStages[stageId];
         }
     }
 }
 
-const canSubmit = computed(() => Object.keys(state.selectedStages).length > 0);
+async function onSubmit() {
+    const outputRecord: Record<string, StagePlannedCharacterDto[]> = {};
+    for (const key in state.selectedStages) {
+        if (state.selectedStages[key] != null) {
+            outputRecord[key] = state.selectedStages[key]!;
+        }
+    }
+
+    return props.submit(outputRecord);
+}
+
+const canSubmit = computed(
+    () =>
+        Object.values(state.selectedStages).filter((val) => val != null)
+            .length > 0,
+);
+
+const hasAnyValidStages = computed(
+    () =>
+        props.stages
+            .map((x) => x.npcs?.length)
+            .filter((length) => (length ?? 0) > 0).length > 0,
+);
 </script>

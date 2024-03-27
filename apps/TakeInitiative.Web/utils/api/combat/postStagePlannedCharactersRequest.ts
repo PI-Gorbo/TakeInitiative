@@ -3,12 +3,13 @@ import * as yup from "yup";
 import { combatResponseValidator } from "./combatResponse";
 
 // Create Campaign
+export type StagePlannedCharacterDto = {
+    characterId: string;
+    quantity: number;
+};
 export type PostStagePlannedCharactersRequest = {
-    combatId: string,
-    character: Record<string, {
-        characterId: string,
-        quantity: number
-    }[]>
+    combatId: string;
+    plannedCharactersToStage: Record<string, StagePlannedCharacterDto[]>;
 };
 
 export type PostStagePlannedCharactersResponse = yup.InferType<
