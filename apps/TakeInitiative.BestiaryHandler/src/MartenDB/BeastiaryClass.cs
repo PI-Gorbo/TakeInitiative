@@ -7,35 +7,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TakeInitiative.BestiaryHandler.src.Json;
 
 namespace TakeInitiative.BestiaryHandler.src.MartenDB
 {
     //[Obsolete("Don't use a class to represent the beast but do shit when you read it from the DB", true)]
     //[JsonProperty(PropertyName = "FooBar")]
-    public class ObjectOrStringConverter<T> : JsonConverter
-    {
-        public override bool CanConvert(System.Type objectType)
-        {
-            // CanConvert is not called when the [JsonConverter] attribute is used
-            return false;
-        }
-
-        public override object ReadJson(JsonReader reader, System.Type objectType, object existingValue, JsonSerializer serializer)
-        {
-            JToken token = JToken.Load(reader);
-            if (token.Type == JTokenType.Object)
-            {
-                return token.ToObject<T>(serializer);
-            }
-            return token.ToString();
-        }
 
 
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-        {
-            serializer.Serialize(writer, value);
-        }
-    }
+    
 
     public class Monster
     {
@@ -161,56 +141,82 @@ namespace TakeInitiative.BestiaryHandler.src.MartenDB
         public required string name { get; init; }
         public required string source { get; init; }
 
+        [JsonConverter(typeof(ModConverter))]
         public Mod _mod { get; set; }
 
     }
 
     public class Mod
     {
+
+        public string print_contents()
+        {
+            string ret = "";
+            if (ast != null)
+            {
+                ret += "*: ";
+                ret += ast.print_contents();
+            }
+            foreach (var dict in possible_text_modifications)
+            {
+                var dictstr = string.Join(Environment.NewLine, dict);
+                ret += "\nPTM: \n";
+                ret += dictstr;
+            }
+            return ret;
+
+        }
+        public Mod()
+        {
+            possible_text_modifications = new List<Dictionary<string, Copy_Mod_Object>>();
+        }
         [JsonProperty(PropertyName = "*")]
         public Asterisk ast { get; set; }
-        
-        //TODO: HEre action can be iether a string or the class
-        //additionally, it can be many names not just action - eg trait
-        public ModAction action { get; set; }
-
-        public List<Item> items { get; set; }
-        public Mod_Replacement trait { get; set; }
-
+        public List<Dictionary<string, Copy_Mod_Object>> possible_text_modifications;
     }
 
-    public class ModAction
+    public class Asterisk
     {
+        public string print_contents()
+        {
+            string ret = "";
+            ret = "mode: " + mode + "\n replace: " + replace + "\n with: " + with + "\n flags: " + flags + "\n ";
+            return ret;
+        }
+        public required string mode { get; init; }
+        public required string replace { get; init; }
+        public required string with { get; init; }
+        public required string flags { get; init; }
 
-        public string mode { get; set; }
-        public string replace { get; set; }
-        public List<Item> items { get; set; }
+        //arabelle has remove as action here???????
     }
 
-    //TODO: Many classes here are copies of this class
-    public class Item
+    public class Copy_Mod_Object
     {
-        public required string name { get; init; }
-        public List<string> entries { get; set; }
-    }
+        public override string ToString()
+        {
+            var str = "mode: " + mode + "\n replace: " + replace + "\n items: " + items + "\n ";
+            return str;
+        }
 
-    public class Mod_Replacement
-    {
         public string mode { get; set; }
         public string replace { get; set; }
         public Item items { get; set; }
     }
 
 
-    public class Asterisk
-    {
-        public required string mode { get; init; }
-        public required string replace { get; init; }
-        public required string with { get; init; }
-        public required string flags { get; init; }
 
-        //arabelle h as remove as action here???????
+    //TODO: Many classes here are copies of this class
+    public class Item
+    {
+        public override string ToString()
+        {
+            return "name: " + name + "\n entries: "  + String.Join(", ", entries.ToArray()) + "\n ";
+        }
+        public required string name { get; init; }
+        public List<string> entries { get; set; }
     }
+
 
     public class Root
     {
