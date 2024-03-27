@@ -1,5 +1,5 @@
 <template>
-    <main class="flex h-full w-full flex-col overflow-auto">
+    <main class="flex h-full w-full flex-col overflow-hidden">
         <div class="flex gap-2">
             <nav
                 :class="[
@@ -13,10 +13,12 @@
                     :class="[
                         state.lastClickedTab.slotName == tab.slotName
                             ? `bg-${props.selectedTabColour} text-${
-                                  TakeInitContrastColour[props.selectedTabColour]
+                                  TakeInitContrastColour[
+                                      props.selectedTabColour
+                                  ]
                               }`
                             : `bg-${props.notSelectedTabColour} text-take-navy-light`, // PLEASE CHANGE TO MANUALLY CONTROLLED TEXT COLOUR
-                        `cursor-pointer select-none rounded-md px-2 py-1 flex items-center md:text-xl  transition-colors hover:bg-${
+                        `flex cursor-pointer select-none items-center rounded-md px-2 py-1 transition-colors  md:text-xl hover:bg-${
                             props.hoveredTabColour
                         } hover:text-${
                             TakeInitContrastColour[props.hoveredTabColour]
@@ -34,10 +36,14 @@
                 class="flex-1"
             ></div>
         </div>
-        <TransitionGroup name="tabFade" class="flex-1 overflow-hidden" tag="section">
+        <TransitionGroup
+            name="tabFade"
+            class="flex-1 overflow-hidden"
+            tag="section"
+        >
             <div
                 v-for="(tab, index) in tabs.filter(
-                    (x) => x.slotName == state.lastClickedTab.slotName
+                    (x) => x.slotName == state.lastClickedTab.slotName,
                 )"
                 :key="tab.slotName"
                 class="h-full w-full overflow-hidden"
@@ -80,7 +86,7 @@ const props = withDefaults(
         hoveredTabColour: "take-yellow",
         selectedTabColour: "take-navy-light",
         notSelectedTabColour: "take-navy-medium",
-    }
+    },
 );
 
 const tabs: ComputedRef<Tab[]> = computed(() => {
@@ -102,7 +108,7 @@ const selectedTab = computed(
     () =>
         tabs.value.find((x) => x.name == state.lastClickedTab.name) ??
         tabs.value.filter((x) => x.show)[0] ??
-        {}
+        {},
 );
 </script>
 <style>
@@ -112,18 +118,15 @@ const selectedTab = computed(
 */
 .tabFade-enter-active,
 .tabFade-leave-active {
-    transition: all 0.15s ease-out;
-    overflow: hidden;
+    transition: all 0.25s ease-in-out;
 }
 
 .tabFade-enter-active {
-    overflow: hidden;
     display: none;
 }
 
 .tabFade-enter-from,
 .tabFade-leave-to {
     opacity: 0;
-    overflow: hidden;
 }
 </style>

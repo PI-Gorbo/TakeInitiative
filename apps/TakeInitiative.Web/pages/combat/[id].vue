@@ -10,9 +10,6 @@
                     :disabled="!isUsersTurn"
                 />
                 <label class="px-2"> Round: {{ combat?.roundNumber }} </label>
-                <label class="px-2">
-                    Current Initiative: {{ combat?.initiativeIndex }}
-                </label>
             </div>
             <div class="flex items-center" v-else-if="combatIsOpen">
                 <FormButton
@@ -53,7 +50,7 @@
         </header>
         <main
             :class="[
-                'flex h-full w-full max-w-[1200px] flex-1 flex-row justify-center',
+                'flex h-full w-full max-w-[1200px] flex-1 flex-row justify-center overflow-y-auto',
             ]"
         >
             <section class="flex h-full flex-1 flex-col gap-2 overflow-y-auto">
@@ -306,7 +303,7 @@ const { refresh, pending, error } = await useAsyncData("Combat", async () => {
     return await combatStore.setCombat(combatId as string).then(() => true);
 });
 
-// Main fetch
+// Ensures the user is joined whenever the page loads.
 const {} = await useAsyncData(
     "JoinCombat",
     async () => {

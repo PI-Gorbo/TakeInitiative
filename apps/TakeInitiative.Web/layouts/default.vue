@@ -4,12 +4,17 @@
             <div
                 class="flex select-none justify-center border-b-2 border-take-yellow bg-take-navy-medium px-4 py-1"
             >
-                <div class="lg:w-7/10 flex max-w-[1200px] sm:w-full md:w-4/5 2xl:w-full">
+                <div
+                    class="lg:w-7/10 flex max-w-[1200px] sm:w-full md:w-4/5 2xl:w-full"
+                >
                     <h1
                         @click="() => navigateTo('/')"
                         class="flex cursor-pointer items-center gap-2 font-NovaCut text-2xl font-bold text-take-yellow sm:text-3xl md:text-4xl"
                     >
-                        <img class="h-[1.5em] w-[1.5em]" src="~assets/yellowDice.png" />
+                        <img
+                            class="h-[1.5em] w-[1.5em]"
+                            src="~assets/yellowDice.png"
+                        />
                         Take Initiative
                     </h1>
                     <section class="flex flex-1 justify-end gap-2">
@@ -20,10 +25,17 @@
                                 key="CombatRoute"
                             >
                                 <article>
-                                    <label class="font-NovaCut text-lg text-take-yellow">
-                                        {{ campaignStore.state.campaign?.campaignName }}
+                                    <label
+                                        class="font-NovaCut text-lg text-take-yellow"
+                                    >
+                                        {{
+                                            campaignStore.state.campaign
+                                                ?.campaignName
+                                        }}
                                         <span class="text-white">-</span>
-                                        {{ combatStore.state.combat?.combatName }}
+                                        {{
+                                            combatStore.state.combat?.combatName
+                                        }}
                                     </label>
                                 </article>
                             </div>
@@ -33,7 +45,9 @@
                                 class="flex items-center gap-2"
                                 key="IndexRoute"
                             >
-                                <article class="flex flex-row items-center gap-1">
+                                <article
+                                    class="flex flex-row items-center gap-1"
+                                >
                                     <label
                                         for="campaigns"
                                         class="font-NovaCut text-take-yellow"
@@ -43,16 +57,18 @@
                                         name="campaigns"
                                         id="campaigns"
                                         class="rounded-lg bg-take-navy p-2"
-                                        :value="userStore.state.selectedCampaignId"
+                                        :value="
+                                            userStore.state.selectedCampaignId
+                                        "
                                         @change="
-                                                (e) => {
-                                                    const campaignId = (
-                                                        e.target as HTMLSelectElement
-                                                    ).value;
-                                                    userStore.state.selectedCampaignId =
-                                                        campaignId;
-                                                }
-                                            "
+                                            (e) => {
+                                                const campaignId = (
+                                                    e.target as HTMLSelectElement
+                                                ).value;
+                                                userStore.state.selectedCampaignId =
+                                                    campaignId;
+                                            }
+                                        "
                                     >
                                         <option
                                             v-for="c in userStore.campaignList"
@@ -135,7 +151,7 @@
                 </main>
             </Modal>
         </header>
-        <div class="w-full flex-1">
+        <div class="w-full flex-1 overflow-y-auto">
             <slot />
         </div>
     </main>

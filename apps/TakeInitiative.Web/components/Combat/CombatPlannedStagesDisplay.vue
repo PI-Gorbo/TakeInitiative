@@ -3,17 +3,16 @@
         <section
             v-if="hasAnyValidStages"
             :key="index"
-            v-for="(stage, index) in props.stages ?? []"
+            v-for="(stage, index) in props.stages.filter(
+                (x) => (x.npcs?.length ?? 0) > 0,
+            ) ?? []"
             class="text-white"
         >
             <div
                 @click="(e) => onClickStage(e, stage.id)"
                 :class="[
                     'flex w-full cursor-pointer flex-col rounded-xl border-2 border-take-navy-light p-2 transition-colors',
-                    state.selectedStages[stage.id] != null &&
-                    state.selectedStages[stage.id]!.length ==
-                        props.stages.find((x) => (x.id = stage.id))?.npcs
-                            ?.length
+                    stagesToHighlight.includes(stage.id)
                         ? 'border-take-yellow'
                         : 'hover:border-take-grey',
                 ]"
@@ -25,7 +24,7 @@
                 </div>
                 <section class="flex flex-1 flex-col gap-2 pb-4">
                     <div
-                        class="flex flex-1 flex-col gap-2"
+                        class="flex flex-1 flex-col gap-2 overflow-y-auto"
                         tag="section"
                         name="fade"
                     >
@@ -34,16 +33,9 @@
                             :key="npc.id"
                             :class="[
                                 'min-h-fit min-w-fit cursor-pointer rounded-xl border border-take-navy-light transition-colors ',
-                                {
-                                    'border-take-yellow':
-                                        state.selectedStages[stage.id]?.find(
-                                            (x) => x.characterId == npc.id,
-                                        ) != null,
-                                    'hover:border-take-grey':
-                                        state.selectedStages[stage.id]?.find(
-                                            (x) => x.characterId == npc.id,
-                                        ) == null,
-                                },
+                                charactersToHighlight.includes(npc.id!)
+                                    ? 'border-take-yellow'
+                                    : 'hover:border-take-grey',
                             ]"
                             @click="
                                 (e) => onClickCharacter(e, stage.id, npc.id!)
@@ -125,6 +117,31 @@ const state = reactive<{
     selectedStages: {},
 });
 
+onMounted(() => {
+    for (const val of props.stages) {
+        state.selectedStages[val.id] = null;
+    }
+});
+
+const stagesToHighlight: ComputedRef<string[]> = computed(() =>
+    Object.entries(state.selectedStages)
+        .filter(
+            ([id, dto]) =>
+                dto != null &&
+                dto.length ==
+                    props.stages.find((x) => x.id == id)?.npcs?.length,
+        )
+        .map(([id, dto]) => id),
+);
+
+const charactersToHighlight: ComputedRef<string[]> = computed(() =>
+    Object.entries(state.selectedStages)
+        .filter(([id, dto]) => dto != null)
+        .map(([id, dto]) => dto)
+        .flatMap((dto) => dto)
+        .map((x) => x?.characterId!),
+);
+
 function onClickStage(event: MouseEvent, stageId: string) {
     event.stopPropagation(); // Stops bubbling
     if (state.selectedStages[stageId] == null) {
@@ -135,7 +152,7 @@ function onClickStage(event: MouseEvent, stageId: string) {
                 quantity: npc.quantity!,
             }))!;
     } else {
-        delete state.selectedStages[stageId];
+        state.selectedStages[stageId] = null;
     }
 }
 
@@ -174,7 +191,7 @@ function onClickCharacter(
         );
 
         if (state.selectedStages[stageId]!.length == 0) {
-            delete state.selectedStages[stageId];
+            state.selectedStages[stageId] = null;
         }
     }
 }
