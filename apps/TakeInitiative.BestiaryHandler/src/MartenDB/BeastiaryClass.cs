@@ -95,7 +95,9 @@ namespace TakeInitiative.BestiaryHandler.src.MartenDB
 
     }
 
-    //represents all the spells of a specific level for a beast/entity
+    /// <summary>
+    /// Represents all the spells of a specific level for a beast/entity
+    /// </summary>
     public class BeastSpellslot
     {
         public BeastSpellslot(string level, int slots, List<string> spells)

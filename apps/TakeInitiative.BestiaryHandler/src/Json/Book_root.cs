@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,6 +10,10 @@ namespace TakeInitiative.BestiaryHandler.src.Json
     // Root myDeserializedClass = JsonConvert.DeserializeObject<Root>(myJsonResponse);
     public class Book
     {
+        public string print_contents()
+        {
+            return JsonConvert.SerializeObject(this, Formatting.Indented);
+        }
         public string name { get; set; }
         public string id { get; set; }
         public string source { get; set; }
@@ -42,7 +47,7 @@ namespace TakeInitiative.BestiaryHandler.src.Json
 
     public class Book_Root
     {
-        public List<Book> books { get; set; }
+        public List<Book> book { get; set; }
     }
 
 }

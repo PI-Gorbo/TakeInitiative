@@ -24,7 +24,7 @@ namespace TakeInitiative.BestiaryHandler.src.MartenDB
 
             //TODO: adding a task to the list makes it execute...... right?
             var tasks = new List<Task>();
-            foreach (Book book in root.books)
+            foreach (Book book in root.book)
             {
                 tasks.Add(Store_Book(session, book));
             }
