@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TakeInitiative.BestiaryHandler.src.Json;
 using System.Collections;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace TakeInitiative.BestiaryHandler.src.MartenDB
 {
@@ -20,7 +21,25 @@ namespace TakeInitiative.BestiaryHandler.src.MartenDB
 
     public class Monster
     {
-
+        public string print_contents()
+        {
+            //string ret = "";
+            //ret += string.Format("Name: {0}\n Source: {1}\n", name, source);
+            //ret += "_copy: ";
+            //ret += _copy.print_contents() ?? "null\n";
+            //ret += "action: ";
+            //if (action != null)
+            //{
+            //    ret += String.Join("", action);
+            //}
+            //else
+            //{
+            //    ret += "null\n";
+            //}
+            return JsonConvert.SerializeObject(this, Formatting.Indented);
+            
+            
+        }
         public required string name { get; init; }
         public required string source { get; init; }
 
@@ -56,6 +75,71 @@ namespace TakeInitiative.BestiaryHandler.src.MartenDB
 
         public List<Reaction> reaction { get; set; }
 
+        [JsonConverter(typeof(SkillConverter))]
+        public Skill skill { get; set; }
+
+        public List<string> languages { get; set; }
+
+        //IDK WHY this is a list in the json file but it is
+        //TODO: Add check for this
+        public List<Spellcasting> spellcasting { get; set; }
+    }
+
+    public class Spellcasting
+    {
+        //see Baba Lysaga in cos 
+        public string name { get; set; }
+        public string type { get; set; }
+        public List<string> headerEntries { get; set; }
+
+        //TODO: this needs to be a custom converter
+        [JsonConverter(typeof(BeastSpellSlotConverter))]
+        public List<BeastSpellslot> spells { get; set; }
+
+        //abiltiy is the spellcasting stat
+        public string ability { get; set; }
+
+    }
+
+    //represents all the spells of a specific level for a beast/entity
+    public class BeastSpellslot
+    {
+        public BeastSpellslot(string level, int slots, List<string> spells)
+        {
+            this.level = level;
+            this.slots = slots;
+            this.spells = spells;
+        }
+        //level is string instead of int because it is  a string key in the json file
+        public string level { get; set; }
+        //if slots is -1, it is cantrip/can be cast at will
+        public int slots { get; set; }
+        public List<string> spells { get; set; }
+
+    }
+    //only used in the custom BeastSpellslot converter
+    //not to be used normally!
+    public class BSS_Converter_Spell
+    {
+        public int slots;
+        public List<string> spells;
+    }
+
+    public class Skill
+    {
+        //example skill object in the JSON file:
+        /*
+         * "skill": {
+				"arcana": "+13",
+				"religion": "+13"
+			},
+         
+         */
+        public Skill()
+        {
+            this.skills = new Dictionary<string, string>();
+        }
+        public Dictionary<string, string> skills;
     }
     
     public class Type
@@ -142,6 +226,21 @@ namespace TakeInitiative.BestiaryHandler.src.MartenDB
 
     public class copy
     {
+        public string print_contents()
+        {
+
+            string ret = String.Format("_copy Name: {0}\n _copy Source: {1}\n", name, source);
+            ret += "_copy _mod: ";
+            if (_mod != null)
+            {
+                ret += _mod.print_contents();
+            }
+            else
+            {
+                ret += "null\n";
+            }
+            return ret;
+        }
         public required string name { get; init; }
         public required string source { get; init; }
 
@@ -155,21 +254,25 @@ namespace TakeInitiative.BestiaryHandler.src.MartenDB
 
         public string print_contents()
         {
-            string ret = "";
+            string ret = "_mod *: ";
             if (ast != null)
             {
-                ret += "*: ";
                 ret += ast.print_contents();
             }
+            else
+            {
+                ret += "null\n";
+            }
+            ret += "_mod PTM: ";
             if (possible_text_modifications == null)
             {
-                return ret;
+                return ret += "null\n";
             }
             foreach (var dict in possible_text_modifications)
             {
-                var dictstr = string.Join(Environment.NewLine, dict);
-                ret += "\nPTM: \n";
+                var dictstr = string.Join("\n", dict);
                 ret += dictstr;
+                ret += "\n";
             }
             return ret;
 
@@ -188,7 +291,7 @@ namespace TakeInitiative.BestiaryHandler.src.MartenDB
     {
         public string print_contents()
         {
-            string ret = "";
+            string ret = "asterisk: ";
             ret = "mode: " + mode + "\n replace: " + replace + "\n with: " + with + "\n flags: " + flags + "\n ";
             return ret;
         }

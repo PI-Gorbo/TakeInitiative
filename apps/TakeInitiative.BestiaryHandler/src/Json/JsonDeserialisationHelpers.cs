@@ -24,8 +24,78 @@ namespace TakeInitiative.BestiaryHandler.src.Json
     JSON object with known properties and need direct access to specific properties.
      */
 
+
+    public class BeastSpellSlotConverter: JsonConverter
+    {
+        public override bool CanWrite { get { return false; } }
+
+        public override bool CanConvert(System.Type objectType)
+        {
+            // CanConvert is not called when the [JsonConverter] attribute is used
+            return false;
+        }
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            throw new NotImplementedException();
+        }
+        public override object ReadJson(JsonReader reader, System.Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            List<BeastSpellslot> list_bss = new List<BeastSpellslot>();
+            JObject jobject = JObject.Load(reader);
+            foreach (var KV in jobject)
+            {
+                string spell_level = KV.Key;
+                JObject value = KV.Value.ToObject<JObject>();
+                //check if slots is null - cantrips/ can cast at will spells, will not have a slots property in the json file
+                int slots = -1;
+                if (value["slots"] != null)
+                {
+                    slots = value["slots"].ToObject<int>();
+                }
+                
+                //spells can't possibly be null
+                List<string> spells = value["spells"].ToObject<List<string>>();
+                BeastSpellslot bss = new BeastSpellslot(spell_level, slots, spells);
+                list_bss.Add(bss);
+            }
+            return list_bss;
+
+
+            
+
+        }
+    }
+    public class SkillConverter: JsonConverter
+    {
+        public override bool CanWrite { get { return false; } }
+        public override bool CanConvert(System.Type objectType)
+        {
+            // CanConvert is not called when the [JsonConverter] attribute is used
+            return false;
+        }
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            throw new NotImplementedException();
+        }
+   
+        public override object ReadJson(JsonReader reader, System.Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            Skill skill = new Skill();
+            JObject jobject = JObject.Load(reader);
+            foreach (var KV in jobject)
+            {
+                string key = KV.Key;
+                string value = KV.Value.ToString();
+                skill.skills[key] = value;
+            }
+            return skill;
+        
+        }
+    }
+
     public class ItemConverter : JsonConverter
     {
+        public override bool CanWrite { get { return false; } }
         public override bool CanConvert(System.Type objectType)
         {
             // CanConvert is not called when the [JsonConverter] attribute is used
@@ -64,7 +134,7 @@ namespace TakeInitiative.BestiaryHandler.src.Json
     
     public class ModConverter : JsonConverter
     {
-
+        public override bool CanWrite { get { return false; } }
         public Copy_Mod_Object handle_one_or_many_items(JToken value)
         {
             //DEBUG LOG
@@ -257,6 +327,7 @@ namespace TakeInitiative.BestiaryHandler.src.Json
     
     public class ACConverter : JsonConverter
     {
+        public override bool CanWrite { get { return false; } }
         public override bool CanConvert(System.Type objectType)
         {
             // CanConvert is not called when the [JsonConverter] attribute is used
@@ -304,6 +375,7 @@ namespace TakeInitiative.BestiaryHandler.src.Json
 
     public class ObjectOrStringConverter<T> : JsonConverter
     {
+        public override bool CanWrite { get { return false; } }
         public override bool CanConvert(System.Type objectType)
         {
             // CanConvert is not called when the [JsonConverter] attribute is used
