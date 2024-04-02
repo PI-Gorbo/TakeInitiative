@@ -12,13 +12,7 @@ using System.Collections;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace TakeInitiative.BestiaryHandler.src.MartenDB
-{
-    //[Obsolete("Don't use a class to represent the beast but do shit when you read it from the DB", true)]
-    //[JsonProperty(PropertyName = "FooBar")]
-
-
-    
-
+{   
     public class Monster
     {
         public string print_contents()
@@ -117,8 +111,11 @@ namespace TakeInitiative.BestiaryHandler.src.MartenDB
         public List<string> spells { get; set; }
 
     }
-    //only used in the custom BeastSpellslot converter
-    //not to be used normally!
+    /// <summary>
+    ///Only used in the custom BeastSpellslot converter!
+    ///<para>Not to be used normally!</para>
+    /// </summary>
+
     public class BSS_Converter_Spell
     {
         public int slots;
@@ -226,27 +223,40 @@ namespace TakeInitiative.BestiaryHandler.src.MartenDB
 
     public class copy
     {
-        public string print_contents()
-        {
+        //public string print_contents()
+        //{
 
-            string ret = String.Format("_copy Name: {0}\n _copy Source: {1}\n", name, source);
-            ret += "_copy _mod: ";
-            if (_mod != null)
-            {
-                ret += _mod.print_contents();
-            }
-            else
-            {
-                ret += "null\n";
-            }
-            return ret;
-        }
+        //    string ret = String.Format("_copy Name: {0}\n _copy Source: {1}\n", name, source);
+        //    ret += "_copy _mod: ";
+        //    if (_mod != null)
+        //    {
+        //        ret += _mod.print_contents();
+        //    }
+        //    else
+        //    {
+        //        ret += "null\n";
+        //    }
+        //    return ret;
+        //}
         public required string name { get; init; }
         public required string source { get; init; }
+
+
+        public List<_template> _templates { get; set; }
 
         [JsonConverter(typeof(ModConverter))]
         public Mod _mod { get; set; }
 
+    }
+
+    /// <summary>
+    ///This is the template JSON object as it appears in the beastiary json files!
+    ///<para>NOT to be confused with the templates inside templates.json!</para>
+    /// </summary>
+    public class _template
+    {
+        public string name { get; set; }
+        public string source { get; set; }
     }
 
     public class Mod
@@ -325,8 +335,10 @@ namespace TakeInitiative.BestiaryHandler.src.MartenDB
     }
 
 
-
-    //TODO: Many classes here are copies of this class
+    /// <summary>
+    /// TODO: Many classes in BeastiaryClass.cs are copies of this class
+    /// <para>Possibly use this class to replace them?</para>>
+    /// </summary>
     public class Item
     {
         //[JsonConstructor]
