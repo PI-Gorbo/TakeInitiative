@@ -124,6 +124,74 @@ namespace TakeInitiative.BestiaryHandler.src.MartenDB
         public List<string> spells;
     }
 
+    /// <summary>
+    ///Can either be a string of be its own JSON object
+    ///<para>References:</para>
+    ///<para>Autognome - beastiary-bam 1886</para>
+    ///<para>Burney the Barber beastiary-bgdia - 1035</para>
+    /// </summary>
+
+public class Entry
+    {
+        public Entry(string str)
+        {
+            this.entry_string = str;
+        }
+        public Entry()
+        {           
+        }
+        public string entry_string { get; set; }
+        public string type { get; set; }
+        public string style { get; set; }
+        //[JsonConverter(typeof(Entry_Item_parentConverter))]
+        public List<Entry_Item_parent> items { get; set; }
+
+    }
+    /// <summary>
+    /// Either entry or entries will be null.
+    /// <para>References for data:</para>
+    /// <para>line 1040 of bestiary-bgdia.json - Burney the Barber</para>
+    /// <para>line 1891 of beastiary-bam.json - Autognome</para>
+    /// <para>line 3864 of beastiary-bmt.json - Living Portent</para>
+    /// <para>child classes unused for now pending redesign </para>
+    /// </summary>
+    public class Entry_Item_parent
+    {
+        public Entry_Item_parent(string str)
+        {
+            this.entry = str;
+        }
+        public Entry_Item_parent(string type, List<string> list)
+        {
+            this.type = type;
+            this.entries = list;
+        }
+        public string type { get; set; }
+        public string name { get; set; }
+        public List<string> entries { get; set; }
+        public string entry { get; set; }
+
+    }
+    ///// <summary>
+    ///// Reference: Autognome in Beastiary-Bam and Living Portent in beastiary-bmt
+    ///// <para>Either entries or entry will be null/not set in the json</para>
+    ///// </summary>
+    //public class Entry_Item : Entry_Item_parent
+    //{
+    //    public string name { get; set; }
+    //    public List<string> entries { get; set; }
+    //    public string entry { get; set; }
+    //}
+
+    ///// <summary>
+    ///// Reference: Burney the Barber in Beastiery-bgdia
+    ///// </summary>
+    //public class Entry_List : Entry_Item_parent
+    //{
+    //    public List<string> items { get; set; }
+    //}
+
+
     public class Skill
     {
         //example skill object in the JSON file:
@@ -154,6 +222,7 @@ namespace TakeInitiative.BestiaryHandler.src.MartenDB
     public class Trait
     {
         public string name { get; set; }
+        
         public List<string> entries { get; set; }
     }
 
@@ -264,31 +333,6 @@ namespace TakeInitiative.BestiaryHandler.src.MartenDB
     public class Mod
     {
 
-        public string print_contents()
-        {
-            string ret = "_mod *: ";
-            if (ast != null)
-            {
-                ret += ast.print_contents();
-            }
-            else
-            {
-                ret += "null\n";
-            }
-            ret += "_mod PTM: ";
-            if (possible_text_modifications == null)
-            {
-                return ret += "null\n";
-            }
-            foreach (var dict in possible_text_modifications)
-            {
-                var dictstr = string.Join("\n", dict);
-                ret += dictstr;
-                ret += "\n";
-            }
-            return ret;
-
-        }
         public Mod()
         {
             possible_text_modifications = new List<Dictionary<string, Copy_Mod_Object>>();
@@ -321,11 +365,7 @@ namespace TakeInitiative.BestiaryHandler.src.MartenDB
         {
             this.items = new List<Item>();
         }
-        public override string ToString()
-        {
-            var str = "mode: " + mode + "\n replace: " + (replace ?? "null replace") + "\nindex: " + index + "\n items: " + (string.Join(", ", items) ?? "null items") + "\n ";
-            return str;
-        }
+
 
         public string mode { get; set; }
         public string replace { get; set; }
@@ -338,7 +378,8 @@ namespace TakeInitiative.BestiaryHandler.src.MartenDB
 
 
     /// <summary>
-    /// TODO: Many classes in BeastiaryClass.cs are copies of this class
+    /// ONLY USED IN COPY MOD OBJECTS. DO NOT CHANGE.
+    /// <para>TODO: Many classes in BeastiaryClass.cs are copies of this class</para>
     /// <para>Possibly use this class to replace them?</para>>
     /// </summary>
     public class Item
@@ -354,18 +395,16 @@ namespace TakeInitiative.BestiaryHandler.src.MartenDB
         public Item(string name)
         {
             this.name = name;
-            this.entries = new List<string>();
-        }
-        public override string ToString()
-        {
-            return "name: " + name + "\n entries: "  + (String.Join(", ", entries.ToArray()) ?? "null entries") + "\n ";
+            this.entries = new List<Entry_Item_parent>();
         }
         public string name { get; init; }
-        public List<string> entries { get; set; }
+        [JsonConverter(typeof(Entry_Item_parentConverter))]
+        //entries is a list of either a string or a JSON object
+        public List<Entry_Item_parent> entries { get; set; }
     }
 
 
-    public class Root
+    public class Beast_Root
     {
         public List<Monster> monster { get; set; }
     }

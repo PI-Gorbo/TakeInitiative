@@ -25,6 +25,82 @@ namespace TakeInitiative.BestiaryHandler.src.Json
      */
 
 
+    public class Entry_Item_parentConverter: JsonConverter
+    {
+        public override bool CanWrite { get { return false; } }
+
+        public override bool CanConvert(System.Type objectType)
+        {
+            // CanConvert is not called when the [JsonConverter] attribute is used
+            return false;
+        }
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            throw new NotImplementedException();
+        }
+        public override object ReadJson(JsonReader reader, System.Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            var list = new List<Entry_Item_parent>();
+            //basetoken is an array containing JSON objects
+            JToken basetoken = JToken.Load(reader);
+            JArray tokenarray = basetoken as JArray;
+            foreach(JToken token in tokenarray)
+            {
+                
+                //check if the object is a string
+                if (token.Type == JTokenType.String)
+                {
+                    list.Add(new Entry_Item_parent(token.ToString()));
+                }
+                else if (token.Type == JTokenType.Object)
+                {
+                    JObject jobject = (JObject)token;
+                    var ETI = new Entry_Item_parent("list", jobject["items"].ToObject<List<string>>());
+                    list.Add(ETI);
+                }
+                else
+                {
+                    throw new Exception("Entry Item is not an object nor a string!");
+                }
+                
+            }
+            return list;
+        }
+    }
+
+    public class EntryConverter : JsonConverter
+    {
+        public override bool CanWrite { get { return false; } }
+
+        public override bool CanConvert(System.Type objectType)
+        {
+            // CanConvert is not called when the [JsonConverter] attribute is used
+            return false;
+        }
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            throw new NotImplementedException();
+        }
+        public override object ReadJson(JsonReader reader, System.Type objectType, object existingValue, JsonSerializer serializer) 
+        {
+
+            var list = new List<Entry>();
+            JToken base_token = JToken.Load(reader);
+            foreach(JToken jtoken in base_token) {
+                if (jtoken.Type == JTokenType.String)
+                {
+                    list.Add(new Entry(jtoken.ToString()));
+                }
+                else
+                {
+                    list.Add(jtoken.ToObject<Entry>());
+                }
+
+            }
+            return list;
+
+        }
+    }
     public class BeastSpellSlotConverter: JsonConverter
     {
         public override bool CanWrite { get { return false; } }
