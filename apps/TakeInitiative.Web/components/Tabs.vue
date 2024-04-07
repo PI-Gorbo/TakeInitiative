@@ -3,7 +3,7 @@
         <div class="flex gap-2">
             <nav
                 :class="[
-                    'mb-4 flex w-max flex-row gap-6 overflow-auto rounded-lg px-2 py-2 ',
+                    'mb-4 flex flex-row gap-6 overflow-auto rounded-lg px-2 py-2 ',
                     `bg-${props.backgroundColour}`,
                 ]"
             >

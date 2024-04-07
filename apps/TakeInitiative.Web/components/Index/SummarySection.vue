@@ -15,13 +15,18 @@
                         <div class="w-full font-NovaCut">Creation Date</div>
                         <div class="px-3 py-2 text-lg text-take-yellow">
                             {{
-                                format(parseISO(campaign?.createdTimestamp ?? ""), "PPPP")
+                                format(
+                                    parseISO(campaign?.createdTimestamp ?? ""),
+                                    "PPPP",
+                                )
                             }}
                         </div>
                     </div>
                     <div class="flex-1">
                         <div class="w-full font-NovaCut">Last Fight Date</div>
-                        <div class="px-3 py-2 text-lg text-take-yellow">...</div>
+                        <div class="px-3 py-2 text-lg text-take-yellow">
+                            ...
+                        </div>
                     </div>
                 </article>
                 <section
@@ -44,9 +49,11 @@
                     <div class="flex w-full font-NovaCut">
                         <label>Description</label>
                     </div>
-                    <div class="flex w-full flex-1 flex-col overflow-y-auto px-3 py-2">
+                    <div
+                        class="flex w-full flex-1 flex-col overflow-y-auto px-3 py-2"
+                    >
                         <div
-                            class="flex flex-1 gap-2 flex-row rounded-xl bg-take-navy-medium p-1"
+                            class="flex flex-1 flex-row gap-2 rounded-xl bg-take-navy-medium p-1"
                         >
                             <textarea
                                 :value="description"
@@ -79,9 +86,11 @@
                     <div class="flex w-full font-NovaCut">
                         <label>Resources</label>
                     </div>
-                    <div class="flex w-full flex-1 flex-col overflow-y-auto px-3 py-2">
+                    <div
+                        class="flex w-full flex-1 flex-col overflow-y-auto px-3 py-2"
+                    >
                         <div
-                            class="flex flex-1 gap-2 flex-row rounded-xl bg-take-navy-medium p-1"
+                            class="flex flex-1 flex-row gap-2 rounded-xl bg-take-navy-medium p-1"
                         >
                             <textarea
                                 :value="resources"
@@ -116,6 +125,7 @@ import { useForm } from "vee-validate";
 import { yup } from "~/utils/types/HelperTypes";
 import { parseISO, format } from "date-fns";
 
+const { isMobile } = useDevice();
 const campaignStore = useCampaignStore();
 const campaign = computed(() => campaignStore.state.campaign);
 const formState = reactive({
@@ -129,7 +139,7 @@ const { values, errors, defineField, validate } = useForm({
         yup.object({
             description: yup.string(),
             resources: yup.string(),
-        })
+        }),
     ),
 });
 const [description, descriptionInputProps] = defineField("description");
@@ -141,7 +151,9 @@ onMounted(() => {
 });
 
 const descriptionHasChanges = computed(() => {
-    return campaignStore.state.campaign?.campaignDescription != description.value;
+    return (
+        campaignStore.state.campaign?.campaignDescription != description.value
+    );
 });
 
 const resourcesHasChanges = computed(() => {
@@ -152,7 +164,6 @@ async function submitDetails(): Promise<void> {
     return await campaignStore.updateCampaignDetails({
         campaignDescription: description.value ?? "",
         campaignResources: resources.value ?? "",
-		
     });
 }
 </script>
