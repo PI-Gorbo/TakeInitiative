@@ -4,9 +4,7 @@
             <div
                 class="flex select-none justify-center border-b-2 border-take-yellow bg-take-navy-medium px-4 py-1"
             >
-                <div
-                    class="lg:w-7/10 flex max-w-[1200px] sm:w-full md:w-4/5 2xl:w-full"
-                >
+                <div class="flex w-full flex-wrap">
                     <h1
                         @click="() => navigateTo('/')"
                         class="flex cursor-pointer items-center gap-2 font-NovaCut text-2xl font-bold text-take-yellow sm:text-3xl md:text-4xl"
@@ -17,8 +15,10 @@
                         />
                         Take Initiative
                     </h1>
-                    <section class="flex flex-1 justify-end gap-2">
-                        <div class="flex items-center gap-2">
+                    <section
+                        class="flex flex-1 flex-row flex-wrap justify-end gap-2"
+                    >
+                        <div class="flex flex-row items-center gap-2">
                             <div
                                 v-if="isCombatRoute"
                                 class="flex items-center gap-2"
@@ -110,6 +110,7 @@
                         </div>
                         <div
                             class="flex items-center px-2 py-1 font-NovaCut text-xl text-take-yellow"
+                            v-if="!isMobile"
                         >
                             <label>{{ userStore.username }}</label>
                         </div>
@@ -178,6 +179,8 @@ const userStore = useUserStore();
 const combatStore = useCombatStore();
 const campaignStore = useCampaignStore();
 const routeInfo = useRoute();
+const { isMobile } = useDevice();
+
 const isIndexRoute = computed(() => routeInfo.name == "index");
 const isCampaignsRoute = computed(() => routeInfo.name == "campaigns");
 const isCombatRoute = computed(() => routeInfo.name == "combat-id");
