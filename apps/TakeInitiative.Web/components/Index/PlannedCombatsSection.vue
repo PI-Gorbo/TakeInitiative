@@ -6,13 +6,6 @@
             v-if="plannedCombats && plannedCombats.length > 0"
         >
             <aside class="col-span-3 flex flex-col gap-2 px-2 py-1">
-                <header v-if="hasActiveCombat == false">
-                    <FormButton
-                        label="Open Combat"
-                        :click="() => onOpenCombat(selectedPlannedCombat?.id!)"
-                        size="sm"
-                    />
-                </header>
                 <div
                     class="flex flex-1 flex-col gap-2 overflow-y-auto rounded-xl border border-take-navy-medium"
                 >
@@ -42,17 +35,32 @@
                                 >
                                     {{ combat.combatName }}
                                 </span>
-                                <FormButton
-                                    class="px-1"
-                                    icon="trash"
-                                    textColour="white"
-                                    buttonColour="take-navy-light"
-                                    hoverButtonColour="take-red"
-                                    size="sm"
-                                    @clicked="
-                                        (ctrl) => showDeleteCombatModal(ctrl, combat)
-                                    "
-                                />
+
+                                <div class="flex gap-2">
+                                    <FormButton
+                                        v-if="hasActiveCombat == false"
+                                        icon="circle-play"
+                                        buttonColour="take-navy-light"
+                                        :loadingDisplay="{ showSpinner: true }"
+                                        :click="() => onOpenCombat(combat?.id!)"
+                                        size="sm"
+                                    />
+                                    <FormButton
+                                        class="px-1"
+                                        icon="trash"
+                                        textColour="white"
+                                        buttonColour="take-navy-light"
+                                        hoverButtonColour="take-red"
+                                        size="sm"
+                                        @clicked="
+                                            (ctrl) =>
+                                                showDeleteCombatModal(
+                                                    ctrl,
+                                                    combat,
+                                                )
+                                        "
+                                    />
+                                </div>
                             </div>
                         </div>
                     </TransitionGroup>
@@ -80,9 +88,17 @@
                 <IndexPlannedCombatSection />
             </section>
         </section>
-        <section class="flex flex-col items-center px-2" v-else key="addPlannedCombat">
-            <h2 class="w-full text-center text-xl">Create your first planned combat</h2>
-            <CreatePlannedCombatForm :onCreatePlannedCombat="onCreatePlannedCombat" />
+        <section
+            class="flex flex-col items-center px-2"
+            v-else
+            key="addPlannedCombat"
+        >
+            <h2 class="w-full text-center text-xl">
+                Create your first planned combat
+            </h2>
+            <CreatePlannedCombatForm
+                :onCreatePlannedCombat="onCreatePlannedCombat"
+            />
         </section>
 
         <Modal
@@ -124,7 +140,9 @@ const campaignStore = useCampaignStore();
 const hasActiveCombat = computed(() => campaignStore.state.combatDto != null);
 const plannedCombatStore = usePlannedCombatStore();
 const plannedCombats = computed(() => campaignStore.state.plannedCombats);
-const selectedPlannedCombat = computed(() => plannedCombatStore.selectedPlannedCombat);
+const selectedPlannedCombat = computed(
+    () => plannedCombatStore.selectedPlannedCombat,
+);
 
 async function setCombat(combat: PlannedCombat) {
     campaignStore.setPlannedCombat(combat.id);
@@ -136,7 +154,7 @@ async function showCreatePlannedCombatModal() {
 }
 
 async function onCreatePlannedCombat(
-    input: void | Omit<CreatePlannedCombatRequest, "campaignId">
+    input: void | Omit<CreatePlannedCombatRequest, "campaignId">,
 ) {
     return await campaignStore
         .createPlannedCombat(input!)
@@ -149,13 +167,14 @@ async function onCreatePlannedCombat(
 // Delete combat
 async function showDeleteCombatModal(
     loadingCtrl: ButtonLoadingControl,
-    combat: PlannedCombat
+    combat: PlannedCombat,
 ) {
     loadingCtrl.setLoaded();
     // If the combat has no stages, or all the stages are empty, then just delete without showing the modal.
     if (
         combat.stages?.length == 0 ||
-        combat.stages?.flatMap((x) => x.NPCs).filter((x) => x != null).length == 0
+        combat.stages?.flatMap((x) => x.NPCs).filter((x) => x != null).length ==
+            0
     ) {
         loadingCtrl.setLoaded();
         await deleteCombat(loadingCtrl, combat);
@@ -168,7 +187,10 @@ async function showDeleteCombatModal(
     }
 }
 
-async function deleteCombat(loadingCtrl: ButtonLoadingControl, combat: PlannedCombat) {
+async function deleteCombat(
+    loadingCtrl: ButtonLoadingControl,
+    combat: PlannedCombat,
+) {
     loadingCtrl.setLoading();
     return await campaignStore.deletePlannedCombat(combat.id).then(() => {
         loadingCtrl.setLoaded();

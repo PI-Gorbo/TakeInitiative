@@ -43,6 +43,7 @@ internal class Program
                 .AllowCredentials()
             ));
 
+
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.

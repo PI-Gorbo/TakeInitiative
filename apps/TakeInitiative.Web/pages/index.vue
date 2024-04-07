@@ -9,7 +9,7 @@
                 (!pending && !error) ||
                 userStore.state.selectedCampaignId == null
             "
-            class="flex max-w-[1200px] flex-1 flex-col overflow-auto sm:w-full md:w-4/5 2xl:w-full"
+            class="flex flex-1 flex-col overflow-auto sm:w-full md:w-4/5 md:max-w-[1200px] 2xl:w-full"
         >
             <header
                 v-if="campaignStore.state.combatDto"

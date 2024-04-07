@@ -1,4 +1,4 @@
 api:
 	dotnet run
-watchApi: 
+api.watch: 
 	dotnet watch run
