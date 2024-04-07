@@ -127,25 +127,39 @@
                     />
                 </main>
             </Modal>
-            <Modal ref="shareCampaignModal" title="Share">
+            <Modal ref="shareCampaignModal">
                 <main class="flex flex-col gap-4 text-white">
                     <div class="flex flex-col gap-2">
-                        <label>Code</label>
-                        <div
-                            class="w-full rounded-lg bg-take-navy p-1 text-center text-xl"
-                        >
-                            {{ userStore.selectedCampaignDto?.joinCode }}
+                        <label>Campaign Code</label>
+                        <div class="flex w-full items-center gap-2">
+                            <div
+                                class="flex w-full justify-start rounded-lg bg-take-navy-light p-1 px-2 text-center"
+                            >
+                                {{ userStore.selectedCampaignDto?.joinCode }}
+                            </div>
+                            <FormButton
+                                icon="copy"
+                                buttonColour="take-navy-medium"
+                                size="sm"
+                            />
                         </div>
                     </div>
 
                     <div class="flex flex-col gap-2">
-                        <label>Join Url</label>
-                        <div
-                            class="w-full rounded-lg bg-take-navy p-1 px-2 text-center text-xl"
-                        >
-                            {{
-                                `${config.public.webUrl}/join/${userStore.selectedCampaignDto?.joinCode}`
-                            }}
+                        <label>URL</label>
+                        <div class="flex w-full items-center gap-2">
+                            <div
+                                class="flex w-full justify-start truncate rounded-lg bg-take-navy-light p-1 px-2 text-center"
+                            >
+                                {{
+                                    `${config.public.webUrl}/join/${userStore.selectedCampaignDto?.joinCode}`
+                                }}
+                            </div>
+                            <FormButton
+                                icon="copy"
+                                buttonColour="take-navy-medium"
+                                size="sm"
+                            />
                         </div>
                     </div>
                 </main>

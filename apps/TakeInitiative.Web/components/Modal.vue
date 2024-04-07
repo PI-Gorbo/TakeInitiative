@@ -2,10 +2,13 @@
     <dialog
         ref="dialog"
         @click="onModalClick"
-        class="rounded-xl bg-take-navy-medium p-5 mt-20"
+        class="mt-20 rounded-xl bg-take-navy-medium p-5"
     >
-        <div class="flex gap-4 pb-5">
-            <h1 v-if="props.title" class="flex w-max items-center text-xl text-white">
+        <div class="flex gap-4">
+            <h1
+                v-if="props.title"
+                class="flex w-max items-center text-xl text-white"
+            >
                 {{ props.title }}
             </h1>
             <div class="flex flex-1 justify-end">
