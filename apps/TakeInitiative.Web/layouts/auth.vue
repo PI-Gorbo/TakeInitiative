@@ -1,18 +1,23 @@
 <template>
-    <main class="h-full w-full flex flex-col overflow-auto bg-take-navy text-white">
+    <main
+        class="flex h-full w-full flex-col overflow-auto bg-take-navy text-white"
+    >
         <main class="bg-take-navy">
-            <section class="shadow-sm p-4 w-full flex justify-center">
+            <section class="flex w-full justify-center p-4 shadow-sm">
                 <div
-                    class="bg-take-navy-medium flex flex-col items-center rounded-lg justify-center px-12 py-8 bg-take-neutral border border-take-yellow w-3/5 2xl:w-[700px]"
+                    class="bg-take-neutral flex w-full flex-col items-center justify-center rounded-lg border border-take-yellow bg-take-navy-medium px-12 py-8 md:w-3/5 2xl:w-[700px]"
                 >
                     <h1
-                        class="text-2xl font-bold text-take-yellow sm:text-3xl md:text-4xl font-NovaCut flex gap-2 items-center"
+                        class="flex items-center gap-2 font-NovaCut text-2xl font-bold text-take-yellow sm:text-3xl md:text-4xl"
                     >
-                        <img class="w-[1.5em] h-[1.5em]" src="~/assets/yellowDice.png" />
+                        <img
+                            class="h-[1.5em] w-[1.5em]"
+                            src="~/assets/yellowDice.png"
+                        />
                         Take Initiative
                     </h1>
                     <div
-                        class="border border-gray-400 opacity-50 w-full rounded-full my-1"
+                        class="my-1 w-full rounded-full border border-gray-400 opacity-50"
                     ></div>
 
                     <slot />
