@@ -1,187 +1,113 @@
 <template>
-    <div class="flex h-full w-full flex-col items-center">
-        <header class="grid w-full max-w-[1200px] grid-cols-3 py-2">
-            <div class="flex items-center" v-if="combatIsStarted">
-                <FormButton
-                    class="px-2"
-                    label="End Turn"
-                    size="sm"
-                    :click="combatStore.endTurn"
-                    :disabled="!isUsersTurn"
-                />
-                <label class="px-2"> Round: {{ combat?.roundNumber }} </label>
-            </div>
-            <div class="flex items-center" v-else-if="combatIsOpen">
-                <FormButton
-                    class="px-2"
-                    label="Stage Character(s)"
-                    size="sm"
-                    buttonColour="take-navy-light"
-                    @clicked="onShowNewStagedCharacterModal"
-                    :disabled="!isUsersTurn"
-                />
-            </div>
-            <label
-                class="col-start-2 flex items-center justify-center text-center font-NovaCut text-xl text-take-yellow"
-                >{{ combat?.combatName }}</label
+    <div class="flex h-full w-full">
+        <!-- SIDE PANEL -->
+        <aside class="flex w-min">
+            <ol
+                class="gal-2 z-50 flex flex-col divide-y-2 divide-take-navy border-r border-take-navy bg-take-navy-medium p-2"
             >
-            <div class="flex justify-end">
-                <ConfirmButton
-                    v-if="userIsDm && combatIsOpen"
-                    label="Start Combat"
-                    :loadingDisplay="{
-                        showSpinner: true,
-                        loadingText: 'Starting...',
-                    }"
-                    size="sm"
-                    :click="combatStore.startCombat"
+                <CombatAsidePanelMenuItem
+                    :highlighted="asidePanelState.panelName == 'Logs'"
+                    icon="receipt"
+                    label="Logs"
+                    @click="() => onClickPanel('Logs')"
                 />
+                <CombatAsidePanelMenuItem
+                    :highlighted="asidePanelState.panelName == 'Roll'"
+                    icon="dice-d20"
+                    label="Roll"
+                    @click="() => onClickPanel('Roll')"
+                />
+                <CombatAsidePanelMenuItem
+                    v-if="!combatIsFinished"
+                    :highlighted="
+                        asidePanelState.panelName == 'Stage Characters'
+                    "
+                    icon="person-circle-plus"
+                    label="Stage Characters"
+                    @click="() => onClickPanel('Stage Characters')"
+                />
+                <CombatAsidePanelMenuItem
+                    v-if="combatIsStarted && userIsDm"
+                    :highlighted="asidePanelState.panelName == 'Add Characters'"
+                    icon="person-circle-plus"
+                    label="Add Characters"
+                    @click="() => onClickPanel('Add Characters')"
+                />
+                <CombatAsidePanelMenuItem
+                    v-if="combatIsStarted"
+                    :highlighted="
+                        asidePanelState.panelName == 'Staged Character List'
+                    "
+                    icon="list"
+                    label="Staged Character List"
+                    @click="() => onClickPanel('Staged Character List')"
+                />
+            </ol>
+        </aside>
 
-                <ConfirmButton
-                    v-if="userIsDm && combatIsStarted"
-                    label="Finish Combat"
-                    confirmText="Confirm Finish"
-                    confirmHoverColour="take-red"
-                    size="sm"
-                    buttonColour="take-navy-light"
-                    :click="combatStore.finishCombat"
-                />
-            </div>
-        </header>
-        <main
+        <!-- REST OF THE PAGE -->
+        <div
             :class="[
-                'flex h-full w-full max-w-[1200px] flex-1 flex-row justify-center overflow-y-auto',
+                'h-full w-full flex-1',
+                isMediumScreenOrLarger ? '' : 'overflow-hidden',
             ]"
         >
-            <section class="flex h-full flex-1 flex-col gap-2 overflow-y-auto">
-                <div class="flex-1">
-                    <TransitionGroup
-                        class="flex h-full flex-1 select-none flex-col gap-2 rounded-lg border-2 border-take-navy-light p-2"
-                        tag="ul"
-                        name="shuffleList"
+            <!-- SLIDING SIDE PANEL SECTION -->
+            <Transition
+                name="slide"
+                tag="div"
+                :class="[
+                    'z-40 h-full flex-1',
+                    isMediumScreenOrLarger ? 'fixed' : '',
+                ]"
+            >
+                <TransitionGroup
+                    name="fade"
+                    v-if="asidePanelState.open"
+                    class="max-h-svh w-full overflow-y-auto bg-take-navy-medium px-2 md:w-[40ex]"
+                >
+                    <section
+                        v-if="asidePanelState.panelName == 'Logs'"
+                        key="Logs"
+                        class="flex w-full flex-col gap-1 divide-y-2 divide-take-navy overflow-y-auto p-2 text-sm text-gray-200"
                     >
-                        <li
-                            v-for="(charInfo, index) in characterList"
-                            :key="charInfo.character.id"
-                            :class="[
-                                'grid grid-cols-2 rounded-xl border-2 border-take-navy-light p-2 transition-colors',
-                                {
-                                    'cursor-pointer hover:border-take-yellow':
-                                        isEditableForUser(charInfo) &&
-                                        combatIsOpen,
-                                    'border-take-yellow':
-                                        combatIsStarted &&
-                                        index == combat?.initiativeIndex,
-                                },
-                            ]"
-                            @click="
-                                () =>
-                                    isEditableForUser(charInfo)
-                                        ? onClickCharacter(charInfo.character)
-                                        : null
-                            "
-                        >
-                            <header class="flex items-center gap-2">
-                                <!-- Initiative -->
-                                <div
-                                    v-if="!combatIsOpen"
-                                    :class="[
-                                        {
-                                            'cursor-pointer':
-                                                isEditableForUser(charInfo) &&
-                                                combatIsOpen,
-                                        },
-                                        'flex gap-2',
-                                    ]"
-                                >
-                                    <div
-                                        v-for="(value, index) in charInfo
-                                            .character.initiativeValue"
-                                        :class="[
-                                            'flex items-center rounded-lg  p-1',
-                                            {
-                                                'text-xs': index != 0,
-                                                'bg-take-navy-light':
-                                                    index == 0,
-                                                'bg-take-navy-medium':
-                                                    index != 0,
-                                            },
-                                        ]"
-                                    >
-                                        {{ value }}
-                                    </div>
-                                </div>
-
-                                <!-- Username -->
-                                <label
-                                    :class="[
-                                        {
-                                            'cursor-pointer':
-                                                isEditableForUser(charInfo) &&
-                                                combatIsOpen,
-                                        },
-                                    ]"
-                                >
-                                    <FontAwesomeIcon
-                                        class="text-take-yellow"
-                                        :icon="getIconForUser(charInfo)"
-                                    />
-                                    {{ charInfo.user?.username }}:</label
-                                >
-
-                                <!-- Character Name -->
-                                <label
-                                    :class="[
-                                        {
-                                            'cursor-pointer':
-                                                isEditableForUser(charInfo) &&
-                                                combatIsOpen,
-                                        },
-                                    ]"
-                                    >{{ charInfo.character.name }}
-                                    {{
-                                        charInfo.character.copyNumber != null
-                                            ? `(${charInfo.character.copyNumber})`
-                                            : ""
-                                    }}</label
-                                >
-                            </header>
-                            <body>
-                                <ol class="flex flex-row justify-end">
-                                    <li v-if="combatIsOpen">
-                                        <FontAwesomeIcon icon="shoe-prints" />
-                                        {{
-                                            charInfo.character.initiative.value
-                                        }}
-                                    </li>
-                                </ol>
-                            </body>
-                        </li>
-                        <li v-if="combatIsOpen">
-                            <div
-                                :class="[
-                                    'group flex w-full cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-take-navy-light transition-colors hover:border-take-yellow',
-                                ]"
-                                @click="onShowNewStagedCharacterModal"
+                        <p v-for="line in prettyCombatLogs">{{ line }}</p>
+                    </section>
+                    <section
+                        v-if="asidePanelState.panelName == 'Roll'"
+                        key="logs"
+                        class="flex w-full flex-col gap-1 px-2 py-4 text-sm text-gray-200"
+                    >
+                        <section>
+                            <FormBase
+                                class="border-take-gray flex w-full gap-2 rounded-lg border border-opacity-20 p-2"
+                                v-slot="{ submitting }"
+                                :onSubmit="async () => {}"
                             >
+                                <FormInput label="Custom Roll" class="flex-1" />
                                 <FormButton
-                                    class="group-hover:text-take-yellow"
-                                    buttonColour="take-navy"
-                                    hoverButtonColour="take-navy"
-                                    textColour="take-grey"
-                                    hoverTextColour="take-yellow"
-                                    icon="plus"
-                                    label="Stage character(s)"
+                                    label="Roll"
+                                    icon="dice-d20"
                                     size="sm"
-                                    :preventClickBubbling="false"
+                                    class="items-center"
+                                    buttonColour="take-grey-dark"
+                                    textColour="take-navy"
+                                    :isLoading="submitting"
                                 />
-                            </div>
-                        </li>
-                    </TransitionGroup>
-                    <Modal
-                        ref="stageNewCharacterModal"
-                        title="Stage your Characters"
-                        class="w-full max-w-[1200px]"
+                            </FormBase>
+                            <a
+                                target="_blank"
+                                href="https://d20.readthedocs.io/en/latest/start.html#dice-syntax"
+                                class="underline"
+                            >
+                                Custom roll syntax examples
+                            </a>
+                        </section>
+                    </section>
+                    <section
+                        v-if="asidePanelState.panelName == 'Stage Characters'"
+                        key="Stage"
+                        class="flex w-full flex-col gap-1 text-sm text-gray-200"
                     >
                         <Tabs
                             :showTabs="{
@@ -190,13 +116,14 @@
                                     (campaignStore.state.userCampaignMember
                                         ?.characters?.length ?? 0) > 0,
                             }"
-                            class="overflow-auto"
+                            class="py-2"
+                            backgroundColour="take-navy-medium"
                         >
                             <!-- <template #Characters>
-                            <CombatStageCharacterForm
-                            :onCreate="onUpsertStagedCharacter"
-                            />
-                        </template> -->
+                                        <CombatStageCharacterForm
+                                        :onCreate="onUpsertStagedCharacter"
+                                        />
+                                    </template> -->
                             <template #Custom>
                                 <CombatStageCharacterForm
                                     :onCreate="onUpsertStagedCharacter"
@@ -211,29 +138,211 @@
                                 />
                             </template>
                         </Tabs>
-                    </Modal>
-                    <Modal
-                        ref="editStagedCharacterModal"
-                        title="Edit staged Character"
+                    </section>
+                </TransitionGroup>
+            </Transition>
+
+            <!-- MAIN CONTENT -->
+            <Transition name="fade">
+                <main
+                    class="relative flex h-full flex-1 flex-col items-center justify-center px-4"
+                    v-if="showMainPanel"
+                >
+                    <header class="grid w-full max-w-[1200px] grid-cols-3 py-2">
+                        <div class="flex items-center" v-if="combatIsStarted">
+                            <FormButton
+                                class="px-2"
+                                label="End Turn"
+                                size="sm"
+                                :click="combatStore.endTurn"
+                                :disabled="!isUsersTurn"
+                            />
+                            <label class="px-2">
+                                Round: {{ combat?.roundNumber }}
+                            </label>
+                        </div>
+                        <label
+                            class="col-start-2 flex items-center justify-center text-center font-NovaCut text-xl text-take-yellow"
+                            >{{ combat?.combatName }}</label
+                        >
+                        <div class="flex justify-end">
+                            <ConfirmButton
+                                v-if="userIsDm && combatIsOpen"
+                                label="Start Combat"
+                                :loadingDisplay="{
+                                    showSpinner: true,
+                                    loadingText: 'Starting...',
+                                }"
+                                size="sm"
+                                :click="combatStore.startCombat"
+                            />
+                            <ConfirmButton
+                                v-if="userIsDm && combatIsStarted"
+                                label="Finish Combat"
+                                confirmText="Confirm Finish"
+                                confirmHoverColour="take-red"
+                                size="sm"
+                                buttonColour="take-navy-light"
+                                :click="combatStore.finishCombat"
+                            />
+                        </div>
+                    </header>
+                    <main
+                        :class="[
+                            'flex h-full w-full max-w-[1200px] flex-1 flex-row justify-center overflow-y-auto',
+                        ]"
                     >
-                        <CombatStageCharacterForm
-                            :onEdit="onUpsertStagedCharacter"
-                            :onDelete="onDeleteStagedCharacter"
-                            :character="lastClickedStagedCharacter!"
-                        />
-                    </Modal>
-                </div>
-            </section>
-        </main>
-        <footer class="flex w-full max-w-[1200px] flex-col py-2">
-            <textarea
-                class="w-full overflow-y-auto rounded-lg bg-take-navy-medium p-2"
-                ref="combatLogs"
-                :value="joinedCombatLogs"
-                rows="5"
-                cols="50"
-            />
-        </footer>
+                        <section
+                            class="flex h-full flex-1 flex-col gap-2 overflow-y-auto"
+                        >
+                            <div class="flex-1">
+                                <TransitionGroup
+                                    class="flex h-full flex-1 select-none flex-col gap-2 rounded-lg border-2 border-take-navy-light p-2"
+                                    tag="ul"
+                                    name="shuffleList"
+                                >
+                                    <!-- INITIATIVE LIST -->
+
+                                    <li
+                                        v-for="(
+                                            charInfo, index
+                                        ) in characterList"
+                                        :key="charInfo.character.id"
+                                        :class="[
+                                            'grid grid-cols-2 rounded-xl border-2 border-take-navy-light p-2 transition-colors',
+                                            {
+                                                'cursor-pointer hover:border-take-yellow':
+                                                    isEditableForUser(
+                                                        charInfo,
+                                                    ) && combatIsOpen,
+                                                'border-take-yellow':
+                                                    combatIsStarted &&
+                                                    index ==
+                                                        combat?.initiativeIndex,
+                                            },
+                                        ]"
+                                        @click="
+                                            () =>
+                                                isEditableForUser(charInfo)
+                                                    ? onClickCharacter(
+                                                          charInfo.character,
+                                                      )
+                                                    : null
+                                        "
+                                    >
+                                        <header class="flex items-center gap-2">
+                                            <!-- Initiative -->
+                                            <div
+                                                v-if="!combatIsOpen"
+                                                :class="[
+                                                    {
+                                                        'cursor-pointer':
+                                                            isEditableForUser(
+                                                                charInfo,
+                                                            ) && combatIsOpen,
+                                                    },
+                                                    'flex gap-2',
+                                                ]"
+                                            >
+                                                <div
+                                                    v-for="(
+                                                        value, index
+                                                    ) in charInfo.character
+                                                        .initiativeValue"
+                                                    :class="[
+                                                        'flex items-center rounded-lg  p-1',
+                                                        {
+                                                            'text-xs':
+                                                                index != 0,
+                                                            'bg-take-navy-light':
+                                                                index == 0,
+                                                            'bg-take-navy-medium':
+                                                                index != 0,
+                                                        },
+                                                    ]"
+                                                >
+                                                    {{ value }}
+                                                </div>
+                                            </div>
+                                            <!-- Username -->
+                                            <label
+                                                :class="[
+                                                    {
+                                                        'cursor-pointer':
+                                                            isEditableForUser(
+                                                                charInfo,
+                                                            ) && combatIsOpen,
+                                                    },
+                                                ]"
+                                            >
+                                                <FontAwesomeIcon
+                                                    class="text-take-yellow"
+                                                    :icon="
+                                                        getIconForUser(charInfo)
+                                                    "
+                                                />
+                                                {{
+                                                    charInfo.user?.username
+                                                }}:</label
+                                            >
+                                            <!-- Character Name -->
+                                            <label
+                                                :class="[
+                                                    {
+                                                        'cursor-pointer':
+                                                            isEditableForUser(
+                                                                charInfo,
+                                                            ) && combatIsOpen,
+                                                    },
+                                                ]"
+                                                >{{ charInfo.character.name }}
+                                                {{
+                                                    charInfo.character
+                                                        .copyNumber != null
+                                                        ? `(${charInfo.character.copyNumber})`
+                                                        : ""
+                                                }}</label
+                                            >
+                                        </header>
+                                        <body>
+                                            <ol
+                                                class="flex flex-row justify-end"
+                                            >
+                                                <li v-if="combatIsOpen">
+                                                    <FontAwesomeIcon
+                                                        icon="shoe-prints"
+                                                    />
+                                                    {{
+                                                        charInfo.character
+                                                            .initiative.value
+                                                    }}
+                                                </li>
+                                            </ol>
+                                        </body>
+                                    </li>
+                                </TransitionGroup>
+                                <Modal
+                                    ref="editStagedCharacterModal"
+                                    title="Edit staged Character"
+                                >
+                                    <CombatStageCharacterForm
+                                        :onEdit="
+                                            (req) =>
+                                                onUpsertStagedCharacter().then(
+                                                    () =>
+                                                        editStagedCharacterModal.hide(),
+                                                )
+                                        "
+                                        :onDelete="onDeleteStagedCharacter"
+                                        :character="lastClickedStagedCharacter!"
+                                    />
+                                </Modal>
+                            </div>
+                        </section>
+                    </main>
+                </main>
+            </Transition>
+        </div>
     </div>
 </template>
 <script setup lang="ts">
@@ -322,13 +431,11 @@ watch(
         combatLogs.value.scrollTop = 0;
     },
 );
-const joinedCombatLogs = computed(() =>
-    combat.value?.combatLogs
-        .reverse()
-        .map((log) => `> ${log}`)
-        .join("\n"),
+const prettyCombatLogs = computed(() =>
+    combat.value?.combatLogs.map((log) => `> ${log}`).toReversed(),
 );
 
+// Displaying the character list,\
 type PlayerDto = {
     user: CampaignMemberDto;
     character: CombatCharacter;
@@ -414,11 +521,6 @@ function onClickCharacter(character: CombatCharacter) {
     }
 }
 
-const stageNewCharacterModal = ref<typeof Modal | null>(null);
-function onShowNewStagedCharacterModal() {
-    stageNewCharacterModal.value?.show();
-}
-
 async function onDeleteStagedCharacter(
     req: Omit<DeleteStagedCharacterRequest, "combatId">,
 ) {
@@ -431,8 +533,7 @@ async function onDeleteStagedCharacter(
 
 async function onUpsertStagedCharacter(req: StagedCharacterDTO) {
     return combatStore.upsertStagedCharacter(req).then(() => {
-        stageNewCharacterModal.value?.hide();
-        editStagedCharacterModal.value?.hide();
+        if (!isMediumScreenOrLarger) closeAsidePanel();
     });
 }
 
@@ -440,7 +541,7 @@ async function onStagePlannedCharacters(
     req: PostStagePlannedCharactersRequest["plannedCharactersToStage"],
 ) {
     return combatStore.stagePlannedCharacters(req).then(() => {
-        stageNewCharacterModal.value?.hide();
+        if (!isMediumScreenOrLarger) closeAsidePanel();
     });
 }
 
@@ -487,6 +588,46 @@ const isUsersTurn = computed(() => {
     }
     return false;
 });
+
+// Aside Panel State
+type PanelName =
+    | "Logs"
+    | "Roll"
+    | "Stage Characters"
+    | "Staged Character List"
+    | "Add Characters";
+const asidePanelState = reactive<{
+    open: boolean;
+    panelName: PanelName | null;
+}>({
+    open: false,
+    panelName: null,
+});
+
+const isMediumScreenOrLarger = computed(() => {
+    if (process.client) {
+        return window.matchMedia("(min-width: 768px)").matches;
+    }
+    return true;
+});
+const showMainPanel = computed(
+    () => !(!isMediumScreenOrLarger && asidePanelState.open),
+);
+
+function onClickPanel(name: PanelName) {
+    if (name == asidePanelState.panelName) {
+        asidePanelState.open = false;
+        asidePanelState.panelName = null;
+    } else {
+        asidePanelState.open = true;
+        asidePanelState.panelName = name;
+    }
+}
+
+function closeAsidePanel() {
+    asidePanelState.open = false;
+    asidePanelState.panelName = null;
+}
 </script>
 
 <style>
@@ -505,5 +646,17 @@ const isUsersTurn = computed(() => {
    animations can be calculated correctly. */
 .shuffleList-leave-active {
     position: absolute;
+}
+
+.slide-enter-active,
+.slide-leave-active {
+    transition: all 0.3s ease-in-out;
+}
+
+.slide-enter-from,
+.slide-leave-to {
+    transform: translateX(-100%);
+    z-index: 19;
+    opacity: 0;
 }
 </style>

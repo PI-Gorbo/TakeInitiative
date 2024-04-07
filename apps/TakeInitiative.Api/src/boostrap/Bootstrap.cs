@@ -136,7 +136,7 @@ public static class Bootstrap
         {
             // /usr/lib/python3.11/config-3.11-x86_64-linux-gnu/libpython3.11.so
             Log.Information("Identified PythonDLL path as null and attempting to identify .so location...");
-            var configName =  new DirectoryInfo("/usr/lib/python3.11")
+            var configName = new DirectoryInfo("/usr/lib/python3.11")
                 .EnumerateDirectories("config-3.11-*")
                 .First();
 

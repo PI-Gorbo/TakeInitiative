@@ -31,7 +31,7 @@
                     <FontAwesomeIcon
                         v-if="props.icon"
                         :icon="props.icon"
-                        :size="props.iconSize"
+                        :size="props.size"
                     />
                 </div>
                 <div v-if="props.label" class="cursor-pointer" @click="onClick">
@@ -102,7 +102,6 @@ const props = withDefaults(defineProps<FromButtonProps>(), {
     textColour: undefined,
     hoverTextColour: undefined,
     icon: undefined,
-    iconSize: "lg",
     disabled: false,
     click: undefined,
     preventClickBubbling: true,
