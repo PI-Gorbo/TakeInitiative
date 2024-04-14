@@ -20,6 +20,7 @@ import { deletePlannedCombatStageRequest } from "~/utils/api/plannedCombat/stage
 import { createPlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
 import { deletePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/deletePlannedCombatNpcRequest";
 import { updatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
+import { updatePlannedCombatStageRequest } from "~/utils/api/plannedCombat/stages/updatePlannedCombatStageRequest";
 import { getUserRequest } from "~/utils/api/user/getUserRequest";
 import { loginRequest } from "~/utils/api/user/loginRequest";
 import { logoutRequest } from "~/utils/api/user/logoutRequest";
@@ -48,6 +49,7 @@ export const useApi = () => {
             stage: {
                 create: createPlannedCombatStageRequest($axios),
                 delete: deletePlannedCombatStageRequest($axios),
+                update: updatePlannedCombatStageRequest($axios),
                 npc: {
                     create: createPlannedCombatNpcRequest($axios),
                     update: updatePlannedCombatNpcRequest($axios),

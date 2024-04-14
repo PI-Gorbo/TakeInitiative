@@ -1,6 +1,8 @@
 <template>
     <div class="flex w-full flex-1 justify-center">
-        <div class="lg:w-7/10 flex max-w-[1200px] flex-col sm:w-full md:w-4/5 2xl:w-full">
+        <div
+            class="lg:w-7/10 flex max-w-[1200px] flex-col sm:w-full md:w-4/5 2xl:w-full"
+        >
             <section class="py-4">
                 <div class="flex justify-center">
                     <label>Campaigns</label>
@@ -42,7 +44,7 @@
                         v-model:value="campaign.campaignName"
                         buttonColour="take-navy-medium"
                         notEditableColour="take-navy-medium"
-                        :onNotEditable="
+                        :onSave="
                             async () => {
                                 return userStore.updateCampaign({
                                     campaignId: campaign.id,
@@ -54,7 +56,11 @@
                     <div class="text-white">
                         <FontAwesomeIcon
                             class="text-take-yellow"
-                            :icon="campaign.role == 'Player' ? 'user-large' : 'crown'"
+                            :icon="
+                                campaign.role == 'Player'
+                                    ? 'user-large'
+                                    : 'crown'
+                            "
                         />
                         {{ campaign.role }}
                     </div>
@@ -99,8 +105,8 @@ const campaigns = computed(() =>
                 id: c.campaignId,
                 campaignName: c.campaignName,
                 role: "Player",
-            }))
-        )
+            })),
+        ),
 );
 definePageMeta({
     requiresAuth: true,
@@ -109,11 +115,13 @@ definePageMeta({
 
 async function deleteCampaign(campaign: { id: string }) {
     const userStore = useUserStore();
-    return userStore.deleteCampaign({ campaignId: campaign.id }).then(async () => {
-        if (userStore.campaignCount == 0) {
-            await navigateTo("/createOrJoinCampaign");
-        }
-    });
+    return userStore
+        .deleteCampaign({ campaignId: campaign.id })
+        .then(async () => {
+            if (userStore.campaignCount == 0) {
+                await navigateTo("/createOrJoinCampaign");
+            }
+        });
 }
 
 async function createCampaign(req: CreateCampaignRequest) {

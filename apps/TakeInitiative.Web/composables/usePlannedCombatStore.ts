@@ -6,8 +6,8 @@ import type {
 } from "./../utils/types/models";
 import type { CreatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
 import type { UpdatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
+import type { UpdatePlannedCombatStageRequest } from "~/utils/api/plannedCombat/stages/updatePlannedCombatStageRequest";
 export const usePlannedCombatStore = defineStore("plannedCombatStore", () => {
-
     const campaignStore = useCampaignStore();
 
     const api = useApi();
@@ -53,29 +53,48 @@ export const usePlannedCombatStore = defineStore("plannedCombatStore", () => {
     }
 
     async function removeNpc(stage: PlannedCombatStage, npcId: string) {
-		return await api.plannedCombat.stage.npc
-			.delete({
-				combatId: state.plannedCombat?.id!,
-				stageId: stage.id,
-				npcId: npcId,
-			}).then(setPlannedCombat)
-	}
-
-	async function updateNpc(stage: PlannedCombatStage, npc: Omit<UpdatePlannedCombatNpcRequest, "combatId" | "stageId">) {
-		return await api.plannedCombat.stage.npc
-			.update({
-                ...npc,
-				armourClass: npc.armourClass,
-				combatId: state.plannedCombat?.id!,
+        return await api.plannedCombat.stage.npc
+            .delete({
+                combatId: state.plannedCombat?.id!,
                 stageId: stage.id,
-			}).then(setPlannedCombat)
-	}
+                npcId: npcId,
+            })
+            .then(setPlannedCombat);
+    }
+
+    async function updateNpc(
+        stage: PlannedCombatStage,
+        npc: Omit<UpdatePlannedCombatNpcRequest, "combatId" | "stageId">,
+    ) {
+        return await api.plannedCombat.stage.npc
+            .update({
+                ...npc,
+                armourClass: npc.armourClass,
+                combatId: state.plannedCombat?.id!,
+                stageId: stage.id,
+            })
+            .then(setPlannedCombat);
+    }
 
     async function createOpenCombat() {
+        return api.combat
+            .open({ plannedCombatId: state.plannedCombat?.id! })
+            .then(() =>
+                campaignStore.setCampaignById(state.plannedCombat?.campaignId),
+            )
+            .then(() => (state.plannedCombat = null));
+    }
 
-        return api.combat.open({ plannedCombatId: state.plannedCombat?.id! })
-            .then(() => campaignStore.setCampaignById(state.plannedCombat?.campaignId))
-            .then(() => state.plannedCombat = null)
+    async function updateStage(
+        req: Omit<UpdatePlannedCombatStageRequest, "combatId">,
+    ) {
+        return api.plannedCombat.stage
+            .update({
+                combatId: state.plannedCombat?.id!,
+                stageId: req.stageId,
+                name: req.name,
+            })
+            .then(setPlannedCombat);
     }
 
     return {
@@ -83,9 +102,10 @@ export const usePlannedCombatStore = defineStore("plannedCombatStore", () => {
         setPlannedCombat,
         addStage,
         removeStage,
+        updateStage,
         addNpc,
-		removeNpc,
-		updateNpc,
-        createOpenCombat
+        removeNpc,
+        updateNpc,
+        createOpenCombat,
     };
 });
