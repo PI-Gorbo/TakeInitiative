@@ -1,48 +1,165 @@
 <template>
     <div class="flex h-full w-full">
-        <div :class="['h-full w-full flex-1']">
+        <!-- SIDE PANEL -->
+        <aside class="flex w-min">
+            <ol
+                class="gal-2 z-50 flex flex-col divide-y-2 divide-take-navy border-r border-take-navy bg-take-navy-medium p-2"
+            >
+                <CombatAsidePanelMenuItem
+                    :highlighted="asidePanelState.panelName == 'Logs'"
+                    icon="receipt"
+                    label="Logs"
+                    @click="() => onClickPanel('Logs')"
+                />
+                <CombatAsidePanelMenuItem
+                    :highlighted="asidePanelState.panelName == 'Roll'"
+                    icon="dice-d20"
+                    label="Roll"
+                    @click="() => onClickPanel('Roll')"
+                />
+                <CombatAsidePanelMenuItem
+                    v-if="!combatIsFinished"
+                    :highlighted="
+                        asidePanelState.panelName == 'Stage Characters'
+                    "
+                    icon="person-circle-plus"
+                    label="Stage Characters"
+                    @click="() => onClickPanel('Stage Characters')"
+                />
+                <CombatAsidePanelMenuItem
+                    v-if="combatIsStarted && userIsDm"
+                    :highlighted="asidePanelState.panelName == 'Add Characters'"
+                    icon="person-circle-plus"
+                    label="Add Characters"
+                    @click="() => onClickPanel('Add Characters')"
+                />
+                <CombatAsidePanelMenuItem
+                    v-if="combatIsStarted"
+                    :highlighted="
+                        asidePanelState.panelName == 'Staged Character List'
+                    "
+                    icon="list"
+                    label="Staged Character List"
+                    @click="() => onClickPanel('Staged Character List')"
+                />
+            </ol>
+        </aside>
+
+        <!-- REST OF THE PAGE -->
+        <div
+            :class="[
+                'h-full w-full flex-1',
+                isMediumScreenOrLarger ? '' : 'overflow-hidden',
+            ]"
+        >
+            <!-- SLIDING SIDE PANEL SECTION -->
+            <Transition
+                name="slide"
+                tag="div"
+                :class="[
+                    'z-40 h-full flex-1',
+                    isMediumScreenOrLarger ? 'fixed' : '',
+                ]"
+            >
+                <TransitionGroup
+                    name="fade"
+                    v-if="asidePanelState.open"
+                    class="max-h-svh w-full overflow-y-auto bg-take-navy-medium px-2 md:w-[40ex]"
+                >
+                    <section
+                        v-if="asidePanelState.panelName == 'Logs'"
+                        key="Logs"
+                        class="flex w-full flex-col gap-1 divide-y-2 divide-take-navy overflow-y-auto p-2 text-sm text-gray-200"
+                    >
+                        <p v-for="line in prettyCombatLogs">{{ line }}</p>
+                    </section>
+                    <section
+                        v-if="asidePanelState.panelName == 'Roll'"
+                        key="logs"
+                        class="flex w-full flex-col gap-1 px-2 py-4 text-sm text-gray-200"
+                    >
+                        <section>
+                            <FormBase
+                                class="border-take-gray flex w-full gap-2 rounded-lg border border-opacity-20 p-2"
+                                v-slot="{ submitting }"
+                                :onSubmit="async () => {}"
+                            >
+                                <FormInput label="Custom Roll" class="flex-1" />
+                                <FormButton
+                                    label="Roll"
+                                    icon="dice-d20"
+                                    size="sm"
+                                    class="items-center"
+                                    buttonColour="take-grey-dark"
+                                    textColour="take-navy"
+                                    :isLoading="submitting"
+                                />
+                            </FormBase>
+                            <a
+                                target="_blank"
+                                href="https://d20.readthedocs.io/en/latest/start.html#dice-syntax"
+                                class="underline"
+                            >
+                                Custom roll syntax examples
+                            </a>
+                        </section>
+                    </section>
+                    <section
+                        v-if="asidePanelState.panelName == 'Stage Characters'"
+                        key="Stage"
+                        class="flex w-full flex-col gap-1 text-sm text-gray-200"
+                    >
+                        <Tabs
+                            :showTabs="{
+                                Planned: () => userIsDm,
+                                Characters: () =>
+                                    (campaignStore.state.userCampaignMember
+                                        ?.characters?.length ?? 0) > 0,
+                            }"
+                            class="py-2"
+                            backgroundColour="take-navy-medium"
+                        >
+                            <!-- <template #Characters>
+                                        <CombatStageCharacterForm
+                                        :onCreate="onUpsertStagedCharacter"
+                                        />
+                                    </template> -->
+                            <template #Custom>
+                                <CombatStageCharacterForm
+                                    :onCreate="onUpsertStagedCharacter"
+                                />
+                            </template>
+                            <template #Planned>
+                                <CombatPlannedStagesDisplay
+                                    :stages="
+                                        combatStore.state.combat?.plannedStages!
+                                    "
+                                    :submit="onStagePlannedCharacters"
+                                />
+                            </template>
+                        </Tabs>
+                    </section>
+                </TransitionGroup>
+            </Transition>
+
             <!-- MAIN CONTENT -->
             <Transition name="fade">
                 <main
                     class="relative flex h-full flex-1 flex-col items-center justify-center px-4"
+                    v-if="showMainPanel"
                 >
                     <header class="grid w-full max-w-[1200px] grid-cols-3 py-2">
-                        <div
-                            class="flex items-center gap-2"
-                            v-if="combatIsStarted"
-                        >
-                            <!-- <FormButton
-                                class="px-2"
-                                label="Show Staging"
-                                size="sm"
-                                loadingDisplay="Ending turn..."
-                                :disabled="!isUsersTurn"
-                            /> -->
+                        <div class="flex items-center" v-if="combatIsStarted">
                             <FormButton
                                 class="px-2"
                                 label="End Turn"
                                 size="sm"
                                 :click="combatStore.endTurn"
-                                :loadingDisplay="{
-                                    showSpinner: true,
-                                    loadingText: 'Ending Turn',
-                                }"
                                 :disabled="!isUsersTurn"
                             />
                             <label class="px-2">
                                 Round: {{ combat?.roundNumber }}
                             </label>
-                        </div>
-                        <div class="flex items-center" v-if="combatIsOpen">
-                            <FormButton
-                                class="px-2"
-                                label="Stage Characters"
-                                size="sm"
-                                :click="
-                                    async () => showModal('Stage Characters')
-                                "
-                                :disabled="!isUsersTurn"
-                            />
                         </div>
                         <label
                             class="col-start-2 flex items-center justify-center text-center font-NovaCut text-xl text-take-yellow"
@@ -54,7 +171,7 @@
                                 label="Start Combat"
                                 :loadingDisplay="{
                                     showSpinner: true,
-                                    loadingText: 'Starting',
+                                    loadingText: 'Starting...',
                                 }"
                                 size="sm"
                                 :click="combatStore.startCombat"
@@ -63,10 +180,6 @@
                                 v-if="userIsDm && combatIsStarted"
                                 label="Finish Combat"
                                 confirmText="Confirm Finish"
-                                :loadingDisplay="{
-                                    showSpinner: true,
-                                    loadingText: 'Finishing',
-                                }"
                                 confirmHoverColour="take-red"
                                 size="sm"
                                 buttonColour="take-navy-light"
@@ -76,7 +189,7 @@
                     </header>
                     <main
                         :class="[
-                            'flex h-full w-full max-w-[1200px] flex-1 flex-row justify-center overflow-y-auto pb-2',
+                            'flex h-full w-full max-w-[1200px] flex-1 flex-row justify-center overflow-y-auto',
                         ]"
                     >
                         <section
@@ -99,8 +212,9 @@
                                             'grid grid-cols-2 rounded-xl border-2 border-take-navy-light p-2 transition-colors',
                                             {
                                                 'cursor-pointer hover:border-take-yellow':
-                                                    combatIsOpen &&
-                                                    isEditableForUser(charInfo),
+                                                    isEditableForUser(
+                                                        charInfo,
+                                                    ) && combatIsOpen,
                                                 'border-take-yellow':
                                                     combatIsStarted &&
                                                     index ==
@@ -206,56 +320,30 @@
                                             </ol>
                                         </body>
                                     </li>
-                                    <li
-                                        key="footer"
-                                        v-if="combatIsOpen"
-                                        :class="[
-                                            'cursor-pointer rounded-xl border-2 border-dashed border-take-navy-light p-2 text-center transition-colors hover:border-take-yellow',
-                                        ]"
-                                        @click="
-                                            () => showModal('Stage Characters')
-                                        "
-                                    >
-                                        Stage Characters
-                                    </li>
                                 </TransitionGroup>
+                                <Modal
+                                    ref="editStagedCharacterModal"
+                                    title="Edit staged Character"
+                                >
+                                    <CombatStageCharacterForm
+                                        :onEdit="
+                                            (req) =>
+                                                onUpsertStagedCharacter(
+                                                    req,
+                                                ).then(() =>
+                                                    editStagedCharacterModal.hide(),
+                                                )
+                                        "
+                                        :onDelete="onDeleteStagedCharacter"
+                                        :character="lastClickedStagedCharacter!"
+                                    />
+                                </Modal>
                             </div>
                         </section>
                     </main>
                 </main>
             </Transition>
         </div>
-        <Modal ref="combatPageModal" :title="modalState.title ?? ''">
-            <CombatStageCharacterForm
-                v-if="modalState.title == 'Edit Staged Character'"
-                :onEdit="(req) => onUpsertStagedCharacter(req).then(closeModal)"
-                :onDelete="onDeleteStagedCharacter"
-                :character="lastClickedStagedCharacter!"
-            />
-            <Tabs
-                v-if="modalState.title == 'Stage Characters'"
-                :showTabs="{
-                    Planned: () => userIsDm,
-                    Characters: () =>
-                        (campaignStore.state.userCampaignMember?.characters
-                            ?.length ?? 0) > 0,
-                }"
-                class="py-2"
-                backgroundColour="take-navy-medium"
-            >
-                <template #Custom>
-                    <CombatStageCharacterForm
-                        :onCreate="onUpsertStagedCharacter"
-                    />
-                </template>
-                <template #Planned>
-                    <CombatPlannedStagesDisplay
-                        :stages="combatStore.state.combat?.plannedStages!"
-                        :submit="onStagePlannedCharacters"
-                    />
-                </template>
-            </Tabs>
-        </Modal>
     </div>
 </template>
 <script setup lang="ts">
@@ -335,27 +423,6 @@ const {} = await useAsyncData(
     { server: false },
 );
 
-// Modal State
-type ModalTitle = "Stage Characters" | "Edit Staged Character";
-const combatPageModal = ref<typeof Modal | null>(null);
-const modalState = reactive<{
-    open: boolean;
-    title: ModalTitle | null;
-}>({
-    open: false,
-    title: null,
-});
-function showModal(title: ModalTitle) {
-    combatPageModal.value?.show();
-    modalState.open = true;
-    modalState.title = title;
-}
-function closeModal() {
-    combatPageModal.value?.hide();
-    modalState.open = false;
-    modalState.title = null;
-}
-
 // Combat logs
 const combatLogs = ref<HTMLDivElement | null>(null);
 watch(
@@ -369,7 +436,7 @@ const prettyCombatLogs = computed(() =>
     combat.value?.combatLogs.map((log) => `> ${log}`).toReversed(),
 );
 
-// Displaying the character list,
+// Displaying the character list
 type PlayerDto = {
     user: CampaignMemberDto;
     character: CombatCharacter;
@@ -446,11 +513,12 @@ const characterList = computed(() => {
     return playerDTOs;
 });
 
+const editStagedCharacterModal = ref<typeof Modal | null>(null);
 const lastClickedStagedCharacter = ref<CombatCharacter | undefined>(undefined);
 function onClickCharacter(character: CombatCharacter) {
     if (combat.value?.state == CombatState.Open) {
         lastClickedStagedCharacter.value = character;
-        showModal("Edit Staged Character");
+        editStagedCharacterModal.value?.show();
     }
 }
 
@@ -460,18 +528,22 @@ async function onDeleteStagedCharacter(
     return await useCombatStore()
         .deleteStagedCharacter(req)
         .then(() => {
-            closeModal();
+            editStagedCharacterModal.value?.hide();
         });
 }
 
 async function onUpsertStagedCharacter(req: StagedCharacterDTO) {
-    return combatStore.upsertStagedCharacter(req).then(closeModal);
+    return combatStore.upsertStagedCharacter(req).then(() => {
+        if (!isMediumScreenOrLarger) closeAsidePanel();
+    });
 }
 
 async function onStagePlannedCharacters(
     req: PostStagePlannedCharactersRequest["plannedCharactersToStage"],
 ) {
-    return combatStore.stagePlannedCharacters(req).then(closeModal);
+    return combatStore.stagePlannedCharacters(req).then(() => {
+        if (!isMediumScreenOrLarger) closeAsidePanel();
+    });
 }
 
 // Get Icon depending on user
@@ -517,6 +589,46 @@ const isUsersTurn = computed(() => {
     }
     return false;
 });
+
+// Aside Panel State
+type PanelName =
+    | "Logs"
+    | "Roll"
+    | "Stage Characters"
+    | "Staged Character List"
+    | "Add Characters";
+const asidePanelState = reactive<{
+    open: boolean;
+    panelName: PanelName | null;
+}>({
+    open: false,
+    panelName: null,
+});
+
+const isMediumScreenOrLarger = computed(() => {
+    if (process.client) {
+        return window.matchMedia("(min-width: 768px)").matches;
+    }
+    return true;
+});
+const showMainPanel = computed(
+    () => !(!isMediumScreenOrLarger && asidePanelState.open),
+);
+
+function onClickPanel(name: PanelName) {
+    if (name == asidePanelState.panelName) {
+        asidePanelState.open = false;
+        asidePanelState.panelName = null;
+    } else {
+        asidePanelState.open = true;
+        asidePanelState.panelName = name;
+    }
+}
+
+function closeAsidePanel() {
+    asidePanelState.open = false;
+    asidePanelState.panelName = null;
+}
 </script>
 
 <style>

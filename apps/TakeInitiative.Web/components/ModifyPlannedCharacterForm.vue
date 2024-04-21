@@ -1,5 +1,9 @@
 <template>
-    <FormBase class="flex flex-col gap-2" :onSubmit="onSubmit" v-slot="{ submitting }">
+    <FormBase
+        class="flex flex-col gap-2"
+        :onSubmit="onSubmit"
+        v-slot="{ submitting }"
+    >
         <FormInput
             :autoFocus="true"
             textColour="white"
@@ -44,7 +48,9 @@
                                 .value)
                     "
                     :placeholder="
-                        initiativeStrategy == InitiativeStrategy.Fixed ? '+5' : '1d20 + 5'
+                        initiativeStrategy == InitiativeStrategy.Fixed
+                            ? '+5'
+                            : '1d20 + 5'
                     "
                 />
             </div>
@@ -64,7 +70,10 @@
         <div class="flex w-full justify-center" v-if="!props.npc">
             <FormButton
                 label="Create"
-                loadingDisplay="Creating..."
+                :loadingDisplay="{
+                    showSpinner: true,
+                    loadingText: 'Creating...',
+                }"
                 :isLoading="submitting && submitting.submitterName == 'Create'"
                 buttonColour="take-yellow-dark"
             />
@@ -72,7 +81,10 @@
         <div v-else class="flex justify-between gap-2">
             <FormButton
                 label="Save"
-                loadingDisplay="Saving..."
+                :loadingDisplay="{
+                    showSpinner: true,
+                    loadingText: 'Saving...',
+                }"
                 :isLoading="submitting && submitting.submitterName == 'Save'"
                 buttonColour="take-yellow-dark"
             />
@@ -235,7 +247,7 @@ async function onCreate() {
     if (!validateResult.valid) {
         return;
     }
-    console.log(quantity.value)
+    console.log(quantity.value);
     return await props
         .onCreate({
             health: null,

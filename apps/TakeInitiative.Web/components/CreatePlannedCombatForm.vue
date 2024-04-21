@@ -11,7 +11,8 @@
             :value="createPlannedCombatForm.combatName.value.value"
             @update:value="
                 (val) =>
-                    (createPlannedCombatForm.combatName.value.value = String(val) ?? '')
+                    (createPlannedCombatForm.combatName.value.value =
+                        String(val) ?? '')
             "
             colour="take-navy-light"
             :autoFocus="true"
@@ -21,7 +22,10 @@
                 :isLoading="submitting"
                 label="Create"
                 type="submit"
-                loadingDisplay="Creating..."
+                :loadingDisplay="{
+                    showSpinner: true,
+                    loadingText: 'Creating...',
+                }"
             />
         </div>
     </FormBase>
@@ -37,7 +41,7 @@ const createPlannedCombatForm = useCreatePlannedCombatForm();
 
 const props = defineProps<{
     onCreatePlannedCombat: (
-        input: void | Omit<CreatePlannedCombatRequest, "campaignId">
+        input: void | Omit<CreatePlannedCombatRequest, "campaignId">,
     ) => Promise<any>;
 }>();
 
@@ -50,7 +54,7 @@ async function submit(): ReturnType<typeof createPlannedCombatForm.submit> {
         .submit()
         .then(props.onCreatePlannedCombat)
         .catch(async (error) =>
-            createPlannedCombatForm.setError(await parseAsApiError(error))
+            createPlannedCombatForm.setError(await parseAsApiError(error)),
         );
 }
 </script>

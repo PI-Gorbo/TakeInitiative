@@ -40,7 +40,9 @@
                                 .value)
                     "
                     :placeholder="
-                        initiativeStrategy == InitiativeStrategy.Fixed ? '+5' : '1d20 + 5'
+                        initiativeStrategy == InitiativeStrategy.Fixed
+                            ? '+5'
+                            : '1d20 + 5'
                     "
                 />
             </div>
@@ -60,7 +62,10 @@
         <div class="flex w-full justify-center" v-if="!props.character">
             <FormButton
                 label="Create"
-                loadingDisplay="Creating..."
+                :loadingDisplay="{
+                    showSpinner: true,
+                    loadingText: 'Creating...',
+                }"
                 :isLoading="submitting && submitting.submitterName == 'Create'"
                 buttonColour="take-yellow-dark"
             />
@@ -68,7 +73,10 @@
         <div v-else class="flex justify-between gap-2">
             <FormButton
                 label="Save"
-                loadingDisplay="Saving..."
+                :loadingDisplay="{
+                    showSpinner: true,
+                    loadingText: 'Saving...',
+                }"
                 :isLoading="submitting && submitting.submitterName == 'Save'"
                 buttonColour="take-yellow-dark"
             />
@@ -105,14 +113,10 @@ const formState = reactive({
 
 const props = defineProps<{
     character?: CombatCharacter;
-    onCreate?: (
-        request: StagedCharacterDTO,
-    ) => Promise<any>;
-    onEdit?: (
-        request: StagedCharacterDTO,
-    ) => Promise<any>;
+    onCreate?: (request: StagedCharacterDTO) => Promise<any>;
+    onEdit?: (request: StagedCharacterDTO) => Promise<any>;
     onDelete?: (
-        request: Omit<DeleteStagedCharacterRequest, 'combatId'>,
+        request: Omit<DeleteStagedCharacterRequest, "combatId">,
     ) => Promise<any>;
 }>();
 
@@ -154,11 +158,15 @@ const [initiativeValue, initiativeValueInputProps] = defineField(
     },
 );
 
-watch(() => props.character, () => {
-    initiativeStrategy.value = props.character?.initiative.strategy;
-    initiativeValue.value = props.character?.initiative.value;
-    name.value = props.character?.name;
-}, {deep: true})
+watch(
+    () => props.character,
+    () => {
+        initiativeStrategy.value = props.character?.initiative.strategy;
+        initiativeValue.value = props.character?.initiative.value;
+        name.value = props.character?.name;
+    },
+    { deep: true },
+);
 
 onMounted(() => {
     if (!props.character) {
@@ -213,7 +221,7 @@ async function onEdit() {
             name: name.value!,
             armorClass: null,
             id: props.character?.id!,
-            hidden: false
+            hidden: false,
         })
         .catch(async (error) => {
             formState.error = await parseAsApiError(error);
@@ -239,7 +247,7 @@ async function onCreate() {
             name: name.value!,
             armorClass: null,
             id: props.character?.id! ?? crypto.randomUUID(),
-            hidden: false
+            hidden: false,
         })
         .catch(async (error) => {
             formState.error = await parseAsApiError(error);

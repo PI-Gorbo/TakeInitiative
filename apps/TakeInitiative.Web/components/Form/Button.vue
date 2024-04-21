@@ -17,10 +17,11 @@
         <slot>
             <div
                 v-if="
-                    !props.isLoading ||
-                    (props.isLoading &&
+                    !isLoading ||
+                    props.loadingDisplay == null ||
+                    (isLoading &&
                         typeof props.isLoading == 'object' &&
-                        props.isLoading.submitterId != buttonRef?.id)
+                        props.isLoading?.submitterId != buttonRef?.id)
                 "
                 class="text-centre flex select-none justify-center gap-1"
             >
@@ -38,12 +39,12 @@
                     {{ props.label }}
                 </div>
             </div>
-            <div v-else-if="props.loadingDisplay" class="flex justify-center">
-                <label v-if="typeof props.loadingDisplay === 'string'"
-                    >{{ props.loadingDisplay }}
-                </label>
+            <div
+                v-else-if="props.loadingDisplay"
+                class="flex justify-center gap-2"
+            >
                 <div
-                    v-else-if="props.icon"
+                    v-if="props.loadingDisplay.showSpinner"
                     class="flex items-center justify-center text-center"
                 >
                     <FontAwesomeIcon
@@ -51,10 +52,10 @@
                         icon="circle-notch"
                         :size="props.size"
                     />
-                    <label v-if="props.loadingDisplay?.loadingText"
-                        >{{ props.loadingDisplay?.loadingText }}
-                    </label>
                 </div>
+                <label v-if="props.loadingDisplay.loadingText"
+                    >{{ props.loadingDisplay.loadingText }}
+                </label>
             </div>
         </slot>
     </button>
@@ -70,9 +71,7 @@ import type { SubmittingState } from "./Base.vue";
 import { TakeInitContrastColour } from "~/utils/types/HelperTypes";
 
 const buttonRef = ref<HTMLButtonElement | null>(null);
-export type LoadingDisplay =
-    | string
-    | { showSpinner: true; loadingText?: string };
+export type LoadingDisplay = { showSpinner: true; loadingText?: string };
 export type FromButtonProps = {
     name?: string;
     label?: string;
@@ -127,11 +126,16 @@ async function onClick(event: Event) {
         event.stopPropagation();
     }
 
+    if (isLoading.value) {
+        return;
+    }
+
     emit("clicked", loadingControls);
     if (props.click == undefined) {
         return;
     }
 
+    console.log("calling the on click method");
     state.isLoading = true;
     await props.click().finally(() => (state.isLoading = false));
 }

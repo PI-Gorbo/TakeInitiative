@@ -121,7 +121,10 @@
                 <main class="flex flex-col items-center">
                     <FormButton
                         label="Logout"
-                        loadingDisplay="Logging out..."
+                        :loadingDisplay="{
+                            showSpinner: true,
+                            loadingText: 'Logging out...',
+                        }"
                         icon="right-from-bracket"
                         @clicked="onLogout"
                         :isLoading="manageUserState.loggingOut"
