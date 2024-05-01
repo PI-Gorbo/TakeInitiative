@@ -88,12 +88,14 @@ export const usePlannedCombatStore = defineStore("plannedCombatStore", () => {
     async function updateStage(
         req: Omit<UpdatePlannedCombatStageRequest, "combatId">,
     ) {
-        return api.plannedCombat.stage
-            .update({
+        const request = {
                 combatId: state.plannedCombat?.id!,
                 stageId: req.stageId,
                 name: req.name,
-            })
+            }
+            console.log("request is",request)
+        return api.plannedCombat.stage
+            .update(request)
             .then(setPlannedCombat);
     }
 

@@ -30,7 +30,7 @@
                 <FormButton
                     label="Login"
                     type="submit"
-                    loadingDisplay="Logging in..."
+                    :loadingDisplay="{loadingText: 'Logging in...', showSpinner: true}"
                     :isLoading="state.isSubmitting"
                 />
             </div>

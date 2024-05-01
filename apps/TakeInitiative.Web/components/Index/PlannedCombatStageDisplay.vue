@@ -4,11 +4,12 @@
     >
         <div class="mb-2 flex w-full flex-row gap-2">
             <FormToggleableInput
-                :value="props.stage.name"
+                :value="stageName"
                 textColour="take-yellow"
                 colour="take-navy-medium"
                 notEditableColour="take-navy"
                 :autoFocus="true"
+                @update:value="(val) => (stageName = String(val))"
                 :onSave="() => props.updateStage({ name: stageName })"
             />
             <!-- <div class="flex-1 text-take-yellow">

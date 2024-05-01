@@ -25,6 +25,7 @@ export function putUpsertStagedCharacter(axios: AxiosInstance) {
     return async function (
         request: UpsertStagedCharacterRequest,
     ): Promise<UpsertStagedCharacterResponse> {
+ 
         return await axios
             .put("/api/combat/stage/character", request)
             .then(async (response) =>

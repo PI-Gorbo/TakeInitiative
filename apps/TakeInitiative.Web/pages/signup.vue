@@ -44,7 +44,10 @@
             <div class="flex justify-center">
                 <FormButton
                     label="Sign Up"
-                    loadingDisplay="Signing Up..."
+                    :loadingDisplay="{
+                        showSpinner: true,
+                        loadingText: 'Signing Up...'
+                    }",
                     :isLoading="formState.submitting"
                 />
             </div>

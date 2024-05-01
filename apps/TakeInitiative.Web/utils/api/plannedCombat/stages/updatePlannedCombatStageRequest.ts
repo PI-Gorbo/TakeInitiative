@@ -20,9 +20,8 @@ export function updatePlannedCombatStageRequest(axios: AxiosInstance) {
     return async function getUser(
         request: UpdatePlannedCombatStageRequest,
     ): Promise<UpdatePlannedCombatStageResponse> {
-        console.log(request);
         return axios
-            .put("/api/campaign/planned-combat/stage", { data: request })
+            .put("/api/campaign/planned-combat/stage", request)
             .then(async function (response) {
                 const result =
                     await updatePlannedCombatStageResponseValidator.validate(

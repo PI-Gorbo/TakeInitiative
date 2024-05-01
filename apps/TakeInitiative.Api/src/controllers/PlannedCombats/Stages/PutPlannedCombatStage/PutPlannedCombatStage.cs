@@ -14,6 +14,7 @@ public class PutPlannedCombatStage(IDocumentStore Store) : Endpoint<PutPlannedCo
         Put("/api/campaign/planned-combat/stage");
         AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
         Policies(TakePolicies.UserExists);
+
     }
 
     public override async Task HandleAsync(PutPlannedCombatStageRequest req, CancellationToken ct)
@@ -41,6 +42,12 @@ public class PutPlannedCombatStage(IDocumentStore Store) : Endpoint<PutPlannedCo
                 ThrowError("Planned combats can only be edited by DMs.");
             }
 
+            // Check if the stage exists.
+            if (!combat.Stages.Any(x => x.Id == req.StageId))
+            {
+                ThrowError(x => x.StageId, "The stage does not exist.");
+            }
+ 
             // Get the stage form the combat
             var stage = combat.Stages.FirstOrDefault(x => x.Id == req.StageId);
             if (stage == null)
