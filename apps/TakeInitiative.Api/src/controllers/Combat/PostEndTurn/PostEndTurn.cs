@@ -35,10 +35,10 @@ public class PostEndTurn(IHubContext<CombatHub> hubContext) : Endpoint<PostEndTu
             ThrowError(result.Error, (int)HttpStatusCode.ServiceUnavailable);
         }
 
-        await hubContext.NotifyCombatUpdated(result.Value);
         await SendAsync(new()
         {
             Combat = result.Value
         });
+        await hubContext.NotifyCombatUpdated(result.Value);
     }
 }

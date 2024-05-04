@@ -307,6 +307,31 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
         };
     }
 
+    public async Task<Combat> Apply(StagedCharactersRolledIntoInitiativeEvent @event, Combat Combat, IEvent<StagedCharactersRolledIntoInitiativeEvent> eventDetails, IQuerySession session)
+    {
+
+        var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
+        var newInitiativeList = @event.InitiativeRolls.Select((charInitiative, index) =>
+        {
+            return Combat.StagedList.First(x => x.Id == charInitiative.id) with
+            {
+                InitiativeValue = charInitiative.rolls
+            };
+        })
+        .Concat(Combat.InitiativeList)
+        .OrderByDescending(x => x.InitiativeValue, new InitiativeComparer())
+        .ToImmutableList();
+
+        Guid[] stagedCharactersToOmit = @event.InitiativeRolls.Select(x => x.id).ToArray();
+        return Combat with
+        {
+            CombatLogs = Combat.CombatLogs.Add($"{user?.UserName} rolled {@event.InitiativeRolls.Count} characters into initiative at {eventDetails.Timestamp:R}"),
+            StagedList = Combat.StagedList.Where(x => !x.Id.In(stagedCharactersToOmit)).ToImmutableList(),
+            InitiativeList = newInitiativeList,
+        };
+    }
+
+
     // Players joining & leaving. //
     public async Task<Combat> Apply(PlayerLeftEvent @event, Combat Combat, IEvent<PlayerLeftEvent> eventDetails, IQuerySession session)
     {

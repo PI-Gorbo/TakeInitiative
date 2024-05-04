@@ -12,16 +12,17 @@ using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.CQRS;
 
-public record StartCombatCommand : ICommand<Result<Combat>>
+public record RollStagedCharacterIntoInitiativeCommand : ICommand<Result<Combat>>
 {
     public required Guid CombatId { get; set; }
     public required Guid UserId { get; set; }
+    public required Guid[] CharacterIds { get; set; }
 }
 
-public class StartCombatCommandHandler(IDocumentStore Store) : CommandHandler<StartCombatCommand, Result<Combat>>
+public class RollStagedCharacterIntoInitiativeCommandHandler(IDocumentStore Store) : CommandHandler<RollStagedCharacterIntoInitiativeCommand, Result<Combat>>
 {
 
-    public override async Task<Result<Combat>> ExecuteAsync(StartCombatCommand command, CancellationToken ct = default)
+    public override async Task<Result<Combat>> ExecuteAsync(RollStagedCharacterIntoInitiativeCommand command, CancellationToken ct = default)
     {
         return await Store.Try(
             async (session) =>
@@ -38,25 +39,27 @@ public class StartCombatCommandHandler(IDocumentStore Store) : CommandHandler<St
                     ThrowError($"Cannot activate character because the combat is {combat.State.ToString().ToLower()}.");
                 }
 
-                if (combat.State != CombatState.Open)
-                {
-                    ThrowError($"Combat has already been started.");
-                }
-
                 // Check the user is part of the combat.
                 if (combat.DungeonMaster != command.UserId)
                 {
                     ThrowError("Must be the dungeon master in order to start the combat.");
                 }
 
-                var computedInitiativeRolls = DiceRoller.ComputeFirstRollsOfCombat(combat.StagedList);
+                // Check that all the characters specified exist.
+                var stagedCharacterIds = combat.StagedList.Select(x => x.Id).ToList();
+                if (command.CharacterIds.Any(character => !stagedCharacterIds.Contains(character)))
+                {
+                    ThrowError($"One or more of the specified character ids are not in the staged character list.");
+                }
+
+                var computedInitiativeRolls = DiceRoller.ComputeRollsWithExistingInitiative(combat.StagedList.Where(x => x.Id.In(command.CharacterIds)), combat.InitiativeList);
                 if (computedInitiativeRolls.IsFailure)
                 {
                     ThrowError($"There was an error while trying to compute the dice rolls. {computedInitiativeRolls.Error}");
                 }
 
                 // Publish the event
-                CombatStartedEvent activateEvent = new()
+                StagedCharactersRolledIntoInitiativeEvent activateEvent = new()
                 {
                     UserId = command.UserId,
                     InitiativeRolls = computedInitiativeRolls.Value,

@@ -1,6 +1,6 @@
 <template>
     <TransitionGroup
-        class="flex h-full flex-1 select-none flex-col gap-2 rounded-lg border-2 border-take-navy-light p-2"
+        class="flex h-full flex-1 select-none flex-col gap-2 rounded-lg"
         tag="ul"
         name="shuffleList"
     >
@@ -15,24 +15,28 @@
                     'cursor-pointer hover:border-take-yellow':
                         combatIsOpen && isEditableForUser(charInfo),
                     'border-take-yellow':
-                        combatIsStarted && index == combat?.initiativeIndex,
+                        props.listToDisplay != 'Staging' &&
+                        combatIsStarted &&
+                        index == combat?.initiativeIndex,
                 },
             ]"
             @click="
                 () =>
                     isEditableForUser(charInfo)
-                        ? onClickCharacter(charInfo.character)
+                        ? emit('OnClickCharacter', charInfo.character)
                         : null
             "
         >
-            <header class="flex items-center gap-2">
+            <header class="flex items-center gap-2 text-white">
                 <!-- Initiative -->
                 <div
                     v-if="!combatIsOpen"
                     :class="[
                         {
                             'cursor-pointer':
-                                isEditableForUser(charInfo) && combatIsOpen,
+                                isEditableForUser(charInfo) &&
+                                (combatIsOpen ||
+                                    props.listToDisplay == 'Staging'),
                         },
                         'flex gap-2',
                     ]"
@@ -57,13 +61,15 @@
                     :class="[
                         {
                             'cursor-pointer':
-                                isEditableForUser(charInfo) && combatIsOpen,
+                                isEditableForUser(charInfo) &&
+                                (combatIsOpen ||
+                                    props.listToDisplay == 'Staging'),
                         },
                     ]"
                 >
                     <FontAwesomeIcon
                         class="text-take-yellow"
-                        :icon="getIconForUser(charInfo)"
+                        :icon="combatStore.getIconForUser(charInfo)"
                     />
                     {{ charInfo.user?.username }}:</label
                 >
@@ -72,7 +78,9 @@
                     :class="[
                         {
                             'cursor-pointer':
-                                isEditableForUser(charInfo) && combatIsOpen,
+                                isEditableForUser(charInfo) &&
+                                (combatIsOpen ||
+                                    props.listToDisplay == 'Staging'),
                         },
                     ]"
                     >{{ charInfo.character.name }}
@@ -98,21 +106,31 @@
             :class="[
                 'cursor-pointer rounded-xl border-2 border-dashed border-take-navy-light p-2 text-center transition-colors hover:border-take-yellow',
             ]"
-            @click="() => showModal('Stage Characters')"
+            @click="emit('CombatOpenedStageCharacters')"
         >
-            Stage Characters
+            + Stage Characters
         </li>
     </TransitionGroup>
 </template>
 <script setup lang="ts">
 import type { CampaignMemberDto } from "~/utils/api/campaign/getCampaignRequest";
 import { type CombatCharacter, CombatState } from "~/utils/types/models";
+import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 
+const userStore = useUserStore();
 const campaignStore = useCampaignStore();
 const combatStore = useCombatStore();
 const combat = computed(() => {
     return combatStore.state.combat;
 });
+const {
+    combatIsOpen,
+    combatIsStarted,
+    combatIsFinished,
+    orderedStagedCharacterListWithPlayerInfo,
+    initiativeListWithPlayerInfo,
+} = storeToRefs(combatStore);
+const isEditableForUser = combatStore.isEditableForUser;
 
 const props = withDefaults(
     defineProps<{
@@ -122,92 +140,22 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{
-    (e: "StageCharacters"): void;
-    (e: "OnClickCharacter"): void;
+    (e: "CombatOpenedStageCharacters"): void;
+    (e: "OnClickCharacter", character: CombatCharacter): void;
 }>();
 
-type PlayerDto = {
-    user: CampaignMemberDto;
-    character: CombatCharacter;
-};
 const characterList = computed(() => {
-    const compareStrings = (a: string, b: string) => {
-        let fa = a.toLowerCase(),
-            fb = b.toLowerCase();
-
-        if (fa < fb) {
-            return -1;
-        }
-        if (fa > fb) {
-            return 1;
-        }
-        return 0;
-    };
-
-    const openCombatCharacterSortFunc = (
-        a: PlayerDto,
-        b: PlayerDto,
-    ): number => {
-        const aIsDungeonMaster = a.user?.isDungeonMaster;
-        const bIsDungeonMaster = b.user?.isDungeonMaster;
-        if (aIsDungeonMaster && !bIsDungeonMaster) {
-            return -1;
-        } else if (!aIsDungeonMaster && bIsDungeonMaster) {
-            return 1;
-        }
-
-        // First sort by user,
-        let result = compareStrings(a.user?.username!, b.user?.username!);
-        if (result != 0) {
-            return result;
-        }
-
-        // Then sort by character name
-        result = compareStrings(a.character.name, b.character.name);
-        if (result != 0) {
-            return result;
-        }
-
-        // Sort by copy number
-        result =
-            (a.character.copyNumber ?? 0) < (b.character.copyNumber ?? 0)
-                ? -1
-                : 1;
-
-        return result;
-    };
-
-    let list;
-    let listType = "Staging";
     if (props.listToDisplay == undefined) {
         if (combat.value?.state == CombatState.Open) {
-            list = combat.value.stagedList;
+            return orderedStagedCharacterListWithPlayerInfo.value;
         } else {
-            list = combat.value?.initiativeList;
-            listType = "Initiative";
+            return initiativeListWithPlayerInfo.value;
         }
     } else if (props.listToDisplay == "Staging") {
-        list = combat.value?.stagedList;
+        return orderedStagedCharacterListWithPlayerInfo.value;
     } else {
-        list = combat.value?.initiativeList;
-        listType = "Initiative";
+        return initiativeListWithPlayerInfo.value;
     }
-
-    const sortFunc = listType == "Staging" ? openCombatCharacterSortFunc : null;
-
-    const playerDTOs = list!.map(
-        (x) =>
-            ({
-                user: campaignStore.getMemberDetailsFor(x.playerId)!,
-                character: x,
-            }) satisfies PlayerDto,
-    );
-
-    if (sortFunc) {
-        return playerDTOs.sort(sortFunc);
-    }
-
-    return playerDTOs;
 });
 </script>
 

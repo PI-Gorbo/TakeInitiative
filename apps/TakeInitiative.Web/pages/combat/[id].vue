@@ -6,18 +6,38 @@
                 <main
                     class="relative flex h-full flex-1 flex-col items-center justify-center px-4"
                 >
-                    <header class="grid w-full max-w-[1200px] grid-cols-3 py-2">
+                    <CollapsableHorizontalMenu
+                        ref="horizontalMenu"
+                        :menuItems="[
+                            {
+                                label: 'Staged Characters',
+                                hasNotificationIcon: false,
+                            },
+                        ]"
+                        @menuItemClicked="
+                            (item) => {
+                                if (item.label == 'Staged Characters') {
+                                    showModal(
+                                        'Combat Started Staged Character Menu',
+                                    );
+                                    horizontalMenu!.hide();
+                                }
+                            }
+                        "
+                    >
+                        <template #Left>
+                            <a
+                                class="flex-none cursor-default select-none text-xl font-semibold"
+                                href="#"
+                                >{{ combat?.combatName }}</a
+                            >
+                        </template>
+                    </CollapsableHorizontalMenu>
+                    <!-- <header class="grid w-full max-w-[1200px] grid-cols-3 py-2">
                         <div
                             class="flex items-center gap-2"
                             v-if="combatIsStarted"
                         >
-                            <!-- <FormButton
-                                class="px-2"
-                                label="Show Staging"
-                                size="sm"
-                                loadingDisplay="Ending turn..."
-                                :disabled="!isUsersTurn"
-                            /> -->
                             <FormButton
                                 class="px-2"
                                 label="End Turn"
@@ -28,18 +48,34 @@
                                     loadingText: 'Ending Turn',
                                 }"
                                 :disabled="!isUsersTurn"
-                            />
-                            <label class="px-2">
+                            /> -->
+                    <!-- <FormButton
+                                buttonColour="take-navy-light"
+                                class="px-2"
+                                label="View Staged Characters"
+                                size="sm"
+                                :disabled="!isUsersTurn"
+                                @clicked="
+                                    () =>
+                                        showModal(
+                                            'Combat Started Staged Character Menu',
+                                        )
+                                "
+                            /> -->
+                    <!-- <label class="px-2">
                                 Round: {{ combat?.roundNumber }}
-                            </label>
-                        </div>
+                            </label> -->
+                    <!-- </div>
                         <div class="flex items-center" v-if="combatIsOpen">
                             <FormButton
                                 class="px-2"
                                 label="Stage Characters"
                                 size="sm"
                                 :click="
-                                    async () => showModal('Stage Characters')
+                                    async () =>
+                                        showModal(
+                                            'Combat Opened Stage Characters',
+                                        )
                                 "
                                 :disabled="!isUsersTurn"
                             />
@@ -70,10 +106,11 @@
                                 confirmHoverColour="take-red"
                                 size="sm"
                                 buttonColour="take-navy-light"
+                                m
                                 :click="combatStore.finishCombat"
                             />
                         </div>
-                    </header>
+                    </header> -->
                     <main
                         :class="[
                             'flex h-full w-full max-w-[1200px] flex-1 flex-row justify-center overflow-y-auto pb-2',
@@ -83,142 +120,19 @@
                             class="flex h-full flex-1 flex-col gap-2 overflow-y-auto"
                         >
                             <div class="flex-1">
-                                <TransitionGroup
-                                    class="flex h-full flex-1 select-none flex-col gap-2 rounded-lg border-2 border-take-navy-light p-2"
-                                    tag="ul"
-                                    name="shuffleList"
-                                >
-                                    <!-- INITIATIVE LIST -->
-
-                                    <li
-                                        v-for="(
-                                            charInfo, index
-                                        ) in characterList"
-                                        :key="charInfo.character.id"
-                                        :class="[
-                                            'grid grid-cols-2 rounded-xl border-2 border-take-navy-light p-2 transition-colors',
-                                            {
-                                                'cursor-pointer hover:border-take-yellow':
-                                                    combatIsOpen &&
-                                                    isEditableForUser(charInfo),
-                                                'border-take-yellow':
-                                                    combatIsStarted &&
-                                                    index ==
-                                                        combat?.initiativeIndex,
-                                            },
-                                        ]"
-                                        @click="
-                                            () =>
-                                                isEditableForUser(charInfo)
-                                                    ? onClickCharacter(
-                                                          charInfo.character,
-                                                      )
-                                                    : null
-                                        "
-                                    >
-                                        <header class="flex items-center gap-2">
-                                            <!-- Initiative -->
-                                            <div
-                                                v-if="!combatIsOpen"
-                                                :class="[
-                                                    {
-                                                        'cursor-pointer':
-                                                            isEditableForUser(
-                                                                charInfo,
-                                                            ) && combatIsOpen,
-                                                    },
-                                                    'flex gap-2',
-                                                ]"
-                                            >
-                                                <div
-                                                    v-for="(
-                                                        value, index
-                                                    ) in charInfo.character
-                                                        .initiativeValue"
-                                                    :class="[
-                                                        'flex items-center rounded-lg  p-1',
-                                                        {
-                                                            'text-xs':
-                                                                index != 0,
-                                                            'bg-take-navy-light':
-                                                                index == 0,
-                                                            'bg-take-navy-medium':
-                                                                index != 0,
-                                                        },
-                                                    ]"
-                                                >
-                                                    {{ value }}
-                                                </div>
-                                            </div>
-                                            <!-- Username -->
-                                            <label
-                                                :class="[
-                                                    {
-                                                        'cursor-pointer':
-                                                            isEditableForUser(
-                                                                charInfo,
-                                                            ) && combatIsOpen,
-                                                    },
-                                                ]"
-                                            >
-                                                <FontAwesomeIcon
-                                                    class="text-take-yellow"
-                                                    :icon="
-                                                        getIconForUser(charInfo)
-                                                    "
-                                                />
-                                                {{
-                                                    charInfo.user?.username
-                                                }}:</label
-                                            >
-                                            <!-- Character Name -->
-                                            <label
-                                                :class="[
-                                                    {
-                                                        'cursor-pointer':
-                                                            isEditableForUser(
-                                                                charInfo,
-                                                            ) && combatIsOpen,
-                                                    },
-                                                ]"
-                                                >{{ charInfo.character.name }}
-                                                {{
-                                                    charInfo.character
-                                                        .copyNumber != null
-                                                        ? `(${charInfo.character.copyNumber})`
-                                                        : ""
-                                                }}</label
-                                            >
-                                        </header>
-                                        <body>
-                                            <ol
-                                                class="flex flex-row justify-end"
-                                            >
-                                                <li v-if="combatIsOpen">
-                                                    <FontAwesomeIcon
-                                                        icon="shoe-prints"
-                                                    />
-                                                    {{
-                                                        charInfo.character
-                                                            .initiative.value
-                                                    }}
-                                                </li>
-                                            </ol>
-                                        </body>
-                                    </li>
-                                    <li
-                                        key="footer"
-                                        v-if="combatIsOpen"
-                                        :class="[
-                                            'cursor-pointer rounded-xl border-2 border-dashed border-take-navy-light p-2 text-center transition-colors hover:border-take-yellow',
-                                        ]"
-                                        @click="
-                                            () => showModal('Stage Characters')
-                                        "
-                                    >
-                                        Stage Characters
-                                    </li>
-                                </TransitionGroup>
+                                <CombatCharacterListSection
+                                    class="border-2 border-take-navy-light p-2"
+                                    @combatOpenedStageCharacters="
+                                        () =>
+                                            showModal(
+                                                'Combat Started Staged Character Menu',
+                                            )
+                                    "
+                                    @OnClickCharacter="
+                                        (character) =>
+                                            onClickCharacter(character!)
+                                    "
+                                />
                             </div>
                         </section>
                     </main>
@@ -227,13 +141,13 @@
         </div>
         <Modal ref="combatPageModal" :title="modalState.title ?? ''">
             <CombatStageCharacterForm
-                v-if="modalState.title == 'Edit Staged Character'"
+                v-if="modalState.modalType == 'Edit Staged Character'"
                 :onEdit="(req) => onUpsertStagedCharacter(req).then(closeModal)"
                 :onDelete="onDeleteStagedCharacter"
                 :character="lastClickedStagedCharacter!"
             />
             <Tabs
-                v-if="modalState.title == 'Stage Characters'"
+                v-if="modalState.modalType == 'Combat Opened Stage Characters'"
                 :showTabs="{
                     Planned: () => userIsDm,
                     Characters: () =>
@@ -255,11 +169,22 @@
                     />
                 </template>
             </Tabs>
+            <main
+                v-if="
+                    modalState.modalType ==
+                    'Combat Started Staged Character Menu'
+                "
+            >
+                <CombatStagedCharactersSection
+                    @RolledCharactersIntoInitiative="() => closeModal()"
+                />
+            </main>
         </Modal>
     </div>
 </template>
 <script setup lang="ts">
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+import type CollapsableHorizontalMenu from "~/components/CollapsableHorizontalMenu.vue";
 import ConfirmButton from "~/components/Form/ConfirmButton.vue";
 import Modal from "~/components/Modal.vue";
 import type { CampaignMemberDto } from "~/utils/api/campaign/getCampaignRequest";
@@ -306,19 +231,7 @@ const combatId = route.params.id;
 
 // Combat data
 const combatStore = useCombatStore();
-const combat = computed(() => {
-    return combatStore.state.combat;
-});
-const userIsDm = computed(
-    () => userStore.state.user?.userId == combat.value?.dungeonMaster,
-);
-const combatIsOpen = computed(() => combat.value?.state == CombatState.Open);
-const combatIsStarted = computed(
-    () => combat.value?.state == CombatState.Started,
-);
-const combatIsFinished = computed(
-    () => combat.value?.state == CombatState.Finished,
-);
+const { combat, userIsDm } = storeToRefs(combatStore);
 
 // Main fetch
 const { refresh, pending, error } = await useAsyncData("Combat", async () => {
@@ -336,19 +249,35 @@ const {} = await useAsyncData(
 );
 
 // Modal State
-type ModalTitle = "Stage Characters" | "Edit Staged Character";
+type CombatPageModalType =
+    | "Combat Opened Stage Characters"
+    | "Combat Started Staged Character Menu"
+    | "Edit Staged Character";
 const combatPageModal = ref<typeof Modal | null>(null);
+const horizontalMenu = ref<typeof CollapsableHorizontalMenu | null>(null);
 const modalState = reactive<{
     open: boolean;
-    title: ModalTitle | null;
+    modalType: CombatPageModalType | null;
+    title: string | null;
 }>({
     open: false,
+    modalType: null,
     title: null,
 });
-function showModal(title: ModalTitle) {
+function showModal(modalType: CombatPageModalType) {
     combatPageModal.value?.show();
     modalState.open = true;
-    modalState.title = title;
+    modalState.modalType = modalType;
+    switch (modalType) {
+        case "Combat Opened Stage Characters":
+            modalState.title = "Stage Characters";
+            break;
+        case "Edit Staged Character":
+            modalState.title = "Edit Staged Character";
+            break;
+        case "Combat Started Staged Character Menu":
+            modalState.title = "Staged Characters";
+    }
 }
 function closeModal() {
     combatPageModal.value?.hide();
@@ -356,95 +285,20 @@ function closeModal() {
     modalState.title = null;
 }
 
-// Combat logs
-const combatLogs = ref<HTMLDivElement | null>(null);
-watch(
-    () => combat.value?.combatLogs,
-    (before, after) => {
-        if (!combatLogs.value) return;
-        combatLogs.value.scrollTop = 0;
-    },
-);
-const prettyCombatLogs = computed(() =>
-    combat.value?.combatLogs.map((log) => `> ${log}`).toReversed(),
-);
+// // Combat logs
+// const combatLogs = ref<HTMLDivElement | null>(null);
+// watch(
+//     () => combat.value?.combatLogs,
+//     (before, after) => {
+//         if (!combatLogs.value) return;
+//         combatLogs.value.scrollTop = 0;
+//     },
+// );
+// const prettyCombatLogs = computed(() =>
+//     combat.value?.combatLogs.map((log) => `> ${log}`).toReversed(),
+// );
 
 // Displaying the character list,
-type PlayerDto = {
-    user: CampaignMemberDto;
-    character: CombatCharacter;
-};
-
-const characterList = computed(() => {
-    const compareStrings = (a: string, b: string) => {
-        let fa = a.toLowerCase(),
-            fb = b.toLowerCase();
-
-        if (fa < fb) {
-            return -1;
-        }
-        if (fa > fb) {
-            return 1;
-        }
-        return 0;
-    };
-
-    const openCombatCharacterSortFunc = (
-        a: PlayerDto,
-        b: PlayerDto,
-    ): number => {
-        const aIsDungeonMaster = a.user?.isDungeonMaster;
-        const bIsDungeonMaster = b.user?.isDungeonMaster;
-        if (aIsDungeonMaster && !bIsDungeonMaster) {
-            return -1;
-        } else if (!aIsDungeonMaster && bIsDungeonMaster) {
-            return 1;
-        }
-
-        // First sort by user,
-        let result = compareStrings(a.user?.username!, b.user?.username!);
-        if (result != 0) {
-            return result;
-        }
-
-        // Then sort by character name
-        result = compareStrings(a.character.name, b.character.name);
-        if (result != 0) {
-            return result;
-        }
-
-        // Sort by copy number
-        result =
-            (a.character.copyNumber ?? 0) < (b.character.copyNumber ?? 0)
-                ? -1
-                : 1;
-
-        return result;
-    };
-
-    const list =
-        combat.value?.state == CombatState.Open
-            ? combat.value.stagedList
-            : combat.value?.initiativeList;
-    const sortFunc =
-        combat.value?.state == CombatState.Open
-            ? openCombatCharacterSortFunc
-            : null;
-
-    const playerDTOs = list!.map(
-        (x) =>
-            ({
-                user: campaignStore.getMemberDetailsFor(x.playerId)!,
-                character: x,
-            }) satisfies PlayerDto,
-    );
-
-    if (sortFunc) {
-        return playerDTOs.sort(sortFunc);
-    }
-
-    return playerDTOs;
-});
 
 const lastClickedStagedCharacter = ref<CombatCharacter | undefined>(undefined);
 function onClickCharacter(character: CombatCharacter) {
@@ -472,35 +326,6 @@ async function onStagePlannedCharacters(
     req: PostStagePlannedCharactersRequest["plannedCharactersToStage"],
 ) {
     return combatStore.stagePlannedCharacters(req).then(closeModal);
-}
-
-// Get Icon depending on user
-function getIconForUser(charInfo: {
-    user: CampaignMemberDto;
-    character: CombatCharacter;
-}) {
-    const currentUserId = userStore.state.user?.userId;
-
-    if (charInfo.user.userId == combat.value?.dungeonMaster) {
-        return "crown";
-    }
-
-    if (charInfo.user.userId == currentUserId) {
-        return "circle-user";
-    }
-
-    return "user-large";
-}
-
-// Determines if the current row is editable for this current user
-function isEditableForUser(charInfo: {
-    user: CampaignMemberDto;
-    character: CombatCharacter;
-}) {
-    return (
-        userStore.state.user?.userId == combat?.value?.dungeonMaster ||
-        charInfo.user?.userId == userStore.state.user?.userId
-    );
 }
 
 const isUsersTurn = computed(() => {

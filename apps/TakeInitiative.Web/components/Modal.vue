@@ -2,9 +2,12 @@
     <dialog
         ref="dialog"
         @click="onModalClick"
-        class="mt-20 rounded-xl bg-take-navy-medium p-5"
+        :class="[
+            'mt-20 rounded-xl bg-take-navy-medium p-5',
+            isMobile && 'w-full',
+        ]"
     >
-        <div class="flex gap-4">
+        <div class="my-1 flex gap-4">
             <h1
                 v-if="props.title"
                 class="flex w-max items-center text-xl text-white"
@@ -27,6 +30,7 @@
     </dialog>
 </template>
 <script setup lang="ts">
+const { isMobile } = useDevice();
 const dialog = ref<HTMLDialogElement | null>(null);
 const id = ref<number>(0);
 const props = defineProps<{

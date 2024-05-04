@@ -13,7 +13,7 @@
                             class="h-[1.5em] w-[1.5em]"
                             src="~assets/yellowDice.png"
                         />
-                        Take Initiative
+                        <span v-if="!isMobile">Take Initiative</span>
                     </h1>
                     <section
                         class="flex flex-1 flex-row flex-wrap justify-end gap-2"
@@ -28,14 +28,15 @@
                                     <label
                                         class="font-NovaCut text-lg text-take-yellow"
                                     >
-                                        {{
-                                            campaignStore.state.campaign
-                                                ?.campaignName
-                                        }}
-                                        <span class="text-white">-</span>
-                                        {{
-                                            combatStore.state.combat?.combatName
-                                        }}
+                                        <ClientOnly
+                                            fallback-tag="span"
+                                            fallback="Loading..."
+                                        >
+                                            {{
+                                                campaignStore.state.campaign
+                                                    ?.campaignName
+                                            }}
+                                        </ClientOnly>
                                     </label>
                                 </article>
                             </div>
@@ -107,12 +108,6 @@
                                 hoverButtonColour="take-yellow"
                                 @clicked="() => manageUserModal?.show()"
                             />
-                        </div>
-                        <div
-                            class="flex items-center px-2 py-1 font-NovaCut text-xl text-take-yellow"
-                            v-if="!isMobile"
-                        >
-                            <label>{{ userStore.username }}</label>
                         </div>
                     </section>
                 </div>

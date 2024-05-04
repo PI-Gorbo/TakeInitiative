@@ -21,6 +21,19 @@ export default defineNuxtPlugin((nuxtApp) => {
         return config;
     });
 
+    Axios.interceptors.response.use(
+        (resp) => {
+            return resp;
+        },
+        (error) => {
+            if (error.response.status == 401) {
+                navigateTo("/login");
+            }
+
+            return error;
+        },
+    );
+
     return {
         provide: {
             axios: Axios,

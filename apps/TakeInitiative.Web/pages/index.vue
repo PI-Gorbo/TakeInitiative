@@ -14,7 +14,7 @@
             <header
                 v-if="campaignStore.state.combatDto"
                 :class="[
-                    'mt-3 cursor-pointer select-none rounded-lg px-4 py-3 text-center text-xl text-take-navy',
+                    'mx-3 my-2 cursor-pointer select-none rounded-lg px-4 py-3 text-center text-xl text-take-navy',
                     campaignStore.state.combatDto.state == CombatState.Open
                         ? 'bg-take-yellow-dark'
                         : 'bg-take-red ',
@@ -38,7 +38,7 @@
                 </div>
             </header>
             <Tabs
-                class="flex-1 flex-col overflow-auto py-4"
+                class="flex-1 flex-col overflow-auto"
                 backgroundColour="take-navy"
                 notSelectedTabColour="take-navy"
                 :renameTabs="{
