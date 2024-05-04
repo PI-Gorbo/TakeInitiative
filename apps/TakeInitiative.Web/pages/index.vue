@@ -2,7 +2,7 @@
     <TransitionGroup
         name="fade"
         tag="main"
-        class="flex h-full flex-col items-center"
+        class="flex h-full flex-col items-center bg-take-navy text-white"
     >
         <div
             v-if="
@@ -63,7 +63,36 @@
                 <template #CombatHistory>
                     <IndexCombatHistorySection />
                 </template>
-                <template #Settings> Dungeon Master Settings </template>
+                <template #Settings>
+                    <main class="flex w-2/3 flex-col gap-4">
+                        <div class="w-fit">
+                            <FormToggleableInput
+                                label="Campaign Name"
+                                v-model:value="campaignName"
+                                buttonColour="take-navy-medium"
+                                notEditableColour="take-navy-medium"
+                                :onSave="
+                                    async () => {
+                                        return userStore.updateCampaign({
+                                            campaignId: campaign?.campaignId!,
+                                            campaignName: campaignName,
+                                        });
+                                    }
+                                "
+                            />
+                        </div>
+                        <div>
+                            <FormButton
+                                label="Delete Campaign"
+                                icon="trash"
+                                buttonColour="take-navy-light"
+                                hoverButtonColour="take-red"
+                                size="sm"
+                                :click="() => deleteCampaign()"
+                            />
+                        </div>
+                    </main>
+                </template>
             </Tabs>
         </div>
         <div v-else class="flex h-full w-full items-center justify-center">
@@ -79,17 +108,27 @@ import { useForm } from "vee-validate";
 import redirectToCreateOrJoinCampaign from "~/middleware/redirectToCreateOrJoinCampaign";
 import { CombatState } from "~/utils/types/models";
 
+const campaignName = ref<string | undefined>(undefined);
 const userStore = useUserStore();
-const { state } = storeToRefs(userStore);
+const { selectedCampaignDto: campaign } = storeToRefs(userStore);
 const campaignStore = useCampaignStore();
 const { refresh, pending, error } = await useAsyncData(
     "Campaign",
     () => {
-        return campaignStore.init().then(() => true);
+        return campaignStore
+            .init()
+            .then(
+                () =>
+                    (campaignName.value =
+                        campaignStore.state.campaign?.campaignName!),
+            )
+            .then(() => true);
     },
     { watch: [() => userStore.state.selectedCampaignId] },
 ); // Return something so that nuxt does not recall this on this client
-
+onMounted(
+    () => (campaignName.value = campaignStore.state.campaign?.campaignName!),
+);
 useHead({
     title: "Take Initiative",
 });
@@ -97,6 +136,7 @@ useHead({
 definePageMeta({
     requiresAuth: true,
     middleware: [redirectToCreateOrJoinCampaign],
+    layout: "index-page",
 });
 
 const openCombatText = computed(() => {
@@ -131,4 +171,19 @@ const combatStartedText = computed(() => {
 
     return `The combat '${combatDto?.combatName}' has started! Click to join or watch.`;
 });
+
+function deleteCampaign() {
+    console.log(campaignStore.state.campaign?.id);
+    return userStore
+        .deleteCampaign({ campaignId: campaignStore.state.campaign?.id! })
+        .then(async () => {
+            if (userStore.campaignCount == 0) {
+                await navigateTo("/createOrJoinCampaign");
+            } else {
+                userStore.setSelectedCampaign(
+                    userStore.campaignList![0].campaignId,
+                );
+            }
+        });
+}
 </script>

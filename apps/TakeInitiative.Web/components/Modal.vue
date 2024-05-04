@@ -3,7 +3,7 @@
         ref="dialog"
         @click="onModalClick"
         :class="[
-            'mt-20 rounded-xl bg-take-navy-medium p-5',
+            'mt-20 rounded-xl bg-take-navy-dark p-5',
             isMobile && 'w-full',
         ]"
     >
@@ -20,8 +20,8 @@
                     icon="xmark"
                     @clicked="hide"
                     size="sm"
-                    buttonColour="take-navy-light"
-                    hoverButtonColour="take-yellow"
+                    buttonColour="take-navy"
+                    hoverButtonColour="take-navy-medium"
                     hoverTextColour="take-grey"
                 />
             </div>

@@ -34,5 +34,5 @@ export default defineNuxtConfig({
         },
     },
     modules: ["@pinia/nuxt", "@nuxtjs/device"],
-    plugins: ["~/plugins/preline.client.ts"],
+    plugins: [],
 });

@@ -14,14 +14,14 @@
         >
             <div
                 :class="[
-                    `md:text-md h-full w-min rounded-md py-2 pl-2 bg-${props.colour} text-${props.textColour}`,
+                    `md:text-md h-full flex-1 rounded-md py-2 pl-2 bg-${props.colour} text-${props.textColour}`,
                 ]"
             >
                 <input
                     :autofocus="props.autoFocus"
                     :value="props.value"
                     :class="[
-                        `md:text-md w- h-full rounded-sm bg-${props.colour} text-${props.textColour}`,
+                        `md:text-md h-full flex-1 rounded-sm bg-${props.colour} text-${props.textColour}`,
                     ]"
                     @input="
                         (event) => {
