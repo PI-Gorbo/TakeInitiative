@@ -5,6 +5,28 @@
             !isMobile && 'items-center',
         ]"
     >
+        <header
+            v-if="campaignStore.state.combatDto"
+            :class="[
+                'mx-3 my-2 cursor-pointer select-none rounded-lg px-4 py-3 text-center text-xl text-take-navy',
+                campaignStore.state.combatDto.state == CombatState.Open
+                    ? 'bg-take-yellow-dark'
+                    : 'bg-take-red ',
+            ]"
+            @click="
+                async () =>
+                    await navigateTo(
+                        `/combat/${campaignStore.state.combatDto?.id}`,
+                    )
+            "
+        >
+            <div v-if="campaignStore.state.combatDto.state == CombatState.Open">
+                {{ openCombatText }}
+            </div>
+            <div v-else>
+                {{ combatStartedText }}
+            </div>
+        </header>
         <div
             class="grid w-full flex-1 grid-cols-9 gap-4 overflow-y-auto"
             v-if="!isMobile"
@@ -215,12 +237,14 @@
     </main>
 </template>
 <script setup lang="ts">
+import { CombatState } from "~/utils/types/models";
 import { toTypedSchema } from "@vee-validate/yup";
 import { useForm } from "vee-validate";
 import { yup } from "~/utils/types/HelperTypes";
 import { parseISO, format } from "date-fns";
 
 const { isMobile } = useDevice();
+const userStore = useUserStore()
 const campaignStore = useCampaignStore();
 const campaign = computed(() => campaignStore.state.campaign);
 const formState = reactive({
@@ -261,4 +285,38 @@ async function submitDetails(): Promise<void> {
         campaignResources: resources.value ?? "",
     });
 }
+
+
+const openCombatText = computed(() => {
+    const combatDto = campaignStore.state.combatDto;
+    const combatOpenedByUser = campaignStore.state.nonUserCampaignMembers
+        ?.concat([
+            {
+                userId: userStore.state.user?.userId!,
+                username: userStore.username!,
+            } satisfies {
+                userId: string;
+                username: string;
+            },
+        ])
+        .find((x) => x.userId == combatDto?.dungeonMaster)?.username;
+
+    return `The combat '${combatDto?.combatName}' has been opened by ${combatOpenedByUser}! Click to join or start watching before it starts...`;
+});
+const combatStartedText = computed(() => {
+    const combatDto = campaignStore.state.combatDto;
+    const combatOpenedByUser = campaignStore.state.nonUserCampaignMembers
+        ?.concat([
+            {
+                userId: userStore.state.user?.userId!,
+                username: userStore.username!,
+            } satisfies {
+                userId: string;
+                username: string;
+            },
+        ])
+        .find((x) => x.userId == combatDto?.dungeonMaster)?.username;
+
+    return `The combat '${combatDto?.combatName}' has started! Click to join or watch.`;
+});
 </script>

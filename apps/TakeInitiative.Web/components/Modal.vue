@@ -14,7 +14,7 @@
             <div class="flex flex-1 justify-end">
                 <FormButton
                     class="p-0"
-                    size="md"
+                    size="lg"
                     icon="xmark"
                     @clicked="hide"
                     buttonColour="take-navy"

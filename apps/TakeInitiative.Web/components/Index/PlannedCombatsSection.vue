@@ -88,6 +88,7 @@
                 <IndexPlannedCombatSection />
             </section>
         </section>
+        
         <section
             class="flex flex-col items-center px-2"
             v-else

@@ -8,28 +8,28 @@
         />
         <div class="drawer-content w-full overflow-y-auto">
             <main class="flex h-full w-full flex-col">
-                <header class="navbar">
+                <header class="navbar bg-take-navy-medium border-take-navy-medium border-b-take-yellow border">
                     <section class="navbar-start flex gap-2">
                         <img
                             class="h-[3em] w-[3em]"
                             src="~assets/yellowDice.png"
                         />
+                    </section>
+                    <section class="navbar-end">
                         <label class="font-NovaCut text-xl text-take-yellow">{{
                             userStore.selectedCampaignDto?.campaignName
                         }}</label>
-                    </section>
-                    <section class="navbar-end">
                         <FormButton
                             icon="share-from-square"
                             size="sm"
-                            textColour="take-navy-light"
-                            buttonColour="take-navy"
+                            textColour=""
+                            buttonColour="take-navy-medium"
                             hoverButtonColour="take-navy-dark"
                             @clicked="() => shareCampaignModal?.show()"
                         />
                         <label
                             for="drawer"
-                            class="btn cursor-pointer border-none bg-take-navy text-take-navy-light hover:bg-take-navy-dark"
+                            class="btn cursor-pointer border-none bg-take-navy-medium hover:bg-take-navy-dark"
                         >
                             <FontAwesomeIcon icon="bars" />
                         </label>
@@ -66,7 +66,7 @@
                         "
                         @update:selectedItem="
                             (item) => onSetSelectedCampaign(item.campaignId)
-                        "
+                        "   
                     >
                         <template #Footer>
                             <li
