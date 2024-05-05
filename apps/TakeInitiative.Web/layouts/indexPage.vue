@@ -17,19 +17,19 @@
                         <label class="font-NovaCut text-xl text-take-yellow">{{
                             userStore.selectedCampaignDto?.campaignName
                         }}</label>
+                    </section>
+                    <section class="navbar-end">
                         <FormButton
                             icon="share-from-square"
-                            textColour="white"
                             size="sm"
+                            textColour="take-navy-light"
                             buttonColour="take-navy"
                             hoverButtonColour="take-navy-dark"
                             @clicked="() => shareCampaignModal?.show()"
                         />
-                    </section>
-                    <section class="navbar-end">
                         <label
                             for="drawer"
-                            class="btn cursor-pointer border-none bg-take-navy hover:bg-take-navy-dark"
+                            class="btn cursor-pointer border-none bg-take-navy text-take-navy-light hover:bg-take-navy-dark"
                         >
                             <FontAwesomeIcon icon="bars" />
                         </label>
@@ -70,10 +70,7 @@
                     >
                         <template #Footer>
                             <li
-                                :class="[
-                                    'rounded-md',
-                                    `bg-take-navy-dark hover:bg-take-navy-medium`,
-                                ]"
+                                :class="['rounded-md', ``]"
                                 @click="
                                     () => {
                                         createOrJoinCampaignModal?.show();
@@ -81,7 +78,7 @@
                                     }
                                 "
                             >
-                                <a
+                                <a class="text-take-yellow"
                                     ><FontAwesomeIcon icon="plus" /> Create or
                                     Join</a
                                 >
@@ -108,18 +105,15 @@
         <Modal ref="shareCampaignModal" title="Share">
             <main class="flex flex-col gap-4 text-white">
                 <div class="flex flex-col gap-2">
-                    <label>Campaign Code</label>
+                    <label class="font-NovaCut text-take-yellow"
+                        >Campaign Code</label
+                    >
                     <div class="flex w-full items-center gap-2">
-                        <div
-                            class="flex w-full justify-start rounded-lg bg-take-navy p-1 px-2 text-center"
-                        >
-                            {{ userStore.selectedCampaignDto?.joinCode }}
-                        </div>
-                        <TimedTooltip tooltip="Copied!">
+                        <TimedTooltip tooltip="Copied!" class="peer">
                             <FormButton
                                 icon="copy"
-                                buttonColour="take-navy"
-                                hoverButtonColour="take-navy-medium"
+                                buttonColour="take-navy-dark"
+                                hoverButtonColour="take-yellow"
                                 size="sm"
                                 :preventClickBubbling="false"
                                 @clicked="
@@ -131,25 +125,24 @@
                                 "
                             />
                         </TimedTooltip>
+                        <div
+                            class="pointer-events-none -order-1 flex w-full justify-start rounded-lg border border-take-navy-dark bg-take-navy-dark p-1 px-2 text-center transition-colors peer-hover:border-take-yellow"
+                        >
+                            {{ userStore.selectedCampaignDto?.joinCode }}
+                        </div>
                     </div>
                 </div>
 
                 <div class="flex flex-col gap-2">
-                    <label>URL</label>
-                    <div class="flex w-full items-center gap-2">
-                        <div
-                            class="flex w-full justify-start truncate rounded-lg bg-take-navy p-1 px-2 text-center"
-                        >
-                            {{
-                                `${config.public.webUrl}/join/${userStore.selectedCampaignDto?.joinCode}`
-                            }}
-                        </div>
-                        <TimedTooltip tooltip="Copied!">
+                    <label class="font-NovaCut text-take-yellow">URL</label>
+                    <div class="group group flex w-full items-center gap-2">
+                        <TimedTooltip tooltip="Copied!" class="peer">
                             <FormButton
                                 icon="copy"
-                                buttonColour="take-navy"
-                                hoverButtonColour="take-navy-medium"
                                 size="sm"
+                                class="transition-colors"
+                                buttonColour="take-navy-dark"
+                                hoverButtonColour="take-yellow"
                                 :preventClickBubbling="false"
                                 @clicked="
                                     () =>
@@ -159,6 +152,13 @@
                                 "
                             />
                         </TimedTooltip>
+                        <div
+                            class="-order-1 flex w-full justify-start truncate rounded-lg border border-take-navy bg-take-navy-dark p-1 px-2 text-center transition-colors peer-hover:border-take-yellow"
+                        >
+                            {{
+                                `${config.public.webUrl}/join/${userStore.selectedCampaignDto?.joinCode}`
+                            }}
+                        </div>
                     </div>
                 </div>
             </main>

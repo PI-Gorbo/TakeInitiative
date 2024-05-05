@@ -8,7 +8,8 @@
                 ? 'bg-take-grey-dark hover:bg-take-grey-dark'
                 : `bg-${props.buttonColour} hover:bg-${props.hoverButtonColour} text-${props.textColour ?? TakeInitContrastColour[props.buttonColour]} hover:text-${$props.hoverTextColour ?? TakeInitContrastColour[props.hoverButtonColour]}`,
             size == 'sm' ? 'px-2.5 py-2.5 text-sm' : '',
-            size != 'sm' ? 'px-4 py-4 text-lg' : '',
+            size == 'md' ? 'text-md px-3 py-3' : '',
+            size == 'lg' ? 'px-4 py-4 text-lg' : '',
         ]"
         type="submit"
         :disabled="props.disabled"
@@ -82,7 +83,7 @@ export type FromButtonProps = {
     textColour?: TakeInitColour;
     hoverTextColour?: TakeInitColour | undefined;
     icon?: string;
-    size?: FontAwesomeIconSize;
+    size?: FontAwesomeIconSize | "md";
     disabled?: boolean;
     click?: () => Promise<any>;
     preventClickBubbling?: boolean;
