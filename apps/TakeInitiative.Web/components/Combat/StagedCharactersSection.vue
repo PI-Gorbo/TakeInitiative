@@ -82,6 +82,12 @@
                     (req) =>
                         combatStore
                             .deleteStagedCharacter(req)
+                            .then(
+                                () =>
+                                    (clickedList = clickedList.filter(
+                                        (x) => x != req.characterId,
+                                    )),
+                            )
                             .then(transitionViewToList)
                 "
                 :character="viewState.currentView.characterToEdit"

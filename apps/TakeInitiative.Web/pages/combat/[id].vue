@@ -1,143 +1,127 @@
 <template>
-    <div class="flex h-full w-full">
-        <div :class="['h-full w-full flex-1']">
+    <div class="drawer drawer-end flex h-full w-full">
+        <input
+            ref="combatDrawer"
+            id="combatDrawer"
+            type="checkbox"
+            class="drawer-toggle"
+        />
+        <div
+            class="drawer-content flex h-full w-full flex-1 flex-col overflow-y-auto"
+        >
             <!-- MAIN CONTENT -->
-            <Transition name="fade">
-                <main
-                    class="relative flex h-full flex-1 flex-col items-center justify-center px-4"
+            <header class="grid grid-cols-3 p-2">
+                <div>
+                    <FormButton
+                        v-if="combatIsStarted && isUsersTurn"
+                        icon="arrows-rotate"
+                        label="End Turn"
+                        buttonColour="take-yellow"
+                        hoverButtonColour="take-yellow-dark"
+                        :loadingDisplay="{
+                            showSpinner: true,
+                            loadingText: 'End...',
+                        }"
+                        :click="combatStore.endTurn"
+                    />
+                </div>
+                <label
+                    class="flex items-center justify-center text-center font-NovaCut text-lg"
+                    >{{ combat?.combatName }}</label
                 >
-                    <CollapsableHorizontalMenu
-                        ref="horizontalMenu"
-                        :menuItems="[
-                            {
-                                label: 'Staged Characters',
-                                hasNotificationIcon: false,
-                            },
-                        ]"
-                        @menuItemClicked="
-                            (item) => {
-                                if (item.label == 'Staged Characters') {
-                                    showModal(
-                                        'Combat Started Staged Character Menu',
-                                    );
-                                    horizontalMenu!.hide();
-                                }
+                <div class="flex justify-end px-1">
+                    <FormButton
+                        v-if="!combatIsFinished"
+                        icon="bars"
+                        class="aspect-square w-min"
+                        buttonColour="take-navy"
+                        textColour="base-200"
+                        hoverButtonColour="take-navy-dark"
+                        :preventClickBubbling="false"
+                        @clicked="toggleDrawer"
+                    />
+                </div>
+            </header>
+            <main
+                :class="[
+                    'flex w-full flex-1 flex-row justify-center overflow-y-auto px-2 pb-2',
+                ]"
+            >
+                <section class="flex flex-1 flex-col gap-2 overflow-y-auto">
+                    <CombatCharacterListSection
+                        class="border-2 border-take-navy-light p-2"
+                        @combatOpenedStageCharacters="
+                            () => showModal('Combat Opened Stage Characters')
+                        "
+                        @OnClickCharacter="
+                            (character) => onClickCharacter(character!)
+                        "
+                    />
+                </section>
+            </main>
+        </div>
+        <div class="drawer-side">
+            <label
+                for="combatDrawer"
+                aria-label="close sidebar"
+                class="drawer-overlay"
+            ></label>
+            <ul
+                class="menu flex min-h-full w-80 flex-col gap-2 bg-take-navy p-4 text-base-content"
+            >
+                <!-- Sidebar content here -->
+                <li>
+                    <FormButton
+                        label="Staged Characters"
+                        icon="clipboard-question"
+                        @clicked="
+                            () => {
+                                showModal(
+                                    combatIsOpen
+                                        ? 'Combat Opened Stage Characters'
+                                        : 'Combat Started Staged Character Menu',
+                                );
+                                toggleDrawer();
                             }
                         "
-                    >
-                        <template #Left>
-                            <a
-                                class="flex-none cursor-default select-none text-xl font-semibold"
-                                href="#"
-                                >{{ combat?.combatName }}</a
-                            >
-                        </template>
-                    </CollapsableHorizontalMenu>
-                    <!-- <header class="grid w-full max-w-[1200px] grid-cols-3 py-2">
-                        <div
-                            class="flex items-center gap-2"
-                            v-if="combatIsStarted"
-                        >
-                            <FormButton
-                                class="px-2"
-                                label="End Turn"
-                                size="sm"
-                                :click="combatStore.endTurn"
-                                :loadingDisplay="{
-                                    showSpinner: true,
-                                    loadingText: 'Ending Turn',
-                                }"
-                                :disabled="!isUsersTurn"
-                            /> -->
-                    <!-- <FormButton
-                                buttonColour="take-navy-light"
-                                class="px-2"
-                                label="View Staged Characters"
-                                size="sm"
-                                :disabled="!isUsersTurn"
-                                @clicked="
-                                    () =>
-                                        showModal(
-                                            'Combat Started Staged Character Menu',
-                                        )
-                                "
-                            /> -->
-                    <!-- <label class="px-2">
-                                Round: {{ combat?.roundNumber }}
-                            </label> -->
-                    <!-- </div>
-                        <div class="flex items-center" v-if="combatIsOpen">
-                            <FormButton
-                                class="px-2"
-                                label="Stage Characters"
-                                size="sm"
-                                :click="
-                                    async () =>
-                                        showModal(
-                                            'Combat Opened Stage Characters',
-                                        )
-                                "
-                                :disabled="!isUsersTurn"
-                            />
-                        </div>
-                        <label
-                            class="col-start-2 flex items-center justify-center text-center font-NovaCut text-xl text-take-yellow"
-                            >{{ combat?.combatName }}</label
-                        >
-                        <div class="flex justify-end">
-                            <ConfirmButton
-                                v-if="userIsDm && combatIsOpen"
-                                label="Start Combat"
-                                :loadingDisplay="{
-                                    showSpinner: true,
-                                    loadingText: 'Starting',
-                                }"
-                                size="sm"
-                                :click="combatStore.startCombat"
-                            />
-                            <ConfirmButton
-                                v-if="userIsDm && combatIsStarted"
-                                label="Finish Combat"
-                                confirmText="Confirm Finish"
-                                :loadingDisplay="{
-                                    showSpinner: true,
-                                    loadingText: 'Finishing',
-                                }"
-                                confirmHoverColour="take-red"
-                                size="sm"
-                                buttonColour="take-navy-light"
-                                m
-                                :click="combatStore.finishCombat"
-                            />
-                        </div>
-                    </header> -->
-                    <main
-                        :class="[
-                            'flex h-full w-full max-w-[1200px] flex-1 flex-row justify-center overflow-y-auto pb-2',
-                        ]"
-                    >
-                        <section
-                            class="flex h-full flex-1 flex-col gap-2 overflow-y-auto"
-                        >
-                            <div class="flex-1">
-                                <CombatCharacterListSection
-                                    class="border-2 border-take-navy-light p-2"
-                                    @combatOpenedStageCharacters="
-                                        () =>
-                                            showModal(
-                                                'Combat Started Staged Character Menu',
-                                            )
-                                    "
-                                    @OnClickCharacter="
-                                        (character) =>
-                                            onClickCharacter(character!)
-                                    "
-                                />
-                            </div>
-                        </section>
-                    </main>
-                </main>
-            </Transition>
+                        buttonColour="take-navy-dark"
+                        hoverButtonColour="take-navy-medium"
+                        hoverTextColour="white"
+                    />
+                </li>
+                <li>
+                    <FormButton
+                        v-if="combatIsOpen"
+                        label="Start Combat"
+                        icon="shoe-prints"
+                        :click="
+                            () => combatStore.startCombat().then(toggleDrawer)
+                        "
+                        buttonColour="take-navy-dark"
+                        hoverButtonColour="take-navy-medium"
+                        hoverTextColour="white"
+                        :loadingDisplay="{
+                            showSpinner: true,
+                            loadingText: 'Starting...',
+                        }"
+                    />
+                    <FormButton
+                        v-else-if="combatIsStarted"
+                        label="Finish Combat"
+                        icon="flag-checkered"
+                        :click="
+                            () => combatStore.finishCombat().then(toggleDrawer)
+                        "
+                        buttonColour="take-navy-dark"
+                        hoverButtonColour="take-navy-medium"
+                        hoverTextColour="white"
+                        :loadingDisplay="{
+                            showSpinner: true,
+                            loadingText: 'Finishing...',
+                        }"
+                    />
+                </li>
+            </ul>
         </div>
         <Modal ref="combatPageModal" :title="modalState.title ?? ''">
             <CombatStageCharacterForm
@@ -202,6 +186,12 @@ import {
 
 const campaignStore = useCampaignStore();
 const userStore = useUserStore();
+const combatDrawer = ref<HTMLInputElement | null>(null);
+function toggleDrawer() {
+    if (combatDrawer.value) {
+        combatDrawer.value.checked = !combatDrawer.value?.checked;
+    }
+}
 
 definePageMeta({
     requiresAuth: true,
@@ -231,7 +221,8 @@ const combatId = route.params.id;
 
 // Combat data
 const combatStore = useCombatStore();
-const { combat, userIsDm } = storeToRefs(combatStore);
+const { combat, userIsDm, combatIsOpen, combatIsStarted, combatIsFinished } =
+    storeToRefs(combatStore);
 
 // Main fetch
 const { refresh, pending, error } = await useAsyncData("Combat", async () => {
@@ -254,7 +245,6 @@ type CombatPageModalType =
     | "Combat Started Staged Character Menu"
     | "Edit Staged Character";
 const combatPageModal = ref<typeof Modal | null>(null);
-const horizontalMenu = ref<typeof CollapsableHorizontalMenu | null>(null);
 const modalState = reactive<{
     open: boolean;
     modalType: CombatPageModalType | null;
@@ -333,8 +323,12 @@ const isUsersTurn = computed(() => {
         return true;
     }
 
+    if (!combat.value?.initiativeIndex) {
+        return false;
+    }
+
     const characterWithCurrentInitiative =
-        combat.value?.initiativeList[combat.value.initiativeIndex ?? 0];
+        combat.value?.initiativeList[combat.value.initiativeIndex];
     if (
         characterWithCurrentInitiative?.playerId == userStore.state.user?.userId
     ) {

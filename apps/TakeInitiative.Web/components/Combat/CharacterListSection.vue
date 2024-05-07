@@ -1,6 +1,6 @@
 <template>
     <TransitionGroup
-        class="flex h-full flex-1 select-none flex-col gap-2 rounded-lg"
+        class="flex h-full flex-1 select-none flex-col gap-2 overflow-y-auto rounded-lg"
         tag="ul"
         name="shuffleList"
     >

@@ -88,7 +88,7 @@ export type FromButtonProps = {
     isLoading?: SubmittingState | boolean | null;
     buttonColour?: TakeInitColour;
     hoverButtonColour?: TakeInitColour | undefined;
-    textColour?: TakeInitColour;
+    textColour?: TakeInitColour | "base-200" | undefined;
     hoverTextColour?: TakeInitColour | undefined;
     icon?: string;
     size?: FontAwesomeIconSize;

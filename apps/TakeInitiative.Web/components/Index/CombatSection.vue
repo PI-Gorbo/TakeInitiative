@@ -29,11 +29,20 @@
                 ]"
             >
                 <div class="flex flex-col gap-2">
-                    <div>
-                        <FontAwesomeIcon icon="pen-to-square" />
-                        <span class="font-NovaCut text-take-yellow">
-                            Planned Combats
-                        </span>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <FontAwesomeIcon icon="pen-to-square" />
+                            <span class="font-NovaCut text-take-yellow">
+                                Planned Combats
+                            </span>
+                        </div>
+                        <FormButton
+                            label="New"
+                            icon="plus"
+                            size="sm"
+                            buttonColour="take-navy"
+                            @clicked="showCreatePlannedCombatModal"
+                        />
                     </div>
                     <ul class="flex flex-col gap-2 overflow-y-auto">
                         <li
