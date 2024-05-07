@@ -1,119 +1,104 @@
 <template>
-    <main class="flex h-full flex-col overflow-auto bg-take-navy text-white">
-        <header>
-            <div
-                class="flex select-none justify-center border-b-2 border-take-yellow bg-take-navy-medium px-4 py-1"
-            >
-                <div class="flex w-full flex-wrap">
-                    <h1
-                        @click="() => navigateTo('/')"
-                        class="flex cursor-pointer items-center gap-2 font-NovaCut text-2xl font-bold text-take-yellow sm:text-3xl md:text-4xl"
-                    >
-                        <img
-                            class="h-[1.5em] w-[1.5em]"
-                            src="~assets/yellowDice.png"
-                        />
-                        <span v-if="!isMobile">Take Initiative</span>
-                    </h1>
-                    <section
-                        class="flex flex-1 flex-row flex-wrap justify-end gap-2"
-                    >
-                        <div class="flex flex-row items-center gap-2">
-                            <div
-                                v-if="isCombatRoute"
-                                class="flex items-center gap-2"
-                                key="CombatRoute"
-                            >
-                                <article>
-                                    <label
-                                        class="font-NovaCut text-lg text-take-yellow"
-                                    >
-                                        <ClientOnly
-                                            fallback-tag="span"
-                                            fallback="Loading..."
-                                        >
-                                            {{
-                                                campaignStore.state.campaign
-                                                    ?.campaignName
-                                            }}
-                                        </ClientOnly>
-                                    </label>
-                                </article>
-                            </div>
-
-                            <div
-                                v-if="isIndexRoute"
-                                class="flex items-center gap-2"
-                                key="IndexRoute"
-                            >
-                                <article
-                                    class="flex flex-row items-center gap-1"
-                                >
-                                    <label
-                                        for="campaigns"
-                                        class="font-NovaCut text-take-yellow"
-                                        >Campaigns:</label
-                                    >
-                                    <select
-                                        name="campaigns"
-                                        id="campaigns"
-                                        class="rounded-lg bg-take-navy p-2"
-                                        :value="
-                                            userStore.state.selectedCampaignId
-                                        "
-                                        @change="
-                                            (e) => {
-                                                const campaignId = (
-                                                    e.target as HTMLSelectElement
-                                                ).value;
-                                                userStore.state.selectedCampaignId =
-                                                    campaignId;
-                                            }
-                                        "
-                                    >
-                                        <option
-                                            v-for="c in userStore.campaignList"
-                                            :key="c.campaignId"
-                                            :value="c.campaignId"
-                                        >
-                                            {{ c.campaignName }}
-                                        </option>
-                                    </select>
-                                </article>
-                                <FormButton
-                                    icon="share-from-square"
-                                    textColour="white"
-                                    size="sm"
-                                    buttonColour="take-navy-light"
-                                    hoverButtonColour="take-yellow"
-                                    @clicked="() => shareCampaignModal?.show()"
-                                />
-                            </div>
-                            <FormButton
-                                key="CampaignsRoute"
-                                v-if="!isCampaignsRoute"
-                                @clicked="() => navigateTo('/campaigns')"
-                                icon="flag-checkered"
-                                size="sm"
-                                textColour="white"
-                                buttonColour="take-navy-light"
-                                hoverButtonColour="take-yellow"
+    <div class="drawer flex h-full bg-take-navy text-white">
+        <input
+            ref="drawerToggle"
+            id="drawer"
+            type="checkbox"
+            class="drawer-toggle"
+        />
+        <div class="drawer-content w-full">
+            <main class="flex h-full w-full flex-col">
+                <header
+                    class="navbar border border-take-navy-medium border-b-take-yellow bg-take-navy-medium"
+                >
+                    <section class="navbar-start flex gap-2">
+                        <label for="drawer" class="cursor-pointer">
+                            <img
+                                class="h-[3em] w-[3em]"
+                                src="~assets/yellowDice.png"
                             />
-
-                            <FormButton
-                                icon="user-gear"
-                                size="sm"
-                                textColour="white"
-                                buttonColour="take-navy-light"
-                                hoverButtonColour="take-yellow"
-                                @clicked="() => manageUserModal?.show()"
-                            />
-                        </div>
+                        </label>
                     </section>
+                    <section class="navbar-end flex items-center gap-2">
+                        <label class="font-NovaCut text-xl text-take-yellow">{{
+                            userStore.selectedCampaignDto?.campaignName
+                        }}</label>
+                        <FormButton
+                            icon="share-from-square"
+                            size="sm"
+                            textColour=""
+                            buttonColour="take-navy-medium"
+                            hoverButtonColour="take-navy-dark"
+                            @clicked="() => shareCampaignModal?.show()"
+                        />
+                    </section>
+                </header>
+                <div class="flex-1 overflow-y-scroll">
+                    <slot />
                 </div>
-            </div>
-            <Modal ref="manageUserModal" title="Manage">
-                <main class="flex flex-col items-center">
+            </main>
+        </div>
+        <div class="drawer-side">
+            <label
+                for="drawer"
+                aria-label="close sidebar"
+                class="drawer-overlay"
+            ></label>
+            <ul
+                class="menu flex min-h-full w-80 flex-col gap-2 bg-take-navy p-4 text-base-content"
+            >
+                <li v-if="isIndexRoute">
+                    <Dropdown
+                        colour="take-navy-dark"
+                        hoverColour="take-navy-medium"
+                        labelFallback="Campaigns"
+                        :items="userStore.campaignList!"
+                        :displayFunc="(c) => c.campaignName"
+                        :keyFunc="(c) => c.campaignId"
+                        :selectedItem="
+                            userStore.campaignList?.find(
+                                (x) =>
+                                    x.campaignId ==
+                                    userStore.state.selectedCampaignId,
+                            )
+                        "
+                        @update:selectedItem="
+                            (item) => onSetSelectedCampaign(item.campaignId)
+                        "
+                    >
+                        <template #Footer>
+                            <li
+                                :class="['rounded-md', ``]"
+                                @click="
+                                    () => {
+                                        createOrJoinCampaignModal?.show();
+                                        toggleDrawer();
+                                    }
+                                "
+                            >
+                                <a class="text-take-yellow"
+                                    ><FontAwesomeIcon icon="plus" /> Create or
+                                    Join</a
+                                >
+                            </li>
+                        </template>
+                    </Dropdown>
+                </li>
+                <li v-else>
+                    <FormButton
+                        icon="house"
+                        label="home"
+                        buttonColour="take-navy-dark"
+                        hoverButtonColour="take-yellow"
+                        @clicked="
+                            () => {
+                                navigateTo('/');
+                                toggleDrawer();
+                            }
+                        "
+                    />
+                </li>
+                <li>
                     <FormButton
                         label="Logout"
                         :loadingDisplay="{
@@ -121,83 +106,136 @@
                             loadingText: 'Logging out...',
                         }"
                         icon="right-from-bracket"
-                        @clicked="onLogout"
-                        :isLoading="manageUserState.loggingOut"
+                        :click="userStore.logout"
+                        buttonColour="take-navy-dark"
+                        hoverButtonColour="take-navy-medium"
+                        size="sm"
                     />
-                </main>
-            </Modal>
-            <Modal ref="shareCampaignModal">
-                <main class="flex flex-col gap-4 text-white">
-                    <div class="flex flex-col gap-2">
-                        <label>Campaign Code</label>
-                        <div class="flex w-full items-center gap-2">
-                            <div
-                                class="flex w-full justify-start rounded-lg bg-take-navy-light p-1 px-2 text-center"
-                            >
-                                {{ userStore.selectedCampaignDto?.joinCode }}
-                            </div>
-                            <FormButton
-                                icon="copy"
-                                buttonColour="take-navy-medium"
-                                size="sm"
-                            />
-                        </div>
-                    </div>
-
-                    <div class="flex flex-col gap-2">
-                        <label>URL</label>
-                        <div class="flex w-full items-center gap-2">
-                            <div
-                                class="flex w-full justify-start truncate rounded-lg bg-take-navy-light p-1 px-2 text-center"
-                            >
-                                {{
-                                    `${config.public.webUrl}/join/${userStore.selectedCampaignDto?.joinCode}`
-                                }}
-                            </div>
-                            <FormButton
-                                icon="copy"
-                                buttonColour="take-navy-medium"
-                                size="sm"
-                            />
-                        </div>
-                    </div>
-                </main>
-            </Modal>
-        </header>
-        <div class="w-full flex-1 overflow-y-auto">
-            <slot />
+                </li>
+            </ul>
         </div>
-    </main>
+        <Modal ref="shareCampaignModal" title="Share">
+            <main class="flex flex-col gap-4 text-white">
+                <div class="flex flex-col gap-2">
+                    <label class="font-NovaCut text-take-yellow"
+                        >Campaign Code</label
+                    >
+                    <div class="flex w-full items-center gap-2">
+                        <TimedTooltip tooltip="Copied!" class="peer">
+                            <FormButton
+                                icon="copy"
+                                buttonColour="take-navy-dark"
+                                hoverButtonColour="take-yellow"
+                                size="sm"
+                                :preventClickBubbling="false"
+                                @clicked="
+                                    () =>
+                                        copyText(
+                                            userStore.selectedCampaignDto
+                                                ?.joinCode!,
+                                        )
+                                "
+                            />
+                        </TimedTooltip>
+                        <div
+                            class="pointer-events-none -order-1 flex w-full justify-start rounded-lg border border-take-navy-dark bg-take-navy-dark p-1 px-2 text-center transition-colors peer-hover:border-take-yellow"
+                        >
+                            {{ userStore.selectedCampaignDto?.joinCode }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="font-NovaCut text-take-yellow">URL</label>
+                    <div class="group group flex w-full items-center gap-2">
+                        <TimedTooltip tooltip="Copied!" class="peer">
+                            <FormButton
+                                icon="copy"
+                                size="sm"
+                                class="transition-colors"
+                                buttonColour="take-navy-dark"
+                                hoverButtonColour="take-yellow"
+                                :preventClickBubbling="false"
+                                @clicked="
+                                    () =>
+                                        copyText(
+                                            `${config.public.webUrl}/join/${userStore.selectedCampaignDto?.joinCode}`,
+                                        )
+                                "
+                            />
+                        </TimedTooltip>
+                        <div
+                            class="-order-1 flex w-full justify-start truncate rounded-lg border border-take-navy bg-take-navy-dark p-1 px-2 text-center transition-colors peer-hover:border-take-yellow"
+                        >
+                            {{
+                                `${config.public.webUrl}/join/${userStore.selectedCampaignDto?.joinCode}`
+                            }}
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </Modal>
+        <Modal ref="createOrJoinCampaignModal" title="Create or Join">
+            <Tabs notSelectedTabColour="take-navy-medium">
+                <template #Create>
+                    <CreateCampaignForm :submit="createCampaign" class="px-2" />
+                </template>
+                <template #Join>
+                    <JoinCampaignForm :submit="joinCampaign" class="px-2" />
+                </template>
+            </Tabs>
+        </Modal>
+    </div>
 </template>
 <script setup lang="ts">
+import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import Modal from "~/components/Modal.vue";
-const manageUserModal = ref<InstanceType<typeof Modal> | null>(null);
+import type { CreateCampaignRequest } from "~/utils/api/campaign/createCampaignRequest";
+import type { JoinCampaignRequest } from "~/utils/api/campaign/joinCampaignRequest";
+const drawerToggle = ref<HTMLInputElement | null>(null);
+function toggleDrawer() {
+    if (drawerToggle.value) {
+        drawerToggle.value.checked = !drawerToggle.value?.checked;
+    }
+}
+
+const createOrJoinCampaignModal = ref<InstanceType<typeof Modal> | null>(null);
 const shareCampaignModal = ref<InstanceType<typeof Modal> | null>(null);
 const userStore = useUserStore();
-const combatStore = useCombatStore();
-const campaignStore = useCampaignStore();
 const routeInfo = useRoute();
-const { isMobile } = useDevice();
-
 const isIndexRoute = computed(() => routeInfo.name == "index");
 const isCampaignsRoute = computed(() => routeInfo.name == "campaigns");
 const isCombatRoute = computed(() => routeInfo.name == "combat-id");
-const joinCode = computed(() => {
-    if (isIndexRoute) {
-        return userStore.selectedCampaignDto?.joinCode;
-    }
-});
 
 const config = useRuntimeConfig();
 const manageUserState = reactive({
     loggingOut: false,
 });
 
-async function onLogout() {
-    manageUserState.loggingOut = true;
-    await userStore.logout().finally(async () => {
-        manageUserState.loggingOut = false;
-        manageUserModal.value?.hide();
-    });
+function onSetSelectedCampaign(campaignId: string) {
+    userStore.setSelectedCampaign(campaignId);
+    toggleDrawer();
+}
+
+function copyText(value: string) {
+    navigator.clipboard.writeText(value);
+}
+
+async function createCampaign(req: CreateCampaignRequest) {
+    return await useUserStore()
+        .createCampaign(req)
+        .then(async (c) => {
+            userStore.setSelectedCampaign(c.id);
+        })
+        .then(createOrJoinCampaignModal.value?.hide);
+}
+
+async function joinCampaign(req: JoinCampaignRequest) {
+    return await useUserStore()
+        .joinCampaign(req)
+        .then(async (c) => {
+            userStore.setSelectedCampaign(c.id);
+        })
+        .then(createOrJoinCampaignModal.value?.hide);
 }
 </script>

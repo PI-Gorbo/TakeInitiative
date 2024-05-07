@@ -104,7 +104,6 @@ useHead({
 definePageMeta({
     requiresAuth: true,
     middleware: [redirectToCreateOrJoinCampaign],
-    layout: "index-page",
 });
 
 const openCombatText = computed(() => {
