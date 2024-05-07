@@ -2,8 +2,8 @@
     <TransitionGroup
         name="fade"
         tag="main"
-        class="flex h-full flex-col items-center bg-take-navy text-white"
-    >   
+        class="flex h-full flex-col items-center overflow-y-auto bg-take-navy text-white"
+    >
         <div
             v-if="
                 (!pending && !error) ||
@@ -11,7 +11,6 @@
             "
             class="flex w-full flex-1 flex-col overflow-auto md:w-4/5 md:max-w-[1200px] 2xl:w-full"
         >
-
             <Tabs
                 class="flex-1 flex-col overflow-auto"
                 backgroundColour="take-navy"

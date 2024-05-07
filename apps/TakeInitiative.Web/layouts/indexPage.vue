@@ -1,21 +1,25 @@
 <template>
-    <div class="drawer drawer-end flex h-full bg-take-navy text-white">
+    <div class="drawer flex h-full bg-take-navy text-white">
         <input
             ref="drawerToggle"
             id="drawer"
             type="checkbox"
             class="drawer-toggle"
         />
-        <div class="drawer-content w-full overflow-y-auto">
+        <div class="drawer-content w-full">
             <main class="flex h-full w-full flex-col">
-                <header class="navbar bg-take-navy-medium border-take-navy-medium border-b-take-yellow border">
+                <header
+                    class="navbar border border-take-navy-medium border-b-take-yellow bg-take-navy-medium"
+                >
                     <section class="navbar-start flex gap-2">
-                        <img
-                            class="h-[3em] w-[3em]"
-                            src="~assets/yellowDice.png"
-                        />
+                        <label for="drawer" class="cursor-pointer">
+                            <img
+                                class="h-[3em] w-[3em]"
+                                src="~assets/yellowDice.png"
+                            />
+                        </label>
                     </section>
-                    <section class="navbar-end">
+                    <section class="navbar-end flex items-center gap-2">
                         <label class="font-NovaCut text-xl text-take-yellow">{{
                             userStore.selectedCampaignDto?.campaignName
                         }}</label>
@@ -27,15 +31,9 @@
                             hoverButtonColour="take-navy-dark"
                             @clicked="() => shareCampaignModal?.show()"
                         />
-                        <label
-                            for="drawer"
-                            class="btn cursor-pointer border-none bg-take-navy-medium hover:bg-take-navy-dark"
-                        >
-                            <FontAwesomeIcon icon="bars" />
-                        </label>
                     </section>
                 </header>
-                <div class="flex-1">
+                <div class="flex-1 overflow-y-scroll">
                     <slot />
                 </div>
             </main>
@@ -49,7 +47,7 @@
             <ul
                 class="menu flex min-h-full w-80 flex-col gap-2 bg-take-navy p-4 text-base-content"
             >
-                <li>
+                <li v-if="isIndexRoute">
                     <Dropdown
                         colour="take-navy-dark"
                         hoverColour="take-navy-medium"
@@ -66,7 +64,7 @@
                         "
                         @update:selectedItem="
                             (item) => onSetSelectedCampaign(item.campaignId)
-                        "   
+                        "
                     >
                         <template #Footer>
                             <li
@@ -85,6 +83,20 @@
                             </li>
                         </template>
                     </Dropdown>
+                </li>
+                <li v-else>
+                    <FormButton
+                        icon="house"
+                        label="home"
+                        buttonColour="take-navy-dark"
+                        hoverButtonColour="take-yellow"
+                        @clicked="
+                            () => {
+                                navigateTo('/');
+                                toggleDrawer();
+                            }
+                        "
+                    />
                 </li>
                 <li>
                     <FormButton
@@ -190,10 +202,10 @@ function toggleDrawer() {
 const createOrJoinCampaignModal = ref<InstanceType<typeof Modal> | null>(null);
 const shareCampaignModal = ref<InstanceType<typeof Modal> | null>(null);
 const userStore = useUserStore();
-// const routeInfo = useRoute();
-// const isIndexRoute = computed(() => routeInfo.name == "index");
-// const isCampaignsRoute = computed(() => routeInfo.name == "campaigns");
-// const isCombatRoute = computed(() => routeInfo.name == "combat-id");
+const routeInfo = useRoute();
+const isIndexRoute = computed(() => routeInfo.name == "index");
+const isCampaignsRoute = computed(() => routeInfo.name == "campaigns");
+const isCombatRoute = computed(() => routeInfo.name == "combat-id");
 
 const config = useRuntimeConfig();
 const manageUserState = reactive({

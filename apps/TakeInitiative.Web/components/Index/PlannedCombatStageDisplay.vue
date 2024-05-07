@@ -2,7 +2,9 @@
     <div
         class="flex w-full flex-col rounded-xl border-2 border-take-navy-light p-2"
     >
-        <div class="mb-2 flex w-full flex-row gap-2">
+        <div
+            class="mb-2 flex w-full flex-row items-center justify-between gap-2"
+        >
             <FormToggleableInput
                 :value="stageName"
                 textColour="take-yellow"
@@ -12,24 +14,21 @@
                 @update:value="(val) => (stageName = String(val))"
                 :onSave="() => props.updateStage({ name: stageName })"
             />
-            <!-- <div class="flex-1 text-take-yellow">
-                {{ props.stage.name }}
-            </div> -->
-            <FormButton
-                icon="plus"
-                buttonColour="take-navy-medium"
-                textColour="white"
-                @click="() => createNpcFormModal?.show()"
-                size="sm"
-            />
-            <FormButton
-                icon="trash"
-                buttonColour="take-navy-medium"
-                textColour="white"
-                hoverButtonColour="take-red"
-                @clicked="() => props.deleteStage()"
-                size="sm"
-            />
+            <div class="flex flex-row gap-2">
+                <FormButton
+                    icon="plus"
+                    buttonColour="take-navy-medium"
+                    textColour="white"
+                    @click="() => createNpcFormModal?.show()"
+                />
+                <FormButton
+                    icon="trash"
+                    buttonColour="take-navy-medium"
+                    textColour="white"
+                    hoverButtonColour="take-red"
+                    @clicked="() => props.deleteStage()"
+                />
+            </div>
         </div>
         <section class="flex flex-1 flex-col gap-2 pb-4">
             <TransitionGroup

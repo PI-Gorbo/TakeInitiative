@@ -3,14 +3,17 @@
         ref="buttonRef"
         :name="props.label ?? props.icon"
         :class="[
-            `flex btn border-none`,
-            props.icon != undefined && props.label == undefined && 'aspect-square',
+            `btn flex border-none`,
+            props.icon != undefined &&
+                props.label == undefined &&
+                'aspect-square h-min',
             props.disabled
                 ? 'bg-take-grey-dark hover:bg-take-grey-dark'
                 : `bg-${props.buttonColour} hover:bg-${props.hoverButtonColour} text-${props.textColour ?? TakeInitContrastColour[props.buttonColour]} hover:text-${$props.hoverTextColour ?? TakeInitContrastColour[props.hoverButtonColour]}`,
-            size == 'sm' ? 'px-2.5 py-2.5 text-sm' : '',
-            size == 'lg' ? 'px-3 py-3 text-md' : '',
-            size == 'xl' ? 'px-3.5 py-3.5 text-md' : '',
+            size == 'sm' ? 'p-2 text-sm' : '',
+            size == null ? 'text-md p-2.5' : '',
+            size == 'lg' ? 'text-md p-3' : '',
+            size == 'xl' ? 'p-3.5 text-lg' : '',
         ]"
         type="submit"
         :disabled="props.disabled"
@@ -25,7 +28,7 @@
                         typeof props.isLoading == 'object' &&
                         props.isLoading?.submitterId != buttonRef?.id)
                 "
-                class="text-centre flex select-none justify-center gap-1"
+                class="text-centre flex select-none items-center justify-center gap-1"
             >
                 <div
                     v-if="props.icon"
@@ -37,13 +40,17 @@
                         :size="props.size"
                     />
                 </div>
-                <div v-if="props.label" class="cursor-pointer" @click="onClick">
+                <div
+                    v-if="props.label"
+                    class="cursor-pointer text-center"
+                    @click="onClick"
+                >
                     {{ props.label }}
                 </div>
             </div>
             <div
                 v-else-if="props.loadingDisplay"
-                class="flex justify-center gap-2"
+                class="flex items-center justify-center gap-2"
             >
                 <div
                     v-if="props.loadingDisplay.showSpinner"
@@ -84,7 +91,7 @@ export type FromButtonProps = {
     textColour?: TakeInitColour;
     hoverTextColour?: TakeInitColour | undefined;
     icon?: string;
-    size?: FontAwesomeIconSize | "md";
+    size?: FontAwesomeIconSize;
     disabled?: boolean;
     click?: () => Promise<any>;
     preventClickBubbling?: boolean;

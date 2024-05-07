@@ -58,10 +58,9 @@ export const useCampaignStore = defineStore("campaignStore", () => {
     async function setCampaign(
         campaignDetails: GetCampaignResponse,
     ): Promise<void> {
-        Object.keys(campaignDetails)
-            .forEach((key) => {
-                state[key] = campaignDetails[key]
-            })
+        Object.keys(campaignDetails).forEach((key) => {
+            state[key] = campaignDetails[key];
+        });
     }
 
     async function updateCampaignDetails(
@@ -93,9 +92,11 @@ export const useCampaignStore = defineStore("campaignStore", () => {
             });
     }
 
-    async function setPlannedCombat(combatId: string) {
+    async function setPlannedCombat(combatId: string | null) {
         plannedCombatStore.setPlannedCombat(
-            state.plannedCombats?.find((x) => x.id == combatId),
+            combatId != null
+                ? state.plannedCombats?.find((x) => x.id == combatId)
+                : null,
         );
     }
 
@@ -163,6 +164,13 @@ export const useCampaignStore = defineStore("campaignStore", () => {
         ];
     });
 
+    async function openCombat(plannedCombatId: string) {
+        return api.combat
+            .open({ plannedCombatId: plannedCombatId })
+            .then(() => setCampaignById(state.campaign?.id!))
+            .then(() => plannedCombatStore.setPlannedCombat(null));
+    }
+
     return {
         state,
         init,
@@ -172,6 +180,7 @@ export const useCampaignStore = defineStore("campaignStore", () => {
         createPlannedCombat,
         setPlannedCombat,
         deletePlannedCombat,
+        openCombat,
         isDm: computed(
             () => state.userCampaignMember?.isDungeonMaster ?? false,
         ),

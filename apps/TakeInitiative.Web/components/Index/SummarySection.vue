@@ -12,6 +12,7 @@
                 campaignStore.state.combatDto.state == CombatState.Open
                     ? 'bg-take-yellow-dark'
                     : 'bg-take-red ',
+                isMobile ? 'flex-1' : 'w-full',
             ]"
             @click="
                 async () =>
@@ -244,7 +245,7 @@ import { yup } from "~/utils/types/HelperTypes";
 import { parseISO, format } from "date-fns";
 
 const { isMobile } = useDevice();
-const userStore = useUserStore()
+const userStore = useUserStore();
 const campaignStore = useCampaignStore();
 const campaign = computed(() => campaignStore.state.campaign);
 const formState = reactive({
@@ -285,7 +286,6 @@ async function submitDetails(): Promise<void> {
         campaignResources: resources.value ?? "",
     });
 }
-
 
 const openCombatText = computed(() => {
     const combatDto = campaignStore.state.combatDto;

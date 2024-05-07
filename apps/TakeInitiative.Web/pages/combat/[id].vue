@@ -223,6 +223,7 @@ definePageMeta({
             combatStore.joinCombat();
         },
     ],
+    layout: "index-page",
 });
 
 // Route

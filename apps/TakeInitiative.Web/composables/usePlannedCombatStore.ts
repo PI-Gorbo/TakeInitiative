@@ -17,6 +17,17 @@ export const usePlannedCombatStore = defineStore("plannedCombatStore", () => {
 
     function setPlannedCombat(combat: PlannedCombat | null | undefined) {
         state.plannedCombat = combat;
+
+        if (combat) {
+            // Update the planned combat list on the main campaign store.
+            const index = campaignStore.state?.plannedCombats?.findIndex(
+                (x) => x.id == combat?.id,
+            );
+
+            if (index != null && campaignStore.state?.plannedCombats) {
+                campaignStore.state.plannedCombats[index] = combat; // Also update the combat.
+            }
+        }
     }
 
     async function addStage(
@@ -76,27 +87,16 @@ export const usePlannedCombatStore = defineStore("plannedCombatStore", () => {
             .then(setPlannedCombat);
     }
 
-    async function createOpenCombat() {
-        return api.combat
-            .open({ plannedCombatId: state.plannedCombat?.id! })
-            .then(() =>
-                campaignStore.setCampaignById(state.plannedCombat?.campaignId),
-            )
-            .then(() => (state.plannedCombat = null));
-    }
-
     async function updateStage(
         req: Omit<UpdatePlannedCombatStageRequest, "combatId">,
     ) {
         const request = {
-                combatId: state.plannedCombat?.id!,
-                stageId: req.stageId,
-                name: req.name,
-            }
-            console.log("request is",request)
-        return api.plannedCombat.stage
-            .update(request)
-            .then(setPlannedCombat);
+            combatId: state.plannedCombat?.id!,
+            stageId: req.stageId,
+            name: req.name,
+        };
+        console.log("request is", request);
+        return api.plannedCombat.stage.update(request).then(setPlannedCombat);
     }
 
     return {
@@ -108,6 +108,5 @@ export const usePlannedCombatStore = defineStore("plannedCombatStore", () => {
         addNpc,
         removeNpc,
         updateNpc,
-        createOpenCombat,
     };
 });
