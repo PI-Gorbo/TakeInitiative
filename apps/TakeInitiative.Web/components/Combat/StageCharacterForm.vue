@@ -4,13 +4,24 @@
         :onSubmit="onSubmit"
         v-slot="{ submitting }"
     >
-        <FormInput
-            :autoFocus="true"
-            textColour="white"
-            label="Name"
-            v-model:value="name"
-            v-bind="nameInputProps"
-        />
+        <div class="flex items-end justify-between">
+            <FormInput
+                :autoFocus="true"
+                textColour="white"
+                label="Name"
+                v-model:value="name"
+                v-bind="nameInputProps"
+            />
+
+            <FormButton
+                :icon="isHidden ? 'eye-slash' : 'eye'"
+                size="lg"
+                :label="isHidden ? 'Hidden' : 'Visible'"
+                @clicked="() => (isHidden = !isHidden)"
+                buttonColour="take-navy-light"
+                type="button"
+            />
+        </div>
 
         <section>
             <label class="text-white">Initiative</label>
@@ -91,7 +102,7 @@
 </template>
 
 <script setup lang="ts">
-import { Form } from "vee-validate";
+import { ErrorMessage, Form } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/yup";
 import { useForm } from "vee-validate";
 import * as yup from "yup";
@@ -106,7 +117,7 @@ import {
 import type { StagedCharacterDTO } from "~/utils/api/combat/putUpsertStagedCharacter";
 import type { SubmittingState } from "../Form/Base.vue";
 import type { DeleteStagedCharacterRequest } from "~/utils/api/combat/deleteStagedCharacterRequest";
-
+const { userIsDm } = storeToRefs(useCombatStore());
 const formState = reactive({
     error: null as ApiError<StagedCharacterDTO> | null,
 });
@@ -127,6 +138,7 @@ const { values, errors, defineField, validate } = useForm({
             name: yup.string().required("Please provide a name"),
             initiative: characterInitiativeValidator,
             quantity: yup.number().min(1),
+            isHidden: yup.boolean(),
         }),
     ),
 });
@@ -158,12 +170,19 @@ const [initiativeValue, initiativeValueInputProps] = defineField(
     },
 );
 
+const [isHidden, isHiddenInputProps] = defineField("isHidden", {
+    props: (state) => ({
+        errorMessage: formState.error?.getErrorFor("hidden") ?? state.errors[0],
+    }),
+});
+
 watch(
     () => props.character,
     () => {
         initiativeStrategy.value = props.character?.initiative.strategy;
         initiativeValue.value = props.character?.initiative.value;
         name.value = props.character?.name;
+        isHidden.value = props.character?.hidden;
     },
     { deep: true },
 );
@@ -172,10 +191,12 @@ onMounted(() => {
     if (!props.character) {
         initiativeStrategy.value = InitiativeStrategy.Roll;
         initiativeValue.value = "1d20 + 1";
+        isHidden.value = userIsDm.value;
     } else {
         initiativeStrategy.value = props.character?.initiative.strategy;
         initiativeValue.value = props.character.initiative.value;
         name.value = props.character.name;
+        isHidden.value = props.character?.hidden;
     }
 });
 
