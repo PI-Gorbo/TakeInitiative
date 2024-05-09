@@ -12,11 +12,12 @@
                     class="navbar border border-take-navy-medium border-b-take-yellow bg-take-navy-medium"
                 >
                     <section class="navbar-start flex gap-2">
-                        <label for="drawer" class="cursor-pointer">
+                        <label for="drawer" class="cursor-pointer flex gap-2 items-center">
                             <img
                                 class="h-[3em] w-[3em]"
                                 src="~assets/yellowDice.png"
                             />
+                            <label class="text-2xl md:text-3xl font-NovaCut text-take-yellow" v-if="!isMobile">Take Initiative</label>
                         </label>
                     </section>
                     <section class="navbar-end flex items-center gap-2">
@@ -87,7 +88,7 @@
                 <li v-else>
                     <FormButton
                         icon="house"
-                        label="home"
+                        label="Return Home"
                         buttonColour="take-navy-dark"
                         hoverButtonColour="take-yellow"
                         @clicked="
@@ -192,6 +193,9 @@ import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import Modal from "~/components/Modal.vue";
 import type { CreateCampaignRequest } from "~/utils/api/campaign/createCampaignRequest";
 import type { JoinCampaignRequest } from "~/utils/api/campaign/joinCampaignRequest";
+
+
+const {isMobile} = useDevice();
 const drawerToggle = ref<HTMLInputElement | null>(null);
 function toggleDrawer() {
     if (drawerToggle.value) {
