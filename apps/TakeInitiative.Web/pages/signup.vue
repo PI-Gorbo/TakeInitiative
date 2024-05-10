@@ -35,8 +35,8 @@
                 v-bind="confirmPasswordProps"
             />
 
-            <div v-if="formState.submitError?.errors.generalErrors" class="text-take-red">
-                {{ formState.submitError?.errors.generalErrors[0] }}
+            <div v-if="formState.submitError?.errors?.generalErrors" class="text-take-red">
+                {{ formState.submitError?.errors?.generalErrors[0] }}
             </div>
 
             <div v-if="formState.success" class="text-take-yellow">Signing in...</div>
@@ -47,7 +47,7 @@
                     :loadingDisplay="{
                         showSpinner: true,
                         loadingText: 'Signing Up...'
-                    }",
+                    }"
                     :isLoading="formState.submitting"
                 />
             </div>

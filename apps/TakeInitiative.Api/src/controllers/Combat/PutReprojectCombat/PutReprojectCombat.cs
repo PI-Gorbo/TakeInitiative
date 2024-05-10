@@ -12,8 +12,6 @@ using Marten.Events.Daemon.Coordination;
 
 namespace TakeInitiative.Api.Controllers;
 
-
-
 public class PutReprojectCombat(IDocumentStore Store, IHubContext<CombatHub> hubContext, IProjectionCoordinator projectionCoordinator) : EndpointWithoutRequest
 {
 	public override void Configure()

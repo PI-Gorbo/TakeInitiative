@@ -99,7 +99,9 @@
                         "
                     />
                 </li>
+                <li class="flex-1 bg-take-navy"></li>
                 <li>
+                    <div class="text-take-yellow font-NovaCut hover:bg-take-navy">{{ userStore.username }}</div>
                     <FormButton
                         label="Logout"
                         :loadingDisplay="{

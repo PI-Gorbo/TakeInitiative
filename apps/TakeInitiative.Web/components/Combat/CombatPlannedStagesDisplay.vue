@@ -1,5 +1,5 @@
 <template>
-    <div class="flex flex-col gap-2">
+    <div class="flex flex-col gap-2 pt-2">
         <section
             v-if="hasAnyValidStages"
             :key="index"

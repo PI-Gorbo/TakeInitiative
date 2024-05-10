@@ -9,6 +9,9 @@ export default defineNuxtConfig({
         },
         pageTransition: { name: "fade", mode: "out-in" },
     },
+    routeRules: {
+        '/combat/**': {ssr: false}
+    },
     devtools: { enabled: true },
     typescript: {},
     runtimeConfig: {

@@ -4,8 +4,9 @@
         :onSubmit="onSubmit"
         v-slot="{ submitting }"
     >
-        <div class="flex items-end justify-between">
+        <div class="flex items-end justify-between gap-2">
             <FormInput
+                class="flex-1"
                 :autoFocus="true"
                 textColour="white"
                 label="Name"
@@ -14,6 +15,7 @@
             />
 
             <FormButton
+                v-if="userIsDm"
                 :icon="isHidden ? 'eye-slash' : 'eye'"
                 size="lg"
                 :label="isHidden ? 'Hidden' : 'Visible'"
@@ -35,7 +37,7 @@
                                 (e.target as HTMLSelectElement).value,
                             ))
                     "
-                    class="rounded-l-lg bg-take-grey-dark py-1 pl-2 pr-1"
+                    class="rounded-l-lg bg-take-grey-dark py-1 pl-2 pr-1 text-take-navy"
                 >
                     <option :value="InitiativeStrategy.Fixed">Fixed</option>
                     <option :value="InitiativeStrategy.Roll">Roll</option>
@@ -189,8 +191,7 @@ watch(
 
 onMounted(() => {
     if (!props.character) {
-        initiativeStrategy.value = InitiativeStrategy.Roll;
-        initiativeValue.value = "1d20 + 1";
+        initiativeStrategy.value = InitiativeStrategy.Roll; 
         isHidden.value = userIsDm.value;
     } else {
         initiativeStrategy.value = props.character?.initiative.strategy;
@@ -242,7 +243,7 @@ async function onEdit() {
             name: name.value!,
             armorClass: null,
             id: props.character?.id!,
-            hidden: false,
+            hidden: isHidden.value!,
         })
         .catch(async (error) => {
             formState.error = await parseAsApiError(error);
@@ -268,7 +269,7 @@ async function onCreate() {
             name: name.value!,
             armorClass: null,
             id: props.character?.id! ?? crypto.randomUUID(),
-            hidden: false,
+            hidden: isHidden.value!,
         })
         .catch(async (error) => {
             formState.error = await parseAsApiError(error);

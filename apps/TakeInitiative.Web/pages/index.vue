@@ -49,7 +49,7 @@
                                 "
                             />
                         </div>
-                        <div>
+                    <div>
                             <FormButton
                                 label="Delete Campaign"
                                 icon="trash"

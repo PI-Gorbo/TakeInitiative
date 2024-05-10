@@ -11,25 +11,20 @@
         >
             <!-- MAIN CONTENT -->
             <header class="grid grid-cols-3 p-2">
-                <div>
-                    <FormButton
-                        v-if="combatIsStarted && isUsersTurn"
-                        icon="arrows-rotate"
-                        label="End Turn"
-                        buttonColour="take-yellow"
-                        hoverButtonColour="take-yellow-dark"
-                        :loadingDisplay="{
-                            showSpinner: true,
-                            loadingText: 'End...',
-                        }"
-                        :click="combatStore.endTurn"
-                    />
+                <div class="flex gap-1">
+                 
                 </div>
                 <label
                     class="flex items-center justify-center text-center font-NovaCut text-lg"
                     >{{ combat?.combatName }}</label
                 >
-                <div class="flex justify-end px-1">
+                <div class="flex justify-end gap-1 px-1">
+                    <div class="flex gap-1">
+                        <div class="flex flex-col items-center justify-center">
+                            <span class="font-NovaCut">R</span
+                            ><span>{{ combat?.roundNumber }}</span>
+                        </div>
+                    </div>
                     <FormButton
                         v-if="!combatIsFinished"
                         icon="bars"
@@ -59,6 +54,20 @@
                     />
                 </section>
             </main>
+            <footer class="flex justify-end items-center pb-2 px-2">
+                 <FormButton
+                        v-if="combatIsStarted && isUsersTurn"
+                        icon="arrows-rotate"
+                        label="End Turn"
+                        buttonColour="take-red"
+                        hoverButtonColour="take-yellow-dark"
+                        :loadingDisplay="{
+                            showSpinner: true,
+                            loadingText: 'End...',
+                        }"
+                        :click="combatStore.endTurn"
+                    />
+            </footer>
         </div>
         <div class="drawer-side">
             <label
@@ -67,10 +76,10 @@
                 class="drawer-overlay"
             ></label>
             <ul
-                class="menu flex min-h-full w-80 flex-col gap-2 bg-take-navy p-4 text-base-content"
+                class="flex min-h-full w-80 flex-col gap-2 bg-take-navy p-4 text-base-content"
             >
                 <!-- Sidebar content here -->
-                <li>
+                <li class="w-full">
                     <FormButton
                         label="Staged Characters"
                         icon="clipboard-question"
@@ -87,11 +96,12 @@
                         buttonColour="take-navy-dark"
                         hoverButtonColour="take-navy-medium"
                         hoverTextColour="white"
+                        class="w-full"
                     />
                 </li>
-                <li>
+                <li class="w-full">
                     <FormButton
-                        v-if="combatIsOpen"
+                        v-if="userIsDm && combatIsOpen"
                         label="Start Combat"
                         icon="shoe-prints"
                         :click="
@@ -104,9 +114,10 @@
                             showSpinner: true,
                             loadingText: 'Starting...',
                         }"
+                        class="w-full"
                     />
                     <FormButton
-                        v-else-if="combatIsStarted"
+                        v-else-if="userIsDm && combatIsStarted"
                         label="Finish Combat"
                         icon="flag-checkered"
                         :click="
@@ -119,7 +130,11 @@
                             showSpinner: true,
                             loadingText: 'Finishing...',
                         }"
+                        class="w-full"
                     />
+                </li>
+                <li class="select-none">
+                    Connection Status: {{ combatStore.connection.state }} 
                 </li>
             </ul>
         </div>
@@ -130,30 +145,42 @@
                 :onDelete="onDeleteStagedCharacter"
                 :character="lastClickedStagedCharacter!"
             />
-            <Tabs
+            <div
                 v-if="modalState.modalType == 'Combat Opened Stage Characters'"
-                :showTabs="{
-                    Planned: () => userIsDm,
-                    Characters: () =>
-                        (campaignStore.state.userCampaignMember?.characters
-                            ?.length ?? 0) > 0,
-                }"
-                class="py-2"
-                backgroundColour="take-navy-medium"
             >
-                <template #Custom>
-                    <CombatStageCharacterForm
-                        :onCreate="onUpsertStagedCharacter"
-                    />
-                </template>
-                <template #Planned>
-                    <CombatPlannedStagesDisplay
-                        :stages="combatStore.state.combat?.plannedStages!"
-                        :submit="onStagePlannedCharacters"
-                    />
-                </template>
-            </Tabs>
-            <main
+                <Tabs
+                    v-if="
+                        userIsDm &&
+                        (combatStore.state.combat?.plannedStages ?? []).length >
+                            0
+                    "
+                    :showTabs="{
+                        Planned: () => userIsDm,
+                        Characters: () =>
+                            (campaignStore.state.userCampaignMember?.characters
+                                ?.length ?? 0) > 0,
+                    }"
+                    class="py-2"
+                    backgroundColour="take-navy-medium"
+                >
+                    <template #Custom>
+                        <CombatStageCharacterForm
+                            :onCreate="onUpsertStagedCharacter"
+                        />
+                    </template>
+                    <template #Planned>
+                        <CombatPlannedStagesDisplay
+                            :stages="combatStore.state.combat?.plannedStages!"
+                            :submit="onStagePlannedCharacters"
+                        />
+                    </template>
+                </Tabs>
+                <CombatStageCharacterForm
+                    v-else
+                    :onCreate="onUpsertStagedCharacter"
+                />
+            </div>
+            <div
                 v-if="
                     modalState.modalType ==
                     'Combat Started Staged Character Menu'
@@ -162,7 +189,10 @@
                 <CombatStagedCharactersSection
                     @RolledCharactersIntoInitiative="() => closeModal()"
                 />
-            </main>
+            </div>
+            <div v-if="modalState.modalType == 'Edit Initiative Character'" >
+                <CombatEditInitiativeCharacterForm :character="lastClickedInitiativeCharacter!"/>
+            </div>
         </Modal>
     </div>
 </template>
@@ -195,6 +225,7 @@ function toggleDrawer() {
 
 definePageMeta({
     requiresAuth: true,
+
     middleware: [
         function (to, from) {
             if (!process.client || to.name !== "combat-id") {
@@ -230,7 +261,7 @@ const { refresh, pending, error } = await useAsyncData("Combat", async () => {
 });
 
 // Ensures the user is joined whenever the page loads.
-const {} = await useAsyncData(
+const {refresh: rejoinCombat} = await useAsyncData(
     "JoinCombat",
     async () => {
         console.log("Sending join request");
@@ -243,7 +274,8 @@ const {} = await useAsyncData(
 type CombatPageModalType =
     | "Combat Opened Stage Characters"
     | "Combat Started Staged Character Menu"
-    | "Edit Staged Character";
+    | "Edit Staged Character"
+    | "Edit Initiative Character";
 const combatPageModal = ref<typeof Modal | null>(null);
 const modalState = reactive<{
     open: boolean;
@@ -267,34 +299,27 @@ function showModal(modalType: CombatPageModalType) {
             break;
         case "Combat Started Staged Character Menu":
             modalState.title = "Staged Characters";
+        case "Edit Initiative Character":
+            modalState.title = "Edit Character in Initiative";
     }
 }
+const lastClickedStagedCharacter = ref<CombatCharacter | undefined>(undefined);
+const lastClickedInitiativeCharacter = ref<CombatCharacter | undefined>(undefined); 
 function closeModal() {
     combatPageModal.value?.hide();
     modalState.open = false;
     modalState.title = null;
+    lastClickedStagedCharacter.value = undefined;
+    lastClickedInitiativeCharacter.value = undefined;
 }
 
-// // Combat logs
-// const combatLogs = ref<HTMLDivElement | null>(null);
-// watch(
-//     () => combat.value?.combatLogs,
-//     (before, after) => {
-//         if (!combatLogs.value) return;
-//         combatLogs.value.scrollTop = 0;
-//     },
-// );
-// const prettyCombatLogs = computed(() =>
-//     combat.value?.combatLogs.map((log) => `> ${log}`).toReversed(),
-// );
-
-// Displaying the character list,
-
-const lastClickedStagedCharacter = ref<CombatCharacter | undefined>(undefined);
 function onClickCharacter(character: CombatCharacter) {
-    if (combat.value?.state == CombatState.Open) {
+    if (combatIsOpen.value) {
         lastClickedStagedCharacter.value = character;
         showModal("Edit Staged Character");
+    } else if (combatIsStarted.value) {
+        lastClickedInitiativeCharacter.value = character;
+        showModal("Edit Initiative Character");
     }
 }
 

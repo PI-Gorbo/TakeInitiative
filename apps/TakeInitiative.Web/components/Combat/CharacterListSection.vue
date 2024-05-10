@@ -1,4 +1,4 @@
-<template>
+    <template>
     <TransitionGroup
         class="flex h-full flex-1 select-none flex-col gap-2 overflow-y-auto rounded-lg"
         tag="ul"
@@ -7,14 +7,19 @@
         <!-- INITIATIVE LIST -->
 
         <li
-            v-for="(charInfo, index) in characterList"
+            v-for="(charInfo, index) in characterList.filter(
+                (x) => userIsDm || !x.character.hidden,
+            )"
             :key="charInfo.character.id"
             :class="[
                 'grid grid-cols-2 rounded-xl border-2 border-take-navy-light p-2 transition-colors',
                 {
-                    'cursor-pointer hover:border-take-yellow':
-                        combatIsOpen && isEditableForUser(charInfo),
-                    'border-take-yellow':
+                    'cursor-pointer':
+                        (combatIsOpen || combatIsStarted) &&
+                        isEditableForUser(charInfo),
+                    ' hover:border-take-red':
+                        combatIsOpen && combatIsStarted  && isEditableForUser(charInfo),
+                    'border-take-red':
                         props.listToDisplay != 'Staging' &&
                         combatIsStarted &&
                         index == combat?.initiativeIndex,
@@ -31,15 +36,7 @@
                 <!-- Initiative -->
                 <div
                     v-if="!combatIsOpen"
-                    :class="[
-                        {
-                            'cursor-pointer':
-                                isEditableForUser(charInfo) &&
-                                (combatIsOpen ||
-                                    props.listToDisplay == 'Staging'),
-                        },
-                        'flex gap-2',
-                    ]"
+                    class="flex gap-2"
                 >
                     <div
                         v-for="(value, index) in charInfo.character
@@ -57,12 +54,13 @@
                     </div>
                 </div>
                 <!-- Username -->
-                <label
+                <span
                     :class="[
                         {
                             'cursor-pointer':
                                 isEditableForUser(charInfo) &&
                                 (combatIsOpen ||
+                                    combatIsStarted ||
                                     props.listToDisplay == 'Staging'),
                         },
                     ]"
@@ -71,28 +69,34 @@
                         class="text-take-yellow"
                         :icon="combatStore.getIconForUser(charInfo)"
                     />
-                    {{ charInfo.user?.username }}:</label
-                >
+                    {{ charInfo.user?.username }}
+                </span>
                 <!-- Character Name -->
-                <label
-                    :class="[
-                        {
-                            'cursor-pointer':
-                                isEditableForUser(charInfo) &&
-                                (combatIsOpen ||
-                                    props.listToDisplay == 'Staging'),
-                        },
-                    ]"
-                    >{{ charInfo.character.name }}
+                <span>
                     {{
-                        charInfo.character.copyNumber != null
+                        charInfo.character.name +
+                            (charInfo.character.copyNumber !=
+                        null
                             ? `(${charInfo.character.copyNumber})`
-                            : ""
-                    }}</label
-                >
+                            : "")
+                    }}
+                </span>
             </header>
-            <body>
-                <ol class="flex flex-row justify-end">
+            <body class="flex-1">
+                <ol class="flex flex-row items-center justify-end gap-2">
+                    <li
+                        v-if="
+                            userIsDm &&
+                            charInfo.character.playerId ==
+                                userStore.state.user?.userId
+                        "
+                    >
+                        <FontAwesomeIcon
+                            :icon="
+                                charInfo.character.hidden ? 'eye-slash' : 'eye'
+                            "
+                        />
+                    </li>
                     <li v-if="combatIsOpen">
                         <FontAwesomeIcon icon="shoe-prints" />
                         {{ charInfo.character.initiative.value }}
@@ -129,6 +133,7 @@ const {
     combatIsFinished,
     orderedStagedCharacterListWithPlayerInfo,
     initiativeListWithPlayerInfo,
+    userIsDm,
 } = storeToRefs(combatStore);
 const isEditableForUser = combatStore.isEditableForUser;
 
