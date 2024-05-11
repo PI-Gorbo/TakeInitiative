@@ -3,15 +3,15 @@ using FluentValidation;
 
 namespace TakeInitiative.Api.Controllers;
 
-public class PutUpdateInitiativeCharacterRequestValidator : Validator<PutUpsertStagedCharacterRequest>
+public class PutUpdateInitiativeCharacterRequestValidator : Validator<PutUpdateInitiativeCharacterRequest>
 {
-	public PutUpdateInitiativeCharacterRequestValidator()
-	{
-		RuleFor(x => x.CombatId)
-			.NotEmpty();
+    public PutUpdateInitiativeCharacterRequestValidator()
+    {
+        RuleFor(x => x.CombatId)
+            .NotEmpty();
 
-		RuleFor(x => x.Character)
-			.NotEmpty();
+        RuleFor(x => x.Character)
+            .NotEmpty();
     }
 }
 

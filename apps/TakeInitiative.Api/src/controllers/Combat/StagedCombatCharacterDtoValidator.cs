@@ -4,9 +4,9 @@ namespace TakeInitiative.Api.Controllers;
 
 public class StagedCombatCharacterDtoValidator : CharacterValidator<StagedCombatCharacterDto>
 {
-	public StagedCombatCharacterDtoValidator()
-	{
+    public StagedCombatCharacterDtoValidator()
+    {
 
-	}
+    }
 }
 

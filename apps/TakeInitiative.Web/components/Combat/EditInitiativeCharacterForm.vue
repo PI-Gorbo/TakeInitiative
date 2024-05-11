@@ -1,6 +1,6 @@
 <template>
     <FormBase :onSubmit="submit" v-slot="{ submitting }">
-        <main class="pb-2">
+        <main class="pb-2" v-if="props.character">
             <div class="flex items-end justify-between gap-2">
                 <FormInput
                     class="flex-1"
@@ -12,7 +12,10 @@
                 />
 
                 <FormButton
-                    v-if="userIsDm"
+                    v-if="
+                        userIsDm &&
+                        props.character.playerId == userStore.state.user?.userId
+                    "
                     :icon="isHidden ? 'eye-slash' : 'eye'"
                     size="lg"
                     :label="isHidden ? 'Hidden' : 'Visible'"
@@ -50,13 +53,15 @@ import {
     characterInitiativeValidator,
     type CombatCharacter,
 } from "~/utils/types/models";
+import type { CombatCharacterDto } from "~/utils/api/combat/putUpdateInitiativeCharacterRequest";
+const userStore = useUserStore();
 const { userIsDm } = storeToRefs(useCombatStore());
 
 const props = withDefaults(
     defineProps<{
         character: CombatCharacter;
-        onEdit?: (request: {}) => Promise<any>;
-        onDelete?: (request: Omit<unknown, "combatId">) => Promise<any>;
+        onEdit: (character: CombatCharacterDto) => Promise<any>;
+        onDelete: (characterId: string) => Promise<any>;
     }>(),
     {},
 );
@@ -88,6 +93,11 @@ const [isHidden, isHiddenInputProps] = defineField("isHidden", {
 });
 
 function setValuesFromProps() {
+    if (props.character == null) {
+        name.value = "";
+        isHidden.value = false;
+        return;
+    }
     name.value = props.character.name;
     isHidden.value = props.character.hidden;
 }
@@ -104,6 +114,25 @@ async function submit(formSubmittingState: SubmittingState) {
     }
 }
 
-async function onEdit() {}
-async function onDelete() {}
+async function onEdit() {
+    return await props
+        .onEdit({
+            id: props.character.id,
+            name: name.value!,
+            hidden: isHidden.value!,
+            initiativeValue: props.character.initiativeValue!,
+            armorClass: props.character.armourClass ?? null,
+            health: props.character.health!,
+        })
+        .catch(
+            async (error) => (formState.error = await parseAsApiError(error)),
+        );
+}
+async function onDelete() {
+    return await props
+        .onDelete(props.character.id)
+        .catch(
+            async (error) => (formState.error = await parseAsApiError(error)),
+        );
+}
 </script>

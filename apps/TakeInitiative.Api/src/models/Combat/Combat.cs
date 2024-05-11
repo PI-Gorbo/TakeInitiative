@@ -29,16 +29,16 @@ public record Combat
             CombatState State,
             string? CombatName,
             Guid DungeonMaster,
-            ImmutableList<CombatTimingRecord>? Timing,
-            ImmutableList<string>? CombatLogs,
-            ImmutableList<PlayerDto>? CurrentPlayers,
+            ImmutableList<CombatTimingRecord> Timing,
+            ImmutableList<string> CombatLogs,
+            ImmutableList<PlayerDto> CurrentPlayers,
 
             // Actual Initiative List
-            ImmutableList<CombatCharacter>? StagedList,
-            ImmutableList<CombatCharacter>? InitiativeList,
+            ImmutableList<CombatCharacter> StagedList,
+            ImmutableList<CombatCharacter> InitiativeList,
 
             // Planning 
-            ImmutableList<PlannedCombatStage>? PlannedStages
+            ImmutableList<PlannedCombatStage> PlannedStages
     )
     {
         return new Combat()
@@ -58,4 +58,9 @@ public record Combat
             RoundNumber = null,
         };
     }
+
+    public (int initiative, int turnNumber) GetNextTurnInfo() =>
+        this.InitiativeIndex + 1 == this.InitiativeList.Count
+            ? (0, (this.RoundNumber ?? 0) + 1)
+            : (this.InitiativeIndex + 1, this.RoundNumber ?? 0);
 }

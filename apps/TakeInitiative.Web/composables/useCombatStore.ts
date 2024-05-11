@@ -1,3 +1,4 @@
+import { deleteInitiativeCharacterRequest } from "~/utils/api/combat/deleteInitiativeCharacterRequest";
 import {
     CombatState,
     type Combat,
@@ -12,6 +13,10 @@ import type { DeleteStagedCharacterRequest } from "~/utils/api/combat/deleteStag
 import type { PostStagePlannedCharactersRequest } from "~/utils/api/combat/postStagePlannedCharactersRequest";
 import type { CampaignMemberDto } from "~/utils/api/campaign/getCampaignRequest";
 import type { PostRollStagedCharactersIntoInitiativeRequest } from "~/utils/api/combat/postRollStagedCharactersIntoInitiative";
+import type {
+    CombatCharacterDto,
+    PutUpdateInitiativeCharacterRequest,
+} from "~/utils/api/combat/putUpdateInitiativeCharacterRequest";
 export type CombatPlayerDto = {
     user: CampaignMemberDto;
     character: CombatCharacter;
@@ -86,7 +91,7 @@ export const useCombatStore = defineStore("combatStore", () => {
     }
 
     async function upsertStagedCharacter(req: StagedCharacterDTO) {
-        return await api.combat.stage.character.upsert({
+        return await api.combat.staged.character.upsert({
             character: req,
             combatId: state.combat?.id!,
         });
@@ -95,7 +100,7 @@ export const useCombatStore = defineStore("combatStore", () => {
     async function deleteStagedCharacter(
         req: Omit<DeleteStagedCharacterRequest, "combatId">,
     ) {
-        return await api.combat.stage.character.delete({
+        return await api.combat.staged.character.delete({
             ...req,
             combatId: state.combat?.id!,
         });
@@ -119,7 +124,7 @@ export const useCombatStore = defineStore("combatStore", () => {
             "combatId"
         >,
     ) {
-        return await api.combat.stage.rollIntoInitiative({
+        return await api.combat.staged.rollIntoInitiative({
             ...request,
             combatId: state.combat?.id!,
         });
@@ -128,9 +133,23 @@ export const useCombatStore = defineStore("combatStore", () => {
     async function stagePlannedCharacters(
         req: PostStagePlannedCharactersRequest["plannedCharactersToStage"],
     ) {
-        return await api.combat.stage.planned({
+        return await api.combat.staged.planned({
             combatId: state.combat?.id!,
             plannedCharactersToStage: req,
+        });
+    }
+
+    async function updateInitiativeCharacter(character: CombatCharacterDto) {
+        return await api.combat.initiative.character.update({
+            combatId: state.combat?.id!,
+            character,
+        });
+    }
+
+    async function deleteInitiativeCharacterRequest(characterId: string) {
+        return await api.combat.initiative.character.delete({
+            combatId: state.combat?.id!,
+            characterId,
         });
     }
 
@@ -201,6 +220,8 @@ export const useCombatStore = defineStore("combatStore", () => {
     return {
         connection,
         state,
+        deleteInitiativeCharacterRequest,
+        updateInitiativeCharacter,
         upsertStagedCharacter,
         deleteStagedCharacter,
         stagePlannedCharacters,

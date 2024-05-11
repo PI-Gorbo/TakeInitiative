@@ -39,7 +39,7 @@ public class RollStagedCharacterIntoInitiativeCommandHandler(IDocumentStore Stor
                     ThrowError($"Cannot activate character because the combat is {combat.State.ToString().ToLower()}.");
                 }
 
-                // Check the user is part of the combat.
+                // Check the user is the dungeon master.
                 if (combat.DungeonMaster != command.UserId)
                 {
                     ThrowError("Must be the dungeon master in order to start the combat.");

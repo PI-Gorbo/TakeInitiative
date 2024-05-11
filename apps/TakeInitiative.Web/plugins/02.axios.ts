@@ -28,9 +28,10 @@ export default defineNuxtPlugin((nuxtApp) => {
         async (error) => {
             if (error.response.status == 401) {
                 await navigateTo("/login");
+                throw error;
             }
 
-            return error;
+            throw error;
         },
     );
 

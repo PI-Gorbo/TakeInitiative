@@ -10,22 +10,22 @@ using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Controllers;
 
-public class PutUpdateInitiativeCharacter(IHubContext<CombatHub> hubContext) : Endpoint<PutUpdateInitiativeCharacterRequest, CombatResponse>
+public class DeleteInitiativeCharacter(IHubContext<CombatHub> hubContext) : Endpoint<DeleteInitiativeCharacterRequest, CombatResponse>
 {
     public override void Configure()
     {
-        Put("/api/combat/initiative/character");
+        Delete("/api/combat/initiative/character");
         AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
         Policies(TakePolicies.UserExists);
     }
 
-    public override async Task HandleAsync(PutUpdateInitiativeCharacterRequest req, CancellationToken ct)
+    public override async Task HandleAsync(DeleteInitiativeCharacterRequest req, CancellationToken ct)
     {
-        var result = await new EditInitiativeCharacterCommand()
+        var result = await new DeleteInitiativeCharacterCommand()
         {
             CombatId = req.CombatId,
             UserId = this.GetUserIdOrThrowUnauthorized(),
-            CharacterDto = req.Character
+            CharacterId = req.CharacterId,
         }.ExecuteAsync();
 
         if (result.IsFailure)

@@ -1,4 +1,4 @@
-    <template>
+<template>
     <TransitionGroup
         class="flex h-full flex-1 select-none flex-col gap-2 overflow-y-auto rounded-lg"
         tag="ul"
@@ -7,9 +7,9 @@
         <!-- INITIATIVE LIST -->
 
         <li
-            v-for="(charInfo, index) in characterList.filter(
-                (x) => userIsDm || !x.character.hidden,
-            )"
+            v-for="{ char: charInfo, index } in characterList
+                .map((char, index) => ({ char, index }))
+                .filter((x) => userIsDm || !x.char.character.hidden)"
             :key="charInfo.character.id"
             :class="[
                 'grid grid-cols-2 rounded-xl border-2 border-take-navy-light p-2 transition-colors',
@@ -17,8 +17,9 @@
                     'cursor-pointer':
                         (combatIsOpen || combatIsStarted) &&
                         isEditableForUser(charInfo),
-                    ' hover:border-take-red':
-                        combatIsOpen && combatIsStarted  && isEditableForUser(charInfo),
+                    ' hover:border-take-yellow':
+                        (combatIsOpen || combatIsStarted) &&
+                        isEditableForUser(charInfo),
                     'border-take-red':
                         props.listToDisplay != 'Staging' &&
                         combatIsStarted &&
@@ -34,10 +35,7 @@
         >
             <header class="flex items-center gap-2 text-white">
                 <!-- Initiative -->
-                <div
-                    v-if="!combatIsOpen"
-                    class="flex gap-2"
-                >
+                <div v-if="!combatIsOpen" class="flex gap-2">
                     <div
                         v-for="(value, index) in charInfo.character
                             .initiativeValue"
@@ -75,8 +73,7 @@
                 <span>
                     {{
                         charInfo.character.name +
-                            (charInfo.character.copyNumber !=
-                        null
+                        (charInfo.character.copyNumber != null
                             ? `(${charInfo.character.copyNumber})`
                             : "")
                     }}

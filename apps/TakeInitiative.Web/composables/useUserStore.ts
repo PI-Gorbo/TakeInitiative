@@ -60,10 +60,9 @@ export const useUserStore = defineStore("userStore", () => {
     }
 
     async function login(request: LoginRequest): Promise<void> {
-        return await api.user
-            .login(request)
-            .then(async () => await fetchUser())
-            .then();
+        await api.user.login(request).then(async () => {
+            return await fetchUser();
+        });
     }
 
     async function signUp(signUpRequest: SignUpRequest): Promise<void> {

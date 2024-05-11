@@ -11,9 +11,7 @@
         >
             <!-- MAIN CONTENT -->
             <header class="grid grid-cols-3 p-2">
-                <div class="flex gap-1">
-                 
-                </div>
+                <div class="flex gap-1"></div>
                 <label
                     class="flex items-center justify-center text-center font-NovaCut text-lg"
                     >{{ combat?.combatName }}</label
@@ -54,19 +52,19 @@
                     />
                 </section>
             </main>
-            <footer class="flex justify-end items-center pb-2 px-2">
-                 <FormButton
-                        v-if="combatIsStarted && isUsersTurn"
-                        icon="arrows-rotate"
-                        label="End Turn"
-                        buttonColour="take-red"
-                        hoverButtonColour="take-yellow-dark"
-                        :loadingDisplay="{
-                            showSpinner: true,
-                            loadingText: 'End...',
-                        }"
-                        :click="combatStore.endTurn"
-                    />
+            <footer class="flex items-center justify-end px-2 pb-2">
+                <FormButton
+                    v-if="combatIsStarted && isUsersTurn"
+                    icon="arrows-rotate"
+                    label="End Turn"
+                    buttonColour="take-red"
+                    hoverButtonColour="take-yellow-dark"
+                    :loadingDisplay="{
+                        showSpinner: true,
+                        loadingText: 'End...',
+                    }"
+                    :click="combatStore.endTurn"
+                />
             </footer>
         </div>
         <div class="drawer-side">
@@ -134,7 +132,7 @@
                     />
                 </li>
                 <li class="select-none">
-                    Connection Status: {{ combatStore.connection.state }} 
+                    Connection Status: {{ combatStore.connection.state }}
                 </li>
             </ul>
         </div>
@@ -190,8 +188,22 @@
                     @RolledCharactersIntoInitiative="() => closeModal()"
                 />
             </div>
-            <div v-if="modalState.modalType == 'Edit Initiative Character'" >
-                <CombatEditInitiativeCharacterForm :character="lastClickedInitiativeCharacter!"/>
+            <div v-if="modalState.modalType == 'Edit Initiative Character'">
+                <CombatEditInitiativeCharacterForm
+                    :character="lastClickedInitiativeCharacter!"
+                    :onEdit="
+                        (character) =>
+                            combatStore
+                                .updateInitiativeCharacter(character)
+                                .then(closeModal)
+                    "
+                    :onDelete="
+                        (character) =>
+                            combatStore
+                                .deleteInitiativeCharacterRequest(character)
+                                .then(closeModal)
+                    "
+                />
             </div>
         </Modal>
     </div>
@@ -261,7 +273,7 @@ const { refresh, pending, error } = await useAsyncData("Combat", async () => {
 });
 
 // Ensures the user is joined whenever the page loads.
-const {refresh: rejoinCombat} = await useAsyncData(
+const { refresh: rejoinCombat } = await useAsyncData(
     "JoinCombat",
     async () => {
         console.log("Sending join request");
@@ -304,7 +316,9 @@ function showModal(modalType: CombatPageModalType) {
     }
 }
 const lastClickedStagedCharacter = ref<CombatCharacter | undefined>(undefined);
-const lastClickedInitiativeCharacter = ref<CombatCharacter | undefined>(undefined); 
+const lastClickedInitiativeCharacter = ref<CombatCharacter | undefined>(
+    undefined,
+);
 function closeModal() {
     combatPageModal.value?.hide();
     modalState.open = false;
