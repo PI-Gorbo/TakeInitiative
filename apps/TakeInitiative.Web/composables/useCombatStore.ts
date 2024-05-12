@@ -27,7 +27,7 @@ export const useCombatStore = defineStore("combatStore", () => {
     const api = useApi();
 
     // Start the connection.
-    var connection = new signalR.HubConnectionBuilder()
+    const connection = new signalR.HubConnectionBuilder()
         .withUrl(`${useRuntimeConfig().public.axios.baseURL}/combatHub`, {
             accessTokenFactory: () => useCookie(".AspNetCore.Cookies").value!,
         })

@@ -1,17 +1,16 @@
 using System.Net;
 using FastEndpoints;
 using Marten;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using TakeInitiative.Api.Models;
 using TakeInitiative.Utilities.Extensions;
 using CSharpFunctionalExtensions;
-using TakeInitiative.Utilities;
-using Microsoft.AspNetCore.SignalR;
 using TakeInitiative.Api.CQRS;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.SignalR;
 
 namespace TakeInitiative.Api.Controllers;
 
-public class PostFinishCombat(IHubContext<CombatHub> hubContext) : Endpoint<PostFinishCombatRequest, CombatResponse>
+public class PostFinishCombat(IDocumentSession session, IHubContext<CombatHub> combatHub, IHubContext<CampaignHub> campaignHub) : Endpoint<PostFinishCombatRequest, CombatResponse>
 {
     public override void Configure()
     {
@@ -33,7 +32,8 @@ public class PostFinishCombat(IHubContext<CombatHub> hubContext) : Endpoint<Post
             ThrowError(result.Error, (int)HttpStatusCode.ServiceUnavailable);
         }
 
-        await hubContext.NotifyCombatUpdated(result.Value);
         await SendAsync(new() { Combat = result.Value });
+        await combatHub.NotifyCombatUpdated(result.Value);
+        await campaignHub.NotifyCombatStateUpdated(result.Value.CampaignId);
     }
 }
