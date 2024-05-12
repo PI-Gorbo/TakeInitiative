@@ -10,16 +10,17 @@ namespace TakeInitiative.Api.Controllers;
 
 public class PostStartCombat(IDocumentStore Store, IHubContext<CombatHub> hubContext) : Endpoint<PostStartCombatRequest, CombatResponse>
 {
-	public override void Configure()
-	{
-		Post("/api/combat/start");
-		AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
-		Policies(TakePolicies.UserExists);
-	}
+    public override void Configure()
+    {
+        Post("/api/combat/start");
+        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
+        Policies(TakePolicies.UserExists);
+    }
 
-	public override async Task HandleAsync(PostStartCombatRequest req, CancellationToken ct)
-	{
-        var result = await new StartCombatCommand() {
+    public override async Task HandleAsync(PostStartCombatRequest req, CancellationToken ct)
+    {
+        var result = await new StartCombatCommand()
+        {
             CombatId = req.CombatId,
             UserId = this.GetUserIdOrThrowUnauthorized()
         }.ExecuteAsync();
@@ -29,9 +30,10 @@ public class PostStartCombat(IDocumentStore Store, IHubContext<CombatHub> hubCon
             ThrowError(result.Error, (int)HttpStatusCode.ServiceUnavailable);
         }
 
-        await hubContext.NotifyCombatUpdated(result.Value);
-		await SendAsync(new CombatResponse() {
+        await SendAsync(new CombatResponse()
+        {
             Combat = result.Value,
         });
-	}
+        await hubContext.NotifyCombatUpdated(result.Value);
+    }
 }

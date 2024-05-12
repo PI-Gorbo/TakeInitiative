@@ -1,5 +1,5 @@
 <template>
-    <div class="flex flex-col gap-2">
+    <div class="flex flex-col gap-2 pt-2">
         <section
             v-if="hasAnyValidStages"
             :key="index"
@@ -84,7 +84,10 @@
             <div class="flex w-full justify-end" v-if="canSubmit">
                 <FormButton
                     label="Stage Characters"
-                    loadingDisplay="Staging..."
+                    :loadingDisplay="{
+                        showSpinner: true,
+                        loadingText: 'Staging...',
+                    }"
                     :click="onSubmit"
                 />
             </div>

@@ -3,51 +3,57 @@ import type { extendNuxtSchema } from "nuxt/kit";
 import type { Path, YupSchema } from "vee-validate";
 import * as yup from "yup";
 
-
-
-
 export type ApiError<TRequest extends {}> = {
     statusCode: number;
     message: string;
-    getErrorFor: <TPath extends Path<TRequest>>(key: TPath | "generalErrors") => string | null;
+    errors: { [key: string]: string[] };
+    getErrorFor: <TPath extends Path<TRequest>>(
+        key: TPath | "generalErrors",
+    ) => string | null;
+    error: AxiosError<any>;
 };
 const apiErrorSchema = yup.object({
     statusCode: yup.number().required(),
-    message: yup.string(),
+    message: yup.string().required(),
     errors: yup.object().required(),
 });
 export async function parseAsApiError<TRequest extends {}>(
     error: AxiosError<any>,
 ): Promise<ApiError<TRequest>> {
+    console.log(error.response?.data);
     try {
-        const errorObject = error.response?.data;
         const result = await apiErrorSchema.validate(error?.response?.data);
         return {
-            ...errorObject,
+            statusCode: result.statusCode,
+            message: result.message,
+            errors: result.errors,
             getErrorFor: (error) => {
-				try {
-					const accessors = error.split('.');
-					let errorValue = errorObject.errors
-					for (let index = 0; index < accessors.length; index++) {
-						errorValue = errorValue[accessors[index]]
-					}
-					
-					if (errorValue == null || errorValue.length == 0) {
-						return null;
-					}
-					return errorValue[0];
-				} catch {
-					return null;
-				}
+                try {
+                    const accessors = error.split(".");
+                    let errorValue = result.errors;
+                    for (let index = 0; index < accessors.length; index++) {
+                        errorValue = errorValue[accessors[index]];
+                    }
+                    if (errorValue == null || errorValue.length == 0) {
+                        return null;
+                    }
+                    return errorValue[0];
+                } catch {
+                    return null;
+                }
             },
-        } satisfies ApiError<TRequest>;
-    } catch {
+            error,
+        };
+    } catch (err) {
+        console.log(error, err);
+        const validationError: yup.ValidationError = err as yup.ValidationError;
+        console.log(validationError);
         return {
-			statusCode: 500,
-			message: "Something went wrong.",
-			getErrorFor: (error) => {
-				return null
-			},
+            statusCode: error.status ?? 500,
+            message: "Something went wrong",
+            errors: {},
+            getErrorFor: (err) => null,
+            error,
         };
     }
 }

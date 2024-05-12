@@ -118,7 +118,7 @@ export const combatCharacterValidator = yup.object({
     id: yup.string().required(),
     plannedCharacterId: yup.string().nullable(),
     playerId: yup.string().required(),
-    initiativeValue: yup.array(yup.number()).nullable(),
+    initiativeValue: yup.array(yup.number().required()).nullable(),
     hidden: yup.boolean().required(),
     name: yup.string().required(),
     health: characterHealthValidator.nullable(),

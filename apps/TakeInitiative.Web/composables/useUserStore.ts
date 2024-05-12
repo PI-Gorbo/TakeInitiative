@@ -60,10 +60,9 @@ export const useUserStore = defineStore("userStore", () => {
     }
 
     async function login(request: LoginRequest): Promise<void> {
-        return await api.user
-            .login(request)
-            .then(async () => await fetchUser())
-            .then();
+        await api.user.login(request).then(async () => {
+            return await fetchUser();
+        });
     }
 
     async function signUp(signUpRequest: SignUpRequest): Promise<void> {
@@ -73,12 +72,13 @@ export const useUserStore = defineStore("userStore", () => {
     }
 
     async function logout(): Promise<void> {
-        await api.user.logout()
-			.then(() => {
-				state.selectedCampaignId = null
-				state.user = null
-			})
-			.then(async () => await navigateTo("/login"))
+        await api.user
+            .logout()
+            .then(() => {
+                state.selectedCampaignId = null;
+                state.user = null;
+            })
+            .then(async () => await navigateTo("/login"));
     }
 
     async function createCampaign(
@@ -89,7 +89,9 @@ export const useUserStore = defineStore("userStore", () => {
             .then((campaign) => fetchUser().then(() => campaign));
     }
 
-    async function joinCampaign(request: JoinCampaignRequest): Promise<Campaign> {
+    async function joinCampaign(
+        request: JoinCampaignRequest,
+    ): Promise<Campaign> {
         return await api.campaign
             .join(request)
             .then((campaign) => fetchUser().then(() => campaign));
@@ -146,6 +148,10 @@ export const useUserStore = defineStore("userStore", () => {
         username,
         campaignCount,
         campaignList,
-		selectedCampaignDto: computed(() => campaignList.value?.find(x => x.campaignId == state.selectedCampaignId))
+        selectedCampaignDto: computed(() =>
+            campaignList.value?.find(
+                (x) => x.campaignId == state.selectedCampaignId,
+            ),
+        ),
     };
 });

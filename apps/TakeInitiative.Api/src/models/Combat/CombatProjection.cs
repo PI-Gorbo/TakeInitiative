@@ -9,7 +9,7 @@ using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Models;
 
-public partial class CombatProjection : SingleStreamProjection<Combat>
+public class CombatProjection : SingleStreamProjection<Combat>
 {
     // COMBAT LIFECYCLE //
     public async Task<Combat> Apply(CombatOpenedEvent @event, Combat Combat, IEvent<CombatOpenedEvent> eventDetails, IQuerySession session)
@@ -128,17 +128,7 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
             ? $"{user?.UserName} had their turn ended by the DM at {eventDetails.Timestamp:R}"
             : $"{user?.UserName} ended their turn at {eventDetails.Timestamp:R}";
 
-        var nextRoundNumber = Combat.RoundNumber;
-        var nextInitiativeIndex = Combat.InitiativeIndex;
-        if (nextInitiativeIndex + 1 == Combat.InitiativeList.Count)
-        {
-            nextInitiativeIndex = 0;
-            nextRoundNumber++;
-        }
-        else
-        {
-            nextInitiativeIndex++;
-        }
+        var (nextInitiativeIndex, nextRoundNumber) = Combat.GetNextTurnInfo();
 
         return Combat with
         {
@@ -307,6 +297,71 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
         };
     }
 
+    public async Task<Combat> Apply(StagedCharactersRolledIntoInitiativeEvent @event, Combat Combat, IEvent<StagedCharactersRolledIntoInitiativeEvent> eventDetails, IQuerySession session)
+    {
+
+        var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
+        var newInitiativeList = @event.InitiativeRolls.Select((charInitiative, index) =>
+        {
+            return Combat.StagedList.First(x => x.Id == charInitiative.id) with
+            {
+                InitiativeValue = charInitiative.rolls
+            };
+        })
+        .Concat(Combat.InitiativeList)
+        .OrderByDescending(x => x.InitiativeValue, new InitiativeComparer())
+        .ToImmutableList();
+
+        Guid[] stagedCharactersToOmit = @event.InitiativeRolls.Select(x => x.id).ToArray();
+        return Combat with
+        {
+            CombatLogs = Combat.CombatLogs.Add($"{user?.UserName} rolled {@event.InitiativeRolls.Count} characters into initiative at {eventDetails.Timestamp:R}"),
+            StagedList = Combat.StagedList.Where(x => !x.Id.In(stagedCharactersToOmit)).ToImmutableList(),
+            InitiativeList = newInitiativeList,
+        };
+    }
+
+    // Initiative Character management //
+    public async Task<Combat> Apply(InitiativeCharacterEditedEvent @event, Combat Combat, IEvent<InitiativeCharacterEditedEvent> eventDetails, IQuerySession session)
+    {
+        var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
+        var (character, index) = Combat.InitiativeList.Select((value, index) => (value, index)).First(x => x.value.Id == @event.Character.Id);
+
+        return Combat with
+        {
+            CombatLogs = Combat.CombatLogs.Add($"{user?.UserName} edited the character {@event.Character.Name} at {eventDetails.Timestamp:R}"),
+            InitiativeList = Combat.InitiativeList.SetItem(index, character with
+            {
+                Name = @event.Character.Name,
+                InitiativeValue = @event.Character.InitiativeValue,
+                Health = @event.Character.Health,
+                Hidden = @event.Character.Hidden,
+                ArmorClass = @event.Character.ArmorClass,
+            }),
+        };
+    }
+
+    public async Task<Combat> Apply(InitiativeCharacterRemovedEvent @event, Combat Combat, IEvent<InitiativeCharacterRemovedEvent> eventDetails, IQuerySession session)
+    {
+        var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
+        var (character, index) = Combat.InitiativeList.Select((value, index) => (value, index)).First(x => x.value.Id == @event.CharacterId);
+
+        var initiativeIndex = Combat.InitiativeIndex;
+        var roundNumber = Combat.RoundNumber;
+        if (index == Combat.InitiativeIndex)
+        {
+            (initiativeIndex, roundNumber) = Combat.GetNextTurnInfo();
+        }
+
+        return Combat with
+        {
+            CombatLogs = Combat.CombatLogs.Add($"{user?.UserName} edited the character {character.Name} at {eventDetails.Timestamp:R}"),
+            InitiativeList = Combat.InitiativeList.RemoveAt(index),
+            InitiativeIndex = initiativeIndex,
+            RoundNumber = roundNumber
+        };
+    }
+
     // Players joining & leaving. //
     public async Task<Combat> Apply(PlayerLeftEvent @event, Combat Combat, IEvent<PlayerLeftEvent> eventDetails, IQuerySession session)
     {
@@ -331,7 +386,4 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
             ),
         };
     }
-
-
-
 }

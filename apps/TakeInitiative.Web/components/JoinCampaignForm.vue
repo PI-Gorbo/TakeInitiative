@@ -24,7 +24,10 @@
             <FormButton
                 type="submit"
                 label="Join"
-                loadingDisplay="Joining..."
+                :loadingDisplay="{
+                    showSpinner: true,
+                    loadingText: 'Joining...',
+                }"
                 :isLoading="submitting"
                 buttonColour="take-yellow-dark"
             />

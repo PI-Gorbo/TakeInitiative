@@ -3,7 +3,7 @@
         <label :class="[`block text-sm`]">{{ props.label }}</label>
         <form
             @submit.prevent
-            @submit="onNotEditableClicked"
+            @submit="onSave"
             v-if="
                 !props.enableToggleEditable ||
                 (props.enableToggleEditable && state.editable)
@@ -14,14 +14,14 @@
         >
             <div
                 :class="[
-                    `md:text-md h-full w-min rounded-md py-2 pl-2 bg-${props.colour} text-${props.textColour}`,
+                    `md:text-md h-full flex-1 rounded-md py-2 pl-2 bg-${props.colour} text-${props.textColour}`,
                 ]"
             >
                 <input
                     :autofocus="props.autoFocus"
                     :value="props.value"
                     :class="[
-                        `md:text-md w- h-full rounded-sm bg-${props.colour} text-${props.textColour}`,
+                        `md:text-md h-full flex-1 rounded-sm bg-${props.colour} text-${props.textColour}`,
                     ]"
                     @input="
                         (event) => {
@@ -29,7 +29,6 @@
                                 'update:value',
                                 (event.target as HTMLInputElement).value,
                             );
-                          
                         }
                     "
                     :type="props.type"
@@ -40,7 +39,7 @@
                 v-if="props.enableToggleEditable"
                 :icon="!state.loading ? 'save' : 'circle-notch'"
                 :class="['cursor-pointer pr-2', state.loading ? 'fa-spin' : '']"
-                @click="onNotEditableClicked"
+                @click="onSave"
             />
         </form>
         <label
@@ -76,7 +75,7 @@ const props = withDefaults(
             autoFocus?: boolean;
             enableToggleEditable?: boolean;
             notEditableColour?: TakeInitColour;
-            onNotEditable?: () => Promise<any>;
+            onSave?: () => Promise<any>;
         }
     >(),
     {
@@ -88,7 +87,7 @@ const props = withDefaults(
         errorMessage: null,
         enableToggleEditable: true,
         notEditableColour: "take-navy-light",
-    }
+    },
 );
 
 const state = reactive({
@@ -100,10 +99,10 @@ const emits = defineEmits<{
     (e: "update:value", value: string | number | undefined): void;
 }>();
 
-async function onNotEditableClicked() {
-    if (props.onNotEditable) {
+async function onSave() {
+    if (props.onSave) {
         state.loading = true;
-        await props.onNotEditable().finally(() => (state.loading = false));
+        await props.onSave().finally(() => (state.loading = false));
     }
     state.editable = false;
 }

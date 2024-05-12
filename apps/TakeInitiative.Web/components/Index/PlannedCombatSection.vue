@@ -1,23 +1,24 @@
 <template>
     <Transition name="fade" mode="out-in">
         <main
-            class="flex h-full w-full flex-col gap-4 overflow-auto py-2 pl-4"
+            class="flex h-full w-full flex-col gap-4 overflow-auto px-2"
             v-if="plannedCombat"
             :key="plannedCombat.id"
         >
             <TransitionGroup
                 v-if="plannedCombat?.stages?.length != 0"
-                class="flex flex-col gap-4 flex-1"
+                class="flex flex-1 flex-col"
                 tag="body"
                 name="fade"
             >
                 <div
-                    class="flex w-full flex-1 justify-center"
+                    class="flex w-full flex-1 justify-center pb-1"
                     v-for="stage in plannedCombat.stages"
                     :key="stage.id"
                 >
                     <PlannedCombatStageDisplay
                         :stage="stage"
+                        :updateStage="(req) => updateStage(stage, req)"
                         :deleteStage="() => deleteStage(stage)"
                         :createNpc="(request) => addNpc(stage, request)"
                         :updateNpc="(request) => updateNpc(stage, request)"
@@ -62,6 +63,7 @@ import type { CreatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/st
 import type { UpdatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
 import PlannedCombatStageDisplay from "./PlannedCombatStageDisplay.vue";
 import type { DeletePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/deletePlannedCombatNpcRequest";
+import type { UpdatePlannedCombatStageRequest } from "~/utils/api/plannedCombat/stages/updatePlannedCombatStageRequest";
 
 const campaignStore = useCampaignStore();
 const plannedCombatStore = usePlannedCombatStore();
@@ -74,7 +76,7 @@ const emit = defineEmits<{
 
 const createStageModal = ref<InstanceType<typeof Modal> | null>(null);
 async function createStage(
-    input: void | Omit<CreatePlannedCombatStageRequest, "combatId">
+    input: void | Omit<CreatePlannedCombatStageRequest, "combatId">,
 ) {
     return await plannedCombatStore
         .addStage(input!)
@@ -83,27 +85,37 @@ async function createStage(
 
 async function addNpc(
     stage: PlannedCombatStage,
-    nonPlayerCharacter: Omit<CreatePlannedCombatNpcRequest, "combatId" | "stageId">
+    nonPlayerCharacter: Omit<
+        CreatePlannedCombatNpcRequest,
+        "combatId" | "stageId"
+    >,
 ) {
     return await plannedCombatStore.addNpc(stage, nonPlayerCharacter);
 }
 
 async function updateNpc(
     stage: PlannedCombatStage,
-    npc: Omit<UpdatePlannedCombatNpcRequest, "combatId" | "stageId">
+    npc: Omit<UpdatePlannedCombatNpcRequest, "combatId" | "stageId">,
 ) {
     return await plannedCombatStore.updateNpc(stage, npc);
 }
 
 async function deleteNpc(
     stage: PlannedCombatStage,
-    npc: Omit<DeletePlannedCombatNpcRequest, "combatId" | "stageId">
+    npc: Omit<DeletePlannedCombatNpcRequest, "combatId" | "stageId">,
 ) {
     return await plannedCombatStore.removeNpc(stage, npc.npcId);
 }
 
 async function deleteStage(stage: PlannedCombatStage) {
     return await plannedCombatStore.removeStage(stage.id);
+}
+
+async function updateStage(
+    stage: PlannedCombatStage,
+    req: Omit<UpdatePlannedCombatStageRequest, "combatId" | "stageId">,
+) {
+    return await plannedCombatStore.updateStage({ stageId: stage.id, ...req });
 }
 </script>
 

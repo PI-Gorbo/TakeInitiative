@@ -21,38 +21,39 @@ public class FinishCombatCommandHandler(IDocumentStore Store) : CommandHandler<F
     public override async Task<Result<Combat>> ExecuteAsync(FinishCombatCommand command, CancellationToken ct = default)
     {
         return await Store.Try(
-			async (session) =>
-			{
-				var combat = await session.LoadAsync<Combat>(command.CombatId);
-				if (combat == null)
-				{
-					ThrowError(x => x.CombatId, "Combat does not exist.");
-				}					
+            async (session) =>
+            {
+                var combat = await session.LoadAsync<Combat>(command.CombatId);
+                if (combat == null)
+                {
+                    ThrowError(x => x.CombatId, "Combat does not exist.");
+                }
 
-				// Check the user is part of the combat.
-				if (combat.DungeonMaster != command.UserId)
-				{
-					ThrowError("Must be the dungeon master in order to finish the combat.");
+                // Check the user is the dungeon master
+                if (combat.DungeonMaster != command.UserId)
+                {
+                    ThrowError("Must be the dungeon master in order to finish the combat.");
                 }
 
                 // Remove the active combat from the campaign
                 var campaign = await session.LoadAsync<Campaign>(combat.CampaignId);
-                if (campaign == null) {
+                if (campaign == null)
+                {
                     ThrowError("An error occurred while trying to fetch the campaign for the combat.");
                 }
                 campaign.ActiveCombatId = null;
                 session.Store(campaign);
 
-				// Publish the event
-				CombatFinishedEvent @event = new()
-				{
-					UserId = command.UserId,
-				};
-				session.Events.Append(command.CombatId, @event);
-				await session.SaveChangesAsync();
+                // Publish the event
+                CombatFinishedEvent @event = new()
+                {
+                    UserId = command.UserId,
+                };
+                session.Events.Append(command.CombatId, @event);
+                await session.SaveChangesAsync();
 
-				return await session.LoadAsync<Combat>(command.CombatId);
-			});
+                return await session.LoadAsync<Combat>(command.CombatId);
+            });
     }
 }
 

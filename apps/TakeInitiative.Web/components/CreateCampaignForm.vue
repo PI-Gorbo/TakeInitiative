@@ -23,7 +23,10 @@
         <div class="flex w-full justify-center">
             <FormButton
                 label="Create"
-                loadingDisplay="Creating..."
+                :loadingDisplay="{
+                    loadingText: 'Creating...',
+                    showSpinner: true,
+                }"
                 :isLoading="submitting"
                 buttonColour="take-yellow-dark"
             />

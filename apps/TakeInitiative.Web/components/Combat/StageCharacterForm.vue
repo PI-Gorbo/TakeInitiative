@@ -4,13 +4,26 @@
         :onSubmit="onSubmit"
         v-slot="{ submitting }"
     >
-        <FormInput
-            :autoFocus="true"
-            textColour="white"
-            label="Name"
-            v-model:value="name"
-            v-bind="nameInputProps"
-        />
+        <div class="flex items-end justify-between gap-2">
+            <FormInput
+                class="flex-1"
+                :autoFocus="true"
+                textColour="white"
+                label="Name"
+                v-model:value="name"
+                v-bind="nameInputProps"
+            />
+
+            <FormButton
+                v-if="userIsDm"
+                :icon="isHidden ? 'eye-slash' : 'eye'"
+                size="lg"
+                :label="isHidden ? 'Hidden' : 'Visible'"
+                @clicked="() => (isHidden = !isHidden)"
+                buttonColour="take-navy-light"
+                type="button"
+            />
+        </div>
 
         <section>
             <label class="text-white">Initiative</label>
@@ -24,7 +37,7 @@
                                 (e.target as HTMLSelectElement).value,
                             ))
                     "
-                    class="rounded-l-lg bg-take-grey-dark py-1 pl-2 pr-1"
+                    class="rounded-l-lg bg-take-grey-dark py-1 pl-2 pr-1 text-take-navy"
                 >
                     <option :value="InitiativeStrategy.Fixed">Fixed</option>
                     <option :value="InitiativeStrategy.Roll">Roll</option>
@@ -40,7 +53,9 @@
                                 .value)
                     "
                     :placeholder="
-                        initiativeStrategy == InitiativeStrategy.Fixed ? '+5' : '1d20 + 5'
+                        initiativeStrategy == InitiativeStrategy.Fixed
+                            ? '+5'
+                            : '1d20 + 5'
                     "
                 />
             </div>
@@ -60,7 +75,10 @@
         <div class="flex w-full justify-center" v-if="!props.character">
             <FormButton
                 label="Create"
-                loadingDisplay="Creating..."
+                :loadingDisplay="{
+                    showSpinner: true,
+                    loadingText: 'Creating...',
+                }"
                 :isLoading="submitting && submitting.submitterName == 'Create'"
                 buttonColour="take-yellow-dark"
             />
@@ -68,7 +86,10 @@
         <div v-else class="flex justify-between gap-2">
             <FormButton
                 label="Save"
-                loadingDisplay="Saving..."
+                :loadingDisplay="{
+                    showSpinner: true,
+                    loadingText: 'Saving...',
+                }"
                 :isLoading="submitting && submitting.submitterName == 'Save'"
                 buttonColour="take-yellow-dark"
             />
@@ -83,7 +104,7 @@
 </template>
 
 <script setup lang="ts">
-import { Form } from "vee-validate";
+import { ErrorMessage, Form } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/yup";
 import { useForm } from "vee-validate";
 import * as yup from "yup";
@@ -98,21 +119,17 @@ import {
 import type { StagedCharacterDTO } from "~/utils/api/combat/putUpsertStagedCharacter";
 import type { SubmittingState } from "../Form/Base.vue";
 import type { DeleteStagedCharacterRequest } from "~/utils/api/combat/deleteStagedCharacterRequest";
-
+const { userIsDm } = storeToRefs(useCombatStore());
 const formState = reactive({
     error: null as ApiError<StagedCharacterDTO> | null,
 });
 
 const props = defineProps<{
     character?: CombatCharacter;
-    onCreate?: (
-        request: StagedCharacterDTO,
-    ) => Promise<any>;
-    onEdit?: (
-        request: StagedCharacterDTO,
-    ) => Promise<any>;
+    onCreate?: (request: StagedCharacterDTO) => Promise<any>;
+    onEdit?: (request: StagedCharacterDTO) => Promise<any>;
     onDelete?: (
-        request: Omit<DeleteStagedCharacterRequest, 'combatId'>,
+        request: Omit<DeleteStagedCharacterRequest, "combatId">,
     ) => Promise<any>;
 }>();
 
@@ -123,6 +140,7 @@ const { values, errors, defineField, validate } = useForm({
             name: yup.string().required("Please provide a name"),
             initiative: characterInitiativeValidator,
             quantity: yup.number().min(1),
+            isHidden: yup.boolean(),
         }),
     ),
 });
@@ -154,20 +172,32 @@ const [initiativeValue, initiativeValueInputProps] = defineField(
     },
 );
 
-watch(() => props.character, () => {
-    initiativeStrategy.value = props.character?.initiative.strategy;
-    initiativeValue.value = props.character?.initiative.value;
-    name.value = props.character?.name;
-}, {deep: true})
+const [isHidden, isHiddenInputProps] = defineField("isHidden", {
+    props: (state) => ({
+        errorMessage: formState.error?.getErrorFor("hidden") ?? state.errors[0],
+    }),
+});
+
+watch(
+    () => props.character,
+    () => {
+        initiativeStrategy.value = props.character?.initiative.strategy;
+        initiativeValue.value = props.character?.initiative.value;
+        name.value = props.character?.name;
+        isHidden.value = props.character?.hidden;
+    },
+    { deep: true },
+);
 
 onMounted(() => {
     if (!props.character) {
-        initiativeStrategy.value = InitiativeStrategy.Roll;
-        initiativeValue.value = "1d20 + 1";
+        initiativeStrategy.value = InitiativeStrategy.Roll; 
+        isHidden.value = userIsDm.value;
     } else {
         initiativeStrategy.value = props.character?.initiative.strategy;
         initiativeValue.value = props.character.initiative.value;
         name.value = props.character.name;
+        isHidden.value = props.character?.hidden;
     }
 });
 
@@ -213,7 +243,7 @@ async function onEdit() {
             name: name.value!,
             armorClass: null,
             id: props.character?.id!,
-            hidden: false
+            hidden: isHidden.value!,
         })
         .catch(async (error) => {
             formState.error = await parseAsApiError(error);
@@ -239,7 +269,7 @@ async function onCreate() {
             name: name.value!,
             armorClass: null,
             id: props.character?.id! ?? crypto.randomUUID(),
-            hidden: false
+            hidden: isHidden.value!,
         })
         .catch(async (error) => {
             formState.error = await parseAsApiError(error);

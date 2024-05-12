@@ -2,31 +2,33 @@
     <dialog
         ref="dialog"
         @click="onModalClick"
-        class="mt-20 rounded-xl bg-take-navy-medium p-5"
+        :class="['mt-20 rounded-xl bg-take-navy border border-take-yellow-dark p-5', isMobile && 'w-full']"
     >
-        <div class="flex gap-4">
+        <div class="my-1 flex gap-4">
             <h1
                 v-if="props.title"
-                class="flex w-max items-center text-xl text-white"
+                class="flex w-max items-center font-NovaCut text-xl text-white"
             >
                 {{ props.title }}
             </h1>
             <div class="flex flex-1 justify-end">
                 <FormButton
-                    class=""
+                    class="p-0"
+                    size="lg"
                     icon="xmark"
                     @clicked="hide"
-                    size="sm"
-                    buttonColour="take-navy-light"
-                    hoverButtonColour="take-yellow"
+                    buttonColour="take-navy"
+                    hoverButtonColour="take-navy-medium"
                     hoverTextColour="take-grey"
                 />
             </div>
         </div>
         <slot :key="id" />
+        <div class="flex flex-1 justify-end py-4"></div>
     </dialog>
 </template>
 <script setup lang="ts">
+const { isMobile } = useDevice();
 const dialog = ref<HTMLDialogElement | null>(null);
 const id = ref<number>(0);
 const props = defineProps<{

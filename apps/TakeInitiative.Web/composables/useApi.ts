@@ -4,13 +4,16 @@ import { deleteCampaignRequest } from "~/utils/api/campaign/deleteCampaignReques
 import { getCampaignRequest } from "~/utils/api/campaign/getCampaignRequest";
 import { joinCampaignRequest } from "~/utils/api/campaign/joinCampaignRequest";
 import { updateCampaignDetailsRequest } from "~/utils/api/campaign/updateCampaignDetailsRequest";
+import { deleteInitiativeCharacterRequest } from "~/utils/api/combat/deleteInitiativeCharacterRequest";
 import { deleteStagedCharacter } from "~/utils/api/combat/deleteStagedCharacterRequest";
 import { getCombatRequest } from "~/utils/api/combat/getCombatRequest";
 import { openCombatRequest } from "~/utils/api/combat/openCombatRequest";
 import { postFinishCombatRequest } from "~/utils/api/combat/postFinishCombatRequest";
 import { postEndTurnRequest } from "~/utils/api/combat/postNextTurn";
+import { postRollStagedCharactersIntoInitiativeRequest } from "~/utils/api/combat/postRollStagedCharactersIntoInitiative";
 import { postStagedPlannedCharactersRequest } from "~/utils/api/combat/postStagePlannedCharactersRequest";
 import { postStartCombatRequest } from "~/utils/api/combat/postStartCombat";
+import { putUpdateInitiativeCharacterRequest } from "~/utils/api/combat/putUpdateInitiativeCharacterRequest";
 import { putUpsertStagedCharacter } from "~/utils/api/combat/putUpsertStagedCharacter";
 import { createPlannedCombatRequest } from "~/utils/api/plannedCombat/createPlannedCombatRequest";
 import { deletePlannedCombatRequest } from "~/utils/api/plannedCombat/deletePlannedCombatRequest";
@@ -20,6 +23,7 @@ import { deletePlannedCombatStageRequest } from "~/utils/api/plannedCombat/stage
 import { createPlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
 import { deletePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/deletePlannedCombatNpcRequest";
 import { updatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
+import { updatePlannedCombatStageRequest } from "~/utils/api/plannedCombat/stages/updatePlannedCombatStageRequest";
 import { getUserRequest } from "~/utils/api/user/getUserRequest";
 import { loginRequest } from "~/utils/api/user/loginRequest";
 import { logoutRequest } from "~/utils/api/user/logoutRequest";
@@ -48,6 +52,7 @@ export const useApi = () => {
             stage: {
                 create: createPlannedCombatStageRequest($axios),
                 delete: deletePlannedCombatStageRequest($axios),
+                update: updatePlannedCombatStageRequest($axios),
                 npc: {
                     create: createPlannedCombatNpcRequest($axios),
                     update: updatePlannedCombatNpcRequest($axios),
@@ -56,18 +61,26 @@ export const useApi = () => {
             },
         },
         combat: {
+            get: getCombatRequest($axios),
             start: postStartCombatRequest($axios),
             finish: postFinishCombatRequest($axios),
             open: openCombatRequest($axios),
-            get: getCombatRequest($axios),
-            stage: {
+            endTurn: postEndTurnRequest($axios),
+            staged: {
                 character: {
                     upsert: putUpsertStagedCharacter($axios),
                     delete: deleteStagedCharacter($axios),
                 },
                 planned: postStagedPlannedCharactersRequest($axios),
+                rollIntoInitiative:
+                    postRollStagedCharactersIntoInitiativeRequest($axios),
             },
-            endTurn: postEndTurnRequest($axios),
+            initiative: {
+                character: {
+                    update: putUpdateInitiativeCharacterRequest($axios),
+                    delete: deleteInitiativeCharacterRequest($axios),
+                },
+            },
         },
     };
 };

@@ -3,12 +3,17 @@
         ref="buttonRef"
         :name="props.label ?? props.icon"
         :class="[
-            `flex cursor-pointer justify-center rounded-md  transition-colors`,
+            `btn flex border-none`,
+            props.icon != undefined &&
+                props.label == undefined &&
+                'aspect-square h-min',
             props.disabled
                 ? 'bg-take-grey-dark hover:bg-take-grey-dark'
                 : `bg-${props.buttonColour} hover:bg-${props.hoverButtonColour} text-${props.textColour ?? TakeInitContrastColour[props.buttonColour]} hover:text-${$props.hoverTextColour ?? TakeInitContrastColour[props.hoverButtonColour]}`,
-            size == 'sm' ? 'px-2.5 py-2.5 text-sm' : '',
-            size != 'sm' ? 'px-4 py-4 text-lg' : '',
+            size == 'sm' ? 'p-2 text-sm' : '',
+            size == null ? 'text-md p-2.5' : '',
+            size == 'lg' ? 'text-md p-3' : '',
+            size == 'xl' ? 'p-3.5 text-lg' : '',
         ]"
         type="submit"
         :disabled="props.disabled"
@@ -17,12 +22,13 @@
         <slot>
             <div
                 v-if="
-                    !props.isLoading ||
-                    (props.isLoading &&
+                    !isLoading ||
+                    props.loadingDisplay == null ||
+                    (isLoading &&
                         typeof props.isLoading == 'object' &&
-                        props.isLoading.submitterId != buttonRef?.id)
+                        props.isLoading?.submitterId != buttonRef?.id)
                 "
-                class="text-centre flex select-none justify-center gap-1"
+                class="text-centre flex select-none items-center justify-center gap-1"
             >
                 <div
                     v-if="props.icon"
@@ -31,19 +37,23 @@
                     <FontAwesomeIcon
                         v-if="props.icon"
                         :icon="props.icon"
-                        :size="props.iconSize"
+                        :size="props.size"
                     />
                 </div>
-                <div v-if="props.label" class="cursor-pointer" @click="onClick">
+                <div
+                    v-if="props.label"
+                    class="cursor-pointer text-center"
+                    @click="onClick"
+                >
                     {{ props.label }}
                 </div>
             </div>
-            <div v-else-if="props.loadingDisplay" class="flex justify-center">
-                <label v-if="typeof props.loadingDisplay === 'string'"
-                    >{{ props.loadingDisplay }}
-                </label>
+            <div
+                v-else-if="props.loadingDisplay"
+                class="flex items-center justify-center gap-2"
+            >
                 <div
-                    v-else-if="props.icon"
+                    v-if="props.loadingDisplay.showSpinner"
                     class="flex items-center justify-center text-center"
                 >
                     <FontAwesomeIcon
@@ -51,10 +61,10 @@
                         icon="circle-notch"
                         :size="props.size"
                     />
-                    <label v-if="props.loadingDisplay?.loadingText"
-                        >{{ props.loadingDisplay?.loadingText }}
-                    </label>
                 </div>
+                <label v-if="props.loadingDisplay.loadingText"
+                    >{{ props.loadingDisplay.loadingText }}
+                </label>
             </div>
         </slot>
     </button>
@@ -70,9 +80,7 @@ import type { SubmittingState } from "./Base.vue";
 import { TakeInitContrastColour } from "~/utils/types/HelperTypes";
 
 const buttonRef = ref<HTMLButtonElement | null>(null);
-export type LoadingDisplay =
-    | string
-    | { showSpinner: true; loadingText?: string };
+export type LoadingDisplay = { showSpinner: true; loadingText?: string };
 export type FromButtonProps = {
     name?: string;
     label?: string;
@@ -80,7 +88,7 @@ export type FromButtonProps = {
     isLoading?: SubmittingState | boolean | null;
     buttonColour?: TakeInitColour;
     hoverButtonColour?: TakeInitColour | undefined;
-    textColour?: TakeInitColour;
+    textColour?: TakeInitColour | "base-200" | undefined;
     hoverTextColour?: TakeInitColour | undefined;
     icon?: string;
     size?: FontAwesomeIconSize;
@@ -102,7 +110,6 @@ const props = withDefaults(defineProps<FromButtonProps>(), {
     textColour: undefined,
     hoverTextColour: undefined,
     icon: undefined,
-    iconSize: "lg",
     disabled: false,
     click: undefined,
     preventClickBubbling: true,
@@ -128,11 +135,16 @@ async function onClick(event: Event) {
         event.stopPropagation();
     }
 
+    if (isLoading.value) {
+        return;
+    }
+
     emit("clicked", loadingControls);
     if (props.click == undefined) {
         return;
     }
 
+    console.log("calling the on click method");
     state.isLoading = true;
     await props.click().finally(() => (state.isLoading = false));
 }

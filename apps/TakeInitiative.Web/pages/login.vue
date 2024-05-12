@@ -30,7 +30,10 @@
                 <FormButton
                     label="Login"
                     type="submit"
-                    loadingDisplay="Logging in..."
+                    :loadingDisplay="{
+                        loadingText: 'Logging in...',
+                        showSpinner: true,
+                    }"
                     :isLoading="state.isSubmitting"
                 />
             </div>
@@ -60,7 +63,7 @@ const { values, errors, defineField, validate } = useForm({
         yup.object({
             email: yup.string().required().email(),
             password: yup.string().required(),
-        })
+        }),
     ),
 });
 const [email, emailInputProps] = defineField("email", {
@@ -87,11 +90,11 @@ async function onLogin() {
 
     await userStore
         .login({ email: email.value ?? "", password: password.value ?? "" })
-        .then(async () => {
-            await navigateTo("/");
-        })
         .catch(async (error) => {
             state.errorObject = await parseAsApiError(error);
+        })
+        .then(async () => {
+            await navigateTo("/");
         })
         .finally(() => (state.isSubmitting = false));
 }

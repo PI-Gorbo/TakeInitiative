@@ -11,7 +11,8 @@
             :value="createPlannedCombatStageForm.name.value.value"
             @update:value="
                 (val) =>
-                    (createPlannedCombatStageForm.name.value.value = String(val) ?? '')
+                    (createPlannedCombatStageForm.name.value.value =
+                        String(val) ?? '')
             "
             colour="take-navy-light"
             :autoFocus="true"
@@ -21,7 +22,10 @@
                 :isLoading="submitting"
                 label="Create"
                 type="submit"
-                loadingDisplay="Creating..."
+                :loadingDisplay="{
+                    showSpinner: true,
+                    loadingText: 'Creating...',
+                }"
             />
         </div>
     </FormBase>
@@ -33,11 +37,13 @@ import type { CreatePlannedCombatStageRequest } from "~/utils/api/plannedCombat/
 const createPlannedCombatStageForm = useCreatePlannedCombatStageForm();
 const props = defineProps<{
     onSubmit: (
-        input: void | Omit<CreatePlannedCombatStageRequest, "combatId">
+        input: void | Omit<CreatePlannedCombatStageRequest, "combatId">,
     ) => Promise<any>;
 }>();
 
-async function submit(): ReturnType<typeof createPlannedCombatStageForm.submit> {
+async function submit(): ReturnType<
+    typeof createPlannedCombatStageForm.submit
+> {
     return await createPlannedCombatStageForm
         .submit()
         .then(props.onSubmit)

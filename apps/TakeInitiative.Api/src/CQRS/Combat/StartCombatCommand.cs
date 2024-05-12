@@ -43,13 +43,13 @@ public class StartCombatCommandHandler(IDocumentStore Store) : CommandHandler<St
                     ThrowError($"Combat has already been started.");
                 }
 
-                // Check the user is part of the combat.
+                // Check the user is the dungeon master
                 if (combat.DungeonMaster != command.UserId)
                 {
                     ThrowError("Must be the dungeon master in order to start the combat.");
                 }
 
-                var computedInitiativeRolls = DiceRoller.ComputeRolls(combat.StagedList);
+                var computedInitiativeRolls = DiceRoller.ComputeFirstRollsOfCombat(combat.StagedList);
                 if (computedInitiativeRolls.IsFailure)
                 {
                     ThrowError($"There was an error while trying to compute the dice rolls. {computedInitiativeRolls.Error}");

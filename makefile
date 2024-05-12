@@ -4,6 +4,11 @@ docker.build.api:
 docker.drop.api:
 	docker stop takeapi
 	docker rm takeapi
+run.api:
+	docker start takedb
+	cd ./apps/TakeInitiative.Api && dotnet run
+run.api.watch:
+	cd apps/TakeInitiative.Api && dotnet watch run
 
 ## Web
 docker.build.web:
@@ -11,6 +16,8 @@ docker.build.web:
 docker.drop.web:
 	docker stop takeweb
 	docker rm takeweb
+run.web:
+	cd ./apps/TakeInitiative.Web && npm run dev
 
 ## Database
 docker.isolated.database:

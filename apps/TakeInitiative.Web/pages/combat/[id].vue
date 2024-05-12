@@ -1,243 +1,216 @@
 <template>
-    <div class="flex h-full w-full flex-col items-center">
-        <header class="grid w-full max-w-[1200px] grid-cols-3 py-2">
-            <div class="flex items-center" v-if="combatIsStarted">
-                <FormButton
-                    class="px-2"
-                    label="End Turn"
-                    size="sm"
-                    :click="combatStore.endTurn"
-                    :disabled="!isUsersTurn"
-                />
-                <label class="px-2"> Round: {{ combat?.roundNumber }} </label>
-            </div>
-            <div class="flex items-center" v-else-if="combatIsOpen">
-                <FormButton
-                    class="px-2"
-                    label="Stage Character(s)"
-                    size="sm"
-                    buttonColour="take-navy-light"
-                    @clicked="onShowNewStagedCharacterModal"
-                    :disabled="!isUsersTurn"
-                />
-            </div>
-            <label
-                class="col-start-2 flex items-center justify-center text-center font-NovaCut text-xl text-take-yellow"
-                >{{ combat?.combatName }}</label
+    <div class="drawer drawer-end flex h-full w-full">
+        <input
+            ref="combatDrawer"
+            id="combatDrawer"
+            type="checkbox"
+            class="drawer-toggle"
+        />
+        <div
+            class="drawer-content flex h-full w-full flex-1 flex-col overflow-y-auto"
+        >
+            <!-- MAIN CONTENT -->
+            <header class="grid grid-cols-3 p-2">
+                <div class="flex gap-1"></div>
+                <label
+                    class="flex items-center justify-center text-center font-NovaCut text-lg"
+                    >{{ combat?.combatName }}</label
+                >
+                <div class="flex justify-end gap-1 px-1">
+                    <div class="flex gap-1">
+                        <div class="flex flex-col items-center justify-center">
+                            <span class="font-NovaCut">R</span
+                            ><span>{{ combat?.roundNumber }}</span>
+                        </div>
+                    </div>
+                    <FormButton
+                        v-if="!combatIsFinished"
+                        icon="bars"
+                        class="aspect-square w-min"
+                        buttonColour="take-navy"
+                        textColour="base-200"
+                        hoverButtonColour="take-navy-dark"
+                        :preventClickBubbling="false"
+                        @clicked="toggleDrawer"
+                    />
+                </div>
+            </header>
+            <main
+                :class="[
+                    'flex w-full flex-1 flex-row justify-center overflow-y-auto px-2 pb-2',
+                ]"
             >
-            <div class="flex justify-end">
-                <ConfirmButton
-                    v-if="userIsDm && combatIsOpen"
-                    label="Start Combat"
+                <section class="flex flex-1 flex-col gap-2 overflow-y-auto">
+                    <CombatCharacterListSection
+                        class="border-2 border-take-navy-light p-2"
+                        @combatOpenedStageCharacters="
+                            () => showModal('Combat Opened Stage Characters')
+                        "
+                        @OnClickCharacter="
+                            (character) => onClickCharacter(character!)
+                        "
+                    />
+                </section>
+            </main>
+            <footer class="flex items-center justify-end px-2 pb-2">
+                <FormButton
+                    v-if="combatIsStarted && isUsersTurn"
+                    icon="arrows-rotate"
+                    label="End Turn"
+                    buttonColour="take-red"
+                    hoverButtonColour="take-yellow-dark"
                     :loadingDisplay="{
                         showSpinner: true,
-                        loadingText: 'Starting...',
+                        loadingText: 'End...',
                     }"
-                    size="sm"
-                    :click="combatStore.startCombat"
+                    :click="combatStore.endTurn"
                 />
-
-                <ConfirmButton
-                    v-if="userIsDm && combatIsStarted"
-                    label="Finish Combat"
-                    confirmText="Confirm Finish"
-                    confirmHoverColour="take-red"
-                    size="sm"
-                    buttonColour="take-navy-light"
-                    :click="combatStore.finishCombat"
+            </footer>
+        </div>
+        <div class="drawer-side">
+            <label
+                for="combatDrawer"
+                aria-label="close sidebar"
+                class="drawer-overlay"
+            ></label>
+            <ul
+                class="flex min-h-full w-80 flex-col gap-2 bg-take-navy p-4 text-base-content"
+            >
+                <!-- Sidebar content here -->
+                <li class="w-full">
+                    <FormButton
+                        label="Staged Characters"
+                        icon="clipboard-question"
+                        @clicked="
+                            () => {
+                                showModal(
+                                    combatIsOpen
+                                        ? 'Combat Opened Stage Characters'
+                                        : 'Combat Started Staged Character Menu',
+                                );
+                                toggleDrawer();
+                            }
+                        "
+                        buttonColour="take-navy-dark"
+                        hoverButtonColour="take-navy-medium"
+                        hoverTextColour="white"
+                        class="w-full"
+                    />
+                </li>
+                <li class="w-full">
+                    <FormButton
+                        v-if="userIsDm && combatIsOpen"
+                        label="Start Combat"
+                        icon="shoe-prints"
+                        :click="
+                            () => combatStore.startCombat().then(toggleDrawer)
+                        "
+                        buttonColour="take-navy-dark"
+                        hoverButtonColour="take-navy-medium"
+                        hoverTextColour="white"
+                        :loadingDisplay="{
+                            showSpinner: true,
+                            loadingText: 'Starting...',
+                        }"
+                        class="w-full"
+                    />
+                    <FormButton
+                        v-else-if="userIsDm && combatIsStarted"
+                        label="Finish Combat"
+                        icon="flag-checkered"
+                        :click="
+                            () => combatStore.finishCombat().then(toggleDrawer)
+                        "
+                        buttonColour="take-navy-dark"
+                        hoverButtonColour="take-navy-medium"
+                        hoverTextColour="white"
+                        :loadingDisplay="{
+                            showSpinner: true,
+                            loadingText: 'Finishing...',
+                        }"
+                        class="w-full"
+                    />
+                </li>
+                <li class="select-none">
+                    Connection Status: {{ combatStore.connection.state }}
+                </li>
+            </ul>
+        </div>
+        <Modal ref="combatPageModal" :title="modalState.title ?? ''">
+            <CombatStageCharacterForm
+                v-if="modalState.modalType == 'Edit Staged Character'"
+                :onEdit="(req) => onUpsertStagedCharacter(req).then(closeModal)"
+                :onDelete="onDeleteStagedCharacter"
+                :character="lastClickedStagedCharacter!"
+            />
+            <div
+                v-if="modalState.modalType == 'Combat Opened Stage Characters'"
+            >
+                <Tabs
+                    v-if="
+                        userIsDm &&
+                        (combatStore.state.combat?.plannedStages ?? []).length >
+                            0
+                    "
+                    :showTabs="{
+                        Planned: () => userIsDm,
+                        Characters: () =>
+                            (campaignStore.state.userCampaignMember?.characters
+                                ?.length ?? 0) > 0,
+                    }"
+                    class="py-2"
+                    backgroundColour="take-navy-medium"
+                >
+                    <template #Custom>
+                        <CombatStageCharacterForm
+                            :onCreate="onUpsertStagedCharacter"
+                        />
+                    </template>
+                    <template #Planned>
+                        <CombatPlannedStagesDisplay
+                            :stages="combatStore.state.combat?.plannedStages!"
+                            :submit="onStagePlannedCharacters"
+                        />
+                    </template>
+                </Tabs>
+                <CombatStageCharacterForm
+                    v-else
+                    :onCreate="onUpsertStagedCharacter"
                 />
             </div>
-        </header>
-        <main
-            :class="[
-                'flex h-full w-full max-w-[1200px] flex-1 flex-row justify-center overflow-y-auto',
-            ]"
-        >
-            <section class="flex h-full flex-1 flex-col gap-2 overflow-y-auto">
-                <div class="flex-1">
-                    <TransitionGroup
-                        class="flex h-full flex-1 select-none flex-col gap-2 rounded-lg border-2 border-take-navy-light p-2"
-                        tag="ul"
-                        name="shuffleList"
-                    >
-                        <li
-                            v-for="(charInfo, index) in characterList"
-                            :key="charInfo.character.id"
-                            :class="[
-                                'grid grid-cols-2 rounded-xl border-2 border-take-navy-light p-2 transition-colors',
-                                {
-                                    'cursor-pointer hover:border-take-yellow':
-                                        isEditableForUser(charInfo) &&
-                                        combatIsOpen,
-                                    'border-take-yellow':
-                                        combatIsStarted &&
-                                        index == combat?.initiativeIndex,
-                                },
-                            ]"
-                            @click="
-                                () =>
-                                    isEditableForUser(charInfo)
-                                        ? onClickCharacter(charInfo.character)
-                                        : null
-                            "
-                        >
-                            <header class="flex items-center gap-2">
-                                <!-- Initiative -->
-                                <div
-                                    v-if="!combatIsOpen"
-                                    :class="[
-                                        {
-                                            'cursor-pointer':
-                                                isEditableForUser(charInfo) &&
-                                                combatIsOpen,
-                                        },
-                                        'flex gap-2',
-                                    ]"
-                                >
-                                    <div
-                                        v-for="(value, index) in charInfo
-                                            .character.initiativeValue"
-                                        :class="[
-                                            'flex items-center rounded-lg  p-1',
-                                            {
-                                                'text-xs': index != 0,
-                                                'bg-take-navy-light':
-                                                    index == 0,
-                                                'bg-take-navy-medium':
-                                                    index != 0,
-                                            },
-                                        ]"
-                                    >
-                                        {{ value }}
-                                    </div>
-                                </div>
-
-                                <!-- Username -->
-                                <label
-                                    :class="[
-                                        {
-                                            'cursor-pointer':
-                                                isEditableForUser(charInfo) &&
-                                                combatIsOpen,
-                                        },
-                                    ]"
-                                >
-                                    <FontAwesomeIcon
-                                        class="text-take-yellow"
-                                        :icon="getIconForUser(charInfo)"
-                                    />
-                                    {{ charInfo.user?.username }}:</label
-                                >
-
-                                <!-- Character Name -->
-                                <label
-                                    :class="[
-                                        {
-                                            'cursor-pointer':
-                                                isEditableForUser(charInfo) &&
-                                                combatIsOpen,
-                                        },
-                                    ]"
-                                    >{{ charInfo.character.name }}
-                                    {{
-                                        charInfo.character.copyNumber != null
-                                            ? `(${charInfo.character.copyNumber})`
-                                            : ""
-                                    }}</label
-                                >
-                            </header>
-                            <body>
-                                <ol class="flex flex-row justify-end">
-                                    <li v-if="combatIsOpen">
-                                        <FontAwesomeIcon icon="shoe-prints" />
-                                        {{
-                                            charInfo.character.initiative.value
-                                        }}
-                                    </li>
-                                </ol>
-                            </body>
-                        </li>
-                        <li v-if="combatIsOpen">
-                            <div
-                                :class="[
-                                    'group flex w-full cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-take-navy-light transition-colors hover:border-take-yellow',
-                                ]"
-                                @click="onShowNewStagedCharacterModal"
-                            >
-                                <FormButton
-                                    class="group-hover:text-take-yellow"
-                                    buttonColour="take-navy"
-                                    hoverButtonColour="take-navy"
-                                    textColour="take-grey"
-                                    hoverTextColour="take-yellow"
-                                    icon="plus"
-                                    label="Stage character(s)"
-                                    size="sm"
-                                    :preventClickBubbling="false"
-                                />
-                            </div>
-                        </li>
-                    </TransitionGroup>
-                    <Modal
-                        ref="stageNewCharacterModal"
-                        title="Stage your Characters"
-                        class="w-full max-w-[1200px]"
-                    >
-                        <Tabs
-                            :showTabs="{
-                                Planned: () => userIsDm,
-                                Characters: () =>
-                                    (campaignStore.state.userCampaignMember
-                                        ?.characters?.length ?? 0) > 0,
-                            }"
-                            class="overflow-auto"
-                        >
-                            <!-- <template #Characters>
-                            <CombatStageCharacterForm
-                            :onCreate="onUpsertStagedCharacter"
-                            />
-                        </template> -->
-                            <template #Custom>
-                                <CombatStageCharacterForm
-                                    :onCreate="onUpsertStagedCharacter"
-                                />
-                            </template>
-                            <template #Planned>
-                                <CombatPlannedStagesDisplay
-                                    :stages="
-                                        combatStore.state.combat?.plannedStages!
-                                    "
-                                    :submit="onStagePlannedCharacters"
-                                />
-                            </template>
-                        </Tabs>
-                    </Modal>
-                    <Modal
-                        ref="editStagedCharacterModal"
-                        title="Edit staged Character"
-                    >
-                        <CombatStageCharacterForm
-                            :onEdit="onUpsertStagedCharacter"
-                            :onDelete="onDeleteStagedCharacter"
-                            :character="lastClickedStagedCharacter!"
-                        />
-                    </Modal>
-                </div>
-            </section>
-        </main>
-        <footer class="flex w-full max-w-[1200px] flex-col py-2">
-            <textarea
-                class="w-full overflow-y-auto rounded-lg bg-take-navy-medium p-2"
-                ref="combatLogs"
-                :value="joinedCombatLogs"
-                rows="5"
-                cols="50"
-            />
-        </footer>
+            <div
+                v-if="
+                    modalState.modalType ==
+                    'Combat Started Staged Character Menu'
+                "
+            >
+                <CombatStagedCharactersSection
+                    @RolledCharactersIntoInitiative="() => closeModal()"
+                />
+            </div>
+            <div v-if="modalState.modalType == 'Edit Initiative Character'">
+                <CombatEditInitiativeCharacterForm
+                    :character="lastClickedInitiativeCharacter!"
+                    :onEdit="
+                        (character) =>
+                            combatStore
+                                .updateInitiativeCharacter(character)
+                                .then(closeModal)
+                    "
+                    :onDelete="
+                        (character) =>
+                            combatStore
+                                .deleteInitiativeCharacterRequest(character)
+                                .then(closeModal)
+                    "
+                />
+            </div>
+        </Modal>
     </div>
 </template>
 <script setup lang="ts">
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+import type CollapsableHorizontalMenu from "~/components/CollapsableHorizontalMenu.vue";
 import ConfirmButton from "~/components/Form/ConfirmButton.vue";
 import Modal from "~/components/Modal.vue";
 import type { CampaignMemberDto } from "~/utils/api/campaign/getCampaignRequest";
@@ -255,9 +228,16 @@ import {
 
 const campaignStore = useCampaignStore();
 const userStore = useUserStore();
+const combatDrawer = ref<HTMLInputElement | null>(null);
+function toggleDrawer() {
+    if (combatDrawer.value) {
+        combatDrawer.value.checked = !combatDrawer.value?.checked;
+    }
+}
 
 definePageMeta({
     requiresAuth: true,
+
     middleware: [
         function (to, from) {
             if (!process.client || to.name !== "combat-id") {
@@ -284,19 +264,8 @@ const combatId = route.params.id;
 
 // Combat data
 const combatStore = useCombatStore();
-const combat = computed(() => {
-    return combatStore.state.combat;
-});
-const userIsDm = computed(
-    () => userStore.state.user?.userId == combat.value?.dungeonMaster,
-);
-const combatIsOpen = computed(() => combat.value?.state == CombatState.Open);
-const combatIsStarted = computed(
-    () => combat.value?.state == CombatState.Started,
-);
-const combatIsFinished = computed(
-    () => combat.value?.state == CombatState.Finished,
-);
+const { combat, userIsDm, combatIsOpen, combatIsStarted, combatIsFinished } =
+    storeToRefs(combatStore);
 
 // Main fetch
 const { refresh, pending, error } = await useAsyncData("Combat", async () => {
@@ -304,7 +273,7 @@ const { refresh, pending, error } = await useAsyncData("Combat", async () => {
 });
 
 // Ensures the user is joined whenever the page loads.
-const {} = await useAsyncData(
+const { refresh: rejoinCombat } = await useAsyncData(
     "JoinCombat",
     async () => {
         console.log("Sending join request");
@@ -313,110 +282,59 @@ const {} = await useAsyncData(
     { server: false },
 );
 
-// Combat logs
-const combatLogs = ref<HTMLDivElement | null>(null);
-watch(
-    () => combat.value?.combatLogs,
-    (before, after) => {
-        if (!combatLogs.value) return;
-        combatLogs.value.scrollTop = 0;
-    },
-);
-const joinedCombatLogs = computed(() =>
-    combat.value?.combatLogs
-        .reverse()
-        .map((log) => `> ${log}`)
-        .join("\n"),
-);
-
-type PlayerDto = {
-    user: CampaignMemberDto;
-    character: CombatCharacter;
-};
-
-const characterList = computed(() => {
-    const compareStrings = (a: string, b: string) => {
-        let fa = a.toLowerCase(),
-            fb = b.toLowerCase();
-
-        if (fa < fb) {
-            return -1;
-        }
-        if (fa > fb) {
-            return 1;
-        }
-        return 0;
-    };
-
-    const openCombatCharacterSortFunc = (
-        a: PlayerDto,
-        b: PlayerDto,
-    ): number => {
-        const aIsDungeonMaster = a.user?.isDungeonMaster;
-        const bIsDungeonMaster = b.user?.isDungeonMaster;
-        if (aIsDungeonMaster && !bIsDungeonMaster) {
-            return -1;
-        } else if (!aIsDungeonMaster && bIsDungeonMaster) {
-            return 1;
-        }
-
-        // First sort by user,
-        let result = compareStrings(a.user?.username!, b.user?.username!);
-        if (result != 0) {
-            return result;
-        }
-
-        // Then sort by character name
-        result = compareStrings(a.character.name, b.character.name);
-        if (result != 0) {
-            return result;
-        }
-
-        // Sort by copy number
-        result =
-            (a.character.copyNumber ?? 0) < (b.character.copyNumber ?? 0)
-                ? -1
-                : 1;
-
-        return result;
-    };
-
-    const list =
-        combat.value?.state == CombatState.Open
-            ? combat.value.stagedList
-            : combat.value?.initiativeList;
-    const sortFunc =
-        combat.value?.state == CombatState.Open
-            ? openCombatCharacterSortFunc
-            : null;
-
-    const playerDTOs = list!.map(
-        (x) =>
-            ({
-                user: campaignStore.getMemberDetailsFor(x.playerId)!,
-                character: x,
-            }) satisfies PlayerDto,
-    );
-
-    if (sortFunc) {
-        return playerDTOs.sort(sortFunc);
-    }
-
-    return playerDTOs;
+// Modal State
+type CombatPageModalType =
+    | "Combat Opened Stage Characters"
+    | "Combat Started Staged Character Menu"
+    | "Edit Staged Character"
+    | "Edit Initiative Character";
+const combatPageModal = ref<typeof Modal | null>(null);
+const modalState = reactive<{
+    open: boolean;
+    modalType: CombatPageModalType | null;
+    title: string | null;
+}>({
+    open: false,
+    modalType: null,
+    title: null,
 });
-
-const editStagedCharacterModal = ref<typeof Modal | null>(null);
-const lastClickedStagedCharacter = ref<CombatCharacter | undefined>(undefined);
-function onClickCharacter(character: CombatCharacter) {
-    if (combat.value?.state == CombatState.Open) {
-        lastClickedStagedCharacter.value = character;
-        editStagedCharacterModal.value?.show();
+function showModal(modalType: CombatPageModalType) {
+    combatPageModal.value?.show();
+    modalState.open = true;
+    modalState.modalType = modalType;
+    switch (modalType) {
+        case "Combat Opened Stage Characters":
+            modalState.title = "Stage Characters";
+            break;
+        case "Edit Staged Character":
+            modalState.title = "Edit Staged Character";
+            break;
+        case "Combat Started Staged Character Menu":
+            modalState.title = "Staged Characters";
+        case "Edit Initiative Character":
+            modalState.title = "Edit Character in Initiative";
     }
 }
+const lastClickedStagedCharacter = ref<CombatCharacter | undefined>(undefined);
+const lastClickedInitiativeCharacter = ref<CombatCharacter | undefined>(
+    undefined,
+);
+function closeModal() {
+    combatPageModal.value?.hide();
+    modalState.open = false;
+    modalState.title = null;
+    lastClickedStagedCharacter.value = undefined;
+    lastClickedInitiativeCharacter.value = undefined;
+}
 
-const stageNewCharacterModal = ref<typeof Modal | null>(null);
-function onShowNewStagedCharacterModal() {
-    stageNewCharacterModal.value?.show();
+function onClickCharacter(character: CombatCharacter) {
+    if (combatIsOpen.value) {
+        lastClickedStagedCharacter.value = character;
+        showModal("Edit Staged Character");
+    } else if (combatIsStarted.value) {
+        lastClickedInitiativeCharacter.value = character;
+        showModal("Edit Initiative Character");
+    }
 }
 
 async function onDeleteStagedCharacter(
@@ -425,52 +343,18 @@ async function onDeleteStagedCharacter(
     return await useCombatStore()
         .deleteStagedCharacter(req)
         .then(() => {
-            editStagedCharacterModal.value?.hide();
+            closeModal();
         });
 }
 
 async function onUpsertStagedCharacter(req: StagedCharacterDTO) {
-    return combatStore.upsertStagedCharacter(req).then(() => {
-        stageNewCharacterModal.value?.hide();
-        editStagedCharacterModal.value?.hide();
-    });
+    return combatStore.upsertStagedCharacter(req).then(closeModal);
 }
 
 async function onStagePlannedCharacters(
     req: PostStagePlannedCharactersRequest["plannedCharactersToStage"],
 ) {
-    return combatStore.stagePlannedCharacters(req).then(() => {
-        stageNewCharacterModal.value?.hide();
-    });
-}
-
-// Get Icon depending on user
-function getIconForUser(charInfo: {
-    user: CampaignMemberDto;
-    character: CombatCharacter;
-}) {
-    const currentUserId = userStore.state.user?.userId;
-
-    if (charInfo.user.userId == combat.value?.dungeonMaster) {
-        return "crown";
-    }
-
-    if (charInfo.user.userId == currentUserId) {
-        return "circle-user";
-    }
-
-    return "user-large";
-}
-
-// Determines if the current row is editable for this current user
-function isEditableForUser(charInfo: {
-    user: CampaignMemberDto;
-    character: CombatCharacter;
-}) {
-    return (
-        userStore.state.user?.userId == combat?.value?.dungeonMaster ||
-        charInfo.user?.userId == userStore.state.user?.userId
-    );
+    return combatStore.stagePlannedCharacters(req).then(closeModal);
 }
 
 const isUsersTurn = computed(() => {
@@ -478,8 +362,12 @@ const isUsersTurn = computed(() => {
         return true;
     }
 
+    if (!combat.value?.initiativeIndex) {
+        return false;
+    }
+
     const characterWithCurrentInitiative =
-        combat.value?.initiativeList[combat.value.initiativeIndex ?? 0];
+        combat.value?.initiativeList[combat.value.initiativeIndex];
     if (
         characterWithCurrentInitiative?.playerId == userStore.state.user?.userId
     ) {
@@ -505,5 +393,17 @@ const isUsersTurn = computed(() => {
    animations can be calculated correctly. */
 .shuffleList-leave-active {
     position: absolute;
+}
+
+.slide-enter-active,
+.slide-leave-active {
+    transition: all 0.3s ease-in-out;
+}
+
+.slide-enter-from,
+.slide-leave-to {
+    transform: translateX(-100%);
+    z-index: 19;
+    opacity: 0;
 }
 </style>

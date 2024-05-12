@@ -2,54 +2,25 @@
     <TransitionGroup
         name="fade"
         tag="main"
-        class="flex h-full flex-col items-center"
+        class="flex h-full flex-col items-center overflow-y-auto bg-take-navy text-white"
     >
         <div
             v-if="
                 (!pending && !error) ||
                 userStore.state.selectedCampaignId == null
             "
-            class="flex flex-1 flex-col overflow-auto sm:w-full md:w-4/5 md:max-w-[1200px] 2xl:w-full"
+            class="flex w-full flex-1 flex-col overflow-auto md:w-4/5 md:max-w-[1200px] 2xl:w-full"
         >
-            <header
-                v-if="campaignStore.state.combatDto"
-                :class="[
-                    'mt-3 cursor-pointer select-none rounded-lg px-4 py-3 text-center text-xl text-take-navy',
-                    campaignStore.state.combatDto.state == CombatState.Open
-                        ? 'bg-take-yellow-dark'
-                        : 'bg-take-red ',
-                ]"
-                @click="
-                    async () =>
-                        await navigateTo(
-                            `/combat/${campaignStore.state.combatDto?.id}`,
-                        )
-                "
-            >
-                <div
-                    v-if="
-                        campaignStore.state.combatDto.state == CombatState.Open
-                    "
-                >
-                    {{ openCombatText }}
-                </div>
-                <div v-else>
-                    {{ combatStartedText }}
-                </div>
-            </header>
             <Tabs
-                class="flex-1 flex-col overflow-auto py-4"
+                class="flex-1 flex-col overflow-auto"
                 backgroundColour="take-navy"
                 notSelectedTabColour="take-navy"
                 :renameTabs="{
-                    PlannedCombats: 'Planned Combats',
-                    CombatHistory: 'Combat History',
+                    Combats: 'Combats',
                 }"
                 :showTabs="{
-                    PlannedCombats: () => campaignStore.isDm,
+                    Combats: () => campaignStore.isDm,
                     Settings: () => campaignStore.isDm,
-                    CombatHistory: () =>
-                        (campaignStore.state.finishedCombats?.length ?? 0) > 0,
                 }"
                 negativeSectionId="IndexPageTabs"
             >
@@ -57,13 +28,39 @@
                     <IndexSummarySection />
                 </template>
                 <template #Characters> Characters... </template>
-                <template #PlannedCombats>
-                    <IndexPlannedCombatsSection />
+                <template #Combats>
+                    <IndexCombatSection />
                 </template>
-                <template #CombatHistory>
-                    <IndexCombatHistorySection />
+                <template #Settings>
+                    <main class="flex w-2/3 flex-col gap-4">
+                        <div class="w-fit">
+                            <FormToggleableInput
+                                label="Campaign Name"
+                                v-model:value="campaignName"
+                                buttonColour="take-navy-medium"
+                                notEditableColour="take-navy-medium"
+                                :onSave="
+                                    async () => {
+                                        return userStore.updateCampaign({
+                                            campaignId: campaign?.campaignId!,
+                                            campaignName: campaignName,
+                                        });
+                                    }
+                                "
+                            />
+                        </div>
+                    <div>
+                            <FormButton
+                                label="Delete Campaign"
+                                icon="trash"
+                                buttonColour="take-navy-light"
+                                hoverButtonColour="take-red"
+                                size="sm"
+                                :click="() => deleteCampaign()"
+                            />
+                        </div>
+                    </main>
                 </template>
-                <template #Settings> Dungeon Master Settings </template>
             </Tabs>
         </div>
         <div v-else class="flex h-full w-full items-center justify-center">
@@ -79,17 +76,27 @@ import { useForm } from "vee-validate";
 import redirectToCreateOrJoinCampaign from "~/middleware/redirectToCreateOrJoinCampaign";
 import { CombatState } from "~/utils/types/models";
 
+const campaignName = ref<string | undefined>(undefined);
 const userStore = useUserStore();
-const { state } = storeToRefs(userStore);
+const { selectedCampaignDto: campaign } = storeToRefs(userStore);
 const campaignStore = useCampaignStore();
 const { refresh, pending, error } = await useAsyncData(
     "Campaign",
     () => {
-        return campaignStore.init().then(() => true);
+        return campaignStore
+            .init()
+            .then(
+                () =>
+                    (campaignName.value =
+                        campaignStore.state.campaign?.campaignName!),
+            )
+            .then(() => true);
     },
     { watch: [() => userStore.state.selectedCampaignId] },
 ); // Return something so that nuxt does not recall this on this client
-
+onMounted(
+    () => (campaignName.value = campaignStore.state.campaign?.campaignName!),
+);
 useHead({
     title: "Take Initiative",
 });
@@ -131,4 +138,19 @@ const combatStartedText = computed(() => {
 
     return `The combat '${combatDto?.combatName}' has started! Click to join or watch.`;
 });
+
+function deleteCampaign() {
+    console.log(campaignStore.state.campaign?.id);
+    return userStore
+        .deleteCampaign({ campaignId: campaignStore.state.campaign?.id! })
+        .then(async () => {
+            if (userStore.campaignCount == 0) {
+                await navigateTo("/createOrJoinCampaign");
+            } else {
+                userStore.setSelectedCampaign(
+                    userStore.campaignList![0].campaignId,
+                );
+            }
+        });
+}
 </script>
