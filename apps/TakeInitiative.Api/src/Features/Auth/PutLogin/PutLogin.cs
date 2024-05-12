@@ -1,10 +1,15 @@
 using System.Net;
+using System.Runtime.CompilerServices;
+using CSharpFunctionalExtensions;
 using FastEndpoints;
 using FastEndpoints.Security;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using TakeInitiative.Api.Bootstrap;
 using TakeInitiative.Api.Models;
+using TakeInitiative.Utilities;
+using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features;
 public class PutLogin(
@@ -19,24 +24,27 @@ public class PutLogin(
     }
     public override async Task HandleAsync(PutLoginRequest req, CancellationToken ct)
     {
-        var user = await UserManager.FindByEmailAsync(req.Email);
-        if (user == null)
-        {
-            ThrowError("Invalid username or password", (int)HttpStatusCode.Unauthorized);
-        }
+        await Result
+            .Try(
+                async () => await UserManager.FindByEmailAsync(req.Email),
+                (err) => ApiError.InternalServerError(err.Message))
+            .EnsureNotNull(ApiError.Unauthorized("Invalid username or password"))
+            .Bind(async (user) =>
+            {
+                // Validate password
+                var signInResult = await SignInManager.CheckPasswordSignInAsync(user, req.Password, lockoutOnFailure: false);
+                if (!signInResult.Succeeded)
+                {
+                    return ApiError.Unauthorized("Invalid username or password");
+                }
 
-        // Validate password
-        var signInResult = await SignInManager.CheckPasswordSignInAsync(user, req.Password, lockoutOnFailure: false);
-        if (!signInResult.Succeeded)
-        {
-            ThrowError("Invalid username or password", (int)HttpStatusCode.Unauthorized);
-        }
+                // Create cookie
+                await CookieAuth.SignInAsync(u =>
+                {
+                    u["UserId"] = user.Id.ToString();
+                });
 
-        await CookieAuth.SignInAsync(u =>
-        {
-            u["UserId"] = user.Id.ToString();
-        });
-
-        await SendOkAsync(ct);
+                return UnitResult.Success<ApiError>();
+            }).ToApiResult(this);
     }
 }

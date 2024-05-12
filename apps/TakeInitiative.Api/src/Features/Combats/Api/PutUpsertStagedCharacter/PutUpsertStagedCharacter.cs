@@ -5,11 +5,12 @@ using Marten;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.SignalR;
 using TakeInitiative.Api.Models;
+using TakeInitiative.Utilities;
 using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features;
 
-public class PutUpsertStagedCharacter(IDocumentStore Store, IHubContext<CombatHub> hubContext) : Endpoint<PutUpsertStagedCharacterRequest, CombatResponse>
+public class PutUpsertStagedCharacter(IDocumentSession session, IHubContext<CombatHub> hubContext) : Endpoint<PutUpsertStagedCharacterRequest, CombatResponse>
 {
     public override void Configure()
     {
@@ -21,85 +22,68 @@ public class PutUpsertStagedCharacter(IDocumentStore Store, IHubContext<CombatHu
     public override async Task HandleAsync(PutUpsertStagedCharacterRequest req, CancellationToken ct)
     {
         var userId = this.GetUserIdOrThrowUnauthorized();
-
-        Result<CombatResponse> result = await Store.Try(async (session) =>
-        {
-            var combat = await session.LoadAsync<Combat>(req.CombatId);
-            if (combat == null)
+        await Result
+            .Try(
+                async () => await session.LoadAsync<Combat>(req.CombatId),
+                err => ApiError.DbInteractionFailed(err.Message))
+            .EnsureNotNull("There is no combat with the given id.")
+            .Ensure(
+                combat => combat.State != CombatState.Paused && combat.State != CombatState.Finished,
+                combat => $"Cannot stage character because the combat is {combat.State.ToString().ToLower()}.")
+            .Ensure(combat => combat.CurrentPlayers.Any(x => x.UserId == userId), "Must be a current player in order to stage enemies")
+            .Bind(async fetchedCombat =>
             {
-                ThrowError(x => x.CombatId, "Combat does not exist.");
-            }
-
-            // Check the state of the combat.
-            if (combat.State == CombatState.Paused || combat.State == CombatState.Finished)
-            {
-                ThrowError($"Cannot stage character because the combat is {combat.State.ToString().ToLower()}.");
-            }
-
-            // Check the user is part of the combat.
-            if (!combat.CurrentPlayers.Any(x => x.UserId == userId))
-            {
-                ThrowError("Must be a current player in order to stage enemies");
-            }
-
-            var existingCharacter = combat.StagedList.SingleOrDefault(x => x.Id == req.Character.Id);
-            var character = new CombatCharacter()
-            {
-                Id = req.Character.Id,
-                PlayerId = existingCharacter?.PlayerId ?? userId,
-                Name = req.Character.Name,
-                Initiative = req.Character.Initiative,
-                Health = req.Character.Health,
-                ArmorClass = req.Character.ArmorClass,
-                Hidden = req.Character.Hidden,
-                InitiativeValue = null,
-                PlannedCharacterId = null,
-                CopyNumber = null,
-            };
-
-            if (existingCharacter != null)
-            {
-                var userIsAllowedToEditCharacter = existingCharacter?.PlayerId == userId || combat.DungeonMaster == userId;
-                if (!userIsAllowedToEditCharacter)
+                var existingCharacter = fetchedCombat.StagedList.SingleOrDefault(x => x.Id == req.Character.Id);
+                var character = new CombatCharacter()
                 {
-                    ThrowError(x => x.Character, "Only a dungeon master can edit this character.");
+                    Id = req.Character.Id,
+                    PlayerId = existingCharacter?.PlayerId ?? userId,
+                    Name = req.Character.Name,
+                    Initiative = req.Character.Initiative,
+                    Health = req.Character.Health,
+                    ArmorClass = req.Character.ArmorClass,
+                    Hidden = req.Character.Hidden,
+                    InitiativeValue = null,
+                    PlannedCharacterId = null,
+                    CopyNumber = null,
+                };
+
+                if (existingCharacter != null)
+                {
+                    var userIsAllowedToEditCharacter = existingCharacter?.PlayerId == userId || fetchedCombat.DungeonMaster == userId;
+                    if (!userIsAllowedToEditCharacter)
+                    {
+                        return ApiError.Invalid<PutUpsertStagedCharacterRequest>(x => x.Character, "Only a dungeon master can edit this character.");
+                    }
+
+                    // Create the edit user event
+                    StagedCharacterEditedEvent editEvent = new()
+                    {
+                        UserId = userId,
+                        Character = character
+                    };
+                    session.Events.Append(req.CombatId, editEvent);
+                }
+                else
+                {
+                    // Create the add user event
+                    StagedCharacterEvent addEvent = new()
+                    {
+                        UserId = userId,
+                        Character = character
+                    };
+                    session.Events.Append(req.CombatId, addEvent);
                 }
 
-                // Create the edit user event
-                StagedCharacterEditedEvent editEvent = new()
+                await session.SaveChangesAsync();
+
+                var refreshedCombat = await session.LoadAsync<Combat>(req.CombatId);
+                await hubContext.NotifyCombatUpdated(refreshedCombat!);
+
+                return Result.Success<CombatResponse, ApiError>(new CombatResponse()
                 {
-                    UserId = userId,
-                    Character = character
-                };
-                session.Events.Append(req.CombatId, editEvent);
-            }
-            else
-            {
-                // Create the add user event
-                StagedCharacterEvent addEvent = new()
-                {
-                    UserId = userId,
-                    Character = character
-                };
-                session.Events.Append(req.CombatId, addEvent);
-            }
-
-            await session.SaveChangesAsync();
-
-            combat = await session.LoadAsync<Combat>(req.CombatId);
-            await hubContext.NotifyCombatUpdated(combat);
-
-            return new CombatResponse()
-            {
-                Combat = combat
-            };
-        });
-
-        if (result.IsFailure)
-        {
-            ThrowError(result.Error, (int)HttpStatusCode.ServiceUnavailable);
-        }
-
-        await SendAsync(result.Value);
+                    Combat = refreshedCombat!
+                });
+            }).ToApiResult(this);
     }
 }

@@ -21,6 +21,7 @@ public class PostSignUp(
     }
     public override async Task HandleAsync(PostSignUpRequest req, CancellationToken ct)
     {
+
         var user = new ApplicationUser();
         if (await UserManager.FindByEmailAsync(req.Email) != null)
         {
