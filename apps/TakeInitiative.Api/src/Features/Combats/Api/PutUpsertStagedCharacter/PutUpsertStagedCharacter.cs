@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.SignalR;
 using TakeInitiative.Api.Models;
 using TakeInitiative.Utilities.Extensions;
 
-namespace TakeInitiative.Api.Controllers;
+namespace TakeInitiative.Api.Features;
 
 public class PutUpsertStagedCharacter(IDocumentStore Store, IHubContext<CombatHub> hubContext) : Endpoint<PutUpsertStagedCharacterRequest, CombatResponse>
 {

@@ -10,33 +10,33 @@ using TakeInitiative.Utilities;
 using Microsoft.AspNetCore.SignalR;
 using Marten.Events.Daemon.Coordination;
 
-namespace TakeInitiative.Api.Controllers;
+namespace TakeInitiative.Api.Features;
 
 public class PutReprojectCombat(IDocumentStore Store, IHubContext<CombatHub> hubContext, IProjectionCoordinator projectionCoordinator) : EndpointWithoutRequest
 {
-	public override void Configure()
-	{
-		Put("/api/combat/reproject");
-		AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
-		Policies(TakePolicies.UserExists);
-	}
+    public override void Configure()
+    {
+        Put("/api/combat/reproject");
+        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
+        Policies(TakePolicies.UserExists);
+    }
 
-	public override async Task HandleAsync( CancellationToken ct)
-	{
-		var userId = this.GetUserIdOrThrowUnauthorized();
+    public override async Task HandleAsync(CancellationToken ct)
+    {
+        var userId = this.GetUserIdOrThrowUnauthorized();
 
-		Result result = await Store.Try(
-			async (session) =>
-			{
-				var daemon = projectionCoordinator.DaemonForMainDatabase();
+        Result result = await Store.Try(
+            async (session) =>
+            {
+                var daemon = projectionCoordinator.DaemonForMainDatabase();
                 await daemon.RebuildProjectionAsync("combat", ct);
-			});
+            });
 
-		if (result.IsFailure)
-		{
-			ThrowError(result.Error, (int)HttpStatusCode.ServiceUnavailable);
-		}
+        if (result.IsFailure)
+        {
+            ThrowError(result.Error, (int)HttpStatusCode.ServiceUnavailable);
+        }
 
-		await SendOkAsync();
-	}
+        await SendOkAsync();
+    }
 }

@@ -1,20 +1,20 @@
 using FastEndpoints;
 using FluentValidation;
 
-namespace TakeInitiative.Api.Controllers;
+namespace TakeInitiative.Api.Features;
 
 public class DeletePlannedCombatNpcRequestValidator : Validator<DeletePlannedCombatNpcRequest>
 {
-	public DeletePlannedCombatNpcRequestValidator()
-	{
-		RuleFor(x => x.CombatId)
-			.NotEmpty();
+    public DeletePlannedCombatNpcRequestValidator()
+    {
+        RuleFor(x => x.CombatId)
+            .NotEmpty();
 
-		RuleFor(x => x.StageId)
-			.NotEmpty();
+        RuleFor(x => x.StageId)
+            .NotEmpty();
 
-		RuleFor(x => x.NpcId)
-			.NotEmpty();
+        RuleFor(x => x.NpcId)
+            .NotEmpty();
 
-	}
+    }
 }

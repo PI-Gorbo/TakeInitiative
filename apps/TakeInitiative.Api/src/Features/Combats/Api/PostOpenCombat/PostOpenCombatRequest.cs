@@ -1,6 +1,6 @@
-namespace TakeInitiative.Api.Controllers;
+namespace TakeInitiative.Api.Features;
 
 public record PostOpenCombatRequest
 {
-	public Guid PlannedCombatId { get; set; }
+    public Guid PlannedCombatId { get; set; }
 }

@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using TakeInitiative.Api.Models;
 using TakeInitiative.Utilities.Extensions;
 
-namespace TakeInitiative.Api.Controllers;
+namespace TakeInitiative.Api.Features;
 
 
 public class DeletePlannedCombatStage(IDocumentStore Store) : Endpoint<DeletePlannedCombatStageRequest, PlannedCombat>

@@ -1,4 +1,4 @@
-using TakeInitiative.Api.Controllers;
+using TakeInitiative.Api.Features;
 
 namespace TakeInitiative.Api.Models;
 public record InitiativeCharacterRemovedEvent

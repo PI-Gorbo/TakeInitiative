@@ -1,9 +1,9 @@
 using TakeInitiative.Api.Models;
 
-namespace TakeInitiative.Api.Controllers;
+namespace TakeInitiative.Api.Features;
 
 public record StagedCombatCharacterDto : Character
 {
-	public bool Hidden { get; init; } = false;
+    public bool Hidden { get; init; } = false;
 }
 

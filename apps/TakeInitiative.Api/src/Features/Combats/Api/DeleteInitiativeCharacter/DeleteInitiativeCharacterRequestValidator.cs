@@ -1,7 +1,7 @@
 using FastEndpoints;
 using FluentValidation;
 
-namespace TakeInitiative.Api.Controllers;
+namespace TakeInitiative.Api.Features;
 
 public class DeleteInitiativeCharacterRequestValidator : Validator<DeleteInitiativeCharacterRequest>
 {

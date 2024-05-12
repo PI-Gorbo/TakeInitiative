@@ -5,7 +5,7 @@ using FastEndpoints;
 using Marten;
 using Marten.Exceptions;
 using Microsoft.AspNet.SignalR;
-using TakeInitiative.Api.Controllers;
+using TakeInitiative.Api.Features;
 using TakeInitiative.Api.Models;
 using TakeInitiative.Utilities;
 using TakeInitiative.Utilities.Extensions;

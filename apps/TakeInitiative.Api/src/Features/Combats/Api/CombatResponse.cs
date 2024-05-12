@@ -1,8 +1,8 @@
 using TakeInitiative.Api.Models;
 
-namespace TakeInitiative.Api.Controllers;
+namespace TakeInitiative.Api.Features;
 
 public record CombatResponse
 {
-	public required Combat Combat { get; set; }
+    public required Combat Combat { get; set; }
 }

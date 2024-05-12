@@ -5,53 +5,53 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using TakeInitiative.Api.Models;
 using TakeInitiative.Utilities.Extensions;
 
-namespace TakeInitiative.Api.Controllers;
+namespace TakeInitiative.Api.Features;
 public class GetUser(IDocumentStore Store) : EndpointWithoutRequest<GetUserResponse>
 {
-	public override void Configure()
-	{
-		Get("/api/user");
-		AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
-		Policies(TakePolicies.UserExists);
-	}
+    public override void Configure()
+    {
+        Get("/api/user");
+        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
+        Policies(TakePolicies.UserExists);
+    }
 
-	public override async Task HandleAsync(CancellationToken ct)
-	{
-		var userId = this.GetUserIdOrThrowUnauthorized();
-		var result = await Store.Try(async (IDocumentSession session) =>
-			{
-				var user = await session.LoadAsync<ApplicationUser>(userId);
-				var campaigns = await session.LoadManyAsync<Campaign>(user!.Campaigns);
+    public override async Task HandleAsync(CancellationToken ct)
+    {
+        var userId = this.GetUserIdOrThrowUnauthorized();
+        var result = await Store.Try(async (IDocumentSession session) =>
+            {
+                var user = await session.LoadAsync<ApplicationUser>(userId);
+                var campaigns = await session.LoadManyAsync<Campaign>(user!.Campaigns);
 
-				var dmCampaigns = new List<GetUserCampaignDto>();
-				var memberCampaigns = new List<GetUserCampaignDto>();
-				foreach (Campaign campaign in campaigns)
-				{
-					var member = campaign.CampaignMemberInfo.SingleOrDefault(x => x.UserId == userId);
-					if (member!.IsDungeonMaster)
-					{
-						dmCampaigns.Add(new GetUserCampaignDto(campaign.CampaignName, campaign.Id, campaign.GetJoinCode()));
-					}
-					else
-					{
-						memberCampaigns.Add(new GetUserCampaignDto(campaign.CampaignName, campaign.Id, campaign.GetJoinCode()));
-					}
-				}
+                var dmCampaigns = new List<GetUserCampaignDto>();
+                var memberCampaigns = new List<GetUserCampaignDto>();
+                foreach (Campaign campaign in campaigns)
+                {
+                    var member = campaign.CampaignMemberInfo.SingleOrDefault(x => x.UserId == userId);
+                    if (member!.IsDungeonMaster)
+                    {
+                        dmCampaigns.Add(new GetUserCampaignDto(campaign.CampaignName, campaign.Id, campaign.GetJoinCode()));
+                    }
+                    else
+                    {
+                        memberCampaigns.Add(new GetUserCampaignDto(campaign.CampaignName, campaign.Id, campaign.GetJoinCode()));
+                    }
+                }
 
-				return new GetUserResponse()
-				{
-					UserId = user.Id,
-					Username = user.UserName,
-					DmCampaigns = dmCampaigns,
-					MemberCampaigns = memberCampaigns
-				};
-			});
+                return new GetUserResponse()
+                {
+                    UserId = user.Id,
+                    Username = user.UserName,
+                    DmCampaigns = dmCampaigns,
+                    MemberCampaigns = memberCampaigns
+                };
+            });
 
-		if (result.IsFailure)
-		{
-			ThrowError(result.Error, (int)HttpStatusCode.ServiceUnavailable);
-		}
+        if (result.IsFailure)
+        {
+            ThrowError(result.Error, (int)HttpStatusCode.ServiceUnavailable);
+        }
 
-		await SendAsync(result.Value);
-	}
+        await SendAsync(result.Value);
+    }
 }

@@ -9,7 +9,7 @@ using TakeInitiative.Utilities;
 using Microsoft.AspNetCore.SignalR;
 using TakeInitiative.Api.CQRS;
 
-namespace TakeInitiative.Api.Controllers;
+namespace TakeInitiative.Api.Features;
 
 public class PostEndTurn(IHubContext<CombatHub> hubContext) : Endpoint<PostEndTurnRequest, CombatResponse>
 {

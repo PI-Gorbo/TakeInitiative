@@ -9,7 +9,7 @@ using TakeInitiative.Api.CQRS;
 using TakeInitiative.Api.Models;
 using TakeInitiative.Utilities.Extensions;
 
-namespace TakeInitiative.Api.Controllers;
+namespace TakeInitiative.Api.Features;
 
 public record PostRollStagedCharactersIntoInitiativeRequest
 {

@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.SignalR;
 using TakeInitiative.Api.Models;
 using TakeInitiative.Utilities.Extensions;
 
-namespace TakeInitiative.Api.Controllers;
+namespace TakeInitiative.Api.Features;
 
 public static class CampaignHubContextExtensions
 {

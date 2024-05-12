@@ -1,6 +1,6 @@
 using TakeInitiative.Api.Models;
 
-namespace TakeInitiative.Api.Controllers;
+namespace TakeInitiative.Api.Features;
 
 public record CombatCharacterDto
 {

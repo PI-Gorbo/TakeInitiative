@@ -1,13 +1,13 @@
 using FastEndpoints;
 using FluentValidation;
 
-namespace TakeInitiative.Api.Controllers;
+namespace TakeInitiative.Api.Features;
 
 public class PostFinishCombatValidator : Validator<PostFinishCombatRequest>
 {
-	public PostFinishCombatValidator()
-	{
-		RuleFor(x => x.CombatId)
-			.NotEmpty();
-	}
+    public PostFinishCombatValidator()
+    {
+        RuleFor(x => x.CombatId)
+            .NotEmpty();
+    }
 }

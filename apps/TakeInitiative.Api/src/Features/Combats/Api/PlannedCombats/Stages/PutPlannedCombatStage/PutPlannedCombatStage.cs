@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using TakeInitiative.Api.Models;
 using TakeInitiative.Utilities.Extensions;
 
-namespace TakeInitiative.Api.Controllers;
+namespace TakeInitiative.Api.Features;
 
 public class PutPlannedCombatStage(IDocumentStore Store) : Endpoint<PutPlannedCombatStageRequest, PlannedCombat>
 {
@@ -47,7 +47,7 @@ public class PutPlannedCombatStage(IDocumentStore Store) : Endpoint<PutPlannedCo
             {
                 ThrowError(x => x.StageId, "The stage does not exist.");
             }
- 
+
             // Get the stage form the combat
             var stage = combat.Stages.FirstOrDefault(x => x.Id == req.StageId);
             if (stage == null)

@@ -8,7 +8,7 @@ using TakeInitiative.Api.CQRS;
 using TakeInitiative.Api.Models;
 using TakeInitiative.Utilities.Extensions;
 
-namespace TakeInitiative.Api.Controllers;
+namespace TakeInitiative.Api.Features;
 
 public class PutUpdateInitiativeCharacter(IHubContext<CombatHub> hubContext) : Endpoint<PutUpdateInitiativeCharacterRequest, CombatResponse>
 {

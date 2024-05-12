@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 using TakeInitiative.Api.Bootstrap;
 using TakeInitiative.Api.Models;
 
-namespace TakeInitiative.Api.Controllers;
+namespace TakeInitiative.Api.Features;
 public class PutLogin(
     IOptions<JWTOptions> JWTOptions,
     UserManager<ApplicationUser> UserManager,

@@ -1,13 +1,13 @@
 using FluentValidation;
 
-namespace TakeInitiative.Api.Controllers;
+namespace TakeInitiative.Api.Features;
 
 public class DeleteStagedCharacterValidator : AbstractValidator<DeleteStagedCharacterRequest>
 {
-	public DeleteStagedCharacterValidator()
-	{
+    public DeleteStagedCharacterValidator()
+    {
 
-		RuleFor(x => x.CharacterId)
-			.NotEmpty();
-	}
+        RuleFor(x => x.CharacterId)
+            .NotEmpty();
+    }
 }

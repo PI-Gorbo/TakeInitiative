@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.SignalR;
 using TakeInitiative.Api.CQRS;
 using TakeInitiative.Api.Models;
 
-namespace TakeInitiative.Api.Controllers;
+namespace TakeInitiative.Api.Features;
 
 public class PostStartCombat(IDocumentSession session, IHubContext<CombatHub> combatHub, IHubContext<CampaignHub> campaignHub) : Endpoint<PostStartCombatRequest, CombatResponse>
 {
