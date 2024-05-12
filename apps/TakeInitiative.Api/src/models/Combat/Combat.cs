@@ -60,7 +60,7 @@ public record Combat
     }
 
     public (int initiative, int turnNumber) GetNextTurnInfo() =>
-        this.InitiativeIndex + 1 == this.InitiativeList.Count
-            ? (0, (this.RoundNumber ?? 0) + 1)
-            : (this.InitiativeIndex + 1, this.RoundNumber ?? 0);
+    this.InitiativeIndex + 1 == this.InitiativeList.Count
+        ? (0, (this.RoundNumber ?? 0) + 1)
+        : (this.InitiativeIndex + 1, this.RoundNumber ?? 0);
 }

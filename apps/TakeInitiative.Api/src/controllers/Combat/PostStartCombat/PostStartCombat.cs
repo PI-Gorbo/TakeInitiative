@@ -5,10 +5,11 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using TakeInitiative.Utilities.Extensions;
 using Microsoft.AspNetCore.SignalR;
 using TakeInitiative.Api.CQRS;
+using TakeInitiative.Api.Models;
 
 namespace TakeInitiative.Api.Controllers;
 
-public class PostStartCombat(IDocumentStore Store, IHubContext<CombatHub> hubContext) : Endpoint<PostStartCombatRequest, CombatResponse>
+public class PostStartCombat(IDocumentSession session, IHubContext<CombatHub> combatHub, IHubContext<CampaignHub> campaignHub) : Endpoint<PostStartCombatRequest, CombatResponse>
 {
     public override void Configure()
     {
@@ -34,6 +35,7 @@ public class PostStartCombat(IDocumentStore Store, IHubContext<CombatHub> hubCon
         {
             Combat = result.Value,
         });
-        await hubContext.NotifyCombatUpdated(result.Value);
+        await combatHub.NotifyCombatUpdated(result.Value);
+        await campaignHub.NotifyCombatStateUpdated(result.Value.CampaignId);
     }
 }

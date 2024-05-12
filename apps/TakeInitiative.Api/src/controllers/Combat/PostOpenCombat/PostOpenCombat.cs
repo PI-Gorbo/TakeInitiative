@@ -2,13 +2,14 @@ using System.Net;
 using FastEndpoints;
 using Marten;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.SignalR;
 using TakeInitiative.Api.CQRS;
 using TakeInitiative.Api.Models;
 using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Controllers;
 
-public class PostOpenCombat(IDocumentStore Store) : Endpoint<PostOpenCombatRequest, CombatResponse>
+public class PostOpenCombat(IDocumentSession session, IHubContext<CampaignHub> campaignHub) : Endpoint<PostOpenCombatRequest, CombatResponse>
 {
     public override void Configure()
     {
@@ -33,5 +34,6 @@ public class PostOpenCombat(IDocumentStore Store) : Endpoint<PostOpenCombatReque
         }
 
         await SendAsync(new CombatResponse() { Combat = result.Value });
+        await campaignHub.NotifyCombatStateUpdated(result.Value.CampaignId);
     }
 }
