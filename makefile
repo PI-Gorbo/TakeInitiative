@@ -40,6 +40,8 @@ docker.dev.compose:
 
 docker.publish: 
 	make docker.build 
+	make docker.drop.api
+	make docker.drop.web
 	make docker.compose
 
 docker.refresh.web: 
