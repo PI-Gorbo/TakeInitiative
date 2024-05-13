@@ -1,4 +1,4 @@
-# TakeInitiatives
+# TakeInitiative
 
 A webapp designed to help dungeon masters to create combats and track initiative for those combats.
 
