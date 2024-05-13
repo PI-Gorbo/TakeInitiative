@@ -17,7 +17,7 @@
                     >{{ combat?.combatName }}</label
                 >
                 <div class="flex justify-end gap-1 px-1">
-                    <div class="flex gap-1">
+                    <div class="flex gap-1" v-if="combatIsStarted">
                         <div class="flex flex-col items-center justify-center">
                             <span class="font-NovaCut">R</span
                             ><span>{{ combat?.roundNumber }}</span>
@@ -54,11 +54,12 @@
             </main>
             <footer class="flex items-center justify-end px-2 pb-2">
                 <FormButton
-                    v-if="combatIsStarted && isUsersTurn"
-                    icon="arrows-rotate"
+                    v-if="combatIsStarted"
+                    icon="forward-step"
                     label="End Turn"
                     buttonColour="take-red"
                     hoverButtonColour="take-yellow-dark"
+                    :disabled="isUsersTurn"
                     :loadingDisplay="{
                         showSpinner: true,
                         loadingText: 'End...',
