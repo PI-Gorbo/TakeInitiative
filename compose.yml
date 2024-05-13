@@ -5,7 +5,7 @@ services:
         image: postgres:latest
         container_name: takedb
         ports:
-            - 5432:5432
+            - 7401:5432
         volumes:
             - "/dockerVolumes/take-initiative/postgresql:/var/lib/postgresql/data"
         environment:
@@ -17,7 +17,7 @@ services:
         image: takeinitiative-api:latest
         container_name: takeapi
         ports:
-            - "5000:8080"
+            - "7402:8080"
         environment:
             - "ConnectionStrings:TakeDB=User ID=postgres;Password=postgres;Host=postgres;Port=5432;Database=postgres;"
             - "CORS=https://take-initiative.com;https://take-initiative.com"
@@ -27,7 +27,7 @@ services:
         build: takeinitiative-web:latest
         container_name: takeweb
         ports:
-            - "3000:3000"
+            - "7403:3000"
         environment:
             - "NUXT_PUBLIC_AXIOS_BASE_URL=https://api.take-initiative.com"
             - "NUXT_PUBLIC_WEB_URL=https://take-initiative.com"
