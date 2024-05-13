@@ -6,9 +6,11 @@
     >
         <div
             v-if="
+                isSignalRRefresh ||
                 (!pending && !error) ||
                 userStore.state.selectedCampaignId == null
             "
+            :key="userStore.state.selectedCampaignId!"
             class="flex w-full flex-1 flex-col overflow-auto md:w-4/5 md:max-w-[1200px] 2xl:w-full"
         >
             <Tabs
@@ -49,7 +51,7 @@
                                 "
                             />
                         </div>
-                    <div>
+                        <div>
                             <FormButton
                                 label="Delete Campaign"
                                 icon="trash"
@@ -71,16 +73,30 @@
 
 <script setup lang="ts">
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+import * as signalR from "@microsoft/signalr";
 import { toTypedSchema } from "@vee-validate/yup";
 import { useForm } from "vee-validate";
 import redirectToCreateOrJoinCampaign from "~/middleware/redirectToCreateOrJoinCampaign";
-import { CombatState } from "~/utils/types/models";
+import { CombatState, type Campaign } from "~/utils/types/models";
+useHead({
+    title: "Take Initiative",
+});
 
-const campaignName = ref<string | undefined>(undefined);
+definePageMeta({
+    requiresAuth: true,
+    middleware: [redirectToCreateOrJoinCampaign],
+});
+
+// Main Page Data & Settings Page config
 const userStore = useUserStore();
 const { selectedCampaignDto: campaign } = storeToRefs(userStore);
+const campaignName = ref<string | undefined>(undefined);
 const campaignStore = useCampaignStore();
-const { refresh, pending, error } = await useAsyncData(
+const {
+    refresh: refreshPageData,
+    pending,
+    error,
+} = await useAsyncData(
     "Campaign",
     () => {
         return campaignStore
@@ -97,47 +113,6 @@ const { refresh, pending, error } = await useAsyncData(
 onMounted(
     () => (campaignName.value = campaignStore.state.campaign?.campaignName!),
 );
-useHead({
-    title: "Take Initiative",
-});
-
-definePageMeta({
-    requiresAuth: true,
-    middleware: [redirectToCreateOrJoinCampaign],
-});
-
-const openCombatText = computed(() => {
-    const combatDto = campaignStore.state.combatDto;
-    const combatOpenedByUser = campaignStore.state.nonUserCampaignMembers
-        ?.concat([
-            {
-                userId: userStore.state.user?.userId!,
-                username: userStore.username!,
-            } satisfies {
-                userId: string;
-                username: string;
-            },
-        ])
-        .find((x) => x.userId == combatDto?.dungeonMaster)?.username;
-
-    return `The combat '${combatDto?.combatName}' has been opened by ${combatOpenedByUser}! Click to join or start watching before it starts...`;
-});
-const combatStartedText = computed(() => {
-    const combatDto = campaignStore.state.combatDto;
-    const combatOpenedByUser = campaignStore.state.nonUserCampaignMembers
-        ?.concat([
-            {
-                userId: userStore.state.user?.userId!,
-                username: userStore.username!,
-            } satisfies {
-                userId: string;
-                username: string;
-            },
-        ])
-        .find((x) => x.userId == combatDto?.dungeonMaster)?.username;
-
-    return `The combat '${combatDto?.combatName}' has started! Click to join or watch.`;
-});
 
 function deleteCampaign() {
     console.log(campaignStore.state.campaign?.id);
@@ -153,4 +128,53 @@ function deleteCampaign() {
             }
         });
 }
+
+// Signal R connectivity.
+const isSignalRRefresh = ref<boolean>(false);
+const connection = new signalR.HubConnectionBuilder()
+    .withUrl(`${useRuntimeConfig().public.axios.baseURL}/campaignHub`, {
+        accessTokenFactory: () => useCookie(".AspNetCore.Cookies").value!,
+    })
+    .build();
+
+const { pending: pendingSignalR, error: errorSignalR } = await useAsyncData(
+    "CampaignHub",
+    async () => {
+        await connection.start();
+        connection.on("combatStateUpdated", async () => {
+            console.log("combat state has updated");
+            isSignalRRefresh.value = true;
+            await refreshPageData();
+            isSignalRRefresh.value = false;
+        });
+        await connection
+            .send(
+                "Join",
+                userStore.state.user?.userId,
+                campaignStore.state.campaign?.id,
+            )
+            .catch((error) => console.log("error connecting"));
+    },
+    { server: false },
+);
+
+watch(
+    () => userStore.state.selectedCampaignId,
+    async (newValue, oldValue) => {
+        if (oldValue != null) {
+            await connection.send("Leave", oldValue);
+        }
+
+        if (newValue != null) {
+            await connection.send("Join", newValue);
+        }
+    },
+);
+
+onUnmounted(async () => {
+    await connection
+        .send("Leave", campaignStore.state.campaign?.id)
+        .catch((error) => console.log("error leaving"));
+    await connection.stop();
+});
 </script>
