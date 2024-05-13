@@ -14,7 +14,8 @@ services:
             - POSTGRES_DB=postgres
         restart: always
     api:
-        image: takeinitiative-api:latest
+        build: 
+            context: ./apps/TakeInitiative.Api/
         container_name: takeapi
         ports:
             - "7402:8080"
@@ -24,7 +25,8 @@ services:
             - "AllowedHosts=api.take-initiative.com"
         restart: always
     web:
-        build: takeinitiative-web:latest
+        build: 
+            context: ./apps/TakeInitiative.Web/
         container_name: takeweb
         ports:
             - "7403:3000"
