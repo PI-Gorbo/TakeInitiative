@@ -10,7 +10,7 @@ using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Campaigns;
 
-public class PostJoinCampaign(IDocumentStore Store) : Endpoint<JoinCampaignByJoinCodeRequest, Campaign>
+public class PostJoinCampaign(IDocumentSession session) : Endpoint<JoinCampaignByJoinCodeRequest, Campaign>
 {
     public override void Configure()
     {
@@ -23,20 +23,21 @@ public class PostJoinCampaign(IDocumentStore Store) : Endpoint<JoinCampaignByJoi
     {
         var userId = this.GetUserIdOrThrowUnauthorized();
 
-        var result = await CampaignIdShortener.ToId(req.JoinCode)
-            .Bind((Guid campaignId) => Store.Try(async session =>
+        var result = await CampaignIdShortener
+            .ToId(req.JoinCode).MapError(ApiError.BadRequest)
+            .Bind<Guid, Campaign, ApiError>(async (Guid campaignId) =>
             {
                 // Check if there is a campaign that correlates to this id.
                 var campaign = await session.LoadAsync<Campaign>(campaignId, ct);
                 if (campaign == null)
                 {
-                    ThrowError(x => x.JoinCode, "Join code is invalid.");
+                    return ApiError.Invalid<JoinCampaignByJoinCodeRequest>(x => x.JoinCode, "Join code is invalid");
                 }
 
                 // Check if the user is already a member of the campaign.
                 if (campaign.CampaignMemberInfo.Select(x => x.UserId).Contains(userId))
                 {
-                    ThrowError("User is already part of the campaign", (int)HttpStatusCode.BadRequest);
+                    return campaign; // Return early if the user is already part of the campaign.
                 }
 
                 // Add the user to the campaign's list, and create a CampaignMember entity.
@@ -54,14 +55,8 @@ public class PostJoinCampaign(IDocumentStore Store) : Endpoint<JoinCampaignByJoi
                 await session.SaveChangesAsync(ct);
 
                 return campaign;
-            }));
+            });
 
-
-        if (result.IsFailure)
-        {
-            ThrowError(result.Error, (int)HttpStatusCode.BadRequest);
-        }
-
-        await SendAsync(result.Value);
+        await this.ReturnApiResult(result);
     }
 }

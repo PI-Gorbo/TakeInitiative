@@ -18,7 +18,7 @@ public class GetUser(IDocumentSession session) : EndpointWithoutRequest<GetUserR
     public override async Task HandleAsync(CancellationToken ct)
     {
         var userId = this.GetUserIdOrThrowUnauthorized();
-        await Result.Try(async () =>
+        var result = await Result.Try(async () =>
         {
             var user = await session.LoadAsync<ApplicationUser>(userId);
             var campaigns = await session.LoadManyAsync<Campaign>(user!.Campaigns);
@@ -54,7 +54,8 @@ public class GetUser(IDocumentSession session) : EndpointWithoutRequest<GetUserR
                 DmCampaigns = dmCampaigns,
                 MemberCampaigns = memberCampaigns
             };
-        })
-        .ToApiResult(this);
+        });
+
+        await this.ReturnApiResult(result);
     }
 }

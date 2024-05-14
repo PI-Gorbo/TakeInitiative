@@ -19,7 +19,7 @@ public class PutLogin(
     }
     public override async Task HandleAsync(PutLoginRequest req, CancellationToken ct)
     {
-        await Result
+        var result = await Result
             .Try(
                 async () => await UserManager.FindByEmailAsync(req.Email),
                 (err) => ApiError.InternalServerError(err.Message))
@@ -40,6 +40,8 @@ public class PutLogin(
                 });
 
                 return UnitResult.Success<ApiError>();
-            }).ToApiResult(this);
+            });
+
+        await this.ReturnApiResult(result);
     }
 }

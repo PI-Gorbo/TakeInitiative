@@ -20,7 +20,7 @@ public class PutUpsertStagedCharacter(IDocumentSession session, IHubContext<Comb
     public override async Task HandleAsync(PutUpsertStagedCharacterRequest req, CancellationToken ct)
     {
         var userId = this.GetUserIdOrThrowUnauthorized();
-        await Result
+        var result = await Result
             .Try(
                 async () => await session.LoadAsync<Combat>(req.CombatId),
                 err => ApiError.DbInteractionFailed(err.Message))
@@ -82,6 +82,8 @@ public class PutUpsertStagedCharacter(IDocumentSession session, IHubContext<Comb
                 {
                     Combat = refreshedCombat!
                 });
-            }).ToApiResult(this);
+            });
+
+        await this.ReturnApiResult(result);
     }
 }
