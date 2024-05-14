@@ -28,12 +28,13 @@ public class DeletePlayerCharacter(IDocumentSession session) : Endpoint<DeletePl
             .Bind(async (member) =>
             {
                 // Ensure the player character exists.
-                var character = member.Characters.SingleOrDefault(x => x.Id == req.PlayerCharacterId);
-                if (character == null)
+                var index = member.Characters.FindIndex(x => x.Id == req.PlayerCharacterId);
+                if (index == -1)
                 {
                     return ApiError.NotFound("There are no characters with the given id.");
                 }
 
+                member.Characters.RemoveAt(index);
                 session.Store(member);
                 await session.SaveChangesAsync();
 

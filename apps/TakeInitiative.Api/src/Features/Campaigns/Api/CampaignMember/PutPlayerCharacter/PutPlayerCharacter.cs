@@ -13,19 +13,14 @@ public class PutPlayerCharacter(IDocumentSession session) : Endpoint<PutPlayerCh
 {
     public override void Configure()
     {
-        Post("/api/campaign/member/character");
+        Put("/api/campaign/member/character");
         AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
         Policies(TakePolicies.UserExists);
     }
 
     public override async Task HandleAsync(PutPlayerCharacterRequest req, CancellationToken ct)
     {
-
         var userId = this.GetUserIdOrThrowUnauthorized();
-
-        // Construct new player character 
-        PlayerCharacter newCharacter = PlayerCharacter.
-            New(userId, req.PlayerCharacter.Name, req.PlayerCharacter.Initiative, req.PlayerCharacter.ArmorClass, req.PlayerCharacter.Health);
 
         var result = await Result
             .Try(
@@ -36,7 +31,7 @@ public class PutPlayerCharacter(IDocumentSession session) : Endpoint<PutPlayerCh
                 .Ensure((campaignMember) => campaignMember.UserId == userId, "Cannot edit Campaign Member details of others")
             .Bind(async campaignMember =>
             {
-                var index = campaignMember.Characters.FindIndex(x => x.Id == req.CampaignMemberId);
+                var index = campaignMember.Characters.FindIndex(x => x.Id == req.PlayerCharacterId);
                 if (index == -1)
                 {
                     return ApiError.NotFound("There is no character with the provided character id.");

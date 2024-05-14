@@ -33,19 +33,9 @@ public class PutUpsertStagedCharacter(IDocumentSession session, IHubContext<Comb
             .Bind(async fetchedCombat =>
             {
                 var existingCharacter = fetchedCombat.StagedList.SingleOrDefault(x => x.Id == req.Character.Id);
-                var character = new CombatCharacter()
-                {
-                    Id = req.Character.Id,
-                    PlayerId = existingCharacter?.PlayerId ?? userId,
-                    Name = req.Character.Name,
-                    Initiative = req.Character.Initiative,
-                    Health = req.Character.Health,
-                    ArmorClass = req.Character.ArmorClass,
-                    Hidden = req.Character.Hidden,
-                    InitiativeValue = null,
-                    PlannedCharacterId = null,
-                    CopyNumber = null,
-                };
+                var character = CombatCharacter.FromCharacter(req.Character, userId, CharacterOriginDetails.CustomCharacter(), req.Character.Hidden);
+
+
 
                 if (existingCharacter != null)
                 {
