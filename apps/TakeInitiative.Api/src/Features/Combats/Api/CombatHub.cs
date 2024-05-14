@@ -2,10 +2,10 @@ using CSharpFunctionalExtensions;
 using Marten;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using TakeInitiative.Api.Models;
+using TakeInitiative.Api.Features;
 using TakeInitiative.Utilities.Extensions;
 
-namespace TakeInitiative.Api.Features;
+namespace TakeInitiative.Api.Features.Combats;
 
 public static class CombatHubContextExtensions
 {

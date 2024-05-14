@@ -1,4 +1,4 @@
-namespace TakeInitiative.Api.Models;
+namespace TakeInitiative.Api.Features;
 
 public enum InitiativeStrategy
 {

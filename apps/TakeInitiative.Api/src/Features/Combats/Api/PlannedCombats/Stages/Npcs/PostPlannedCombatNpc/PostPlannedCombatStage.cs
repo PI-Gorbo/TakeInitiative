@@ -4,10 +4,10 @@ using FastEndpoints;
 using Marten;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using TakeInitiative.Api.Models;
+using TakeInitiative.Api.Features;
 using TakeInitiative.Utilities.Extensions;
 
-namespace TakeInitiative.Api.Features;
+namespace TakeInitiative.Api.Features.Combats;
 
 public class PostPlannedCombatNpc(IDocumentStore Store) : Endpoint<PostPlannedCombatNpcRequest, PlannedCombat>
 {

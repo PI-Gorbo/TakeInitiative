@@ -3,10 +3,10 @@ using CSharpFunctionalExtensions;
 using FastEndpoints;
 using Marten;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using TakeInitiative.Api.Models;
+using TakeInitiative.Api.Features;
 using TakeInitiative.Utilities.Extensions;
 
-namespace TakeInitiative.Api.Features;
+namespace TakeInitiative.Api.Features.Campaigns;
 
 public class PutSetCurrentCharacter(IDocumentStore Store) : Endpoint<SetCurrentCharacterRequest, CampaignMember>
 {

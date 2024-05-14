@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace TakeInitiative.Api.Features;
+namespace TakeInitiative.Api.Features.Combats;
 
 public record PutPlannedCombatStageRequest
 {

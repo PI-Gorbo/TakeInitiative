@@ -4,11 +4,12 @@ using FastEndpoints;
 using Marten;
 using Marten.Linq.CreatedAt;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using TakeInitiative.Api.Models;
+using TakeInitiative.Api.Features;
+using TakeInitiative.Api.Features.Campaigns;
 using TakeInitiative.Utilities;
 using TakeInitiative.Utilities.Extensions;
 
-namespace TakeInitiative.Api.Features;
+namespace TakeInitiative.Api.Features.Users;
 public class GetUser(IDocumentSession session) : EndpointWithoutRequest<GetUserResponse>
 {
     public override void Configure()

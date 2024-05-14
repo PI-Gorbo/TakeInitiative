@@ -1,8 +1,8 @@
 using FastEndpoints;
 using FluentValidation;
-using TakeInitiative.Api.Models;
+using TakeInitiative.Api.Features;
 
-namespace TakeInitiative.Api.Features;
+namespace TakeInitiative.Api.Features.Combats;
 
 public class PostPlannedCombatNpcRequestValidator : Validator<PostPlannedCombatNpcRequest>
 {

@@ -2,14 +2,14 @@ using System.Net;
 using FastEndpoints;
 using Marten;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using TakeInitiative.Api.Models;
+using TakeInitiative.Api.Features;
 using TakeInitiative.Utilities.Extensions;
 using CSharpFunctionalExtensions;
 using TakeInitiative.Utilities;
 using Microsoft.AspNetCore.SignalR;
 using TakeInitiative.Api.CQRS;
 
-namespace TakeInitiative.Api.Features;
+namespace TakeInitiative.Api.Features.Combats;
 
 public class PostEndTurn(IHubContext<CombatHub> hubContext) : Endpoint<PostEndTurnRequest, CombatResponse>
 {

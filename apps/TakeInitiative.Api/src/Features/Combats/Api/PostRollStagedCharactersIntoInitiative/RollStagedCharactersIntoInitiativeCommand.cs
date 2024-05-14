@@ -6,7 +6,7 @@ using Marten;
 using Marten.Exceptions;
 using Microsoft.AspNet.SignalR;
 using TakeInitiative.Api.Features;
-using TakeInitiative.Api.Models;
+using TakeInitiative.Api.Features;
 using TakeInitiative.Utilities;
 using TakeInitiative.Utilities.Extensions;
 

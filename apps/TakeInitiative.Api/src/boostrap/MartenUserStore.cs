@@ -1,7 +1,7 @@
 using CSharpFunctionalExtensions;
 using Marten;
 using Microsoft.AspNetCore.Identity;
-using TakeInitiative.Api.Models;
+using TakeInitiative.Api.Features;
 
 namespace TakeInitiative.Api.Bootstrap;
 public class MartenUserStore :
@@ -9,13 +9,14 @@ public class MartenUserStore :
     IUserPasswordStore<ApplicationUser>,
     IUserEmailStore<ApplicationUser>
 {
-	private IDocumentSession session;
-	public MartenUserStore(IDocumentStore Store) {
-		session = Store.LightweightSession();
-	}
+    private IDocumentSession session;
+    public MartenUserStore(IDocumentStore Store)
+    {
+        session = Store.LightweightSession();
+    }
     public void Dispose()
     {
-		session.Dispose();
+        session.Dispose();
     }
 
     public Task<IdentityResult> CreateAsync(ApplicationUser user, CancellationToken cancellationToken)

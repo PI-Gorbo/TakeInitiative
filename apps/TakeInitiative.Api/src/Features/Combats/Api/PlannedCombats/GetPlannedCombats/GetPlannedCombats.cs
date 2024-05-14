@@ -2,10 +2,10 @@ using System.Net;
 using FastEndpoints;
 using Marten;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using TakeInitiative.Api.Models;
+using TakeInitiative.Api.Features;
 using TakeInitiative.Utilities.Extensions;
 
-namespace TakeInitiative.Api.Features;
+namespace TakeInitiative.Api.Features.Combats;
 
 public class GetPlannedCombats(IDocumentStore Store) : Endpoint<GetPlannedCombatsRequest, GetPlannedCombatsResponse>
 {

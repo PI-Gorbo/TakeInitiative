@@ -3,9 +3,9 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using TakeInitiative.Api.Bootstrap;
-using TakeInitiative.Api.Models;
+using TakeInitiative.Api.Features;
 
-namespace TakeInitiative.Api.Features;
+namespace TakeInitiative.Api.Features.Auth;
 public class GetAuthenticated(
     IOptions<JWTOptions> JWTOptions,
     UserManager<ApplicationUser> UserManager,

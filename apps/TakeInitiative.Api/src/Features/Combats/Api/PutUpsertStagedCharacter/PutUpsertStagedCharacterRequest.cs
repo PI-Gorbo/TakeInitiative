@@ -1,6 +1,6 @@
-using TakeInitiative.Api.Models;
+using TakeInitiative.Api.Features;
 
-namespace TakeInitiative.Api.Features;
+namespace TakeInitiative.Api.Features.Combats;
 
 public record PutUpsertStagedCharacterRequest
 {

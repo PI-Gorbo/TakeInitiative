@@ -1,7 +1,7 @@
 using FastEndpoints;
 using FluentValidation;
 
-namespace TakeInitiative.Api.Features;
+namespace TakeInitiative.Api.Features.Combats;
 
 public class DeletePlannedCombatNpcRequestValidator : Validator<DeletePlannedCombatNpcRequest>
 {

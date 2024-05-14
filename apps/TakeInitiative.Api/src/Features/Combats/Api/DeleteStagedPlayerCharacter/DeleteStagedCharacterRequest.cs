@@ -1,4 +1,4 @@
-namespace TakeInitiative.Api.Features;
+namespace TakeInitiative.Api.Features.Combats;
 
 public record DeleteStagedCharacterRequest
 {

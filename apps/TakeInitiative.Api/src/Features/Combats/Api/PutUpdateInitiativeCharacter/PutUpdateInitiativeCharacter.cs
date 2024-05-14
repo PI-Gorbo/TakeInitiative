@@ -5,10 +5,10 @@ using Marten;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.SignalR;
 using TakeInitiative.Api.CQRS;
-using TakeInitiative.Api.Models;
+using TakeInitiative.Api.Features;
 using TakeInitiative.Utilities.Extensions;
 
-namespace TakeInitiative.Api.Features;
+namespace TakeInitiative.Api.Features.Combats;
 
 public class PutUpdateInitiativeCharacter(IHubContext<CombatHub> hubContext) : Endpoint<PutUpdateInitiativeCharacterRequest, CombatResponse>
 {

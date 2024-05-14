@@ -5,9 +5,9 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using TakeInitiative.Utilities.Extensions;
 using Microsoft.AspNetCore.SignalR;
 using TakeInitiative.Api.CQRS;
-using TakeInitiative.Api.Models;
+using TakeInitiative.Api.Features;
 
-namespace TakeInitiative.Api.Features;
+namespace TakeInitiative.Api.Features.Combats;
 
 public class PostStartCombat(IDocumentSession session, IHubContext<CombatHub> combatHub, IHubContext<CampaignHub> campaignHub) : Endpoint<PostStartCombatRequest, CombatResponse>
 {
