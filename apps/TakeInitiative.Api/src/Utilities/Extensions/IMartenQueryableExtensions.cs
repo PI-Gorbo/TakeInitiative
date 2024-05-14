@@ -1,5 +1,4 @@
 using Marten.Linq;
-using TakeInitiative.Api.Models;
 using Marten;
 
 namespace TakeInitiative.Utilities.Extensions;

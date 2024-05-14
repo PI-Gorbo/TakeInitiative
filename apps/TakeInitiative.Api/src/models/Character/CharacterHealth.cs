@@ -1,15 +1,16 @@
-namespace TakeInitiative.Api.Models;
+namespace TakeInitiative.Api.Features;
 
 public record CharacterHealth
 {
-	public int? MaxHealth { get; set; } = 0;
+    public int? MaxHealth { get; set; } = 0;
     public int CurrentHealth { get; set; } = 0;
 
     public override string ToString()
     {
-		if (MaxHealth == null) {
-			return $"{CurrentHealth}";
-		}
+        if (MaxHealth == null)
+        {
+            return $"{CurrentHealth}";
+        }
 
         if (CurrentHealth != MaxHealth)
         {

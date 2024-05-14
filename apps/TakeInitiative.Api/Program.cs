@@ -1,7 +1,5 @@
 using FastEndpoints;
 using Microsoft.AspNetCore.Mvc;
-using Python.Runtime;
-using TakeInitiative.Api.Controllers;
 internal class Program
 {
     private static void Main(string[] args)
