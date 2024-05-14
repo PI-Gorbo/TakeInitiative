@@ -115,6 +115,7 @@
                 class="py-2"
                 backgroundColour="take-navy-medium"
             >
+                <template #Characters> Characters ... </template>
                 <template #Custom>
                     <CombatStageCharacterForm
                         :onCreate="

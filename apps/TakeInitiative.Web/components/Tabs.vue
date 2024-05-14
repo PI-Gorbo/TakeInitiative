@@ -18,7 +18,7 @@
                                   ]
                               }`
                             : `bg-${props.notSelectedTabColour} text-take-navy-light`, // PLEASE CHANGE TO MANUALLY CONTROLLED TEXT COLOUR
-                        `flex cursor-pointer select-none items-center rounded-md px-2 py-1 transition-colors  md:text-xl hover:bg-${
+                        `flex cursor-pointer select-none items-center rounded-md px-2 py-1 transition-colors md:text-lg hover:bg-${
                             props.hoveredTabColour
                         } hover:text-${
                             TakeInitContrastColour[props.hoveredTabColour]
