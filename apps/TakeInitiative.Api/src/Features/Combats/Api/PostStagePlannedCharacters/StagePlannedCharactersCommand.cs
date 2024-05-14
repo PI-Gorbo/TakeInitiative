@@ -9,7 +9,7 @@ public record StagePlannedCharactersCommand : ICommand<Result<Combat>>
 {
     public required Guid UserId { get; set; }
     public required Guid CombatId { get; set; }
-    public required Dictionary<Guid, StagePlannedCharacterDto[]> PlannedCharactersToStage { get; set; }
+    public required Dictionary<Guid, StagePlannedCharacterDto[]> PlannedCharactersToStage { get; set; } // A dictionary of combat stage ids to the character dtos we want to extract from the stage.
 }
 
 public class StagePlannedCharactersCommandHandler(IDocumentStore Store) : CommandHandler<StagePlannedCharactersCommand, Result<Combat>>

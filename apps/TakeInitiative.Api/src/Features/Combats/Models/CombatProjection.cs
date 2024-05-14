@@ -172,8 +172,19 @@ public class CombatProjection : SingleStreamProjection<Combat>
         return Combat with
         {
             CombatLogs = [.. Combat.CombatLogs, $"{user?.UserName} staged {@event.Character.Name} at {eventDetails.Timestamp:R}"],
-            StagedList = (Combat.StagedList ?? ImmutableList<CombatCharacter>.Empty)
+            StagedList = (Combat.StagedList ?? [])
                 .Add(@event.Character)
+        };
+    }
+
+    public async Task<Combat> Apply(StagedPlayerCharacterEvent @event, Combat Combat, IEvent<StagedPlayerCharacterEvent> eventDetails, IQuerySession session)
+    {
+        var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
+        return Combat with
+        {
+            CombatLogs = [.. Combat.CombatLogs, $"{user?.UserName} staged {@event.Characters.Length} character(s) with the names {string.Join(", ", @event.Characters.Select(x => x.Name))} at {eventDetails.Timestamp:R}"],
+            StagedList = (Combat.StagedList ?? [])
+                .AddRange(@event.Characters.Map(x => CombatCharacter.FromCharacter(x, @event.UserId, CharacterOriginDetails.PlayerCharacter(@event.UserId), Combat.DungeonMaster == user!.Id)))
         };
     }
 
@@ -248,7 +259,7 @@ public class CombatProjection : SingleStreamProjection<Combat>
                     {
                         return [ new CombatCharacter() {
                             Id = Guid.NewGuid(),
-                            PlannedCharacterId = npc.Id,
+                            CharacterOriginDetails = CharacterOriginDetails.PlannedCharacter(npc.Id),
                             Name = npc.Name,
                             Initiative = npc.Initiative,
                             InitiativeValue = [],
@@ -263,6 +274,7 @@ public class CombatProjection : SingleStreamProjection<Combat>
                     var nextQuantityNumber = Combat.InitiativeList.Where(x => x.Name == npc.Name)
                         .Select(x => x.CopyNumber)
                         .Max() + 1 ?? 1;
+
                     var combatCharactersToOutput = new List<CombatCharacter>();
                     for (int i = 0; i < npc.Quantity; i++)
                     {
@@ -270,7 +282,7 @@ public class CombatProjection : SingleStreamProjection<Combat>
                             new CombatCharacter()
                             {
                                 Id = Guid.NewGuid(),
-                                PlannedCharacterId = npc.Id,
+                                CharacterOriginDetails = CharacterOriginDetails.PlannedCharacter(npc.Id),
                                 Name = npc.Name,
                                 Initiative = npc.Initiative,
                                 InitiativeValue = [],

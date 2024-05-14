@@ -29,7 +29,7 @@
                 <template #Summary>
                     <IndexSummarySection />
                 </template>
-                <template #Characters> Characters... </template>
+                <template #Characters> <IndexCharactersSection /> </template>
                 <template #Combats>
                     <IndexCombatSection />
                 </template>

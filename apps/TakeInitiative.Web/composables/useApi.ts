@@ -1,9 +1,12 @@
 import { createCampaignRequest } from "~/utils/api/campaign/createCampaignRequest";
+import { createPlayerCharacterRequest } from "~/utils/api/campaign/createPlayerCharacterRequest";
 import { deleteCampaignRequest } from "~/utils/api/campaign/deleteCampaignRequest";
+import { deletePlayerCharacterRequest } from "~/utils/api/campaign/deletePlayerCharacterRequest";
 
 import { getCampaignRequest } from "~/utils/api/campaign/getCampaignRequest";
 import { joinCampaignRequest } from "~/utils/api/campaign/joinCampaignRequest";
 import { updateCampaignDetailsRequest } from "~/utils/api/campaign/updateCampaignDetailsRequest";
+import { updatePlayerCharacterRequest } from "~/utils/api/campaign/updatePlayerCharacterRequest";
 import { deleteInitiativeCharacterRequest } from "~/utils/api/combat/deleteInitiativeCharacterRequest";
 import { deleteStagedCharacter } from "~/utils/api/combat/deleteStagedCharacterRequest";
 import { getCombatRequest } from "~/utils/api/combat/getCombatRequest";
@@ -12,6 +15,7 @@ import { postFinishCombatRequest } from "~/utils/api/combat/postFinishCombatRequ
 import { postEndTurnRequest } from "~/utils/api/combat/postNextTurn";
 import { postRollStagedCharactersIntoInitiativeRequest } from "~/utils/api/combat/postRollStagedCharactersIntoInitiative";
 import { postStagedPlannedCharactersRequest } from "~/utils/api/combat/postStagePlannedCharactersRequest";
+import { postStagePlayerCharactersRequest as postStagePlayerCharactersRequest } from "~/utils/api/combat/postStagePlayerCharactersRequest";
 import { postStartCombatRequest } from "~/utils/api/combat/postStartCombat";
 import { putUpdateInitiativeCharacterRequest } from "~/utils/api/combat/putUpdateInitiativeCharacterRequest";
 import { putUpsertStagedCharacter } from "~/utils/api/combat/putUpsertStagedCharacter";
@@ -44,6 +48,11 @@ export const useApi = () => {
             update: updateCampaignDetailsRequest($axios),
             get: getCampaignRequest($axios),
             delete: deleteCampaignRequest($axios),
+            playerCharacters: {
+                create: createPlayerCharacterRequest($axios),
+                update: updatePlayerCharacterRequest($axios),
+                delete: deletePlayerCharacterRequest($axios),
+            },
         },
         plannedCombat: {
             create: createPlannedCombatRequest($axios),
@@ -66,7 +75,7 @@ export const useApi = () => {
             finish: postFinishCombatRequest($axios),
             open: openCombatRequest($axios),
             endTurn: postEndTurnRequest($axios),
-            staged: {
+            stage: {
                 character: {
                     upsert: putUpsertStagedCharacter($axios),
                     delete: deleteStagedCharacter($axios),
@@ -74,6 +83,7 @@ export const useApi = () => {
                 planned: postStagedPlannedCharactersRequest($axios),
                 rollIntoInitiative:
                     postRollStagedCharactersIntoInitiativeRequest($axios),
+                playerCharacters: postStagePlayerCharactersRequest($axios),
             },
             initiative: {
                 character: {

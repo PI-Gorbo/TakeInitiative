@@ -18,7 +18,6 @@ public class GetCampaignMember(IDocumentStore Store) : Endpoint<GetCampaignMembe
 
     public override async Task HandleAsync(GetCampaignMemberRequest req, CancellationToken ct)
     {
-
         var userId = this.GetUserIdOrThrowUnauthorized();
         var result = await Store.Try(async session =>
         {

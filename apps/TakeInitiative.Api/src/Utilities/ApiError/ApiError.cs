@@ -11,7 +11,8 @@ public record ApiError
     public static ApiError NotFound(string message) => new ApiError { Message = message, StatusCode = HttpStatusCode.NotFound };
     public static ApiError Unauthorized(string message) => new ApiError { Message = message, StatusCode = HttpStatusCode.Unauthorized };
     public static ApiError InternalServerError(string message) => new ApiError { Message = message, StatusCode = HttpStatusCode.InternalServerError };
-    public static ApiError DbInteractionFailed(string message) => new ApiError { Message = $"Failed to fetch data from the database. {message}", StatusCode = HttpStatusCode.ServiceUnavailable };
+    public static ApiError DbInteractionFailed(string message) => new ApiError { Message = $"A database operation failed. {message}", StatusCode = HttpStatusCode.ServiceUnavailable };
+    public static ApiError DbInteractionFailed(Exception ex) => new ApiError { Message = $"A database operation failed. {ex.Message}", StatusCode = HttpStatusCode.ServiceUnavailable };
 
     public static implicit operator ApiError(string value) => BadRequest(value);
 }

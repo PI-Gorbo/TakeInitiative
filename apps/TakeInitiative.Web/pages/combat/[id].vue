@@ -160,17 +160,27 @@
                                 ?.length ?? 0) > 0,
                     }"
                     class="py-2"
-                    backgroundColour="take-navy-medium"
+                    backgroundColour="take-navy"
                 >
-                    <template #Custom>
-                        <CombatStageCharacterForm
-                            :onCreate="onUpsertStagedCharacter"
+                    <template #Characters>
+                        <CombatCampaignMemberCharactersSection
+                            :onStage="
+                                (ids) =>
+                                    combatStore
+                                        .stagePlayerCharacters(ids)
+                                        .then(closeModal)
+                            "
                         />
                     </template>
                     <template #Planned>
                         <CombatPlannedStagesDisplay
                             :stages="combatStore.state.combat?.plannedStages!"
                             :submit="onStagePlannedCharacters"
+                        />
+                    </template>
+                    <template #Custom>
+                        <CombatStageCharacterForm
+                            :onCreate="onUpsertStagedCharacter"
                         />
                     </template>
                 </Tabs>
@@ -201,7 +211,7 @@
                     :onDelete="
                         (character) =>
                             combatStore
-                                .deleteInitiativeCharacterRequest(character)
+                                .deleteInitiativeCharacter(character)
                                 .then(closeModal)
                     "
                 />

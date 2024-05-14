@@ -1,7 +1,7 @@
 <template>
     <div @click="() => editNpcFormModal?.show()" class="p-2">
-        <div class="cursor-pointer flex gap-2 justify-between px-2">
-            <div class="cursor-pointer text-lg ws-nowrap select-none">
+        <div class="flex cursor-pointer justify-between gap-2 px-2">
+            <div class="ws-nowrap cursor-pointer select-none text-lg">
                 {{ npc.name }} ( x {{ npc.quantity }} )
             </div>
             <div v-if="npc.health">
@@ -13,7 +13,7 @@
                 <FontAwesomeIcon icon="shield-halved" />
                 <div class="ws-nowrap min-w-fit">{{ npc.armorClass }}</div>
             </div>
-            <div class="flex gap-2 items-center select-none">
+            <div class="flex select-none items-center gap-2">
                 <FontAwesomeIcon icon="shoe-prints" />
                 <div>{{ npc.initiative.value }}</div>
             </div>
@@ -23,10 +23,14 @@
         <ModifyPlannedCharacterForm
             :npc="props.npc"
             :onEdit="
-                (request) => props.editNpc(request).then(() => editNpcFormModal?.hide())
+                (request) =>
+                    props.editNpc(request).then(() => editNpcFormModal?.hide())
             "
             :onDelete="
-                (request) => props.deleteNpc(request).then(() => editNpcFormModal?.hide())
+                (request) =>
+                    props
+                        .deleteNpc(request)
+                        .then(() => editNpcFormModal?.hide())
             "
         />
     </Modal>
@@ -43,10 +47,10 @@ const editNpcFormModal = ref<InstanceType<typeof Modal> | null>(null);
 const props = defineProps<{
     npc: PlannedCombatCharacter;
     editNpc: (
-        request: Omit<UpdatePlannedCombatNpcRequest, "combatId" | "stageId">
+        request: Omit<UpdatePlannedCombatNpcRequest, "combatId" | "stageId">,
     ) => Promise<any>;
     deleteNpc: (
-        request: Omit<DeletePlannedCombatNpcRequest, "combatId" | "stageId">
+        request: Omit<DeletePlannedCombatNpcRequest, "combatId" | "stageId">,
     ) => Promise<any>;
 }>();
 </script>

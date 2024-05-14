@@ -1,3 +1,4 @@
+import { PlayerCharacter } from "./models";
 import type { InferType } from "yup";
 import { yup } from "./HelperTypes";
 
@@ -24,14 +25,37 @@ export const campaignValidator = yup.object({
 });
 export type Campaign = InferType<typeof campaignValidator>;
 
+// Character Initiative
+export enum InitiativeStrategy {
+    Fixed = 0,
+    Roll = 1,
+}
+export const characterInitiativeValidator = yup.object({
+    strategy: yup.mixed().oneOf(Object.values(InitiativeStrategy)),
+    value: yup.string().required(),
+});
+export type CharacterInitiative = InferType<
+    typeof characterInitiativeValidator
+>;
+
+// Character Health
+export const characterHealthValidator = yup.object({
+    maxHealth: yup.number().nullable(),
+    currentHealth: yup.number().required(),
+});
+export type CharacterHealth = InferType<typeof characterHealthValidator>;
+
 // Player Character
-export const playerCharacterValidator = yup.object({
+export const characterValidator = yup.object({
     id: yup.string().required(),
-    playerId: yup.string().required(),
     name: yup.string().required(),
-    health: yup.object().nullable(),
-    initiative: yup.object().required(),
-    armourClass: yup.number().nullable(),
+    health: characterHealthValidator.nullable(),
+    initiative: characterInitiativeValidator,
+    armorClass: yup.number().nullable(),
+});
+export type ICharacter = InferType<typeof characterValidator>;
+export const playerCharacterValidator = characterValidator.shape({
+    playerId: yup.string().required(),
 });
 export type PlayerCharacter = InferType<typeof playerCharacterValidator>;
 
@@ -41,31 +65,9 @@ export const campaignMemberValidator = yup.object({
     userId: yup.string().required(),
     campaignId: yup.string().required(),
     isDungeonMaster: yup.boolean().required(),
-    currentCharacterId: yup.string().nullable(),
     characters: yup.array(playerCharacterValidator),
 });
 export type CampaignMember = InferType<typeof campaignMemberValidator>;
-
-// Character Health
-export const characterHealthValidator = yup.object({
-    maxHealth: yup.number().nullable(),
-    currentHealth: yup.number().required(),
-});
-export type CharacterHealth = InferType<typeof characterHealthValidator>;
-
-export enum InitiativeStrategy {
-    Fixed = 0,
-    Roll = 1,
-}
-
-// Character Initiative
-export const characterInitiativeValidator = yup.object({
-    strategy: yup.mixed().oneOf(Object.values(InitiativeStrategy)),
-    value: yup.string().required(),
-});
-export type CharacterInitiative = InferType<
-    typeof characterInitiativeValidator
->;
 
 // Planned Combat NPC
 export const plannedCombatCharacterValidator = yup.object({
@@ -114,9 +116,20 @@ export const playerDtoValidator = yup.object({
     userId: yup.string().required(),
 });
 export type PlayerDto = InferType<typeof playerDtoValidator>;
+
+export const CharacterOriginOptions = {
+    PlayerCharacter: 0,
+    PlannedCharacter: 1,
+    CustomCharacter: 2,
+} as const;
 export const combatCharacterValidator = yup.object({
     id: yup.string().required(),
-    plannedCharacterId: yup.string().nullable(),
+    characterOriginDetails: yup.object({
+        characterOrigin: yup
+            .mixed()
+            .oneOf(Object.values(CharacterOriginOptions)),
+        id: yup.string().nullable(),
+    }),
     playerId: yup.string().required(),
     initiativeValue: yup.array(yup.number().required()).nullable(),
     hidden: yup.boolean().required(),

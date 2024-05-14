@@ -18,7 +18,6 @@ const campaignMemberDtoValidator = yup.object({
     userId: yup.string().required(),
     username: yup.string().required(),
     isDungeonMaster: yup.boolean().required(),
-    currentCharacter: playerCharacterValidator.nullable(),
 });
 
 const combatDtoValidator = yup.object({

@@ -11,14 +11,6 @@
             v-model:value="name"
             v-bind="nameInputProps"
         />
-        <FormInput
-            label="Quantity"
-            textColour="white"
-            type="number"
-            :value="quantity"
-            @update:value="(val) => (quantity = Number(val) ?? 1)"
-            v-bind="quantityInputProps"
-        />
 
         <section>
             <label class="text-white">Initiative</label>
@@ -109,27 +101,23 @@ import {
     type PlannedCombatCharacter,
     type PlannedCombatStage,
     characterInitiativeValidator,
+    type PlayerCharacter,
 } from "~/utils/types/models";
 import type { CreatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
 import type { UpdatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
 import type { DeletePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/deletePlannedCombatNpcRequest";
-import type { SubmittingState } from "./Form/Base.vue";
+import type { PlayerCharacterDto } from "~/utils/api/campaign/createPlayerCharacterRequest";
+import type { SubmittingState } from "../Form/Base.vue";
 
 const formState = reactive({
     error: null as ApiError<CreatePlannedCombatNpcRequest> | null,
 });
 
 const props = defineProps<{
-    npc?: PlannedCombatCharacter;
-    onCreate?: (
-        request: Omit<CreatePlannedCombatNpcRequest, "combatId" | "stageId">,
-    ) => Promise<unknown>;
-    onEdit?: (
-        request: Omit<UpdatePlannedCombatNpcRequest, "combatId" | "stageId">,
-    ) => Promise<unknown>;
-    onDelete?: (
-        request: Omit<DeletePlannedCombatNpcRequest, "combatId" | "stageId">,
-    ) => Promise<unknown>;
+    npc?: PlayerCharacter;
+    onCreate?: (request: PlayerCharacterDto) => Promise<unknown>;
+    onEdit?: (request: PlayerCharacterDto) => Promise<unknown>;
+    onDelete?: () => Promise<unknown>;
 }>();
 
 // Form Definition
@@ -145,13 +133,6 @@ const { values, errors, defineField, validate } = useForm({
 const [name, nameInputProps] = defineField("name", {
     props: (state) => ({
         errorMessage: formState.error?.getErrorFor("name") ?? state.errors[0],
-    }),
-});
-
-const [quantity, quantityInputProps] = defineField("quantity", {
-    props: (state) => ({
-        errorMessage:
-            formState.error?.getErrorFor("quantity") ?? state.errors[0],
     }),
 });
 
@@ -181,11 +162,9 @@ onMounted(() => {
     if (!props.npc) {
         initiativeStrategy.value = InitiativeStrategy.Roll;
         initiativeValue.value = "1d20 + 1";
-        quantity.value = 1;
     } else {
         initiativeStrategy.value = props.npc?.initiative.strategy;
         initiativeValue.value = props.npc.initiative.value;
-        quantity.value = props.npc.quantity;
         name.value = props.npc.name;
     }
 });
@@ -206,11 +185,9 @@ async function onSubmit(formSubmittingState: SubmittingState) {
 
 async function onDelete() {
     if (!props.onDelete) return;
-    return await props
-        .onDelete({ npcId: props.npc?.id! })
-        .catch(async (err) => {
-            formState.error = await parseAsApiError(err);
-        });
+    return await props.onDelete().catch(async (err) => {
+        formState.error = await parseAsApiError(err);
+    });
 }
 
 async function onEdit() {
@@ -230,9 +207,7 @@ async function onEdit() {
                 value: initiativeValue.value!,
             },
             name: name.value!,
-            quantity: quantity.value!,
-            armourClass: null,
-            npcId: props.npc?.id!,
+            armorClass: null,
         })
         .catch(async (error) => {
             formState.error = await parseAsApiError(error);
@@ -247,7 +222,7 @@ async function onCreate() {
     if (!validateResult.valid) {
         return;
     }
-    console.log(quantity.value);
+
     return await props
         .onCreate({
             health: null,
@@ -256,8 +231,7 @@ async function onCreate() {
                 value: initiativeValue.value!,
             },
             name: name.value!,
-            quantity: quantity.value!,
-            armourClass: null,
+            armorClass: null,
         })
         .catch(async (error) => {
             formState.error = await parseAsApiError(error);
