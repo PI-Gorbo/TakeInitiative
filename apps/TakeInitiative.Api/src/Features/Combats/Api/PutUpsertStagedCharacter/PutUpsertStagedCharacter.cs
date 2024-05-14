@@ -23,12 +23,13 @@ public class PutUpsertStagedCharacter(IDocumentSession session, IHubContext<Comb
         var result = await Result
             .Try(
                 async () => await session.LoadAsync<Combat>(req.CombatId),
-                err => ApiError.DbInteractionFailed(err.Message))
-            .EnsureNotNull("There is no combat with the given id.")
-            .Ensure(
-                combat => combat.State != CombatState.Paused && combat.State != CombatState.Finished,
-                combat => $"Cannot stage character because the combat is {combat.State.ToString().ToLower()}.")
-            .Ensure(combat => combat.CurrentPlayers.Any(x => x.UserId == userId), "Must be a current player in order to stage enemies")
+                err => ApiError.DbInteractionFailed(err.Message)
+            )
+                .EnsureNotNull("There is no combat with the given id.")
+                .Ensure(
+                    combat => combat.State != CombatState.Paused && combat.State != CombatState.Finished,
+                    combat => $"Cannot stage character because the combat is {combat.State.ToString().ToLower()}.")
+                .Ensure(combat => combat.CurrentPlayers.Any(x => x.UserId == userId), "Must be a current player in order to stage enemies")
             .Bind(async fetchedCombat =>
             {
                 var existingCharacter = fetchedCombat.StagedList.SingleOrDefault(x => x.Id == req.Character.Id);
