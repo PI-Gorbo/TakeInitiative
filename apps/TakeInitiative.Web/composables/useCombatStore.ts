@@ -91,7 +91,7 @@ export const useCombatStore = defineStore("combatStore", () => {
     }
 
     async function upsertStagedCharacter(req: StagedCharacterDTO) {
-        return await api.combat.staged.character.upsert({
+        return await api.combat.stage.character.upsert({
             character: req,
             combatId: state.combat?.id!,
         });
@@ -100,7 +100,7 @@ export const useCombatStore = defineStore("combatStore", () => {
     async function deleteStagedCharacter(
         req: Omit<DeleteStagedCharacterRequest, "combatId">,
     ) {
-        return await api.combat.staged.character.delete({
+        return await api.combat.stage.character.delete({
             ...req,
             combatId: state.combat?.id!,
         });
@@ -124,7 +124,7 @@ export const useCombatStore = defineStore("combatStore", () => {
             "combatId"
         >,
     ) {
-        return await api.combat.staged.rollIntoInitiative({
+        return await api.combat.stage.rollIntoInitiative({
             ...request,
             combatId: state.combat?.id!,
         });
@@ -133,9 +133,16 @@ export const useCombatStore = defineStore("combatStore", () => {
     async function stagePlannedCharacters(
         req: PostStagePlannedCharactersRequest["plannedCharactersToStage"],
     ) {
-        return await api.combat.staged.planned({
+        return await api.combat.stage.planned({
             combatId: state.combat?.id!,
             plannedCharactersToStage: req,
+        });
+    }
+
+    async function stagePlayerCharacters(playerCharacterIds: string[]) {
+        return await api.combat.stage.playerCharacters({
+            combatId: state.combat?.id!,
+            characterIds: playerCharacterIds,
         });
     }
 
@@ -146,7 +153,7 @@ export const useCombatStore = defineStore("combatStore", () => {
         });
     }
 
-    async function deleteInitiativeCharacterRequest(characterId: string) {
+    async function deleteInitiativeCharacter(characterId: string) {
         return await api.combat.initiative.character.delete({
             combatId: state.combat?.id!,
             characterId,
@@ -220,11 +227,12 @@ export const useCombatStore = defineStore("combatStore", () => {
     return {
         connection,
         state,
-        deleteInitiativeCharacterRequest,
+        deleteInitiativeCharacter,
         updateInitiativeCharacter,
         upsertStagedCharacter,
         deleteStagedCharacter,
         stagePlannedCharacters,
+        stagePlayerCharacters,
         setCombat,
         joinCombat,
         leaveCombat,

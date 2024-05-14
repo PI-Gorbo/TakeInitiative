@@ -123,13 +123,13 @@ const props = defineProps<{
     npc?: PlannedCombatCharacter;
     onCreate?: (
         request: Omit<CreatePlannedCombatNpcRequest, "combatId" | "stageId">,
-    ) => Promise<void>;
+    ) => Promise<unknown>;
     onEdit?: (
         request: Omit<UpdatePlannedCombatNpcRequest, "combatId" | "stageId">,
-    ) => Promise<void>;
+    ) => Promise<unknown>;
     onDelete?: (
         request: Omit<DeletePlannedCombatNpcRequest, "combatId" | "stageId">,
-    ) => Promise<void>;
+    ) => Promise<unknown>;
 }>();
 
 // Form Definition

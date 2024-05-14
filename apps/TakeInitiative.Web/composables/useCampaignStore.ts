@@ -13,6 +13,7 @@ import type {
 import type { CampaignMember } from "../utils/types/models";
 import type { UpdateCampaignDetailsRequest } from "~/utils/api/campaign/updateCampaignDetailsRequest";
 import type { CreatePlannedCombatRequest } from "~/utils/api/plannedCombat/createPlannedCombatRequest";
+import type { PlayerCharacterDto } from "~/utils/api/campaign/createPlayerCharacterRequest";
 
 export const useCampaignStore = defineStore("campaignStore", () => {
     const api = useApi();
@@ -171,6 +172,38 @@ export const useCampaignStore = defineStore("campaignStore", () => {
             .then(() => plannedCombatStore.setPlannedCombat(null));
     }
 
+    // Player Character Management //
+    async function createPlayerCharacter(dto: PlayerCharacterDto) {
+        return await api.campaign.playerCharacters
+            .create({
+                campaignMemberId: state.userCampaignMember?.id!,
+                playerCharacter: dto,
+            })
+            .then((member) => (state.userCampaignMember = member));
+    }
+
+    async function updatePlayerCharacter(
+        characterId: string,
+        dto: PlayerCharacterDto,
+    ) {
+        return await api.campaign.playerCharacters
+            .update({
+                campaignMemberId: state.userCampaignMember?.id!,
+                playerCharacterId: characterId,
+                playerCharacter: dto,
+            })
+            .then((member) => (state.userCampaignMember = member));
+    }
+
+    async function deletePlayerCharacter(characterId: string) {
+        return await api.campaign.playerCharacters
+            .delete({
+                memberId: state.userCampaignMember?.id!,
+                playerCharacterId: characterId,
+            })
+            .then((member) => (state.userCampaignMember = member));
+    }
+
     return {
         state,
         init,
@@ -181,6 +214,9 @@ export const useCampaignStore = defineStore("campaignStore", () => {
         setPlannedCombat,
         deletePlannedCombat,
         openCombat,
+        createPlayerCharacter,
+        updatePlayerCharacter,
+        deletePlayerCharacter,
         isDm: computed(
             () => state.userCampaignMember?.isDungeonMaster ?? false,
         ),

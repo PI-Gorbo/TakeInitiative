@@ -10,12 +10,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Protocols.Configuration;
 using Python.Runtime;
 using Serilog;
-using TakeInitiative.Api.Bootstrap;
-using TakeInitiative.Api.Models;
-using TakeInitiative.Setup.Database;
 using TakeInitiative.Utilities.Extensions;
 using Weasel.Postgresql;
 
+namespace TakeInitiative.Api.Bootstrap;
 public static class Bootstrap
 {
     public static WebApplicationBuilder AddMartenDB(this WebApplicationBuilder builder)

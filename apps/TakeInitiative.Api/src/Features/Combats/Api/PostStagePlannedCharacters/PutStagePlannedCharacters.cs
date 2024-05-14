@@ -1,0 +1,40 @@
+using System.Net;
+using CSharpFunctionalExtensions;
+using FastEndpoints;
+using Marten;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.SignalR;
+using TakeInitiative.Utilities.Extensions;
+
+namespace TakeInitiative.Api.Features.Combats;
+
+public class PostStagePlannedCharacters(IDocumentStore Store, IHubContext<CombatHub> hubContext) : Endpoint<PutStagePlannedCharactersRequest, CombatResponse>
+{
+    public override void Configure()
+    {
+        Post("/api/combat/stage/planned-character");
+        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
+        Policies(TakePolicies.UserExists);
+    }
+
+    public override async Task HandleAsync(PutStagePlannedCharactersRequest req, CancellationToken ct)
+    {
+        var userId = this.GetUserIdOrThrowUnauthorized();
+
+        Result<Combat> result = await new StagePlannedCharactersCommand()
+        {
+            CombatId = req.CombatId,
+            UserId = userId,
+            PlannedCharactersToStage = req.PlannedCharactersToStage
+        }.ExecuteAsync();
+
+        if (result.IsFailure)
+        {
+            ThrowError(result.Error, (int)HttpStatusCode.ServiceUnavailable);
+        }
+
+
+        await SendAsync(new() { Combat = result.Value });
+        await hubContext.NotifyCombatUpdated(result.Value);
+    }
+}

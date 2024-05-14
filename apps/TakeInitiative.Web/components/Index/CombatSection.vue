@@ -49,7 +49,7 @@
                             v-for="plannedCombat in plannedCombats"
                             :key="plannedCombat.id"
                             :class="[
-                                'flex select-none items-center justify-between rounded-md border border-take-navy-dark bg-take-navy-dark p-2',
+                                'flex select-none items-center justify-between rounded-md border border-take-navy-dark bg-take-navy-dark p-1',
                                 selectedPlannedCombat?.id == plannedCombat.id &&
                                     'border-take-yellow',
                             ]"
@@ -99,7 +99,7 @@
                         <li
                             v-for="finishedCombat in combatHistory"
                             :key="finishedCombat.combatId"
-                            class="flex select-none items-center justify-between rounded-md bg-take-navy-dark p-2"
+                            class="flex select-none items-center justify-between rounded-md bg-take-navy-dark p-1"
                         >
                             <span class="px-1">{{ finishedCombat.name }}</span>
                             <FormButton

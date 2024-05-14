@@ -3,18 +3,19 @@ using CSharpFunctionalExtensions;
 using Marten;
 using Microsoft.AspNetCore.Identity;
 
-namespace TakeInitiative.Setup.Database;
+namespace TakeInitiative.Api.Bootstrap;
 public class MartenRoleStore :
     IRoleClaimStore<ApplicationUserRole>
 {
-	private IDocumentSession session;
-	public MartenRoleStore(IDocumentStore Store) {
-		session = Store.LightweightSession();
-	}
+    private IDocumentSession session;
+    public MartenRoleStore(IDocumentStore Store)
+    {
+        session = Store.LightweightSession();
+    }
 
     public void Dispose()
     {
-		session.Dispose();
+        session.Dispose();
         return;
     }
 
