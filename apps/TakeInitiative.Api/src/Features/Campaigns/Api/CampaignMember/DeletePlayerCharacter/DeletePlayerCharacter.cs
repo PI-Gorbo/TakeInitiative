@@ -3,16 +3,12 @@ using CSharpFunctionalExtensions;
 using FastEndpoints;
 using Marten;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using TakeInitiative.Utilities;
 using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Campaigns;
-public record DeletePlayerCharacterRequest
-{
-    public required Guid MemberId { get; set; }
-    public required Guid PlayerCharacterId { get; set; }
-}
 
-public class DeletePlayerCharacter(IDocumentStore Store) : Endpoint<DeletePlayerCharacterRequest, CampaignMember>
+public class DeletePlayerCharacter(IDocumentSession session) : Endpoint<DeletePlayerCharacterRequest, CampaignMember>
 {
     public override void Configure()
     {
@@ -25,43 +21,25 @@ public class DeletePlayerCharacter(IDocumentStore Store) : Endpoint<DeletePlayer
     {
         var userId = this.GetUserIdOrThrowUnauthorized();
 
-        var result = await Store.Try(async session =>
-        {
-            var campaignMember = await session.LoadAsync<CampaignMember>(req.MemberId);
-            if (campaignMember == null)
+        var result = await Result
+            .Try(async () => await session.LoadAsync<CampaignMember>(req.MemberId), ApiError.DbInteractionFailed)
+                .EnsureNotNull(ApiError.NotFound("No Campaign Member with the given id exists."))
+                .Ensure((member) => member.UserId == userId, "Cannot edit Campaign Member details of others")
+            .Bind(async (member) =>
             {
-                ThrowError("No Campaign Member with the given id exists.", (int)HttpStatusCode.NotFound);
-            }
+                // Ensure the player character exists.
+                var character = member.Characters.SingleOrDefault(x => x.Id == req.PlayerCharacterId);
+                if (character == null)
+                {
+                    return ApiError.NotFound("There are no characters with the given id.");
+                }
 
-            // Ensure only the owner of the campaign member details can edit
-            if (campaignMember.UserId != userId)
-            {
-                ThrowError("Cannot edit Campaign Member details of others", (int)HttpStatusCode.Unauthorized);
-            }
+                session.Store(member);
+                await session.SaveChangesAsync();
 
-            // Ensure the player character exists.
-            var character = campaignMember.Characters.SingleOrDefault(x => x.Id == req.PlayerCharacterId);
-            if (character == null)
-            {
-                ThrowError("There are no characters with the given id.", (int)HttpStatusCode.NotFound);
-            }
+                return Result.Success<CampaignMember, ApiError>(member);
+            });
 
-            campaignMember.Characters = campaignMember.Characters.Where(x => x.Id != req.PlayerCharacterId).ToList();
-            if (campaignMember.Characters.Count == 0)
-            {
-                campaignMember.CurrentCharacterId = null;
-            }
-
-            session.Store(campaignMember);
-            await session.SaveChangesAsync();
-            return campaignMember;
-        });
-
-        if (result.IsFailure)
-        {
-            ThrowError(result.Error, (int)HttpStatusCode.ServiceUnavailable);
-        }
-
-        await SendAsync(result.Value);
+        await this.ReturnApiResult(result);
     }
 }
