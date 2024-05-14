@@ -1,6 +1,5 @@
 using FastEndpoints;
 using FluentValidation;
-using TakeInitiative.Api.Features;
 
 namespace TakeInitiative.Api.Features.Combats;
 

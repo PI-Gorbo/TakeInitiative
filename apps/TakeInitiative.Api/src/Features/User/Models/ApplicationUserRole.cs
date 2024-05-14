@@ -1,6 +1,5 @@
 using System.Security.Claims;
-
-namespace TakeInitiative.Setup.Database;
+namespace TakeInitiative.Api.Features.Users;
 public class ApplicationUserRole
 {
     public Guid Id { get; set; }

@@ -1,16 +1,10 @@
-using System.Collections.Immutable;
-using System.Net;
 using CSharpFunctionalExtensions;
 using FastEndpoints;
 using Marten;
-using Marten.Exceptions;
-using Microsoft.AspNet.SignalR;
-using TakeInitiative.Api.Features;
-using TakeInitiative.Api.Features;
 using TakeInitiative.Utilities;
 using TakeInitiative.Utilities.Extensions;
 
-namespace TakeInitiative.Api.CQRS;
+namespace TakeInitiative.Api.Features.Combats;
 
 public record RollStagedCharacterIntoInitiativeCommand : ICommand<Result<Combat>>
 {

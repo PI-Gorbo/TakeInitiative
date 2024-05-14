@@ -1,10 +1,8 @@
 using System.Net;
 using FastEndpoints;
 using Marten;
-using TakeInitiative.Api.Features;
 using TakeInitiative.Utilities.Extensions;
 using CSharpFunctionalExtensions;
-using TakeInitiative.Api.CQRS;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.SignalR;
 

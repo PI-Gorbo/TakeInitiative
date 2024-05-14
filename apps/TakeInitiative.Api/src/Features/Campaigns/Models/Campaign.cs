@@ -1,4 +1,3 @@
-using Marten.Metadata;
 using TakeInitiative.Utilities;
 
 namespace TakeInitiative.Api.Features.Campaigns;

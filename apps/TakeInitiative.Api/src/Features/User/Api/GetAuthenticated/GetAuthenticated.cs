@@ -2,10 +2,8 @@ using FastEndpoints;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
-using TakeInitiative.Api.Bootstrap;
-using TakeInitiative.Api.Features;
 
-namespace TakeInitiative.Api.Features.Auth;
+namespace TakeInitiative.Api.Features.Users;
 public class GetAuthenticated(
     IOptions<JWTOptions> JWTOptions,
     UserManager<ApplicationUser> UserManager,

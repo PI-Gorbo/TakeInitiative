@@ -3,7 +3,6 @@ using JasperFx.Core;
 using Marten;
 using Marten.Events;
 using Marten.Events.Aggregation;
-using Marten.Linq.SoftDeletes;
 using TakeInitiative.Utilities;
 using TakeInitiative.Utilities.Extensions;
 

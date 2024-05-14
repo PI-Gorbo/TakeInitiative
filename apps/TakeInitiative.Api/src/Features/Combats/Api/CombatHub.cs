@@ -2,7 +2,6 @@ using CSharpFunctionalExtensions;
 using Marten;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using TakeInitiative.Api.Features;
 using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Combats;

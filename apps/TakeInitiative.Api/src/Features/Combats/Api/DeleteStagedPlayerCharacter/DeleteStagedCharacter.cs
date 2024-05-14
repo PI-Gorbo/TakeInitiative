@@ -2,11 +2,9 @@ using System.Net;
 using FastEndpoints;
 using Marten;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using TakeInitiative.Api.Features;
 using TakeInitiative.Utilities.Extensions;
 using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.SignalR;
-using System.ComponentModel;
 
 namespace TakeInitiative.Api.Features.Combats;
 

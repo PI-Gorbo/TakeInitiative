@@ -1,6 +1,5 @@
 using System.Linq.Expressions;
 using System.Net;
-using FastEndpoints;
 namespace TakeInitiative.Utilities;
 
 public record ApiError

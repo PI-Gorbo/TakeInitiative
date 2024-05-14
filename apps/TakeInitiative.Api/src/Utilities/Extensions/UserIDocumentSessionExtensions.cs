@@ -1,5 +1,4 @@
 using Marten;
-using TakeInitiative.Api.Features;
 
 namespace TakeInitiative.Utilities.Extensions;
 public static class UserIDocumentSessionExtensions

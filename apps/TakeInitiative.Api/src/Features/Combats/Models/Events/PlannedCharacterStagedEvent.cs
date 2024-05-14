@@ -1,5 +1,3 @@
-using TakeInitiative.Api.CQRS;
-
 namespace TakeInitiative.Api.Features.Combats;
 
 public record StagedPlannedCharacterEvent

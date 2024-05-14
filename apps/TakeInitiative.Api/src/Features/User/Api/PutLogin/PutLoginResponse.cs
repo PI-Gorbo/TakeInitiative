@@ -1,4 +1,4 @@
-namespace TakeInitiative.Api.Features.Auth;
+namespace TakeInitiative.Api.Features.Users;
 
 public record PutLoginResponse
 {

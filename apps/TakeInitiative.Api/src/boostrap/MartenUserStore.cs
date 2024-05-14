@@ -1,7 +1,6 @@
 using CSharpFunctionalExtensions;
 using Marten;
 using Microsoft.AspNetCore.Identity;
-using TakeInitiative.Api.Features;
 
 namespace TakeInitiative.Api.Bootstrap;
 public class MartenUserStore :

@@ -1,5 +1,3 @@
-using System.Collections.Immutable;
-
 namespace TakeInitiative.Api.Features.Combats;
 public record CombatStartedEvent
 {
