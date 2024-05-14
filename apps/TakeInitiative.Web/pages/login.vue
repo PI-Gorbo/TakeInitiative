@@ -2,7 +2,13 @@
     <section class="w-full">
         <div class="flex w-full flex-col justify-center">
             <h1 class="text-center text-xl">Log In</h1>
-            <NuxtLink to="/signup" class="text-center text-sm underline">
+            <NuxtLink
+                :to="{
+                    path: '/signup',
+                    query: redirectToPath ? { redirectTo: redirectToPath } : {},
+                }"
+                class="text-center text-sm underline"
+            >
                 Sign up instead</NuxtLink
             >
         </div>
@@ -48,6 +54,7 @@ import * as yup from "yup";
 import type { LoginRequest } from "~/utils/api/user/loginRequest";
 import { getDefaultLibFileName } from "typescript";
 import type { LocationQueryValue } from "vue-router";
+const redirectToPath = useRoute().query.redirectTo as LocationQueryValue;
 const state = reactive({
     isSubmitting: false,
     errorObject: null as null | ApiError<LoginRequest>,
@@ -95,8 +102,6 @@ async function onLogin() {
             state.errorObject = await parseAsApiError(error);
         })
         .then(async () => {
-            const redirectToPath = useRoute().query
-                .redirectTo as LocationQueryValue;
             if (redirectToPath != null) {
                 await navigateTo(redirectToPath);
             } else {

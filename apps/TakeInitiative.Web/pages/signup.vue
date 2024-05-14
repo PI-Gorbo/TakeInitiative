@@ -2,7 +2,13 @@
     <section class="w-full">
         <div class="flex w-full flex-col justify-center">
             <h1 class="text-center text-xl">Sign Up</h1>
-            <NuxtLink to="/login" class="text-center text-sm underline">
+            <NuxtLink
+                :to="{
+                    path: '/login',
+                    query: redirectToPath ? { redirectTo: redirectToPath } : {},
+                }"
+                class="text-center text-sm underline"
+            >
                 Login instead</NuxtLink
             >
         </div>
@@ -35,18 +41,23 @@
                 v-bind="confirmPasswordProps"
             />
 
-            <div v-if="formState.submitError?.errors?.generalErrors" class="text-take-red">
+            <div
+                v-if="formState.submitError?.errors?.generalErrors"
+                class="text-take-red"
+            >
                 {{ formState.submitError?.errors?.generalErrors[0] }}
             </div>
 
-            <div v-if="formState.success" class="text-take-yellow">Signing in...</div>
+            <div v-if="formState.success" class="text-take-yellow">
+                Signing in...
+            </div>
 
             <div class="flex justify-center">
                 <FormButton
                     label="Sign Up"
                     :loadingDisplay="{
                         showSpinner: true,
-                        loadingText: 'Signing Up...'
+                        loadingText: 'Signing Up...',
                     }"
                     :isLoading="formState.submitting"
                 />
@@ -62,6 +73,8 @@ import { toTypedSchema } from "@vee-validate/yup";
 import * as yup from "yup";
 import { formatDiagnosticsWithColorAndContext } from "typescript";
 import type { SignUpRequest } from "~/utils/api/user/signUpRequest";
+import type { LocationQueryValue } from "vue-router";
+const redirectToPath = useRoute().query.redirectTo as LocationQueryValue;
 definePageMeta({
     requiresAuth: false,
     layout: "auth",
@@ -92,24 +105,27 @@ const { values, errors, defineField, validate } = useForm({
                     }
                     return true;
                 }),
-        })
+        }),
     ),
 });
 const [email, emailInputProps] = defineField("email", {
     props: (state) => {
         return {
-            errorMessage: formState?.submitError?.getErrorFor("email") ?? state.errors[0],
+            errorMessage:
+                formState?.submitError?.getErrorFor("email") ?? state.errors[0],
         };
     },
 });
 const [username, usernameInputProps] = defineField("username", {
     props: (state) => ({
-        errorMessage: formState.submitError?.getErrorFor("username") ?? state.errors[0],
+        errorMessage:
+            formState.submitError?.getErrorFor("username") ?? state.errors[0],
     }),
 });
 const [password, passwordInputProps] = defineField("password", {
     props: (state) => ({
-        errorMessage: formState.submitError?.getErrorFor("password") ?? state.errors[0],
+        errorMessage:
+            formState.submitError?.getErrorFor("password") ?? state.errors[0],
     }),
 });
 const [confirmPassword, confirmPasswordProps] = defineField("confirmPassword", {
@@ -130,22 +146,28 @@ async function onSignUp() {
     }
 
     await userStore
-        .signUp({
-            email: email.value!,
-            username: username.value!,
-            password: password.value!,
-        })
+        .signUp(
+            {
+                email: email.value!,
+                username: username.value!,
+                password: password.value!,
+            },
+            redirectToPath,
+        )
         .then(() => (formState.success = true))
         .catch(async (error) => {
             try {
-                formState.submitError = await parseAsApiError<SignUpRequest>(error);
+                formState.submitError =
+                    await parseAsApiError<SignUpRequest>(error);
             } catch {
                 formState.submitError = {
                     // TODO : Refactor
                     statusCode: 500,
                     message: "Something went wrong while trying to sign in.",
                     errors: {
-                        generalErrors: ["Something went wrong while trying to sign in."],
+                        generalErrors: [
+                            "Something went wrong while trying to sign in.",
+                        ],
                     },
                     getErrorFor: (error) =>
                         error == "generalErrors"

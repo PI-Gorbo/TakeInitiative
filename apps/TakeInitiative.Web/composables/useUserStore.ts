@@ -65,9 +65,12 @@ export const useUserStore = defineStore("userStore", () => {
         });
     }
 
-    async function signUp(signUpRequest: SignUpRequest): Promise<void> {
+    async function signUp(
+        signUpRequest: SignUpRequest,
+        redirectPath: string | null,
+    ): Promise<void> {
         return await api.user.signUp(signUpRequest).then(async () => {
-            await navigateTo("/");
+            await navigateTo(redirectPath ?? "/");
         });
     }
 
