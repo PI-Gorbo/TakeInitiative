@@ -47,6 +47,7 @@ import { toTypedSchema } from "@vee-validate/yup";
 import * as yup from "yup";
 import type { LoginRequest } from "~/utils/api/user/loginRequest";
 import { getDefaultLibFileName } from "typescript";
+import type { LocationQueryValue } from "vue-router";
 const state = reactive({
     isSubmitting: false,
     errorObject: null as null | ApiError<LoginRequest>,
@@ -94,7 +95,13 @@ async function onLogin() {
             state.errorObject = await parseAsApiError(error);
         })
         .then(async () => {
-            await navigateTo("/");
+            const redirectToPath = useRoute().query
+                .redirectTo as LocationQueryValue;
+            if (redirectToPath != null) {
+                await navigateTo(redirectToPath);
+            } else {
+                await navigateTo("/");
+            }
         })
         .finally(() => (state.isSubmitting = false));
 }
