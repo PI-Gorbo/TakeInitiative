@@ -32,24 +32,30 @@ public class PutUpsertStagedCharacter(IDocumentSession session, IHubContext<Comb
                 .Ensure(combat => combat.CurrentPlayers.Any(x => x.UserId == userId), "Must be a current player in order to stage enemies")
             .Bind(async fetchedCombat =>
             {
-                var existingCharacter = fetchedCombat.StagedList.SingleOrDefault(x => x.Id == req.Character.Id);
-                var character = CombatCharacter.FromCharacter(req.Character, userId, CharacterOriginDetails.CustomCharacter(), req.Character.Hidden);
+                Maybe<CombatCharacter> existingCharacter = fetchedCombat.StagedList.SingleOrDefault(x => x.Id == req.Character.Id).AsMaybe();
 
-
-
-                if (existingCharacter != null)
+                if (existingCharacter.HasValue)
                 {
-                    var userIsAllowedToEditCharacter = existingCharacter?.PlayerId == userId || fetchedCombat.DungeonMaster == userId;
+                    var userIsAllowedToEditCharacter = existingCharacter.Value.PlayerId == userId || fetchedCombat.DungeonMaster == userId;
                     if (!userIsAllowedToEditCharacter)
                     {
                         return ApiError.Invalid<PutUpsertStagedCharacterRequest>(x => x.Character, "Only a dungeon master can edit this character.");
                     }
 
+                    CombatCharacter updatedCharacter = existingCharacter.Value with
+                    {
+                        Name = req.Character.Name,
+                        Health = req.Character.Health,
+                        Initiative = req.Character.Initiative,
+                        ArmorClass = req.Character.ArmorClass,
+                        Hidden = req.Character.Hidden,
+                    };
+
                     // Create the edit user event
                     StagedCharacterEditedEvent editEvent = new()
                     {
                         UserId = userId,
-                        Character = character
+                        Character = updatedCharacter
                     };
                     session.Events.Append(req.CombatId, editEvent);
                 }
@@ -59,7 +65,7 @@ public class PutUpsertStagedCharacter(IDocumentSession session, IHubContext<Comb
                     StagedCharacterEvent addEvent = new()
                     {
                         UserId = userId,
-                        Character = character
+                        Character = CombatCharacter.New(req.Character.Name, req.Character.Initiative, req.Character.ArmorClass, req.Character.Health, req.Character.Hidden)
                     };
                     session.Events.Append(req.CombatId, addEvent);
                 }
