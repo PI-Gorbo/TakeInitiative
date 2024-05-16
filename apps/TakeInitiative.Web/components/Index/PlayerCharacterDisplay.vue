@@ -3,7 +3,7 @@
         class="flex flex-1 cursor-pointer flex-wrap justify-between gap-2 rounded-md border border-take-navy-dark bg-take-navy-dark px-2 transition-colors hover:border-take-yellow"
     >
         <div
-            class="flex items-center justify-center p-1 font-NovaCut capitalize md:text-lg"
+            class="flex items-center justify-center p-1 font-NovaCut md:text-lg"
         >
             {{ props.character.name }}
         </div>

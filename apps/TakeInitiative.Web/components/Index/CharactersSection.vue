@@ -1,5 +1,5 @@
 <template>
-    <main class="py-2">
+    <main class="px-2 py-2 sm:px-0">
         <div
             v-if="
                 campaignMember?.characters == null ||
@@ -85,7 +85,6 @@ import ModifyPlayerCharacterForm from "./ModifyPlayerCharacterForm.vue";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import Modal from "~/components/Modal.vue";
 import type { PlayerCharacter } from "~/utils/types/models";
-import PlannedCharacterDisplay from "./PlannedCharacterDisplay.vue";
 
 const campaignStore = useCampaignStore();
 const campaignMember = computed(() => campaignStore.state.userCampaignMember);
