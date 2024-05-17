@@ -7,25 +7,21 @@ public record CombatCharacter : Character
     public required bool Hidden { get; set; }
     public required int? CopyNumber { get; set; }
 
-    public static CombatCharacter New(string Name, CharacterInitiative initiative, int? ArmorClass = null, CharacterHealth? Health = null, bool hidden = false)
+    public static CombatCharacter New(Guid playerId, string name, CharacterInitiative initiative, int? armorClass , CharacterHealth? health , bool hidden, CharacterOriginDetails characterOriginDetails,  int? copyNumber)
     {
-        var character = New(Name, initiative, ArmorClass, Health);
-        character.Hidden = hidden;
-        return character;
+        return new CombatCharacter()
+        {
+            Id = Guid.NewGuid(),
+            PlayerId = playerId,
+            CharacterOriginDetails = characterOriginDetails,
+            Initiative = initiative,
+            Name = name,
+            ArmorClass = armorClass,
+            Health = health,
+            Hidden = hidden,
+            InitiativeValue = [],
+            CopyNumber = copyNumber,
+        };
     }
-
-    public static CombatCharacter FromCharacter(Character playerCharacter, Guid playerId, CharacterOriginDetails origin, bool hidden) => new CombatCharacter()
-    {
-        Id = Guid.NewGuid(),
-        PlayerId = playerId,
-        CharacterOriginDetails = origin,
-        Name = playerCharacter.Name,
-        ArmorClass = playerCharacter.ArmorClass,
-        CopyNumber = null,
-        Health = playerCharacter.Health,
-        Initiative = playerCharacter.Initiative,
-        InitiativeValue = [],
-        Hidden = hidden,
-    };
 }
 

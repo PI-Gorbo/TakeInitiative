@@ -59,7 +59,7 @@
                     label="End Turn"
                     buttonColour="take-red"
                     hoverButtonColour="take-yellow-dark"
-                    :disabled="isUsersTurn"
+                    :disabled="!isUsersTurn"
                     :loadingDisplay="{
                         showSpinner: true,
                         loadingText: 'End...',
