@@ -49,7 +49,7 @@ public class StagePlayerCharactersCommandHandler(IDocumentSession session) : Com
                     return ApiError.BadRequest("One or more of the given ids do not correspond to characters for the player.");
                 }
 
-                return Result.Success<Character[], ApiError>(characters);
+                return Result.Success<PlayerCharacter[], ApiError>(characters);
             })
             .MapTry(async (characters) =>
             {
