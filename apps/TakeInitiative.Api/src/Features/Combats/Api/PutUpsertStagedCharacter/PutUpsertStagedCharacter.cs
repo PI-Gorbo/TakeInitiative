@@ -65,7 +65,16 @@ public class PutUpsertStagedCharacter(IDocumentSession session, IHubContext<Comb
                     StagedCharacterEvent addEvent = new()
                     {
                         UserId = userId,
-                        Character = CombatCharacter.New(req.Character.Name, req.Character.Initiative, req.Character.ArmorClass, req.Character.Health, req.Character.Hidden)
+                        Character = CombatCharacter.New(
+                            playerId: userId,
+                            name: req.Character.Name,
+                            initiative: req.Character.Initiative,
+                            armorClass: req.Character.ArmorClass,
+                            health: req.Character.Health,
+                            hidden: req.Character.Hidden,
+                            characterOriginDetails: CharacterOriginDetails.CustomCharacter(),
+                            copyNumber: null
+                        )
                     };
                     session.Events.Append(req.CombatId, addEvent);
                 }

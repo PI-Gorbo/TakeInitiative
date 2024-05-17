@@ -184,7 +184,16 @@ public class CombatProjection : SingleStreamProjection<Combat>
         {
             CombatLogs = [.. Combat.CombatLogs, $"{user?.UserName} staged {@event.Characters.Length} character(s) with the names {string.Join(", ", @event.Characters.Select(x => x.Name))} at {eventDetails.Timestamp:R}"],
             StagedList = (Combat.StagedList ?? [])
-                .AddRange(@event.Characters.Map(x => CombatCharacter.FromCharacter(x, @event.UserId, CharacterOriginDetails.PlayerCharacter(@event.UserId), Combat.DungeonMaster == user!.Id)))
+                .AddRange(@event.Characters.Map(x => CombatCharacter.New(
+                    playerId: @event.UserId,
+                    name: x.Name,
+                    initiative: x.Initiative,
+                    armorClass: x.ArmorClass,
+                    health: x.Health,
+                    hidden: Combat.DungeonMaster == user!.Id,
+                    characterOriginDetails: CharacterOriginDetails.PlayerCharacter(@event.UserId),
+                    copyNumber: null))
+                )
         };
     }
 
