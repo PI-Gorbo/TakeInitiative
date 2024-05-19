@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using CSharpFunctionalExtensions;
 using Marten;
 using Python.Runtime;
+using TakeInitiative.Api.Features;
 
 namespace TakeInitiative.Utilities;
 
@@ -73,46 +74,112 @@ public static class DiceRoller
             .ToList();
     }
 
-    public static Result<List<CharacterInitiativeRoll>> ComputeFirstRollsOfCombat(IEnumerable<CombatCharacter> characters)
+    public static Result<List<CharacterInitiativeRoll>> ComputeFirstRolls(IEnumerable<CombatCharacter> characters)
     {
         return ComputeFirstRollsOfCombat_Recursive(characters, isFirstRoll: true);
     }
 
 
-    private static CharacterInitiativeRoll MergeIncomingRollWithExistingInitiativeList(CharacterInitiativeRoll incomingRoll, IEnumerable<CharacterInitiativeRoll> currentInitiative)
-    {
-        int initiativeRound = 0;
-        var conflicts = currentInitiative.Where(x => x.rolls.Length > initiativeRound && x.rolls[initiativeRound] == incomingRoll.rolls[initiativeRound]);
-        while (conflicts.Any())
-        {
-            // There are one or more conflicts.
-            initiativeRound++;
-            incomingRoll.rolls.Append(DiceRoller.EvaluateRoll("1d20").Value);
-            conflicts = conflicts.Where(x => x.rolls.Length > initiativeRound && x.rolls[initiativeRound] == incomingRoll.rolls[initiativeRound]);
-        }
+    // private static CharacterInitiativeRoll MergeIncomingRollWithExistingInitiativeList(CharacterInitiativeRoll incomingRoll, List<CharacterInitiativeRoll> currentInitiative)
+    // {
+    //     // Situation:
+    //     // We have an incoming roll, lets say 6, which has to be merged in with the other rolls.
 
-        return incomingRoll;
-    }
+    //     int initiativeRound = 0;
+    //     var conflicts = currentInitiative.Where(x => x.rolls.Length > initiativeRound && x.rolls[initiativeRound] == incomingRoll.rolls[initiativeRound]).ToList();
+    //     while (conflicts.Any())
+    //     {
+    //         // If the incoming roll needs to be appended to (as we are at the end of the roll and there are conflicts)
+    //         if (incomingRoll.rolls.Length == initiativeRound)
+    //         {
+    //             incomingRoll.rolls.Append(DiceRoller.EvaluateRoll("1d20").Value);
+    //         }
 
-    public static Result<List<CharacterInitiativeRoll>> ComputeRollsWithExistingInitiative(IEnumerable<CombatCharacter> characters, ImmutableList<CombatCharacter> currentInitiativeList)
+    //         // Search for more conflicts, until there are none.
+    //         initiativeRound++;
+    //         if (conflicts.Count == 1)
+    //         {
+    //             // If there is only one conflict, we need to extend the initiative list of the current initiative rolls too.
+    //             Guid conflictId = conflicts[0].id;
+
+    //         }
+    //         else
+    //         {
+    //             conflicts = currentInitiative.Where(x => x.rolls.Length > initiativeRound && x.rolls[initiativeRound] == incomingRoll.rolls[initiativeRound]).ToList();
+    //         }
+    //     }
+
+    //     return incomingRoll;
+    // }
+
+    public static Result<List<CharacterInitiativeRoll>> ComputeRolls(List<CombatCharacter> newCharacters, ImmutableList<CombatCharacter> existingInitiativeList)
     {
         // 1. Compute the rolls of the new characters, to produce a set that has no conflicts.
-        var incomingComputedRolls = ComputeFirstRollsOfCombat(characters);
+        var incomingComputedRolls = ComputeFirstRolls(newCharacters);
         if (incomingComputedRolls.IsFailure)
         {
             return incomingComputedRolls;
         }
 
-        // 2. Merge the newly computed set into the existing initiative list, one by one.
-        List<CharacterInitiativeRoll> outgoingList = currentInitiativeList.Select(x => new CharacterInitiativeRoll(x.Id, x.InitiativeValue)).ToList();
-        foreach (CharacterInitiativeRoll incomingRoll in incomingComputedRolls.Value)
+        Dictionary<Guid, CharacterInitiativeRoll> outgoingCharacterInitiative = existingInitiativeList
+            .Select(x => new CharacterInitiativeRoll(x.Id, x.InitiativeValue))
+            .Concat(incomingComputedRolls.Value)
+            .ToDictionary(x => x.id, x => x);
+
+        int initiativeRound = 0;
+        List<IGrouping<int, CharacterInitiativeRoll>> rollsGroupedByConflict = outgoingCharacterInitiative
+            .Values
+            .Where(x => x.rolls.Length > initiativeRound)
+            .GroupBy(x => x.rolls[initiativeRound])
+            .ToList();
+
+        while (rollsGroupedByConflict.Select(x => x.Count() > 1).Any())
         {
-            CharacterInitiativeRoll evaluatedRoll = MergeIncomingRollWithExistingInitiativeList(incomingRoll, outgoingList);
-            outgoingList = outgoingList.Append(evaluatedRoll).ToList();
+
+            foreach (var group in rollsGroupedByConflict)
+            {
+
+                if (group.Count() == 1)
+                {
+                    continue; // No Conflict, skip.
+                }
+
+                // The list of all the ids of the elements that need to be extended.
+                Guid[] idsThatNeedToBeExtended = Array.Empty<Guid>();
+
+                if (group.All(x => x.rolls.Length == initiativeRound + 1))
+                {
+                    // Situation:
+                    // Incoming: (id1,6)
+                    // Current: (id2,6)
+                    // Here, we need to extend both
+                    idsThatNeedToBeExtended = group.Select(x => x.id).ToArray();
+                }
+                // else if ()
+                // {
+                //     // Situation:
+                //     // Incoming: (id1, [6,2])
+                //     // Current: (id2, [6,3])
+                //     // Here, we don't need to extend, we just need to increment the initiative round by 1.
+                // }
+                else
+                {
+
+
+                }
+
+
+                initiativeRound++;
+            }
+
+            // Re-compute if there are any conflicts.
+            rollsGroupedByConflict = outgoingCharacterInitiative
+                .Values
+                .Where(x => x.rolls.Length > initiativeRound)
+                .GroupBy(x => x.rolls[initiativeRound])
+                .ToList();
         }
 
-        // Return only the new rolls, by filtering by the current initiative list.
-        Guid[] existingIds = currentInitiativeList.Select(x => x.Id).ToArray();
-        return outgoingList.Where(x => !x.id.In(existingIds)).ToList();
+        return rollsGroupedByConflict.SelectMany(x => x).ToList();
     }
 }

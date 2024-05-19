@@ -46,7 +46,7 @@ public class RollStagedCharacterIntoInitiativeCommandHandler(IDocumentStore Stor
                     ThrowError($"One or more of the specified character ids are not in the staged character list.");
                 }
 
-                var computedInitiativeRolls = DiceRoller.ComputeRollsWithExistingInitiative(combat.StagedList.Where(x => x.Id.In(command.CharacterIds)), combat.InitiativeList);
+                var computedInitiativeRolls = DiceRoller.ComputeRolls(combat.StagedList.Where(x => x.Id.In(command.CharacterIds)), combat.InitiativeList);
                 if (computedInitiativeRolls.IsFailure)
                 {
                     ThrowError($"There was an error while trying to compute the dice rolls. {computedInitiativeRolls.Error}");

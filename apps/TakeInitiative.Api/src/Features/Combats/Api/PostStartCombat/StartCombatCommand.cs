@@ -42,7 +42,7 @@ public class StartCombatCommandHandler(IDocumentStore Store) : CommandHandler<St
                     ThrowError("Must be the dungeon master in order to start the combat.");
                 }
 
-                var computedInitiativeRolls = DiceRoller.ComputeFirstRollsOfCombat(combat.StagedList);
+                var computedInitiativeRolls = DiceRoller.ComputeFirstRolls(combat.StagedList);
                 if (computedInitiativeRolls.IsFailure)
                 {
                     ThrowError($"There was an error while trying to compute the dice rolls. {computedInitiativeRolls.Error}");

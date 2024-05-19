@@ -1,6 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace TakeInitiative.Utilities;
 
-public class InitiativeComparer : IComparer<int[]>
+public class InitiativeComparer : IComparer<int[]>, IEqualityComparer<int[]>
 {
     public int Compare(int[]? x, int[]? y)
     {
@@ -27,6 +29,27 @@ public class InitiativeComparer : IComparer<int[]>
         }
 
         return x[currentIndex] > y[currentIndex] ? 1 : -1;
+    }
+
+    public bool Equals(int[]? x, int[]? y)
+    {
+        if (x == y) // Reference equals or null.
+        {
+            return true;
+        }
+
+        if ((x == null && y != null) || (x != null && y == null))
+        {
+            return false;
+        }
+
+        return x!.SequenceEqual(y!);
+    }
+
+    public int GetHashCode([DisallowNull] int[] obj)
+    {
+        return obj.Aggregate(0, (a, v) =>
+            HashCode.Combine(a, v.GetHashCode()));
     }
 }
 
