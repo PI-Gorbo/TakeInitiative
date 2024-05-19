@@ -65,7 +65,7 @@ public class PutUpsertStagedCharacter(IDocumentSession session, IHubContext<Comb
                     StagedCharacterEvent addEvent = new()
                     {
                         UserId = userId,
-                        Character = CombatCharacter.New(
+                        Character = CombatCharacter.NewCombatCharacter(
                             playerId: userId,
                             name: req.Character.Name,
                             initiative: req.Character.Initiative,
