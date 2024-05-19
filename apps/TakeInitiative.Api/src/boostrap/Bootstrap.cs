@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Protocols.Configuration;
 using Python.Runtime;
 using Serilog;
+using TakeInitiative.Utilities;
 using TakeInitiative.Utilities.Extensions;
 using Weasel.Postgresql;
 
@@ -146,6 +147,9 @@ public static class Bootstrap
         Runtime.PythonDLL = pythonConfig;
         PythonEngine.Initialize();
         PythonEngine.BeginAllowThreads();
+
+        // Add dice roller.
+        builder.Services.AddTransient<IDiceRoller, DiceRoller>();
         return builder;
     }
 

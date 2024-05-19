@@ -60,7 +60,7 @@ public static class DiceRollerExtensions
 
     internal static Result<List<(Guid id, int roll)>> ComputeOneRollForEachCharacter(this IDiceRoller roller, IEnumerable<CombatCharacter> characters, bool isFirstRoll)
     {
-        return characters.Select(x => (id: x.Id, roll: isFirstRoll ? x.Initiative.RollInitiative() : roller.RollD20()))
+        return characters.Select(x => (id: x.Id, roll: isFirstRoll ? x.Initiative.RollInitiative(roller) : roller.RollD20()))
             .Aggregate(Result.Success<List<(Guid id, int roll)>>(new()), (current, nextValue) =>
             {
                 if (current.IsFailure)
@@ -92,7 +92,7 @@ public static class DiceRollerExtensions
             .GroupBy(x => x.rolls[rollIndex])
             .ToList();
 
-        while (rollsGroupedByConflict.Select(x => x.Count() > 1).Any())
+        while (rollsGroupedByConflict.Where(x => x.Count() > 1).Any())
         {
 
             foreach (var group in rollsGroupedByConflict)
@@ -159,7 +159,7 @@ public static class DiceRollerExtensions
                 .ToList();
         }
 
-        return rollsGroupedByConflict.SelectMany(x => x).ToList();
+        return outgoingCharacterInitiative.Values.ToList();
     }
 }
 
