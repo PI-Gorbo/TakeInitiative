@@ -29,6 +29,8 @@ jobs:
         needs: test
         runs-on: ubuntu-latest
         steps:
+            - name: Checkout repo
+              uses: actions/checkout@v4
             - name: Release with the provided tag
               env:
                   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
