@@ -2,7 +2,7 @@
 name: FEATURE
 about: Suggest a feature
 title: "[FEAT] X"
-labels: ''
+labels: Feature, Triage
 assignees: ''
 
 ---
