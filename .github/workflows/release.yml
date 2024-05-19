@@ -26,6 +26,7 @@ jobs:
             - name: Test
               run: dotnet test --no-build --verbosity normal
     releaseAndMerge:
+        needs: test
         runs-on: ubuntu-latest
         steps:
             - name: Release with the provided tag
