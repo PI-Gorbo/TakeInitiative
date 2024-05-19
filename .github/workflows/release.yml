@@ -30,7 +30,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Release with the provided tag
-              run: gh release create {{ inputs.tag }} --generate-notes
+              run: gh release create ${{ inputs.tag }} --generate-notes
             - name: Create a merge request into main
               run: |
-                  gh pr create --title ":robot: Automatic PR v{{ inputs.tag }} from dev into main" --head dev --base main
+                  gh pr create --title ":robot: Automatic PR v${{ inputs.tag }} from dev into main" --head dev --base main
