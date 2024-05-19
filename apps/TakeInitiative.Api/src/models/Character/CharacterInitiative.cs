@@ -35,9 +35,9 @@ public record CharacterInitiative
         }
     }
 
-    public Result<int> RollInitiative()
+    public Result<int> RollInitiative(IDiceRoller roller)
     {
         return this.Fixed
-            ?? DiceRoller.EvaluateRoll(this.Roll);
+            ?? roller.EvaluateRoll(this.Roll);
     }
 }

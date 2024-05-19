@@ -13,7 +13,7 @@ public record RollStagedCharacterIntoInitiativeCommand : ICommand<Result<Combat>
     public required Guid[] CharacterIds { get; set; }
 }
 
-public class RollStagedCharacterIntoInitiativeCommandHandler(IDocumentStore Store) : CommandHandler<RollStagedCharacterIntoInitiativeCommand, Result<Combat>>
+public class RollStagedCharacterIntoInitiativeCommandHandler(IDocumentStore Store, IDiceRoller diceRoller) : CommandHandler<RollStagedCharacterIntoInitiativeCommand, Result<Combat>>
 {
 
     public override async Task<Result<Combat>> ExecuteAsync(RollStagedCharacterIntoInitiativeCommand command, CancellationToken ct = default)
@@ -46,7 +46,7 @@ public class RollStagedCharacterIntoInitiativeCommandHandler(IDocumentStore Stor
                     ThrowError($"One or more of the specified character ids are not in the staged character list.");
                 }
 
-                var computedInitiativeRolls = DiceRoller.ComputeRollsWithExistingInitiative(combat.StagedList.Where(x => x.Id.In(command.CharacterIds)), combat.InitiativeList);
+                var computedInitiativeRolls = diceRoller.ComputeRolls(combat.StagedList.Where(x => x.Id.In(command.CharacterIds)).ToList(), combat.InitiativeList);
                 if (computedInitiativeRolls.IsFailure)
                 {
                     ThrowError($"There was an error while trying to compute the dice rolls. {computedInitiativeRolls.Error}");

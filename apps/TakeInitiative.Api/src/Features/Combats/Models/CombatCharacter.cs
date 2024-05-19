@@ -7,7 +7,7 @@ public record CombatCharacter : Character
     public required bool Hidden { get; set; }
     public required int? CopyNumber { get; set; }
 
-    public static CombatCharacter New(Guid playerId, string name, CharacterInitiative initiative, int? armorClass , CharacterHealth? health , bool hidden, CharacterOriginDetails characterOriginDetails,  int? copyNumber)
+    public static CombatCharacter NewCombatCharacter(Guid playerId, string name, CharacterInitiative initiative, int? armorClass, CharacterHealth? health, bool hidden, CharacterOriginDetails characterOriginDetails, int? copyNumber)
     {
         return new CombatCharacter()
         {

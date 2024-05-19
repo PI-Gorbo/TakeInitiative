@@ -11,7 +11,7 @@ public record StartCombatCommand : ICommand<Result<Combat>>
     public required Guid UserId { get; set; }
 }
 
-public class StartCombatCommandHandler(IDocumentStore Store) : CommandHandler<StartCombatCommand, Result<Combat>>
+public class StartCombatCommandHandler(IDocumentStore Store, IDiceRoller roller) : CommandHandler<StartCombatCommand, Result<Combat>>
 {
 
     public override async Task<Result<Combat>> ExecuteAsync(StartCombatCommand command, CancellationToken ct = default)
@@ -42,7 +42,7 @@ public class StartCombatCommandHandler(IDocumentStore Store) : CommandHandler<St
                     ThrowError("Must be the dungeon master in order to start the combat.");
                 }
 
-                var computedInitiativeRolls = DiceRoller.ComputeFirstRollsOfCombat(combat.StagedList);
+                var computedInitiativeRolls = roller.ComputeRolls(combat.StagedList);
                 if (computedInitiativeRolls.IsFailure)
                 {
                     ThrowError($"There was an error while trying to compute the dice rolls. {computedInitiativeRolls.Error}");

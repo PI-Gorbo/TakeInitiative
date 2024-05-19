@@ -73,19 +73,19 @@ public class MartenUserStore :
         }).Finally(x => x.IsSuccess ? x.Value : null);
     }
 
-    public async Task<string?> GetNormalizedUserNameAsync(ApplicationUser user, CancellationToken cancellationToken)
+    public Task<string?> GetNormalizedUserNameAsync(ApplicationUser user, CancellationToken cancellationToken)
     {
-        return user?.NormalizedUserName;
+        return Task.FromResult(user?.NormalizedUserName);
     }
 
-    public async Task<string> GetUserIdAsync(ApplicationUser user, CancellationToken cancellationToken)
+    public Task<string> GetUserIdAsync(ApplicationUser user, CancellationToken cancellationToken)
     {
-        return user.Id.ToString();
+        return Task.FromResult(user.Id.ToString());
     }
 
-    public async Task<string?> GetUserNameAsync(ApplicationUser user, CancellationToken cancellationToken)
+    public Task<string?> GetUserNameAsync(ApplicationUser user, CancellationToken cancellationToken)
     {
-        return user.UserName;
+        return Task.FromResult(user.UserName);
     }
 
     public async Task SetNormalizedUserNameAsync(ApplicationUser user, string? normalizedName, CancellationToken cancellationToken)
