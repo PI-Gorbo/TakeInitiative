@@ -44,4 +44,4 @@ jobs:
               env:
                   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: |
-                  gh pr create --title ":robot: Automatic PR v${{ inputs.tag }} from dev into main" --head dev --base main --fill
+                  gh pr create --head dev --base main --title "Automatic PR v${{ inputs.tag }} from dev into main" --fill
