@@ -1,0 +1,35 @@
+# This workflow will build a .NET project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+
+name: Release
+
+on:
+    workflow_dispatch:
+        inputs:
+            tag:
+                description: "The release tag (omit the v in the version. ie: not v1.0.0)"
+                required: false
+                type: string
+jobs:
+    test:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - name: Setup .NET
+              uses: actions/setup-dotnet@v4
+              with:
+                  dotnet-version: 8.0.x
+            - name: Restore dependencies
+              run: dotnet restore
+            - name: Build
+              run: dotnet build --no-restore
+            - name: Test
+              run: dotnet test --no-build --verbosity normal
+    releaseAndMerge:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Release with the provided tag
+              run: gh release create {{ inputs.tag }} --generate-notes
+            - name: Create a merge request into main
+              run: |
+                  gh pr create --title ":robot: Automatic PR v{{ inputs.tag }} from dev into main" --head dev --base main
