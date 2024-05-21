@@ -44,10 +44,12 @@ const getCampaignResponseSchema = yup.object({
     campaign: campaignValidator,
     userCampaignMember: campaignMemberValidator,
     nonUserCampaignMembers: yup.array(campaignMemberDtoValidator),
-    plannedCombats: yup.array(plannedCombatValidator).nullable(),
     joinCode: yup.string().required(),
-    combatDto: combatDtoValidator.nullable(),
-    finishedCombats: yup.array(finishedCombatDtoValidator),
+    currentCombatInfo: combatDtoValidator.nullable(),
+    combatHistoryInfo: yup.object({
+        lastCombatTimestamp: yup.string().nullable(),
+        totalCombats: yup.number(),
+    }),
 });
 export type GetCampaignResponse = yup.InferType<
     typeof getCampaignResponseSchema

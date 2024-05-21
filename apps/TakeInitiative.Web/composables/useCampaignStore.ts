@@ -1,4 +1,4 @@
-import { usePlannedCombatStore } from "./usePlannedCombatStore";
+import { useCampaignCombatsStore } from "./useCampaignCombatsStore";
 import type {
     CampaignMemberDto,
     CombatDto,
@@ -18,34 +18,16 @@ import type { PlayerCharacterDto } from "~/utils/api/campaign/createPlayerCharac
 export const useCampaignStore = defineStore("campaignStore", () => {
     const api = useApi();
     const userStore = useUserStore();
-    const plannedCombatStore = usePlannedCombatStore();
+    const plannedCombatStore = useCampaignCombatsStore();
 
     const state = reactive<Partial<GetCampaignResponse>>({
         campaign: undefined,
-        combatDto: undefined,
+        combatHistoryInfo: undefined,
+        currentCombatInfo: undefined,
         joinCode: undefined,
-        userCampaignMember: undefined,
-        finishedCombats: undefined,
         nonUserCampaignMembers: undefined,
-        plannedCombats: undefined,
+        userCampaignMember: undefined,
     });
-
-    async function init(): Promise<void> {
-        return await userStore.isLoggedIn().then(async (loggedIn) => {
-            if (!loggedIn) {
-                return Promise.reject("User is not logged in");
-            }
-
-            // Initialize Dependencies.
-            if (userStore.state.selectedCampaignId == null) {
-                return Promise.reject(
-                    "User store is empty. Cannot initialize the campaign store.",
-                );
-            }
-
-            return await setCampaignById(userStore.state.selectedCampaignId);
-        });
-    }
 
     async function fetchCampaign(
         campaignId: string,
@@ -53,13 +35,15 @@ export const useCampaignStore = defineStore("campaignStore", () => {
         return await api.campaign.get({ campaignId });
     }
 
-    const setCampaignById = async (campaignId: string): Promise<void> =>
-        fetchCampaign(campaignId).then(setCampaign);
+    const setCampaignById = async (campaignId: string): Promise<void> => {
+        return fetchCampaign(campaignId).then(setCampaign);
+    };
 
     async function setCampaign(
         campaignDetails: GetCampaignResponse,
     ): Promise<void> {
         Object.keys(campaignDetails).forEach((key) => {
+            // @ts-ignore
             state[key] = campaignDetails[key];
         });
     }
@@ -74,66 +58,8 @@ export const useCampaignStore = defineStore("campaignStore", () => {
             })
             .then((campaign) => {
                 state.campaign = campaign;
-            });
-    }
-
-    // Planned Combats
-    async function createPlannedCombat(
-        request: Omit<CreatePlannedCombatRequest, "campaignId">,
-    ): Promise<PlannedCombat> {
-        return await api.plannedCombat
-            .create({
-                ...request,
-                campaignId: state.campaign?.id!,
             })
-            .then((combat) => {
-                state.campaign?.plannedCombatIds?.push(combat.id);
-                state.plannedCombats?.push(combat);
-                return combat;
-            });
-    }
-
-    async function setPlannedCombat(combatId: string | null) {
-        plannedCombatStore.setPlannedCombat(
-            combatId != null
-                ? state.plannedCombats?.find((x) => x.id == combatId)
-                : null,
-        );
-    }
-
-    async function deletePlannedCombat(plannedCombatId: string) {
-        return await api.plannedCombat
-            .delete({
-                campaignId: state.campaign!.id,
-                combatId: plannedCombatId,
-            })
-            .then(() => {
-                state.plannedCombats = state.plannedCombats?.filter(
-                    (x) => x.id != plannedCombatId,
-                );
-
-                if (state.campaign?.plannedCombatIds) {
-                    state.campaign.plannedCombatIds =
-                        state.campaign.plannedCombatIds?.filter(
-                            (x) => x != plannedCombatId,
-                        );
-                }
-
-                // If the plannedCombatStore has the planned combat as the selected combat, then
-                // change it.
-                if (
-                    plannedCombatStore.selectedPlannedCombat?.id ==
-                    plannedCombatId
-                ) {
-                    if ((state.plannedCombats?.length ?? 0) > 0) {
-                        plannedCombatStore.setPlannedCombat(
-                            state.plannedCombats![0],
-                        );
-                    }
-                } else {
-                    plannedCombatStore.setPlannedCombat(null);
-                }
-            });
+            .then(userStore.refetchUser);
     }
 
     // Member Details
@@ -145,21 +71,11 @@ export const useCampaignStore = defineStore("campaignStore", () => {
             return [];
         }
 
-        const currentUserCurrentCharacter =
-            state.userCampaignMember.currentCharacterId != null
-                ? state.userCampaignMember.characters?.find(
-                      (x) =>
-                          x.id == state.userCampaignMember?.currentCharacterId,
-                  )
-                : null;
-
         return [
             ...state.nonUserCampaignMembers,
             {
                 userId: state.userCampaignMember.userId,
                 isDungeonMaster: state.userCampaignMember.isDungeonMaster,
-                currentCharacter:
-                    currentUserCurrentCharacter as PlayerCharacter | null,
                 username: userStore.state.user?.username!,
             },
         ];
@@ -168,8 +84,7 @@ export const useCampaignStore = defineStore("campaignStore", () => {
     async function openCombat(plannedCombatId: string) {
         return api.combat
             .open({ plannedCombatId: plannedCombatId })
-            .then(() => setCampaignById(state.campaign?.id!))
-            .then(() => plannedCombatStore.setPlannedCombat(null));
+            .then(() => setCampaignById(state.campaign?.id!));
     }
 
     // Player Character Management //
@@ -206,13 +121,9 @@ export const useCampaignStore = defineStore("campaignStore", () => {
 
     return {
         state,
-        init,
         setCampaign,
         setCampaignById,
         updateCampaignDetails,
-        createPlannedCombat,
-        setPlannedCombat,
-        deletePlannedCombat,
         openCombat,
         createPlayerCharacter,
         updatePlayerCharacter,

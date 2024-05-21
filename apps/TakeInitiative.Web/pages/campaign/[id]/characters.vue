@@ -13,7 +13,7 @@
                     >Looks like you don't have any characters yet. Create
                     one!</label
                 >
-                <ModifyPlayerCharacterForm
+                <IndexModifyPlayerCharacterForm
                     :onCreate="
                         (req: PlayerCharacterDto) =>
                             campaignStore.createPlayerCharacter(req)
@@ -47,7 +47,7 @@
             </li>
         </ul>
         <Modal ref="editCharacterModal" title="Edit Character">
-            <ModifyPlayerCharacterForm
+            <IndexModifyPlayerCharacterForm
                 v-if="lastClickedCharacter"
                 :npc="lastClickedCharacter"
                 :onEdit="
@@ -68,7 +68,7 @@
             />
         </Modal>
         <Modal ref="createCharacterModal" title="Create new Character">
-            <ModifyPlayerCharacterForm
+            <IndexModifyPlayerCharacterForm
                 :onCreate="
                     (req: PlayerCharacterDto) =>
                         campaignStore
@@ -81,10 +81,14 @@
 </template>
 <script setup lang="ts">
 import type { PlayerCharacterDto } from "~/utils/api/campaign/createPlayerCharacterRequest";
-import ModifyPlayerCharacterForm from "./ModifyPlayerCharacterForm.vue";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import Modal from "~/components/Modal.vue";
 import type { PlayerCharacter } from "~/utils/types/models";
+
+definePageMeta({
+    requiresAuth: true,
+    layout: "campaign-tabs",
+});
 
 const campaignStore = useCampaignStore();
 const campaignMember = computed(() => campaignStore.state.userCampaignMember);

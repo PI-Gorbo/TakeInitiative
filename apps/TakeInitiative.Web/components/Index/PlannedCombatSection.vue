@@ -66,8 +66,9 @@ import type { DeletePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/st
 import type { UpdatePlannedCombatStageRequest } from "~/utils/api/plannedCombat/stages/updatePlannedCombatStageRequest";
 
 const campaignStore = useCampaignStore();
-const plannedCombatStore = usePlannedCombatStore();
-const plannedCombat = computed(() => plannedCombatStore.selectedPlannedCombat);
+const campaignCombatStore = useCampaignCombatsStore();
+const { selectedPlannedCombat: plannedCombat } =
+    storeToRefs(campaignCombatStore);
 
 const emit = defineEmits<{
     (e: "DeleteCombat", loadingCtrl: ButtonLoadingControl): void;
@@ -78,7 +79,7 @@ const createStageModal = ref<InstanceType<typeof Modal> | null>(null);
 async function createStage(
     input: void | Omit<CreatePlannedCombatStageRequest, "combatId">,
 ) {
-    return await plannedCombatStore
+    return await campaignCombatStore
         .addStage(input!)
         .then(() => createStageModal.value?.hide());
 }
@@ -90,33 +91,31 @@ async function addNpc(
         "combatId" | "stageId"
     >,
 ) {
-    return await plannedCombatStore.addNpc(stage, nonPlayerCharacter);
+    return await campaignCombatStore.addNpc(stage, nonPlayerCharacter);
 }
 
 async function updateNpc(
     stage: PlannedCombatStage,
     npc: Omit<UpdatePlannedCombatNpcRequest, "combatId" | "stageId">,
 ) {
-    return await plannedCombatStore.updateNpc(stage, npc);
+    return await campaignCombatStore.updateNpc(stage, npc);
 }
 
 async function deleteNpc(
     stage: PlannedCombatStage,
     npc: Omit<DeletePlannedCombatNpcRequest, "combatId" | "stageId">,
 ) {
-    return await plannedCombatStore.removeNpc(stage, npc.npcId);
+    return await campaignCombatStore.removeNpc(stage, npc.npcId);
 }
 
 async function deleteStage(stage: PlannedCombatStage) {
-    return await plannedCombatStore.removeStage(stage.id);
+    return await campaignCombatStore.removeStage(stage.id);
 }
 
 async function updateStage(
     stage: PlannedCombatStage,
     req: Omit<UpdatePlannedCombatStageRequest, "combatId" | "stageId">,
 ) {
-    return await plannedCombatStore.updateStage({ stageId: stage.id, ...req });
+    return await campaignCombatStore.updateStage({ stageId: stage.id, ...req });
 }
 </script>
-
-<style></style>

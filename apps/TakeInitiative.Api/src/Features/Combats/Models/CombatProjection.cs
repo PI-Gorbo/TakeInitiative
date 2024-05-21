@@ -61,7 +61,6 @@ public class CombatProjection : SingleStreamProjection<Combat>
         var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
         return Combat with
         {
-            Timing = Combat.Timing.Add(new(StartTime: eventDetails.Timestamp, EndTime: null)),
             State = CombatState.Started,
             CombatLogs = [.. Combat.CombatLogs, $"{user?.UserName} resumed the combat at {eventDetails.Timestamp:R}"],
         };
@@ -70,23 +69,9 @@ public class CombatProjection : SingleStreamProjection<Combat>
     public async Task<Combat> Apply(CombatPausedEvent @event, Combat Combat, IEvent<CombatPausedEvent> eventDetails, IQuerySession session)
     {
         var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
-        var latestTimingInstance = Combat.Timing.LastOrDefault();
-        if (latestTimingInstance == null)
-        {
-            throw new InvalidDataException("Combat is not in the correct state. The combat was paused with no entires in the timings list.");
-        }
-
-        var timing = Combat.Timing.SetItem(
-            Combat.Timing.Count - 1,
-            latestTimingInstance with
-            {
-                EndTime = eventDetails.Timestamp
-            }
-        );
 
         return Combat with
         {
-            Timing = timing,
             State = CombatState.Paused,
             CombatLogs = [.. Combat.CombatLogs, $"{user?.UserName} paused the combat at {eventDetails.Timestamp:R}"],
         };
@@ -95,25 +80,11 @@ public class CombatProjection : SingleStreamProjection<Combat>
     public async Task<Combat> Apply(CombatFinishedEvent @event, Combat Combat, IEvent<CombatFinishedEvent> eventDetails, IQuerySession session)
     {
         var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
-
-        var latestTimingInstance = Combat.Timing.LastOrDefault();
-        if (latestTimingInstance == null)
-        {
-            throw new InvalidDataException("Combat is not in the correct state. The combat was paused with no entires in the timings list.");
-        }
-
-        var timing = Combat.Timing.SetItem(
-          Combat.Timing.Count - 1,
-          latestTimingInstance with
-          {
-              EndTime = eventDetails.Timestamp
-          });
-
         return Combat with
         {
-            Timing = timing,
             State = CombatState.Finished,
             CombatLogs = [.. Combat.CombatLogs, $"{user?.UserName} finished the combat at {eventDetails.Timestamp:R}"],
+            FinishedTimestamp = DateTimeOffset.UtcNow,
         };
     }
 

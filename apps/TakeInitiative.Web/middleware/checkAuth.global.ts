@@ -11,9 +11,5 @@ export default defineNuxtRouteMiddleware(async (to) => {
         });
     }
 
-    // If the user is logged in, and the place they are going doesn't require auth, then we
-    // can redirect to the login page.
-    if (isLoggedIn && !to.meta.requiresAuth) {
-        return navigateTo("/");
-    }
+    return;
 });

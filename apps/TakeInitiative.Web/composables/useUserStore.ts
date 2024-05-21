@@ -9,42 +9,46 @@ import type { Campaign } from "~/utils/types/models";
 
 type User = GetUserResponse;
 export const useUserStore = defineStore("userStore", () => {
+    // Stores
     const api = useApi();
 
+    // State
     const state = reactive({
         user: null as User | null,
-        selectedCampaignId: null as string | null,
     });
 
+    // Computed
+    const username = computed(() => state.user?.username);
+
+    const campaignCount = computed(() => {
+        if (state.user == null) {
+            return 0;
+        }
+
+        return (
+            state.user.dmCampaigns.length + state.user.memberCampaigns.length
+        );
+    });
+
+    const campaignList = computed(() => {
+        return state.user?.dmCampaigns
+            .map((campaign) => ({ ...campaign, isDm: true }))
+            .concat(
+                state.user.memberCampaigns.map((c) => ({
+                    ...c,
+                    isDm: false,
+                })),
+            );
+    });
+
+    // Mutations
     async function init(): Promise<void> {
         return await isLoggedIn().then(() => {});
     }
 
     async function fetchUser(): Promise<User> {
         // fetch the user.
-        return await api.user
-            .getUser()
-            .then((user) => (state.user = user))
-            .then((user) => {
-                if (
-                    campaignList.value?.find(
-                        (x) => x.campaignId == state.selectedCampaignId,
-                    ) != null
-                ) {
-                    return user;
-                }
-
-                state.selectedCampaignId =
-                    campaignList.value && campaignList.value.length != 0
-                        ? campaignList.value[0].campaignId
-                        : null;
-
-                return user;
-            });
-    }
-
-    function setSelectedCampaign(campaignId: string) {
-        state.selectedCampaignId = campaignId;
+        return await api.user.getUser().then((user) => (state.user = user));
     }
 
     async function isLoggedIn(): Promise<Boolean> {
@@ -70,7 +74,11 @@ export const useUserStore = defineStore("userStore", () => {
         redirectPath: string | null,
     ): Promise<void> {
         return await api.user.signUp(signUpRequest).then(async () => {
-            await navigateTo(redirectPath ?? "/");
+            if (redirectPath != null) {
+                await navigateTo(redirectPath);
+            } else {
+                await navigateToFirstAvailableCampaign();
+            }
         });
     }
 
@@ -78,7 +86,6 @@ export const useUserStore = defineStore("userStore", () => {
         await api.user
             .logout()
             .then(() => {
-                state.selectedCampaignId = null;
                 state.user = null;
             })
             .then(async () => await navigateTo("/login"));
@@ -100,61 +107,66 @@ export const useUserStore = defineStore("userStore", () => {
             .then((campaign) => fetchUser().then(() => campaign));
     }
 
-    async function updateCampaign(
-        request: UpdateCampaignDetailsRequest,
-    ): Promise<Campaign> {
-        return await api.campaign
-            .update(request)
-            .then((campaign) => fetchUser().then(() => campaign));
-    }
-
     async function deleteCampaign(
         request: DeleteCampaignRequest,
     ): Promise<void> {
         return await api.campaign
             .delete(request)
-            .then((campaign) => fetchUser().then(() => campaign));
-    }
-    const username = computed(() => state.user?.username);
+            .then(fetchUser)
+            .then(async () => {
+                // Check if its the campaigns route.
+                const route = useRoute();
+                const isCampaignRoute = route.name
+                    ?.toString()
+                    .startsWith("campaign-id");
+                if (!isCampaignRoute) {
+                    return;
+                }
 
-    const campaignCount = computed(() => {
+                // Check if the campaign the user is viewing is the
+                // campaign that is being deleted
+                const id = route.params.id as string;
+                if (id != request.campaignId) {
+                    return;
+                }
+
+                if ((campaignList.value?.length ?? 0) > 0) {
+                    await useNavigator().navigateToCampaignTab(
+                        campaignList.value![0].campaignId,
+                        "summary",
+                    );
+                }
+            });
+    }
+
+    function navigateToFirstAvailableCampaign() {
         if (state.user == null) {
-            return 0;
+            return;
         }
 
-        return (
-            state.user.dmCampaigns.length + state.user.memberCampaigns.length
-        );
-    });
+        // Get the first campaign available
+        const campaign = state.user.memberCampaigns.concat(
+            state.user.dmCampaigns,
+        )[0];
 
-    const campaignList = computed(() => {
-        return state.user?.dmCampaigns
-            .map((campaign) => ({ ...campaign, isDm: true }))
-            .concat(
-                state.user.memberCampaigns.map((c) => ({ ...c, isDm: false })),
-            );
-    });
+        return navigateTo(`/campaign/${campaign.campaignId}/summary`);
+    }
 
     // Helper functions
     return {
         state,
         init,
+        refetchUser: fetchUser,
         login,
         signUp,
         isLoggedIn,
         createCampaign,
-        updateCampaign,
         deleteCampaign,
         logout,
-        setSelectedCampaign,
         joinCampaign,
         username,
         campaignCount,
         campaignList,
-        selectedCampaignDto: computed(() =>
-            campaignList.value?.find(
-                (x) => x.campaignId == state.selectedCampaignId,
-            ),
-        ),
+        navigateToFirstAvailableCampaign,
     };
 });

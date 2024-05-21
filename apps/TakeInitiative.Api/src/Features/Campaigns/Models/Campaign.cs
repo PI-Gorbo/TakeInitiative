@@ -12,7 +12,6 @@ public record Campaign
     public List<Guid> PlannedCombatIds { get; set; } = [];
     public List<CampaignMemberInfo> CampaignMemberInfo { get; set; } = [];
     public Guid? ActiveCombatId { get; set; } = null;
-    public List<Guid> CombatIds { get; set; } = [];
     public DateTimeOffset CreatedTimestamp { get; init; } = DateTimeOffset.UtcNow;
 
     public static Campaign CreateNewCampaign(Guid OwnerId, string CampaignName)
@@ -30,6 +29,8 @@ public record Campaign
         this.CampaignMemberInfo.Add(campaignMemberInfo);
         return this;
     }
+
+    public bool IsMember(Guid userId) => CampaignMemberInfo.Any(x => x.UserId == userId);
 
     public bool isDm(Guid userId)
     {

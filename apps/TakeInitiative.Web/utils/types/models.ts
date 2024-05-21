@@ -1,4 +1,3 @@
-import { PlayerCharacter } from "./models";
 import type { InferType } from "yup";
 import { yup } from "./HelperTypes";
 
@@ -20,7 +19,6 @@ export const campaignValidator = yup.object({
     plannedCombatIds: yup.array(yup.string()),
     campaignMemberInfo: yup.array(campaignMemberInfoValidator),
     activeCombatId: yup.string().nullable(),
-    combatIds: yup.array(yup.string()),
     createdTimestamp: yup.string(),
 });
 export type Campaign = InferType<typeof campaignValidator>;
@@ -147,7 +145,6 @@ export const combatValidator = yup.object({
     state: yup.mixed().oneOf(Object.values(CombatState)),
     combatName: yup.string().required(),
     dungeonMaster: yup.string().required(),
-    timing: yup.array(combatTimingRecordValidator).required(),
     combatLogs: yup.array(yup.string()).required(),
     currentPlayers: yup.array(playerDtoValidator).required(),
     plannedStages: yup.array(plannedCombatStageValidator).required(),

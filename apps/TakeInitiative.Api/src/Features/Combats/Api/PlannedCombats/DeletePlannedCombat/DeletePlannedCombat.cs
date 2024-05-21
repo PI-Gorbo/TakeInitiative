@@ -9,7 +9,7 @@ public class DeletePlannedCombat(IDocumentStore Store) : Endpoint<DeletePlannedC
 {
     public override void Configure()
     {
-        Delete("/api/campaign/planned-combat");
+        Delete("/api/combat/planned");
         AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
         Policies(TakePolicies.UserExists);
     }

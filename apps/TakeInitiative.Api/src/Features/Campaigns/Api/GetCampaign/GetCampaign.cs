@@ -50,13 +50,13 @@ public class GetCampaign(IDocumentStore Store) : Endpoint<GetCampaignRequest, Ge
                 }
 
                 // Retrieve all application user instances.
-                var otherUserIds = campaignMembers.Where(x => x.UserId != userId).Select(x => x.UserId).ToList();
+                var otherUserIds = campaignMembers!.Where(x => x.UserId != userId).Select(x => x.UserId).ToList();
                 var userDtos = await session.Query<ApplicationUser>()
                     .Where(x => x.Id.IsOneOf(otherUserIds))
                     .Select(x => new { x.UserName, x.Id })
                     .ToListAsync();
 
-                var nonUserCampaignMemberDtos = campaignMembers.Where(x => x.UserId != userId)
+                var nonUserCampaignMemberDtos = campaignMembers!.Where(x => x.UserId != userId)
                     .Select(member => CampaignMemberDto.FromMember(member, userDtos.Single(x => x.Id == member.UserId).UserName));
 
                 // If the user is a dm, retrieve all the planned combats.
@@ -67,17 +67,26 @@ public class GetCampaign(IDocumentStore Store) : Endpoint<GetCampaignRequest, Ge
                     ? null
                     : await session.Query<Combat>()
                         .Where(x => x.Id == campaign.ActiveCombatId)
+                        .Select(x => new
+                        {
+                            x.Id,
+                            x.State,
+                            x.CombatName,
+                            x.CurrentPlayers,
+                            x.DungeonMaster,
+                        })
                         .SingleOrDefaultAsync();
 
-                // Get the finished combats for this campaign
-                var finishedCombats = await session.Query<Combat>()
-                    .Where(x => x.CampaignId == campaign.Id && x.State == CombatState.Finished)
-                    .Select(x => new FinishedCombatDto
-                    {
-                        CombatId = x.Id,
-                        Name = x.CombatName
-
-                    }).ToListAsync();
+                int totalCombats = await session.Query<Combat>()
+                    .Where(x => x.CampaignId == campaign.Id)
+                    .CountAsync();
+                DateTimeOffset? lastCombatTimestamp = totalCombats != 0
+                    ? await session.Query<Combat>()
+                        .Where(x => x.CampaignId == campaign.Id && x.FinishedTimestamp != null)
+                        .OrderByDescending(x => x.FinishedTimestamp)
+                        .Select(x => x.FinishedTimestamp)
+                        .FirstOrDefaultAsync()
+                    : null;
 
                 return new GetCampaignResponse()
                 {
@@ -85,8 +94,7 @@ public class GetCampaign(IDocumentStore Store) : Endpoint<GetCampaignRequest, Ge
                     JoinCode = campaign.GetJoinCode(),
                     NonUserCampaignMembers = nonUserCampaignMemberDtos.ToArray(),
                     UserCampaignMember = userCampaignMember,
-                    PlannedCombats = plannedCombats,
-                    CombatDto = dto == null ? null : new CombatDto()
+                    CurrentCombatInfo = dto == null ? null : new CurrentCombatDto()
                     {
                         CombatName = dto.CombatName,
                         CurrentPlayers = dto.CurrentPlayers.ToList(),
@@ -94,7 +102,11 @@ public class GetCampaign(IDocumentStore Store) : Endpoint<GetCampaignRequest, Ge
                         Id = dto.Id,
                         State = dto.State
                     },
-                    FinishedCombats = finishedCombats.ToArray()
+                    CombatHistoryInfo = new CombatHistoryDto()
+                    {
+                        TotalCombats = totalCombats,
+                        LastCombatTimestamp = lastCombatTimestamp
+                    }
                 };
             });
 
