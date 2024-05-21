@@ -63,6 +63,19 @@ const state = reactive({
 definePageMeta({
     requiresAuth: false,
     layout: "auth",
+    middleware: [
+        async (to) => {
+            const userStore = useUserStore();
+            const isLoggedIn = await userStore.isLoggedIn();
+            if (redirectToPath != null) {
+                await navigateTo(redirectToPath);
+            } else {
+                await userStore.navigateToFirstAvailableCampaign();
+            }
+
+            return;
+        },
+    ],
 });
 
 // Form Definition
