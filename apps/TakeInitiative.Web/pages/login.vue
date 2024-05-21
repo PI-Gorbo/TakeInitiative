@@ -63,7 +63,6 @@ const state = reactive({
 definePageMeta({
     requiresAuth: false,
     layout: "auth",
-    middleware: ["already-logged-in-reroute"],
 });
 
 // Form Definition
