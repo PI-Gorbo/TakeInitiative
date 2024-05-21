@@ -96,6 +96,7 @@ async function onLogin() {
         return;
     }
 
+    console.log("Logging in...");
     await userStore
         .login({ email: email.value ?? "", password: password.value ?? "" })
         .catch(async (error) => {
@@ -103,9 +104,11 @@ async function onLogin() {
         })
         .then(async () => {
             if (redirectToPath != null) {
+                console.log("using redirect path");
                 await navigateTo(redirectToPath);
             } else {
-                await navigateTo("/");
+                console.log("navigating to first available campaign");
+                await userStore.navigateToFirstAvailableCampaign();
             }
         })
         .finally(() => (state.isSubmitting = false));

@@ -12,22 +12,32 @@
                     class="navbar border border-take-navy-medium border-b-take-yellow bg-take-navy-medium"
                 >
                     <section class="navbar-start flex gap-2">
-                        <label for="drawer" class="cursor-pointer flex gap-2 items-center">
+                        <label
+                            for="drawer"
+                            class="flex cursor-pointer items-center gap-2"
+                        >
                             <img
                                 class="h-[3em] w-[3em]"
                                 src="~assets/yellowDice.png"
                             />
-                            <label class="text-2xl md:text-3xl font-NovaCut text-take-yellow" v-if="!isMobile">Take Initiative</label>
+                            <label
+                                class="font-NovaCut text-2xl text-take-yellow md:text-3xl"
+                                v-if="!isMobile"
+                                >Take Initiative</label
+                            >
                         </label>
                     </section>
-                    <section class="navbar-end flex items-center gap-2">
+                    <section
+                        class="navbar-end flex items-center gap-2"
+                        v-if="isCampaignsRoute"
+                    >
                         <label class="font-NovaCut text-xl text-take-yellow">{{
-                            userStore.selectedCampaignDto?.campaignName
+                            selectedCampaignInfo?.campaign?.campaignName
                         }}</label>
                         <FormButton
                             icon="share-from-square"
                             size="sm"
-                            textColour=""
+                            textColour="take-grey"
                             buttonColour="take-navy-medium"
                             hoverButtonColour="take-navy-dark"
                             @clicked="() => shareCampaignModal?.show()"
@@ -48,7 +58,7 @@
             <ul
                 class="menu flex min-h-full w-80 flex-col gap-2 bg-take-navy p-4 text-base-content"
             >
-                <li v-if="isIndexRoute">
+                <li v-if="isCampaignsRoute">
                     <Dropdown
                         colour="take-navy-dark"
                         hoverColour="take-navy-medium"
@@ -58,9 +68,7 @@
                         :keyFunc="(c) => c.campaignId"
                         :selectedItem="
                             userStore.campaignList?.find(
-                                (x) =>
-                                    x.campaignId ==
-                                    userStore.state.selectedCampaignId,
+                                (x) => x.campaignId == selectedCampaignInfo,
                             )
                         "
                         @update:selectedItem="
@@ -85,7 +93,7 @@
                         </template>
                     </Dropdown>
                 </li>
-                <li v-else>
+                <li v-else-if="isCombatRoute">
                     <FormButton
                         icon="house"
                         label="Return Home"
@@ -93,7 +101,10 @@
                         hoverButtonColour="take-yellow"
                         @clicked="
                             () => {
-                                navigateTo('/');
+                                useNavigator().navigateToCampaignTab(
+                                    combatInfo?.campaignId!,
+                                    'summary',
+                                );
                                 toggleDrawer();
                             }
                         "
@@ -101,7 +112,11 @@
                 </li>
                 <li class="flex-1 bg-take-navy"></li>
                 <li>
-                    <div class="text-take-yellow font-NovaCut hover:bg-take-navy">{{ userStore.username }}</div>
+                    <div
+                        class="font-NovaCut text-take-yellow hover:bg-take-navy"
+                    >
+                        {{ userStore.username }}
+                    </div>
                     <FormButton
                         label="Logout"
                         :loadingDisplay="{
@@ -134,8 +149,7 @@
                                 @clicked="
                                     () =>
                                         copyText(
-                                            userStore.selectedCampaignDto
-                                                ?.joinCode!,
+                                            selectedCampaignInfo?.joinCode!,
                                         )
                                 "
                             />
@@ -143,7 +157,7 @@
                         <div
                             class="pointer-events-none -order-1 flex w-full justify-start rounded-lg border border-take-navy-dark bg-take-navy-dark p-1 px-2 text-center transition-colors peer-hover:border-take-yellow"
                         >
-                            {{ userStore.selectedCampaignDto?.joinCode }}
+                            {{ selectedCampaignInfo?.joinCode }}
                         </div>
                     </div>
                 </div>
@@ -162,7 +176,7 @@
                                 @clicked="
                                     () =>
                                         copyText(
-                                            `${config.public.webUrl}/join/${userStore.selectedCampaignDto?.joinCode}`,
+                                            `${config.public.webUrl}/join/${selectedCampaignInfo?.joinCode}`,
                                         )
                                 "
                             />
@@ -171,7 +185,7 @@
                             class="-order-1 flex w-full justify-start truncate rounded-lg border border-take-navy bg-take-navy-dark p-1 px-2 text-center transition-colors peer-hover:border-take-yellow"
                         >
                             {{
-                                `${config.public.webUrl}/join/${userStore.selectedCampaignDto?.joinCode}`
+                                `${config.public.webUrl}/join/${selectedCampaignInfo?.joinCode}`
                             }}
                         </div>
                     </div>
@@ -196,8 +210,12 @@ import Modal from "~/components/Modal.vue";
 import type { CreateCampaignRequest } from "~/utils/api/campaign/createCampaignRequest";
 import type { JoinCampaignRequest } from "~/utils/api/campaign/joinCampaignRequest";
 
+const nav = useNavigator();
+const config = useRuntimeConfig();
+const userStore = useUserStore();
+const { isMobile } = useDevice();
 
-const {isMobile} = useDevice();
+// Drawer
 const drawerToggle = ref<HTMLInputElement | null>(null);
 function toggleDrawer() {
     if (drawerToggle.value) {
@@ -205,33 +223,36 @@ function toggleDrawer() {
     }
 }
 
+// Modals
 const createOrJoinCampaignModal = ref<InstanceType<typeof Modal> | null>(null);
 const shareCampaignModal = ref<InstanceType<typeof Modal> | null>(null);
-const userStore = useUserStore();
+
+// Route info
 const routeInfo = useRoute();
-const isIndexRoute = computed(() => routeInfo.name == "index");
-const isCampaignsRoute = computed(() => routeInfo.name == "campaigns");
+const isCampaignsRoute = computed(() =>
+    routeInfo.name?.toString().startsWith("campaign-id"),
+);
+const selectedCampaignInfo = computed(() => useCampaignStore().state);
+
 const isCombatRoute = computed(() => routeInfo.name == "combat-id");
+const combatInfo = computed(() => useCombatStore().state?.combat);
 
-const config = useRuntimeConfig();
-const manageUserState = reactive({
-    loggingOut: false,
-});
-
-function onSetSelectedCampaign(campaignId: string) {
-    userStore.setSelectedCampaign(campaignId);
-    toggleDrawer();
-}
-
+// Helper methods
 function copyText(value: string) {
     navigator.clipboard.writeText(value);
+}
+
+// Events
+function onSetSelectedCampaign(campaignId: string) {
+    nav.navigateToCampaignTab(campaignId, "summary");
+    toggleDrawer();
 }
 
 async function createCampaign(req: CreateCampaignRequest) {
     return await useUserStore()
         .createCampaign(req)
         .then(async (c) => {
-            userStore.setSelectedCampaign(c.id);
+            await nav.navigateToCampaignTab(c.id, "summary");
         })
         .then(createOrJoinCampaignModal.value?.hide);
 }
@@ -240,7 +261,7 @@ async function joinCampaign(req: JoinCampaignRequest) {
     return await useUserStore()
         .joinCampaign(req)
         .then(async (c) => {
-            userStore.setSelectedCampaign(c.id);
+            await nav.navigateToCampaignTab(c.id, "summary");
         })
         .then(createOrJoinCampaignModal.value?.hide);
 }

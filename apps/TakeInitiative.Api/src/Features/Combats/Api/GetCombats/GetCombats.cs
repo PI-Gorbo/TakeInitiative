@@ -6,26 +6,26 @@ using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Combats;
 
-public class GetPlannedCombats(IDocumentStore Store) : Endpoint<GetPlannedCombatsRequest, GetPlannedCombatsResponse>
+public class GetCombats(IDocumentStore Store) : EndpointWithoutRequest<GetCombatsResponse>
 {
     public override void Configure()
     {
-        Get("/api/campaign/planned-combats");
+        Get("/api/combats/");
         AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
         Policies(TakePolicies.UserExists);
     }
 
-    public override async Task HandleAsync(GetPlannedCombatsRequest req, CancellationToken ct)
+    public override async Task HandleAsync(CancellationToken ct)
     {
-
+        var campaignId = Query<Guid>("campaignId", isRequired: true);
         var userId = this.GetUserIdOrThrowUnauthorized();
 
         var result = await Store.Try(async session =>
         {
-            var campaign = await session.LoadAsync<Campaign>(req.CampaignId);
+            var campaign = await session.LoadAsync<Campaign>(campaignId);
             if (campaign == null)
             {
-                ThrowError((req) => req.CampaignId, $"There is no campaign that corresponds to the id {req.CampaignId}.");
+                ThrowError((req) => campaignId, $"There is no campaign that corresponds to the id {campaignId}.");
             }
 
             // Check that the user is a dungeon master
@@ -38,12 +38,29 @@ public class GetPlannedCombats(IDocumentStore Store) : Endpoint<GetPlannedCombat
             var plannedCombats = await session.LoadManyAsync<PlannedCombat>(campaign.PlannedCombatIds);
             if (plannedCombats == null)
             {
-                ThrowError($"Failed to retrieve planned combats for the campaign {req.CampaignId}", (int)HttpStatusCode.NotFound);
+                ThrowError($"Failed to retrieve planned combats for the campaign {campaignId}", (int)HttpStatusCode.NotFound);
             }
 
-            return new GetPlannedCombatsResponse()
+            var combats = await session.Query<Combat>()
+                .Where(x => x.CampaignId == campaignId)
+                .Select(x => new
+                {
+                    x.Id,
+                    x.CombatName,
+                    x.State,
+                    x.FinishedTimestamp,
+                }).ToListAsync();
+
+            return new GetCombatsResponse()
             {
-                PlannedCombats = plannedCombats.ToArray()
+                PlannedCombats = plannedCombats.ToArray(),
+                Combats = combats.Select(x => new CombatDto()
+                {
+                    CombatId = x.Id,
+                    CombatName = x.CombatName!,
+                    State = x.State,
+                    FinishedTimestamp = x.FinishedTimestamp,
+                }).ToArray()
             };
         });
 

@@ -93,7 +93,7 @@ export type FromButtonProps = {
     icon?: string;
     size?: FontAwesomeIconSize;
     disabled?: boolean;
-    click?: () => Promise<any>;
+    click?: () => Promise<any | void>;
     preventClickBubbling?: boolean;
 };
 

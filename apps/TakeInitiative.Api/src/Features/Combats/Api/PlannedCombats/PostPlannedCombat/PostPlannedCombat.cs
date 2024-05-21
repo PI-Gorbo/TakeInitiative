@@ -10,7 +10,7 @@ public class PostPlannedCombat(IDocumentStore Store) : Endpoint<PostPlannedComba
 {
     public override void Configure()
     {
-        Post("/api/campaign/planned-combat");
+        Post("/api/combat/planned");
         AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
         Policies(TakePolicies.UserExists);
     }

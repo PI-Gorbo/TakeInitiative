@@ -1,5 +1,9 @@
 <template>
-    <TransitionGroup name="fade" class="h-full w-full">
+    <TransitionGroup name="fade" class="h-full w-full" tag="main">
+        <div key="loading" v-if="pending || campaignStore.state == undefined">
+            Loading...
+        </div>
+
         <TransitionGroup
             name="fade"
             tag="section"
@@ -11,14 +15,17 @@
                     grid: !isSmallScreen,
                 },
             ]"
-            v-if="plannedCombats.length != 0 || combatHistory.length != 0"
+            v-else-if="
+                campaignCombatsStore.hasAnyPlannedCombats ||
+                campaignCombatsStore.hasAnyCombats
+            "
         >
             <aside
                 key="combatAside"
                 v-if="
                     !(
                         isSmallScreen &&
-                        (selectedPlannedCombat || selectedFinishedCombat)
+                        campaignCombatsStore.state?.selectedCombat
                     )
                 "
                 :class="[
@@ -46,12 +53,13 @@
                     </div>
                     <ul class="flex flex-col gap-2 overflow-y-auto">
                         <li
-                            v-for="plannedCombat in plannedCombats"
+                            v-for="plannedCombat in campaignCombatsStore.state
+                                ?.plannedCombats ?? []"
                             :key="plannedCombat.id"
                             :class="[
                                 'flex select-none items-center justify-between rounded-md border border-take-navy-dark bg-take-navy-dark p-1',
-                                selectedPlannedCombat?.id == plannedCombat.id &&
-                                    'border-take-yellow',
+                                campaignCombatsStore.state.selectedCombat?.id ==
+                                    plannedCombat.id && 'border-take-yellow',
                             ]"
                         >
                             <span class="px-1">{{
@@ -76,8 +84,7 @@
                                     buttonColour="take-navy-dark"
                                     @clicked="
                                         () => {
-                                            selectedFinishedCombat = null;
-                                            campaignStore.setPlannedCombat(
+                                            campaignCombatsStore.selectPlannedCombat(
                                                 plannedCombat.id,
                                             );
                                         }
@@ -97,27 +104,35 @@
                     </div>
                     <ul class="flex flex-col gap-2 overflow-y-auto">
                         <li
-                            v-for="finishedCombat in combatHistory"
-                            :key="finishedCombat.combatId"
-                            class="flex select-none items-center justify-between rounded-md bg-take-navy-dark p-1"
+                            v-for="finishedCombat in campaignCombatsStore.state
+                                ?.combats ?? []"
+                            :key="finishedCombat.combatName"
+                            :class="[
+                                'flex select-none items-center justify-between rounded-md border border-take-navy-dark bg-take-navy-dark p-1 transition-colors',
+                                finishedCombat.combatId ==
+                                    campaignCombatsStore.selectedCombat
+                                        ?.combatId && 'border-take-yellow',
+                            ]"
                         >
-                            <span class="px-1">{{ finishedCombat.name }}</span>
+                            <span class="px-1">{{
+                                finishedCombat.combatName
+                            }}</span>
                             <FormButton
                                 icon="eye"
                                 label="View"
                                 buttonColour="take-navy-dark"
                                 @clicked="
                                     () => {
-                                        selectedFinishedCombat =
-                                            finishedCombat.combatId;
-                                        campaignStore.setPlannedCombat(null);
+                                        campaignCombatsStore.selectCombat(
+                                            finishedCombat.combatId,
+                                        );
                                     }
                                 "
                             />
                         </li>
                     </ul>
                     <label
-                        v-if="combatHistory.length == 0"
+                        v-if="campaignCombatsStore.state?.combats?.length == 0"
                         class="text-sm italic"
                         >Plan, Start and Finish your first combat start a
                         History!</label
@@ -126,20 +141,35 @@
             </aside>
 
             <main
-                key="combatMain"
-                v-if="selectedPlannedCombat"
+                key="plannedCombat"
+                v-if="campaignCombatsStore.selectedPlannedCombat"
                 class="col-span-7 flex flex-col overflow-y-auto"
             >
-                <header class="flex items-center gap-2 pb-2">
+                <header class="flex items-center justify-between gap-2 pb-2">
                     <FormButton
                         v-if="isSmallScreen"
                         icon="arrow-left"
                         buttonColour="take-navy"
-                        @click="() => campaignStore.setPlannedCombat(null)"
+                        @click="() => campaignCombatsStore.unselectCombat()"
                     />
                     <div :class="['px-2 text-center font-NovaCut']">
-                        {{ selectedPlannedCombat.combatName }}
+                        {{
+                            campaignCombatsStore.selectedPlannedCombat
+                                .combatName
+                        }}
                     </div>
+                    <FormButton
+                        icon="trash"
+                        buttonColour="take-navy-medium"
+                        hoverButtonColour="take-red"
+                        :click="
+                            () =>
+                                campaignCombatsStore.deletePlannedCombat(
+                                    campaignCombatsStore.selectedPlannedCombat
+                                        ?.id!,
+                                )
+                        "
+                    />
                 </header>
                 <div class="overflow-y-auto">
                     <IndexPlannedCombatSection />
@@ -147,8 +177,8 @@
             </main>
 
             <main
-                key="combatMain"
-                v-if="selectedFinishedCombat"
+                key="combat"
+                v-else-if="campaignCombatsStore.selectedCombat"
                 class="col-span-7"
             >
                 <FormButton
@@ -156,7 +186,7 @@
                     icon="arrow-left"
                     size="lg"
                     buttonColour="take-navy"
-                    @click="() => (selectedFinishedCombat = null)"
+                    @click="() => campaignCombatsStore.unselectCombat()"
                 />
                 Finished combat summary coming soon...
             </main>
@@ -167,11 +197,9 @@
             v-else
             key="createFirstPlannedCombat"
         >
-            <h2 class="w-full text-center text-xl">
-                Create your first planned combat
-            </h2>
+            <h2 class="w-full text-center text-xl">Create planned combat</h2>
             <CreatePlannedCombatForm
-                :onCreatePlannedCombat="onCreatePlannedCombat"
+                :onCreatePlannedCombat="(req) => onCreatePlannedCombat(req!)"
             />
         </section>
 
@@ -182,50 +210,63 @@
         >
             <CreatePlannedCombatForm
                 class="h-full w-full"
-                :onCreatePlannedCombat="onCreatePlannedCombat"
+                :onCreatePlannedCombat="(req) => onCreatePlannedCombat(req!)"
             />
         </Modal>
-
-        <ConfirmModal
-            key="ConfirmModal"
-            ref="deleteCombatModal"
-            confirmText="Delete"
-            confirmColour="take-red"
-            :closeOnConfirm="false"
-            @Confirm="(ctrls) => deleteCombat(ctrls, selectedPlannedCombat)"
-            cancelText="Cancel"
-            cancelColour="take-yellow"
-            bodyText="Delete this planned combat?"
-        />
     </TransitionGroup>
 </template>
 <script setup lang="ts">
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import Modal from "~/components/Modal.vue";
 import ConfirmModal from "~/components/ConfirmModal.vue";
-import type { ButtonLoadingControl } from "../Form/Button.vue";
+import type { ButtonLoadingControl } from "~/components/Form/Button.vue";
 import type { PlannedCombat } from "~/utils/types/models";
 import type { CreatePlannedCombatRequest } from "~/utils/api/plannedCombat/createPlannedCombatRequest";
+import { getCombatsRequest } from "~/utils/api/combat/getCombatsRequest";
+
+// Page info
+definePageMeta({
+    requiresAuth: true,
+    layout: "campaign-tabs",
+});
+
+// Stores
+const route = useRoute();
+const campaignCombatsStore = useCampaignCombatsStore();
+const campaignStore = useCampaignStore();
+const hasActiveCombat = computed(
+    () => campaignStore.state.currentCombatInfo != null,
+);
+
+// Page Setup
+const { pending, error } = await useAsyncData(
+    "CampaignCombats",
+    async (nuxtApp) => {
+        const getData = getCombatsRequest(nuxtApp?.$axios!);
+        return await getData({
+            campaignId: route.params.id as string,
+        }).then((resp) => {
+            campaignCombatsStore.state.campaignId = route.params.id as string;
+            Object.keys(resp).forEach((key) => {
+                // @ts-ignore
+                campaignCombatsStore.state[key] = resp[key];
+            });
+        });
+    },
+    {
+        watch: [() => route.params.id],
+    },
+);
 
 // Screen Size
+const { isMobile } = useDevice();
 const isSmallScreen = computed(() => {
-    return window.matchMedia("(max-width: 640px)").matches;
+    return isMobile || window?.matchMedia("(max-width: 640px)").matches;
 });
 
 // Modals
 const deleteCombatModal = ref<InstanceType<typeof ConfirmModal> | null>(null);
 const createPlannedCombatModal = ref<InstanceType<typeof Modal> | null>(null);
-
-const campaignStore = useCampaignStore();
-const hasActiveCombat = computed(() => campaignStore.state.combatDto != null);
-const plannedCombatStore = usePlannedCombatStore();
-const plannedCombats = computed(() => campaignStore.state.plannedCombats ?? []);
-const combatHistory = computed(() => campaignStore.state.finishedCombats ?? []);
-
-const selectedFinishedCombat = ref<string | null>(null);
-const selectedPlannedCombat = computed(
-    () => plannedCombatStore.selectedPlannedCombat,
-);
 
 // Create planned combat
 async function showCreatePlannedCombatModal() {
@@ -233,62 +274,48 @@ async function showCreatePlannedCombatModal() {
 }
 
 async function onCreatePlannedCombat(
-    input: void | Omit<CreatePlannedCombatRequest, "campaignId">,
+    input: Omit<CreatePlannedCombatRequest, "campaignId">,
 ) {
-    return await campaignStore
-        .createPlannedCombat(input!)
-        .then((plannedCombat) => {
-            return campaignStore.setPlannedCombat(plannedCombat.id);
-        })
+    return await campaignCombatsStore
+        .createPlannedCombat(input)
         .then(() => createPlannedCombatModal.value?.hide());
 }
 
-// Delete combat
-async function showDeleteCombatModal(
-    loadingCtrl: ButtonLoadingControl,
-    combat: PlannedCombat,
-) {
-    loadingCtrl.setLoaded();
-    // If the combat has no stages, or all the stages are empty, then just delete without showing the modal.
-    if (
-        combat.stages?.length == 0 ||
-        combat.stages?.flatMap((x) => x.NPCs).filter((x) => x != null).length ==
-            0
-    ) {
-        loadingCtrl.setLoaded();
-        await deleteCombat(loadingCtrl, combat);
-        return;
-    }
-
-    // Show the delete confirmation modal.
-    if (deleteCombatModal.value) {
-        deleteCombatModal.value?.show();
-    }
-}
-
-async function deleteCombat(
-    loadingCtrl: ButtonLoadingControl,
-    combat: PlannedCombat,
-) {
-    loadingCtrl.setLoading();
-    return await campaignStore.deletePlannedCombat(combat.id).then(() => {
-        loadingCtrl.setLoaded();
-        deleteCombatModal.value?.hide();
+async function onOpenCombat(plannedCombatId: string) {
+    return await campaignStore.openCombat(plannedCombatId).then(async () => {
+        await useNavigator().navigateToCampaignTab(
+            route.params.id as string,
+            "summary",
+        );
     });
 }
 
-async function onOpenCombat(plannedCombatId: string) {
-    return await campaignStore.openCombat(plannedCombatId);
-}
-
 onMounted(() => {
+    if (isSmallScreen.value) {
+        return;
+    }
+
     if (
-        !isSmallScreen.value && // Ensure not a smalls screen
-        plannedCombats.value &&
-        plannedCombats.value.length > 0 &&
-        selectedPlannedCombat.value == null
+        !campaignCombatsStore.hasAnyCombats &&
+        !campaignCombatsStore.hasAnyPlannedCombats
     ) {
-        campaignStore.setPlannedCombat(plannedCombats.value[0].id);
+        return;
+    }
+
+    if (
+        campaignCombatsStore.hasAnyPlannedCombats &&
+        campaignCombatsStore.state.plannedCombats
+    ) {
+        campaignCombatsStore.selectPlannedCombat(
+            campaignCombatsStore.state.plannedCombats[0].id,
+        );
+    } else if (
+        campaignCombatsStore.hasAnyCombats &&
+        campaignCombatsStore.state.combats
+    ) {
+        campaignCombatsStore.selectCombat(
+            campaignCombatsStore.state.combats[0].combatId,
+        );
     }
 });
 </script>
