@@ -68,7 +68,9 @@
                         :keyFunc="(c) => c.campaignId"
                         :selectedItem="
                             userStore.campaignList?.find(
-                                (x) => x.campaignId == selectedCampaignInfo,
+                                (x) =>
+                                    x.campaignId ==
+                                    selectedCampaignInfo.campaign?.id,
                             )
                         "
                         @update:selectedItem="
