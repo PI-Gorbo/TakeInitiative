@@ -21,7 +21,7 @@ import { putUpdateInitiativeCharacterRequest } from "~/utils/api/combat/putUpdat
 import { putUpsertStagedCharacter } from "~/utils/api/combat/putUpsertStagedCharacter";
 import { createPlannedCombatRequest } from "~/utils/api/plannedCombat/createPlannedCombatRequest";
 import { deletePlannedCombatRequest } from "~/utils/api/plannedCombat/deletePlannedCombatRequest";
-import { getPlannedCombatsRequest } from "~/utils/api/plannedCombat/getPlannedCombatsRequest";
+import { getCombatsRequest } from "~/utils/api/combat/getCombatsRequest";
 import { createPlannedCombatStageRequest } from "~/utils/api/plannedCombat/stages/createPlannedCombatStageRequest";
 import { deletePlannedCombatStageRequest } from "~/utils/api/plannedCombat/stages/deletePlannedCombatStageRequest";
 import { createPlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
@@ -56,7 +56,6 @@ export const useApi = () => {
         },
         plannedCombat: {
             create: createPlannedCombatRequest($axios),
-            getAll: getPlannedCombatsRequest($axios),
             delete: deletePlannedCombatRequest($axios),
             stage: {
                 create: createPlannedCombatStageRequest($axios),
@@ -70,6 +69,7 @@ export const useApi = () => {
             },
         },
         combat: {
+            getAll: getCombatsRequest($axios),
             get: getCombatRequest($axios),
             start: postStartCombatRequest($axios),
             finish: postFinishCombatRequest($axios),

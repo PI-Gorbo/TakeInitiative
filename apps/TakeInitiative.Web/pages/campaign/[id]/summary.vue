@@ -1,15 +1,10 @@
 <template>
-    <main
-        :class="[
-            'flex h-full flex-col overflow-y-auto',
-            !isMobile && 'items-center',
-        ]"
-    >
+    <main :class="['flex h-full flex-col', !isMobile && 'items-center']">
         <header
-            v-if="campaignStore.state.combatDto"
+            v-if="campaignStore.state.currentCombatInfo"
             :class="[
                 'mx-3 my-2 cursor-pointer select-none rounded-lg px-4 py-3 text-center text-xl text-take-navy',
-                campaignStore.state.combatDto.state == CombatState.Open
+                campaignStore.state.currentCombatInfo.state == CombatState.Open
                     ? 'bg-take-yellow-dark'
                     : 'bg-take-red ',
                 isMobile ? 'flex-1' : 'w-full',
@@ -17,11 +12,16 @@
             @click="
                 async () =>
                     await navigateTo(
-                        `/combat/${campaignStore.state.combatDto?.id}`,
+                        `/combat/${campaignStore.state.currentCombatInfo?.id}`,
                     )
             "
         >
-            <div v-if="campaignStore.state.combatDto.state == CombatState.Open">
+            <div
+                v-if="
+                    campaignStore.state.currentCombatInfo.state ==
+                    CombatState.Open
+                "
+            >
                 {{ openCombatText }}
             </div>
             <div v-else>
@@ -38,7 +38,10 @@
                 >
                     <div class="flex-1">
                         <div class="w-full font-NovaCut">Creation Date</div>
-                        <div class="px-3 py-2 text-lg text-take-yellow">
+                        <div
+                            class="px-3 py-2 text-lg text-take-yellow"
+                            v-if="campaign?.createdTimestamp"
+                        >
                             {{
                                 format(
                                     parseISO(campaign?.createdTimestamp ?? ""),
@@ -83,6 +86,7 @@
                             <textarea
                                 :value="description"
                                 class="h-full w-full rounded-xl bg-take-navy-medium p-1 ring-0"
+                                :disabled="!campaignStore.isDm"
                                 @input="
                                     (e) =>
                                         (description = (
@@ -90,7 +94,7 @@
                                         ).value)
                                 "
                             />
-                            <div>
+                            <div v-if="campaignStore.isDm">
                                 <FormButton
                                     type="submit"
                                     class="text-sm disabled:bg-take-navy-medium"
@@ -120,6 +124,7 @@
                             <textarea
                                 :value="resources"
                                 class="h-full w-full rounded-xl bg-take-navy-medium p-1 ring-0"
+                                :disabled="!campaignStore.isDm"
                                 @input="
                                     (e) =>
                                         (resources = (
@@ -127,7 +132,7 @@
                                         ).value)
                                 "
                             />
-                            <div>
+                            <div v-if="campaignStore.isDm">
                                 <FormButton
                                     type="submit"
                                     class="text-sm disabled:bg-take-navy-medium"
@@ -148,7 +153,10 @@
             >
                 <div class="flex flex-1 flex-row items-center justify-between">
                     <div class="font-NovaCut">Creation Date</div>
-                    <div class="px-3 py-2 text-lg text-take-yellow">
+                    <div
+                        class="px-3 py-2 text-lg text-take-yellow"
+                        v-if="campaign?.createdTimestamp"
+                    >
                         {{
                             format(
                                 parseISO(campaign?.createdTimestamp ?? ""),
@@ -202,6 +210,7 @@
                         <textarea
                             :value="description"
                             class="h-full w-full rounded-xl bg-take-navy-medium p-1 ring-0"
+                            :disabled="!campaignStore.isDm"
                             @input="
                                 (e) =>
                                     (description = (
@@ -224,6 +233,7 @@
                         <textarea
                             :value="resources"
                             class="h-full w-full rounded-xl bg-take-navy-medium p-1 ring-0"
+                            :disabled="!campaignStore.isDm"
                             @input="
                                 (e) =>
                                     (resources = (
@@ -243,6 +253,12 @@ import { toTypedSchema } from "@vee-validate/yup";
 import { useForm } from "vee-validate";
 import { yup } from "~/utils/types/HelperTypes";
 import { parseISO, format } from "date-fns";
+
+// Page info
+definePageMeta({
+    requiresAuth: true,
+    layout: "campaign-tabs",
+});
 
 const { isMobile } = useDevice();
 const userStore = useUserStore();
@@ -280,7 +296,7 @@ const resourcesHasChanges = computed(() => {
     return campaignStore.state.campaign?.campaignResources != resources.value;
 });
 
-async function submitDetails(): Promise<void> {
+async function submitDetails(): Promise<unknown> {
     return await campaignStore.updateCampaignDetails({
         campaignDescription: description.value ?? "",
         campaignResources: resources.value ?? "",
@@ -288,35 +304,19 @@ async function submitDetails(): Promise<void> {
 }
 
 const openCombatText = computed(() => {
-    const combatDto = campaignStore.state.combatDto;
-    const combatOpenedByUser = campaignStore.state.nonUserCampaignMembers
-        ?.concat([
-            {
-                userId: userStore.state.user?.userId!,
-                username: userStore.username!,
-            } satisfies {
-                userId: string;
-                username: string;
-            },
-        ])
-        .find((x) => x.userId == combatDto?.dungeonMaster)?.username;
+    const combatDto = campaignStore.state.currentCombatInfo;
+    const combatOpedByName = campaignStore.memberDtos.find(
+        (x) => x.userId == combatDto?.dungeonMaster,
+    )?.username;
 
-    return `The combat '${combatDto?.combatName}' has been opened by ${combatOpenedByUser}! Click to join or start watching before it starts...`;
+    return `The combat '${combatDto?.combatName}' has been opened. Click to join.`;
 });
 const combatStartedText = computed(() => {
-    const combatDto = campaignStore.state.combatDto;
-    const combatOpenedByUser = campaignStore.state.nonUserCampaignMembers
-        ?.concat([
-            {
-                userId: userStore.state.user?.userId!,
-                username: userStore.username!,
-            } satisfies {
-                userId: string;
-                username: string;
-            },
-        ])
-        .find((x) => x.userId == combatDto?.dungeonMaster)?.username;
+    const combatDto = campaignStore.state.currentCombatInfo;
+    const combatOpedByName = campaignStore.memberDtos.find(
+        (x) => x.userId == combatDto?.dungeonMaster,
+    )?.username;
 
-    return `The combat '${combatDto?.combatName}' has started! Click to join or watch.`;
+    return `The combat '${combatDto?.combatName}' has started! Click to join.`;
 });
 </script>

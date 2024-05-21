@@ -9,18 +9,14 @@ public record Combat
     public CombatState State { get; set; }
     public string? CombatName { get; init; }
     public Guid DungeonMaster { get; init; }
-    public ImmutableList<CombatTimingRecord> Timing { get; init; } = null!;
-    public ImmutableList<string> CombatLogs { get; set; } = null!;
-    public ImmutableList<PlayerDto> CurrentPlayers { get; set; } = null!;
-
-    // Actual Initiative List
-    public ImmutableList<CombatCharacter> StagedList { get; set; } = null!; // Will never be null when the api has access to it.
-    public ImmutableList<CombatCharacter> InitiativeList { get; set; } = null!; // Will never be null when the api has access to it.
-    public int InitiativeIndex { get; set; } = -1;
+    public ImmutableList<string> CombatLogs { get; set; } = [];
+    public ImmutableList<PlayerDto> CurrentPlayers { get; set; } = [];
+    public ImmutableList<PlannedCombatStage> PlannedStages { get; set; } = []; // Will never be null when the api has access to it.
+    public ImmutableList<CombatCharacter> StagedList { get; set; } = []; // Will never be null when the api has access to it.
+    public ImmutableList<CombatCharacter> InitiativeList { get; set; } = []; // Will never be null when the api has access to it.
+    public int InitiativeIndex { get; set; }
     public int? RoundNumber { get; set; }
-
-    // Planning 
-    public ImmutableList<PlannedCombatStage> PlannedStages { get; set; } = null!; // Will never be null when the api has access to it.
+    public DateTimeOffset? FinishedTimestamp { get; set; }
 
     public static Combat New(
             Guid Id,
@@ -47,7 +43,6 @@ public record Combat
             State = State,
             CombatName = CombatName,
             DungeonMaster = DungeonMaster,
-            Timing = Timing,
             CombatLogs = CombatLogs,
             CurrentPlayers = CurrentPlayers,
             StagedList = StagedList,
@@ -55,11 +50,11 @@ public record Combat
             PlannedStages = PlannedStages,
             InitiativeIndex = -1,
             RoundNumber = null,
+            FinishedTimestamp = null
         };
     }
 
-    public (int initiative, int turnNumber) GetNextTurnInfo() =>
-    this.InitiativeIndex + 1 == this.InitiativeList.Count
-        ? (0, (this.RoundNumber ?? 0) + 1)
-        : (this.InitiativeIndex + 1, this.RoundNumber ?? 0);
+    public (int initiative, int turnNumber) GetNextTurnInfo() => this.InitiativeIndex + 1 == this.InitiativeList.Count
+        ? (0, (this.RoundNumber ?? 0) + 1) // At the end of the round, reset to top of initiative and increment round number count.
+        : (this.InitiativeIndex + 1, this.RoundNumber ?? 0); // Otherwise, just increment initiative index.
 }

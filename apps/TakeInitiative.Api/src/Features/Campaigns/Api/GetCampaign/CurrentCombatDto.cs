@@ -1,6 +1,6 @@
 namespace TakeInitiative.Api.Features.Campaigns;
 
-public record CombatDto
+public record CurrentCombatDto
 {
     public required Guid Id { get; set; }
     public required CombatState State { get; set; }

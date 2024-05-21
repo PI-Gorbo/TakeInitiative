@@ -3,5 +3,5 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     const combatStore = useCombatStore();
     if (to?.name != "combat-id" && from?.name == "combat-id") {
         await combatStore.leaveCombat();
-    } 
+    }
 });

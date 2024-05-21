@@ -22,7 +22,7 @@ export function createPlannedCombatRequest(axios: AxiosInstance) {
         request: CreatePlannedCombatRequest,
     ): Promise<CreatePlannedCombatResponse> {
         return axios
-            .post("/api/campaign/planned-combat", request)
+            .post("/api/combat/planned", request)
             .then(async function (response) {
                 const result =
                     await postPlannedCombatResponseValidator.validate(

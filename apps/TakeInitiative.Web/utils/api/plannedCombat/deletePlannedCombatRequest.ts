@@ -15,6 +15,6 @@ export function deletePlannedCombatRequest(axios: AxiosInstance) {
     return async function getUser(
         request: DeletePlannedCombatRequest,
     ): Promise<void> {
-        return axios.delete("/api/campaign/planned-combat", { data: request });
+        return axios.delete("/api/combat/planned", { data: request });
     };
 }
