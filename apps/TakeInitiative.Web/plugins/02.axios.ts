@@ -1,4 +1,4 @@
-import type { AxiosInstance, CreateAxiosDefaults } from "axios";
+import type { AxiosError, AxiosInstance, CreateAxiosDefaults } from "axios";
 import axios from "axios";
 export default defineNuxtPlugin((nuxtApp) => {
     // Destructure the environment variables to get axios config
@@ -11,15 +11,18 @@ export default defineNuxtPlugin((nuxtApp) => {
     const Axios: AxiosInstance = axios.create(defaultAxios);
     // Register to use an auth token if there is one.
 
-    const aspNetCoreCookie = useCookie(".AspNetCore.Cookies").value; // Axios does not attach the cookie on the first request. so we have to manually do it.
+    console.log("Adding request interceptor...")
+    const aspNetCoreCookie = useCookie(".AspNetCore.Cookies"); // Axios does not attach the cookie on the first request. so we have to manually do it.
     Axios.interceptors.request.use((config) => {
-        if (aspNetCoreCookie) {
+        console.log("Request interceptor start", aspNetCoreCookie.value)
+        if (aspNetCoreCookie.value) {
             config.headers["Cookie"] =
-                `.AspNetCore.Cookies=${aspNetCoreCookie}`;
+                `.AspNetCore.Cookies=${aspNetCoreCookie.value}`;
         }
         config.withCredentials = true; // Automatically adds cookies to every request.
         return config;
     });
+    console.log("Finished Adding request interceptor")
 
     Axios.interceptors.response.use(
         (resp) => {
@@ -27,7 +30,10 @@ export default defineNuxtPlugin((nuxtApp) => {
         },
         async (error) => {
             if (error.response.status == 401) {
-                console.error("Unauthenticated. Redirecting to /login", error)
+                const axiosError: AxiosError = error as AxiosError
+                console.error("Unauthenticated. Redirecting to /login")
+                console.error("request", axiosError.request);
+                console.error("response", axiosError.response);
                 await navigateTo("/login");
                 throw error;
             }
