@@ -153,6 +153,4 @@ export const combatValidator = yup.object({
     initiativeIndex: yup.number(),
     roundNumber: yup.string().nullable(),
 });
-export type Combat = Omit<InferType<typeof combatValidator>, "state"> & {
-    state: CombatState;
-};
+export type Combat = InferType<typeof combatValidator>

@@ -31,9 +31,23 @@ const campaignStore = useCampaignStore();
 const { isDm } = storeToRefs(campaignStore);
 const { pending, error } = await useAsyncData(
     "campaignPages",
-    () => {
-        return campaignStore
+    async () => {
+        
+        if (!route.name?.toString().startsWith('campaign-id')) {
+            console.log("not on the campaigns page");
+            throw Error("not on the right page")
+        }
+
+        const id = route.params.id as string | null
+        if (id == null) {
+            throw Error("Id was not valid. Given id: " + id)
+        }
+
+        return await campaignStore
             .setCampaignById(route.params.id as string)
+            .catch(err => {
+                return console.error(err);
+            })
             .then(() => true);
     },
     {

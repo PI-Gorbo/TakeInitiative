@@ -131,7 +131,7 @@ export const useUserStore = defineStore("userStore", () => {
                 }
 
                 if ((campaignList.value?.length ?? 0) > 0) {
-                    await useNavigator().navigateToCampaignTab(
+                    await useNavigator().toCampaignTab(
                         campaignList.value![0].campaignId,
                         "summary",
                     );

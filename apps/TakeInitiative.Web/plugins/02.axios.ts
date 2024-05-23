@@ -27,7 +27,7 @@ export default defineNuxtPlugin((nuxtApp) => {
         },
         async (error) => {
             if (error.response.status == 401) {
-                console.log("navigating to /login");
+                console.error("Unauthenticated. Redirecting to /login", error)
                 await navigateTo("/login");
                 throw error;
             }

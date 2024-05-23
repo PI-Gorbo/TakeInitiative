@@ -44,7 +44,6 @@ export const useCombatStore = defineStore("combatStore", () => {
     async function setCombat(combatId: string): Promise<void> {
         return await api.combat.get({ combatId }).then(async (resp) => {
             state.combat = resp.combat;
-            userStore.setSelectedCampaign(resp.combat.campaignId);
             await campaignStore.setCampaignById(resp.combat.campaignId);
         });
     }

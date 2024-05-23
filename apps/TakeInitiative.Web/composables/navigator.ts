@@ -1,8 +1,8 @@
 export const useNavigator = () => {
     return {
-        navigateToCampaignTab: (
+        toCampaignTab: (
             id: string,
             tab: "summary" | "character" | "combats" | "settings",
-        ) => navigateTo(`/campaign/${id}/${tab}`),
+        ) => navigateTo(`/campaign/${id}/${tab}`), 
     };
 };

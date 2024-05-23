@@ -28,7 +28,7 @@ public class GetCampaignMember(IDocumentStore Store) : Endpoint<GetCampaignMembe
 
             if (!userIsPartOfCampaign)
             {
-                ThrowError("User must be part of the campaign to request information about its members", (int)HttpStatusCode.Unauthorized);
+                ThrowError("User must be part of the campaign to request information about its members", (int)HttpStatusCode.BadRequest);
             }
 
             return campaignMember;
