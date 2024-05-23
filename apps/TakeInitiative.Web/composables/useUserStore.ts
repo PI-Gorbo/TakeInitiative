@@ -52,6 +52,7 @@ export const useUserStore = defineStore("userStore", () => {
     }
 
     async function isLoggedIn(): Promise<Boolean> {
+        console.log("Checking if the user is logged in")
         if (state.user != null) {
             return true;
         }

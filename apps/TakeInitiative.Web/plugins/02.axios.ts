@@ -15,6 +15,7 @@ export default defineNuxtPlugin((nuxtApp) => {
     const aspNetCoreCookie = useCookie(".AspNetCore.Cookies"); // Axios does not attach the cookie on the first request. so we have to manually do it.
     Axios.interceptors.request.use((config) => {
         console.log("Request interceptor start", aspNetCoreCookie.value)
+        console.log("Attempting with the get cookie request")
         if (aspNetCoreCookie.value) {
             config.headers["Cookie"] =
                 `.AspNetCore.Cookies=${aspNetCoreCookie.value}`;
@@ -32,7 +33,7 @@ export default defineNuxtPlugin((nuxtApp) => {
             if (error.response.status == 401) {
                 const axiosError: AxiosError = error as AxiosError
                 console.error("Unauthenticated. Redirecting to /login")
-                console.error(axiosError?.request?.rawHeaders);
+                console.error(axiosError?.request);
                 await navigateTo("/login");
                 throw error;
             }
