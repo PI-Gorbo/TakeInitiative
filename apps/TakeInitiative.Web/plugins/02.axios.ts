@@ -32,8 +32,7 @@ export default defineNuxtPlugin((nuxtApp) => {
             if (error.response.status == 401) {
                 const axiosError: AxiosError = error as AxiosError
                 console.error("Unauthenticated. Redirecting to /login")
-                console.error("request", axiosError.request);
-                console.error("response", axiosError.response);
+                console.error(axiosError?.request?.rawHeaders);
                 await navigateTo("/login");
                 throw error;
             }
