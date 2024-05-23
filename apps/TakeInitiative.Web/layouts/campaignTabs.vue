@@ -17,7 +17,7 @@
                         <div class="capitalize">{{ tab.name }}</div>
                     </div>
                 </header>
-                <main class="flex-1 md:w-4/5 md:max-w-[1200px]">
+                <main class="flex-1 w-full md:w-4/5 md:max-w-[1200px]">
                     <slot />
                 </main>
             </div>
