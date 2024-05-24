@@ -26,7 +26,7 @@ export default defineNuxtPlugin((nuxtApp) => {
 
     Axios.interceptors.response.use(
         (resp) => {
-            
+            console.log(resp.headers)
             console.log("In response")
             if (resp.headers["set-cookie"]) {
                 console.log("set-cookie header present")
