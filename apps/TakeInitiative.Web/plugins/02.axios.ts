@@ -36,6 +36,8 @@ export default defineNuxtPlugin((nuxtApp) => {
                 console.log("Value of cookie:", extractedCookie.slice(20));
                 aspNetCoreCookie.value = extractedCookie.slice(20)  
               }   
+            } else {
+                console.log("set-cookie header was not present")
             }
 
             return resp;
