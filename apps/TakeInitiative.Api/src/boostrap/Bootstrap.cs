@@ -93,6 +93,9 @@ public static class Bootstrap
                     return Task.CompletedTask;
                 };
             })
+            .ConfigureApplicationCookie(cfg => {
+                cfg.Cookie.Domain = builder.Configuration.GetValue<string>("CookieDomain") ?? throw new InvalidOperationException("Attempted to find configuration for the value CookieDomain but there was none provided.");
+            })
             .AddAuthorization(opts =>
             {
                 opts.AddPolicy("UserExists",

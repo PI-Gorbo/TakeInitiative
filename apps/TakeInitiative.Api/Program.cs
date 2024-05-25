@@ -61,7 +61,6 @@ internal class Program
             .UseAuthorization();
 
         app.UseHealthChecks("/healthz");
-        app.MapGet("/devInfo", ([FromServices] IConfiguration config) => ((IConfigurationRoot)config).GetDebugView());
         app.Run();
     }
 }

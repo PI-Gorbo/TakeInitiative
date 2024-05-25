@@ -1,6 +1,7 @@
 using CSharpFunctionalExtensions;
 using FastEndpoints;
 using FastEndpoints.Security;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using TakeInitiative.Utilities;
@@ -35,7 +36,7 @@ public class PutLogin(
 
                 // Create cookie
                 await CookieAuth.SignInAsync(u =>
-                {
+                {  
                     u["UserId"] = user.Id.ToString();
                 });
 

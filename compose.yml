@@ -23,6 +23,7 @@ services:
             - "ConnectionStrings:TakeDB=User ID=postgres;Password=postgres;Host=postgres;Port=5432;Database=postgres;"
             - "CORS=http://take-initiative.com;https://take-initiative.com"
             - "AllowedHosts=api.take-initiative.com"
+            - "CookieDomain=take-initiative.com"
         restart: always
         # healthcheck:
         #     test: curl --fail http://localhost:8080/heathz || exit 1

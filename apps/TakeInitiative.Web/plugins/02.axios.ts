@@ -13,12 +13,10 @@ export default defineNuxtPlugin((nuxtApp) => {
     // Register to use an auth token if there is one.
     const aspNetCoreCookie = useCookie(".AspNetCore.Cookies"); // Axios does not attach the cookie on the first request. so we have to manually do it.
     Axios.interceptors.request.use((config) => {
+        console.log(aspNetCoreCookie.value)
         if (aspNetCoreCookie.value) {
-            console.log("seting request cookie", aspNetCoreCookie.value)
             config.headers["Cookie"] =
                 `.AspNetCore.Cookies=${aspNetCoreCookie.value}`;
-        } else {
-            console.log("not setting the cookie")
         }
         config.withCredentials = true; // Automatically adds cookies to every request.
         return config;
@@ -26,25 +24,11 @@ export default defineNuxtPlugin((nuxtApp) => {
 
     Axios.interceptors.response.use(
         (resp) => {
-            console.log(resp.headers)
-            console.log("In response")
-            if (resp.headers["set-cookie"]) {
-                console.log("set-cookie header present")
-              const extractedCookie = resp.headers['set-cookie'].filter(x => x.startsWith('.AspNetCore.Cookies'))[0]
-              console.log("extracted cookie", extractedCookie)
-              if (extractedCookie) {
-                console.log("Value of cookie:", extractedCookie.slice(20));
-                aspNetCoreCookie.value = extractedCookie.slice(20)  
-              }   
-            } else {
-                console.log("set-cookie header was not present")
-            }
-
             return resp;
         },
         async (error) => {
             if (error.response.status == 401) {
-                const axiosError: AxiosError = error as AxiosError
+                const axiosError: AxiosError = error as AxiosError;
                 await navigateTo("/login");
                 throw error;
             }
