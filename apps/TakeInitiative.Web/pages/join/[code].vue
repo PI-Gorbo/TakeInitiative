@@ -28,14 +28,11 @@ const {
 } = await useAsyncData(
     "joinPage",
     async () => {
-        console.log("Started request");
         // Route
         const joinCode = useRoute().params.code as string;
         const userStore = useUserStore();
         return await userStore
             .joinCampaign({ joinCode })
-            .then((campaign) => userStore.setSelectedCampaign(campaign.id))
-            .then(() => console.log("navigating"))
             .then(async () => await navigateTo("/"))
             .then(() => true)
             .catch(

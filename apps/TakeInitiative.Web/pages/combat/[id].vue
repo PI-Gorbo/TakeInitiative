@@ -287,7 +287,6 @@ const { refresh, pending, error } = await useAsyncData("Combat", async () => {
 const { refresh: rejoinCombat } = await useAsyncData(
     "JoinCombat",
     async () => {
-        console.log("Sending join request");
         return await combatStore.joinCombat().then(() => true);
     },
     { server: false },

@@ -1,6 +1,5 @@
 export default defineNuxtRouteMiddleware(async (to) => {
 
-    console.log("In index reroute")
     const userStore = useUserStore();
     if (userStore.state.user == null) {
         return;
