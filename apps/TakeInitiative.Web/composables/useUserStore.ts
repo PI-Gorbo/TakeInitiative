@@ -149,7 +149,11 @@ export const useUserStore = defineStore("userStore", () => {
             state.user.dmCampaigns,
         )[0];
 
-        return navigateTo(`/campaign/${campaign.campaignId}/summary`);
+        if (campaign == null) {
+            return useNavigator().toCreateOrJoinCampaign()
+        }
+
+        return useNavigator().toCampaignTab(campaign.campaignId, 'summary')
     }
 
     // Helper functions

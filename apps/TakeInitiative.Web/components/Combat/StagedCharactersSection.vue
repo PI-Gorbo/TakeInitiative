@@ -71,7 +71,7 @@
                 label="Back"
                 @clicked="transitionViewToList"
             />
-            <CombatStageCharacterForm
+            <CombatModifyStagedCharacterForm
                 :onEdit="
                     (req) =>
                         combatStore
@@ -101,43 +101,7 @@
                 label="Back"
                 @clicked="transitionViewToList"
             />
-            <Tabs
-                :showTabs="{
-                    Planned: () => userIsDm,
-                    Characters: () =>
-                        (campaignStore.state.userCampaignMember?.characters
-                            ?.length ?? 0) > 0,
-                }"
-                :renameTabs="{
-                    Custom: 'Add Custom',
-                    Planned: 'Add Planned',
-                }"
-                class="py-2"
-                backgroundColour="take-navy-medium"
-            >
-                <template #Characters> Characters ... </template>
-                <template #Custom>
-                    <CombatStageCharacterForm
-                        :onCreate="
-                            (req) =>
-                                combatStore
-                                    .upsertStagedCharacter(req)
-                                    .then(transitionViewToList)
-                        "
-                    />
-                </template>
-                <template #Planned>
-                    <CombatPlannedStagesDisplay
-                        :stages="combatStore.state.combat?.plannedStages!"
-                        :submit="
-                            (req) =>
-                                combatStore
-                                    .stagePlannedCharacters(req)
-                                    .then(transitionViewToList)
-                        "
-                    />
-                </template>
-            </Tabs>
+            <CombatAddStagedCharacterTabs :characterAdded="async () => transitionViewToList" />
         </div>
     </main>
 </template>
@@ -182,7 +146,7 @@ function transitionViewToEdit(characterToEdit: CombatCharacter) {
 const clickedList = ref<string[]>([]);
 const campaignStore = useCampaignStore();
 const combatStore = useCombatStore();
-const { userIsDm, orderedStagedCharacterListWithPlayerInfo } =
+const { userIsDm, orderedStagedCharacterListWithPlayerInfo, anyPlannedCharacters } =
     storeToRefs(combatStore);
 
 function onCharacterClicked(character: CombatPlayerDto) {

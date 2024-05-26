@@ -14,49 +14,14 @@
 
         <section>
             <label class="text-white">Initiative</label>
-            <div class="flex flex-row">
-                <select
-                    name="Initiative Strategy"
-                    :value="initiativeStrategy"
-                    @input="
-                        (e: Event) =>
-                            (initiativeStrategy = Number(
-                                (e.target as HTMLSelectElement).value,
-                            ))
-                    "
-                    class="rounded-l-lg bg-take-grey-dark py-1 pl-2 pr-1"
-                >
-                    <option :value="InitiativeStrategy.Fixed">Fixed</option>
-                    <option :value="InitiativeStrategy.Roll">Roll</option>
-                </select>
-
-                <input
-                    type="text"
-                    class="flex-1 rounded-r-lg bg-take-navy-light px-1 text-white"
-                    :value="initiativeValue"
-                    @input="
-                        (e) =>
-                            (initiativeValue = (e.target as HTMLInputElement)
-                                .value)
-                    "
-                    :placeholder="
-                        initiativeStrategy == InitiativeStrategy.Fixed
-                            ? '+5'
-                            : '1d20 + 5'
-                    "
-                />
-            </div>
-            <label
-                v-if="initiativeStrategyInputProps.errorMessage"
-                class="text-take-red"
-                >{{ initiativeStrategyInputProps.errorMessage }}</label
-            >
-            <label
-                v-if="initiativeValueInputProps.errorMessage != null"
-                class="text-take-red"
-            >
-                {{ initiativeValueInputProps.errorMessage }}
-            </label>
+            <CharacterInitiative
+                v-model:initiativeStrategy="initiativeStrategy"
+                v-model:initiativeValue="initiativeValue"
+                :errorMessage="
+                    initiativeStrategyInputProps.errorMessage ||
+                    initiativeValueInputProps.errorMessage
+                "
+            />
         </section>
 
         <div class="flex w-full justify-center" v-if="!props.npc">
@@ -126,7 +91,6 @@ const { values, errors, defineField, validate } = useForm({
         yup.object({
             name: yup.string().required("Please provide a name"),
             initiative: characterInitiativeValidator,
-            quantity: yup.number().min(1),
         }),
     ),
 });
@@ -161,7 +125,6 @@ const [initiativeValue, initiativeValueInputProps] = defineField(
 onMounted(() => {
     if (!props.npc) {
         initiativeStrategy.value = InitiativeStrategy.Roll;
-        initiativeValue.value = "1d20 + 1";
     } else {
         initiativeStrategy.value = props.npc?.initiative.strategy;
         initiativeValue.value = props.npc.initiative.value;
