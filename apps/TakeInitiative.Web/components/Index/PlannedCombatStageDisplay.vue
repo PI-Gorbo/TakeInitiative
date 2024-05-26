@@ -50,7 +50,7 @@
                 </section>
             </TransitionGroup>
             <Modal ref="createNpcFormModal" title="Create NPC">
-                <ModifyPlannedCharacterForm
+                <IndexModifyPlannedCharacterForm
                     :onCreate="
                         (request) =>
                             props
