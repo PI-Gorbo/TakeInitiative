@@ -20,7 +20,6 @@ const apiErrorSchema = yup.object({
 export async function parseAsApiError<TRequest extends {}>(
     error: AxiosError<any>,
 ): Promise<ApiError<TRequest>> {
-    console.log(error.response?.data);
     try {
         const result = await apiErrorSchema.validate(error?.response?.data);
         return {
@@ -45,9 +44,7 @@ export async function parseAsApiError<TRequest extends {}>(
             error,
         };
     } catch (err) {
-        console.log(error, err);
         const validationError: yup.ValidationError = err as yup.ValidationError;
-        console.log(validationError);
         return {
             statusCode: error.status ?? 500,
             message: "Something went wrong",

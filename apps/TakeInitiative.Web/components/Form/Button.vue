@@ -144,7 +144,6 @@ async function onClick(event: Event) {
         return;
     }
 
-    console.log("calling the on click method");
     state.isLoading = true;
     await props.click().finally(() => (state.isLoading = false));
 }
