@@ -44,15 +44,14 @@ const { pending, error } = await useAsyncData(
 
         return await campaignStore
             .setCampaignById(route.params.id as string)
-            .catch(err => {
-                return console.error(err);
-            })
             .then(() => true);
     },
     {
         watch: [() => route.params.id],
     },
 );
+
+
 
 type TabOption = {
     name: string;

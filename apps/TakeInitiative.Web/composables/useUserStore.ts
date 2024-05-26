@@ -109,11 +109,18 @@ export const useUserStore = defineStore("userStore", () => {
 
     async function deleteCampaign(
         request: DeleteCampaignRequest,
-    ): Promise<void> {
+    ): Promise<any> {
         return await api.campaign
             .delete(request)
             .then(fetchUser)
             .then(async () => {
+                console.log(campaignList.value)
+                if ((campaignList.value?.length ?? 0) == 0) {
+                    console.log("Navigating to create or join page")
+                    return useNavigator()
+                        .toCreateOrJoinCampaign();
+                }
+
                 // Check if its the campaigns route.
                 const route = useRoute();
                 const isCampaignRoute = route.name
@@ -131,7 +138,7 @@ export const useUserStore = defineStore("userStore", () => {
                 }
 
                 if ((campaignList.value?.length ?? 0) > 0) {
-                    await useNavigator().toCampaignTab(
+                    return useNavigator().toCampaignTab(
                         campaignList.value![0].campaignId,
                         "summary",
                     );
@@ -150,10 +157,10 @@ export const useUserStore = defineStore("userStore", () => {
         )[0];
 
         if (campaign == null) {
-            return useNavigator().toCreateOrJoinCampaign()
+            return useNavigator().toCreateOrJoinCampaign();
         }
 
-        return useNavigator().toCampaignTab(campaign.campaignId, 'summary')
+        return useNavigator().toCampaignTab(campaign.campaignId, "summary");
     }
 
     // Helper functions
