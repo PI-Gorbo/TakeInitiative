@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using CSharpFunctionalExtensions;
 using JasperFx.Core;
 using Marten;
 using Marten.Events;
@@ -294,20 +295,26 @@ public class CombatProjection : SingleStreamProjection<Combat>
         var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
         var newInitiativeList = @event.InitiativeRolls.Select((charInitiative, index) =>
         {
+            var exitingCharacter = Combat.InitiativeList.Find(x => x.Id == charInitiative.id).AsMaybe();
+            if (exitingCharacter.HasValue) {
+                return exitingCharacter.Value with {
+                    InitiativeValue = charInitiative.rolls
+                };
+            }
+
             return Combat.StagedList.First(x => x.Id == charInitiative.id) with
             {
                 InitiativeValue = charInitiative.rolls
             };
         })
-        .Concat(Combat.InitiativeList)
         .OrderByDescending(x => x.InitiativeValue, new InitiativeComparer())
         .ToImmutableList();
 
-        Guid[] stagedCharactersToOmit = @event.InitiativeRolls.Select(x => x.id).ToArray();
+        var stagedCharactersToRemove = @event.InitiativeRolls.Select(x => x.id).ToArray();
         return Combat with
         {
             CombatLogs = Combat.CombatLogs.Add($"{user?.UserName} rolled {@event.InitiativeRolls.Count} characters into initiative at {eventDetails.Timestamp:R}"),
-            StagedList = Combat.StagedList.Where(x => !x.Id.In(stagedCharactersToOmit)).ToImmutableList(),
+            StagedList = Combat.StagedList.Where(x => !x.Id.In(stagedCharactersToRemove)).ToImmutableList(),
             InitiativeList = newInitiativeList,
         };
     }

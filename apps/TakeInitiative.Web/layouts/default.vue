@@ -103,7 +103,7 @@
                         hoverButtonColour="take-yellow"
                         @clicked="
                             () => {
-                                useNavigator().navigateToCampaignTab(
+                                useNavigator().toCampaignTab(
                                     combatInfo?.campaignId!,
                                     'summary',
                                 );

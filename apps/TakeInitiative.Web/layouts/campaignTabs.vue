@@ -34,7 +34,6 @@ const { pending, error } = await useAsyncData(
     async () => {
         
         if (!route.name?.toString().startsWith('campaign-id')) {
-            console.log("not on the campaigns page");
             throw Error("not on the right page")
         }
 
