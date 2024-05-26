@@ -68,7 +68,7 @@
                 />
             </footer>
         </div>
-        <div class="drawer-side">
+        <aside class="drawer-side">
             <label
                 for="combatDrawer"
                 aria-label="close sidebar"
@@ -136,69 +136,25 @@
                     Connection Status: {{ combatStore.connection.state }}
                 </li>
             </ul>
-        </div>
+        </aside>
         <Modal ref="combatPageModal" :title="modalState.title ?? ''">
-            <CombatStageCharacterForm
+            <CombatModifyStagedCharacterForm
                 v-if="modalState.modalType == 'Edit Staged Character'"
                 :onEdit="(req) => onUpsertStagedCharacter(req).then(closeModal)"
                 :onDelete="onDeleteStagedCharacter"
                 :character="lastClickedStagedCharacter!"
             />
-            <div
+            <CombatAddStagedCharacterTabs
                 v-if="modalState.modalType == 'Combat Opened Stage Characters'"
-            >
-                <Tabs
-                    v-if="
-                        userIsDm &&
-                        (combatStore.state.combat?.plannedStages ?? []).length >
-                            0
-                    "
-                    :showTabs="{
-                        Planned: () => userIsDm,
-                        Characters: () =>
-                            (campaignStore.state.userCampaignMember?.characters
-                                ?.length ?? 0) > 0,
-                    }"
-                    class="py-2"
-                    backgroundColour="take-navy"
-                >
-                    <template #Characters>
-                        <CombatCampaignMemberCharactersSection
-                            :onStage="
-                                (ids) =>
-                                    combatStore
-                                        .stagePlayerCharacters(ids)
-                                        .then(closeModal)
-                            "
-                        />
-                    </template>
-                    <template #Planned>
-                        <CombatPlannedStagesDisplay
-                            :stages="combatStore.state.combat?.plannedStages!"
-                            :submit="onStagePlannedCharacters"
-                        />
-                    </template>
-                    <template #Custom>
-                        <CombatStageCharacterForm
-                            :onCreate="onUpsertStagedCharacter"
-                        />
-                    </template>
-                </Tabs>
-                <CombatStageCharacterForm
-                    v-else
-                    :onCreate="onUpsertStagedCharacter"
-                />
-            </div>
-            <div
+                :characterAdded="closeModal"
+            />
+            <CombatStagedCharactersSection
                 v-if="
                     modalState.modalType ==
                     'Combat Started Staged Character Menu'
                 "
-            >
-                <CombatStagedCharactersSection
                     @RolledCharactersIntoInitiative="() => closeModal()"
-                />
-            </div>
+            />
             <div v-if="modalState.modalType == 'Edit Initiative Character'">
                 <CombatEditInitiativeCharacterForm
                     :character="lastClickedInitiativeCharacter!"
@@ -275,8 +231,14 @@ const combatId = route.params.id;
 
 // Combat data
 const combatStore = useCombatStore();
-const { combat, userIsDm, combatIsOpen, combatIsStarted, combatIsFinished } =
-    storeToRefs(combatStore);
+const {
+    combat,
+    userIsDm,
+    combatIsOpen,
+    combatIsStarted,
+    combatIsFinished,
+    anyPlannedCharacters,
+} = storeToRefs(combatStore);
 
 // Main fetch
 const { refresh, pending, error } = await useAsyncData("Combat", async () => {
@@ -321,15 +283,17 @@ function showModal(modalType: CombatPageModalType) {
             break;
         case "Combat Started Staged Character Menu":
             modalState.title = "Staged Characters";
+            break;
         case "Edit Initiative Character":
             modalState.title = "Edit Character in Initiative";
+            break;
     }
 }
 const lastClickedStagedCharacter = ref<CombatCharacter | undefined>(undefined);
 const lastClickedInitiativeCharacter = ref<CombatCharacter | undefined>(
     undefined,
 );
-function closeModal() {
+async function closeModal() {
     combatPageModal.value?.hide();
     modalState.open = false;
     modalState.title = null;

@@ -246,7 +246,7 @@ function copyText(value: string) {
 
 // Events
 function onSetSelectedCampaign(campaignId: string) {
-    nav.navigateToCampaignTab(campaignId, "summary");
+    nav.toCampaignTab(campaignId, "summary");
     toggleDrawer();
 }
 
@@ -254,7 +254,7 @@ async function createCampaign(req: CreateCampaignRequest) {
     return await useUserStore()
         .createCampaign(req)
         .then(async (c) => {
-            await nav.navigateToCampaignTab(c.id, "summary");
+            await nav.toCampaignTab(c.id, "summary");
         })
         .then(createOrJoinCampaignModal.value?.hide);
 }
@@ -263,7 +263,7 @@ async function joinCampaign(req: JoinCampaignRequest) {
     return await useUserStore()
         .joinCampaign(req)
         .then(async (c) => {
-            await nav.navigateToCampaignTab(c.id, "summary");
+            await nav.toCampaignTab(c.id, "summary");
         })
         .then(createOrJoinCampaignModal.value?.hide);
 }

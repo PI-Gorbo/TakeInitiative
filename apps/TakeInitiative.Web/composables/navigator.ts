@@ -4,5 +4,6 @@ export const useNavigator = () => {
             id: string,
             tab: "summary" | "character" | "combats" | "settings",
         ) => navigateTo(`/campaign/${id}/${tab}`), 
+        toCreateOrJoinCampaign: () => navigateTo('/createOrJoinCampaign')
     };
 };

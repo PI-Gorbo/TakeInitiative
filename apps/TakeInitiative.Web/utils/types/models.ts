@@ -29,8 +29,10 @@ export enum InitiativeStrategy {
     Roll = 1,
 }
 export const characterInitiativeValidator = yup.object({
-    strategy: yup.mixed().oneOf(Object.values(InitiativeStrategy)),
-    value: yup.string().required(),
+    strategy: yup
+        .mixed<InitiativeStrategy>()
+        .oneOf(Object.values(InitiativeStrategy).map(x => x as InitiativeStrategy)),
+    value: yup.string().required("An initiative value is required"),
 });
 export type CharacterInitiative = InferType<
     typeof characterInitiativeValidator

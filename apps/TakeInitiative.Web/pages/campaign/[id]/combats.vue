@@ -283,7 +283,7 @@ async function onCreatePlannedCombat(
 
 async function onOpenCombat(plannedCombatId: string) {
     return await campaignStore.openCombat(plannedCombatId).then(async () => {
-        await useNavigator().navigateToCampaignTab(
+        await useNavigator().toCampaignTab(
             route.params.id as string,
             "summary",
         );

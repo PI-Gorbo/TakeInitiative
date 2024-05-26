@@ -252,6 +252,7 @@ export const useCombatStore = defineStore("combatStore", () => {
         combat: computed(() => {
             return state.combat;
         }),
+        anyPlannedCharacters: computed(() => (state.combat?.plannedStages.flatMap(x => x.npcs).length ?? 0) > 0),
         orderedStagedCharacterListWithPlayerInfo,
         initiativeListWithPlayerInfo: computed(
             () =>

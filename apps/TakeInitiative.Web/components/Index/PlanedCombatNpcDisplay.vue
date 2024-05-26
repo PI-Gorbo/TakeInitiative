@@ -20,7 +20,7 @@
         </div>
     </div>
     <Modal ref="editNpcFormModal" title="Edit NPC">
-        <ModifyPlannedCharacterForm
+        <IndexModifyPlannedCharacterForm
             :npc="props.npc"
             :onEdit="
                 (request) =>
