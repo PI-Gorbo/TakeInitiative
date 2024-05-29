@@ -120,7 +120,7 @@ const [initiativeStrategy, initiativeStrategyInputProps] = defineField(
     {
         props: (state) => ({
             errorMessage:
-                formState.error?.getErrorFor("initiative.strategy") ??
+                formState.error?.getErrorFor("character.Initiative.Strategy") ??
                 state.errors[0],
         }),
     },
@@ -131,7 +131,7 @@ const [initiativeValue, initiativeValueInputProps] = defineField(
     {
         props: (state) => ({
             errorMessage:
-                formState.error?.getErrorFor("initiative.value") ??
+                formState.error?.getErrorFor("character.Initiative.Value") ??
                 state.errors[0],
         }),
     },
@@ -139,7 +139,8 @@ const [initiativeValue, initiativeValueInputProps] = defineField(
 
 const [isHidden, isHiddenInputProps] = defineField("isHidden", {
     props: (state) => ({
-        errorMessage: formState.error?.getErrorFor("hidden") ?? state.errors[0],
+        errorMessage:
+            formState.error?.getErrorFor("character.Hidden") ?? state.errors[0],
     }),
 });
 

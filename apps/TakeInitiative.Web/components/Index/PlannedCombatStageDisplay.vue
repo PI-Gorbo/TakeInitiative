@@ -19,7 +19,7 @@
                     icon="plus"
                     buttonColour="take-navy-medium"
                     textColour="white"
-                    @click="() => createNpcFormModal?.show()"
+                    @click="() => createPlannedCharacterFormModal?.show()"
                 />
                 <FormButton
                     icon="trash"
@@ -49,13 +49,13 @@
                     />
                 </section>
             </TransitionGroup>
-            <Modal ref="createNpcFormModal" title="Create NPC">
+            <Modal ref="createPlannedCharacterFormModal" title="Create Character">
                 <IndexModifyPlannedCharacterForm
                     :onCreate="
                         (request) =>
                             props
                                 .createNpc(request)
-                                .then(() => createNpcFormModal?.hide())
+                                .then(() => createPlannedCharacterFormModal?.hide())
                     "
                 />
             </Modal>
@@ -73,7 +73,7 @@ import Modal from "~/components/Modal.vue";
 
 import PlanedCombatNpcDisplay from "./PlanedCombatNpcDisplay.vue";
 
-const createNpcFormModal = ref<InstanceType<typeof Modal> | null>(null);
+const createPlannedCharacterFormModal = ref<InstanceType<typeof Modal> | null>(null);
 
 const props = defineProps<{
     stage: PlannedCombatStage;

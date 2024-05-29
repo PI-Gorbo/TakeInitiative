@@ -2,7 +2,7 @@
     <dialog
         ref="dialog"
         @click="onModalClick"
-        :class="['mt-20 rounded-xl bg-take-navy border border-take-yellow-dark p-5', isMobile && 'w-full']"
+        class="mt-20 rounded-xl bg-take-navy border border-take-yellow-dark p-5 w-full sm:w-full md:w-3/4 lg:w-1/2"
     >
         <div class="my-1 flex gap-4">
             <h1

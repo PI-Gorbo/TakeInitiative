@@ -4,8 +4,8 @@
             <div v-if="pending" class="w-full h-full flex justify-center items-center text-9xl">
                 <FontAwesomeIcon icon="spinner" class="fa-spin"/>
             </div>
-            <div v-else-if="error" class="w-full h-full flex text-center text-2xl">
-                Something has gone wrong. Please reload the page.
+            <div v-else-if="error" class="w-full h-full flex justify-center items-center text-2xl">
+                <button class="border-take-red border-2 rounded-lg h-min" @click="() => refresh()"> Something has gone wrong. Click here to refresh.</button>
             </div>
             <div v-else class="flex h-full flex-col items-center">
                 <header class="flex gap-2 py-2 md:w-4/5 md:max-w-[1200px]">
@@ -37,7 +37,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 const route = useRoute();
 const campaignStore = useCampaignStore();
 const { isDm } = storeToRefs(campaignStore);
-const { pending, error } = await useAsyncData(
+const { pending, error, refresh } = await useAsyncData(
     "campaignPages",
     async () => {
         const wait = (t: number) =>

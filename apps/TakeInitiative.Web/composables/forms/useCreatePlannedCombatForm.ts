@@ -14,7 +14,7 @@ export const useCreatePlannedCombatForm = () => {
     const { values, errors, defineField, validate } = useForm({
         validationSchema: toTypedSchema(
             yup.object({
-                combatName: yup.string().required(),
+                combatName: yup.string().required("Please provide a name for the combat."),
             }),
         ),
     });
