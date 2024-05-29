@@ -1,5 +1,5 @@
 <template>
-    <div @click="() => editNpcFormModal?.show()" class="p-2">
+    <div @click="() => editPlannedCharacterFormModal?.show()" class="p-2">
         <div class="flex cursor-pointer justify-between gap-2 px-2">
             <div class="ws-nowrap cursor-pointer select-none text-lg">
                 {{ npc.name }} ( x {{ npc.quantity }} )
@@ -19,18 +19,18 @@
             </div>
         </div>
     </div>
-    <Modal ref="editNpcFormModal" title="Edit NPC">
+    <Modal ref="editPlannedCharacterFormModal" title="Edit Planned Character">
         <IndexModifyPlannedCharacterForm
             :npc="props.npc"
             :onEdit="
-                (request) =>
-                    props.editNpc(request).then(() => editNpcFormModal?.hide())
+                (request) =>    
+                    props.editNpc(request).then(() => editPlannedCharacterFormModal?.hide())
             "
             :onDelete="
                 (request) =>
                     props
                         .deleteNpc(request)
-                        .then(() => editNpcFormModal?.hide())
+                        .then(() => editPlannedCharacterFormModal?.hide())
             "
         />
     </Modal>
@@ -43,7 +43,7 @@ import type { PlannedCombatCharacter } from "~/utils/types/models";
 import Modal from "~/components/Modal.vue";
 import type { DeletePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/deletePlannedCombatNpcRequest";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-const editNpcFormModal = ref<InstanceType<typeof Modal> | null>(null);
+const editPlannedCharacterFormModal = ref<InstanceType<typeof Modal> | null>(null);
 const props = defineProps<{
     npc: PlannedCombatCharacter;
     editNpc: (

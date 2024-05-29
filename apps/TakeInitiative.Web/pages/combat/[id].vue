@@ -138,6 +138,13 @@
             </ul>
         </aside>
         <Modal ref="combatPageModal" :title="modalState.title ?? ''">
+            <CombatStagedCharactersSection
+                v-if="
+                    modalState.modalType ==
+                    'Combat Started Staged Character Menu'
+                "
+                    @RolledCharactersIntoInitiative="() => closeModal()"
+            />
             <CombatModifyStagedCharacterForm
                 v-if="modalState.modalType == 'Edit Staged Character'"
                 :onEdit="(req) => onUpsertStagedCharacter(req).then(closeModal)"
@@ -147,13 +154,6 @@
             <CombatAddStagedCharacterTabs
                 v-if="modalState.modalType == 'Combat Opened Stage Characters'"
                 :characterAdded="closeModal"
-            />
-            <CombatStagedCharactersSection
-                v-if="
-                    modalState.modalType ==
-                    'Combat Started Staged Character Menu'
-                "
-                    @RolledCharactersIntoInitiative="() => closeModal()"
             />
             <div v-if="modalState.modalType == 'Edit Initiative Character'">
                 <CombatEditInitiativeCharacterForm

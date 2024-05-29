@@ -1,11 +1,12 @@
 using FastEndpoints;
 using FluentValidation;
+using TakeInitiative.Utilities;
 
 namespace TakeInitiative.Api.Features.Combats;
 
 public class PostPlannedCombatNpcRequestValidator : Validator<PostPlannedCombatNpcRequest>
 {
-    public PostPlannedCombatNpcRequestValidator()
+    public PostPlannedCombatNpcRequestValidator(IDiceRoller roller)
     {
         RuleFor(x => x.CombatId)
             .NotEmpty();
@@ -22,7 +23,7 @@ public class PostPlannedCombatNpcRequestValidator : Validator<PostPlannedCombatN
 
         RuleFor(x => x.Initiative)
             .NotEmpty()
-            .SetValidator(new CharacterInitiativeValidator());
+            .SetValidator(new CharacterInitiativeValidator(roller));
 
         RuleFor(x => x.Quantity)
             .Must(quantity => quantity >= 1)

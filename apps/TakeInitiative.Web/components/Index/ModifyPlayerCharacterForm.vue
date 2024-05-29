@@ -116,7 +116,7 @@ const [initiativeValue, initiativeValueInputProps] = defineField(
     {
         props: (state) => ({
             errorMessage:
-                formState.error?.getErrorFor("initiative.value") ??
+                formState.error?.getErrorFor("playerCharacter.Initiative.Value") ??
                 state.errors[0],
         }),
     },
@@ -180,7 +180,7 @@ async function onEdit() {
 async function onCreate() {
     if (!props.onCreate) return;
 
-    formState.error = null;
+    formState.error = null; 
     const validateResult = await validate();
     if (!validateResult.valid) {
         return;

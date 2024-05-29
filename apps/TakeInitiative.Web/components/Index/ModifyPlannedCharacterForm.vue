@@ -103,7 +103,7 @@ const { values, errors, defineField, validate } = useForm({
         yup.object({
             name: yup.string().required("Please provide a name"),
             initiative: characterInitiativeValidator,
-            quantity: yup.number().min(1),
+            quantity: yup.number().min(1, "Quantity must be 1 or more.")
         }),
     ),
 });
@@ -136,7 +136,7 @@ const [initiativeValue, initiativeValueInputProps] = defineField(
     {
         props: (state) => ({
             errorMessage:
-                formState.error?.getErrorFor("initiative.value") ??
+                formState.error?.getErrorFor("initiative.Value") ??
                 state.errors[0],
         }),
     },

@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace TakeInitiative.Api.Features.Campaigns;
 
 public record PutPlayerCharacterRequest

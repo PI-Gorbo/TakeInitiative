@@ -78,14 +78,14 @@ export const useCombatStore = defineStore("combatStore", () => {
         ) {
             return;
         }
-
-        await connection.start().catch((error) => {
-            state.signalRError = error;
-            throw error;
-        });
+        
         connection.on("combatUpdated", (combat: Combat) => {
             state.combat = combat;
             return;
+        });
+        await connection.start().catch((error) => {
+            state.signalRError = error;
+            throw error;
         });
     }
 
