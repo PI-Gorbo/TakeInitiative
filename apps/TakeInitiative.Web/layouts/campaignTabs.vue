@@ -1,7 +1,13 @@
 <template>
     <div class="h-full w-full">
         <NuxtLayout name="default">
-            <div class="flex h-full flex-col items-center">
+            <div v-if="pending" class="w-full h-full flex justify-center items-center text-9xl">
+                <FontAwesomeIcon icon="spinner" class="fa-spin"/>
+            </div>
+            <div v-else-if="error" class="w-full h-full flex text-center text-2xl">
+                Something has gone wrong. Please reload the page.
+            </div>
+            <div v-else class="flex h-full flex-col items-center">
                 <header class="flex gap-2 py-2 md:w-4/5 md:max-w-[1200px]">
                     <div
                         v-for="tab in visibleTabs"
@@ -17,7 +23,7 @@
                         <div class="capitalize">{{ tab.name }}</div>
                     </div>
                 </header>
-                <main class="flex-1 w-full md:w-4/5 md:max-w-[1200px]">
+                <main class="w-full flex-1 md:w-4/5 md:max-w-[1200px]">
                     <slot />
                 </main>
             </div>
@@ -25,6 +31,8 @@
     </div>
 </template>
 <script setup lang="ts">
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+
 // Fetch and Set current campaign.
 const route = useRoute();
 const campaignStore = useCampaignStore();
@@ -32,14 +40,17 @@ const { isDm } = storeToRefs(campaignStore);
 const { pending, error } = await useAsyncData(
     "campaignPages",
     async () => {
-        
-        if (!route.name?.toString().startsWith('campaign-id')) {
-            throw Error("not on the right page")
+        const wait = (t: number) =>
+            new Promise((resolve, reject) => setTimeout(resolve, t));
+        await wait(2000);
+
+        if (!route.name?.toString().startsWith("campaign-id")) {
+            throw Error("not on the right page");
         }
 
-        const id = route.params.id as string | null
+        const id = route.params.id as string | null;
         if (id == null) {
-            throw Error("Id was not valid. Given id: " + id)
+            throw Error("Id was not valid. Given id: " + id);
         }
 
         return await campaignStore
@@ -50,8 +61,6 @@ const { pending, error } = await useAsyncData(
         watch: [() => route.params.id],
     },
 );
-
-
 
 type TabOption = {
     name: string;
