@@ -7,8 +7,8 @@ export type ApiError<TRequest extends {}> = {
     statusCode: number;
     message: string;
     errors: { [key: string]: string[] };
-    getErrorFor: <TPath extends Path<TRequest>>(
-        key: TPath | "generalErrors",
+    getErrorFor: (
+        key: string | "generalErrors",
     ) => string | null;
     error: AxiosError<any>;
 };
@@ -27,6 +27,10 @@ export async function parseAsApiError<TRequest extends {}>(
             message: result.message,
             errors: result.errors,
             getErrorFor: (error) => {
+                if (error in result.errors) {
+                    return result.errors[error][0]
+                }
+
                 try {
                     const accessors = error.split(".");
                     let errorValue = result.errors;

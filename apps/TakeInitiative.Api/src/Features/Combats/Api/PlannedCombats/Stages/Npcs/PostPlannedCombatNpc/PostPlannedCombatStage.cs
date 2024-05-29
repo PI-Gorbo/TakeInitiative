@@ -2,11 +2,12 @@ using System.Net;
 using FastEndpoints;
 using Marten;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using TakeInitiative.Utilities;
 using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Combats;
 
-public class PostPlannedCombatNpc(IDocumentStore Store) : Endpoint<PostPlannedCombatNpcRequest, PlannedCombat>
+public class PostPlannedCombatNpc(IDocumentStore Store, IDiceRoller roller) : Endpoint<PostPlannedCombatNpcRequest, PlannedCombat>
 {
     public override void Configure()
     {
@@ -54,7 +55,7 @@ public class PostPlannedCombatNpc(IDocumentStore Store) : Endpoint<PostPlannedCo
                 Health: req.Health,
                 Quantity: req.Quantity
             );
-            var validator = new PlannedCombatCharacterValidator();
+            var validator = new PlannedCombatCharacterValidator(roller);
             var validationResult = await validator.ValidateAsync(npc, ct);
             if (!validationResult.IsValid)
             {

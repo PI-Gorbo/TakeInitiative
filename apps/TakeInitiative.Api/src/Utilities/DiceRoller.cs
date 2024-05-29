@@ -6,7 +6,6 @@ namespace TakeInitiative.Utilities;
 
 public class DiceRoller : IDiceRoller
 {
-
     public Result<int> EvaluateRoll(string roll)
     {
         return Result.Try(() =>
@@ -17,7 +16,10 @@ public class DiceRoller : IDiceRoller
                 var result = d20.roll(roll);
                 return (int)result.total;
             };
-        }, ex => $"Failed to evaluate dice roll, please check your syntax. {ex}");
+        }, ex =>
+        {
+            return $"Failed to evaluate dice roll, please check your syntax. {ex.Message}";
+        });
     }
 }
 

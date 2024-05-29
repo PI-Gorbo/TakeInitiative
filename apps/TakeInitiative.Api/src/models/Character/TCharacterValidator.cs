@@ -1,11 +1,12 @@
 using FluentValidation;
+using TakeInitiative.Utilities;
 
 namespace TakeInitiative.Api.Features;
 
 public class CharacterValidator<TCharacter> : AbstractValidator<TCharacter>
     where TCharacter : Character
 {
-    protected CharacterValidator()
+    protected CharacterValidator(IDiceRoller diceRoller)
     {
         RuleFor(x => x.Id).NotEmpty();
 
@@ -18,6 +19,6 @@ public class CharacterValidator<TCharacter> : AbstractValidator<TCharacter>
 
         RuleFor(x => x.Initiative)
             .NotEmpty()
-            .SetValidator(new CharacterInitiativeValidator());
+            .SetValidator(new CharacterInitiativeValidator(diceRoller));
     }
 }
