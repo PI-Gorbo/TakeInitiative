@@ -101,7 +101,9 @@
                 label="Back"
                 @clicked="transitionViewToList"
             />
-            <CombatAddStagedCharacterTabs :characterAdded="async () => transitionViewToList" />
+            <CombatAddStagedCharacterTabs
+                :characterAdded="async () => transitionViewToList()"
+            />
         </div>
     </main>
 </template>
@@ -132,6 +134,7 @@ function transitionViewToAdd() {
     };
 }
 function transitionViewToList() {
+    console.log("here");
     viewState.currentView = {
         name: "List",
     };
@@ -146,8 +149,11 @@ function transitionViewToEdit(characterToEdit: CombatCharacter) {
 const clickedList = ref<string[]>([]);
 const campaignStore = useCampaignStore();
 const combatStore = useCombatStore();
-const { userIsDm, orderedStagedCharacterListWithPlayerInfo, anyPlannedCharacters } =
-    storeToRefs(combatStore);
+const {
+    userIsDm,
+    orderedStagedCharacterListWithPlayerInfo,
+    anyPlannedCharacters,
+} = storeToRefs(combatStore);
 
 function onCharacterClicked(character: CombatPlayerDto) {
     if (userIsDm.value) {

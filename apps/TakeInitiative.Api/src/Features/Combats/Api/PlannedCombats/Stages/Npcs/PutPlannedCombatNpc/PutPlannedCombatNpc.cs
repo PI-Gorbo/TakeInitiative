@@ -58,7 +58,7 @@ public class PutPlannedCombatNpc(IDocumentStore Store, IDiceRoller roller) : End
             npc = npc with
             {
                 Name = req.Name,
-                ArmorClass = req.ArmorClass,
+                ArmourClass = req.ArmourClass,
                 Health = req.Health,
                 Initiative = req.Initiative,
                 Quantity = req.Quantity

@@ -10,7 +10,7 @@ export type CombatCharacterDto = {
     health?: CharacterHealth;
     hidden: boolean;
     initiativeValue: number[];
-    armorClass: number | null;
+    armourClass: number | null;
 };
 export type PutUpdateInitiativeCharacterRequest = {
     combatId: string;
