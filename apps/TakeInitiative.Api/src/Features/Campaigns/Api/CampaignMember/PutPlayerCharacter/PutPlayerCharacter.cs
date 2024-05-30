@@ -42,7 +42,7 @@ public class PutPlayerCharacter(IDocumentSession session) : Endpoint<PutPlayerCh
                 character.Name = req.PlayerCharacter.Name;
                 character.Health = req.PlayerCharacter.Health;
                 character.Initiative = req.PlayerCharacter.Initiative;
-                character.ArmorClass = req.PlayerCharacter.ArmorClass;
+                character.ArmourClass = req.PlayerCharacter.ArmourClass;
 
                 session.Store(campaignMember);
                 await session.SaveChangesAsync();

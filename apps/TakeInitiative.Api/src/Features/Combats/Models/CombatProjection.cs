@@ -160,7 +160,7 @@ public class CombatProjection : SingleStreamProjection<Combat>
                     playerId: @event.UserId,
                     name: x.Name,
                     initiative: x.Initiative,
-                    armorClass: x.ArmorClass,
+                    armourClass: x.ArmourClass,
                     health: x.Health,
                     hidden: Combat.DungeonMaster == user!.Id,
                     characterOriginDetails: CharacterOriginDetails.PlayerCharacter(@event.UserId),
@@ -245,7 +245,7 @@ public class CombatProjection : SingleStreamProjection<Combat>
                             Initiative = npc.Initiative,
                             InitiativeValue = [],
                             PlayerId = @event.UserId,
-                            ArmorClass = npc.ArmorClass,
+                            ArmourClass = npc.ArmourClass,
                             Health = npc.Health,
                             Hidden = true,
                             CopyNumber = null
@@ -268,7 +268,7 @@ public class CombatProjection : SingleStreamProjection<Combat>
                                 Initiative = npc.Initiative,
                                 InitiativeValue = [],
                                 PlayerId = @event.UserId,
-                                ArmorClass = npc.ArmorClass,
+                                ArmourClass = npc.ArmourClass,
                                 Health = npc.Health,
                                 Hidden = true,
                                 CopyNumber = nextQuantityNumber++
@@ -296,8 +296,10 @@ public class CombatProjection : SingleStreamProjection<Combat>
         var newInitiativeList = @event.InitiativeRolls.Select((charInitiative, index) =>
         {
             var exitingCharacter = Combat.InitiativeList.Find(x => x.Id == charInitiative.id).AsMaybe();
-            if (exitingCharacter.HasValue) {
-                return exitingCharacter.Value with {
+            if (exitingCharacter.HasValue)
+            {
+                return exitingCharacter.Value with
+                {
                     InitiativeValue = charInitiative.rolls
                 };
             }
@@ -334,7 +336,7 @@ public class CombatProjection : SingleStreamProjection<Combat>
                 InitiativeValue = @event.Character.InitiativeValue,
                 Health = @event.Character.Health,
                 Hidden = @event.Character.Hidden,
-                ArmorClass = @event.Character.ArmorClass,
+                ArmourClass = @event.Character.ArmourClass,
             }),
         };
     }

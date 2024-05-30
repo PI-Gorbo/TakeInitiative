@@ -12,7 +12,7 @@
                 .filter((x) => userIsDm || !x.char.character.hidden)"
             :key="charInfo.character.id"
             :class="[
-                'grid grid-cols-2 rounded-xl border-2 border-take-navy-light p-2 transition-colors',
+                'flex gap-2 rounded-xl border-2 border-take-navy-light p-2 transition-colors',
                 {
                     'cursor-pointer':
                         (combatIsOpen || combatIsStarted) &&
@@ -80,7 +80,9 @@
                 </span>
             </header>
             <body class="flex-1">
-                <ol class="flex flex-row items-center justify-end gap-2">
+                <ol
+                    class="flex flex-row flex-wrap items-center justify-end gap-5"
+                >
                     <li
                         v-if="
                             userIsDm &&
@@ -94,6 +96,27 @@
                             "
                         />
                     </li>
+                    <div
+                        v-if="charInfo.character.health?.hasHealth"
+                        class="flex select-none items-center gap-2"
+                    >
+                        <FontAwesomeIcon icon="droplet" />
+                        {{ charInfo.character.health.currentHealth }}
+                        {{
+                            charInfo.character.health.maxHealth
+                                ? `/ ${charInfo.character.health.maxHealth}`
+                                : ""
+                        }}
+                    </div>
+                    <div
+                        v-if="charInfo.character.armourClass"
+                        class="flex select-none items-center gap-2"
+                    >
+                        <FontAwesomeIcon icon="shield-halved" />
+                        <div class="ws-nowrap min-w-fit">
+                            {{ charInfo.character.armourClass }}
+                        </div>
+                    </div>
                     <li v-if="combatIsOpen">
                         <FontAwesomeIcon icon="shoe-prints" />
                         {{ charInfo.character.initiative.value }}

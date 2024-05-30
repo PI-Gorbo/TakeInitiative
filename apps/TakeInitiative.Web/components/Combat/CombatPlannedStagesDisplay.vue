@@ -43,14 +43,18 @@
                         >
                             <div class="p-2">
                                 <div
-                                    class="flex cursor-pointer justify-between gap-2 px-2"
+                                    class="flex cursor-pointer flex-wrap justify-between gap-2 px-2"
                                 >
                                     <div
                                         class="ws-nowrap cursor-pointer select-none text-lg"
                                     >
                                         {{ npc.name }} ( x {{ npc.quantity }} )
                                     </div>
-                                    <div v-if="npc.health">
+
+                                    <div
+                                        v-if="npc.health"
+                                        class="flex select-none items-center gap-2"
+                                    >
                                         <FontAwesomeIcon icon="droplet" />
                                         {{ npc.health.currentHealth }}
                                         {{
@@ -59,10 +63,13 @@
                                                 : ""
                                         }}
                                     </div>
-                                    <div v-if="npc.armorClass">
+                                    <div
+                                        v-if="npc.armourClass"
+                                        class="flex select-none items-center gap-2"
+                                    >
                                         <FontAwesomeIcon icon="shield-halved" />
                                         <div class="ws-nowrap min-w-fit">
-                                            {{ npc.armorClass }}
+                                            {{ npc.armourClass }}
                                         </div>
                                     </div>
                                     <div

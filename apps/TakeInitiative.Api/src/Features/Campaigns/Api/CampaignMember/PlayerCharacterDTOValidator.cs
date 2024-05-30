@@ -5,19 +5,16 @@ namespace TakeInitiative.Api.Features;
 
 public class PlayerCharacterDTOValidator : AbstractValidator<PlayerCharacterDTO>
 {
-    public PlayerCharacterDTOValidator(IDiceRoller roller) 
+    public PlayerCharacterDTOValidator(IDiceRoller roller)
     {
         RuleFor(x => x.Name)
             .NotEmpty();
 
         RuleFor(x => x.Health)
-            .Null();
+            .NotNull();
 
         RuleFor(x => x.Initiative)
             .SetValidator(new CharacterInitiativeValidator(roller));
-
-        RuleFor(x => x.ArmorClass)
-            .Null();
     }
 }
 

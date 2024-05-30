@@ -2,7 +2,7 @@ namespace TakeInitiative.Api.Features;
 public record PlayerCharacter : Character
 {
     public required Guid PlayerId { get; set; }
-    public static PlayerCharacter New(Guid PlayerId, string Name, CharacterInitiative initiative, int? ArmorClass = null, CharacterHealth? Health = null)
+    public static PlayerCharacter New(Guid PlayerId, string Name, CharacterInitiative initiative, int? ArmourClass = null, CharacterHealth? Health = null)
     {
         return new PlayerCharacter()
         {
@@ -10,7 +10,7 @@ public record PlayerCharacter : Character
             Initiative = initiative,
             Name = Name,
             PlayerId = PlayerId,
-            ArmorClass = ArmorClass,
+            ArmourClass = ArmourClass,
             Health = Health
         };
     }

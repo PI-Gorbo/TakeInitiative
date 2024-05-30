@@ -12,7 +12,7 @@ export type PlayerCharacterDto = {
     name: string;
     health: CharacterHealth | null;
     initiative: CharacterInitiative | null;
-    armorClass: number | null;
+    armourClass: number | null;
 };
 export type CreatePlayerCharacterRequest = {
     campaignMemberId: string;

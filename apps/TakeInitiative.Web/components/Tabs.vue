@@ -36,24 +36,9 @@
                 class="flex-1"
             ></div>
         </div>
-        <TransitionGroup
-            name="tabFade"
-            class="flex-1 overflow-hidden"
-            tag="section"
-        >
-            <div
-                v-for="(tab, index) in tabs.filter(
-                    (x) => x.slotName == state.lastClickedTab.slotName,
-                )"
-                :key="tab.slotName"
-                class="h-full w-full overflow-hidden"
-            >
-                <slot
-                    :name="selectedTab.slotName"
-                    v-if="tab.slotName == state.lastClickedTab.slotName"
-                />
-            </div>
-        </TransitionGroup>
+        <div class="h-full w-full overflow-hidden">
+            <slot :name="selectedTab.slotName" />
+        </div>
     </main>
 </template>
 <script setup lang="ts">

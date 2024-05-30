@@ -24,6 +24,19 @@
                     type="button"
                 />
             </div>
+
+            <CharacterHealth
+                v-model:hasHealth="hasHealth"
+                v-model:currentHealth="currentHealth"
+                v-model:maxHealth="maxHealth"
+                :error="
+                    hasHealthInputProps.errorMessage ??
+                    currentHealthInputProps.errorMessage ??
+                    maxHealthInputProps.errorMessage
+                "
+            />
+
+            <CharacterArmourClass v-model:value="armourClass" />
         </main>
         <footer class="flex justify-between">
             <FormButton
@@ -50,6 +63,7 @@ import type { SubmittingState } from "../Form/Base.vue";
 import { toTypedSchema } from "@vee-validate/yup";
 import { yup } from "~/utils/types/HelperTypes";
 import {
+    characterHealthValidator,
     characterInitiativeValidator,
     type CombatCharacter,
 } from "~/utils/types/models";
@@ -76,6 +90,8 @@ const { values, errors, defineField, validate } = useForm({
         yup.object({
             name: yup.string().required("Please provide a name"),
             isHidden: yup.boolean(),
+            armourClass: yup.number().nullable(),
+            health: characterHealthValidator.required(),
         }),
     ),
 });
@@ -92,6 +108,43 @@ const [isHidden, isHiddenInputProps] = defineField("isHidden", {
     }),
 });
 
+const [hasHealth, hasHealthInputProps] = defineField("health.hasHealth", {
+    props: (state) => ({
+        errorMessage:
+            (formState.error?.getErrorFor("playerCharacter.Health.HasHealth") ||
+                formState.error?.getErrorFor("in")) ??
+            state.errors[0],
+    }),
+});
+
+const [currentHealth, currentHealthInputProps] = defineField(
+    "health.currentHealth",
+    {
+        props: (state) => ({
+            errorMessage:
+                formState.error?.getErrorFor(
+                    "playerCharacter.Health.CurrentHealth",
+                ) ?? state.errors[0],
+        }),
+    },
+);
+
+const [maxHealth, maxHealthInputProps] = defineField("health.maxHealth", {
+    props: (state) => ({
+        errorMessage:
+            formState.error?.getErrorFor("playerCharacter.Health.MaxHealth") ??
+            state.errors[0],
+    }),
+});
+
+const [armourClass, armourClassInputProps] = defineField("armourClass", {
+    props: (state) => ({
+        errorMessage:
+            formState.error?.getErrorFor("playerCharacter.armourClass") ??
+            state.errors[0],
+    }),
+});
+
 function setValuesFromProps() {
     if (props.character == null) {
         name.value = "";
@@ -100,6 +153,10 @@ function setValuesFromProps() {
     }
     name.value = props.character.name;
     isHidden.value = props.character.hidden;
+    armourClass.value = props.character.armourClass ?? null;
+    hasHealth.value = props.character.health?.hasHealth ?? false;
+    currentHealth.value = props.character.health?.currentHealth ?? 0;
+    maxHealth.value = props.character.health?.maxHealth ?? 0;
 }
 onMounted(setValuesFromProps);
 watch(() => props.character, setValuesFromProps);
@@ -121,8 +178,12 @@ async function onEdit() {
             name: name.value!,
             hidden: isHidden.value!,
             initiativeValue: props.character.initiativeValue!,
-            armorClass: props.character.armourClass ?? null,
-            health: props.character.health!,
+            health: {
+                hasHealth: hasHealth.value ?? false,
+                currentHealth: currentHealth.value ?? 0,
+                maxHealth: maxHealth.value ?? 0,
+            },
+            armourClass: armourClass.value ?? null,
         })
         .catch(
             async (error) => (formState.error = await parseAsApiError(error)),

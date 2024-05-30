@@ -47,7 +47,7 @@ public class PutUpsertStagedCharacter(IDocumentSession session, IHubContext<Comb
                         Name = req.Character.Name,
                         Health = req.Character.Health,
                         Initiative = req.Character.Initiative,
-                        ArmorClass = req.Character.ArmorClass,
+                        ArmourClass = req.Character.ArmourClass,
                         Hidden = req.Character.Hidden,
                     };
 
@@ -69,7 +69,7 @@ public class PutUpsertStagedCharacter(IDocumentSession session, IHubContext<Comb
                             playerId: userId,
                             name: req.Character.Name,
                             initiative: req.Character.Initiative,
-                            armorClass: req.Character.ArmorClass,
+                            armourClass: req.Character.ArmourClass,
                             health: req.Character.Health,
                             hidden: req.Character.Hidden,
                             characterOriginDetails: CharacterOriginDetails.CustomCharacter(),

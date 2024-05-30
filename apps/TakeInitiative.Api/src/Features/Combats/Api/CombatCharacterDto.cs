@@ -7,5 +7,5 @@ public record CombatCharacterDto
     public required CharacterHealth? Health { get; set; }
     public required bool Hidden { get; set; }
     public required int[] InitiativeValue { get; set; }
-    public required int? ArmorClass { get; set; }
+    public required int? ArmourClass { get; set; }
 }

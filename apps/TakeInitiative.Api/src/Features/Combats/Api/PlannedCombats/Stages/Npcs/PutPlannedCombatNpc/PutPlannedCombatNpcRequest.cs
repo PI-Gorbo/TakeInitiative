@@ -6,8 +6,8 @@ public record PutPlannedCombatNpcRequest
     public required Guid StageId { get; set; }
     public required Guid NpcId { get; set; }
     public required string Name { get; set; }
-    public CharacterHealth? Health { get; set; } = null;
-    public int? ArmorClass { get; set; } = null;
+    public required CharacterHealth? Health { get; set; }
+    public required int? ArmourClass { get; set; }
     public required CharacterInitiative Initiative { get; set; }
     public required uint Quantity { get; set; }
 

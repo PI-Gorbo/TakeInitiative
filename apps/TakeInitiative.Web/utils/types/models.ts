@@ -31,7 +31,11 @@ export enum InitiativeStrategy {
 export const characterInitiativeValidator = yup.object({
     strategy: yup
         .mixed<InitiativeStrategy>()
-        .oneOf(Object.values(InitiativeStrategy).map(x => x as InitiativeStrategy)),
+        .oneOf(
+            Object.values(InitiativeStrategy).map(
+                (x) => x as InitiativeStrategy,
+            ),
+        ),
     value: yup.string().required("An initiative value is required"),
 });
 export type CharacterInitiative = InferType<
@@ -40,6 +44,7 @@ export type CharacterInitiative = InferType<
 
 // Character Health
 export const characterHealthValidator = yup.object({
+    hasHealth: yup.boolean().required(),
     maxHealth: yup.number().nullable(),
     currentHealth: yup.number().required(),
 });
@@ -51,7 +56,7 @@ export const characterValidator = yup.object({
     name: yup.string().required(),
     health: characterHealthValidator.nullable(),
     initiative: characterInitiativeValidator,
-    armorClass: yup.number().nullable(),
+    armourClass: yup.number().nullable(),
 });
 export type ICharacter = InferType<typeof characterValidator>;
 export const playerCharacterValidator = characterValidator.shape({
@@ -74,7 +79,7 @@ export const plannedCombatCharacterValidator = yup.object({
     id: yup.string(),
     name: yup.string().required("Please provide a name"),
     health: characterHealthValidator.notRequired(),
-    armorClass: yup.number().notRequired(),
+    armourClass: yup.number().notRequired(),
     initiative: characterInitiativeValidator,
     quantity: yup.number(),
 });
@@ -155,4 +160,4 @@ export const combatValidator = yup.object({
     initiativeIndex: yup.number(),
     roundNumber: yup.string().nullable(),
 });
-export type Combat = InferType<typeof combatValidator>
+export type Combat = InferType<typeof combatValidator>;

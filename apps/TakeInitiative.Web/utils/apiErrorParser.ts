@@ -7,8 +7,8 @@ export type ApiError<TRequest extends {}> = {
     statusCode: number;
     message: string;
     errors: { [key: string]: string[] };
-    getErrorFor: (
-        key: string | "generalErrors",
+    getErrorFor: <TPath extends Path<TRequest>>(
+        key: string | "generalErrors" | TPath,
     ) => string | null;
     error: AxiosError<any>;
 };
@@ -17,6 +17,7 @@ const apiErrorSchema = yup.object({
     message: yup.string().required(),
     errors: yup.object().required(),
 });
+
 export async function parseAsApiError<TRequest extends {}>(
     error: AxiosError<any>,
 ): Promise<ApiError<TRequest>> {
@@ -28,7 +29,7 @@ export async function parseAsApiError<TRequest extends {}>(
             errors: result.errors,
             getErrorFor: (error) => {
                 if (error in result.errors) {
-                    return result.errors[error][0]
+                    return result.errors[error][0];
                 }
 
                 try {
