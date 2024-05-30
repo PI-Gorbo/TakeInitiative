@@ -13,9 +13,8 @@ public class CharacterValidator<TCharacter> : AbstractValidator<TCharacter>
         RuleFor(x => x.Name)
             .NotEmpty();
 
-        RuleFor(x => x.Health!.CurrentHealth)
-            .NotEmpty()
-            .When(x => x.Health != null);
+        RuleFor(x => x.Health)
+            .NotNull();
 
         RuleFor(x => x.Initiative)
             .NotEmpty()

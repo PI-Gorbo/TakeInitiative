@@ -15,7 +15,7 @@
                     class="h-min rounded-lg border-2 border-take-red"
                     @click="() => refresh()"
                 >
-                    Something has gone wrong. Click here to refresh. {{ error }}
+                    Something has gone wrong. Click here to refresh.
                 </button>
             </div>
             <div v-else class="flex h-full flex-col items-center">

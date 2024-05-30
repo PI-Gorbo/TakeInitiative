@@ -1,16 +1,20 @@
 import type { AxiosInstance } from "axios";
 import * as yup from "yup";
-import { characterHealthValidator, characterInitiativeValidator, plannedCombatValidator } from "~/utils/types/models";
+import {
+    characterHealthValidator,
+    characterInitiativeValidator,
+    plannedCombatValidator,
+} from "~/utils/types/models";
 
 // Get User
 export const createPlannedCombatNpcRequestValidator = yup.object({
     combatId: yup.string().required(),
-	stageId: yup.string().required(),
-	name: yup.string().required(),
-	health: characterHealthValidator.required().nullable(),
-	armourClass: yup.number().required().nullable(),
-	initiative: characterInitiativeValidator.required(),
-	quantity: yup.number().required().min(1)	
+    stageId: yup.string().required(),
+    name: yup.string().required(),
+    health: characterHealthValidator.required(),
+    armourClass: yup.number().required().nullable(),
+    initiative: characterInitiativeValidator.required(),
+    quantity: yup.number().required().min(1),
 });
 
 export type CreatePlannedCombatNpcRequest = yup.InferType<
@@ -29,8 +33,8 @@ export function createPlannedCombatNpcRequest(axios: AxiosInstance) {
     ): Promise<createPlannedCombatStageResponse> {
         return axios
             .post("/api/campaign/planned-combat/stage/npc", {
-				...request,
-			} satisfies CreatePlannedCombatNpcRequest)
+                ...request,
+            } satisfies CreatePlannedCombatNpcRequest)
             .then(async function (response) {
                 const result =
                     await createPlannedCombatNpcResponseValidator.validate(

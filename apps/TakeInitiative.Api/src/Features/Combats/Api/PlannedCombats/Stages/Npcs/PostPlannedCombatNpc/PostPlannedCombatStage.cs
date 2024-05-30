@@ -51,7 +51,7 @@ public class PostPlannedCombatNpc(IDocumentStore Store, IDiceRoller roller) : En
                 StageId: stage.Id,
                 Name: req.Name,
                 Initiative: req.Initiative,
-                ArmorClass: req.ArmorClass,
+                ArmourClass: req.ArmourClass,
                 Health: req.Health,
                 Quantity: req.Quantity
             );

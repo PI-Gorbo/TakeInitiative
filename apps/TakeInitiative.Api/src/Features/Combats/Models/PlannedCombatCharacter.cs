@@ -5,7 +5,7 @@ public record PlannedCombatCharacter : Character
     public required Guid StageId { get; set; }
     public required uint Quantity { get; set; }
 
-    public static PlannedCombatCharacter New(Guid StageId, string Name, CharacterInitiative Initiative, int? ArmorClass, CharacterHealth? Health, uint Quantity)
+    public static PlannedCombatCharacter New(Guid StageId, string Name, CharacterInitiative Initiative, int? ArmourClass, CharacterHealth? Health, uint Quantity)
     {
         return new PlannedCombatCharacter()
         {
@@ -13,7 +13,7 @@ public record PlannedCombatCharacter : Character
             Id = Guid.NewGuid(),
             Initiative = Initiative,
             Name = Name,
-            ArmorClass = ArmorClass,
+            ArmourClass = ArmourClass,
             Health = Health,
             Quantity = Quantity
         };

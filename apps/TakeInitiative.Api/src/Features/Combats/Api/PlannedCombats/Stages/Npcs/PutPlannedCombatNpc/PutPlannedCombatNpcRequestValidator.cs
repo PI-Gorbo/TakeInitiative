@@ -17,10 +17,6 @@ public class PutPlannedCombatNpcRequestValidator : Validator<PutPlannedCombatNpc
         RuleFor(x => x.Name)
             .NotEmpty();
 
-        RuleFor(x => x.Health.CurrentHealth)
-            .NotEmpty()
-            .When(x => x.Health != null);
-
         RuleFor(x => x.Initiative)
             .NotEmpty()
             .SetValidator(new CharacterInitiativeValidator(roller));

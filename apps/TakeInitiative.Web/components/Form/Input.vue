@@ -1,12 +1,13 @@
 <template>
     <div class="flex flex-col">
-        <label :class="[`text-${props.textColour} block text-sm font-medium`]">{{
-            props.label
-        }}</label>
+        <label
+            :class="[`text-${props.textColour} block text-sm font-medium`]"
+            >{{ props.label }}</label
+        >
         <input
             :autofocus="props.autoFocus"
             :class="[
-                `md:text-md mt-1 w-full rounded-md bg-${props.colour} p-2 text-${props.textColour}`,
+                `md:text-md mt-1 w-full rounded-md bg-${props.colour} p-2 disabled:brightness-75 text-${props.textColour}`,
             ]"
             :value="props.value"
             @input="
@@ -18,6 +19,7 @@
             "
             :type="props.type"
             :placeholder="props.placeholder"
+            :disabled="props.disabled"
         />
         <label v-if="props.errorMessage != null" class="text-take-red">
             {{ props.errorMessage }}
@@ -36,6 +38,7 @@ const props = withDefaults(
             colour?: TakeInitColour;
             textColour?: TakeInitColour | "white";
             autoFocus?: boolean;
+            disabled?: boolean;
         }
     >(),
     {
@@ -45,7 +48,8 @@ const props = withDefaults(
         textColour: "white",
         autoFocus: false,
         errorMessage: null,
-    }
+        disabled: false,
+    },
 );
 
 const emits = defineEmits<{

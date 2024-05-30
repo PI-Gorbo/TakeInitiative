@@ -4,14 +4,20 @@
             <div class="ws-nowrap cursor-pointer select-none text-lg">
                 {{ npc.name }} ( x {{ npc.quantity }} )
             </div>
-            <div v-if="npc.health">
+            <div
+                v-if="npc.health?.hasHealth"
+                class="flex select-none items-center gap-2"
+            >
                 <FontAwesomeIcon icon="droplet" />
                 {{ npc.health.currentHealth }}
                 {{ npc.health.maxHealth ? `/ ${npc.health.maxHealth}` : "" }}
             </div>
-            <div v-if="npc.armorClass">
+            <div
+                v-if="npc.armourClass"
+                class="flex select-none items-center gap-2"
+            >
                 <FontAwesomeIcon icon="shield-halved" />
-                <div class="ws-nowrap min-w-fit">{{ npc.armorClass }}</div>
+                <div class="ws-nowrap min-w-fit">{{ npc.armourClass }}</div>
             </div>
             <div class="flex select-none items-center gap-2">
                 <FontAwesomeIcon icon="shoe-prints" />
@@ -23,8 +29,10 @@
         <IndexModifyPlannedCharacterForm
             :npc="props.npc"
             :onEdit="
-                (request) =>    
-                    props.editNpc(request).then(() => editPlannedCharacterFormModal?.hide())
+                (request) =>
+                    props
+                        .editNpc(request)
+                        .then(() => editPlannedCharacterFormModal?.hide())
             "
             :onDelete="
                 (request) =>
@@ -43,7 +51,9 @@ import type { PlannedCombatCharacter } from "~/utils/types/models";
 import Modal from "~/components/Modal.vue";
 import type { DeletePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/deletePlannedCombatNpcRequest";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-const editPlannedCharacterFormModal = ref<InstanceType<typeof Modal> | null>(null);
+const editPlannedCharacterFormModal = ref<InstanceType<typeof Modal> | null>(
+    null,
+);
 const props = defineProps<{
     npc: PlannedCombatCharacter;
     editNpc: (
