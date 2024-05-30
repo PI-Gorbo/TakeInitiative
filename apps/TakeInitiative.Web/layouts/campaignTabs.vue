@@ -1,11 +1,22 @@
 <template>
     <div class="h-full w-full">
         <NuxtLayout name="default">
-            <div v-if="pending" class="w-full h-full flex justify-center items-center text-9xl">
-                <FontAwesomeIcon icon="spinner" class="fa-spin"/>
+            <div
+                v-if="pending"
+                class="flex h-full w-full items-center justify-center text-9xl"
+            >
+                <FontAwesomeIcon icon="spinner" class="fa-spin" />
             </div>
-            <div v-else-if="error" class="w-full h-full flex justify-center items-center text-2xl">
-                <button class="border-take-red border-2 rounded-lg h-min" @click="() => refresh()"> Something has gone wrong. Click here to refresh.</button>
+            <div
+                v-else-if="error"
+                class="flex h-full w-full items-center justify-center text-2xl"
+            >
+                <button
+                    class="h-min rounded-lg border-2 border-take-red"
+                    @click="() => refresh()"
+                >
+                    Something has gone wrong. Click here to refresh. {{ error }}
+                </button>
             </div>
             <div v-else class="flex h-full flex-col items-center">
                 <header class="flex gap-2 py-2 md:w-4/5 md:max-w-[1200px]">
@@ -31,7 +42,7 @@
     </div>
 </template>
 <script setup lang="ts">
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 
 // Fetch and Set current campaign.
 const route = useRoute();
@@ -40,17 +51,13 @@ const { isDm } = storeToRefs(campaignStore);
 const { pending, error, refresh } = await useAsyncData(
     "campaignPages",
     async () => {
-        const wait = (t: number) =>
-            new Promise((resolve, reject) => setTimeout(resolve, t));
-        await wait(2000);
-
         if (!route.name?.toString().startsWith("campaign-id")) {
-            throw Error("not on the right page");
+            return false;
         }
 
         const id = route.params.id as string | null;
         if (id == null) {
-            throw Error("Id was not valid. Given id: " + id);
+            return false;
         }
 
         return await campaignStore
