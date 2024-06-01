@@ -1,20 +1,13 @@
 <template>
     <main class="flex h-full flex-col gap-4">
-        <section></section>
         <section class="flex flex-col gap-2">
             <label class="text-lg">Campaign Details</label>
-            <FormToggleableInput
+            <FormInput
+                class="px-2"
                 label="Campaign Name"
                 v-model:value="state.campaignName"
                 buttonColour="take-navy-medium"
                 notEditableColour="take-navy-medium"
-                :onSave="
-                    async () => {
-                        return campaignStore.updateCampaignDetails({
-                            campaignName: state.campaignName,
-                        });
-                    }
-                "
             />
         </section>
         <ol class="flex-1">
@@ -96,6 +89,14 @@
                     </span>
                 </footer>
             </li>
+            <li class="flex justify-end">
+                <FormButton
+                    label="Save"
+                    icon="floppy-disk"
+                    :disabled="!anyChangesToSave"
+                    :click="saveChanges"
+                />
+            </li>
         </ol>
         <footer class="mb-8 rounded-md border border-take-red p-2">
             <label class="text-lg">Danger Zone</label>
@@ -151,6 +152,21 @@ const state = reactive<{
     },
 });
 
+// Saving changes
+const anyChangesToSave = computed(() => {
+    return (
+        state.campaignName != campaignStore.state.campaign?.campaignName ||
+        state.combatHealthDisplaySettings.dmCharacterDisplayMethod !=
+            campaignStore.state.campaign?.campaignSettings
+                .combatHealthDisplaySettings.dmCharacterDisplayMethod ||
+        state.combatHealthDisplaySettings.otherPlayerCharacterDisplayMethod !=
+            campaignStore.state.campaign?.campaignSettings
+                .combatHealthDisplaySettings.otherPlayerCharacterDisplayMethod
+    );
+});
+async function saveChanges() {}
+
+// Combat Health Display
 const combatHealthDisplayOptionEnumEntries = Object.keys(
     DisplayOptionEnum,
 ) as DisplayOptions[];
