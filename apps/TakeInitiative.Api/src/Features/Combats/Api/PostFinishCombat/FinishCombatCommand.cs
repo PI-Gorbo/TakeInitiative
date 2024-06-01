@@ -37,8 +37,11 @@ public class FinishCombatCommandHandler(IDocumentStore Store) : CommandHandler<F
                 {
                     ThrowError("An error occurred while trying to fetch the campaign for the combat.");
                 }
-                campaign.ActiveCombatId = null;
-                session.Store(campaign);
+
+                session.Store(campaign with
+                {
+                    ActiveCombatId = null,
+                });
 
                 // Publish the event
                 CombatFinishedEvent @event = new()

@@ -28,20 +28,13 @@ public class PutCampaignDetails(IDocumentStore Store) : Endpoint<PutCampaignDeta
                     return Result.Failure<Campaign>("Only the owner of the campaign can update the details.");
                 }
 
-                if (req.CampaignDescription != null)
+                campaign = campaign with
                 {
-                    campaign.CampaignDescription = req.CampaignDescription;
-                }
-
-                if (req.CampaignResources != null)
-                {
-                    campaign.CampaignResources = req.CampaignResources;
-                }
-
-                if (req.CampaignName != null)
-                {
-                    campaign.CampaignName = req.CampaignName;
-                }
+                    CampaignDescription = req.CampaignDescription ?? campaign.CampaignDescription,
+                    CampaignResources = req.CampaignResources ?? campaign.CampaignResources,
+                    CampaignName = req.CampaignName ?? campaign.CampaignName,
+                    CampaignSettings = req.CampaignSettings ?? campaign.CampaignSettings,
+                };
 
                 session.Store(campaign);
                 await session.SaveChangesAsync(ct);
@@ -55,6 +48,3 @@ public class PutCampaignDetails(IDocumentStore Store) : Endpoint<PutCampaignDeta
         await SendAsync(result.Value);
     }
 }
-
-
-

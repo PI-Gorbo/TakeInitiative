@@ -61,8 +61,10 @@ public class OpenCombatCommandHandler(IDocumentStore Store) : CommandHandler<Ope
                 session.Delete(plannedCombat);
 
                 // Set the active combat id
-                campaign.ActiveCombatId = stream.Id;
-                session.Store(campaign);
+                session.Store(campaign with
+                {
+                    ActiveCombatId = stream.Id
+                });
 
                 // Save changes, triggering the projection
                 await session.SaveChangesAsync(ct);
