@@ -43,6 +43,7 @@
 </template>
 <script setup lang="ts">
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+import * as signalR from "@microsoft/signalr";
 
 // Fetch and Set current campaign.
 const route = useRoute();
@@ -62,11 +63,55 @@ const { pending, error, refresh } = await useAsyncData(
 
         return await campaignStore
             .setCampaignById(route.params.id as string)
+            .then(() => {
+                console.log("here");
+            })
             .then(() => true);
     },
     {
         watch: [() => route.params.id],
     },
+);
+
+// Signal R
+// Start the connection.
+const connection = new signalR.HubConnectionBuilder()
+    .withUrl(`${useRuntimeConfig().public.axios.baseURL}/campaignHub`, {
+        accessTokenFactory: () => useCookie(".AspNetCore.Cookies").value!,
+    })
+    .build();
+connection.on("campaignStateUpdated", async () => {
+    console.log("got campaign update");
+    await campaignStore.refetchCampaign();
+    return;
+});
+
+const {
+    pending: signalRPending,
+    error: signalRError,
+    refresh: refreshConnection,
+} = await useAsyncData(
+    "campaignPages_SignalR",
+    async () => {
+        if (!route.name?.toString().startsWith("campaign-id")) {
+            return false;
+        }
+
+        const id = route.params.id as string | null;
+        if (id == null) {
+            return false;
+        }
+
+        return await connection
+            .start()
+            .then(
+                async () =>
+                    // Join the campaign hub.
+                    await connection.send("Join", route.params.id),
+            )
+            .then(() => true);
+    },
+    { server: false },
 );
 
 type TabOption = {

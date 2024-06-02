@@ -32,7 +32,7 @@ import type { TakeInitColour } from "~/utils/types/HelperTypes";
 
 const props = withDefaults(
     defineProps<
-        FormInputProps<string | number | undefined> & {
+        FormInputProps<string | number | undefined | null> & {
             type?: string;
             placeholder?: string;
             colour?: TakeInitColour;

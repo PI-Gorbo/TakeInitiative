@@ -1,33 +1,26 @@
 <template>
     <main :class="['flex h-full flex-col', !isMobile && 'items-center']">
         <header
-            v-if="campaignStore.state.currentCombatInfo"
+            v-if="currentCombatInfo"
             :class="[
                 'mx-3 my-2 cursor-pointer select-none rounded-lg px-4 py-3 text-center text-xl text-take-navy',
-                campaignStore.state.currentCombatInfo.state == CombatState.Open
+                currentCombatInfo.state == CombatState.Open
                     ? 'bg-take-yellow-dark'
                     : 'bg-take-red ',
                 isMobile ? 'flex-1' : 'w-full',
             ]"
             @click="
-                async () =>
-                    await navigateTo(
-                        `/combat/${campaignStore.state.currentCombatInfo?.id}`,
-                    )
+                async () => await navigateTo(`/combat/${currentCombatInfo?.id}`)
             "
         >
-            <div
-                v-if="
-                    campaignStore.state.currentCombatInfo.state ==
-                    CombatState.Open
-                "
-            >
+            <div v-if="currentCombatInfo.state == CombatState.Open">
                 {{ openCombatText }}
             </div>
             <div v-else>
                 {{ combatStartedText }}
             </div>
         </header>
+        {{ currentCombatInfo }}
         <div
             class="grid w-full flex-1 grid-cols-9 gap-4 overflow-y-auto"
             v-if="!isMobile"
@@ -284,6 +277,10 @@ const [resources, resourcesInputProps] = defineField("resources");
 onMounted(() => {
     description.value = campaign.value?.campaignDescription ?? "";
     resources.value = campaign.value?.campaignResources ?? "";
+});
+
+const currentCombatInfo = computed(() => {
+    return campaignStore.state.currentCombatInfo;
 });
 
 const descriptionHasChanges = computed(() => {
