@@ -37,7 +37,7 @@
             />
         </section>
 
-        <CharacterHealth
+        <CharacterHealthInput
             v-model:hasHealth="hasHealth"
             v-model:currentHealth="currentHealth"
             v-model:maxHealth="maxHealth"

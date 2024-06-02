@@ -4,14 +4,7 @@
             <div class="ws-nowrap cursor-pointer select-none text-lg">
                 {{ npc.name }} ( x {{ npc.quantity }} )
             </div>
-            <div
-                v-if="npc.health?.hasHealth"
-                class="flex select-none items-center gap-2"
-            >
-                <FontAwesomeIcon icon="droplet" />
-                {{ npc.health.currentHealth }}
-                {{ npc.health.maxHealth ? `/ ${npc.health.maxHealth}` : "" }}
-            </div>
+            <CharacterHealthDisplay :health="npc.health" />
             <div
                 v-if="npc.armourClass"
                 class="flex select-none items-center gap-2"

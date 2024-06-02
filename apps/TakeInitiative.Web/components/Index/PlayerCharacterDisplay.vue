@@ -7,18 +7,7 @@
         >
             {{ props.character.name }}
         </div>
-        <div
-            v-if="props.character.health?.hasHealth"
-            class="flex select-none items-center gap-2"
-        >
-            <FontAwesomeIcon icon="droplet" />
-            {{ props.character.health.currentHealth }}
-            {{
-                props.character.health.maxHealth
-                    ? `/ ${props.character.health.maxHealth}`
-                    : ""
-            }}
-        </div>
+        <CharacterHealthDisplay :health="props.character?.health" />
         <div
             v-if="props.character.armourClass"
             class="flex select-none items-center gap-2"
