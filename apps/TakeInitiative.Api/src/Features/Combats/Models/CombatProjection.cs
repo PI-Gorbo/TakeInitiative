@@ -291,7 +291,7 @@ public class CombatProjection : SingleStreamProjection<Combat>
 
     public async Task<Combat> Apply(StagedCharactersRolledIntoInitiativeEvent @event, Combat Combat, IEvent<StagedCharactersRolledIntoInitiativeEvent> eventDetails, IQuerySession session)
     {
-
+        Guid characterWithCurrentTurn = Combat.InitiativeList[Combat.InitiativeIndex].Id;
         var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
         var newInitiativeList = @event.InitiativeRolls.Select((charInitiative, index) =>
         {
@@ -318,6 +318,7 @@ public class CombatProjection : SingleStreamProjection<Combat>
             CombatLogs = Combat.CombatLogs.Add($"{user?.UserName} rolled {@event.InitiativeRolls.Count} characters into initiative at {eventDetails.Timestamp:R}"),
             StagedList = Combat.StagedList.Where(x => !x.Id.In(stagedCharactersToRemove)).ToImmutableList(),
             InitiativeList = newInitiativeList,
+            InitiativeIndex = newInitiativeList.FindIndex(x => x.Id == characterWithCurrentTurn)
         };
     }
 

@@ -35,6 +35,4 @@ const textToDisplay = computed(() => {
         }
     }
 })
-
-
 </script>
