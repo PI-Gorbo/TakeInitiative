@@ -32,6 +32,6 @@ public class PostFinishCombat(IDocumentSession session, IHubContext<CombatHub> c
 
         await SendAsync(new() { Combat = result.Value });
         await combatHub.NotifyCombatUpdated(result.Value);
-        await campaignHub.NotifyCombatStateUpdated(result.Value.CampaignId);
+        await campaignHub.NotifyCampaignStateUpdated(result.Value.CampaignId);
     }
 }

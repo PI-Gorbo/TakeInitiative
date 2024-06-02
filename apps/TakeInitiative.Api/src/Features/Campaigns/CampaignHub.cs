@@ -7,10 +7,10 @@ namespace TakeInitiative.Api.Features.Campaigns;
 
 public static class CampaignHubContextExtensions
 {
-    public static Task NotifyCombatStateUpdated(this IHubContext<CampaignHub> hubContext, Guid campaignId)
+    public static Task NotifyCampaignStateUpdated(this IHubContext<CampaignHub> hubContext, Guid campaignId)
     {
         return hubContext.Clients.Group(campaignId.ToString())
-            .SendAsync("combatStateUpdated");
+            .SendAsync("campaignStateUpdated");
     }
 }
 
@@ -18,7 +18,7 @@ public static class CampaignHubContextExtensions
 [Authorize] // TakePolicies.UserExists
 public class CampaignHub : Hub
 {
-    public async Task Join(IDocumentSession session, Guid UserId, Guid CampaignId)
+    public async Task Join(IDocumentSession session, Guid CampaignId)
     {
         // Ensure the user is a member of the campaign by finding the campaign member entity for this user.
         Result joinHubResult = await Result

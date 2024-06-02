@@ -32,6 +32,6 @@ public class PostOpenCombat(IDocumentSession session, IHubContext<CampaignHub> c
         }
 
         await SendAsync(new CombatResponse() { Combat = result.Value });
-        await campaignHub.NotifyCombatStateUpdated(result.Value.CampaignId);
+        await campaignHub.NotifyCampaignStateUpdated(result.Value.CampaignId);
     }
 }
