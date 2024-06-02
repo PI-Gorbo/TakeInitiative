@@ -58,43 +58,43 @@
             <ul
                 class="menu flex min-h-full w-80 flex-col gap-2 bg-take-navy p-4 text-base-content"
             >
-                <li v-if="isCampaignsRoute">
-                    <Dropdown
-                        colour="take-navy-dark"
-                        hoverColour="take-navy-medium"
-                        labelFallback="Campaigns"
-                        :items="userStore.campaignList!"
-                        :displayFunc="(c) => c.campaignName"
-                        :keyFunc="(c) => c.campaignId"
-                        :selectedItem="
-                            userStore.campaignList?.find(
-                                (x) =>
-                                    x.campaignId ==
-                                    selectedCampaignInfo.campaign?.id,
-                            )
-                        "
-                        @update:selectedItem="
-                            (item) => onSetSelectedCampaign(item.campaignId)
-                        "
-                    >
-                        <template #Footer>
-                            <li
-                                :class="['rounded-md', ``]"
-                                @click="
-                                    () => {
-                                        createOrJoinCampaignModal?.show();
-                                        toggleDrawer();
-                                    }
-                                "
+                <Dropdown
+                    v-if="isCampaignsRoute"
+                    colour="take-navy-dark"
+                    hoverColour="take-navy-medium"
+                    labelFallback="Campaigns"
+                    headerLabel="Campaign: "
+                    :items="userStore.campaignList!"
+                    :displayFunc="(c) => c.campaignName"
+                    :keyFunc="(c) => c.campaignId"
+                    :selectedItem="
+                        userStore.campaignList?.find(
+                            (x) =>
+                                x.campaignId ==
+                                selectedCampaignInfo.campaign?.id,
+                        )
+                    "
+                    @update:selectedItem="
+                        (item) => onSetSelectedCampaign(item.campaignId)
+                    "
+                >
+                    <template #Footer>
+                        <li
+                            :class="['rounded-md', ``]"
+                            @click="
+                                () => {
+                                    createOrJoinCampaignModal?.show();
+                                    toggleDrawer();
+                                }
+                            "
+                        >
+                            <a class="text-take-yellow"
+                                ><FontAwesomeIcon icon="plus" /> Create or
+                                Join</a
                             >
-                                <a class="text-take-yellow"
-                                    ><FontAwesomeIcon icon="plus" /> Create or
-                                    Join</a
-                                >
-                            </li>
-                        </template>
-                    </Dropdown>
-                </li>
+                        </li>
+                    </template>
+                </Dropdown>
                 <li v-else-if="isCombatRoute">
                     <FormButton
                         icon="house"

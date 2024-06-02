@@ -96,18 +96,11 @@
                             "
                         />
                     </li>
-                    <div
-                        v-if="charInfo.character.health?.hasHealth"
-                        class="flex select-none items-center gap-2"
-                    >
-                        <FontAwesomeIcon icon="droplet" />
-                        {{ charInfo.character.health.currentHealth }}
-                        {{
-                            charInfo.character.health.maxHealth
-                                ? `/ ${charInfo.character.health.maxHealth}`
-                                : ""
-                        }}
-                    </div>
+                    <CharacterHealthDisplay
+                        :health="charInfo.character.health"
+                        :displayMethod="getDisplayMethod(charInfo)"
+                        
+                    />
                     <div
                         v-if="charInfo.character.armourClass"
                         class="flex select-none items-center gap-2"
@@ -138,7 +131,7 @@
 </template>
 <script setup lang="ts">
 import type { CampaignMemberDto } from "~/utils/api/campaign/getCampaignRequest";
-import { type CombatCharacter, CombatState } from "~/utils/types/models";
+import { type CombatCharacter, CombatState, type DisplayOptionValues, DisplayOptionEnum } from "~/utils/types/models";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 
 const userStore = useUserStore();
@@ -182,6 +175,18 @@ const characterList = computed(() => {
         return initiativeListWithPlayerInfo.value;
     }
 });
+
+function getDisplayMethod(character: CombatPlayerDto) : DisplayOptionValues {
+    if (userIsDm.value) {
+        return DisplayOptionEnum['RealValue']
+    }
+
+    if (character.user.isDungeonMaster) {
+        return campaignStore.state.campaign?.campaignSettings.combatHealthDisplaySettings.dmCharacterDisplayMethod!;
+    }
+
+    return campaignStore.state.campaign?.campaignSettings.combatHealthDisplaySettings.otherPlayerCharacterDisplayMethod!;
+}
 </script>
 
 <style>

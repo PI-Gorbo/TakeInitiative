@@ -1,5 +1,8 @@
+import { DisplayOptions } from "./models";
 import type { InferType } from "yup";
 import { yup } from "./HelperTypes";
+
+type ValuesOf<T extends {}> = T[keyof T];
 
 // Campaign Member
 const campaignMemberInfoValidator = yup.object({
@@ -10,6 +13,32 @@ const campaignMemberInfoValidator = yup.object({
 export type CampaignMemberInfo = InferType<typeof campaignMemberInfoValidator>;
 
 // Campaign
+export const DisplayOptionEnum = {
+    RealValue: 0,
+    HealthyBloodied: 1,
+    Hidden: 2,
+} as const;
+export const DisplayOptionValueMap = {
+    0: "RealValue",
+    1: "HealthyBloodied",
+    2: "Hidden",
+};
+export type DisplayOptions = keyof typeof DisplayOptionEnum;
+export type DisplayOptionValues = (typeof DisplayOptionEnum)[DisplayOptions];
+const campaignSettingsValidator = yup.object({
+    combatHealthDisplaySettings: yup
+        .object({
+            dmCharacterDisplayMethod: yup
+                .mixed<DisplayOptionValues>()
+                .required(),
+            otherPlayerCharacterDisplayMethod: yup
+                .mixed<DisplayOptionValues>()
+                .required(),
+        })
+        .required(),
+});
+export type CampaignSettings = InferType<typeof campaignSettingsValidator>;
+
 export const campaignValidator = yup.object({
     id: yup.string().required(),
     ownerId: yup.string().required(),
@@ -20,6 +49,7 @@ export const campaignValidator = yup.object({
     campaignMemberInfo: yup.array(campaignMemberInfoValidator),
     activeCombatId: yup.string().nullable(),
     createdTimestamp: yup.string(),
+    campaignSettings: campaignSettingsValidator.required(),
 });
 export type Campaign = InferType<typeof campaignValidator>;
 
@@ -149,7 +179,9 @@ export type CombatCharacter = InferType<typeof combatCharacterValidator>;
 export const combatValidator = yup.object({
     id: yup.string().required(),
     campaignId: yup.string().required(),
-    state: yup.mixed().oneOf(Object.values(CombatState)),
+    state: yup
+        .mixed<CombatState>()
+        .oneOf(Object.values(CombatState) as CombatState[]),
     combatName: yup.string().required(),
     dungeonMaster: yup.string().required(),
     combatLogs: yup.array(yup.string()).required(),

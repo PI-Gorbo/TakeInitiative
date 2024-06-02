@@ -1,28 +1,43 @@
 <template>
-    <details ref="details" class="dropdown text-base text-white">
-        <summary :class="[`bg-${props.colour} hover:bg-${props.hoverColour}`]">
-            Campaign:
-            {{
-                props.selectedItem != null
-                    ? props.displayFunc(props.selectedItem)
-                    : labelFallback
-            }}
-        </summary>
-        <ul class="flex flex-col gap-1 p-2">
-            <li
-                v-for="item in props.items"
-                :key="props.keyFunc(item)"
-                @click="() => onSelectedItem(item)"
-                :class="[
-                    'rounded-md',
-                    `bg-${props.colour} hover:bg-${props.hoverColour}`,
-                ]"
+    <li class="menu">
+        <details
+            ref="details"
+            class="dropdown text-base text-white"
+            :class="{
+                relative: props.hoverOverContent,
+            }"
+        >
+            <summary
+                :class="[`bg-${props.colour} hover:bg-${props.hoverColour}`]"
             >
-                <a>{{ props.displayFunc(item) }}</a>
-            </li>
-            <slot name="Footer"></slot>
-        </ul>
-    </details>
+                {{
+                    props.selectedItem != null
+                        ? (props.headerLabel ? props.headerLabel + " " : "") +
+                          props.displayFunc(props.selectedItem)
+                        : labelFallback
+                }}
+            </summary>
+            <ul
+                class="z-50 flex flex-col gap-1 p-2"
+                :class="{
+                    absolute: props.hoverOverContent,
+                }"
+            >
+                <li
+                    v-for="item in props.items"
+                    :key="props.keyFunc(item)"
+                    @click="() => onSelectedItem(item)"
+                    :class="[
+                        'rounded-md',
+                        `bg-${props.colour} hover:bg-${props.hoverColour}`,
+                    ]"
+                >
+                    <a>{{ props.displayFunc(item) }}</a>
+                </li>
+                <slot name="Footer"></slot>
+            </ul>
+        </details>
+    </li>
 </template>
 <script setup lang="ts" generic="TListItem">
 import type { TakeInitColour } from "~/utils/types/HelperTypes";
@@ -34,13 +49,16 @@ const props = withDefaults(
         items: TListItem[];
         displayFunc: (item: TListItem) => string;
         keyFunc: (item: TListItem) => string;
-        labelFallback: string;
+        labelFallback?: string;
+        headerLabel?: string;
         colour: TakeInitColour;
         hoverColour: TakeInitColour;
+        hoverOverContent?: boolean;
     }>(),
     {
         colour: "take-navy",
         hoverColour: "take-navy-dark",
+        hoverOverContent: false,
     },
 );
 
