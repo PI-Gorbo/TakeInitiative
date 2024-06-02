@@ -96,18 +96,9 @@
                             "
                         />
                     </li>
-                    <div
-                        v-if="charInfo.character.health?.hasHealth"
-                        class="flex select-none items-center gap-2"
-                    >
-                        <FontAwesomeIcon icon="droplet" />
-                        {{ charInfo.character.health.currentHealth }}
-                        {{
-                            charInfo.character.health.maxHealth
-                                ? `/ ${charInfo.character.health.maxHealth}`
-                                : ""
-                        }}
-                    </div>
+                    <CharacterHealthDisplay
+                        :health="charInfo.character.health"
+                    />
                     <div
                         v-if="charInfo.character.armourClass"
                         class="flex select-none items-center gap-2"

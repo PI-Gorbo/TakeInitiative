@@ -25,6 +25,19 @@ export const DisplayOptionValueMap = {
 };
 export type DisplayOptions = keyof typeof DisplayOptionEnum;
 export type DisplayOptionValues = (typeof DisplayOptionEnum)[DisplayOptions];
+const campaignSettingsValidator = yup.object({
+    combatHealthDisplaySettings: yup
+        .object({
+            dmCharacterDisplayMethod: yup
+                .mixed<DisplayOptionValues>()
+                .required(),
+            otherPlayerCharacterDisplayMethod: yup
+                .mixed<DisplayOptionValues>()
+                .required(),
+        })
+        .required(),
+});
+export type CampaignSettings = InferType<typeof campaignSettingsValidator>;
 
 export const campaignValidator = yup.object({
     id: yup.string().required(),
@@ -36,18 +49,7 @@ export const campaignValidator = yup.object({
     campaignMemberInfo: yup.array(campaignMemberInfoValidator),
     activeCombatId: yup.string().nullable(),
     createdTimestamp: yup.string(),
-    campaignSettings: yup.object({
-        combatHealthDisplaySettings: yup
-            .object({
-                dmCharacterDisplayMethod: yup
-                    .mixed<DisplayOptionValues>()
-                    .required(),
-                otherPlayerCharacterDisplayMethod: yup
-                    .mixed<DisplayOptionValues>()
-                    .required(),
-            })
-            .required(),
-    }),
+    campaignSettings: campaignSettingsValidator.required(),
 });
 export type Campaign = InferType<typeof campaignValidator>;
 

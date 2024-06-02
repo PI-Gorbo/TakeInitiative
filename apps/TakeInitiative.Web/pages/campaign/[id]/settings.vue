@@ -14,7 +14,11 @@
             <label class="text-lg"> Combat Settings </label>
             <li class="py-2">
                 <div class="flex flex-row flex-wrap items-center gap-2">
-                    <label class="text-md text-gray-300"
+                    <label
+                        class="text-md text-gray-300"
+                        :class="{
+                            'flex-1': !isMobile,
+                        }"
                         >How should players see the health of the DM's
                         characters?</label
                     >
@@ -53,7 +57,11 @@
             </li>
             <li class="py-2">
                 <div class="flex flex-row flex-wrap items-center gap-2">
-                    <label class="text-md text-gray-300"
+                    <label
+                        class="text-md text-gray-300"
+                        :class="{
+                            'flex-1': !isMobile,
+                        }"
                         >How should players see the health of Others?</label
                     >
                     <Dropdown
@@ -93,6 +101,10 @@
                 <FormButton
                     label="Save"
                     icon="floppy-disk"
+                    :loadingDisplay="{
+                        showSpinner: true,
+                        loadingText: 'Saving...',
+                    }"
                     :disabled="!anyChangesToSave"
                     :click="saveChanges"
                 />
@@ -120,13 +132,14 @@
 </template>
 <script setup lang="ts">
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+import type { UpdateCampaignDetailsRequest } from "~/utils/api/campaign/updateCampaignDetailsRequest";
 import {
     DisplayOptionEnum,
     DisplayOptionValueMap,
     type DisplayOptionValues,
     type DisplayOptions,
 } from "~/utils/types/models";
-
+const { isMobile } = useDevice();
 definePageMeta({
     requiresAuth: true,
     layout: "campaign-tabs",
@@ -153,18 +166,56 @@ const state = reactive<{
 });
 
 // Saving changes
+const campaignNameChanged = computed(
+    () => state.campaignName != campaignStore.state.campaign?.campaignName,
+);
+const dmCharacterHealthDisplayMethodChanged = computed(
+    () =>
+        state.combatHealthDisplaySettings.dmCharacterDisplayMethod !=
+        campaignStore.state.campaign?.campaignSettings
+            .combatHealthDisplaySettings.dmCharacterDisplayMethod,
+);
+const otherCharacterHealthDisplayMethodChanged = computed(
+    () =>
+        state.combatHealthDisplaySettings.otherPlayerCharacterDisplayMethod !=
+        campaignStore.state.campaign?.campaignSettings
+            .combatHealthDisplaySettings.otherPlayerCharacterDisplayMethod,
+);
 const anyChangesToSave = computed(() => {
     return (
-        state.campaignName != campaignStore.state.campaign?.campaignName ||
-        state.combatHealthDisplaySettings.dmCharacterDisplayMethod !=
-            campaignStore.state.campaign?.campaignSettings
-                .combatHealthDisplaySettings.dmCharacterDisplayMethod ||
-        state.combatHealthDisplaySettings.otherPlayerCharacterDisplayMethod !=
-            campaignStore.state.campaign?.campaignSettings
-                .combatHealthDisplaySettings.otherPlayerCharacterDisplayMethod
+        campaignNameChanged.value ||
+        dmCharacterHealthDisplayMethodChanged.value ||
+        otherCharacterHealthDisplayMethodChanged.value
     );
 });
-async function saveChanges() {}
+async function saveChanges() {
+    const dto: Omit<UpdateCampaignDetailsRequest, "campaignId"> = {};
+    if (campaignNameChanged.value) {
+        dto.campaignName = state.campaignName;
+    }
+
+    if (dmCharacterHealthDisplayMethodChanged.value) {
+        if (dto.campaignSettings == null) {
+            dto.campaignSettings =
+                campaignStore.state.campaign?.campaignSettings!;
+        }
+
+        dto.campaignSettings.combatHealthDisplaySettings.dmCharacterDisplayMethod =
+            state.combatHealthDisplaySettings.dmCharacterDisplayMethod;
+    }
+
+    if (otherCharacterHealthDisplayMethodChanged.value) {
+        if (dto.campaignSettings == null) {
+            dto.campaignSettings =
+                campaignStore.state.campaign?.campaignSettings!;
+        }
+
+        dto.campaignSettings.combatHealthDisplaySettings.otherPlayerCharacterDisplayMethod =
+            state.combatHealthDisplaySettings.otherPlayerCharacterDisplayMethod;
+    }
+
+    await campaignStore.updateCampaignDetails(dto);
+}
 
 // Combat Health Display
 const combatHealthDisplayOptionEnumEntries = Object.keys(
