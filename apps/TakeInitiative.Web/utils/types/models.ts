@@ -1,4 +1,3 @@
-import { DisplayOptions } from "./models";
 import type { InferType } from "yup";
 import { yup } from "./HelperTypes";
 
