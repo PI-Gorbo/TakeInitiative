@@ -31,7 +31,16 @@ export const useCombatStore = defineStore("combatStore", () => {
         .withUrl(`${useRuntimeConfig().public.axios.baseURL}/combatHub`, {
             accessTokenFactory: () => useCookie(".AspNetCore.Cookies").value!,
         })
+        .withAutomaticReconnect()
         .build();
+
+    connection.onreconnected(async () => {
+        await setCombat(state.combat?.id!);
+    });
+    connection.on("combatUpdated", (combat: Combat) => {
+        state.combat = combat;
+        return;
+    });
 
     const state = reactive<{
         combat: Combat | null;
@@ -78,11 +87,7 @@ export const useCombatStore = defineStore("combatStore", () => {
         ) {
             return;
         }
-        
-        connection.on("combatUpdated", (combat: Combat) => {
-            state.combat = combat;
-            return;
-        });
+
         await connection.start().catch((error) => {
             state.signalRError = error;
             throw error;
@@ -252,7 +257,11 @@ export const useCombatStore = defineStore("combatStore", () => {
         combat: computed(() => {
             return state.combat;
         }),
-        anyPlannedCharacters: computed(() => (state.combat?.plannedStages.flatMap(x => x.npcs).length ?? 0) > 0),
+        anyPlannedCharacters: computed(
+            () =>
+                (state.combat?.plannedStages.flatMap((x) => x.npcs).length ??
+                    0) > 0,
+        ),
         orderedStagedCharacterListWithPlayerInfo,
         initiativeListWithPlayerInfo: computed(
             () =>

@@ -79,11 +79,17 @@ const connection = new signalR.HubConnectionBuilder()
     .withUrl(`${useRuntimeConfig().public.axios.baseURL}/campaignHub`, {
         accessTokenFactory: () => useCookie(".AspNetCore.Cookies").value!,
     })
+    .withAutomaticReconnect()
+    .configureLogging(signalR.LogLevel.Debug)
     .build();
 connection.on("campaignStateUpdated", async () => {
     console.log("got campaign update");
     await campaignStore.refetchCampaign();
     return;
+});
+connection.onreconnected(async () => {
+    console.log("reconnected");
+    await campaignStore.refetchCampaign();
 });
 
 const {
