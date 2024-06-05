@@ -29,6 +29,7 @@ internal class Program
         builder.AddIdentityAuthenticationAndAuthorization();
         builder.AddOptionObjects();
         builder.AddPython();
+        builder.AddSendGrid();
 
         // Cors
         var cors = (builder.Configuration.GetValue<string>("CORS") ?? throw new MissingMemberException("Missing configuration for value 'CORS'."))

@@ -1,4 +1,3 @@
-using CSharpFunctionalExtensions;
 using FastEndpoints.Security;
 using Marten;
 using Marten.Events.Daemon.Resiliency;
@@ -9,9 +8,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Protocols.Configuration;
 using Python.Runtime;
+using SendGrid.Extensions.DependencyInjection;
 using Serilog;
 using TakeInitiative.Utilities;
-using TakeInitiative.Utilities.Extensions;
 using Weasel.Postgresql;
 
 namespace TakeInitiative.Api.Bootstrap;
@@ -19,7 +18,6 @@ public static class Bootstrap
 {
     public static WebApplicationBuilder AddMartenDB(this WebApplicationBuilder builder)
     {
-
         var martenOpts = builder.Services.AddMarten(opts =>
         {
             opts.Connection(builder.Configuration.GetConnectionString("TakeDB") ?? throw new OperationCanceledException("Required Configuration 'ConnectionStrings:Marten' is missing."));
@@ -62,6 +60,7 @@ public static class Bootstrap
         builder.Services
             .AddIdentityCore<ApplicationUser>(opts =>
             {
+                opts.SignIn.RequireConfirmedAccount = builder.Configuration.GetValue("RequireConfirmedAccount", false);
                 opts.Password = new PasswordOptions()
                 {
                     RequireDigit = true,
@@ -81,6 +80,8 @@ public static class Bootstrap
             .AddSingleton<IAuthorizationHandler, RequireUserToExistInDatabaseAuthorizationHandler>()
             .AddCookieAuth(validFor: TimeSpan.FromHours(1), opts =>
             {
+                opts.SlidingExpiration = true; // Reissue new cookies when the cookie is half or more through its timespan.
+
                 opts.Events.OnRedirectToLogin = ctx =>
                 {
                     ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
@@ -125,6 +126,8 @@ public static class Bootstrap
 
     public static WebApplicationBuilder AddOptionObjects(this WebApplicationBuilder builder)
     {
+        builder.Services.Configure<SendGridOptions>(builder.Configuration.GetSection(SendGridOptions.SendGridOptionsKey));
+        builder.Services.Configure<SendGridOptions>(builder.Configuration.GetSection(SendGridOptions.SendGridOptionsKey));
         builder.Services.Configure<JWTOptions>(builder.Configuration);
         return builder;
     }
@@ -154,36 +157,19 @@ public static class Bootstrap
         return builder;
     }
 
-}
-
-public static class TakePolicies
-{
-    public static string UserExists = "UserExists";
-}
-public class RequireUserToExistInDatabaseAuthorizationRequirement : IAuthorizationRequirement { }
-public class RequireUserToExistInDatabaseAuthorizationHandler(IDocumentStore Store) : AuthorizationHandler<RequireUserToExistInDatabaseAuthorizationRequirement>
-{
-    protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, RequireUserToExistInDatabaseAuthorizationRequirement requirement)
+    public static WebApplicationBuilder AddSendGrid(this WebApplicationBuilder builder)
     {
-        // Validate the user's existence in the database.
-        Result<bool> userExistsResult = await Result.SuccessIf(
-            Guid.TryParse(context.User.Claims.SingleOrDefault(x => x.Type == "UserId")?.Value, out Guid parsedValue),
-            parsedValue,
-            "Failed to parse UserId in claims as Guid.")
-        .Bind((id) => Store.Try(async (session) =>
-        {
-            return await session.Query<ApplicationUser>().AnyAsync(x => x.Id == id);
-        })).Ensure(userExists =>
-        {
-            return userExists;
-        }, "User does not exist.");
+        SendGridOptions options = new();
+        builder.Configuration.GetSection(nameof(SendGridOptions))
+            .Bind(options);
 
-        if (userExistsResult.IsFailure)
+        builder.Services.AddSendGrid((builder) =>
         {
-            context.Fail(new AuthorizationFailureReason(this, userExistsResult.Error));
-            return;
-        }
+            builder.ApiKey = options.ApiKey;
+        });
 
-        context.Succeed(requirement);
+        builder.Services.AddTransient<IEmailSender, SendGridEmailSender>();
+
+        return builder;
     }
 }
