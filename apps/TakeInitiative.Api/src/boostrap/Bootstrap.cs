@@ -128,6 +128,7 @@ public static class Bootstrap
     {
         builder.Services.Configure<SendGridOptions>(builder.Configuration.GetSection(SendGridOptions.SendGridOptionsKey));
         builder.Services.Configure<SendGridOptions>(builder.Configuration.GetSection(SendGridOptions.SendGridOptionsKey));
+        builder.Services.Configure<UrlsOptions>(builder.Configuration.GetSection(UrlsOptions.UrlsOptionsKey));
         builder.Services.Configure<JWTOptions>(builder.Configuration);
         return builder;
     }
