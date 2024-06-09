@@ -3,16 +3,32 @@ using System.Text;
 using CSharpFunctionalExtensions;
 using HandlebarsDotNet;
 using JasperFx.Core;
+using Marten;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using Mjml.Net;
 
 namespace TakeInitiative.Api.Features.Users;
-public class ConfirmEmailSender(IEmailSender emailSender, IOptions<EmailOptions> emailOpts, IOptions<UrlsOptions> urlsOpts, UserManager<ApplicationUser> userManager, ILogger logger, IWebHostEnvironment env)
+public class ConfirmEmailSender(IEmailSender emailSender, IDocumentSession session,IOptions<EmailOptions> emailOpts, IOptions<UrlsOptions> urlsOpts, UserManager<ApplicationUser> userManager, ILogger<ConfirmEmailSender> logger, IWebHostEnvironment env)
 {
     public async Task<Result> SendConfirmAccountEmail(ApplicationUser user)
     {
+        if (user.EmailConfirmed) {
+            return Result.Success("Email is already confirmed");
+        }
+
+        if (user.EmailConfirmationLastSent.HasValue) {
+            var difference = (DateTimeOffset.UtcNow - user.EmailConfirmationLastSent.Value);
+            if (difference.TotalSeconds < 120)
+            {
+                return Result.Failure("Must wait at least two minutes before sending another confirmation email.");
+            }
+        }
+        user.EmailConfirmationLastSent = DateTimeOffset.UtcNow;
+        session.Store(user);
+        await session.SaveChangesAsync();
+
         // Get the HTML and parse the handlebars.
         string preHandlebarsConfirmationEmail = ReadConfirmationEmail();
         var template = Handlebars.Compile(preHandlebarsConfirmationEmail);
@@ -45,7 +61,7 @@ public class ConfirmEmailSender(IEmailSender emailSender, IOptions<EmailOptions>
 
         return await emailSender.SendEmail(
             user.Email,
-            emailOpts.Value.Domain,
+            $"no-reply@{emailOpts.Value.Domain}",
             "Take Initiative - Email Confirmation",
             html
         );
@@ -54,7 +70,7 @@ public class ConfirmEmailSender(IEmailSender emailSender, IOptions<EmailOptions>
     private string ReadConfirmationEmail()
     {
         var assembly = Assembly.GetExecutingAssembly();
-        var resourceName = "MyCompany.MyProduct.MyFile.txt";
+        var resourceName = "TakeInitiative.Api.Embedded.ConfirmationEmail.mjml";
         using Stream stream = assembly.GetManifestResourceStream(resourceName);
         using StreamReader reader = new StreamReader(stream);
         return reader.ReadToEnd();

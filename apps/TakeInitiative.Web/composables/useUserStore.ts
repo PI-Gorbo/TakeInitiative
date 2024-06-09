@@ -82,6 +82,11 @@ export const useUserStore = defineStore("userStore", () => {
         });
     }
 
+    async function confirmEmail(code: string) : Promise<unknown> {
+        return await api.user.confirmEmail(code) 
+            .then((user) => state.user = user)
+    }
+
     async function logout(): Promise<void> {
         await api.user
             .logout()
@@ -168,6 +173,7 @@ export const useUserStore = defineStore("userStore", () => {
         state,
         init,
         refetchUser: fetchUser,
+        ConfirmEmail: confirmEmail,
         login,
         signUp,
         isLoggedIn,

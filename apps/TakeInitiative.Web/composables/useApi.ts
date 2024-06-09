@@ -32,6 +32,8 @@ import { getUserRequest } from "~/utils/api/user/getUserRequest";
 import { loginRequest } from "~/utils/api/user/loginRequest";
 import { logoutRequest } from "~/utils/api/user/logoutRequest";
 import { signUpRequest } from "~/utils/api/user/signUpRequest";
+import { postConfirmEmailRequest as confirmEmailRequest } from "~/utils/api/user/postConfirmEmailRequest";
+import { postSendConfirmEmailRequest } from "~/utils/api/user/postSendConfirmEmailRequest";
 
 export const useApi = () => {
     const { $axios } = useNuxtApp();
@@ -41,6 +43,8 @@ export const useApi = () => {
             signUp: signUpRequest($axios),
             login: loginRequest($axios),
             logout: logoutRequest($axios),
+            confirmEmail: confirmEmailRequest($axios),
+            sendConfirmationEmail: postSendConfirmEmailRequest($axios)
         },
         campaign: {
             create: createCampaignRequest($axios),

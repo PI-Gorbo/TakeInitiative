@@ -1,3 +1,4 @@
+using System.Text.Json;
 using FastEndpoints.Security;
 using Marten;
 using Marten.Events.Daemon.Resiliency;
@@ -60,7 +61,7 @@ public static class Bootstrap
         builder.Services
             .AddIdentityCore<ApplicationUser>(opts =>
             {
-                opts.SignIn.RequireConfirmedAccount = builder.Configuration.GetValue("RequireConfirmedAccount", false);
+                opts.SignIn.RequireConfirmedAccount =false;
                 opts.Password = new PasswordOptions()
                 {
                     RequireDigit = true,
@@ -110,6 +111,8 @@ public static class Bootstrap
                 opts.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 opts.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
             });
+
+        builder.Services.AddTransient<ConfirmEmailSender>();
         return builder;
     }
 
@@ -127,7 +130,7 @@ public static class Bootstrap
     public static WebApplicationBuilder AddOptionObjects(this WebApplicationBuilder builder)
     {
         builder.Services.Configure<SendGridOptions>(builder.Configuration.GetSection(SendGridOptions.SendGridOptionsKey));
-        builder.Services.Configure<SendGridOptions>(builder.Configuration.GetSection(SendGridOptions.SendGridOptionsKey));
+        builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection(EmailOptions.EmailOptionsKey));
         builder.Services.Configure<UrlsOptions>(builder.Configuration.GetSection(UrlsOptions.UrlsOptionsKey));
         builder.Services.Configure<JWTOptions>(builder.Configuration);
         return builder;
@@ -160,13 +163,9 @@ public static class Bootstrap
 
     public static WebApplicationBuilder AddSendGrid(this WebApplicationBuilder builder)
     {
-        SendGridOptions options = new();
-        builder.Configuration.GetSection(nameof(SendGridOptions))
-            .Bind(options);
-
-        builder.Services.AddSendGrid((builder) =>
+        builder.Services.AddSendGrid((_) =>
         {
-            builder.ApiKey = options.ApiKey;
+            _.ApiKey = builder.Configuration.GetValue<string>("SendGrid:ApiKey");
         });
 
         builder.Services.AddTransient<IEmailSender, SendGridEmailSender>();

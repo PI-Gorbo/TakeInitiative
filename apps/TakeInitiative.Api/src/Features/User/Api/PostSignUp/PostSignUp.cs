@@ -9,7 +9,8 @@ namespace TakeInitiative.Api.Features.Users;
 public class PostSignUp(
     IOptions<JWTOptions> JWTOptions,
     UserManager<ApplicationUser> UserManager,
-    SignInManager<ApplicationUser> SignInManager
+    SignInManager<ApplicationUser> SignInManager,
+    ConfirmEmailSender confirmEmailSender
     ) : Endpoint<PostSignUpRequest>
 {
     public override void Configure()
@@ -50,6 +51,12 @@ public class PostSignUp(
         if (!result.Succeeded)
         {
             ThrowError($"Failed to register new account! {String.Join(", ", result.Errors.Select(x => x.Description))}", (int)HttpStatusCode.BadRequest);
+        }
+
+        // Send Email Authentication.
+        var sentEmailConfirmation = await confirmEmailSender.SendConfirmAccountEmail(user);
+        if (sentEmailConfirmation.IsFailure) {
+            ThrowError($"Failed to send confirmation email! {sentEmailConfirmation.Error}", (int)HttpStatusCode.ServiceUnavailable);
         }
 
         await CookieAuth.SignInAsync(u =>
