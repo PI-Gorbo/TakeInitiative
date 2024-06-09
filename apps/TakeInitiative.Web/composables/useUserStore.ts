@@ -82,9 +82,10 @@ export const useUserStore = defineStore("userStore", () => {
         });
     }
 
-    async function confirmEmail(code: string) : Promise<unknown> {
-        return await api.user.confirmEmail(code) 
-            .then((user) => state.user = user)
+    async function confirmEmail(code: string): Promise<unknown> {
+        return await api.user
+            .confirmEmailWithToken(code)
+            .then((user) => (state.user = user));
     }
 
     async function logout(): Promise<void> {
@@ -119,11 +120,10 @@ export const useUserStore = defineStore("userStore", () => {
             .delete(request)
             .then(fetchUser)
             .then(async () => {
-                console.log(campaignList.value)
+                console.log(campaignList.value);
                 if ((campaignList.value?.length ?? 0) == 0) {
-                    console.log("Navigating to create or join page")
-                    return useNavigator()
-                        .toCreateOrJoinCampaign();
+                    console.log("Navigating to create or join page");
+                    return useNavigator().toCreateOrJoinCampaign();
                 }
 
                 // Check if its the campaigns route.

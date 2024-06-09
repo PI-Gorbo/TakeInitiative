@@ -10,40 +10,37 @@ using Microsoft.Extensions.Options;
 using Mjml.Net;
 
 namespace TakeInitiative.Api.Features.Users;
-public class ConfirmEmailSender(
+public class ResetPasswordEmailSender(
     IEmailSender emailSender,
     IDocumentSession session,
     IOptions<EmailOptions> emailOpts,
     IOptions<UrlsOptions> urlsOpts,
     UserManager<ApplicationUser> userManager,
-    ILogger<ConfirmEmailSender> logger,
+    ILogger<ResetPasswordEmailSender> logger,
     IWebHostEnvironment env)
 {
-    public async Task<Result> SendConfirmAccountEmail(ApplicationUser user, CancellationToken ct)
+    public async Task<Result> SendResetPasswordEmail(ApplicationUser user, CancellationToken ct)
     {
-        if (user.EmailConfirmed)
+        if (user.ResetPasswordLastSent.HasValue)
         {
-            return Result.Success("Email is already confirmed");
-        }
-
-        if (user.EmailConfirmationLastSent.HasValue)
-        {
-            var difference = (DateTimeOffset.UtcNow - user.EmailConfirmationLastSent.Value);
+            var difference = DateTimeOffset.UtcNow - user.ResetPasswordLastSent.Value;
             if (difference.TotalSeconds < 120)
             {
-                return Result.Failure("Must wait at least two minutes before sending another confirmation email.");
+                return Result.Failure("Must wait at least two minutes before sending another reset email.");
             }
         }
-        user.EmailConfirmationLastSent = DateTimeOffset.UtcNow;
+
+        // Update the user with the last time sent.
+        user.ResetPasswordLastSent = DateTimeOffset.UtcNow;
         session.Store(user);
         await session.SaveChangesAsync(ct);
 
         // Get the HTML and parse the handlebars.
-        string preHandlebarsConfirmationEmail = ReadConfirmationEmail();
-        var template = Handlebars.Compile(preHandlebarsConfirmationEmail);
+        string preHandlebarsResetEmail = ReadResetEmail();
+        var template = Handlebars.Compile(preHandlebarsResetEmail);
 
         // Get the handlebars data.
-        var link = await GetEmailConfirmationLink(user);
+        var link = await GetPasswordResetLink(user);
         var data = new
         {
             Link = link,
@@ -65,30 +62,30 @@ public class ConfirmEmailSender(
 
         if (env.IsDevelopment())
         {
-            logger.LogInformation("Confirmation Link: {ConfirmationLink}", link);
+            logger.LogInformation("Reset Link: {ConfirmationLink}", link);
         }
 
         return await emailSender.SendEmail(
             user.Email,
             $"no-reply@{emailOpts.Value.Domain}",
-            "Take Initiative - Email Confirmation",
+            "Take Initiative - Password Rest",
             html
-        );
+        ).TapError(e => logger.LogError("Failed to send password reset email. {error}", e));
     }
 
-    private string ReadConfirmationEmail()
+    private string ReadResetEmail()
     {
         var assembly = Assembly.GetExecutingAssembly();
-        var resourceName = "TakeInitiative.Api.Embedded.ConfirmationEmail.mjml";
+        var resourceName = "TakeInitiative.Api.Embedded.ResetPasswordEmail.mjml";
         using Stream stream = assembly.GetManifestResourceStream(resourceName);
         using StreamReader reader = new StreamReader(stream);
         return reader.ReadToEnd();
     }
 
-    private async Task<string> GetEmailConfirmationLink(ApplicationUser user)
+    private async Task<string> GetPasswordResetLink(ApplicationUser user)
     {
-        var emailConfirmationCode = await userManager.GenerateEmailConfirmationTokenAsync(user);
-        var code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(emailConfirmationCode));
-        return new Uri(new Uri(urlsOpts.Value.Web), $"/confirm?code={code}").ToString();
+        var token = await userManager.GeneratePasswordResetTokenAsync(user);
+        var urlEncodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+        return new Uri(new Uri(urlsOpts.Value.Web), $"/resetPassword/{urlEncodedToken}-{Uri.EscapeDataString(user.Email)}").ToString();
     }
 }

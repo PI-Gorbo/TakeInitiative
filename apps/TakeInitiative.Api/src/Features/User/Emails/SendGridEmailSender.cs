@@ -15,6 +15,7 @@ public class SendGridEmailSender(ISendGridClient client) : IEmailSender
         };
         msg.AddContent(MimeType.Html, body);
         msg.AddTo(new EmailAddress(to));
+        msg.SetClickTracking(false, false);
         var response = await client.SendEmailAsync(msg).ConfigureAwait(false);
 
         if (response.IsSuccessStatusCode)

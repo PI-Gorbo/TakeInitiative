@@ -54,8 +54,9 @@ public class PostSignUp(
         }
 
         // Send Email Authentication.
-        var sentEmailConfirmation = await confirmEmailSender.SendConfirmAccountEmail(user);
-        if (sentEmailConfirmation.IsFailure) {
+        var sentEmailConfirmation = await confirmEmailSender.SendConfirmAccountEmail(user, ct);
+        if (sentEmailConfirmation.IsFailure)
+        {
             ThrowError($"Failed to send confirmation email! {sentEmailConfirmation.Error}", (int)HttpStatusCode.ServiceUnavailable);
         }
 
