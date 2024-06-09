@@ -113,12 +113,20 @@
                     />
                 </li>
                 <li class="flex-1 bg-take-navy"></li>
+                <li class="bg-take-navy font-NovaCut text-take-yellow">
+                    {{ userStore.username }}
+                </li>
+                <li v-if="!userStore.state?.user?.confirmedEmail">
+                    <FormButton
+                        label="Confirm Email"
+                        icon="envelope"
+                        :click="async () => await useNavigator().confirmEmail()"
+                        buttonColour="take-navy-dark"
+                        hoverButtonColour="take-navy-medium"
+                        size="sm"
+                    />
+                </li>
                 <li>
-                    <div
-                        class="font-NovaCut text-take-yellow hover:bg-take-navy"
-                    >
-                        {{ userStore.username }}
-                    </div>
                     <FormButton
                         label="Logout"
                         :loadingDisplay="{

@@ -20,7 +20,6 @@
                 {{ combatStartedText }}
             </div>
         </header>
-        {{ currentCombatInfo }}
         <div
             class="grid w-full flex-1 grid-cols-9 gap-4 overflow-y-auto"
             v-if="!isMobile"

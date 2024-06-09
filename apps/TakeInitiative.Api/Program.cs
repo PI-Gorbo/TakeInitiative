@@ -1,5 +1,7 @@
 using FastEndpoints;
+using JasperFx.Core;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 internal class Program
 {
     private static void Main(string[] args)
@@ -24,11 +26,12 @@ internal class Program
         builder.Services.AddSignalR();
 
         // Custom Injection
+        builder.AddOptionObjects();
         builder.AddMartenDB();
         builder.AddSerilog();
         builder.AddIdentityAuthenticationAndAuthorization();
-        builder.AddOptionObjects();
         builder.AddPython();
+        builder.AddSendGrid();
 
         // Cors
         var cors = (builder.Configuration.GetValue<string>("CORS") ?? throw new MissingMemberException("Missing configuration for value 'CORS'."))
