@@ -61,7 +61,7 @@ public static class Bootstrap
         builder.Services
             .AddIdentityCore<ApplicationUser>(opts =>
             {
-                opts.SignIn.RequireConfirmedAccount =false;
+                opts.SignIn.RequireConfirmedAccount = false;
                 opts.Password = new PasswordOptions()
                 {
                     RequireDigit = true,
@@ -113,6 +113,7 @@ public static class Bootstrap
             });
 
         builder.Services.AddTransient<ConfirmEmailSender>();
+        builder.Services.AddTransient<ResetPasswordEmailSender>();
         return builder;
     }
 

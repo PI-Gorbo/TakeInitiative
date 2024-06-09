@@ -63,6 +63,18 @@
                 />
             </div>
         </form>
+
+        <div class="flex justify-end">
+            <NuxtLink
+                :to="{
+                    path: '/resetPassword',
+                    query: redirectToPath ? { redirectTo: redirectToPath } : {},
+                }"
+                class="text-center text-sm underline"
+            >
+                Forgot password</NuxtLink
+            >
+        </div>
     </section>
 </template>
 
@@ -98,7 +110,7 @@ const { values, errors, defineField, validate } = useForm({
                 .test("matches password", function (value) {
                     const { path, createError } = this;
                     if (value != password.value) {
-                        createError({
+                        return createError({
                             path,
                             message: "Passwords do not match.",
                         });

@@ -18,5 +18,6 @@
         "titleBar.inactiveBackground": "#92a56599",
         "titleBar.inactiveForeground": "#15202b99"
     },
-    "peacock.color": "#92a565"
+    "peacock.color": "#92a565",
+    "cSpell.words": ["nessisarily"]
 }

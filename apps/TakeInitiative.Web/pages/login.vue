@@ -44,6 +44,18 @@
                 />
             </div>
         </form>
+
+        <div class="flex justify-end">
+            <NuxtLink
+                :to="{
+                    path: '/resetPassword',
+                    query: redirectToPath ? { redirectTo: redirectToPath } : {},
+                }"
+                class="text-center text-sm underline"
+            >
+                Forgot password</NuxtLink
+            >
+        </div>
     </section>
 </template>
 

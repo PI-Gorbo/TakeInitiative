@@ -28,8 +28,8 @@ public class PostSendConfirmEmail(
         {
             ThrowError("User not found", (int)HttpStatusCode.NotFound);
         }
-        
-        var confirmResult = await confirmEmailSender.SendConfirmAccountEmail(user);
+
+        var confirmResult = await confirmEmailSender.SendConfirmAccountEmail(user, ct);
         if (confirmResult.IsFailure)
         {
             ThrowError($"Failed to send confirmation email. {confirmResult.Error}", (int)HttpStatusCode.BadRequest);
