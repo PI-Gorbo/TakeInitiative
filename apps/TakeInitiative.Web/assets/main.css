@@ -10,12 +10,12 @@
 
 @font-face {
     font-family: "NovaCut";
-    src: url("~/assets/NovaCut-Regular.ttf");
+    src: url("base/assets/NovaCut-Regular.ttf");
 }
 
 @font-face {
     font-family: "Overpass";
-    src: url("~/assets/Overpass-VariableFont_wght.ttf");
+    src: url("base/assets/Overpass-VariableFont_wght.ttf");
 }
 
 .fade-enter-active,

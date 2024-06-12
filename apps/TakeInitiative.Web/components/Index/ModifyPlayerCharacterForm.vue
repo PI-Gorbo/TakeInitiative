@@ -81,11 +81,11 @@ import {
     characterInitiativeValidator,
     type PlayerCharacter,
     characterHealthValidator,
-} from "~/utils/types/models";
-import type { CreatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
-import type { UpdatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
-import type { DeletePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/deletePlannedCombatNpcRequest";
-import type { PlayerCharacterDto } from "~/utils/api/campaign/createPlayerCharacterRequest";
+} from "base/utils/types/models";
+import type { CreatePlannedCombatNpcRequest } from "base/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
+import type { UpdatePlannedCombatNpcRequest } from "base/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
+import type { DeletePlannedCombatNpcRequest } from "base/utils/api/plannedCombat/stages/npcs/deletePlannedCombatNpcRequest";
+import type { PlayerCharacterDto } from "base/utils/api/campaign/createPlayerCharacterRequest";
 import type { SubmittingState } from "../Form/Base.vue";
 
 const formState = reactive({

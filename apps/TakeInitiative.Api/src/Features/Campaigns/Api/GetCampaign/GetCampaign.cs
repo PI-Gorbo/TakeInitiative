@@ -3,6 +3,7 @@ using CSharpFunctionalExtensions;
 using FastEndpoints;
 using Marten;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using TakeInitiative.Utilities;
 using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Campaigns;
@@ -91,7 +92,7 @@ public class GetCampaign(IDocumentStore Store) : Endpoint<GetCampaignRequest, Ge
                 return new GetCampaignResponse()
                 {
                     Campaign = campaign,
-                    JoinCode = campaign.GetJoinCode(),
+                    JoinCode = CampaignIdShortener.ToShortId(campaign.Id),
                     NonUserCampaignMembers = nonUserCampaignMemberDtos.ToArray(),
                     UserCampaignMember = userCampaignMember,
                     CurrentCombatInfo = dto == null ? null : new CurrentCombatDto()

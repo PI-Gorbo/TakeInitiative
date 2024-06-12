@@ -49,13 +49,18 @@
                     />
                 </section>
             </TransitionGroup>
-            <Modal ref="createPlannedCharacterFormModal" title="Create Character">
+            <Modal
+                ref="createPlannedCharacterFormModal"
+                title="Create Character"
+            >
                 <IndexModifyPlannedCharacterForm
                     :onCreate="
                         (request) =>
                             props
                                 .createNpc(request)
-                                .then(() => createPlannedCharacterFormModal?.hide())
+                                .then(() =>
+                                    createPlannedCharacterFormModal?.hide(),
+                                )
                     "
                 />
             </Modal>
@@ -64,16 +69,18 @@
 </template>
 
 <script setup lang="ts">
-import type { CreatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
-import type { DeletePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/deletePlannedCombatNpcRequest";
-import type { UpdatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
-import type { UpdatePlannedCombatStageRequest } from "~/utils/api/plannedCombat/stages/updatePlannedCombatStageRequest";
-import type { PlannedCombatStage } from "~/utils/types/models";
-import Modal from "~/components/Modal.vue";
+import type { CreatePlannedCombatNpcRequest } from "base/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
+import type { DeletePlannedCombatNpcRequest } from "base/utils/api/plannedCombat/stages/npcs/deletePlannedCombatNpcRequest";
+import type { UpdatePlannedCombatNpcRequest } from "base/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
+import type { UpdatePlannedCombatStageRequest } from "base/utils/api/plannedCombat/stages/updatePlannedCombatStageRequest";
+import type { PlannedCombatStage } from "base/utils/types/models";
+import Modal from "base/components/Modal.vue";
 
 import PlanedCombatNpcDisplay from "./PlanedCombatNpcDisplay.vue";
 
-const createPlannedCharacterFormModal = ref<InstanceType<typeof Modal> | null>(null);
+const createPlannedCharacterFormModal = ref<InstanceType<typeof Modal> | null>(
+    null,
+);
 
 const props = defineProps<{
     stage: PlannedCombatStage;

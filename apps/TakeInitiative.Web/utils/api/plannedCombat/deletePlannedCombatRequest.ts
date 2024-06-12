@@ -1,6 +1,6 @@
 import type { AxiosInstance } from "axios";
 import * as yup from "yup";
-import { plannedCombatValidator } from "~/utils/types/models";
+import { plannedCombatValidator } from "base/utils/types/models";
 
 // Get User
 export const deletePlannedCombatRequestValidator = yup.object({

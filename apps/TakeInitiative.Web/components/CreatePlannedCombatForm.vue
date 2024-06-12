@@ -34,9 +34,8 @@
 <script setup lang="ts">
 // TODO : Refactor to be the smae as the CreateCampaignForm
 type FormInputProps = InstanceType<typeof FormInput>["$props"];
-import FormInput from "~/components/Form/Input.vue";
-import type { GetCampaignRequest } from "~/utils/api/campaign/getCampaignRequest";
-import type { CreatePlannedCombatRequest } from "~/utils/api/plannedCombat/createPlannedCombatRequest";
+import FormInput from "base/components/Form/Input.vue";
+import type { CreatePlannedCombatRequest } from "base/utils/api/plannedCombat/createPlannedCombatRequest";
 const createPlannedCombatForm = useCreatePlannedCombatForm();
 
 const props = defineProps<{

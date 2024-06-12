@@ -24,12 +24,12 @@
 </template>
 <script setup lang="ts">
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import type { CampaignMemberDto } from "~/utils/api/campaign/getCampaignRequest";
+import type { CampaignMemberDto } from "base/utils/api/campaign/getCampaignRequest";
 
 const props = withDefaults(
     defineProps<{
         campaignMemberDtos: CampaignMemberDto[];
     }>(),
-    {}
+    {},
 );
 </script>

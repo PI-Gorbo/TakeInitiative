@@ -109,7 +109,7 @@
 </template>
 <script setup lang="ts">
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import type { CombatCharacter } from "~/utils/types/models";
+import type { CombatCharacter } from "base/utils/types/models";
 
 const viewState = reactive<{
     currentView:

@@ -63,6 +63,18 @@
                 />
             </div>
         </form>
+
+        <div class="flex justify-end">
+            <NuxtLink
+                :to="{
+                    path: '/resetPassword',
+                    query: redirectToPath ? { redirectTo: redirectToPath } : {},
+                }"
+                class="text-center text-sm underline"
+            >
+                Forgot password</NuxtLink
+            >
+        </div>
     </section>
 </template>
 
@@ -72,7 +84,7 @@ import { useForm } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/yup";
 import * as yup from "yup";
 import { formatDiagnosticsWithColorAndContext } from "typescript";
-import type { SignUpRequest } from "~/utils/api/user/signUpRequest";
+import type { SignUpRequest } from "base/utils/api/user/signUpRequest";
 import type { LocationQueryValue } from "vue-router";
 const redirectToPath = useRoute().query.redirectTo as LocationQueryValue;
 definePageMeta({
@@ -98,7 +110,7 @@ const { values, errors, defineField, validate } = useForm({
                 .test("matches password", function (value) {
                     const { path, createError } = this;
                     if (value != password.value) {
-                        createError({
+                        return createError({
                             path,
                             message: "Passwords do not match.",
                         });

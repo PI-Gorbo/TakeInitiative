@@ -1,27 +1,19 @@
 <template>
     <main :class="['flex h-full flex-col', !isMobile && 'items-center']">
         <header
-            v-if="campaignStore.state.currentCombatInfo"
+            v-if="currentCombatInfo"
             :class="[
                 'mx-3 my-2 cursor-pointer select-none rounded-lg px-4 py-3 text-center text-xl text-take-navy',
-                campaignStore.state.currentCombatInfo.state == CombatState.Open
+                currentCombatInfo.state == CombatState.Open
                     ? 'bg-take-yellow-dark'
                     : 'bg-take-red ',
                 isMobile ? 'flex-1' : 'w-full',
             ]"
             @click="
-                async () =>
-                    await navigateTo(
-                        `/combat/${campaignStore.state.currentCombatInfo?.id}`,
-                    )
+                async () => await navigateTo(`/combat/${currentCombatInfo?.id}`)
             "
         >
-            <div
-                v-if="
-                    campaignStore.state.currentCombatInfo.state ==
-                    CombatState.Open
-                "
-            >
+            <div v-if="currentCombatInfo.state == CombatState.Open">
                 {{ openCombatText }}
             </div>
             <div v-else>
@@ -248,10 +240,10 @@
     </main>
 </template>
 <script setup lang="ts">
-import { CombatState } from "~/utils/types/models";
+import { CombatState } from "base/utils/types/models";
 import { toTypedSchema } from "@vee-validate/yup";
 import { useForm } from "vee-validate";
-import { yup } from "~/utils/types/HelperTypes";
+import { yup } from "base/utils/types/HelperTypes";
 import { parseISO, format } from "date-fns";
 
 // Page info
@@ -284,6 +276,10 @@ const [resources, resourcesInputProps] = defineField("resources");
 onMounted(() => {
     description.value = campaign.value?.campaignDescription ?? "";
     resources.value = campaign.value?.campaignResources ?? "";
+});
+
+const currentCombatInfo = computed(() => {
+    return campaignStore.state.currentCombatInfo;
 });
 
 const descriptionHasChanges = computed(() => {

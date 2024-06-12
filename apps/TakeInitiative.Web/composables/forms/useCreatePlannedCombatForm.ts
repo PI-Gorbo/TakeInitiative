@@ -1,9 +1,9 @@
 import { toTypedSchema } from "@vee-validate/yup";
 import type { AxiosError } from "axios";
 import { useForm } from "vee-validate";
-import type { CreatePlannedCombatRequest } from "~/utils/api/plannedCombat/createPlannedCombatRequest";
-import { yup } from "~/utils/types/HelperTypes";
-import type { PlannedCombat } from "~/utils/types/models";
+import type { CreatePlannedCombatRequest } from "base/utils/api/plannedCombat/createPlannedCombatRequest";
+import { yup } from "base/utils/types/HelperTypes";
+import type { PlannedCombat } from "base/utils/types/models";
 
 export const useCreatePlannedCombatForm = () => {
     const formState = reactive({
@@ -14,7 +14,9 @@ export const useCreatePlannedCombatForm = () => {
     const { values, errors, defineField, validate } = useForm({
         validationSchema: toTypedSchema(
             yup.object({
-                combatName: yup.string().required("Please provide a name for the combat."),
+                combatName: yup
+                    .string()
+                    .required("Please provide a name for the combat."),
             }),
         ),
     });
@@ -28,7 +30,7 @@ export const useCreatePlannedCombatForm = () => {
 
     // Form Submit
     const campaignStore = useCampaignStore();
-	function submit(): Promise<void | Omit<
+    function submit(): Promise<void | Omit<
         CreatePlannedCombatRequest,
         "campaignId"
     >> {
@@ -39,7 +41,7 @@ export const useCreatePlannedCombatForm = () => {
                     Promise.reject(result.errors);
                 }
             })
-            .then(() => ({ combatName: combatName.value! }))
+            .then(() => ({ combatName: combatName.value! }));
     }
 
     return {
@@ -50,7 +52,7 @@ export const useCreatePlannedCombatForm = () => {
             props: combatNameInputProps,
         },
         submit,
-		setError(error: ApiError<CreatePlannedCombatRequest>) {
+        setError(error: ApiError<CreatePlannedCombatRequest>) {
             formState.error = error;
         },
     };

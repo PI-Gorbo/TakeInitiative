@@ -1,0 +1,31 @@
+
+ARG NODE_VERSION=18.14.0
+ARG PORT=3000
+
+# Fetch the node runtime  
+FROM node:${NODE_VERSION}-slim as base
+
+WORKDIR /src
+
+# Build
+FROM base as build
+
+COPY package*.json .
+RUN npm install
+
+# Set node enviornment. This should be done after npm install as tailwindcss will not be installed if its a dev depdendency
+ENV NODE_ENV=production 
+
+COPY . .
+
+RUN npm run build:main
+RUN npm prune
+
+# Run
+FROM base
+
+ENV PORT=$PORT
+
+COPY --from=build /src/layers/main/.output /src/.output
+
+CMD [ "node", ".output/server/index.mjs" ]

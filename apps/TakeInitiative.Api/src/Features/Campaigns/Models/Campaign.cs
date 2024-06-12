@@ -60,8 +60,4 @@ public record Campaign
 
         return memberInfo.IsDungeonMaster;
     }
-
-    public string GetJoinCode() => CampaignIdShortener.ToShortId(this.Id);
 }
-
-

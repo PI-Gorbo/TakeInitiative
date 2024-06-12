@@ -18,7 +18,7 @@ ENV NODE_ENV=production
 
 COPY . .
 
-RUN npm run build
+RUN npm run build:admin
 RUN npm prune
 
 # Run
@@ -26,6 +26,6 @@ FROM base
 
 ENV PORT=$PORT
 
-COPY --from=build /src/.output /src/.output
+COPY --from=build /src/layers/admin/.output /src/.output
 
 CMD [ "node", ".output/server/index.mjs" ]

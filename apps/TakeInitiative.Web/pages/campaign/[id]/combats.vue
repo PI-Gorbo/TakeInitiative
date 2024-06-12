@@ -217,12 +217,12 @@
 </template>
 <script setup lang="ts">
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import Modal from "~/components/Modal.vue";
-import ConfirmModal from "~/components/ConfirmModal.vue";
-import type { ButtonLoadingControl } from "~/components/Form/Button.vue";
-import type { PlannedCombat } from "~/utils/types/models";
-import type { CreatePlannedCombatRequest } from "~/utils/api/plannedCombat/createPlannedCombatRequest";
-import { getCombatsRequest } from "~/utils/api/combat/getCombatsRequest";
+import Modal from "base/components/Modal.vue";
+import ConfirmModal from "base/components/ConfirmModal.vue";
+import type { ButtonLoadingControl } from "base/components/Form/Button.vue";
+import type { PlannedCombat } from "base/utils/types/models";
+import type { CreatePlannedCombatRequest } from "base/utils/api/plannedCombat/createPlannedCombatRequest";
+import { getCombatsRequest } from "base/utils/api/combat/getCombatsRequest";
 
 // Page info
 definePageMeta({

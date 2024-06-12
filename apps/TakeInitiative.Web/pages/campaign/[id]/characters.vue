@@ -80,10 +80,9 @@
     </main>
 </template>
 <script setup lang="ts">
-import type { PlayerCharacterDto } from "~/utils/api/campaign/createPlayerCharacterRequest";
-import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import Modal from "~/components/Modal.vue";
-import type { PlayerCharacter } from "~/utils/types/models";
+import type { PlayerCharacterDto } from "base/utils/api/campaign/createPlayerCharacterRequest";
+import Modal from "base/components/Modal.vue";
+import type { PlayerCharacter } from "base/utils/types/models";
 
 definePageMeta({
     requiresAuth: true,

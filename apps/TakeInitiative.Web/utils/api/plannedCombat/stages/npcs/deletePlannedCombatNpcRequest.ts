@@ -1,12 +1,16 @@
 import type { AxiosInstance } from "axios";
 import * as yup from "yup";
-import { characterHealthValidator, characterInitiativeValidator, plannedCombatValidator } from "~/utils/types/models";
+import {
+    characterHealthValidator,
+    characterInitiativeValidator,
+    plannedCombatValidator,
+} from "base/utils/types/models";
 
 // Get User
 export const deletePlannedCombatNpcRequestValidator = yup.object({
     combatId: yup.string().required(),
-	stageId: yup.string().required(),
-	npcId: yup.string().required(),
+    stageId: yup.string().required(),
+    npcId: yup.string().required(),
 });
 
 export type DeletePlannedCombatNpcRequest = yup.InferType<
@@ -24,7 +28,7 @@ export function deletePlannedCombatNpcRequest(axios: AxiosInstance) {
         request: DeletePlannedCombatNpcRequest,
     ): Promise<deletePlannedCombatStageResponse> {
         return axios
-            .delete("/api/campaign/planned-combat/stage/npc", {data: request})
+            .delete("/api/campaign/planned-combat/stage/npc", { data: request })
             .then(async function (response) {
                 const result =
                     await deletePlannedCombatNpcResponseValidator.validate(

@@ -33,7 +33,10 @@ const {
         const userStore = useUserStore();
         return await userStore
             .joinCampaign({ joinCode })
-            .then(async () => await navigateTo("/"))
+            .then(
+                async (c) =>
+                    await useNavigator().toCampaignTab(c.id, "summary"),
+            )
             .then(() => true)
             .catch(
                 async (err) =>

@@ -34,6 +34,6 @@ public class PostStartCombat(IDocumentSession session, IHubContext<CombatHub> co
             Combat = result.Value,
         });
         await combatHub.NotifyCombatUpdated(result.Value);
-        await campaignHub.NotifyCombatStateUpdated(result.Value.CampaignId);
+        await campaignHub.NotifyCampaignStateUpdated(result.Value.CampaignId);
     }
 }

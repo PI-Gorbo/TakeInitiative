@@ -8,9 +8,10 @@ const getUserCampaignDto = yup.object({
     campaignId: yup.string().required(),
     joinCode: yup.string().required(),
 });
-const getUserResponseSchema = yup.object({
+export const getUserResponseSchema = yup.object({
     userId: yup.string().required(),
     username: yup.string().required(),
+    confirmedEmail: yup.boolean().required(),
     dmCampaigns: yup.array(getUserCampaignDto).required(),
     memberCampaigns: yup.array(getUserCampaignDto).required(),
 });

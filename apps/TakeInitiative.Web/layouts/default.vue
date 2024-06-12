@@ -18,7 +18,7 @@
                         >
                             <img
                                 class="h-[3em] w-[3em]"
-                                src="~assets/yellowDice.png"
+                                src="../assets/yellowDice.png"
                             />
                             <label
                                 class="font-NovaCut text-2xl text-take-yellow md:text-3xl"
@@ -113,12 +113,20 @@
                     />
                 </li>
                 <li class="flex-1 bg-take-navy"></li>
+                <li class="bg-take-navy font-NovaCut text-take-yellow">
+                    {{ userStore.username }}
+                </li>
+                <li v-if="!userStore.state?.user?.confirmedEmail">
+                    <FormButton
+                        label="Confirm Email"
+                        icon="envelope"
+                        :click="async () => await useNavigator().confirmEmail()"
+                        buttonColour="take-navy-dark"
+                        hoverButtonColour="take-navy-medium"
+                        size="sm"
+                    />
+                </li>
                 <li>
-                    <div
-                        class="font-NovaCut text-take-yellow hover:bg-take-navy"
-                    >
-                        {{ userStore.username }}
-                    </div>
                     <FormButton
                         label="Logout"
                         :loadingDisplay="{
@@ -208,9 +216,9 @@
 </template>
 <script setup lang="ts">
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import Modal from "~/components/Modal.vue";
-import type { CreateCampaignRequest } from "~/utils/api/campaign/createCampaignRequest";
-import type { JoinCampaignRequest } from "~/utils/api/campaign/joinCampaignRequest";
+import Modal from "base/components/Modal.vue";
+import type { CreateCampaignRequest } from "base/utils/api/campaign/createCampaignRequest";
+import type { JoinCampaignRequest } from "base/utils/api/campaign/joinCampaignRequest";
 
 const nav = useNavigator();
 const config = useRuntimeConfig();

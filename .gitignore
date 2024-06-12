@@ -482,3 +482,5 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+apps/TakeInitiative.Api/appsettings.Development.json

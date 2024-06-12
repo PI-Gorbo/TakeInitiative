@@ -1,11 +1,11 @@
-import type { CreateCampaignRequest } from "~/utils/api/campaign/createCampaignRequest";
-import type { DeleteCampaignRequest } from "~/utils/api/campaign/deleteCampaignRequest";
-import type { JoinCampaignRequest } from "~/utils/api/campaign/joinCampaignRequest";
-import type { UpdateCampaignDetailsRequest } from "~/utils/api/campaign/updateCampaignDetailsRequest";
-import type { GetUserResponse } from "~/utils/api/user/getUserRequest";
-import type { LoginRequest } from "~/utils/api/user/loginRequest";
-import type { SignUpRequest } from "~/utils/api/user/signUpRequest";
-import type { Campaign } from "~/utils/types/models";
+import type { CreateCampaignRequest } from "base/utils/api/campaign/createCampaignRequest";
+import type { DeleteCampaignRequest } from "base/utils/api/campaign/deleteCampaignRequest";
+import type { JoinCampaignRequest } from "base/utils/api/campaign/joinCampaignRequest";
+import type { UpdateCampaignDetailsRequest } from "base/utils/api/campaign/updateCampaignDetailsRequest";
+import type { GetUserResponse } from "base/utils/api/user/getUserRequest";
+import type { LoginRequest } from "base/utils/api/user/loginRequest";
+import type { SignUpRequest } from "base/utils/api/user/signUpRequest";
+import type { Campaign } from "base/utils/types/models";
 
 type User = GetUserResponse;
 export const useUserStore = defineStore("userStore", () => {
@@ -82,6 +82,12 @@ export const useUserStore = defineStore("userStore", () => {
         });
     }
 
+    async function confirmEmail(code: string): Promise<unknown> {
+        return await api.user
+            .confirmEmailWithToken(code)
+            .then((user) => (state.user = user));
+    }
+
     async function logout(): Promise<void> {
         await api.user
             .logout()
@@ -114,11 +120,10 @@ export const useUserStore = defineStore("userStore", () => {
             .delete(request)
             .then(fetchUser)
             .then(async () => {
-                console.log(campaignList.value)
+                console.log(campaignList.value);
                 if ((campaignList.value?.length ?? 0) == 0) {
-                    console.log("Navigating to create or join page")
-                    return useNavigator()
-                        .toCreateOrJoinCampaign();
+                    console.log("Navigating to create or join page");
+                    return useNavigator().toCreateOrJoinCampaign();
                 }
 
                 // Check if its the campaigns route.
@@ -168,6 +173,7 @@ export const useUserStore = defineStore("userStore", () => {
         state,
         init,
         refetchUser: fetchUser,
+        ConfirmEmail: confirmEmail,
         login,
         signUp,
         isLoggedIn,

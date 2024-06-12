@@ -107,12 +107,12 @@
 </template>
 
 <script setup lang="ts">
-import type { PlannedCombatStage } from "~/utils/types/models";
+import type { PlannedCombatStage } from "base/utils/types/models";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import type {
     PostStagePlannedCharactersRequest,
     StagePlannedCharacterDto,
-} from "~/utils/api/combat/postStagePlannedCharactersRequest";
+} from "base/utils/api/combat/postStagePlannedCharactersRequest";
 
 const props = defineProps<{
     stages: PlannedCombatStage[];
