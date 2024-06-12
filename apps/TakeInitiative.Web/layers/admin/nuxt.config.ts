@@ -1,5 +1,5 @@
 export default defineNuxtConfig({
-    extends: ["../.."],
+    extends: ["../base"],
     devServer: {
         port: 3001,
     },
