@@ -11,14 +11,13 @@ WORKDIR /src
 FROM base as build
 
 COPY package*.json .
-RUN npm install
+RUN npm ci 
 
 # Set node enviornment. This should be done after npm install as tailwindcss will not be installed if its a dev depdendency
 ENV NODE_ENV=production 
 
 COPY . .
 
-RUN npm run postinstall:main
 RUN npm run build:main
 RUN npm prune
 
