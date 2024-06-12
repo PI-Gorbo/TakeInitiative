@@ -49,7 +49,7 @@ import { useForm } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/yup";
 import * as yup from "yup";
 import { formatDiagnosticsWithColorAndContext } from "typescript";
-import type { SignUpRequest } from "~/utils/api/user/signUpRequest";
+import type { SignUpRequest } from "base/utils/api/user/signUpRequest";
 import type { LocationQueryValue } from "vue-router";
 const route = useRoute();
 definePageMeta({

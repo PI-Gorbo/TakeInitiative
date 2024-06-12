@@ -40,7 +40,7 @@
     </li>
 </template>
 <script setup lang="ts" generic="TListItem">
-import type { TakeInitColour } from "~/utils/types/HelperTypes";
+import type { TakeInitColour } from "base/utils/types/HelperTypes";
 
 const details = ref<HTMLDetailsElement | null>(null);
 const props = withDefaults(

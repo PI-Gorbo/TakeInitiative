@@ -10,7 +10,7 @@
     />
 </template>
 <script setup lang="ts">
-import type { TakeInitColour } from "~/utils/types/HelperTypes";
+import type { TakeInitColour } from "base/utils/types/HelperTypes";
 import type { FromButtonProps } from "./Button.vue";
 
 type ConfirmButtonProps = FromButtonProps & {

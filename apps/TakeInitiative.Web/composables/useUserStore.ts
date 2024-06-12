@@ -1,11 +1,11 @@
-import type { CreateCampaignRequest } from "~/utils/api/campaign/createCampaignRequest";
-import type { DeleteCampaignRequest } from "~/utils/api/campaign/deleteCampaignRequest";
-import type { JoinCampaignRequest } from "~/utils/api/campaign/joinCampaignRequest";
-import type { UpdateCampaignDetailsRequest } from "~/utils/api/campaign/updateCampaignDetailsRequest";
-import type { GetUserResponse } from "~/utils/api/user/getUserRequest";
-import type { LoginRequest } from "~/utils/api/user/loginRequest";
-import type { SignUpRequest } from "~/utils/api/user/signUpRequest";
-import type { Campaign } from "~/utils/types/models";
+import type { CreateCampaignRequest } from "base/utils/api/campaign/createCampaignRequest";
+import type { DeleteCampaignRequest } from "base/utils/api/campaign/deleteCampaignRequest";
+import type { JoinCampaignRequest } from "base/utils/api/campaign/joinCampaignRequest";
+import type { UpdateCampaignDetailsRequest } from "base/utils/api/campaign/updateCampaignDetailsRequest";
+import type { GetUserResponse } from "base/utils/api/user/getUserRequest";
+import type { LoginRequest } from "base/utils/api/user/loginRequest";
+import type { SignUpRequest } from "base/utils/api/user/signUpRequest";
+import type { Campaign } from "base/utils/types/models";
 
 type User = GetUserResponse;
 export const useUserStore = defineStore("userStore", () => {

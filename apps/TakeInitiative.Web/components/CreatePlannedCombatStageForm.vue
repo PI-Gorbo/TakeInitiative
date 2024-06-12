@@ -32,8 +32,8 @@
 </template>
 
 <script setup lang="ts">
-import FormInput from "~/components/Form/Input.vue";
-import type { CreatePlannedCombatStageRequest } from "~/utils/api/plannedCombat/stages/createPlannedCombatStageRequest";
+import FormInput from "base/components/Form/Input.vue";
+import type { CreatePlannedCombatStageRequest } from "base/utils/api/plannedCombat/stages/createPlannedCombatStageRequest";
 const createPlannedCombatStageForm = useCreatePlannedCombatStageForm();
 const props = defineProps<{
     onSubmit: (

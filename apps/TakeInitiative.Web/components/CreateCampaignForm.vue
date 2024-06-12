@@ -39,7 +39,7 @@ import { Form } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/yup";
 import { useForm } from "vee-validate";
 import * as yup from "yup";
-import type { CreateCampaignRequest } from "~/utils/api/campaign/createCampaignRequest";
+import type { CreateCampaignRequest } from "base/utils/api/campaign/createCampaignRequest";
 const formState = reactive({
     formError: null as null | ApiError<CreateCampaignRequest>,
 });

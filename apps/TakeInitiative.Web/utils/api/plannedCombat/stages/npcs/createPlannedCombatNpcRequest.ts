@@ -4,7 +4,7 @@ import {
     characterHealthValidator,
     characterInitiativeValidator,
     plannedCombatValidator,
-} from "~/utils/types/models";
+} from "base/utils/types/models";
 
 // Get User
 export const createPlannedCombatNpcRequestValidator = yup.object({

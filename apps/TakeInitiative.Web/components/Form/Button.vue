@@ -74,10 +74,10 @@
 import type {
     FontAwesomeIconSize as FontAwesomeIconSize,
     TakeInitColour,
-} from "~/utils/types/HelperTypes";
+} from "base/utils/types/HelperTypes";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import type { SubmittingState } from "./Base.vue";
-import { TakeInitContrastColour } from "~/utils/types/HelperTypes";
+import { TakeInitContrastColour } from "base/utils/types/HelperTypes";
 
 const buttonRef = ref<HTMLButtonElement | null>(null);
 export type LoadingDisplay = { showSpinner: true; loadingText?: string };

@@ -1,14 +1,14 @@
-import type { CreatePlannedCombatStageRequest } from "~/utils/api/plannedCombat/stages/createPlannedCombatStageRequest";
+import type { CreatePlannedCombatStageRequest } from "base/utils/api/plannedCombat/stages/createPlannedCombatStageRequest";
 import type {
     PlannedCombat,
     PlannedCombatCharacter,
     PlannedCombatStage,
 } from "../utils/types/models";
-import type { CreatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
-import type { UpdatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
-import type { UpdatePlannedCombatStageRequest } from "~/utils/api/plannedCombat/stages/updatePlannedCombatStageRequest";
-import type { GetCombatsResponse } from "~/utils/api/combat/getCombatsRequest";
-import type { CreatePlannedCombatRequest } from "~/utils/api/plannedCombat/createPlannedCombatRequest";
+import type { CreatePlannedCombatNpcRequest } from "base/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
+import type { UpdatePlannedCombatNpcRequest } from "base/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
+import type { UpdatePlannedCombatStageRequest } from "base/utils/api/plannedCombat/stages/updatePlannedCombatStageRequest";
+import type { GetCombatsResponse } from "base/utils/api/combat/getCombatsRequest";
+import type { CreatePlannedCombatRequest } from "base/utils/api/plannedCombat/createPlannedCombatRequest";
 export const useCampaignCombatsStore = defineStore(
     "campaignCombatsStore",
     () => {

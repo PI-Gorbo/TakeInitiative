@@ -3,8 +3,11 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "nuxt build",
-        "dev": "nuxt dev",
+        "build:main": "nuxt build ./layers/main",
+        "build:admin": "nuxt build ./layers/admin",
+        "dev": "npm run dev:main",
+        "dev:main": "nuxt dev ./layers/main",
+        "dev:admin": "nuxt dev ./layers/admin",
         "generate": "nuxt generate",
         "preview": "nuxt preview",
         "postinstall": "nuxt prepare"

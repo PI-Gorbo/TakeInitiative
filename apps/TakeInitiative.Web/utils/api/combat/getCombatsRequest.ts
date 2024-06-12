@@ -1,6 +1,6 @@
 import type { AxiosInstance } from "axios";
 import * as yup from "yup";
-import { CombatState, plannedCombatValidator } from "~/utils/types/models";
+import { CombatState, plannedCombatValidator } from "base/utils/types/models";
 
 // Get User
 export type GetCombatsRequest = {

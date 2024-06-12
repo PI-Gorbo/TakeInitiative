@@ -94,10 +94,10 @@ import {
     characterInitiativeValidator,
     type CombatCharacter,
     characterHealthValidator,
-} from "~/utils/types/models";
-import type { StagedCharacterDTO } from "~/utils/api/combat/putUpsertStagedCharacter";
+} from "base/utils/types/models";
+import type { StagedCharacterDTO } from "base/utils/api/combat/putUpsertStagedCharacter";
 import type { SubmittingState } from "../Form/Base.vue";
-import type { DeleteStagedCharacterRequest } from "~/utils/api/combat/deleteStagedCharacterRequest";
+import type { DeleteStagedCharacterRequest } from "base/utils/api/combat/deleteStagedCharacterRequest";
 const { userIsDm } = storeToRefs(useCombatStore());
 const formState = reactive({
     error: null as ApiError<StagedCharacterDTO> | null,

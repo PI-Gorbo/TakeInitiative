@@ -53,17 +53,17 @@ import type {
     PlannedCombat,
     PlannedCombatCharacter,
     PlannedCombatStage,
-} from "~/utils/types/models";
+} from "base/utils/types/models";
 import type ConfirmModalVue from "../ConfirmModal.vue";
 import type { ButtonLoadingControl } from "../Form/Button.vue";
-import Modal from "~/components/Modal.vue";
-import type { CreatePlannedCombatRequest } from "~/utils/api/plannedCombat/createPlannedCombatRequest";
-import type { CreatePlannedCombatStageRequest } from "~/utils/api/plannedCombat/stages/createPlannedCombatStageRequest";
-import type { CreatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
-import type { UpdatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
+import Modal from "base/components/Modal.vue";
+import type { CreatePlannedCombatRequest } from "base/utils/api/plannedCombat/createPlannedCombatRequest";
+import type { CreatePlannedCombatStageRequest } from "base/utils/api/plannedCombat/stages/createPlannedCombatStageRequest";
+import type { CreatePlannedCombatNpcRequest } from "base/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
+import type { UpdatePlannedCombatNpcRequest } from "base/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
 import PlannedCombatStageDisplay from "./PlannedCombatStageDisplay.vue";
-import type { DeletePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/deletePlannedCombatNpcRequest";
-import type { UpdatePlannedCombatStageRequest } from "~/utils/api/plannedCombat/stages/updatePlannedCombatStageRequest";
+import type { DeletePlannedCombatNpcRequest } from "base/utils/api/plannedCombat/stages/npcs/deletePlannedCombatNpcRequest";
+import type { UpdatePlannedCombatStageRequest } from "base/utils/api/plannedCombat/stages/updatePlannedCombatStageRequest";
 
 const campaignStore = useCampaignStore();
 const campaignCombatStore = useCampaignCombatsStore();

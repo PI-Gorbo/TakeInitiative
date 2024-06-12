@@ -24,7 +24,7 @@
     </div>
 </template>
 <script setup lang="ts">
-import type { PlayerCharacter } from "~/utils/types/models";
+import type { PlayerCharacter } from "base/utils/types/models";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 const props = defineProps<{
     character: PlayerCharacter;
