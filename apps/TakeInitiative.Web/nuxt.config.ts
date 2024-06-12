@@ -16,7 +16,6 @@ export default defineNuxtConfig({
         "/combat/**": { ssr: false },
     },
     devtools: { enabled: true },
-    typescript: {},
     runtimeConfig: {
         public: {
             // https://medium.com/@hackcharms/how-to-use-axios-in-nuxt3-same-as	-nuxt2-with-typescript-3f4daf524cdd
