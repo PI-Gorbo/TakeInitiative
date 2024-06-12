@@ -38,11 +38,11 @@
 </template>
 
 <script setup lang="ts">
-import type { CreatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
-import type { UpdatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
-import type { PlannedCombatCharacter } from "~/utils/types/models";
-import Modal from "~/components/Modal.vue";
-import type { DeletePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/deletePlannedCombatNpcRequest";
+import type { CreatePlannedCombatNpcRequest } from "base/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
+import type { UpdatePlannedCombatNpcRequest } from "base/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
+import type { PlannedCombatCharacter } from "base/utils/types/models";
+import Modal from "base/components/Modal.vue";
+import type { DeletePlannedCombatNpcRequest } from "base/utils/api/plannedCombat/stages/npcs/deletePlannedCombatNpcRequest";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 const editPlannedCharacterFormModal = ref<InstanceType<typeof Modal> | null>(
     null,

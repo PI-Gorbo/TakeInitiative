@@ -240,10 +240,10 @@
     </main>
 </template>
 <script setup lang="ts">
-import { CombatState } from "~/utils/types/models";
+import { CombatState } from "base/utils/types/models";
 import { toTypedSchema } from "@vee-validate/yup";
 import { useForm } from "vee-validate";
-import { yup } from "~/utils/types/HelperTypes";
+import { yup } from "base/utils/types/HelperTypes";
 import { parseISO, format } from "date-fns";
 
 // Page info

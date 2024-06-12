@@ -99,7 +99,6 @@
                     <CharacterHealthDisplay
                         :health="charInfo.character.health"
                         :displayMethod="getDisplayMethod(charInfo)"
-                        
                     />
                     <div
                         v-if="charInfo.character.armourClass"
@@ -130,8 +129,12 @@
     </TransitionGroup>
 </template>
 <script setup lang="ts">
-import type { CampaignMemberDto } from "~/utils/api/campaign/getCampaignRequest";
-import { type CombatCharacter, CombatState, type DisplayOptionValues, DisplayOptionEnum } from "~/utils/types/models";
+import {
+    type CombatCharacter,
+    CombatState,
+    type DisplayOptionValues,
+    DisplayOptionEnum,
+} from "base/utils/types/models";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 
 const userStore = useUserStore();
@@ -176,16 +179,18 @@ const characterList = computed(() => {
     }
 });
 
-function getDisplayMethod(character: CombatPlayerDto) : DisplayOptionValues {
+function getDisplayMethod(character: CombatPlayerDto): DisplayOptionValues {
     if (userIsDm.value) {
-        return DisplayOptionEnum['RealValue']
+        return DisplayOptionEnum["RealValue"];
     }
 
     if (character.user.isDungeonMaster) {
-        return campaignStore.state.campaign?.campaignSettings.combatHealthDisplaySettings.dmCharacterDisplayMethod!;
+        return campaignStore.state.campaign?.campaignSettings
+            .combatHealthDisplaySettings.dmCharacterDisplayMethod!;
     }
 
-    return campaignStore.state.campaign?.campaignSettings.combatHealthDisplaySettings.otherPlayerCharacterDisplayMethod!;
+    return campaignStore.state.campaign?.campaignSettings
+        .combatHealthDisplaySettings.otherPlayerCharacterDisplayMethod!;
 }
 </script>
 

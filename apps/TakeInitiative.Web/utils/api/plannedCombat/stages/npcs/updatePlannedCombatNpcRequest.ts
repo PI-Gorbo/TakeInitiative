@@ -1,17 +1,21 @@
 import type { AxiosInstance } from "axios";
 import * as yup from "yup";
-import { characterHealthValidator, characterInitiativeValidator, plannedCombatValidator } from "~/utils/types/models";
+import {
+    characterHealthValidator,
+    characterInitiativeValidator,
+    plannedCombatValidator,
+} from "base/utils/types/models";
 
 // Get User
 export const updatePlannedCombatNpcRequestValidator = yup.object({
     combatId: yup.string().required(),
-	stageId: yup.string().required(),
-	npcId: yup.string().required(),
-	name: yup.string().required(),
-	health: characterHealthValidator.notRequired(),
-	armourClass: yup.number().notRequired(),
-	initiative: characterInitiativeValidator.required(),
-	quantity: yup.number().required().min(1)	
+    stageId: yup.string().required(),
+    npcId: yup.string().required(),
+    name: yup.string().required(),
+    health: characterHealthValidator.notRequired(),
+    armourClass: yup.number().notRequired(),
+    initiative: characterInitiativeValidator.required(),
+    quantity: yup.number().required().min(1),
 });
 
 export type UpdatePlannedCombatNpcRequest = yup.InferType<

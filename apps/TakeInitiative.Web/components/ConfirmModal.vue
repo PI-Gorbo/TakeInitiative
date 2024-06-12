@@ -23,8 +23,8 @@
     </Modal>
 </template>
 <script setup lang="ts">
-import Modal from "~/components/Modal.vue";
-import type { TakeInitColour } from "~/utils/types/HelperTypes";
+import Modal from "base/components/Modal.vue";
+import type { TakeInitColour } from "base/utils/types/HelperTypes";
 import type { ButtonLoadingControl } from "./Form/Button.vue";
 const confirmModal = ref<InstanceType<typeof Modal> | null>(null);
 const props = withDefaults(

@@ -61,13 +61,13 @@
 import { useForm } from "vee-validate";
 import type { SubmittingState } from "../Form/Base.vue";
 import { toTypedSchema } from "@vee-validate/yup";
-import { yup } from "~/utils/types/HelperTypes";
+import { yup } from "base/utils/types/HelperTypes";
 import {
     characterHealthValidator,
     characterInitiativeValidator,
     type CombatCharacter,
-} from "~/utils/types/models";
-import type { CombatCharacterDto } from "~/utils/api/combat/putUpdateInitiativeCharacterRequest";
+} from "base/utils/types/models";
+import type { CombatCharacterDto } from "base/utils/api/combat/putUpdateInitiativeCharacterRequest";
 const userStore = useUserStore();
 const { userIsDm } = storeToRefs(useCombatStore());
 

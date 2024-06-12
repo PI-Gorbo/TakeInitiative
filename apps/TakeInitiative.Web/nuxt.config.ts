@@ -1,6 +1,10 @@
 import type { CreateAxiosDefaults } from "axios";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
+const executionDirectory = dirname(fileURLToPath(import.meta.url));
+console.log("Im the root nuxt.config file", executionDirectory);
 export default defineNuxtConfig({
     app: {
         head: {
@@ -10,7 +14,7 @@ export default defineNuxtConfig({
         pageTransition: { name: "fade", mode: "out-in" },
     },
     routeRules: {
-        '/combat/**': {ssr: false}
+        "/combat/**": { ssr: false },
     },
     devtools: { enabled: true },
     typescript: {},
@@ -29,7 +33,10 @@ export default defineNuxtConfig({
             "@fortawesome/fontawesome-svg-core",
         ],
     },
-    css: ["~/assets/main.css", "@fortawesome/fontawesome-svg-core/styles.css"],
+    css: [
+        join(executionDirectory, "./assets/main.css"),
+        "@fortawesome/fontawesome-svg-core/styles.css",
+    ],
     postcss: {
         plugins: {
             tailwindcss: {},
@@ -38,4 +45,7 @@ export default defineNuxtConfig({
     },
     modules: ["@pinia/nuxt", "@nuxtjs/device"],
     plugins: [],
+    alias: {
+        base: executionDirectory,
+    },
 });

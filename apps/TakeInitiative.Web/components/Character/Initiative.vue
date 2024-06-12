@@ -40,7 +40,7 @@
     </div>
 </template>
 <script setup lang="ts">
-import { InitiativeStrategy } from "~/utils/types/models";
+import { InitiativeStrategy } from "base/utils/types/models";
 
 const props = withDefaults(
     defineProps<{

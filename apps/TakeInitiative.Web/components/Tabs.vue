@@ -43,8 +43,8 @@
 </template>
 <script setup lang="ts">
 import { ObjectSchema } from "yup";
-import type { TakeInitColour } from "~/utils/types/HelperTypes";
-import { TakeInitContrastColour } from "~/utils/types/HelperTypes";
+import type { TakeInitColour } from "base/utils/types/HelperTypes";
+import { TakeInitContrastColour } from "base/utils/types/HelperTypes";
 import gsap from "gsap";
 
 const slots = useSlots();

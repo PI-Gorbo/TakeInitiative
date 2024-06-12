@@ -63,7 +63,7 @@
 import { useForm } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/yup";
 import * as yup from "yup";
-import type { LoginRequest } from "~/utils/api/user/loginRequest";
+import type { LoginRequest } from "base/utils/api/user/loginRequest";
 import { getDefaultLibFileName } from "typescript";
 import type { LocationQueryValue } from "vue-router";
 const redirectToPath = useRoute().query.redirectTo as LocationQueryValue;

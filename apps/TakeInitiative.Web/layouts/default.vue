@@ -18,7 +18,7 @@
                         >
                             <img
                                 class="h-[3em] w-[3em]"
-                                src="~assets/yellowDice.png"
+                                src="../assets/yellowDice.png"
                             />
                             <label
                                 class="font-NovaCut text-2xl text-take-yellow md:text-3xl"
@@ -216,9 +216,9 @@
 </template>
 <script setup lang="ts">
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import Modal from "~/components/Modal.vue";
-import type { CreateCampaignRequest } from "~/utils/api/campaign/createCampaignRequest";
-import type { JoinCampaignRequest } from "~/utils/api/campaign/joinCampaignRequest";
+import Modal from "base/components/Modal.vue";
+import type { CreateCampaignRequest } from "base/utils/api/campaign/createCampaignRequest";
+import type { JoinCampaignRequest } from "base/utils/api/campaign/joinCampaignRequest";
 
 const nav = useNavigator();
 const config = useRuntimeConfig();

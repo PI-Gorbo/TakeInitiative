@@ -143,7 +143,7 @@
                     modalState.modalType ==
                     'Combat Started Staged Character Menu'
                 "
-                    @RolledCharactersIntoInitiative="() => closeModal()"
+                @RolledCharactersIntoInitiative="() => closeModal()"
             />
             <CombatModifyStagedCharacterForm
                 v-if="modalState.modalType == 'Edit Staged Character'"
@@ -177,21 +177,21 @@
 </template>
 <script setup lang="ts">
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import type CollapsableHorizontalMenu from "~/components/CollapsableHorizontalMenu.vue";
-import ConfirmButton from "~/components/Form/ConfirmButton.vue";
-import Modal from "~/components/Modal.vue";
-import type { CampaignMemberDto } from "~/utils/api/campaign/getCampaignRequest";
-import type { DeleteStagedCharacterRequest } from "~/utils/api/combat/deleteStagedCharacterRequest";
-import type { PostStagePlannedCharactersRequest } from "~/utils/api/combat/postStagePlannedCharactersRequest";
+import type CollapsableHorizontalMenu from "base/components/CollapsableHorizontalMenu.vue";
+import ConfirmButton from "base/components/Form/ConfirmButton.vue";
+import Modal from "base/components/Modal.vue";
+import type { CampaignMemberDto } from "base/utils/api/campaign/getCampaignRequest";
+import type { DeleteStagedCharacterRequest } from "base/utils/api/combat/deleteStagedCharacterRequest";
+import type { PostStagePlannedCharactersRequest } from "base/utils/api/combat/postStagePlannedCharactersRequest";
 import type {
     StagedCharacterDTO,
     UpsertStagedCharacterRequest,
-} from "~/utils/api/combat/putUpsertStagedCharacter";
+} from "base/utils/api/combat/putUpsertStagedCharacter";
 import {
     CombatState,
     type Combat,
     type CombatCharacter,
-} from "~/utils/types/models";
+} from "base/utils/types/models";
 
 const campaignStore = useCampaignStore();
 const userStore = useUserStore();

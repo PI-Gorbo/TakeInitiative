@@ -27,8 +27,8 @@
     </div>
 </template>
 <script setup lang="ts">
-import type { FormInputProps } from "~/utils/types/FormInputBase";
-import type { TakeInitColour } from "~/utils/types/HelperTypes";
+import type { FormInputProps } from "base/utils/types/FormInputBase";
+import type { TakeInitColour } from "base/utils/types/HelperTypes";
 
 const props = withDefaults(
     defineProps<

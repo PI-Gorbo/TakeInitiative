@@ -39,7 +39,7 @@
 import { toTypedSchema } from "@vee-validate/yup";
 import { useForm } from "vee-validate";
 import * as yup from "yup";
-import type { JoinCampaignRequest } from "~/utils/api/campaign/joinCampaignRequest";
+import type { JoinCampaignRequest } from "base/utils/api/campaign/joinCampaignRequest";
 
 const formState = reactive({
     formError: null as null | ApiError<JoinCampaignRequest>,
