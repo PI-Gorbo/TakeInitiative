@@ -11,6 +11,7 @@
         "generate:main": "nuxt generate ./layers/main",
         "generate:admin": "nuxt generate ./layers/admin",
         "preview": "nuxt preview",
+        "postinstall": "npm run postinstall:main && npm run postinstall:admin",
         "postinstall:main": "nuxt prepare ./layers/main",
         "postinstall:admin": "nuxt prepare ./layers/admin"
     },
