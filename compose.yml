@@ -34,7 +34,7 @@ services:
     web:
         build:
             context: ./apps/TakeInitiative.Web/
-            dockerfile: ./apps/TakeInitiative.Web/dockerfile.Main
+            dockerfile: ./dockerfile.Main
         container_name: takeweb
         ports:
             - "7403:3000"
@@ -45,7 +45,7 @@ services:
     admin:
         build:
             context: ./apps/TakeInitiative.Web/
-            dockerfile: ./apps/TakeInitiative.Web/dockerfile.Main
+            dockerfile: ./dockerfile.Admin
         container_name: takeweb
         ports:
             - "7404:3000"
