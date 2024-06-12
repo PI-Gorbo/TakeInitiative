@@ -4,7 +4,6 @@ import { fileURLToPath } from "url";
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 const executionDirectory = dirname(fileURLToPath(import.meta.url));
-console.log("Im the root nuxt.config file", executionDirectory);
 export default defineNuxtConfig({
     app: {
         head: {
