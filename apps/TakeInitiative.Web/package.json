@@ -8,9 +8,11 @@
         "dev": "npm run dev:main",
         "dev:main": "nuxt dev ./layers/main",
         "dev:admin": "nuxt dev ./layers/admin",
-        "generate": "nuxt generate",
+        "generate:main": "nuxt generate ./layers/main",
+        "generate:admin": "nuxt generate ./layers/admin",
         "preview": "nuxt preview",
-        "postinstall": "nuxt prepare"
+        "postinstall:main": "nuxt prepare ./layers/main",
+        "postinstall:admin": "nuxt prepare ./layers/admin"
     },
     "dependencies": {
         "@fortawesome/free-solid-svg-icons": "^6.5.1",
