@@ -13,8 +13,6 @@ public class PostPlayerCharacter(IDocumentSession session) : Endpoint<PostPlayer
     public override void Configure()
     {
         Post("/api/campaign/member/character");
-        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
-        Policies(TakePolicies.UserExists);
     }
 
     public override async Task HandleAsync(PostPlayerCharacterRequest req, CancellationToken ct)

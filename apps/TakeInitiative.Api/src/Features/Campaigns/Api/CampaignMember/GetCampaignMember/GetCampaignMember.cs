@@ -12,8 +12,6 @@ public class GetCampaignMember(IDocumentStore Store) : Endpoint<GetCampaignMembe
     public override void Configure()
     {
         Get("/api/campaign/member");
-        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
-        Policies(TakePolicies.UserExists);
     }
 
     public override async Task HandleAsync(GetCampaignMemberRequest req, CancellationToken ct)

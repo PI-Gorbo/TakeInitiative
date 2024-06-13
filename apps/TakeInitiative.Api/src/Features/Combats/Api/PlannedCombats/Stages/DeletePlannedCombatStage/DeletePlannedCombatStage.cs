@@ -12,8 +12,6 @@ public class DeletePlannedCombatStage(IDocumentStore Store) : Endpoint<DeletePla
     public override void Configure()
     {
         Delete("/api/campaign/planned-combat/stage");
-        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
-        Policies(TakePolicies.UserExists);
     }
 
     public override async Task HandleAsync(DeletePlannedCombatStageRequest req, CancellationToken ct)

@@ -1,5 +1,7 @@
+using System.Text.Json;
 using FastEndpoints;
 using JasperFx.Core;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 internal class Program
@@ -34,16 +36,24 @@ internal class Program
         builder.AddSendGrid();
 
         // Cors
-        var cors = (builder.Configuration.GetValue<string>("CORS") ?? throw new MissingMemberException("Missing configuration for value 'CORS'."))
-                        .Split(";").ToArray();
 
-        builder.Services.AddCors(opts => opts.AddPolicy("ApiCORS", corsBuilder => corsBuilder
-                .WithOrigins(cors)
-                .AllowAnyHeader()
-                .AllowAnyMethod()
-                .AllowCredentials()
-            ));
+        builder.Services.AddCors(
+            opts =>
+            {
+                var mainAppCors = (builder.Configuration.GetValue<string>("CORS:MainApp") ?? throw new MissingMemberException("Missing configuration for value 'CORS:MainApp'.")).Split(";").ToArray();
+                opts.AddPolicy("MainAppCors", corsBuilder => corsBuilder
+                                .WithOrigins(mainAppCors)
+                                .AllowAnyHeader()
+                                .AllowAnyMethod()
+                                .AllowCredentials());
 
+                var adminAppCors = (builder.Configuration.GetValue<string>("CORS:AdminApp") ?? throw new MissingMemberException("Missing configuration for value 'CORS:AdminApp'.")).Split(";").ToArray();
+                opts.AddPolicy("AdminAppCors", corsBuilder => corsBuilder
+                                .WithOrigins(adminAppCors)
+                                .AllowAnyHeader()
+                                .AllowAnyMethod()
+                                .AllowCredentials());
+            });
 
         var app = builder.Build();
 
@@ -58,8 +68,22 @@ internal class Program
         app.MapHub<CombatHub>("/combatHub");
         app.MapHub<CampaignHub>("/campaignHub");
 
-        app.UseCors("ApiCORS")
-            .UseFastEndpoints()
+        app.UseCors("MainAppCors")
+            .UseFastEndpoints(cfg =>
+            {
+                cfg.Endpoints.Configurator = (endpoint) =>
+                {
+                    if (endpoint.Routes.Any(route => route.StartsWith("/api/admin")))
+                    {
+                        endpoint.Options(opts => opts.RequireCors("AdminAppCors"));
+                    }
+                    else
+                    {
+                        endpoint.AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
+                        endpoint.Policies(TakePolicies.UserExists);
+                    }
+                };
+            })
             .UseAuthentication()
             .UseAuthorization();
 

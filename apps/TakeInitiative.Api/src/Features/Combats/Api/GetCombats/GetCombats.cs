@@ -11,8 +11,6 @@ public class GetCombats(IDocumentStore Store) : EndpointWithoutRequest<GetCombat
     public override void Configure()
     {
         Get("/api/combats/");
-        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
-        Policies(TakePolicies.UserExists);
     }
 
     public override async Task HandleAsync(CancellationToken ct)

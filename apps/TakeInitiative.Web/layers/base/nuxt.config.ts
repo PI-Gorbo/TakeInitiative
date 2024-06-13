@@ -7,7 +7,13 @@ const executionDirectory = dirname(fileURLToPath(import.meta.url));
 export default defineNuxtConfig({
     app: {
         head: {
-            link: [{ rel: "icon", type: "image/png", href: "/yellowDice.png" }],
+            link: [
+                {
+                    rel: "icon",
+                    type: "image/png",
+                    href: "yellowDice.png",
+                },
+            ],
             title: "Take Initiative",
         },
         pageTransition: { name: "fade", mode: "out-in" },

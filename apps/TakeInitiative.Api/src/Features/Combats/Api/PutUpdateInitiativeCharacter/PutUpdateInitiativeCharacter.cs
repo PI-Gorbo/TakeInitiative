@@ -11,8 +11,6 @@ public class PutUpdateInitiativeCharacter(IHubContext<CombatHub> hubContext) : E
     public override void Configure()
     {
         Put("/api/combat/initiative/character");
-        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
-        Policies(TakePolicies.UserExists);
     }
 
     public override async Task HandleAsync(PutUpdateInitiativeCharacterRequest req, CancellationToken ct)

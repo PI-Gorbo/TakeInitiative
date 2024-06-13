@@ -13,8 +13,6 @@ public class PutUpsertStagedCharacter(IDocumentSession session, IHubContext<Comb
     public override void Configure()
     {
         Put("/api/combat/stage/character");
-        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
-        Policies(TakePolicies.UserExists);
     }
 
     public override async Task HandleAsync(PutUpsertStagedCharacterRequest req, CancellationToken ct)

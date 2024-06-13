@@ -16,8 +16,6 @@ public class PostLogout(
     public override void Configure()
     {
         Post("/api/logout");
-        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
-        Policies(TakePolicies.UserExists);
     }
     public override async Task HandleAsync(CancellationToken ct)
     {

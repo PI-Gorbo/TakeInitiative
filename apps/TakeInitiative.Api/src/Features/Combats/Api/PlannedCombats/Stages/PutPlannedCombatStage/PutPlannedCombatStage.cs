@@ -11,8 +11,6 @@ public class PutPlannedCombatStage(IDocumentStore Store) : Endpoint<PutPlannedCo
     public override void Configure()
     {
         Put("/api/campaign/planned-combat/stage");
-        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
-        Policies(TakePolicies.UserExists);
 
     }
 

@@ -11,8 +11,6 @@ public class PostPlannedCombat(IDocumentStore Store) : Endpoint<PostPlannedComba
     public override void Configure()
     {
         Post("/api/combat/planned");
-        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
-        Policies(TakePolicies.UserExists);
     }
 
     public override async Task HandleAsync(PostPlannedCombatRequest req, CancellationToken ct)

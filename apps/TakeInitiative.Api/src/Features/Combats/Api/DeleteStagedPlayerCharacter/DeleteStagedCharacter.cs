@@ -13,8 +13,6 @@ public class DeleteStagedCharacter(IDocumentStore Store, IHubContext<CombatHub> 
     public override void Configure()
     {
         Delete("/api/combat/stage/character");
-        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
-        Policies(TakePolicies.UserExists);
     }
 
     public override async Task HandleAsync(DeleteStagedCharacterRequest req, CancellationToken ct)

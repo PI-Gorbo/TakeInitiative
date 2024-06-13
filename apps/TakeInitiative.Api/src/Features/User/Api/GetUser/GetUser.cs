@@ -11,8 +11,6 @@ public class GetUser(IDocumentSession session) : EndpointWithoutRequest<GetUserR
     public override void Configure()
     {
         Get("/api/user");
-        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
-        Policies(TakePolicies.UserExists);
     }
 
     public override async Task HandleAsync(CancellationToken ct)

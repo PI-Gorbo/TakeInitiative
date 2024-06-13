@@ -11,6 +11,7 @@ using Microsoft.IdentityModel.Protocols.Configuration;
 using Python.Runtime;
 using SendGrid.Extensions.DependencyInjection;
 using Serilog;
+using TakeInitiative.Api.Features.Admin;
 using TakeInitiative.Utilities;
 using Weasel.Postgresql;
 
@@ -38,6 +39,9 @@ public static class Bootstrap
             opts.Schema.For<PlannedCombat>()
                 .Index(x => x.CombatName)
                 .ForeignKey<Campaign>(x => x.CampaignId, fk => fk.OnDelete = CascadeAction.Cascade);
+
+            opts.Schema.For<IAdminConfig>()
+                .AddSubClass<MaintenanceConfig>();
 
             // Event Projections
             opts.Projections
