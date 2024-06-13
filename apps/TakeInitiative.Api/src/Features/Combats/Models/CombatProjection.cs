@@ -142,7 +142,7 @@ public class CombatProjection : SingleStreamProjection<Combat>
         {
             CombatLogs = [.. Combat.CombatLogs, $"{user?.UserName} edited staged character {@event.Character.Name} at {eventDetails.Timestamp:R}"],
             StagedList = Combat.StagedList!
-                .ReplaceOrInsert(x => x.Id == @event.Character.Id, @event.Character)
+                .ReplaceOrInsertIfExists(x => x.Id == @event.Character.Id, @event.Character)
         };
     }
 
