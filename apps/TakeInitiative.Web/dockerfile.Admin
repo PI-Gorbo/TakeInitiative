@@ -18,7 +18,7 @@ ENV NODE_ENV=production
 
 COPY . .
 
-RUN npm run postinstall:admin
+RUN npm run postinstall
 RUN npm run build:admin
 RUN npm prune
 

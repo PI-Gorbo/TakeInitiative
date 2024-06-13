@@ -18,7 +18,7 @@
                         >
                             <img
                                 class="h-[3em] w-[3em]"
-                                src="../assets/yellowDice.png"
+                                src="base/assets/yellowDice.png"
                             />
                             <label
                                 class="font-NovaCut text-2xl text-take-yellow md:text-3xl"
