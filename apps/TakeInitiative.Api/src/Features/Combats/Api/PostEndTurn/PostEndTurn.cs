@@ -12,8 +12,6 @@ public class PostEndTurn(IHubContext<CombatHub> hubContext) : Endpoint<PostEndTu
     public override void Configure()
     {
         Post("/api/combat/turn/end");
-        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
-        Policies(TakePolicies.UserExists);
     }
 
     public override async Task HandleAsync(PostEndTurnRequest req, CancellationToken ct)

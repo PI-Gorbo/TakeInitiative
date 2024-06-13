@@ -13,8 +13,6 @@ public class PostFinishCombat(IDocumentSession session, IHubContext<CombatHub> c
     public override void Configure()
     {
         Post("/api/combat/finish");
-        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
-        Policies(TakePolicies.UserExists);
     }
 
     public override async Task HandleAsync(PostFinishCombatRequest req, CancellationToken ct)

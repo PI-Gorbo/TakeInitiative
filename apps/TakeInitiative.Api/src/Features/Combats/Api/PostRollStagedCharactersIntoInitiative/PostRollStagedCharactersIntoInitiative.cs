@@ -31,8 +31,6 @@ public class PostRollStagedCharactersIntoInitiative(IHubContext<CombatHub> hubCo
     public override void Configure()
     {
         Post("/api/combat/stage/roll");
-        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
-        Policies(TakePolicies.UserExists);
     }
 
     public override async Task HandleAsync(PostRollStagedCharactersIntoInitiativeRequest req, CancellationToken ct)

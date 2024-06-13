@@ -15,8 +15,6 @@ public class PostJoinCampaign(IDocumentSession session) : Endpoint<JoinCampaignB
     public override void Configure()
     {
         Post("/api/campaign/join");
-        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
-        Policies(TakePolicies.UserExists);
     }
 
     public override async Task HandleAsync(JoinCampaignByJoinCodeRequest req, CancellationToken ct)

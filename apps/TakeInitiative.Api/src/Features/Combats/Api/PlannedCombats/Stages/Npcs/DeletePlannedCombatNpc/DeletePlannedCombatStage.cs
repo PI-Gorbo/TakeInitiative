@@ -14,8 +14,6 @@ public class DeletePlannedCombatNpc(IDocumentStore Store) : Endpoint<DeletePlann
     public override void Configure()
     {
         Delete("/api/campaign/planned-combat/stage/npc");
-        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
-        Policies(TakePolicies.UserExists);
     }
 
     public override async Task HandleAsync(DeletePlannedCombatNpcRequest req, CancellationToken ct)

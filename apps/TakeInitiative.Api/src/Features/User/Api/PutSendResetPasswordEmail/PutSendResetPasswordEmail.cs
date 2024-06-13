@@ -14,7 +14,7 @@ public class PutSendResetPasswordEmail(
     public override void Configure()
     {
         Put("/api/sendResetPasswordEmail");
-        AllowAnonymous();
+        Tags("AllowAnonymous");
     }
     public override async Task HandleAsync(PutSendResetPasswordEmailRequest req, CancellationToken ct)
     {

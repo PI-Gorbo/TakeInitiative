@@ -21,7 +21,8 @@ services:
             - "7402:8080"
         environment:
             - "ConnectionStrings:TakeDB=User ID=postgres;Password=postgres;Host=postgres;Port=5432;Database=postgres;"
-            - "CORS=http://take-initiative.com;https://take-initiative.com"
+            - "CORS:MainApp=http://take-initiative.com;https://take-initiative.com"
+            - "CORS:AdminApp=http://warrani:7404;https://warrani:7404"
             - "AllowedHosts=api.take-initiative.com"
             - "CookieDomain=take-initiative.com"
         restart: always
@@ -52,5 +53,5 @@ services:
         environment:
             - "NUXT_PUBLIC_AXIOS_BASE_URL=https://api.take-initiative.com"
             - "NUXT_PUBLIC_WEB_URL=https://take-initiative.com"
-            - "NUXT_PUBLIC_ADMIN_URL=https://admin.take-initiative.com"
+            - "NUXT_PUBLIC_ADMIN_URL=http://warrani:7404"
         restart: always

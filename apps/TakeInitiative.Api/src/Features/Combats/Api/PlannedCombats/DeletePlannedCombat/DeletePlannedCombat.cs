@@ -10,8 +10,6 @@ public class DeletePlannedCombat(IDocumentStore Store) : Endpoint<DeletePlannedC
     public override void Configure()
     {
         Delete("/api/combat/planned");
-        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
-        Policies(TakePolicies.UserExists);
     }
 
     public override async Task HandleAsync(DeletePlannedCombatRequest req, CancellationToken ct)

@@ -13,8 +13,6 @@ public class PostCreateCampaign(IDocumentStore Store) : Endpoint<PostCreateCampa
     public override void Configure()
     {
         Post("/api/campaign");
-        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
-        Policies(TakePolicies.UserExists);
     }
     public override async Task HandleAsync(PostCreateCampaignRequest req, CancellationToken ct)
     {

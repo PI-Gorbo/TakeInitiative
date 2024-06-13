@@ -16,7 +16,7 @@ public class PutLogin(
     public override void Configure()
     {
         Put("/api/login");
-        AllowAnonymous();
+        Tags("AllowAnonymous");
     }
     public override async Task HandleAsync(PutLoginRequest req, CancellationToken ct)
     {
@@ -36,7 +36,7 @@ public class PutLogin(
 
                 // Create cookie
                 await CookieAuth.SignInAsync(u =>
-                {  
+                {
                     u["UserId"] = user.Id.ToString();
                 });
 

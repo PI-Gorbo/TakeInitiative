@@ -15,8 +15,6 @@ public class PutCampaignDetails(IDocumentSession session) : Endpoint<PutCampaign
     public override void Configure()
     {
         Put("/api/campaign");
-        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
-        Policies(TakePolicies.UserExists);
     }
     public override async Task HandleAsync(PutCampaignDetailsRequest req, CancellationToken ct)
     {

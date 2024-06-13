@@ -16,8 +16,9 @@ public class PostSignUp(
     public override void Configure()
     {
         Post("/api/signup");
-        AllowAnonymous();
+        Tags("AllowAnonymous");
     }
+
     public override async Task HandleAsync(PostSignUpRequest req, CancellationToken ct)
     {
         var user = new ApplicationUser();
