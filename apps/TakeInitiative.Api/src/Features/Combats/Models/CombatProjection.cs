@@ -37,11 +37,19 @@ public class CombatProjection : SingleStreamProjection<Combat>
         var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
         var newInitiativeList = @event.InitiativeRolls.Select((charInitiative, index) =>
         {
-            return Combat.StagedList.First(x => x.Id == charInitiative.id) with
+            var stagedCharacter = Combat.StagedList.FirstOrDefault(x => x.Id == charInitiative.id, null);
+            if (stagedCharacter == null)
+            {
+                return null;
+            }
+
+            return stagedCharacter with
             {
                 InitiativeValue = charInitiative.rolls
             };
         })
+        .Where(x => x != null)
+        .Cast<CombatCharacter>()
         .OrderByDescending(x => x.InitiativeValue, new InitiativeComparer())
         .ToImmutableList();
 
