@@ -41,12 +41,15 @@ public static class ApiErrorExtensions
         return Task.CompletedTask;
     }
 
-    public static async Task ReturnApiResult<TRequest>(this Endpoint<TRequest> endpoint, Task<UnitResult<ApiError>> task)
-        where TRequest : notnull
+
+    public static Task ReturnApiResult(this EndpointWithoutRequest endpoint, UnitResult<ApiError> result)
     {
-        var result = await task;
-        await endpoint.ReturnApiResult(result);
-        return;
+        if (result.IsFailure)
+        {
+            endpoint.ThrowError(result.Error.Message, (int)result.Error.StatusCode);
+        }
+
+        return Task.CompletedTask;
     }
 
     public static Task ReturnApiResult<TRequest, TResponse>(this Endpoint<TRequest, TResponse> endpoint, Result<TResponse, PropertyApiError<TRequest>> result)
