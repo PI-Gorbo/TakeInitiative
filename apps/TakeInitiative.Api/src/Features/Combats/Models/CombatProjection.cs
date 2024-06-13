@@ -312,11 +312,18 @@ public class CombatProjection : SingleStreamProjection<Combat>
                 };
             }
 
-            return Combat.StagedList.First(x => x.Id == charInitiative.id) with
+            var stagedChar = Combat.StagedList.FirstOrDefault(x => x.Id == charInitiative.id, null);
+            if (stagedChar == null)
+            {
+                return null;
+            }
+            return stagedChar with
             {
                 InitiativeValue = charInitiative.rolls
             };
         })
+        .Where(x => x != null)
+        .Cast<CombatCharacter>()
         .OrderByDescending(x => x.InitiativeValue, new InitiativeComparer())
         .ToImmutableList();
 
@@ -357,7 +364,11 @@ public class CombatProjection : SingleStreamProjection<Combat>
     public async Task<Combat> Apply(InitiativeCharacterRemovedEvent @event, Combat Combat, IEvent<InitiativeCharacterRemovedEvent> eventDetails, IQuerySession session)
     {
         var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
-        var (character, index) = Combat.InitiativeList.Select((value, index) => (value, index)).First(x => x.value.Id == @event.CharacterId);
+        var (character, index) = Combat.InitiativeList.Select((value, index) => (value, index)).FirstOrDefault(x => x.value.Id == @event.CharacterId, (null, -1));
+        if (character == null)
+        {
+            return Combat;
+        }
 
         var initiativeIndex = Combat.InitiativeIndex;
         var roundNumber = Combat.RoundNumber;
