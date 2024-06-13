@@ -12,7 +12,7 @@
                     >
                         <img
                             class="h-[1.5em] w-[1.5em]"
-                            src="base/assets/yellowDice.png"
+                            src="../assets/yellowDice.png"
                         />
                         Take Initiative
                     </h1>

@@ -3,7 +3,6 @@ import type { AxiosError } from "axios";
 import { useForm } from "vee-validate";
 import type { CreatePlannedCombatRequest } from "../../utils/api/plannedCombat/createPlannedCombatRequest";
 import { yup } from "../../utils/types/HelperTypes";
-import type { PlannedCombat } from "../../utils/types/models";
 
 export const useCreatePlannedCombatForm = () => {
     const formState = reactive({
