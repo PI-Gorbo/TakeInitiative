@@ -35,6 +35,7 @@ export default defineNuxtConfig({
         transpile: [
             "@fortawesome/vue-fontawesome",
             "@fortawesome/fontawesome-svg-core",
+            "vue-toastification",
         ],
     },
     css: [
