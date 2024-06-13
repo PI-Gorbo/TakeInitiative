@@ -272,7 +272,7 @@ public class CombatProjection : SingleStreamProjection<Combat>
                             {
                                 Id = Guid.NewGuid(),
                                 CharacterOriginDetails = CharacterOriginDetails.PlannedCharacter(npc.Id),
-                                Name = npc.Name,
+                                Name = $"{npc.Name} ({nextQuantityNumber})",
                                 Initiative = npc.Initiative,
                                 InitiativeValue = [],
                                 PlayerId = @event.UserId,

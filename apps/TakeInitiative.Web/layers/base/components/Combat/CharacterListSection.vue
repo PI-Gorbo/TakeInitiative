@@ -71,12 +71,7 @@
                 </span>
                 <!-- Character Name -->
                 <span>
-                    {{
-                        charInfo.character.name +
-                        (charInfo.character.copyNumber != null
-                            ? `(${charInfo.character.copyNumber})`
-                            : "")
-                    }}
+                    {{ charInfo.character.name }}
                 </span>
             </header>
             <body class="flex-1">
