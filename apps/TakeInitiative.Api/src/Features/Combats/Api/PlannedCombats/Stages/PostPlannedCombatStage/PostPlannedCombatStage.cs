@@ -12,8 +12,6 @@ public class PostPlannedCombatStage(IDocumentStore Store) : Endpoint<PostPlanned
     public override void Configure()
     {
         Post("/api/campaign/planned-combat/stage");
-        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
-        Policies(TakePolicies.UserExists);
     }
 
     public override async Task HandleAsync(PostPlannedCombatStageRequest req, CancellationToken ct)

@@ -14,8 +14,6 @@ public class PutPlayerCharacter(IDocumentSession session) : Endpoint<PutPlayerCh
     public override void Configure()
     {
         Put("/api/campaign/member/character");
-        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
-        Policies(TakePolicies.UserExists);
     }
 
     public override async Task HandleAsync(PutPlayerCharacterRequest req, CancellationToken ct)

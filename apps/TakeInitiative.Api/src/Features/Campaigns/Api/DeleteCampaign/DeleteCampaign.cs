@@ -12,9 +12,8 @@ public class DeleteCampaign(IDocumentStore Store) : Endpoint<DeleteCampaignReque
     public override void Configure()
     {
         Delete("/api/campaign");
-        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
-        Policies(TakePolicies.UserExists);
     }
+
     public override async Task HandleAsync(DeleteCampaignRequest req, CancellationToken ct)
     {
         var userId = this.GetUserIdOrThrowUnauthorized();

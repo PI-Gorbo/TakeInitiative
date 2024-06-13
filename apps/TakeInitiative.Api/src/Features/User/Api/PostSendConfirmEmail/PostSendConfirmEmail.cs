@@ -18,7 +18,7 @@ public class PostSendConfirmEmail(
     public override void Configure()
     {
         Post("/api/sendConfirmEmail");
-        AllowAnonymous();
+        Tags("AllowAnonymous");
     }
     public override async Task HandleAsync(CancellationToken ct)
     {

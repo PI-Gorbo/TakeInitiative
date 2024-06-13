@@ -11,8 +11,6 @@ public class DeleteInitiativeCharacter(IHubContext<CombatHub> hubContext) : Endp
     public override void Configure()
     {
         Delete("/api/combat/initiative/character");
-        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
-        Policies(TakePolicies.UserExists);
     }
 
     public override async Task HandleAsync(DeleteInitiativeCharacterRequest req, CancellationToken ct)

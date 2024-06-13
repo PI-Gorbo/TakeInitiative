@@ -13,8 +13,6 @@ public class GetCampaign(IDocumentStore Store) : Endpoint<GetCampaignRequest, Ge
     public override void Configure()
     {
         Get("/api/campaign/{CampaignId}");
-        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
-        Policies(TakePolicies.UserExists);
     }
 
     public override async Task HandleAsync(GetCampaignRequest req, CancellationToken ct)

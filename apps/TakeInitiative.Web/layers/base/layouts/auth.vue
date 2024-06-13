@@ -20,10 +20,41 @@
                         class="my-1 w-full rounded-full border border-gray-400 opacity-50"
                     ></div>
 
-                    <slot />
+                    <slot
+                        v-if="status == 'success' && !data?.inMaintenanceMode"
+                    />
+                    <div
+                        v-else-if="
+                            status == 'success' && data?.inMaintenanceMode
+                        "
+                        class="border border-dashed border-take-red bg-take-red bg-opacity-35 p-2"
+                    >
+                        <label class="text-xl underline"
+                            >In Maintenance Mode</label
+                        >
+                        <p>
+                            Unfortunate Take Initiative is in maintenance mode,
+                            but it should be back online soon.
+                        </p>
+                        <p>
+                            {{ data.reason }}
+                        </p>
+                    </div>
+                    <div v-else-if="status == 'pending'"></div>
+                    <div v-else-if="status == 'error'">
+                        {{ error }}
+                    </div>
                 </div>
             </section>
         </main>
     </main>
 </template>
-<script setup lang="ts"></script>
+<script setup lang="ts">
+// Check if in maintenance mode.
+const { data, status, error } = await useAsyncData(
+    "CheckMaintenanceMode",
+    async () => {
+        return useApi().admin.getMaintenance();
+    },
+);
+</script>

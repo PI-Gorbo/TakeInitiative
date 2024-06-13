@@ -57,13 +57,12 @@
 import { useForm } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/yup";
 import * as yup from "yup";
-import type { LoginRequest } from "../../utils/api/user/loginRequest";
 import { getDefaultLibFileName } from "typescript";
 import type { LocationQueryValue } from "vue-router";
 import {
     SendResetPasswordEmailRequestValidator,
     type SendResetPasswordEmailRequest,
-} from "../../utils/api/user/putSendResetPasswordRequest";
+} from "base/utils/api/user/putSendResetPasswordRequest";
 const redirectToPath = useRoute().query.redirectTo as LocationQueryValue;
 const state = reactive({
     errorObject: null as null | ApiError<SendResetPasswordEmailRequest>,

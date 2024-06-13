@@ -10,8 +10,6 @@ public class GetCombat(IDocumentStore Store) : Endpoint<GetCombatRequest, Combat
     public override void Configure()
     {
         Get("/api/combat/{Id}");
-        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
-        Policies(TakePolicies.UserExists);
     }
 
     public override async Task HandleAsync(GetCombatRequest request, CancellationToken ct)

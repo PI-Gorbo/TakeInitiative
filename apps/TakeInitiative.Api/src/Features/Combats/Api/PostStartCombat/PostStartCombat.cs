@@ -12,8 +12,6 @@ public class PostStartCombat(IDocumentSession session, IHubContext<CombatHub> co
     public override void Configure()
     {
         Post("/api/combat/start");
-        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
-        Policies(TakePolicies.UserExists);
     }
 
     public override async Task HandleAsync(PostStartCombatRequest req, CancellationToken ct)

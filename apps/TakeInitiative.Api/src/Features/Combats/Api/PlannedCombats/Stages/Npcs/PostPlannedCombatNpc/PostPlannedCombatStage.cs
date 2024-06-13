@@ -12,8 +12,6 @@ public class PostPlannedCombatNpc(IDocumentStore Store, IDiceRoller roller) : En
     public override void Configure()
     {
         Post("/api/campaign/planned-combat/stage/npc");
-        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
-        Policies(TakePolicies.UserExists);
     }
 
     public override async Task HandleAsync(PostPlannedCombatNpcRequest req, CancellationToken ct)

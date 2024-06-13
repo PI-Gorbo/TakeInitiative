@@ -14,8 +14,6 @@ public class PutReprojectCombat(IDocumentStore Store, IHubContext<CombatHub> hub
     public override void Configure()
     {
         Put("/api/combat/reproject");
-        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
-        Policies(TakePolicies.UserExists);
     }
 
     public override async Task HandleAsync(CancellationToken ct)

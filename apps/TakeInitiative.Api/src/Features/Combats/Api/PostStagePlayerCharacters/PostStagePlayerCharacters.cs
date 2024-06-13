@@ -15,8 +15,6 @@ public class PostStagePlayerCharacters(IHubContext<CombatHub> hubContext) : Endp
     public override void Configure()
     {
         Post("/api/combat/stage/player-character");
-        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
-        Policies(TakePolicies.UserExists);
     }
 
     public override async Task HandleAsync(PostStagePlayerCharactersRequest req, CancellationToken ct)

@@ -12,8 +12,6 @@ public class PostOpenCombat(IDocumentSession session, IHubContext<CampaignHub> c
     public override void Configure()
     {
         Post("/api/combat/open");
-        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
-        Policies(TakePolicies.UserExists);
     }
 
     public override async Task HandleAsync(PostOpenCombatRequest req, CancellationToken ct)

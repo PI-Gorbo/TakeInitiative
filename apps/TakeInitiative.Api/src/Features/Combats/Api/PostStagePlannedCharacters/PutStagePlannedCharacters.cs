@@ -13,8 +13,6 @@ public class PostStagePlannedCharacters(IDocumentStore Store, IHubContext<Combat
     public override void Configure()
     {
         Post("/api/combat/stage/planned-character");
-        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
-        Policies(TakePolicies.UserExists);
     }
 
     public override async Task HandleAsync(PutStagePlannedCharactersRequest req, CancellationToken ct)

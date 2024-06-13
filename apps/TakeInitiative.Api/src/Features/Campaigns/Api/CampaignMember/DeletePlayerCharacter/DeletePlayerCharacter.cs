@@ -13,8 +13,7 @@ public class DeletePlayerCharacter(IDocumentSession session) : Endpoint<DeletePl
     public override void Configure()
     {
         Delete("/api/campaign/member/character");
-        AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
-        Policies(TakePolicies.UserExists);
+
     }
 
     public override async Task HandleAsync(DeletePlayerCharacterRequest req, CancellationToken ct)

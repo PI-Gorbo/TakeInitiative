@@ -132,13 +132,13 @@
 </template>
 <script setup lang="ts">
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import type { UpdateCampaignDetailsRequest } from "../../../utils/api/campaign/updateCampaignDetailsRequest";
+import type { UpdateCampaignDetailsRequest } from "base/utils/api/campaign/updateCampaignDetailsRequest";
 import {
     DisplayOptionEnum,
     DisplayOptionValueMap,
     type DisplayOptionValues,
     type DisplayOptions,
-} from "../../../utils/types/models";
+} from "base/utils/types/models";
 const { isMobile } = useDevice();
 definePageMeta({
     requiresAuth: true,
