@@ -20,7 +20,7 @@ public class PutResetPassword(
     public override void Configure()
     {
         Put("/api/resetPassword");
-        AllowAnonymous();
+        Tags("AllowAnonymous");
     }
     public override async Task HandleAsync(PutResetPasswordRequest req, CancellationToken ct)
     {

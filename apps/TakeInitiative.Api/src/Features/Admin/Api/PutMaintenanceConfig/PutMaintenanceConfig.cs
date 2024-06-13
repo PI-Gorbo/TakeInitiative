@@ -14,17 +14,13 @@ public class PutMaintenanceConfig(IDocumentSession session) : Endpoint<Maintenan
     {
         // Get or create the maintenance config.
         var maintenanceConfig = await session.Query<MaintenanceConfig>().FirstOrDefaultAsync();
-        if (maintenanceConfig == null)
-        {
-            maintenanceConfig = new MaintenanceConfig()
-            {
-                InMaintenanceMode = cfg.InMaintenanceMode,
-                Reason = cfg.Reason
-            };
-            session.Store(maintenanceConfig);
-            await session.SaveChangesAsync();
-        }
 
+        maintenanceConfig ??= new MaintenanceConfig();
+        maintenanceConfig.InMaintenanceMode = cfg.InMaintenanceMode;
+        maintenanceConfig.Reason = cfg.Reason;
+
+        session.Store(maintenanceConfig);
+        await session.SaveChangesAsync();
         await SendAsync(maintenanceConfig);
     }
 

@@ -10,7 +10,7 @@ public class GetMaintenanceConfig(IDocumentSession session) : EndpointWithoutReq
     public override void Configure()
     {
         Get("/api/admin/maintenance");
-        AllowAnonymous();
+        Options(opts => opts.RequireCors("MainAppAndAdminApp"));
     }
 
     public override async Task HandleAsync(CancellationToken ct)

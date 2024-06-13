@@ -82,7 +82,8 @@ public static class Bootstrap
             .AddDefaultTokenProviders(); // Default token providers for password changes and other temporary auth needs.
 
         builder.Services
-            .AddSingleton<IAuthorizationHandler, RequireUserToExistInDatabaseAuthorizationHandler>()
+            .AddTransient<IAuthorizationHandler, RequireUserToExistInDatabaseAuthorizationHandler>()
+            .AddTransient<IAuthorizationHandler, RequireNotInMaintenanceModeAuthorizationHandler>()
             .AddCookieAuth(validFor: TimeSpan.FromHours(1), opts =>
             {
                 opts.SlidingExpiration = true; // Reissue new cookies when the cookie is half or more through its timespan.
@@ -102,13 +103,20 @@ public static class Bootstrap
             })
             .AddAuthorization(opts =>
             {
-                opts.AddPolicy("UserExists",
+                opts.AddPolicy(TakePolicies.UserExists,
                     new AuthorizationPolicyBuilder()
-                    .RequireAuthenticatedUser() // Requires JWT to exist and be signed by the api
-                    .AddRequirements(new RequireUserToExistInDatabaseAuthorizationRequirement())
-                    .Build()
+                        .RequireAuthenticatedUser() // Requires JWT to exist and be signed by the api
+                        .AddRequirements(new RequireUserToExistInDatabaseAuthorizationRequirement())
+                        .Build()
+                );
+
+                opts.AddPolicy(TakePolicies.NotInMaintenanceMode,
+                    new AuthorizationPolicyBuilder()
+                        .AddRequirements(new RequireNotInMaintenanceModeAuthorizationRequirement())
+                        .Build()
                 );
             })
+            .AddSingleton<IAuthorizationMiddlewareResultHandler, AuthorizationMiddlewareResultHandler>() // Order matters, needs to be after add authorization.
             .AddAuthentication(opts =>
             {
                 opts.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;

@@ -19,7 +19,7 @@ public class PostConfirmEmail(
     public override void Configure()
     {
         Post("/api/confirmEmail");
-        AllowAnonymous();
+        Tags("AllowAnonymous");
     }
     public override async Task HandleAsync(PostConfirmEmailRequest req, CancellationToken ct)
     {
