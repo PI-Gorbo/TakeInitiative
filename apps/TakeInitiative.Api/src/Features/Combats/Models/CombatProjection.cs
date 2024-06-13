@@ -123,7 +123,7 @@ public class CombatProjection : SingleStreamProjection<Combat>
         var character = Combat.StagedList.SingleOrDefault(x => x.Id == @event.CharacterId);
         if (character == null)
         {
-            throw new OperationCanceledException("There is no staged character with the given id.");
+            return Combat;
         }
         var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
 
