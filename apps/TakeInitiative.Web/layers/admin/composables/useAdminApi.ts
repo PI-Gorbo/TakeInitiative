@@ -1,10 +1,9 @@
-import { getMaintenanceRequest } from "~/utils/api/admin/config/maintainence/getMaintainenceRequest";
+import { getMaintenanceRequest } from "base/utils/api/admin/getMaintainenceRequest";
 import { putMaintenanceRequest } from "~/utils/api/admin/config/maintainence/putMaintainenceRequest";
 
 export const useAdminApi = () => {
     const { $axios } = useNuxtApp();
     return {
-        getMaintenance: getMaintenanceRequest($axios),
         putMaintenance: putMaintenanceRequest($axios),
     };
 };

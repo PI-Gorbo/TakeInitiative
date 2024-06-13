@@ -36,6 +36,7 @@ import { postConfirmEmailRequest as confirmEmailRequest } from "../utils/api/use
 import { postSendConfirmEmailRequest } from "../utils/api/user/postSendConfirmEmailRequest";
 import { putSendResetPasswordRequest } from "../utils/api/user/putSendResetPasswordRequest";
 import { putResetPassword } from "../utils/api/user/putResetPasswordRequest";
+import { getMaintenanceRequest } from "base/utils/api/admin/getMaintainenceRequest";
 
 export const useApi = () => {
     const { $axios } = useNuxtApp();
@@ -99,6 +100,9 @@ export const useApi = () => {
                     delete: deleteInitiativeCharacterRequest($axios),
                 },
             },
+        },
+        admin: {
+            getMaintenance: getMaintenanceRequest($axios),
         },
     };
 };

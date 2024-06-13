@@ -21,7 +21,8 @@ services:
             - "7402:8080"
         environment:
             - "ConnectionStrings:TakeDB=User ID=postgres;Password=postgres;Host=postgres;Port=5432;Database=postgres;"
-            - "CORS=http://localhost:7404;https://localhost:7404;http://localhost:7403;https://localhost:7403"
+            - "CORS:MainApp=http://localhost:7403;https://localhost:7403"
+            - "CORS:AdminApp=http://localhost:7404;https://localhost:7404"
             - "AllowedHosts=localhost"
             - "CookieDomain=localhost"
         restart: always

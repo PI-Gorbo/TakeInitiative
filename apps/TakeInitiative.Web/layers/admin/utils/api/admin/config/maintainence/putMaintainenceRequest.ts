@@ -2,7 +2,7 @@ import type { AxiosInstance } from "axios";
 import {
     type MaintenanceConfig,
     MaintenanceConfigValidator,
-} from "./getMaintainenceRequest";
+} from "../../../../../../base/utils/api/admin/getMaintainenceRequest";
 
 export function putMaintenanceRequest(axios: AxiosInstance) {
     return (cfg: MaintenanceConfig): Promise<MaintenanceConfig> =>

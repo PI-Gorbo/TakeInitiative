@@ -11,6 +11,10 @@
                 }}</label
             >
 
+            <p v-if="data?.maintenanceData?.inMaintenanceMode">
+                {{ data?.maintenanceData.reason }}
+            </p>
+
             <FormBase
                 v-slot="{ submitting }"
                 v-if="!data?.maintenanceData?.inMaintenanceMode"
@@ -24,6 +28,7 @@
                 />
                 <div class="flex justify-end">
                     <FormButton
+                        buttonColour="take-red"
                         label="Enable Maintenance Mode"
                         :loadingDisplay="{
                             showSpinner: true,
@@ -33,7 +38,7 @@
                     />
                 </div>
             </FormBase>
-            <div v-else>
+            <div v-else class="flex w-full justify-end">
                 <FormButton
                     label="Disable Maintenance Mode"
                     :loadingDisplay="{
@@ -55,13 +60,13 @@ import { useForm } from "vee-validate";
 import {
     MaintenanceConfigValidator,
     type MaintenanceConfig,
-} from "~/utils/api/admin/config/maintainence/getMaintainenceRequest";
+} from "base/utils/api/admin/getMaintainenceRequest";
 
 const { data, refresh, status } = await useAsyncData(
     "maintenanceQuery",
     async () => {
-        const adminApi = useAdminApi();
-        const maintenanceData = await adminApi.getMaintenance();
+        const api = useApi();
+        const maintenanceData = await api.admin.getMaintenance();
         return {
             maintenanceData,
         };
