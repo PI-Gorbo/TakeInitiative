@@ -1,6 +1,10 @@
 import type { AxiosInstance } from "axios";
 import * as yup from "yup";
-import { combatValidator, type CharacterHealth } from "../../types/models";
+import {
+    combatValidator,
+    type CharacterHealth,
+    type Condition,
+} from "../../types/models";
 import { combatResponseValidator } from "./combatResponse";
 
 // Create Campaign
@@ -11,6 +15,7 @@ export type CombatCharacterDto = {
     hidden: boolean;
     initiativeValue: number[];
     armourClass: number | null;
+    conditions: Condition[];
 };
 export type PutUpdateInitiativeCharacterRequest = {
     combatId: string;

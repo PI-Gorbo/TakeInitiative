@@ -1,3 +1,5 @@
+using FluentValidation;
+
 namespace TakeInitiative.Api.Features.Combats;
 public record CombatCharacter : Character
 {
@@ -6,8 +8,9 @@ public record CombatCharacter : Character
     public required int[] InitiativeValue { get; set; }
     public required bool Hidden { get; set; }
     public required int? CopyNumber { get; set; }
+    public Condition[] Conditions { get; set; } = [];
 
-    public static CombatCharacter NewCombatCharacter(Guid playerId, string name, CharacterInitiative initiative, int? armourClass, CharacterHealth? health, bool hidden, CharacterOriginDetails characterOriginDetails, int? copyNumber)
+    public static CombatCharacter NewCombatCharacter(Guid playerId, string name, CharacterInitiative initiative, int? armourClass, CharacterHealth? health, bool hidden, CharacterOriginDetails characterOriginDetails, int? copyNumber, Condition[] conditions)
     {
         return new CombatCharacter()
         {
@@ -21,6 +24,7 @@ public record CombatCharacter : Character
             Hidden = hidden,
             InitiativeValue = [],
             CopyNumber = copyNumber,
+            Conditions = conditions
         };
     }
 }

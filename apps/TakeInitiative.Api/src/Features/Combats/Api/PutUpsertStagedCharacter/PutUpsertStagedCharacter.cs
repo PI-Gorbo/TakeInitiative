@@ -47,6 +47,7 @@ public class PutUpsertStagedCharacter(IDocumentSession session, IHubContext<Comb
                         Initiative = req.Character.Initiative,
                         ArmourClass = req.Character.ArmourClass,
                         Hidden = req.Character.Hidden,
+                        Conditions = req.Character.Conditions,
                     };
 
                     // Create the edit user event
@@ -71,7 +72,8 @@ public class PutUpsertStagedCharacter(IDocumentSession session, IHubContext<Comb
                             health: req.Character.Health,
                             hidden: req.Character.Hidden,
                             characterOriginDetails: CharacterOriginDetails.CustomCharacter(),
-                            copyNumber: null
+                            copyNumber: null,
+                            conditions: req.Character.Conditions
                         )
                     };
                     session.Events.Append(req.CombatId, addEvent);

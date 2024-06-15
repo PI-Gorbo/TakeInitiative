@@ -20,10 +20,14 @@
             :type="props.type"
             :placeholder="props.placeholder"
             :disabled="props.disabled"
+            v-bind="props.datalist ? { list: 'datalist' } : {}"
         />
         <label v-if="props.errorMessage != null" class="text-take-red">
             {{ props.errorMessage }}
         </label>
+        <datalist v-if="props.datalist" id="datalist">
+            <option v-for="item in props.datalist" :value="item" />
+        </datalist>
     </div>
 </template>
 <script setup lang="ts">
@@ -39,6 +43,7 @@ const props = withDefaults(
             textColour?: TakeInitColour | "white";
             autoFocus?: boolean;
             disabled?: boolean;
+            datalist?: string[];
         }
     >(),
     {
@@ -49,6 +54,7 @@ const props = withDefaults(
         autoFocus: false,
         errorMessage: null,
         disabled: false,
+        datalist: undefined,
     },
 );
 

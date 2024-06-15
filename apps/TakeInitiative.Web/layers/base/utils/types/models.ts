@@ -1,7 +1,7 @@
 import type { InferType } from "yup";
 import { yup } from "./HelperTypes";
 
-type ValuesOf<T extends {}> = T[keyof T];
+export type ValuesOf<T> = T[keyof T];
 
 // Campaign Member
 const campaignMemberInfoValidator = yup.object({
@@ -179,6 +179,34 @@ export const CharacterOriginOptions = {
     PlannedCharacter: 1,
     CustomCharacter: 2,
 } as const;
+export const ConditionDurationTypes = {
+    Rounds: 0,
+    Minutes: 1,
+    Hours: 2,
+} as const;
+export const ConditionDurationTypesValues = {
+    0: "Rounds",
+    1: "Minutes",
+    2: "Hours",
+} as const;
+export const conditionValidator = yup.object({
+    name: yup.string().required().nonNullable(),
+    duration: yup
+        .object({
+            type: yup
+                .mixed<ValuesOf<typeof ConditionDurationTypes>>()
+                .required(),
+            value: yup
+                .number()
+                .positive(
+                    "Must be one or more. If one, the effect will end at the end of this round.",
+                )
+                .required(),
+        })
+        .required(),
+    note: yup.string().nullable(),
+});
+export type Condition = InferType<typeof conditionValidator>;
 export const combatCharacterValidator = yup.object({
     id: yup.string().required(),
     characterOriginDetails: yup.object({
@@ -195,6 +223,7 @@ export const combatCharacterValidator = yup.object({
     initiative: characterInitiativeValidator.required(),
     armourClass: yup.number().nullable(),
     copyNumber: yup.number().nullable(),
+    conditions: yup.array(conditionValidator.required()).required(),
 });
 export type CombatCharacter = InferType<typeof combatCharacterValidator>;
 

@@ -11,7 +11,8 @@ public class PutUpdateInitiativeCharacterRequestValidator : Validator<PutUpdateI
             .NotEmpty();
 
         RuleFor(x => x.Character)
-            .NotEmpty();
+            .NotEmpty()
+            .SetValidator(new CombatCharacterDtoValidator());
     }
 }
 

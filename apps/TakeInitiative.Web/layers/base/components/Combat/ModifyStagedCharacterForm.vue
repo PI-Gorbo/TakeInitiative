@@ -280,6 +280,7 @@ async function onEdit() {
                 maxHealth: maxHealth.value ?? 0,
             },
             armourClass: armourClass.value ?? null,
+            conditions: [],
         })
         .catch(async (error) => {
             formState.error = await parseAsApiError(error);
@@ -302,8 +303,7 @@ async function onCreate() {
                 value: initiativeValue.value!,
             },
             name: name.value!,
-
-            id: props.character?.id! ?? crypto.randomUUID(),
+            id: crypto.randomUUID(),
             hidden: isHidden.value!,
             health: {
                 hasHealth: hasHealth.value ?? false,
@@ -311,6 +311,7 @@ async function onCreate() {
                 maxHealth: maxHealth.value ?? 0,
             },
             armourClass: armourClass.value ?? null,
+            conditions: [],
         })
         .catch(async (error) => {
             formState.error = await parseAsApiError(error);

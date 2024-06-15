@@ -2,6 +2,7 @@ import {
     characterHealthValidator,
     type CharacterHealth,
     type CharacterInitiative,
+    type Condition,
 } from "../../types/models";
 import type { AxiosInstance } from "axios";
 import * as yup from "yup";
@@ -15,6 +16,7 @@ export type StagedCharacterDTO = {
     initiative: CharacterInitiative;
     armourClass: number | null;
     hidden: boolean;
+    conditions: Condition[];
 };
 export type UpsertStagedCharacterRequest = {
     combatId: string;

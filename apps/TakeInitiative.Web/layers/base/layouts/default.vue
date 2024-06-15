@@ -63,7 +63,7 @@
                     colour="take-navy-dark"
                     hoverColour="take-navy-medium"
                     labelFallback="Campaigns"
-                    headerLabel="Campaign: "
+                    inDropdownLabel="Campaign: "
                     :items="userStore.campaignList!"
                     :displayFunc="(c) => c.campaignName"
                     :keyFunc="(c) => c.campaignId"

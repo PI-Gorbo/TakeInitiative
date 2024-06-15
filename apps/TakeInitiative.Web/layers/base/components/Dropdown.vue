@@ -1,46 +1,52 @@
 <template>
-    <li class="menu">
-        <details
-            ref="details"
-            class="dropdown text-base text-white"
-            :class="{
-                relative: props.hoverOverContent,
-            }"
-        >
-            <summary
-                :class="[`bg-${props.colour} hover:bg-${props.hoverColour}`]"
-            >
-                {{
-                    props.selectedItem != null
-                        ? (props.headerLabel ? props.headerLabel + " " : "") +
-                          props.displayFunc(props.selectedItem)
-                        : labelFallback
-                }}
-            </summary>
-            <ul
-                class="z-50 flex flex-col gap-1 p-2"
+    <div>
+        <label v-if="props.headerLabel">{{ headerLabel }}</label>
+        <li class="menu">
+            <details
+                ref="details"
+                class="dropdown text-base text-white"
                 :class="{
-                    absolute: props.hoverOverContent,
+                    relative: props.hoverOverContent,
                 }"
             >
-                <li
-                    v-for="item in props.items"
-                    :key="props.keyFunc(item)"
-                    @click="() => onSelectedItem(item)"
+                <summary
                     :class="[
-                        'rounded-md',
                         `bg-${props.colour} hover:bg-${props.hoverColour}`,
                     ]"
                 >
-                    <a>{{ props.displayFunc(item) }}</a>
-                </li>
-                <slot name="Footer"></slot>
-            </ul>
-        </details>
-    </li>
+                    {{
+                        props.selectedItem != null
+                            ? (props.inDropdownLabel
+                                  ? props.inDropdownLabel + " "
+                                  : "") + props.displayFunc(props.selectedItem)
+                            : labelFallback
+                    }}
+                </summary>
+                <ul
+                    class="z-9999 flex flex-col gap-1 p-2"
+                    :class="{
+                        absolute: props.hoverOverContent,
+                    }"
+                >
+                    <li
+                        v-for="item in props.items"
+                        :key="props.keyFunc(item)"
+                        @click="() => onSelectedItem(item)"
+                        :class="[
+                            'rounded-md',
+                            `bg-${props.colour} hover:bg-${props.hoverColour}`,
+                        ]"
+                    >
+                        <a>{{ props.displayFunc(item) }}</a>
+                    </li>
+                    <slot name="Footer"></slot>
+                </ul>
+            </details>
+        </li>
+    </div>
 </template>
 <script setup lang="ts" generic="TListItem">
-import type { TakeInitColour } from "../layers/base/utils/types/HelperTypes";
+import type { TakeInitColour } from "base/utils/types/HelperTypes";
 
 const details = ref<HTMLDetailsElement | null>(null);
 const props = withDefaults(
@@ -50,9 +56,10 @@ const props = withDefaults(
         displayFunc: (item: TListItem) => string;
         keyFunc: (item: TListItem) => string;
         labelFallback?: string;
+        inDropdownLabel?: string;
         headerLabel?: string;
-        colour: TakeInitColour;
-        hoverColour: TakeInitColour;
+        colour?: TakeInitColour;
+        hoverColour?: TakeInitColour;
         hoverOverContent?: boolean;
     }>(),
     {

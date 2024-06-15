@@ -84,7 +84,7 @@ public static class Bootstrap
         builder.Services
             .AddTransient<IAuthorizationHandler, RequireUserToExistInDatabaseAuthorizationHandler>()
             .AddTransient<IAuthorizationHandler, RequireNotInMaintenanceModeAuthorizationHandler>()
-            .AddCookieAuth(validFor: TimeSpan.FromHours(1), opts =>
+            .AddCookieAuth(validFor: TimeSpan.FromHours(12), opts =>
             {
                 opts.SlidingExpiration = true; // Reissue new cookies when the cookie is half or more through its timespan.
 
