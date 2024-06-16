@@ -11,7 +11,7 @@
             />
         </section>
         <ol class="flex-1">
-            <label class="text-lg"> Combat Settings </label>
+            <label class="text-lg"> Combat Health Settings </label>
             <li class="py-2">
                 <div class="flex flex-row flex-wrap items-center gap-2">
                     <label
@@ -25,18 +25,20 @@
                     <Dropdown
                         class="flex-1"
                         :selectedItem="
-                            DisplayOptionValueMap[
+                            HealthDisplayOptionValueKeyMap[
                                 state.combatHealthDisplaySettings
                                     .dmCharacterDisplayMethod ?? 0
-                            ] as DisplayOptions
+                            ] as HealthDisplayOptionKeys
                         "
                         :items="combatHealthDisplayOptionEnumEntries"
-                        :displayFunc="displayOptionsDisplayFunc"
+                        :displayFunc="healthDisplayOptionsDisplayFunc"
                         :keyFunc="(i) => i"
                         @update:selectedItem="
                             (val) =>
                                 (state.combatHealthDisplaySettings.dmCharacterDisplayMethod =
-                                    DisplayOptionEnum[val as DisplayOptions])
+                                    HealthDisplayOptionsEnum[
+                                        val as HealthDisplayOptionKeys
+                                    ])
                         "
                         :hoverOverContent="true"
                         colour="take-navy-dark"
@@ -47,7 +49,7 @@
                     <FontAwesomeIcon icon="circle-info" />
                     <span class="text-sm text-gray-300">
                         {{
-                            dmCharacterDisplayMethodInfoMessage(
+                            dmCharacterHealthDisplayMethodInfoMessage(
                                 state.combatHealthDisplaySettings
                                     .dmCharacterDisplayMethod,
                             )
@@ -67,18 +69,20 @@
                     <Dropdown
                         class="flex-1"
                         :selectedItem="
-                            DisplayOptionValueMap[
+                            HealthDisplayOptionValueKeyMap[
                                 state.combatHealthDisplaySettings
                                     .otherPlayerCharacterDisplayMethod ?? 0
-                            ] as DisplayOptions
+                            ] as HealthDisplayOptionKeys
                         "
                         :items="combatHealthDisplayOptionEnumEntries"
-                        :displayFunc="displayOptionsDisplayFunc"
+                        :displayFunc="healthDisplayOptionsDisplayFunc"
                         :keyFunc="(i) => i"
                         @update:selectedItem="
                             (val) =>
                                 (state.combatHealthDisplaySettings.otherPlayerCharacterDisplayMethod =
-                                    DisplayOptionEnum[val as DisplayOptions])
+                                    HealthDisplayOptionsEnum[
+                                        val as HealthDisplayOptionKeys
+                                    ])
                         "
                         :hoverOverContent="true"
                         colour="take-navy-dark"
@@ -89,7 +93,7 @@
                     <FontAwesomeIcon icon="circle-info" />
                     <span class="text-sm text-gray-300">
                         {{
-                            otherPlayerCharacterDisplayMethodInfoMessage(
+                            otherPlayerCharacterHealthDisplayMethodInfoMessage(
                                 state.combatHealthDisplaySettings
                                     .otherPlayerCharacterDisplayMethod,
                             )
@@ -97,19 +101,112 @@
                     </span>
                 </footer>
             </li>
-            <li class="flex justify-end">
-                <FormButton
-                    label="Save"
-                    icon="floppy-disk"
-                    :loadingDisplay="{
-                        showSpinner: true,
-                        loadingText: 'Saving...',
-                    }"
-                    :disabled="!anyChangesToSave"
-                    :click="saveChanges"
-                />
+        </ol>
+        <ol class="flex-1">
+            <label class="text-lg"> Combat Armour Class Settings </label>
+            <li class="py-2">
+                <div class="flex flex-row flex-wrap items-center gap-2">
+                    <label
+                        class="text-md text-gray-300"
+                        :class="{
+                            'flex-1': !isMobile,
+                        }"
+                        >How should players see the armour class of the DM's
+                        characters?</label
+                    >
+                    <Dropdown
+                        class="flex-1"
+                        :selectedItem="
+                            ArmourClassDisplayOptionValueKeyMap[
+                                state.combatArmourClassDisplaySettings
+                                    .dmCharacterDisplayMethod ?? 0
+                            ] as ArmourClassDisplayOptionKeys
+                        "
+                        :items="combatArmourClassDisplayOptionEnumEntries"
+                        :displayFunc="armourClassDisplayOptionsDisplayFunc"
+                        :keyFunc="(i) => i"
+                        @update:selectedItem="
+                            (val) =>
+                                (state.combatArmourClassDisplaySettings.dmCharacterDisplayMethod =
+                                    ArmourClassDisplayOptionsEnum[
+                                        val as ArmourClassDisplayOptionKeys
+                                    ])
+                        "
+                        :hoverOverContent="true"
+                        colour="take-navy-dark"
+                        hoverColour="take-navy-medium"
+                    />
+                </div>
+                <footer class="flex flex-row items-center gap-2">
+                    <FontAwesomeIcon icon="circle-info" />
+                    <span class="text-sm text-gray-300">
+                        {{
+                            dmCharacterArmourClassDisplayMethodInfoMessage(
+                                state.combatArmourClassDisplaySettings
+                                    .dmCharacterDisplayMethod,
+                            )
+                        }}
+                    </span>
+                </footer>
+            </li>
+            <li class="py-2">
+                <div class="flex flex-row flex-wrap items-center gap-2">
+                    <label
+                        class="text-md text-gray-300"
+                        :class="{
+                            'flex-1': !isMobile,
+                        }"
+                        >How should players see the armour class of
+                        Others?</label
+                    >
+                    <Dropdown
+                        class="flex-1"
+                        :selectedItem="
+                            ArmourClassDisplayOptionValueKeyMap[
+                                state.combatArmourClassDisplaySettings
+                                    .otherPlayerCharacterDisplayMethod ?? 0
+                            ] as ArmourClassDisplayOptionKeys
+                        "
+                        :items="combatArmourClassDisplayOptionEnumEntries"
+                        :displayFunc="armourClassDisplayOptionsDisplayFunc"
+                        :keyFunc="(i) => i"
+                        @update:selectedItem="
+                            (val) =>
+                                (state.combatHealthDisplaySettings.otherPlayerCharacterDisplayMethod =
+                                    HealthDisplayOptionsEnum[
+                                        val as ArmourClassDisplayOptionKeys
+                                    ])
+                        "
+                        :hoverOverContent="true"
+                        colour="take-navy-dark"
+                        hoverColour="take-navy-medium"
+                    />
+                </div>
+                <footer class="flex flex-row items-center gap-2">
+                    <FontAwesomeIcon icon="circle-info" />
+                    <span class="text-sm text-gray-300">
+                        {{
+                            otherPlayerCharacterArmourClassDisplayMethodInfoMessage(
+                                state.combatArmourClassDisplaySettings
+                                    .otherPlayerCharacterDisplayMethod,
+                            )
+                        }}
+                    </span>
+                </footer>
             </li>
         </ol>
+        <li class="flex justify-end">
+            <FormButton
+                label="Save"
+                icon="floppy-disk"
+                :loadingDisplay="{
+                    showSpinner: true,
+                    loadingText: 'Saving...',
+                }"
+                :disabled="!anyChangesToSave"
+                :click="saveChanges"
+            />
+        </li>
         <footer class="mb-8 rounded-md border border-take-red p-2">
             <label class="text-lg">Danger Zone</label>
             <main class="py-2">
@@ -134,10 +231,14 @@
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import type { UpdateCampaignDetailsRequest } from "base/utils/api/campaign/updateCampaignDetailsRequest";
 import {
-    DisplayOptionEnum,
-    DisplayOptionValueMap,
-    type DisplayOptionValues,
-    type DisplayOptions,
+    HealthDisplayOptionsEnum,
+    HealthDisplayOptionValueKeyMap,
+    type HealthDisplayOptionValues,
+    type HealthDisplayOptionKeys,
+    type ArmourClassDisplayOptionValues,
+    ArmourClassDisplayOptionValueKeyMap,
+    type ArmourClassDisplayOptionKeys,
+    ArmourClassDisplayOptionsEnum,
 } from "base/utils/types/models";
 const { isMobile } = useDevice();
 definePageMeta({
@@ -150,8 +251,12 @@ const campaignStore = useCampaignStore();
 const state = reactive<{
     campaignName: string;
     combatHealthDisplaySettings: {
-        dmCharacterDisplayMethod: DisplayOptionValues;
-        otherPlayerCharacterDisplayMethod: DisplayOptionValues;
+        dmCharacterDisplayMethod: HealthDisplayOptionValues;
+        otherPlayerCharacterDisplayMethod: HealthDisplayOptionValues;
+    };
+    combatArmourClassDisplaySettings: {
+        dmCharacterDisplayMethod: ArmourClassDisplayOptionValues;
+        otherPlayerCharacterDisplayMethod: ArmourClassDisplayOptionValues;
     };
 }>({
     campaignName: campaignStore.state.campaign?.campaignName!,
@@ -162,6 +267,15 @@ const state = reactive<{
         otherPlayerCharacterDisplayMethod:
             campaignStore.state.campaign?.campaignSettings
                 .combatHealthDisplaySettings.otherPlayerCharacterDisplayMethod!,
+    },
+    combatArmourClassDisplaySettings: {
+        dmCharacterDisplayMethod:
+            campaignStore.state.campaign?.campaignSettings
+                .combatArmourClassDisplaySettings.dmCharacterDisplayMethod!,
+        otherPlayerCharacterDisplayMethod:
+            campaignStore.state.campaign?.campaignSettings
+                .combatArmourClassDisplaySettings
+                .otherPlayerCharacterDisplayMethod!,
     },
 });
 
@@ -181,11 +295,26 @@ const otherCharacterHealthDisplayMethodChanged = computed(
         campaignStore.state.campaign?.campaignSettings
             .combatHealthDisplaySettings.otherPlayerCharacterDisplayMethod,
 );
+const dmCharacterArmourClassDisplayMethodChanged = computed(
+    () =>
+        state.combatArmourClassDisplaySettings.dmCharacterDisplayMethod !=
+        campaignStore.state.campaign?.campaignSettings
+            .combatArmourClassDisplaySettings.dmCharacterDisplayMethod,
+);
+const otherCharacterArmourClassDisplayMethodChanged = computed(
+    () =>
+        state.combatArmourClassDisplaySettings
+            .otherPlayerCharacterDisplayMethod !=
+        campaignStore.state.campaign?.campaignSettings
+            .combatArmourClassDisplaySettings.otherPlayerCharacterDisplayMethod,
+);
 const anyChangesToSave = computed(() => {
     return (
         campaignNameChanged.value ||
         dmCharacterHealthDisplayMethodChanged.value ||
-        otherCharacterHealthDisplayMethodChanged.value
+        otherCharacterHealthDisplayMethodChanged.value ||
+        dmCharacterArmourClassDisplayMethodChanged.value ||
+        otherCharacterArmourClassDisplayMethodChanged.value
     );
 });
 async function saveChanges() {
@@ -214,15 +343,35 @@ async function saveChanges() {
             state.combatHealthDisplaySettings.otherPlayerCharacterDisplayMethod;
     }
 
+    if (dmCharacterArmourClassDisplayMethodChanged.value) {
+        if (dto.campaignSettings == null) {
+            dto.campaignSettings =
+                campaignStore.state.campaign?.campaignSettings!;
+        }
+
+        dto.campaignSettings.combatArmourClassDisplaySettings.dmCharacterDisplayMethod =
+            state.combatArmourClassDisplaySettings.dmCharacterDisplayMethod;
+    }
+
+    if (otherCharacterArmourClassDisplayMethodChanged.value) {
+        if (dto.campaignSettings == null) {
+            dto.campaignSettings =
+                campaignStore.state.campaign?.campaignSettings!;
+        }
+
+        dto.campaignSettings.combatArmourClassDisplaySettings.otherPlayerCharacterDisplayMethod =
+            state.combatArmourClassDisplaySettings.otherPlayerCharacterDisplayMethod;
+    }
+
     await campaignStore.updateCampaignDetails(dto);
 }
 
 // Combat Health Display
 const combatHealthDisplayOptionEnumEntries = Object.keys(
-    DisplayOptionEnum,
-) as DisplayOptions[];
+    HealthDisplayOptionsEnum,
+) as HealthDisplayOptionKeys[];
 
-const displayOptionsDisplayFunc = (opt: DisplayOptions) => {
+const healthDisplayOptionsDisplayFunc = (opt: HealthDisplayOptionKeys) => {
     switch (opt) {
         case "HealthyBloodied":
             return "Healthy / Bloodied";
@@ -232,8 +381,10 @@ const displayOptionsDisplayFunc = (opt: DisplayOptions) => {
             return "Hidden";
     }
 };
-const dmCharacterDisplayMethodInfoMessage = (value: DisplayOptionValues) => {
-    switch (DisplayOptionValueMap[value]) {
+const dmCharacterHealthDisplayMethodInfoMessage = (
+    value: HealthDisplayOptionValues,
+) => {
+    switch (HealthDisplayOptionValueKeyMap[value]) {
         case "HealthyBloodied":
             return "Displays 'Healthy' for characters above 50% health, 'Blooded' for under 50%, and 'Dead' for 0% for the DM's characters.";
         case "RealValue":
@@ -242,12 +393,47 @@ const dmCharacterDisplayMethodInfoMessage = (value: DisplayOptionValues) => {
             return "The DM's characters health is hidden from others.";
     }
 };
-const otherPlayerCharacterDisplayMethodInfoMessage = (
-    value: DisplayOptionValues,
+const otherPlayerCharacterHealthDisplayMethodInfoMessage = (
+    value: HealthDisplayOptionValues,
 ) => {
-    switch (DisplayOptionValueMap[value]) {
+    switch (HealthDisplayOptionValueKeyMap[value]) {
         case "HealthyBloodied":
             return "Displays 'Healthy' for characters above 50% health, 'Blooded' for under 50%, and 'Dead' for 0% for other player characters.";
+        case "RealValue":
+            return "Displays the current health and the max health of other player characters.";
+        case "Hidden":
+            return "The other player characters health is hidden.";
+    }
+};
+
+// Combat Armour Class Display
+const combatArmourClassDisplayOptionEnumEntries = Object.keys(
+    ArmourClassDisplayOptionsEnum,
+) as ArmourClassDisplayOptionKeys[];
+const armourClassDisplayOptionsDisplayFunc = (
+    opt: ArmourClassDisplayOptionKeys,
+) => {
+    switch (opt) {
+        case "RealValue":
+            return "Real Value";
+        case "Hidden":
+            return "Hidden";
+    }
+};
+const dmCharacterArmourClassDisplayMethodInfoMessage = (
+    value: ArmourClassDisplayOptionValues,
+) => {
+    switch (ArmourClassDisplayOptionValueKeyMap[value]) {
+        case "RealValue":
+            return "Displays the current health and the max health of the DM's Characters";
+        case "Hidden":
+            return "The DM's characters health is hidden from others.";
+    }
+};
+const otherPlayerCharacterArmourClassDisplayMethodInfoMessage = (
+    value: ArmourClassDisplayOptionValues,
+) => {
+    switch (ArmourClassDisplayOptionValueKeyMap[value]) {
         case "RealValue":
             return "Displays the current health and the max health of other player characters.";
         case "Hidden":

@@ -9,28 +9,30 @@
 </template>
 <script setup lang="ts">
 import {
-    DisplayOptionEnum,
-    DisplayOptionValueMap,
+    HealthDisplayOptionsEnum,
+    HealthDisplayOptionValueKeyMap,
     type CharacterHealth,
-    type DisplayOptionValues,
+    type HealthDisplayOptionValues,
 } from "base/utils/types/models";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 const props = withDefaults(
     defineProps<{
         health: CharacterHealth | null | undefined;
-        displayMethod?: DisplayOptionValues;
+        displayMethod?: HealthDisplayOptionValues;
     }>(),
     {
-        displayMethod: DisplayOptionEnum["RealValue"],
+        displayMethod: HealthDisplayOptionsEnum["RealValue"],
     },
 );
 const shouldDisplay = computed(
-    () => props.displayMethod != DisplayOptionEnum["Hidden"],
+    () => props.displayMethod != HealthDisplayOptionsEnum["Hidden"],
 );
 const textToDisplay = computed(() => {
-    if (props.displayMethod == DisplayOptionEnum["RealValue"]) {
+    if (props.displayMethod == HealthDisplayOptionsEnum["RealValue"]) {
         return `${props.health?.currentHealth} / ${props.health?.maxHealth}`;
-    } else if (props.displayMethod == DisplayOptionEnum["HealthyBloodied"]) {
+    } else if (
+        props.displayMethod == HealthDisplayOptionsEnum["HealthyBloodied"]
+    ) {
         const percentage =
             ((props.health?.currentHealth ?? 0) * 1.0) /
             ((props.health?.maxHealth ?? 1) * 1.0);

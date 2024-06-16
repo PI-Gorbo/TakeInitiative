@@ -12,29 +12,52 @@ const campaignMemberInfoValidator = yup.object({
 export type CampaignMemberInfo = InferType<typeof campaignMemberInfoValidator>;
 
 // Campaign
-export const DisplayOptionEnum = {
+export const HealthDisplayOptionsEnum = {
     RealValue: 0,
     HealthyBloodied: 1,
     Hidden: 2,
 } as const;
-export const DisplayOptionValueMap = {
+export const HealthDisplayOptionValueKeyMap = {
     0: "RealValue",
     1: "HealthyBloodied",
     2: "Hidden",
 };
-export type DisplayOptions = keyof typeof DisplayOptionEnum;
-export type DisplayOptionValues = (typeof DisplayOptionEnum)[DisplayOptions];
+export type HealthDisplayOptionKeys = keyof typeof HealthDisplayOptionsEnum;
+export type HealthDisplayOptionValues =
+    (typeof HealthDisplayOptionsEnum)[HealthDisplayOptionKeys];
+
+export const ArmourClassDisplayOptionsEnum = {
+    RealValue: 0,
+    Hidden: 2,
+} as const;
+export const ArmourClassDisplayOptionValueKeyMap = {
+    0: "RealValue",
+    2: "Hidden",
+};
+export type ArmourClassDisplayOptionKeys =
+    keyof typeof ArmourClassDisplayOptionsEnum;
+export type ArmourClassDisplayOptionValues =
+    (typeof ArmourClassDisplayOptionsEnum)[ArmourClassDisplayOptionKeys];
+
 const campaignSettingsValidator = yup.object({
     combatHealthDisplaySettings: yup
         .object({
             dmCharacterDisplayMethod: yup
-                .mixed<DisplayOptionValues>()
+                .mixed<HealthDisplayOptionValues>()
                 .required(),
             otherPlayerCharacterDisplayMethod: yup
-                .mixed<DisplayOptionValues>()
+                .mixed<HealthDisplayOptionValues>()
                 .required(),
         })
         .required(),
+    combatArmourClassDisplaySettings: yup.object({
+        dmCharacterDisplayMethod: yup
+            .mixed<ArmourClassDisplayOptionValues>()
+            .required(),
+        otherPlayerCharacterDisplayMethod: yup
+            .mixed<ArmourClassDisplayOptionValues>()
+            .required(),
+    }),
 });
 export type CampaignSettings = InferType<typeof campaignSettingsValidator>;
 

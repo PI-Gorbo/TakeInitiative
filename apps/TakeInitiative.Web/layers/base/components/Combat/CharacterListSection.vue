@@ -93,17 +93,14 @@
                     </li>
                     <CharacterHealthDisplay
                         :health="charInfo.character.health"
-                        :displayMethod="getDisplayMethod(charInfo)"
+                        :displayMethod="getHealthDisplayMethod(charInfo)"
                     />
-                    <div
-                        v-if="charInfo.character.armourClass"
-                        class="flex select-none items-center gap-2"
-                    >
-                        <FontAwesomeIcon icon="shield-halved" />
-                        <div class="ws-nowrap min-w-fit">
-                            {{ charInfo.character.armourClass }}
-                        </div>
-                    </div>
+                    <CharacterArmourClassDisplay
+                        :armourClass="charInfo.character.armourClass"
+                        :armourClassDisplayMethod="
+                            getArmourClassDisplayMethod(charInfo)
+                        "
+                    />
                     <li v-if="combatIsOpen">
                         <FontAwesomeIcon icon="shoe-prints" />
                         {{ charInfo.character.initiative.value }}
@@ -127,8 +124,11 @@
 import {
     type CombatCharacter,
     CombatState,
-    type DisplayOptionValues,
-    DisplayOptionEnum,
+    type HealthDisplayOptionValues,
+    HealthDisplayOptionsEnum,
+    type ArmourClassDisplayOptionValues,
+    ArmourClassDisplayOptionValueKeyMap,
+    ArmourClassDisplayOptionsEnum,
 } from "base/utils/types/models";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 
@@ -174,9 +174,11 @@ const characterList = computed(() => {
     }
 });
 
-function getDisplayMethod(character: CombatPlayerDto): DisplayOptionValues {
+function getHealthDisplayMethod(
+    character: CombatPlayerDto,
+): HealthDisplayOptionValues {
     if (userIsDm.value) {
-        return DisplayOptionEnum["RealValue"];
+        return HealthDisplayOptionsEnum["RealValue"];
     }
 
     if (character.user.isDungeonMaster) {
@@ -186,6 +188,22 @@ function getDisplayMethod(character: CombatPlayerDto): DisplayOptionValues {
 
     return campaignStore.state.campaign?.campaignSettings
         .combatHealthDisplaySettings.otherPlayerCharacterDisplayMethod!;
+}
+
+function getArmourClassDisplayMethod(
+    character: CombatPlayerDto,
+): ArmourClassDisplayOptionValues {
+    if (userIsDm.value) {
+        return ArmourClassDisplayOptionsEnum.RealValue;
+    }
+
+    if (character.user.isDungeonMaster) {
+        return campaignStore.state.campaign?.campaignSettings
+            .combatArmourClassDisplaySettings.dmCharacterDisplayMethod!;
+    }
+
+    return campaignStore.state.campaign?.campaignSettings
+        .combatArmourClassDisplaySettings.otherPlayerCharacterDisplayMethod!;
 }
 </script>
 
