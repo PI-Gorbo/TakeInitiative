@@ -25,6 +25,7 @@ services:
             - "CORS:AdminApp=http://warrani:7404;https://warrani:7404"
             - "AllowedHosts=api.take-initiative.com"
             - "CookieDomain=take-initiative.com"
+            - "SendGrid:ApiKey=${SendGridApiKey}"
         restart: always
         # healthcheck:
         #     test: curl --fail http://localhost:8080/heathz || exit 1
