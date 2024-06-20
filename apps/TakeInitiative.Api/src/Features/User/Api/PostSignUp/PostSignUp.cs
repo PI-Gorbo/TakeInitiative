@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 namespace TakeInitiative.Api.Features.Users;
 
 public class PostSignUp(
+    IHostEnvironment environment,
     IOptions<JWTOptions> JWTOptions,
     UserManager<ApplicationUser> UserManager,
     SignInManager<ApplicationUser> SignInManager,
@@ -54,11 +55,14 @@ public class PostSignUp(
             ThrowError($"Failed to register new account! {String.Join(", ", result.Errors.Select(x => x.Description))}", (int)HttpStatusCode.BadRequest);
         }
 
-        // Send Email Authentication.
-        var sentEmailConfirmation = await confirmEmailSender.SendConfirmAccountEmail(user, ct);
-        if (sentEmailConfirmation.IsFailure)
+        if (!environment.IsDevelopment())
         {
-            ThrowError($"Failed to send confirmation email! {sentEmailConfirmation.Error}", (int)HttpStatusCode.ServiceUnavailable);
+            // Send Email Authentication.
+            var sentEmailConfirmation = await confirmEmailSender.SendConfirmAccountEmail(user, ct);
+            if (sentEmailConfirmation.IsFailure)
+            {
+                ThrowError($"Failed to send confirmation email! {sentEmailConfirmation.Error}", (int)HttpStatusCode.ServiceUnavailable);
+            }
         }
 
         await CookieAuth.SignInAsync(u =>
