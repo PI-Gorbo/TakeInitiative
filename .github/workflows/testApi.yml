@@ -30,7 +30,7 @@ jobs:
                   cache: "pip" # caching pip dependencies
             - name: "Find python libpython3.11.so"
               run: |
-                  find ./ -name libpython3.11.so
+                  find / -name libpython3.11.so
             - name: Restore dependencies
               run: dotnet restore
             - name: Build
