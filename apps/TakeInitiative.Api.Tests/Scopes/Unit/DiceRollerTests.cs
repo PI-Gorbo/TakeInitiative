@@ -7,7 +7,7 @@ using TakeInitiative.Api.Features.Combats;
 using TakeInitiative.Utilities;
 
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("DynamicProxyGenAssembly2")]
-namespace TakeInitiative.Api.Tests;
+namespace TakeInitiative.Api.Tests.Unit;
 
 public class DiceRollerTests
 {

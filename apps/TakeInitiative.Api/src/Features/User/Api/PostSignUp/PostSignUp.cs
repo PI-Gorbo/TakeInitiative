@@ -55,7 +55,7 @@ public class PostSignUp(
             ThrowError($"Failed to register new account! {String.Join(", ", result.Errors.Select(x => x.Description))}", (int)HttpStatusCode.BadRequest);
         }
 
-        if (!environment.IsDevelopment())
+        if (environment.IsProduction())
         {
             // Send Email Authentication.
             var sentEmailConfirmation = await confirmEmailSender.SendConfirmAccountEmail(user, ct);

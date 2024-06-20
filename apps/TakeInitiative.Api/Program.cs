@@ -28,12 +28,12 @@ internal class Program
         builder.Services.AddSignalR();
 
         // Custom Injection
-        builder.AddOptionObjects();
-        builder.AddMartenDB();
-        builder.AddSerilog();
-        builder.AddIdentityAuthenticationAndAuthorization();
-        builder.AddPython();
-        builder.AddSendGrid();
+        builder.Services.AddOptionObjects(builder.Configuration);
+        builder.Services.AddMartenDB(builder.Configuration, builder.Environment.IsDevelopment());
+        builder.Services.AddSerilog();
+        builder.Services.AddIdentityAuthenticationAndAuthorization(builder.Configuration);
+        builder.Services.AddPython(builder.Configuration);
+        builder.Services.AddSendGrid(builder.Configuration);
 
         // Cors
 

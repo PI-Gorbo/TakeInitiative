@@ -18,7 +18,6 @@ on:
 jobs:
     test:
         runs-on: ubuntu-latest
-
         steps:
             - uses: actions/checkout@v4
             - name: Setup .NET
@@ -30,4 +29,4 @@ jobs:
             - name: Build
               run: dotnet build --configuration Release --no-restore
             - name: Test
-              run: dotnet test --no-build --verbosity normal
+              run: dotnet test -- --verbosity normal
