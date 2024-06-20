@@ -180,14 +180,12 @@ export const CharacterOriginOptions = {
     CustomCharacter: 2,
 } as const;
 export const ConditionDurationTypes = {
-    Rounds: 0,
-    Minutes: 1,
-    Hours: 2,
+    Rounds_StartOfRound: 0, 
+    Rounds_OnCharacterTurn: 1, 
 } as const;
 export const ConditionDurationTypesValues = {
-    0: "Rounds",
-    1: "Minutes",
-    2: "Hours",
+    0: "Rounds_StartOfRound",
+    1: "Rounds_OnCharacterTurn",
 } as const;
 export const conditionValidator = yup.object({
     name: yup.string().required().nonNullable(),
