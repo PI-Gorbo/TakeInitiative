@@ -290,11 +290,11 @@ export const useCombatStore = defineStore("combatStore", () => {
         }) => {
             const currentUserId = userStore.state.user?.userId;
 
-            if (charInfo.user.userId == state.combat?.dungeonMaster) {
+            if (charInfo.user?.userId == state.combat?.dungeonMaster) {
                 return "crown";
             }
 
-            if (charInfo.user.userId == currentUserId) {
+            if (charInfo.user?.userId == currentUserId) {
                 return "circle-user";
             }
 
