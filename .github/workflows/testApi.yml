@@ -24,6 +24,13 @@ jobs:
               uses: actions/setup-dotnet@v4
               with:
                   dotnet-version: 8.0.x
+            - uses: actions/setup-python@v5
+              with:
+                  python-version: "3.11"
+                  cache: "pip" # caching pip dependencies
+            - name: "Find python libpython3.11.so"
+              run: |
+                  find ./ -name libpython3.11.so
             - name: Restore dependencies
               run: dotnet restore
             - name: Build
