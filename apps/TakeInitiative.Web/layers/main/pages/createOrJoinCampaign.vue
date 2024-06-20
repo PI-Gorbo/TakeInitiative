@@ -15,8 +15,8 @@
 </template>
 
 <script setup lang="ts">
-import type { CreateCampaignRequest } from "../utils/api/campaign/createCampaignRequest";
-import type { JoinCampaignRequest } from "../utils/api/campaign/joinCampaignRequest";
+import type { CreateCampaignRequest } from "base/utils/api/campaign/createCampaignRequest";
+import type { JoinCampaignRequest } from "base/utils/api/campaign/joinCampaignRequest";
 
 definePageMeta({ requiresAuth: true, layout: "auth" });
 
