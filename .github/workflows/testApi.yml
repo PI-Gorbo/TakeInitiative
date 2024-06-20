@@ -28,12 +28,15 @@ jobs:
               with:
                   python-version: "3.11"
                   cache: "pip" # caching pip dependencies
-            - name: "Find python libpython3.11.so"
-              run: |
-                  find / -name libpython3.11.so
+            # - name: "Find python libpython3.11.so"
+            #   run: |
+            #       find / -name libpython3.11.so
             - name: Restore dependencies
               run: dotnet restore
             - name: Build
-              run: dotnet build --configuration Release --no-restore
+              run: |
+                  dotnet build --configuration Release --no-restore
             - name: Test
-              run: dotnet test -- --verbosity normal
+              run: |
+                  export PythonDLL=/opt/hostedtoolcache/Python/3.11.9/x64/lib/libpython3.11.so
+                  dotnet test -- --verbosity normal
