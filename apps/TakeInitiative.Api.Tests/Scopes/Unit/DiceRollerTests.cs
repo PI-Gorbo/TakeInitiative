@@ -24,7 +24,7 @@ public class DiceRollerTests
         Guid playerId = Guid.NewGuid();
         var incomingChar = CombatCharacter.NewCombatCharacter(
                     playerId,
-                    "Incoming",
+                    "incoming",
                     new CharacterInitiative()
                     {
                         Strategy = InitiativeStrategy.Roll,
