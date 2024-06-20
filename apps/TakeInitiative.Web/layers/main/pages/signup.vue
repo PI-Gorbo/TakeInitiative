@@ -41,6 +41,41 @@
                 v-bind="confirmPasswordProps"
             />
 
+            <div class="rounded-md border border-take-navy-light p-2">
+                <label class="text-sm italic">Password Requirements</label>
+                <section class="grid grid-flow-row grid-cols-1 lg:grid-cols-2">
+                    <div>
+                        <FontAwesomeIcon
+                            :icon="validPasswordLength ? 'check' : 'x'"
+                        />
+                        6 or more characters
+                    </div>
+                    <div>
+                        <FontAwesomeIcon
+                            :icon="validPasswordHasLower ? 'check' : 'x'"
+                        />
+                        At least one lowercase character
+                    </div>
+                    <div>
+                        <FontAwesomeIcon
+                            :icon="validPasswordHasUpper ? 'check' : 'x'"
+                        />
+                        At least one uppercase character
+                    </div>
+                    <div>
+                        <FontAwesomeIcon
+                            :icon="validPasswordHasDigit ? 'check' : 'x'"
+                        />
+                        At least one digit
+                    </div>
+                    <div>
+                        <FontAwesomeIcon
+                            :icon="validPasswordHasSpecial ? 'check' : 'x'"
+                        />
+                        At least one special character
+                    </div>
+                </section>
+            </div>
             <div
                 v-if="formState.submitError?.errors?.generalErrors"
                 class="text-take-red"
@@ -84,8 +119,9 @@ import { useForm } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/yup";
 import * as yup from "yup";
 import { formatDiagnosticsWithColorAndContext } from "typescript";
-import type { SignUpRequest } from "../utils/api/user/signUpRequest";
 import type { LocationQueryValue } from "vue-router";
+import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+import type { SignUpRequest } from "base/utils/api/user/signUpRequest";
 const redirectToPath = useRoute().query.redirectTo as LocationQueryValue;
 definePageMeta({
     requiresAuth: false,
@@ -98,12 +134,46 @@ const formState = reactive({
     success: false,
     submitting: false as boolean,
 });
+
+const testPasswordLength = (password: string) => password.length >= 6;
+const testPasswordHasLower = (p: string) => p.match(/[a-z]/) != null;
+const testPasswordHasUpper = (p: string) => p.match(/[A-Z]/) != null;
+const testPasswordHasDigit = (p: string) => p.match(/\d/) != null;
+const testPasswordHasSpecial = (p: string) => p.match(/[^a-zA-Z0-9]/) != null;
+
 const { values, errors, defineField, validate } = useForm({
     validationSchema: toTypedSchema(
         yup.object({
             username: yup.string().required(),
             email: yup.string().required().email(),
-            password: yup.string().required(),
+            password: yup
+                .string()
+                .required("A password is required")
+                .test(
+                    "length",
+                    "Must be at least 6 characters long",
+                    testPasswordLength,
+                )
+                .test(
+                    "One lowercase",
+                    "Must have at least one lowercase character.",
+                    testPasswordHasLower,
+                )
+                .test(
+                    "One uppercase",
+                    "Must have at least one uppercase character.",
+                    testPasswordHasUpper,
+                )
+                .test(
+                    "At least one digit",
+                    "Must have at least one digit character.",
+                    testPasswordHasDigit,
+                )
+                .test(
+                    "At least one special character",
+                    "Must have at least one special character.",
+                    testPasswordHasSpecial,
+                ),
             confirmPassword: yup
                 .string()
                 .required("Please confirm your password")
@@ -190,4 +260,21 @@ async function onSignUp() {
         })
         .finally(() => (formState.submitting = false));
 }
+
+// Computed Form Password display
+const validPasswordLength = computed(() =>
+    testPasswordLength(password.value ?? ""),
+);
+const validPasswordHasLower = computed(() =>
+    testPasswordHasLower(password.value ?? ""),
+);
+const validPasswordHasUpper = computed(() =>
+    testPasswordHasUpper(password.value ?? ""),
+);
+const validPasswordHasDigit = computed(() =>
+    testPasswordHasDigit(password.value ?? ""),
+);
+const validPasswordHasSpecial = computed(() =>
+    testPasswordHasSpecial(password.value ?? ""),
+);
 </script>
