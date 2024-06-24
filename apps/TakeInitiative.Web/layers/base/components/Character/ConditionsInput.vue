@@ -11,51 +11,50 @@
                 class="flex w-full flex-wrap items-center gap-2 rounded-lg border border-dashed border-take-navy-light p-2"
             >
                 <FormInput
-                    class="flex-1 min-w-40"
+                    class="min-w-40 flex-1"
                     placeholder="Condition Name"
                     label="Name"
-                    v-model:value="newConditionState.name"
+                    v-model:value="name"
                     :datalist="Dnd5eConditionList"
                 />
                 <Dropdown
-                    class="flex-1 min-w-40"
-                    headerLabel="Trigger"
-                    :items="DurationOptionKeys"
-                    :displayFunc="
-                        (item) => {
-                            if (item == 'Rounds_OnCharacterTurn') {
-                                return 'Character\'s Turn';
-                            } else if (item == 'Rounds_StartOfRound') {
-                                return 'Start of Round';
-                            }
-                            return item;
-                        }
-                    "
+                    class="min-w-40 flex-1"
+                    headerLabel="Duration"
+                    :items="[...durationTypeDropdownOptions] as DurationTypeDropdownOptions[]"
+                    :displayFunc="(i) => i"
                     :keyFunc="(item) => item"
-                    :selectedItem="
-                        ConditionDurationTypesValues[
-                            newConditionState.duration.type
-                        ]
-                    "
+                    :selectedItem="durationTypeDropdownRawValue"
                     :hoverOverContent="true"
                     colour="take-navy-light"
                     @update:selectedItem="
-                        (update) =>
-                            (newConditionState.duration.type =
-                                ConditionDurationTypes[update])
+                        (v) =>
+                            onDurationTypeDropdownChanged(
+                                v as DurationTypeDropdownOptions,
+                            )
                     "
                 />
-                <FormInput
-                    class="flex-1 min-w-20"
-                    label="Duration"
-                    type="number"
-                    v-model:value="newConditionState.duration.value"
+                <Dropdown
+                    v-if="durationTypeDropdownRawValue == 'Rounds'"
+                    class="min-w-40 flex-1"
+                    headerLabel="Trigger on"
+                    :items="[...roundTriggerTypeDropdownOptions] as RoundTriggerTypeDurationOptions[]"
+                    :displayFunc="(i) => i"
+                    :keyFunc="(item) => item"
+                    v-model:selectedItem="roundTriggerOptionRawValue"
+                    :hoverOverContent="true"
+                    colour="take-navy-light"
                 />
                 <FormInput
-                    class="flex-1 min-w-40"
+                    class="min-w-20 flex-1"
+                    label="Duration"
+                    type="number"
+                    v-model:value="durationValue"
+                />
+                <FormInput
+                    class="min-w-40 flex-1"
                     label="Note"
                     placeholder="Notes"
-                    v-model:value="newConditionState.note"
+                    v-model:value="note"
                 />
             </li>
         </ol>
@@ -70,37 +69,47 @@ import {
 } from "base/utils/types/models";
 import { Dnd5eConditionList } from "base/utils/conditionData";
 import { useForm } from "vee-validate";
+import { toTypedSchema } from "@vee-validate/yup";
 const DurationOptionKeys = Object.keys(
     ConditionDurationTypes,
 ) as (keyof typeof ConditionDurationTypes)[];
 
-const formState = reactive<{
-    formError: ApiError<Condition> | undefined | null,
-}>({
-    formError: undefined
-})
-const {defineField} = useForm({
-    validationSchema: conditionValidator.required()
-})
-const [name, nameInputProps] = defineField('name',{
-    props: (state) => ({
-        errorMessage:
-            formState.formError == null
-                ? state.errors[0]
-                : formState.formError?.getErrorFor("campaignName"),
-    }),
-})
-
-
-
-const newConditionState = reactive<Condition>({
-    name: "",
-    duration: {
-        type: 0,
-        value: 1,
-    },
-    note: null,
+const { defineField } = useForm({
+    validationSchema: toTypedSchema(conditionValidator),
 });
+
+const [name, nameInputProps] = defineField("name", {
+    props: (state) => ({
+        errorMessage: state.errors[0],
+    }),
+});
+const [durationType, durationTypeInputProps] = defineField("duration.type", {
+    props: (state) => ({
+        errorMessage: state.errors[0],
+    }),
+});
+const [durationValue, durationValueInputProps] = defineField("duration.value", {
+    props: (state) => ({
+        errorMessage: state.errors[0],
+    }),
+});
+const [note, noteInputProps] = defineField("note", {
+    props: (state) => ({
+        errorMessage: state.errors[0],
+    }),
+});
+
+// Condition Duration Type Dropdown
+const durationTypeDropdownOptions = ["Rounds", "Turns", "Indefinite"] as const;
+type DurationTypeDropdownOptions = (typeof durationTypeDropdownOptions)[number];
+const roundTriggerTypeDropdownOptions = ['Top of Round', 'Character\'s Turn'] as const;
+type RoundTriggerTypeDurationOptions = (typeof roundTriggerTypeDropdownOptions)[number];
+
+const durationTypeDropdownRawValue = ref<DurationTypeDropdownOptions>('Rounds'); // Here is where the default is set.
+const roundTriggerOptionRawValue = ref<RoundTriggerTypeDurationOptions>('Top of Round');
+const onDurationTypeDropdownChanged = (value: DurationTypeDropdownOptions) => {
+    durationTypeDropdownRawValue.value = value;
+};
 
 const props = defineProps<{
     conditions: Condition[] | undefined;

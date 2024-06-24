@@ -1,7 +1,7 @@
 <template>
     <div>
-        <label v-if="props.headerLabel">{{ headerLabel }}</label>
-        <li class="menu">
+        <label class="text-sm" v-if="props.headerLabel">{{ headerLabel }}</label>
+        <li class="menu p-0">
             <details
                 ref="details"
                 class="dropdown text-base text-white"
@@ -23,7 +23,7 @@
                     }}
                 </summary>
                 <ul
-                    class="z-9999 flex flex-col gap-1 p-2"
+                    class="z-[999] flex flex-col gap-1 py-2"
                     :class="{
                         absolute: props.hoverOverContent,
                     }"
@@ -34,7 +34,7 @@
                         @click="() => onSelectedItem(item)"
                         :class="[
                             'rounded-md',
-                            `bg-${props.colour} hover:bg-${props.hoverColour}`,
+                            `bg-${props.colour} hover:bg-${props.hoverColour} border border-${elementBorderColour}`,
                         ]"
                     >
                         <a>{{ props.displayFunc(item) }}</a>
@@ -61,11 +61,13 @@ const props = withDefaults(
         colour?: TakeInitColour;
         hoverColour?: TakeInitColour;
         hoverOverContent?: boolean;
+        elementBorderColour: TakeInitColour;
     }>(),
     {
         colour: "take-navy",
         hoverColour: "take-navy-dark",
         hoverOverContent: false,
+        elementBorderColour: 'take-grey-dark'
     },
 );
 
