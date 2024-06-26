@@ -10,12 +10,21 @@ export default {
                     dark: "#1f2b43",
                     DEFAULT: "#020617",
                 },
+                "take-teal": {
+                    DEFAULT: "#019D89",
+                },
+                "take-blue": {
+                    DEFAULT: "#264652",
+                },
+                "take-purple": {
+                    DEFAULT: "#2C2D41",
+                },
                 "take-red": {
-                    DEFAULT: "#EA5A36",
+                    DEFAULT: "#FF652E",
                 },
                 "take-yellow": {
                     light: "#fce9cc",
-                    DEFAULT: "#FFD28F",
+                    DEFAULT: "#FBB426",
                     dark: "#fcc385",
                 },
                 "take-grey": {
@@ -23,8 +32,8 @@ export default {
                     DEFAULT: "#D1D1D1",
                     dark: "#A7A7A7",
                 },
-                "ti-orange": {
-                    DEFAULT: "#d85a33",
+                "take-creme": {
+                    DEFAULT: "#FDF2C1",
                 },
             },
         },

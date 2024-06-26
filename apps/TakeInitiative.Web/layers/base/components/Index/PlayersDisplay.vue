@@ -12,9 +12,6 @@
                 />
                 <label class="select-none">{{ member.username }}</label>
             </div>
-            <label class="select-none truncate">{{
-                member.currentCharacter?.name
-            }}</label>
 
             <div class="cursor-pointer">
                 <FontAwesomeIcon icon="fa-ellipsis" />
