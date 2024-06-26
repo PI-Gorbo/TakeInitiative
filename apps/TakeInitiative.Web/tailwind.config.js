@@ -23,6 +23,9 @@ export default {
                     DEFAULT: "#D1D1D1",
                     dark: "#A7A7A7",
                 },
+                "ti-orange": {
+                    DEFAULT: "#d85a33",
+                },
             },
         },
         fontFamily: {
