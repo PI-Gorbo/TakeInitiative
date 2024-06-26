@@ -7,7 +7,11 @@
         >
             <div class="flex items-center gap-2 text-center">
                 <FontAwesomeIcon
-                    class="text-take-yellow"
+                    :class="
+                        member.isDungeonMaster
+                            ? 'text-take-yellow'
+                            : 'text-take-teal'
+                    "
                     :icon="!member.isDungeonMaster ? 'user-large' : 'crown'"
                 />
                 <label class="select-none">{{ member.username }}</label>

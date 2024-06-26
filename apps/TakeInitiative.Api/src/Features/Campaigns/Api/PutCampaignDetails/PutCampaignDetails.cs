@@ -5,12 +5,13 @@ using CSharpFunctionalExtensions;
 using FastEndpoints;
 using Marten;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.SignalR;
 using TakeInitiative.Utilities;
 using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Campaigns;
 
-public class PutCampaignDetails(IDocumentSession session) : Endpoint<PutCampaignDetailsRequest, Campaign>
+public class PutCampaignDetails(IDocumentSession session, IHubContext<CampaignHub> campaignHub) : Endpoint<PutCampaignDetailsRequest, Campaign>
 {
     public override void Configure()
     {
@@ -45,6 +46,7 @@ public class PutCampaignDetails(IDocumentSession session) : Endpoint<PutCampaign
 
             session.Store(campaign);
             await session.SaveChangesAsync(ct);
+            await campaignHub.NotifyCampaignStateUpdated(campaign.Id);
             return Result.Success<Campaign, ApiError>(campaign);
         });
 

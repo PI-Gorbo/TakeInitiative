@@ -7,7 +7,7 @@
             props.disabled
                 ? 'bg-take-grey-dark hover:bg-take-grey-dark'
                 : `bg-${props.buttonColour} hover:bg-${props.hoverButtonColour} text-${props.textColour ?? TakeInitContrastColour[props.buttonColour]} hover:text-${$props.hoverTextColour ?? TakeInitContrastColour[props.hoverButtonColour]}`,
-            size == null ? 'text-md p-3' : '',
+            size == null || 'sm' ? 'text-md p-3' : '',
             size == 'lg' ? 'text-md p-4' : '',
             size == 'xl' ? 'p-5 text-lg' : '',
         ]"

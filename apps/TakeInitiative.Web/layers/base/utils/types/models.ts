@@ -117,12 +117,21 @@ export const playerCharacterValidator = characterValidator.shape({
 export type PlayerCharacter = InferType<typeof playerCharacterValidator>;
 
 // Campaign Member
+export const campaignMemberResourceValidator = yup.object({
+    name: yup.string().required(),
+    link: yup.string().required(),
+    lastModifiedTimestamp: yup.string(),
+});
+export type CampaignMemberResource = InferType<
+    typeof campaignMemberResourceValidator
+>;
 export const campaignMemberValidator = yup.object({
     id: yup.string().required(),
     userId: yup.string().required(),
     campaignId: yup.string().required(),
     isDungeonMaster: yup.boolean().required(),
     characters: yup.array(playerCharacterValidator),
+    resources: yup.array(campaignMemberResourceValidator),
 });
 export type CampaignMember = InferType<typeof campaignMemberValidator>;
 

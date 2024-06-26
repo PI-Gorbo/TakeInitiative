@@ -1,5 +1,5 @@
 <template>
-    <div class="drawer flex h-full bg-take-navy text-white">
+    <div class="bg-take-purple-very-dark drawer flex h-full text-white">
         <input
             ref="drawerToggle"
             id="drawer"
@@ -9,7 +9,7 @@
         <div class="drawer-content w-full">
             <main class="flex h-full w-full flex-col">
                 <header
-                    class="navbar border border-take-navy-medium border-b-take-yellow bg-take-navy-medium"
+                    class="navbar border border-take-navy-medium border-b-take-yellow bg-take-navy"
                 >
                     <section class="navbar-start flex gap-2">
                         <label

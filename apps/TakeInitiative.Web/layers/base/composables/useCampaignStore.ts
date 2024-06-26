@@ -136,5 +136,66 @@ export const useCampaignStore = defineStore("campaignStore", () => {
         memberDtos,
         getMemberDetailsFor: (id: string): CampaignMemberDto | undefined =>
             memberDtos.value.find((x) => x.userId == id),
+        memberResources: computed(() => {
+            return [
+                {
+                    id: state.userCampaignMember?.id,
+                    username: userStore.state.user?.username!,
+                    resources: state.userCampaignMember?.resources?.sort(
+                        (a, b) =>
+                            multiplePropertyAlphabeticalSort(
+                                a,
+                                b,
+                                (ob) => ob.link,
+                                (ob) => ob.name,
+                            ),
+                    ),
+                    isDm: state.userCampaignMember?.isDungeonMaster,
+                },
+                ...(state.nonUserCampaignMembers ?? []).map((member) => ({
+                    id: member.userId,
+                    username: member.username!,
+                    resources: member.resources?.sort((a, b) =>
+                        multiplePropertyAlphabeticalSort(
+                            a,
+                            b,
+                            (ob) => ob.link,
+                            (ob) => ob.name,
+                        ),
+                    ),
+                    isDm: member.isDungeonMaster,
+                })),
+            ].sort((member1, member2) => {
+                if (member1.isDm && !member2.isDm) {
+                    // Sort by is Dm
+                    return -1;
+                } else if (!member1.isDm && member2.isDm) {
+                    return 1;
+                }
+
+                // Sort by username.
+                return member1.username > member2.username ? 1 : -1;
+            });
+        }),
     };
 });
+
+const multiplePropertyAlphabeticalSort = <T>(
+    a: T,
+    b: T,
+    ...args: Array<(obj: T) => string>
+): 1 | 0 | -1 => {
+    for (let arg of args) {
+        const comparisonResult = alphabeticalSort(arg(a), arg(b));
+        if (comparisonResult != 0) {
+            return comparisonResult;
+        }
+    }
+
+    return 0;
+};
+const alphabeticalSort = (a: string, b: string): 1 | 0 | -1 => {
+    if (a > b) return 1;
+    if (b > a) return -1;
+    return 0;
+};

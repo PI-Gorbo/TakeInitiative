@@ -2,7 +2,7 @@
     <button
         class="btn h-min min-h-0 p-2"
         :class="[
-            `bg-${buttonColour} text-${TakeInitContrastColour[props.buttonColour]} hover:bg-${hoverColour} disabled:bg-take-grey disabled:text-take-navy disabled:hover:bg-take-grey`,
+            `bg-${buttonColour} text-${TakeInitContrastColour[props.buttonColour]} hover:bg-${hoverColour} disabled:bg-${disabledColour} disabled:text-take-navy disabled:hover:bg-take-grey`,
         ]"
         :type="props.type"
         @click="onClicked"
@@ -25,10 +25,12 @@ const props = withDefaults(
         isLoading?: boolean;
         buttonColour: TakeInitColour;
         hoverButtonColour?: TakeInitColour;
+        disabledColour?: TakeInitColour;
     }>(),
     {
         type: "button",
         isLoading: false,
+        disabledColour: "take-grey",
     },
 );
 

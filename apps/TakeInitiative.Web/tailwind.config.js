@@ -17,20 +17,24 @@ export default {
                     DEFAULT: "#264652",
                 },
                 "take-purple": {
+                    light: "#646676",
                     DEFAULT: "#2C2D41",
+                    dark: "#171825",
+                    "medium-dark": "#11111c",
+                    "very-dark": "#05060b",
                 },
                 "take-red": {
                     DEFAULT: "#FF652E",
                 },
                 "take-yellow": {
-                    light: "#fce9cc",
+                    light: "#fdc465",
                     DEFAULT: "#FBB426",
-                    dark: "#fcc385",
+                    dark: "#da9c20",
                 },
                 "take-grey": {
                     light: "#E7E7E7",
                     DEFAULT: "#D1D1D1",
-                    dark: "#A7A7A7",
+                    dark: "#ba8519",
                 },
                 "take-creme": {
                     DEFAULT: "#FDF2C1",
