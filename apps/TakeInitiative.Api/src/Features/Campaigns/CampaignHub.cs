@@ -12,6 +12,12 @@ public static class CampaignHubContextExtensions
         return hubContext.Clients.Group(campaignId.ToString())
             .SendAsync("campaignStateUpdated");
     }
+
+    public static Task NotifyCampaignMemberStateUpdated(this IHubContext<CampaignHub> hubContext, CampaignMember campaignMember)
+    {
+        return hubContext.Clients.Group(campaignMember.CampaignId.ToString())
+            .SendAsync("campaignMemberStateUpdated", campaignMember);
+    }
 }
 
 

@@ -39,7 +39,6 @@ public class PutCampaignDetails(IDocumentSession session) : Endpoint<PutCampaign
             campaign = campaign with
             {
                 CampaignDescription = req.CampaignDescription ?? campaign.CampaignDescription,
-                CampaignResources = req.CampaignResources ?? campaign.CampaignResources,
                 CampaignName = req.CampaignName ?? campaign.CampaignName,
                 CampaignSettings = req.CampaignSettings ?? campaign.CampaignSettings,
             };
