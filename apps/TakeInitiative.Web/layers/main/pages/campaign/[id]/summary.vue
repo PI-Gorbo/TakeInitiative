@@ -28,6 +28,49 @@
                 <article
                     class="flex flex-1 flex-col rounded-xl border border-take-navy-medium px-2 py-1"
                 >
+                    <FormBase
+                        class="col-span-6 flex flex-1 flex-col"
+                        :onSubmit="submitDetails"
+                        v-slot="{ submitting }"
+                    >
+                        <div class="flex w-full justify-between font-NovaCut">
+                            <label>Description</label>
+                            <div v-if="campaignStore.isDm">
+                                <FormIconButton
+                                    icon="floppy-disk"
+                                    type="submit"
+                                    :isLoading="submitting"
+                                    :buttonColour="
+                                        descriptionHasChanges
+                                            ? 'take-yellow'
+                                            : 'take-grey-dark'
+                                    "
+                                    :class="{
+                                        disabled: !descriptionHasChanges,
+                                    }"
+                                />
+                            </div>
+                        </div>
+                        <div
+                            class="col flex w-full flex-1 flex-col overflow-y-auto px-3 py-2"
+                        >
+                            <textarea
+                                :value="description"
+                                class="w-full flex-1 resize-none rounded-md bg-take-navy p-1 text-lg text-take-yellow ring-0"
+                                :disabled="!campaignStore.isDm"
+                                :class="{
+                                    'border border-take-navy-medium':
+                                        campaignStore.isDm,
+                                }"
+                                @input="
+                                    (e) =>
+                                        (description = (
+                                            e.target as HTMLTextAreaElement
+                                        ).value)
+                                "
+                            />
+                        </div>
+                    </FormBase>
                     <div class="flex-1">
                         <div class="w-full font-NovaCut">Creation Date</div>
                         <div
@@ -61,44 +104,6 @@
                 </section>
             </section>
             <section class="col-span-6 flex h-full flex-col gap-4">
-                <FormBase
-                    class="col-span-6 flex flex-1 flex-col rounded-xl border border-take-navy-medium px-2 py-1"
-                    :onSubmit="submitDetails"
-                    v-slot="{ submitting }"
-                >
-                    <div class="flex w-full font-NovaCut">
-                        <label>Description</label>
-                    </div>
-                    <div
-                        class="flex w-full flex-1 flex-col overflow-y-auto px-3 py-2"
-                    >
-                        <div
-                            class="flex flex-1 flex-row gap-2 rounded-xl bg-take-navy-medium p-1"
-                        >
-                            <textarea
-                                :value="description"
-                                class="h-full w-full rounded-xl bg-take-navy-medium p-1 ring-0"
-                                :disabled="!campaignStore.isDm"
-                                @input="
-                                    (e) =>
-                                        (description = (
-                                            e.target as HTMLTextAreaElement
-                                        ).value)
-                                "
-                            />
-                            <div v-if="campaignStore.isDm">
-                                <FormButton
-                                    type="submit"
-                                    class="text-sm disabled:bg-take-navy-medium"
-                                    icon="floppy-disk"
-                                    :loadingDisplay="{ showSpinner: true }"
-                                    :disabled="!descriptionHasChanges"
-                                    :isLoading="submitting"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </FormBase>
                 <FormBase
                     class="col-span-6 flex flex-1 flex-col rounded-xl border border-take-navy-medium px-2 py-1"
                     :onSubmit="submitDetails"
@@ -295,7 +300,6 @@ const resourcesHasChanges = computed(() => {
 async function submitDetails(): Promise<unknown> {
     return await campaignStore.updateCampaignDetails({
         campaignDescription: description.value ?? "",
-        campaignResources: resources.value ?? "",
     });
 }
 

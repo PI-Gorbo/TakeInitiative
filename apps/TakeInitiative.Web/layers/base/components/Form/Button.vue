@@ -3,17 +3,13 @@
         ref="buttonRef"
         :name="props.label ?? props.icon"
         :class="[
-            `btn flex border-none`,
-            props.icon != undefined &&
-                props.label == undefined &&
-                'aspect-square h-min',
+            `btn flex h-min min-h-0 border-none`,
             props.disabled
                 ? 'bg-take-grey-dark hover:bg-take-grey-dark'
                 : `bg-${props.buttonColour} hover:bg-${props.hoverButtonColour} text-${props.textColour ?? TakeInitContrastColour[props.buttonColour]} hover:text-${$props.hoverTextColour ?? TakeInitContrastColour[props.hoverButtonColour]}`,
-            size == 'sm' ? 'p-2 text-sm' : '',
-            size == null ? 'text-md p-2.5' : '',
-            size == 'lg' ? 'text-md p-3' : '',
-            size == 'xl' ? 'p-3.5 text-lg' : '',
+            size == null ? 'text-md p-3' : '',
+            size == 'lg' ? 'text-md p-4' : '',
+            size == 'xl' ? 'p-5 text-lg' : '',
         ]"
         type="submit"
         :disabled="props.disabled"
