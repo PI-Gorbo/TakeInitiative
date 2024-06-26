@@ -5,6 +5,7 @@ export default {
         extend: {
             colors: {
                 "take-navy": {
+                    
                     light: "#4A6082",
                     medium: "#152846",
                     dark: "#1f2b43",
