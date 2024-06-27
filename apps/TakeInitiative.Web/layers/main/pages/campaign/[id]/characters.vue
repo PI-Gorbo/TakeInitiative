@@ -7,7 +7,7 @@
             "
             class="flex justify-center"
         >
-            <section class="md:w-2/3">
+            <section class="rounded-md bg-take-purple-dark p-5 md:w-2/3">
                 <label
                     class="flex w-full justify-center font-NovaCut text-lg text-take-yellow"
                     >Looks like you don't have any characters yet. Create

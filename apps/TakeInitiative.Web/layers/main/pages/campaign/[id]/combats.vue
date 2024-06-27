@@ -57,7 +57,7 @@
                                 ?.plannedCombats ?? []"
                             :key="plannedCombat.id"
                             :class="[
-                                'flex select-none items-center justify-between rounded-md border border-take-navy-dark bg-take-navy-dark p-1',
+                                'flex select-none items-center justify-between rounded-md border border-take-purple bg-take-purple p-1',
                                 campaignCombatsStore.state.selectedCombat?.id ==
                                     plannedCombat.id && 'border-take-yellow',
                             ]"
@@ -70,7 +70,7 @@
                                     v-if="hasActiveCombat == false"
                                     icon="circle-play"
                                     label="Start"
-                                    buttonColour="take-navy-dark"
+                                    buttonColour="take-purple-light"
                                     :loadingDisplay="{ showSpinner: true }"
                                     :click="
                                         () => onOpenCombat(plannedCombat.id)
@@ -81,7 +81,7 @@
                                 <FormButton
                                     icon="pen"
                                     label="Edit"
-                                    buttonColour="take-navy-dark"
+                                    buttonColour="take-purple-light"
                                     @clicked="
                                         () => {
                                             campaignCombatsStore.selectPlannedCombat(
@@ -108,7 +108,7 @@
                                 ?.combats ?? []"
                             :key="finishedCombat.combatName"
                             :class="[
-                                'flex select-none items-center justify-between rounded-md border border-take-navy-dark bg-take-navy-dark p-1 transition-colors',
+                                'flex select-none items-center justify-between rounded-md border border-take-purple bg-take-purple p-1 transition-colors',
                                 finishedCombat.combatId ==
                                     campaignCombatsStore.selectedCombat
                                         ?.combatId && 'border-take-yellow',
@@ -120,7 +120,7 @@
                             <FormButton
                                 icon="eye"
                                 label="View"
-                                buttonColour="take-navy-dark"
+                                buttonColour="take-purple-light"
                                 @clicked="
                                     () => {
                                         campaignCombatsStore.selectCombat(
@@ -160,7 +160,7 @@
                     </div>
                     <FormButton
                         icon="trash"
-                        buttonColour="take-navy-medium"
+                        buttonColour="take-purple-light"
                         hoverButtonColour="take-red"
                         :click="
                             () =>

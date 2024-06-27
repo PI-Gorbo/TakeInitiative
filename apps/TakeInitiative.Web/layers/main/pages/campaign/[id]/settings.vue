@@ -207,13 +207,15 @@
                 :click="saveChanges"
             />
         </li>
-        <footer class="mb-8 rounded-md border border-take-red p-2">
-            <label class="text-lg">Danger Zone</label>
+        <footer
+            class="mb-8 rounded-md border-2 border-dashed border-take-red p-2"
+        >
+            <label class="text-lg italic">Danger Zone</label>
             <main class="py-2">
                 <FormButton
                     label="Delete Campaign"
                     icon="trash"
-                    buttonColour="take-navy-light"
+                    buttonColour="take-purple-light"
                     hoverButtonColour="take-red"
                     size="sm"
                     :click="

@@ -1,6 +1,6 @@
 <template>
     <div
-        class="flex flex-1 cursor-pointer flex-wrap justify-between gap-2 rounded-md border border-take-navy-dark bg-take-navy-dark px-2 transition-colors hover:border-take-yellow"
+        class="flex flex-1 cursor-pointer flex-wrap justify-between gap-2 rounded-md border border-take-purple bg-take-purple px-2 transition-colors hover:border-take-yellow"
     >
         <div
             class="flex items-center justify-center p-1 font-NovaCut md:text-lg"
