@@ -37,6 +37,7 @@ import { postSendConfirmEmailRequest } from "../utils/api/user/postSendConfirmEm
 import { putSendResetPasswordRequest } from "../utils/api/user/putSendResetPasswordRequest";
 import { putResetPassword } from "../utils/api/user/putResetPasswordRequest";
 import { getMaintenanceRequest } from "base/utils/api/admin/getMaintainenceRequest";
+import { putCampaignMemberResourcesRequest } from "base/utils/api/campaign/putCampaignMemberResourcesRequest";
 
 export const useApi = () => {
     const { $axios } = useNuxtApp();
@@ -61,6 +62,9 @@ export const useApi = () => {
                 create: createPlayerCharacterRequest($axios),
                 update: updatePlayerCharacterRequest($axios),
                 delete: deletePlayerCharacterRequest($axios),
+            },
+            member: {
+                setResources: putCampaignMemberResourcesRequest($axios),
             },
         },
         plannedCombat: {

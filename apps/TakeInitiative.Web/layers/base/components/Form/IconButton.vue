@@ -40,7 +40,7 @@ const state = reactive({
 });
 const isLoading = computed(() => state.loading || props.isLoading);
 const iconToDisplay = computed(() =>
-    isLoading.value ? "circle-notch" : "floppy-disk",
+    isLoading.value ? "circle-notch" : props.icon,
 );
 const hoverColour = computed(
     () => props.hoverButtonColour ?? props.buttonColour,

@@ -22,13 +22,14 @@ public class PutCampaignMemberResources(IDocumentSession session, IHubContext<Ca
             .Try(() => session.LoadAsync<CampaignMember>(req.MemberId), ApiError.DbInteractionFailed)
                 .EnsureNotNull("There is no campaign member with the provided id.")
                 .Ensure(member => member.UserId == userId, "You can only edit the member details of your own campaign member record.")
-            .MapTry(async (member) => { // Save the member details
+            .MapTry(async (member) =>
+            { // Save the member details
                 member.Resources = req.Resources;
                 session.Store(member);
                 await session.SaveChangesAsync();
                 await campaignHub.NotifyCampaignMemberStateUpdated(member);
                 return member;
-            }, ApiError.DbInteractionFailed);    
+            }, ApiError.DbInteractionFailed);
 
         await this.ReturnApiResult(result);
     }

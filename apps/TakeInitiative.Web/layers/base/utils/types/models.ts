@@ -117,10 +117,22 @@ export const playerCharacterValidator = characterValidator.shape({
 export type PlayerCharacter = InferType<typeof playerCharacterValidator>;
 
 // Campaign Member
+export enum ResourceVisibilityOptions {
+    Private = 0,
+    DMsOnly = 1,
+    Public = 2,
+}
+export const resourceVisibilityKeys = ["Private", "DMsOnly", "Public"] as const;
 export const campaignMemberResourceValidator = yup.object({
     name: yup.string().required(),
     link: yup.string().required(),
-    lastModifiedTimestamp: yup.string(),
+    visibility: yup
+        .mixed<ResourceVisibilityOptions>()
+        .oneOf(
+            Object.values(
+                ResourceVisibilityOptions,
+            ) as ResourceVisibilityOptions[],
+        ),
 });
 export type CampaignMemberResource = InferType<
     typeof campaignMemberResourceValidator

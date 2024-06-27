@@ -1,9 +1,15 @@
 <template>
     <main class="flex flex-col gap-4 pt-2">
+        <header>
+            <label class="font-NovaCut text-xl"
+                >Welcome to
+                {{ campaignStore.state.campaign?.campaignName }}!</label
+            >
+        </header>
         <header
             v-if="currentCombatInfo"
             :class="[
-                ' shadow-take-purple-medium-dark cursor-pointer select-none rounded-lg px-4 py-3 text-center text-xl text-take-navy shadow-md',
+                'cursor-pointer select-none rounded-lg px-4 py-3 text-center text-xl text-take-navy',
                 currentCombatInfo.state == CombatState.Open
                     ? 'bg-take-teal'
                     : 'bg-take-red',
@@ -21,16 +27,14 @@
             </div>
         </header>
 
-        <section
-            class="shadow-take-purple-medium-dark flex flex-col gap-4 rounded-md bg-take-navy p-2 shadow-md"
-        >
+        <section class="flex flex-col rounded-md bg-take-purple-dark p-2">
             <FormBase
                 class="flex flex-1 flex-col"
                 :onSubmit="submitDetails"
                 v-slot="{ submitting }"
             >
                 <div class="flex w-full justify-between font-NovaCut">
-                    <label class="text-lg">Description</label>
+                    <label class="text-lg">Campaign Introduction</label>
                     <div v-if="campaignStore.isDm">
                         <FormIconButton
                             icon="floppy-disk"
@@ -44,10 +48,10 @@
                 </div>
                 <textarea
                     :value="description"
-                    class="w-full resize-none rounded-md bg-take-navy px-2 ring-0"
+                    class="w-full resize-none rounded-md bg-take-purple-dark px-2 ring-0"
                     :disabled="!campaignStore.isDm"
                     :class="{
-                        'my-1 border border-take-navy-medium p-1':
+                        'my-1 border border-dashed border-take-navy p-1':
                             campaignStore.isDm,
                     }"
                     @input="
@@ -55,21 +59,20 @@
                             (description = (e.target as HTMLTextAreaElement)
                                 .value)
                     "
+                    :placeholder="
+                        campaignStore.isDm
+                            ? 'Write a quick campaign introduction!'
+                            : 'Tell your DM to write a quick introduction!'
+                    "
                 />
             </FormBase>
-            <div class="flex flex-1 flex-col">
-                <div class="w-full font-NovaCut text-lg">Creation Date</div>
-                <textarea
-                    v-if="campaign?.createdTimestamp"
-                    :value="formattedCampaignStartDate"
-                    class="w-full flex-1 resize-none rounded-md bg-take-navy px-2 ring-0"
-                    :disabled="true"
-                />
+            <div class="select-none px-2">
+                {{ formattedCampaignStartDate }}
             </div>
         </section>
 
         <section
-            class="shadow-take-purple-medium-dark flex max-h-[50%] flex-1 flex-col gap-4 overflow-y-auto rounded-md bg-take-navy p-2 shadow-md"
+            class="flex max-h-[50%] flex-1 flex-col gap-4 overflow-y-auto rounded-md bg-take-purple-dark p-2"
         >
             <label class="block w-full font-NovaCut text-lg"> Players </label>
             <div class="overflow-y-auto">
@@ -79,7 +82,7 @@
             </div>
         </section>
 
-        <div class="w-full flex-1">
+        <div class="w-full flex-1 rounded-md bg-take-purple-dark p-2">
             <label class="font-NovaCut text-lg">Resources</label>
             <IndexResourcesSection />
         </div>
@@ -114,12 +117,11 @@ const { values, errors, defineField, validate } = useForm({
             description: yup.string(),
         }),
     ),
+    initialValues: {
+        description: campaign.value?.campaignDescription ?? "",
+    },
 });
 const [description, descriptionInputProps] = defineField("description");
-
-onMounted(() => {
-    description.value = campaign.value?.campaignDescription ?? "";
-});
 
 watch(
     () => campaign.value?.campaignDescription,
@@ -160,8 +162,12 @@ const combatStartedText = computed(() => {
 
     return `The combat '${combatDto?.combatName}' has started! Click to join.`;
 });
-const formattedCampaignStartDate = computed(() =>
-    format(parseISO(campaign.value?.createdTimestamp ?? ""), "PPPP"),
+const formattedCampaignStartDate = computed(
+    () =>
+        "Created on " +
+        (campaign.value?.createdTimestamp != null
+            ? format(parseISO(campaign.value?.createdTimestamp!), "PPPP")
+            : ""),
 );
 const buttonColour = computed(() =>
     descriptionHasChanges.value ? "take-yellow" : "take-navy-medium",

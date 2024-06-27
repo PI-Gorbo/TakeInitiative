@@ -1,5 +1,5 @@
 <template>
-    <div class="bg-take-purple-very-dark drawer flex h-full text-white">
+    <div class="drawer flex h-full bg-take-purple-very-dark text-white">
         <input
             ref="drawerToggle"
             id="drawer"
@@ -9,7 +9,7 @@
         <div class="drawer-content w-full">
             <main class="flex h-full w-full flex-col">
                 <header
-                    class="navbar border border-take-navy-medium border-b-take-yellow bg-take-navy"
+                    class="navbar border border-take-navy-medium border-b-take-yellow bg-take-purple-dark"
                 >
                     <section class="navbar-start flex gap-2">
                         <label
@@ -18,7 +18,7 @@
                         >
                             <img
                                 class="h-[3em] w-[3em]"
-                                src="../assets/yellowDice.png"
+                                src="/img/yellowDice.png"
                             />
                             <label
                                 class="font-NovaCut text-2xl text-take-yellow md:text-3xl"
@@ -38,8 +38,8 @@
                             icon="share-from-square"
                             size="sm"
                             textColour="take-grey"
-                            buttonColour="take-navy-medium"
-                            hoverButtonColour="take-navy-dark"
+                            buttonColour="take-purple"
+                            hoverButtonColour="take-navy-medium"
                             @clicked="() => shareCampaignModal?.show()"
                         />
                     </section>
@@ -143,7 +143,7 @@
             </ul>
         </div>
         <Modal ref="shareCampaignModal" title="Share">
-            <main class="flex flex-col gap-4 text-white">
+            <main class="flex flex-col gap-4 text-take-grey-light">
                 <div class="flex flex-col gap-2">
                     <label class="font-NovaCut text-take-yellow"
                         >Campaign Code</label
@@ -152,7 +152,7 @@
                         <TimedTooltip tooltip="Copied!" class="peer">
                             <FormButton
                                 icon="copy"
-                                buttonColour="take-navy-dark"
+                                buttonColour="take-purple-dark"
                                 hoverButtonColour="take-yellow"
                                 size="sm"
                                 :preventClickBubbling="false"

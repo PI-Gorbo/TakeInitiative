@@ -7,6 +7,7 @@ import type {
 import type {
     Campaign,
     CampaignMemberInfo,
+    CampaignMemberResource,
     PlannedCombat,
     PlayerCharacter,
 } from "../utils/types/models";
@@ -120,6 +121,15 @@ export const useCampaignStore = defineStore("campaignStore", () => {
             .then((member) => (state.userCampaignMember = member));
     }
 
+    async function setCampaignMemberResources(
+        resources: CampaignMemberResource[],
+    ) {
+        return await api.campaign.member.setResources({
+            memberId: state.userCampaignMember?.id!,
+            resources: resources,
+        });
+    }
+
     return {
         state,
         refetchCampaign: async () => await setCampaignById(state.campaign?.id!),
@@ -130,6 +140,7 @@ export const useCampaignStore = defineStore("campaignStore", () => {
         createPlayerCharacter,
         updatePlayerCharacter,
         deletePlayerCharacter,
+        setCampaignMemberResources,
         isDm: computed(
             () => state.userCampaignMember?.isDungeonMaster ?? false,
         ),
@@ -139,7 +150,7 @@ export const useCampaignStore = defineStore("campaignStore", () => {
         memberResources: computed(() => {
             return [
                 {
-                    id: state.userCampaignMember?.id,
+                    userId: state.userCampaignMember?.userId,
                     username: userStore.state.user?.username!,
                     resources: state.userCampaignMember?.resources?.sort(
                         (a, b) =>
@@ -153,7 +164,7 @@ export const useCampaignStore = defineStore("campaignStore", () => {
                     isDm: state.userCampaignMember?.isDungeonMaster,
                 },
                 ...(state.nonUserCampaignMembers ?? []).map((member) => ({
-                    id: member.userId,
+                    userId: member.userId,
                     username: member.username!,
                     resources: member.resources?.sort((a, b) =>
                         multiplePropertyAlphabeticalSort(

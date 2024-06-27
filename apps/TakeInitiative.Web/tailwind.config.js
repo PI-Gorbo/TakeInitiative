@@ -17,11 +17,10 @@ export default {
                     DEFAULT: "#264652",
                 },
                 "take-purple": {
-                    light: "#646676",
-                    DEFAULT: "#2C2D41",
-                    dark: "#171825",
-                    "medium-dark": "#11111c",
-                    "very-dark": "#05060b",
+                    light: "#2a2635",
+                    DEFAULT: "#171322",
+                    dark: "#0e0b16",
+                    "very-dark": "#040307",
                 },
                 "take-red": {
                     DEFAULT: "#FF652E",
@@ -34,7 +33,7 @@ export default {
                 "take-grey": {
                     light: "#E7E7E7",
                     DEFAULT: "#D1D1D1",
-                    dark: "#ba8519",
+                    dark: "#686868",
                 },
                 "take-creme": {
                     DEFAULT: "#FDF2C1",
@@ -49,17 +48,17 @@ export default {
         {
             // Automatically imports all the colours since we want them for changing colours based on variables.
             pattern:
-                /bg-take-(navy|navy-light|navy-medium|navy-dark|red|yellow|yellow-light|yellow-dark)/,
+                /bg-take-(navy|navy-light|navy-medium|navy-dark|red|yellow|yellow-light|yellow-dark|purple|purple-dark|purple-very-dark|purple-light)/,
             variants: ["hover", "group-hover"],
         },
         {
             pattern:
-                /text-take-(navy|navy-light|navy-medium|navy-dark|red|yellow|yellow-light|yellow-dark)/,
+                /text-take-(navy|navy-light|navy-medium|navy-dark|red|yellow|yellow-light|yellow-dark|purple|purple-dark|purple-very-dark|purple-light)/,
             variants: ["hover", "group-hover"],
         },
         {
             pattern:
-                /border-take-(navy|navy-light|navy-medium|navy-dark|red|yellow|yellow-light|yellow-dark)/,
+                /border-take-(navy|navy-light|navy-medium|navy-dark|red|yellow|yellow-light|yellow-dark|purple|purple-dark|purple-very-dark|purple-light)/,
             variants: ["hover", "group-hover"],
         },
     ],
