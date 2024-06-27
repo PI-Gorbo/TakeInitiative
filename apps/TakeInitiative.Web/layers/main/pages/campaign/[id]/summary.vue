@@ -130,8 +130,10 @@ watch(
     },
 );
 
+const { state: campaignStoreState } = storeToRefs(campaignStore);
+
 const currentCombatInfo = computed(() => {
-    return campaignStore.state.currentCombatInfo;
+    return campaignStoreState.value.currentCombatInfo;
 });
 
 const descriptionHasChanges = computed(() => {
