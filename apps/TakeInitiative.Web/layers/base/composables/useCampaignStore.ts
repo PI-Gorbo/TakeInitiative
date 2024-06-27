@@ -41,6 +41,8 @@ export const useCampaignStore = defineStore("campaignStore", () => {
         return fetchCampaign(campaignId).then(setCampaign);
     };
 
+    const refetchCampaign = () => setCampaignById(state.campaign?.id!);
+
     async function setCampaign(
         campaignDetails: GetCampaignResponse,
     ): Promise<void> {
@@ -124,10 +126,12 @@ export const useCampaignStore = defineStore("campaignStore", () => {
     async function setCampaignMemberResources(
         resources: CampaignMemberResource[],
     ) {
-        return await api.campaign.member.setResources({
-            memberId: state.userCampaignMember?.id!,
-            resources: resources,
-        });
+        return await api.campaign.member
+            .setResources({
+                memberId: state.userCampaignMember?.id!,
+                resources: resources,
+            })
+            .then(refetchCampaign);
     }
 
     return {

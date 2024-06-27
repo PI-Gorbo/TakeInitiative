@@ -127,7 +127,7 @@ const {
             )
             .then(() => true);
     },
-    { server: false },
+    { server: false, watch: [() => route.params.id] },
 );
 
 type TabOption = {
