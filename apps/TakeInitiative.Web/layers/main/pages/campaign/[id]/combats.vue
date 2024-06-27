@@ -160,7 +160,7 @@
                     </div>
                     <FormButton
                         icon="trash"
-                        buttonColour="take-navy-medium"
+                        buttonColour="take-purple-light"
                         hoverButtonColour="take-red"
                         :click="
                             () =>

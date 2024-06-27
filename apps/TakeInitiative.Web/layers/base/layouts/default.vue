@@ -56,11 +56,11 @@
                 class="drawer-overlay"
             ></label>
             <ul
-                class="menu flex min-h-full w-80 flex-col gap-2 bg-take-navy p-4 text-base-content"
+                class="menu flex min-h-full w-80 flex-col gap-2 bg-take-purple-dark p-4 text-base-content"
             >
                 <Dropdown
                     v-if="isCampaignsRoute"
-                    colour="take-navy-dark"
+                    colour="take-purple-light"
                     hoverColour="take-navy-medium"
                     labelFallback="Campaigns"
                     headerLabel="Campaign: "
@@ -112,8 +112,8 @@
                         "
                     />
                 </li>
-                <li class="flex-1 bg-take-navy"></li>
-                <li class="bg-take-navy font-NovaCut text-take-yellow">
+                <li class="flex-1 bg-take-purple-dark"></li>
+                <li class="bg-take-purple-dark font-NovaCut text-take-yellow">
                     {{ userStore.username }}
                 </li>
                 <li v-if="!userStore.state?.user?.confirmedEmail">
@@ -121,7 +121,7 @@
                         label="Confirm Email"
                         icon="envelope"
                         :click="async () => await useNavigator().confirmEmail()"
-                        buttonColour="take-navy-dark"
+                        buttonColour="take-purple-light"
                         hoverButtonColour="take-navy-medium"
                         size="sm"
                     />
@@ -135,7 +135,7 @@
                         }"
                         icon="right-from-bracket"
                         :click="userStore.logout"
-                        buttonColour="take-navy-dark"
+                        buttonColour="take-purple-light"
                         hoverButtonColour="take-navy-medium"
                         size="sm"
                     />

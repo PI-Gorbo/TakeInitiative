@@ -1,6 +1,6 @@
 <template>
     <div
-        class="flex w-full flex-col rounded-xl border-2 border-take-navy-light p-2"
+        class="flex w-full flex-col rounded-xl border-2 border-take-purple p-2"
     >
         <div
             class="mb-2 flex w-full flex-row items-center justify-between gap-2"
@@ -17,13 +17,13 @@
             <div class="flex flex-row gap-2">
                 <FormButton
                     icon="plus"
-                    buttonColour="take-navy-medium"
+                    buttonColour="take-purple-light"
                     textColour="white"
                     @click="() => createPlannedCharacterFormModal?.show()"
                 />
                 <FormButton
                     icon="trash"
-                    buttonColour="take-navy-medium"
+                    buttonColour="take-purple-light"
                     textColour="white"
                     hoverButtonColour="take-red"
                     @clicked="() => props.deleteStage()"
@@ -39,7 +39,7 @@
                 <section
                     v-for="npc in stage.npcs"
                     :key="npc.id"
-                    class="min-h-fit min-w-fit cursor-pointer rounded-xl border border-take-navy-light hover:border-take-yellow"
+                    class="min-h-fit min-w-fit cursor-pointer rounded-xl border border-take-purple-light hover:border-take-yellow"
                 >
                     <PlanedCombatNpcDisplay
                         class="p-2"
