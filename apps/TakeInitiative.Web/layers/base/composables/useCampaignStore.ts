@@ -15,12 +15,46 @@ import type { CampaignMember } from "../utils/types/models";
 import type { UpdateCampaignDetailsRequest } from "../utils/api/campaign/updateCampaignDetailsRequest";
 import type { CreatePlannedCombatRequest } from "../utils/api/plannedCombat/createPlannedCombatRequest";
 import type { PlayerCharacterDto } from "../utils/api/campaign/createPlayerCharacterRequest";
+import * as signalR from "@microsoft/signalr";
 
 export const useCampaignStore = defineStore("campaignStore", () => {
     const api = useApi();
     const userStore = useUserStore();
     const plannedCombatStore = useCampaignCombatsStore();
 
+    // Signal R
+    // Start the connection.
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl(`${useRuntimeConfig().public.axios.baseURL}/campaignHub`, {
+            accessTokenFactory: () => useCookie(".AspNetCore.Cookies").value!,
+        })
+        .withAutomaticReconnect()
+        .configureLogging(signalR.LogLevel.Debug)
+        .build();
+    connection.on("campaignStateUpdated", async () => {
+        await refetchCampaign();
+        return;
+    });
+    connection.on("campaignMemberStateUpdated", async () => {
+        await refetchCampaign();
+        return;
+    });
+    connection.onreconnected(async () => {
+        console.log("reconnected");
+        await refetchCampaign();
+    });
+    async function joinCampaignHub(id: string) {
+        return await connection.start().then(
+            async () =>
+                // Join the campaign hub.
+                await connection.send("Join", id),
+        );
+    }
+    async function leaveCampaignHub() {
+        return await connection.send("Leave", state.campaign?.id);
+    }
+
+    // State
     const state = reactive<Partial<GetCampaignResponse>>({
         campaign: undefined,
         combatHistoryInfo: undefined,
@@ -46,6 +80,15 @@ export const useCampaignStore = defineStore("campaignStore", () => {
     async function setCampaign(
         campaignDetails: GetCampaignResponse,
     ): Promise<void> {
+        if (
+            state.campaign?.id != null &&
+            connection.state == signalR.HubConnectionState.Connected &&
+            state.campaign?.id != campaignDetails.campaign.id
+        ) {
+            console.log("Left old group");
+            await connection.send("Leave", state.campaign?.id);
+        }
+
         Object.keys(campaignDetails).forEach((key) => {
             // @ts-ignore
             state[key] = campaignDetails[key];
@@ -136,7 +179,7 @@ export const useCampaignStore = defineStore("campaignStore", () => {
 
     return {
         state,
-        refetchCampaign: async () => await setCampaignById(state.campaign?.id!),
+        refetchCampaign,
         setCampaign,
         setCampaignById,
         updateCampaignDetails,
@@ -145,6 +188,8 @@ export const useCampaignStore = defineStore("campaignStore", () => {
         updatePlayerCharacter,
         deletePlayerCharacter,
         setCampaignMemberResources,
+        joinCampaignHub,
+        leaveCampaignHub,
         isDm: computed(
             () => state.userCampaignMember?.isDungeonMaster ?? false,
         ),

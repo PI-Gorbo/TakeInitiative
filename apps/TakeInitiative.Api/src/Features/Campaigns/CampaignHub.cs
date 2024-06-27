@@ -34,6 +34,7 @@ public class CampaignHub : Hub
         .Ensure(memberExists => memberExists, "The user must be part of the campaign to join the hub.")
         .TapTry(async () =>
         {
+
             await Groups.AddToGroupAsync(Context.ConnectionId, CampaignId.ToString());
         });
 
