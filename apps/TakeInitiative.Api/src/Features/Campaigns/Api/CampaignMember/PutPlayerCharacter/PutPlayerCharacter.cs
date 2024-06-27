@@ -8,7 +8,7 @@ using TakeInitiative.Utilities;
 using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Campaigns;
-
+    
 public class PutPlayerCharacter(IDocumentSession session) : Endpoint<PutPlayerCharacterRequest, CampaignMember>
 {
     public override void Configure()

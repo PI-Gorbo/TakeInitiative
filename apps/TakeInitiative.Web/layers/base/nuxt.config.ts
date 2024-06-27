@@ -11,7 +11,7 @@ export default defineNuxtConfig({
                 {
                     rel: "icon",
                     type: "image/png",
-                    href: "yellowDice.png",
+                    href: "/img/yellowDice.png",
                 },
             ],
             title: "Take Initiative",

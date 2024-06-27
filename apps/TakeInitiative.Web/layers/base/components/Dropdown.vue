@@ -1,5 +1,5 @@
 <template>
-    <li class="menu">
+    <li class="menu p-0">
         <details
             ref="details"
             class="dropdown text-base text-white"
@@ -40,7 +40,7 @@
     </li>
 </template>
 <script setup lang="ts" generic="TListItem">
-import type { TakeInitColour } from "../layers/base/utils/types/HelperTypes";
+import type { TakeInitColour } from "base/utils/types/HelperTypes";
 
 const details = ref<HTMLDetailsElement | null>(null);
 const props = withDefaults(

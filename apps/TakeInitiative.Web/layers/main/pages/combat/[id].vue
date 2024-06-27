@@ -27,7 +27,7 @@
                         v-if="!combatIsFinished"
                         icon="bars"
                         class="aspect-square w-min"
-                        buttonColour="take-navy"
+                        buttonColour="take-purple"
                         textColour="base-200"
                         hoverButtonColour="take-navy-dark"
                         :preventClickBubbling="false"
@@ -42,7 +42,7 @@
             >
                 <section class="flex flex-1 flex-col gap-2 overflow-y-auto">
                     <CombatCharacterListSection
-                        class="border-2 border-take-navy-light p-2"
+                        class="p-2"
                         @combatOpenedStageCharacters="
                             () => showModal('Combat Opened Stage Characters')
                         "
@@ -75,7 +75,7 @@
                 class="drawer-overlay"
             ></label>
             <ul
-                class="flex min-h-full w-80 flex-col gap-2 bg-take-navy p-4 text-base-content"
+                class="flex min-h-full w-80 flex-col gap-2 bg-take-purple-dark p-4 text-base-content"
             >
                 <!-- Sidebar content here -->
                 <li class="w-full">
@@ -92,7 +92,7 @@
                                 toggleDrawer();
                             }
                         "
-                        buttonColour="take-navy-dark"
+                        buttonColour="take-purple-light"
                         hoverButtonColour="take-navy-medium"
                         hoverTextColour="white"
                         class="w-full"
@@ -106,7 +106,7 @@
                         :click="
                             () => combatStore.startCombat().then(toggleDrawer)
                         "
-                        buttonColour="take-navy-dark"
+                        buttonColour="take-purple-light"
                         hoverButtonColour="take-navy-medium"
                         hoverTextColour="white"
                         :loadingDisplay="{
@@ -122,7 +122,7 @@
                         :click="
                             () => combatStore.finishCombat().then(toggleDrawer)
                         "
-                        buttonColour="take-navy-dark"
+                        buttonColour="take-purple-light"
                         hoverButtonColour="take-navy-medium"
                         hoverTextColour="white"
                         :loadingDisplay="{

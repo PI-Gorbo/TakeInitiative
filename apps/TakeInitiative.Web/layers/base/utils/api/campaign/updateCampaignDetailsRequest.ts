@@ -7,7 +7,6 @@ import { campaignValidator, type CampaignSettings } from "../../types/models";
 export type UpdateCampaignDetailsRequest = {
     campaignId: string;
     campaignDescription?: string;
-    campaignResources?: string;
     campaignName?: string;
     campaignSettings?: CampaignSettings;
 };

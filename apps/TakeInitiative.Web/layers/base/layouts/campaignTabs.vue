@@ -19,20 +19,24 @@
                 </button>
             </div>
             <div v-else class="flex h-full flex-col items-center">
-                <header class="flex gap-2 py-2 md:w-4/5 md:max-w-[1200px]">
-                    <div
-                        v-for="tab in visibleTabs"
-                        :key="tab.name"
-                        :class="[
-                            selectedTab == tab.name
-                                ? `bg-take-yellow text-take-navy`
-                                : `bg-take-navy text-take-navy-light hover:bg-take-navy-light hover:text-white`, // PLEASE CHANGE TO MANUALLY CONTROLLED TEXT COLOUR
-                            `flex cursor-pointer select-none items-center rounded-md px-2 py-1 font-NovaCut transition-colors   md:text-lg`,
-                        ]"
-                        @click="() => navigateToSelectedTab(tab.name)"
-                    >
-                        <div class="capitalize">{{ tab.name }}</div>
-                    </div>
+                <header
+                    class="flex flex-wrap justify-between md:w-4/5 md:max-w-[1200px]"
+                >
+                    <nav class="flex gap-2 py-2">
+                        <div
+                            v-for="tab in visibleTabs"
+                            :key="tab.name"
+                            :class="[
+                                selectedTab == tab.name
+                                    ? `bg-take-yellow text-take-navy`
+                                    : `bg-take-purple-very-dark text-take-grey-dark hover:bg-take-navy-medium hover:text-take-grey-light`, // PLEASE CHANGE TO MANUALLY CONTROLLED TEXT COLOUR
+                                `flex cursor-pointer select-none items-center rounded-md px-2 py-1 font-NovaCut transition-colors   md:text-lg`,
+                            ]"
+                            @click="() => navigateToSelectedTab(tab.name)"
+                        >
+                            <div class="capitalize">{{ tab.name }}</div>
+                        </div>
+                    </nav>
                 </header>
                 <main class="w-full flex-1 md:w-4/5 md:max-w-[1200px]">
                     <slot />
@@ -43,8 +47,8 @@
 </template>
 <script setup lang="ts">
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import * as signalR from "@microsoft/signalr";
 
+const config = useRuntimeConfig();
 // Fetch and Set current campaign.
 const route = useRoute();
 const campaignStore = useCampaignStore();
@@ -63,34 +67,12 @@ const { pending, error, refresh } = await useAsyncData(
 
         return await campaignStore
             .setCampaignById(route.params.id as string)
-            .then(() => {
-                console.log("here");
-            })
             .then(() => true);
     },
     {
         watch: [() => route.params.id],
     },
 );
-
-// Signal R
-// Start the connection.
-const connection = new signalR.HubConnectionBuilder()
-    .withUrl(`${useRuntimeConfig().public.axios.baseURL}/campaignHub`, {
-        accessTokenFactory: () => useCookie(".AspNetCore.Cookies").value!,
-    })
-    .withAutomaticReconnect()
-    .configureLogging(signalR.LogLevel.Debug)
-    .build();
-connection.on("campaignStateUpdated", async () => {
-    console.log("got campaign update");
-    await campaignStore.refetchCampaign();
-    return;
-});
-connection.onreconnected(async () => {
-    console.log("reconnected");
-    await campaignStore.refetchCampaign();
-});
 
 const {
     pending: signalRPending,
@@ -108,16 +90,9 @@ const {
             return false;
         }
 
-        return await connection
-            .start()
-            .then(
-                async () =>
-                    // Join the campaign hub.
-                    await connection.send("Join", route.params.id),
-            )
-            .then(() => true);
+        return await campaignStore.joinCampaignHub(id).then(() => true);
     },
-    { server: false },
+    { server: false, watch: [() => route.params.id] },
 );
 
 type TabOption = {
