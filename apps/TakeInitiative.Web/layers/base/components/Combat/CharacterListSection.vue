@@ -5,7 +5,6 @@
         name="shuffleList"
     >
         <!-- INITIATIVE LIST -->
-
         <li
             v-for="{ char: charInfo, index } in characterList
                 .map((char, index) => ({ char, index }))
@@ -116,7 +115,7 @@
             ]"
             @click="emit('CombatOpenedStageCharacters')"
         >
-            + Stage Characters
+            + Add
         </li>
     </TransitionGroup>
 </template>
