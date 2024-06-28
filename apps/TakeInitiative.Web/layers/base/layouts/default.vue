@@ -1,5 +1,7 @@
 <template>
-    <div class="drawer flex h-full bg-take-purple-very-dark text-white">
+    <div
+        class="drawer drawer-end flex h-full bg-take-purple-very-dark text-white"
+    >
         <input
             ref="drawerToggle"
             id="drawer"
@@ -12,36 +14,40 @@
                     class="navbar border border-take-navy-medium border-b-take-yellow bg-take-purple-dark"
                 >
                     <section class="navbar-start flex gap-2">
-                        <label
-                            for="drawer"
-                            class="flex cursor-pointer items-center gap-2"
-                        >
+                        <label class="flex items-center gap-2">
                             <img
                                 class="h-[3em] w-[3em]"
                                 src="/img/yellowDice.png"
                             />
                             <label
-                                class="font-NovaCut text-2xl text-take-yellow md:text-3xl"
-                                v-if="!isMobile"
+                                class="select-none font-NovaCut text-xl text-take-yellow md:text-3xl lg:text-2xl"
                                 >Take Initiative</label
                             >
                         </label>
                     </section>
-                    <section
-                        class="navbar-end flex items-center gap-2"
-                        v-if="isCampaignsRoute"
-                    >
-                        <label class="font-NovaCut text-xl text-take-yellow">{{
-                            selectedCampaignInfo?.campaign?.campaignName
-                        }}</label>
-                        <FormButton
-                            icon="share-from-square"
-                            size="sm"
-                            textColour="take-grey"
-                            buttonColour="take-purple"
-                            hoverButtonColour="take-navy-medium"
-                            @clicked="() => shareCampaignModal?.show()"
-                        />
+                    <section class="navbar-end flex items-center gap-2">
+                        <template v-if="isCampaignsRoute">
+                            <label
+                                class="font-NovaCut text-lg text-take-yellow lg:text-xl"
+                                >{{
+                                    selectedCampaignInfo?.campaign?.campaignName
+                                }}</label
+                            >
+                            <FormButton
+                                icon="share-from-square"
+                                size="sm"
+                                textColour="take-grey"
+                                buttonColour="take-purple"
+                                hoverButtonColour="take-navy-medium"
+                                @clicked="() => shareCampaignModal?.show()"
+                            />
+                        </template>
+                        <label
+                            for="drawer"
+                            class="aspect-square cursor-pointer rounded-md bg-take-purple p-2 hover:bg-take-navy-medium"
+                        >
+                            <FontAwesomeIcon icon="bars" />
+                        </label>
                     </section>
                 </header>
                 <div class="flex-1 overflow-y-scroll">
@@ -99,7 +105,7 @@
                     <FormButton
                         icon="house"
                         label="Return Home"
-                        buttonColour="take-navy-dark"
+                        buttonColour="take-purple-light"
                         hoverButtonColour="take-yellow"
                         @clicked="
                             () => {

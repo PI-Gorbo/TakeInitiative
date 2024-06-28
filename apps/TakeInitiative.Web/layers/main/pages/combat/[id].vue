@@ -1,37 +1,69 @@
 <template>
-    <div class="drawer drawer-end flex h-full w-full">
-        <input
-            ref="combatDrawer"
-            id="combatDrawer"
-            type="checkbox"
-            class="drawer-toggle"
-        />
-        <div
-            class="drawer-content flex h-full w-full flex-1 flex-col overflow-y-auto"
-        >
+    <div class="flex h-full w-full">
+        <div class="flex h-full w-full flex-1 flex-col overflow-y-auto">
             <!-- MAIN CONTENT -->
             <header class="grid grid-cols-3 p-2">
-                <div class="flex gap-1"></div>
-                <label
-                    class="flex items-center justify-center text-center font-NovaCut text-lg"
-                    >{{ combat?.combatName }}</label
-                >
-                <div class="flex justify-end gap-1 px-1">
-                    <div class="flex gap-1" v-if="combatIsStarted">
-                        <div class="flex flex-col items-center justify-center">
-                            <span class="font-NovaCut">R</span
-                            ><span>{{ combat?.roundNumber }}</span>
-                        </div>
-                    </div>
+                <div class="">
                     <FormButton
                         v-if="!combatIsFinished"
-                        icon="bars"
-                        class="aspect-square w-min"
-                        buttonColour="take-purple"
-                        textColour="base-200"
-                        hoverButtonColour="take-navy-dark"
-                        :preventClickBubbling="false"
-                        @clicked="toggleDrawer"
+                        label="Add"
+                        icon="plus"
+                        @clicked="
+                            () => {
+                                showModal(
+                                    combatIsOpen
+                                        ? 'Combat Opened Stage Characters'
+                                        : 'Combat Started Staged Character Menu',
+                                );
+                                toggleDrawer();
+                            }
+                        "
+                        buttonColour="take-purple-light"
+                        hoverButtonColour="take-navy-medium"
+                        hoverTextColour="white"
+                    />
+                </div>
+                <div>
+                    <label
+                        class="flex items-center justify-center text-center font-NovaCut text-lg"
+                        >{{ combat?.combatName }}</label
+                    >
+                    <label
+                        class="flex items-center justify-center text-center font-NovaCut text-sm"
+                        v-if="combatIsStarted"
+                        >Round {{ combat?.roundNumber }}</label
+                    >
+                </div>
+                <div class="flex justify-end gap-1 px-1">
+                    <FormButton
+                        v-if="userIsDm && combatIsOpen"
+                        label="Start"
+                        icon="shoe-prints"
+                        :click="
+                            () => combatStore.startCombat().then(toggleDrawer)
+                        "
+                        buttonColour="take-purple-light"
+                        hoverButtonColour="take-navy-medium"
+                        hoverTextColour="white"
+                        :loadingDisplay="{
+                            showSpinner: true,
+                            loadingText: 'Starting...',
+                        }"
+                    />
+                    <FormButton
+                        v-else-if="userIsDm && combatIsStarted"
+                        label="Finish"
+                        icon="flag-checkered"
+                        :click="
+                            () => combatStore.finishCombat().then(toggleDrawer)
+                        "
+                        buttonColour="take-purple-light"
+                        hoverButtonColour="take-navy-medium"
+                        hoverTextColour="white"
+                        :loadingDisplay="{
+                            showSpinner: true,
+                            loadingText: 'Finishing...',
+                        }"
                     />
                 </div>
             </header>
@@ -68,75 +100,7 @@
                 />
             </footer>
         </div>
-        <aside class="drawer-side">
-            <label
-                for="combatDrawer"
-                aria-label="close sidebar"
-                class="drawer-overlay"
-            ></label>
-            <ul
-                class="flex min-h-full w-80 flex-col gap-2 bg-take-purple-dark p-4 text-base-content"
-            >
-                <!-- Sidebar content here -->
-                <li class="w-full">
-                    <FormButton
-                        label="Staged Characters"
-                        icon="clipboard-question"
-                        @clicked="
-                            () => {
-                                showModal(
-                                    combatIsOpen
-                                        ? 'Combat Opened Stage Characters'
-                                        : 'Combat Started Staged Character Menu',
-                                );
-                                toggleDrawer();
-                            }
-                        "
-                        buttonColour="take-purple-light"
-                        hoverButtonColour="take-navy-medium"
-                        hoverTextColour="white"
-                        class="w-full"
-                    />
-                </li>
-                <li class="w-full">
-                    <FormButton
-                        v-if="userIsDm && combatIsOpen"
-                        label="Start Combat"
-                        icon="shoe-prints"
-                        :click="
-                            () => combatStore.startCombat().then(toggleDrawer)
-                        "
-                        buttonColour="take-purple-light"
-                        hoverButtonColour="take-navy-medium"
-                        hoverTextColour="white"
-                        :loadingDisplay="{
-                            showSpinner: true,
-                            loadingText: 'Starting...',
-                        }"
-                        class="w-full"
-                    />
-                    <FormButton
-                        v-else-if="userIsDm && combatIsStarted"
-                        label="Finish Combat"
-                        icon="flag-checkered"
-                        :click="
-                            () => combatStore.finishCombat().then(toggleDrawer)
-                        "
-                        buttonColour="take-purple-light"
-                        hoverButtonColour="take-navy-medium"
-                        hoverTextColour="white"
-                        :loadingDisplay="{
-                            showSpinner: true,
-                            loadingText: 'Finishing...',
-                        }"
-                        class="w-full"
-                    />
-                </li>
-                <li class="select-none">
-                    Connection Status: {{ combatStore.connection.state }}
-                </li>
-            </ul>
-        </aside>
+
         <Modal ref="combatPageModal" :title="modalState.title ?? ''">
             <CombatStagedCharactersSection
                 v-if="
