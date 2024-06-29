@@ -50,7 +50,7 @@
 
         <CharacterArmourClass v-model:value="armourClass" />
 
-        <div class="flex w-full justify-center" v-if="!props.character">
+        <div class="flex w-full justify-end" v-if="!props.character">
             <FormButton
                 label="Create"
                 :loadingDisplay="{

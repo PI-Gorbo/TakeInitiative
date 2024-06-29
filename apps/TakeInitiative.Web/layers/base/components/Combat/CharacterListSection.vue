@@ -108,6 +108,27 @@
             </body>
         </li>
         <li
+            v-if="
+                combatIsStarted &&
+                characterList
+                    .map((char, index) => ({ char, index }))
+                    .filter((x) => userIsDm || !x.char.character.hidden)
+                    .length == 0
+            "
+        >
+            <!-- When there are no characters displayed on the user, show a message -->
+            <label
+                class="flex justify-center text-take-grey"
+                v-if="characterList.find((x) => x.character.hidden)"
+            >
+                The DM has one or more hidden characters that they are waiting
+                to reveal.
+            </label>
+            <label class="flex justify-center text-take-grey" v-else>
+                There are no characters left in this combat!
+            </label>
+        </li>
+        <li
             key="footer"
             v-if="combatIsOpen"
             :class="[
@@ -158,6 +179,10 @@ const emit = defineEmits<{
     (e: "CombatOpenedStageCharacters"): void;
     (e: "OnClickCharacter", character: CombatCharacter): void;
 }>();
+
+const combatHasHiddenCharacters = computed(
+    () => characterList.value.find((x) => x.character.hidden) != null,
+);
 
 const characterList = computed(() => {
     if (props.listToDisplay == undefined) {

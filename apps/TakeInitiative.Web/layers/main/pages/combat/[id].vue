@@ -6,8 +6,8 @@
                 <div class="">
                     <FormButton
                         v-if="!combatIsFinished"
-                        label="Add"
-                        icon="plus"
+                        :label="combatIsOpen ? 'Add' : 'Staged List'"
+                        :icon="combatIsOpen ? 'plus' : 'users'"
                         @clicked="
                             () => {
                                 showModal(
@@ -86,7 +86,10 @@
             </main>
             <footer class="flex items-center justify-end px-2 pb-2">
                 <FormButton
-                    v-if="combatIsStarted"
+                    v-if="
+                        combatIsStarted &&
+                        (combat?.initiativeList.length ?? 0) > 0
+                    "
                     icon="forward-step"
                     label="End Turn"
                     buttonColour="take-red"
@@ -300,7 +303,7 @@ const isUsersTurn = computed(() => {
         return true;
     }
 
-    if (!combat.value?.initiativeIndex) {
+    if (combat.value?.initiativeIndex == null) {
         return false;
     }
 

@@ -31,7 +31,7 @@
         </div>
         <div
             v-if="props.resource == null"
-            class="flex w-full items-center justify-center"
+            class="flex w-full items-center justify-end"
         >
             <FormButton
                 type="submit"
