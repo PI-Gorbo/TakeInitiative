@@ -103,7 +103,6 @@
                 />
             </footer>
         </div>
-
         <Modal ref="combatPageModal" :title="modalState.title ?? ''">
             <CombatStagedCharactersSection
                 v-if="
