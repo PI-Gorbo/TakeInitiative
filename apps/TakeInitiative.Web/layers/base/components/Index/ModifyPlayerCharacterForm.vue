@@ -37,7 +37,7 @@
 
         <CharacterArmourClass v-model:value="armourClass" />
 
-        <div class="flex w-full justify-center" v-if="!props.npc">
+        <div class="flex w-full justify-end" v-if="!props.npc">
             <FormButton
                 label="Create"
                 :loadingDisplay="{

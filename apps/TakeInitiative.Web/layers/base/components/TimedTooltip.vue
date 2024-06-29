@@ -8,7 +8,7 @@
     </div>
 </template>
 <script setup lang="ts">
-import { debounce } from "../layers/base/utils/debounce";
+import { debounce } from "base/utils/debounce";
 const props = withDefaults(
     defineProps<{
         tooltip: string;
