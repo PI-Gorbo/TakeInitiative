@@ -1,10 +1,9 @@
 <template>
     <Tabs
+        v-if="showPlannedTab || showCharactersTab"
         :showTabs="{
-            Planned: () => userIsDm && anyPlannedCharacters,
-            Characters: () =>
-                (campaignStore.state.userCampaignMember?.characters?.length ??
-                    0) > 0,
+            Planned: () => showPlannedTab,
+            Characters: () => showCharactersTab,
         }"
         :renameTabs="{
             Custom: 'Add Custom',
@@ -18,8 +17,9 @@
                 class="py-2"
                 :onStage="
                     (ids) =>
-                        combatStore.stagePlayerCharacters(ids)
-                        .then(props.characterAdded)
+                        combatStore
+                            .stagePlayerCharacters(ids)
+                            .then(props.characterAdded)
                 "
             />
         </template>
@@ -45,6 +45,15 @@
             />
         </template>
     </Tabs>
+    <CombatModifyStagedCharacterForm
+        v-else
+        :onCreate="
+            (req) =>
+                combatStore
+                    .upsertStagedCharacter(req)
+                    .then(props.characterAdded)
+        "
+    />
 </template>
 <script setup lang="ts">
 const campaignStore = useCampaignStore();
@@ -58,4 +67,11 @@ const {
 const props = defineProps<{
     characterAdded: () => Promise<any | unknown>;
 }>();
+
+const showPlannedTab = computed(
+    () => userIsDm.value && anyPlannedCharacters.value,
+);
+const showCharactersTab = computed(
+    () => (campaignStore.state.userCampaignMember?.characters?.length ?? 0) > 0,
+);
 </script>

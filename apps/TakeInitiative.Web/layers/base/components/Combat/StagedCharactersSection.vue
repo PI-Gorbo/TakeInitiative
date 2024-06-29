@@ -4,6 +4,9 @@
             class="flex flex-col gap-2"
             v-if="viewState.currentView.name == 'List'"
         >
+            <label class="text-sm italic">
+                A list of characters that the DM can add to the combat.</label
+            >
             <div class="flex flex-col gap-2">
                 <ul
                     v-for="character in orderedStagedCharacterListWithPlayerInfo"
@@ -32,7 +35,10 @@
                     />
                 </ul>
             </div>
-            <footer class="flex justify-between gap-4">
+            <footer
+                class="flex gap-4"
+                :class="[userIsDm ? 'justify-between' : 'justify-end']"
+            >
                 <FormButton
                     v-if="userIsDm"
                     label="Roll into initiative"
@@ -57,7 +63,7 @@
                 <FormButton
                     label="Stage character"
                     size="sm"
-                    buttonColour="take-navy-light"
+                    buttonColour="take-purple-light"
                     icon="plus"
                     @clicked="transitionViewToAdd"
                 />
@@ -67,7 +73,7 @@
             <FormButton
                 size="sm"
                 icon="arrow-left"
-                buttonColour="take-navy-medium"
+                buttonColour="take-purple-light"
                 label="Back"
                 @clicked="transitionViewToList"
             />
@@ -97,10 +103,11 @@
             <FormButton
                 size="sm"
                 icon="arrow-left"
-                buttonColour="take-navy-medium"
-                label="Back"
+                buttonColour="take-purple-light"
+                label="Back to list"
                 @clicked="transitionViewToList"
             />
+
             <CombatAddStagedCharacterTabs
                 :characterAdded="async () => transitionViewToList()"
             />
@@ -168,4 +175,13 @@ function onCharacterClicked(character: CombatPlayerDto) {
 const emit = defineEmits<{
     (e: "RolledCharactersIntoInitiative"): void;
 }>();
+
+// A hook to set the currentView based on if there are any staged characters
+onMounted(() => {
+    if (orderedStagedCharacterListWithPlayerInfo.value.length != 0) {
+        return;
+    }
+
+    transitionViewToAdd();
+});
 </script>

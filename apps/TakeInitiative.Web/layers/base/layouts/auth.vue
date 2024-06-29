@@ -5,7 +5,7 @@
         <main class="bg-take-purple-very-dark">
             <section class="flex w-full justify-center p-4">
                 <div
-                    class="bg-take-neutral flex w-full flex-col items-center justify-center rounded-lg border border-take-yellow bg-take-navy-medium px-12 py-8 md:w-3/5 2xl:w-[700px]"
+                    class="bg-take-neutral flex w-full flex-col items-center justify-center rounded-lg border border-take-yellow bg-take-purple-dark px-12 py-8 shadow-lg md:w-3/5 2xl:w-[700px]"
                 >
                     <h1
                         class="flex items-center gap-2 font-NovaCut text-2xl font-bold text-take-yellow sm:text-3xl md:text-4xl"
