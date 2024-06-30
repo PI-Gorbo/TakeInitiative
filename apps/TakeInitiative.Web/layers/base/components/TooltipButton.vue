@@ -1,5 +1,5 @@
 <template>
-    <div class="tooltip" :data-tip="props.tooltip">
+    <div class="tooltip overflow-visible" :data-tip="props.tooltip">
         <FontAwesomeIcon :icon="props.icon" />
     </div>
 </template>
