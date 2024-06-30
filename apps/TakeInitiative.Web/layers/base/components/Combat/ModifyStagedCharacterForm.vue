@@ -25,17 +25,14 @@
             />
         </div>
 
-        <section>
-            <label class="text-white">Initiative</label>
-            <CharacterInitiative
-                v-model:initiativeStrategy="initiativeStrategy"
-                v-model:initiativeValue="initiativeValue"
-                :errorMessage="
-                    initiativeStrategyInputProps.errorMessage ||
-                    initiativeValueInputProps.errorMessage
-                "
-            />
-        </section>
+        <CharacterInitiative
+            v-model:initiativeStrategy="initiativeStrategy"
+            v-model:initiativeValue="initiativeValue"
+            :errorMessage="
+                initiativeStrategyInputProps.errorMessage ||
+                initiativeValueInputProps.errorMessage
+            "
+        />
 
         <CharacterHealthInput
             v-model:hasHealth="hasHealth"

@@ -1,9 +1,15 @@
 <template>
     <section>
-        <label class="text-sm text-white">Health (Optional)</label>
-        <div :class="['flex items-center gap-2']">
+        <header class="flex gap-2">
+            <label class="text-sm text-white">Health (Optional)</label>
+            <TooltipButton
+                icon="circle-question"
+                tooltip="If you don't provide health, it won't be displayed to others. Click the arrow button to reset. The health fields support basic arithmetic including grouping with brackets (), add (+), subtract (-), multiply (*) and divide (/)."
+            />
+        </header>
+        <div :class="['flex w-full items-center gap-2']">
             <section
-                class="flex items-center gap-2 rounded-md bg-take-navy-light"
+                class="flex flex-1 items-center gap-2 rounded-md bg-take-navy-light"
             >
                 <div class="flex-1">
                     <input
@@ -46,6 +52,29 @@
     </section>
 </template>
 <script setup lang="ts">
+import { Parser } from "expr-eval";
+const healthExpressionParser = new Parser({
+    operators: {
+        // Only enable add, subtract, multiple and divide
+        add: true,
+        subtract: true,
+        multiply: true,
+        divide: true,
+        concatenate: false,
+        conditional: false,
+        factorial: false,
+        power: false,
+        remainder: false,
+
+        // Disable and, or, not, <, ==, !=, etc.
+        logical: false,
+        comparison: false,
+
+        // Disable 'in' and = operators
+        in: false,
+        assignment: false,
+    },
+});
 const props = defineProps<{
     hasHealth: boolean | undefined;
     currentHealth: number | undefined | null;
@@ -70,9 +99,10 @@ function onInputMaxHealth(value: string | undefined | null) {
         if (!value) {
             emit("update:maxHealth", null);
         } else {
-            emit("update:maxHealth", parseInt(value ?? "0"));
+            emit("update:maxHealth", healthExpressionParser.evaluate(value));
         }
     } catch {
+        emit("update:maxHealth", value);
     } finally {
         if (!props.hasHealth) {
             emit("update:hasHealth", true);
@@ -85,9 +115,13 @@ function onInputCurrentHealth(value: string | undefined | null) {
         if (!value) {
             emit("update:currentHealth", null);
         } else {
-            emit("update:currentHealth", parseInt(value ?? "0"));
+            emit(
+                "update:currentHealth",
+                healthExpressionParser.evaluate(value),
+            );
         }
     } catch {
+        emit("update:currentHealth", value);
     } finally {
         if (!props.hasHealth) {
             emit("update:hasHealth", true);
