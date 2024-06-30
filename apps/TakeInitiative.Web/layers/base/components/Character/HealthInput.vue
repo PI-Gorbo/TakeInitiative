@@ -1,40 +1,42 @@
 <template>
     <section>
         <label class="text-sm text-white">Health (Optional)</label>
-        <div :class="['flex items-center gap-1']">
-            <div class="flex items-center pt-5">
+        <div :class="['flex w-full items-center gap-2']">
+            <section
+                class="flex flex-1 items-center gap-2 rounded-md bg-take-navy-light"
+            >
                 <input
-                    type="checkbox"
-                    class="h-8 w-8"
-                    :checked="props.hasHealth"
-                    @input="onHasHealthToggled"
+                    class="flex-1 rounded-md bg-take-navy-light p-2"
+                    placeholder="Current"
+                    :value="props.currentHealth"
+                    @blur="
+                        (e: Event) =>
+                            onInputCurrentHealth(
+                                (e.target as HTMLInputElement).value,
+                            )
+                    "
+                />
+                <span>/</span>
+                <input
+                    class="flex-1 rounded-md bg-take-navy-light p-2"
+                    placeholder="Max"
+                    :value="props.maxHealth"
+                    @blur="
+                        (e: Event) =>
+                            onInputMaxHealth(
+                                (e.target as HTMLInputElement).value,
+                            )
+                    "
+                />
+            </section>
+            <div>
+                <FormIconButton
+                    class="p-3"
+                    icon="arrow-rotate-left"
+                    buttonColour="take-charcoal"
+                    @clicked="reset"
                 />
             </div>
-            <FormInput
-                label="Current"
-                :value="props.currentHealth"
-                type="number"
-                class="flex-1"
-                @input="
-                    (e: Event) =>
-                        onInputCurrentHealth(
-                            (e.target as HTMLInputElement).value,
-                        )
-                "
-                :disabled="!props.hasHealth"
-            />
-            <span class="pt-4">/</span>
-            <FormInput
-                label="Max"
-                :value="props.maxHealth"
-                type="number"
-                class="flex-1"
-                @input="
-                    (e: Event) =>
-                        onInputMaxHealth((e.target as HTMLInputElement).value)
-                "
-                :disabled="!props.hasHealth"
-            />
         </div>
         <label class="text-red-500" v-if="props.error">{{ props.error }}</label>
     </section>
@@ -53,17 +55,19 @@ const emit = defineEmits<{
     (e: "update:maxHealth", value: number | null): void;
 }>();
 
-function onHasHealthToggled() {
-    if (props.hasHealth) {
-        emit("update:hasHealth", false);
-    } else {
-        emit("update:hasHealth", true);
-    }
+function reset() {
+    emit("update:hasHealth", false);
+    emit("update:currentHealth", null);
+    emit("update:maxHealth", null);
 }
 
 function onInputMaxHealth(value: string | undefined | null) {
     try {
-        emit("update:maxHealth", parseInt(value ?? "0"));
+        if (!value) {
+            emit("update:maxHealth", null);
+        } else {
+            emit("update:maxHealth", parseInt(value ?? "0"));
+        }
     } catch {
     } finally {
         if (!props.hasHealth) {
@@ -74,7 +78,11 @@ function onInputMaxHealth(value: string | undefined | null) {
 
 function onInputCurrentHealth(value: string | undefined | null) {
     try {
-        emit("update:currentHealth", parseInt(value ?? "0"));
+        if (!value) {
+            emit("update:currentHealth", null);
+        } else {
+            emit("update:currentHealth", parseInt(value ?? "0"));
+        }
     } catch {
     } finally {
         if (!props.hasHealth) {

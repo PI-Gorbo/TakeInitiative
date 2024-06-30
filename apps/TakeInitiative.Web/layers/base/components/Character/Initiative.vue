@@ -11,7 +11,7 @@
                             Number((e.target as HTMLSelectElement).value),
                         )
                 "
-                class="rounded-l-lg bg-take-grey-dark py-1 pl-2 pr-1 text-take-navy"
+                class="rounded-l-lg bg-take-grey-dark py-2 pl-2 pr-1 text-take-navy"
             >
                 <option :value="InitiativeStrategy.Fixed">Fixed</option>
                 <option :value="InitiativeStrategy.Roll">Roll</option>

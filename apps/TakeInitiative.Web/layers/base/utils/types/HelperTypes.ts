@@ -15,7 +15,7 @@ export type TakeInitColour =
     | "take-grey-dark"
     | "white"
     | "take-teal"
-    | "take-blue"
+    | "take-charcoal"
     | "take-purple"
     | "take-purple-dark"
     | "take-purple-very-dark"

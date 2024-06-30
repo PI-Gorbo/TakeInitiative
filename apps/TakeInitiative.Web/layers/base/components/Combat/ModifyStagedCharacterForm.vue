@@ -206,8 +206,8 @@ watch(
         isHidden.value = props.character?.hidden;
         armourClass.value = props.character?.armourClass ?? null;
         hasHealth.value = props.character?.health?.hasHealth ?? false;
-        currentHealth.value = props.character?.health?.currentHealth ?? 0;
-        maxHealth.value = props.character?.health?.maxHealth ?? 0;
+        currentHealth.value = props.character?.health?.currentHealth;
+        maxHealth.value = props.character?.health?.maxHealth;
     },
     { deep: true },
 );
@@ -227,8 +227,8 @@ onMounted(() => {
         isHidden.value = props.character?.hidden;
         armourClass.value = props.character.armourClass ?? null;
         hasHealth.value = props.character.health?.hasHealth ?? false;
-        currentHealth.value = props.character.health?.currentHealth ?? 0;
-        maxHealth.value = props.character.health?.maxHealth ?? 0;
+        currentHealth.value = props.character.health?.currentHealth;
+        maxHealth.value = props.character.health?.maxHealth;
     }
 });
 
@@ -276,8 +276,8 @@ async function onEdit() {
             hidden: isHidden.value!,
             health: {
                 hasHealth: hasHealth.value ?? false,
-                currentHealth: currentHealth.value ?? 0,
-                maxHealth: maxHealth.value ?? 0,
+                currentHealth: currentHealth.value,
+                maxHealth: maxHealth.value,
             },
             armourClass: armourClass.value ?? null,
         })
@@ -307,8 +307,8 @@ async function onCreate() {
             hidden: isHidden.value!,
             health: {
                 hasHealth: hasHealth.value ?? false,
-                currentHealth: currentHealth.value ?? 0,
-                maxHealth: maxHealth.value ?? 0,
+                currentHealth: currentHealth.value,
+                maxHealth: maxHealth.value,
             },
             armourClass: armourClass.value ?? null,
         })

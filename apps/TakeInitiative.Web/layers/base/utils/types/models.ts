@@ -97,8 +97,25 @@ export type CharacterInitiative = InferType<
 // Character Health
 export const characterHealthValidator = yup.object({
     hasHealth: yup.boolean().required(),
-    maxHealth: yup.number().nullable(),
-    currentHealth: yup.number().required(),
+    maxHealth: yup
+        .number()
+        .typeError("Max health be a valid number!")
+        .nullable()
+        .test(
+            "value",
+            "Either set current and max health to empty with the reset button, or provide a value for both.",
+            (maxHealth, ctx) => {
+                if (!ctx.parent.hasHealth) {
+                    return true;
+                }
+
+                return maxHealth != null && ctx.parent.currentHealth != null;
+            },
+        ),
+    currentHealth: yup
+        .number()
+        .nullable()
+        .typeError("Current health be a valid number!"),
 });
 export type CharacterHealth = InferType<typeof characterHealthValidator>;
 
