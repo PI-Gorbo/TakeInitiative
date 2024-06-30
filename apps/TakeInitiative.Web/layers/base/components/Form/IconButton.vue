@@ -33,6 +33,9 @@ const props = withDefaults(
         disabledColour: "take-grey",
     },
 );
+const emit = defineEmits<{
+    (e: "clicked"): void;
+}>();
 
 // State
 const state = reactive({
@@ -48,6 +51,7 @@ const hoverColour = computed(
 
 // Events
 async function onClicked() {
+    emit("clicked");
     if (!props.clicked) {
         return;
     }
