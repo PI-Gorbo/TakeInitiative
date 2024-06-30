@@ -36,7 +36,14 @@ export const useCombatStore = defineStore("combatStore", () => {
 
     connection.onreconnected(async () => {
         await setCombat(state.combat?.id!);
+        await connection.send(
+            // Rejoin, as users are kicked from all groups on disconnect
+            "joinCombat",
+            userStore.state.user?.userId,
+            state.combat?.id,
+        );
     });
+
     connection.on("combatUpdated", (combat: Combat) => {
         state.combat = combat;
         return;
