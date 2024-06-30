@@ -40,9 +40,11 @@ export const useCampaignStore = defineStore("campaignStore", () => {
         return;
     });
     connection.onreconnected(async () => {
-        console.log("reconnected");
+        // Join the campaign hub.
         await refetchCampaign();
+        await connection.send("Join", state.campaign?.id); // rejoin as you leave all groups on disconnect.
     });
+
     async function joinCampaignHub(id: string) {
         return await connection.start().then(
             async () =>
