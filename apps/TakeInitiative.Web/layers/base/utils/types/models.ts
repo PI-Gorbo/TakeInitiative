@@ -99,11 +99,12 @@ export const characterHealthValidator = yup.object({
     hasHealth: yup.boolean().required(),
     maxHealth: yup
         .number()
-        .typeError("Max health be a valid number!")
+        .integer("Max health be a integer (No decimal point)")
+        .typeError("Max health be a valid number")
         .nullable()
         .test(
             "value",
-            "Either set current and max health to empty with the reset button, or provide a value for both.",
+            "Either set current and max health to empty with the reset button, or provide a value for both",
             (maxHealth, ctx) => {
                 if (!ctx.parent.hasHealth) {
                     return true;
@@ -114,8 +115,9 @@ export const characterHealthValidator = yup.object({
         ),
     currentHealth: yup
         .number()
+        .integer("Current health be a integer (No decimal point)")
         .nullable()
-        .typeError("Current health be a valid number!"),
+        .typeError("Current health be a valid number"),
 });
 export type CharacterHealth = InferType<typeof characterHealthValidator>;
 
