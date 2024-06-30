@@ -29,7 +29,7 @@
                 />
             </div>
             <ul
-                class="flex select-none flex-row gap-2 overflow-x-scroll bg-take-purple p-2"
+                class="flex select-none flex-row gap-2 overflow-x-scroll rounded-md bg-take-purple p-2"
             >
                 <li
                     class="flex min-w-min flex-row items-center gap-2 rounded-md bg-take-purple-light p-2"

@@ -13,13 +13,13 @@ export default {
                 "take-teal": {
                     DEFAULT: "#019D89",
                 },
-                "take-blue": {
+                "take-charcoal": {
                     DEFAULT: "#264652",
                 },
                 "take-purple": {
-                    light: "#2a2635",
-                    DEFAULT: "#171322",
-                    dark: "#0e0b16",
+                    light: "#36374f",
+                    DEFAULT: "#2a2635",
+                    dark: "#171322",
                     "very-dark": "#040307",
                 },
                 "take-red": {
