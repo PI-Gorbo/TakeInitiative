@@ -1,33 +1,37 @@
 <template>
     <section>
         <label class="text-sm text-white">Health (Optional)</label>
-        <div :class="['flex w-full items-center gap-2']">
+        <div :class="['flex items-center gap-2']">
             <section
-                class="flex flex-1 items-center gap-2 rounded-md bg-take-navy-light"
+                class="flex items-center gap-2 rounded-md bg-take-navy-light"
             >
-                <input
-                    class="flex-1 rounded-md bg-take-navy-light p-2"
-                    placeholder="Current"
-                    :value="props.currentHealth"
-                    @blur="
-                        (e: Event) =>
-                            onInputCurrentHealth(
-                                (e.target as HTMLInputElement).value,
-                            )
-                    "
-                />
+                <div class="flex-1">
+                    <input
+                        class="w-full rounded-md bg-take-navy-light p-2"
+                        placeholder="Current"
+                        :value="props.currentHealth"
+                        @blur="
+                            (e: Event) =>
+                                onInputCurrentHealth(
+                                    (e.target as HTMLInputElement).value,
+                                )
+                        "
+                    />
+                </div>
                 <span>/</span>
-                <input
-                    class="flex-1 rounded-md bg-take-navy-light p-2"
-                    placeholder="Max"
-                    :value="props.maxHealth"
-                    @blur="
-                        (e: Event) =>
-                            onInputMaxHealth(
-                                (e.target as HTMLInputElement).value,
-                            )
-                    "
-                />
+                <div class="flex-1">
+                    <input
+                        class="w-full rounded-md bg-take-navy-light p-2"
+                        placeholder="Max"
+                        :value="props.maxHealth"
+                        @blur="
+                            (e: Event) =>
+                                onInputMaxHealth(
+                                    (e.target as HTMLInputElement).value,
+                                )
+                        "
+                    />
+                </div>
             </section>
             <div>
                 <FormIconButton
