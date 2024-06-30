@@ -26,6 +26,7 @@ services:
             - "AllowedHosts=api.take-initiative.com"
             - "CookieDomain=take-initiative.com"
             - "SendGrid:ApiKey=${SendGridApiKey}"
+            - "Urls:Web=https://take-initiative.com"
         restart: always
         # healthcheck:
         #     test: curl --fail http://localhost:8080/heathz || exit 1
