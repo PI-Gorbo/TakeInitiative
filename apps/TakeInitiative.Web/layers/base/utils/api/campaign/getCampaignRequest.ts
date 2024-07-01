@@ -2,6 +2,7 @@ import type { AxiosInstance } from "axios";
 import * as yup from "yup";
 import {
     CombatState,
+    campaignMemberResourceValidator,
     campaignMemberValidator,
     campaignValidator,
     plannedCombatValidator,
@@ -18,6 +19,7 @@ const campaignMemberDtoValidator = yup.object({
     userId: yup.string().required(),
     username: yup.string().required(),
     isDungeonMaster: yup.boolean().required(),
+    resources: yup.array(campaignMemberResourceValidator),
 });
 
 const combatDtoValidator = yup.object({

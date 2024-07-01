@@ -12,17 +12,14 @@
             v-bind="nameInputProps"
         />
 
-        <section>
-            <label class="text-white">Initiative</label>
-            <CharacterInitiative
-                v-model:initiativeStrategy="initiativeStrategy"
-                v-model:initiativeValue="initiativeValue"
-                :errorMessage="
-                    initiativeStrategyInputProps.errorMessage ||
-                    initiativeValueInputProps.errorMessage
-                "
-            />
-        </section>
+        <CharacterInitiative
+            v-model:initiativeStrategy="initiativeStrategy"
+            v-model:initiativeValue="initiativeValue"
+            :errorMessage="
+                initiativeStrategyInputProps.errorMessage ||
+                initiativeValueInputProps.errorMessage
+            "
+        />
 
         <CharacterHealthInput
             v-model:hasHealth="hasHealth"
@@ -37,7 +34,7 @@
 
         <CharacterArmourClass v-model:value="armourClass" />
 
-        <div class="flex w-full justify-center" v-if="!props.npc">
+        <div class="flex w-full justify-end" v-if="!props.npc">
             <FormButton
                 label="Create"
                 :loadingDisplay="{
@@ -190,8 +187,8 @@ onMounted(() => {
         name.value = props.npc.name;
         armourClass.value = props.npc.armourClass ?? null;
         hasHealth.value = props.npc.health?.hasHealth ?? false;
-        currentHealth.value = props.npc.health?.currentHealth ?? 0;
-        maxHealth.value = props.npc.health?.maxHealth ?? 0;
+        currentHealth.value = props.npc.health?.currentHealth;
+        maxHealth.value = props.npc.health?.maxHealth;
     }
 });
 
@@ -230,8 +227,8 @@ async function onEdit() {
         .onEdit({
             health: {
                 hasHealth: hasHealth.value ?? false,
-                currentHealth: currentHealth.value ?? 0,
-                maxHealth: maxHealth.value ?? 0,
+                currentHealth: currentHealth.value,
+                maxHealth: maxHealth.value,
             },
             initiative: {
                 strategy: initiativeStrategy.value!,
@@ -258,8 +255,8 @@ async function onCreate() {
         .onCreate({
             health: {
                 hasHealth: hasHealth.value ?? false,
-                currentHealth: currentHealth.value ?? 0,
-                maxHealth: maxHealth.value ?? 0,
+                currentHealth: currentHealth.value,
+                maxHealth: maxHealth.value,
             },
             initiative: {
                 strategy: initiativeStrategy.value!,

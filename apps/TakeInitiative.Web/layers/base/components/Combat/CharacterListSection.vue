@@ -5,14 +5,13 @@
         name="shuffleList"
     >
         <!-- INITIATIVE LIST -->
-
         <li
             v-for="{ char: charInfo, index } in characterList
                 .map((char, index) => ({ char, index }))
                 .filter((x) => userIsDm || !x.char.character.hidden)"
             :key="charInfo.character.id"
             :class="[
-                'flex gap-2 rounded-xl border-2 border-take-navy-light p-2 transition-colors',
+                'flex gap-2 rounded-xl border-2 border-take-purple-light p-2 transition-colors',
                 {
                     'cursor-pointer':
                         (combatIsOpen || combatIsStarted) &&
@@ -109,6 +108,27 @@
             </body>
         </li>
         <li
+            v-if="
+                combatIsStarted &&
+                characterList
+                    .map((char, index) => ({ char, index }))
+                    .filter((x) => userIsDm || !x.char.character.hidden)
+                    .length == 0
+            "
+        >
+            <!-- When there are no characters displayed on the user, show a message -->
+            <label
+                class="flex justify-center text-take-grey"
+                v-if="characterList.find((x) => x.character.hidden)"
+            >
+                The DM has one or more hidden characters that they are waiting
+                to reveal.
+            </label>
+            <label class="flex justify-center text-take-grey" v-else>
+                There are no characters left in this combat!
+            </label>
+        </li>
+        <li
             key="footer"
             v-if="combatIsOpen"
             :class="[
@@ -116,7 +136,7 @@
             ]"
             @click="emit('CombatOpenedStageCharacters')"
         >
-            + Stage Characters
+            + Add
         </li>
     </TransitionGroup>
 </template>
@@ -159,6 +179,10 @@ const emit = defineEmits<{
     (e: "CombatOpenedStageCharacters"): void;
     (e: "OnClickCharacter", character: CombatCharacter): void;
 }>();
+
+const combatHasHiddenCharacters = computed(
+    () => characterList.value.find((x) => x.character.hidden) != null,
+);
 
 const characterList = computed(() => {
     if (props.listToDisplay == undefined) {

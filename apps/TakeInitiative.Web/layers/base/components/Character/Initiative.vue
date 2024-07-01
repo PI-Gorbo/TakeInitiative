@@ -1,5 +1,12 @@
 <template>
     <div>
+        <header class="flex gap-2">
+            <label class="text-sm">Initiative</label>
+            <TooltipButton
+                icon="circle-question"
+                tooltip="Initiative is rolled when the character enters combat. It can either be a fixed value, or a roll. An example of a roll is 1d20 + 2d4 + 3 which sums one 20 sided dice and two 4 sided die, then adds 3."
+            />
+        </header>
         <div class="flex flex-row">
             <select
                 name="Initiative Strategy"
@@ -11,7 +18,7 @@
                             Number((e.target as HTMLSelectElement).value),
                         )
                 "
-                class="rounded-l-lg bg-take-grey-dark py-1 pl-2 pr-1 text-take-navy"
+                class="rounded-l-lg bg-take-grey-dark py-2 pl-2 pr-1 text-take-navy"
             >
                 <option :value="InitiativeStrategy.Fixed">Fixed</option>
                 <option :value="InitiativeStrategy.Roll">Roll</option>

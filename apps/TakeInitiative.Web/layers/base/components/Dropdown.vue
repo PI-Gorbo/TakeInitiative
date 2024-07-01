@@ -1,10 +1,24 @@
 <template>
-    <div>
-        <label class="text-sm" v-if="props.headerLabel">{{ headerLabel }}</label>
-        <li class="menu p-0">
-            <details
-                ref="details"
-                class="dropdown text-base text-white"
+    <li class="menu p-0">
+        <details
+            ref="details"
+            class="dropdown text-base text-white"
+            :class="{
+                relative: props.hoverOverContent,
+            }"
+        >
+            <summary
+                :class="[`bg-${props.colour} hover:bg-${props.hoverColour}`]"
+            >
+                {{
+                    props.selectedItem != null
+                        ? (props.headerLabel ? props.headerLabel + " " : "") +
+                          props.displayFunc(props.selectedItem)
+                        : labelFallback
+                }}
+            </summary>
+            <ul
+                class="z-50 flex flex-col gap-1 p-2"
                 :class="{
                     relative: props.hoverOverContent,
                 }"

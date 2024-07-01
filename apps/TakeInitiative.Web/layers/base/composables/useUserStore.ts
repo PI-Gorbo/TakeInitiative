@@ -72,12 +72,12 @@ export const useUserStore = defineStore("userStore", () => {
     async function signUp(
         signUpRequest: SignUpRequest,
         redirectPath: string | null,
-    ): Promise<void> {
+    ): Promise<unknown> {
         return await api.user.signUp(signUpRequest).then(async () => {
             if (redirectPath != null) {
-                await navigateTo(redirectPath);
+                return await navigateTo(redirectPath);
             } else {
-                await navigateToFirstAvailableCampaign();
+                return await navigateToFirstAvailableCampaign();
             }
         });
     }

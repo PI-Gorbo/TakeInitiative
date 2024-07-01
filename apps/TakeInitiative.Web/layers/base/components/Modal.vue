@@ -2,7 +2,7 @@
     <dialog
         ref="dialog"
         @click="onModalClick"
-        class="mt-20 rounded-xl bg-take-navy border border-take-yellow-dark p-5 w-full sm:w-full md:w-3/4 lg:w-1/2"
+        class="relative mt-20 w-full overflow-visible rounded-xl border border-take-yellow-dark bg-take-purple-very-dark p-5 sm:w-full md:w-3/4 lg:w-3/5"
     >
         <div class="my-1 flex gap-4">
             <h1

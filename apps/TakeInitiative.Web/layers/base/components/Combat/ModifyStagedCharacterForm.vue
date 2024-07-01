@@ -25,17 +25,14 @@
             />
         </div>
 
-        <section>
-            <label class="text-white">Initiative</label>
-            <CharacterInitiative
-                v-model:initiativeStrategy="initiativeStrategy"
-                v-model:initiativeValue="initiativeValue"
-                :errorMessage="
-                    initiativeStrategyInputProps.errorMessage ||
-                    initiativeValueInputProps.errorMessage
-                "
-            />
-        </section>
+        <CharacterInitiative
+            v-model:initiativeStrategy="initiativeStrategy"
+            v-model:initiativeValue="initiativeValue"
+            :errorMessage="
+                initiativeStrategyInputProps.errorMessage ||
+                initiativeValueInputProps.errorMessage
+            "
+        />
 
         <CharacterHealthInput
             v-model:hasHealth="hasHealth"
@@ -50,7 +47,7 @@
 
         <CharacterArmourClass v-model:value="armourClass" />
 
-        <div class="flex w-full justify-center" v-if="!props.character">
+        <div class="flex w-full justify-end" v-if="!props.character">
             <FormButton
                 label="Create"
                 :loadingDisplay="{
@@ -206,8 +203,8 @@ watch(
         isHidden.value = props.character?.hidden;
         armourClass.value = props.character?.armourClass ?? null;
         hasHealth.value = props.character?.health?.hasHealth ?? false;
-        currentHealth.value = props.character?.health?.currentHealth ?? 0;
-        maxHealth.value = props.character?.health?.maxHealth ?? 0;
+        currentHealth.value = props.character?.health?.currentHealth;
+        maxHealth.value = props.character?.health?.maxHealth;
     },
     { deep: true },
 );
@@ -227,8 +224,8 @@ onMounted(() => {
         isHidden.value = props.character?.hidden;
         armourClass.value = props.character.armourClass ?? null;
         hasHealth.value = props.character.health?.hasHealth ?? false;
-        currentHealth.value = props.character.health?.currentHealth ?? 0;
-        maxHealth.value = props.character.health?.maxHealth ?? 0;
+        currentHealth.value = props.character.health?.currentHealth;
+        maxHealth.value = props.character.health?.maxHealth;
     }
 });
 
@@ -276,8 +273,8 @@ async function onEdit() {
             hidden: isHidden.value!,
             health: {
                 hasHealth: hasHealth.value ?? false,
-                currentHealth: currentHealth.value ?? 0,
-                maxHealth: maxHealth.value ?? 0,
+                currentHealth: currentHealth.value,
+                maxHealth: maxHealth.value,
             },
             armourClass: armourClass.value ?? null,
             conditions: [],
@@ -307,8 +304,8 @@ async function onCreate() {
             hidden: isHidden.value!,
             health: {
                 hasHealth: hasHealth.value ?? false,
-                currentHealth: currentHealth.value ?? 0,
-                maxHealth: maxHealth.value ?? 0,
+                currentHealth: currentHealth.value,
+                maxHealth: maxHealth.value,
             },
             armourClass: armourClass.value ?? null,
             conditions: [],

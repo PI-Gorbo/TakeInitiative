@@ -97,8 +97,27 @@ export type CharacterInitiative = InferType<
 // Character Health
 export const characterHealthValidator = yup.object({
     hasHealth: yup.boolean().required(),
-    maxHealth: yup.number().nullable(),
-    currentHealth: yup.number().required(),
+    maxHealth: yup
+        .number()
+        .integer("Max health be a integer (No decimal point)")
+        .typeError("Max health be a valid number")
+        .nullable()
+        .test(
+            "value",
+            "Either set current and max health to empty with the reset button, or provide a value for both",
+            (maxHealth, ctx) => {
+                if (!ctx.parent.hasHealth) {
+                    return true;
+                }
+
+                return maxHealth != null && ctx.parent.currentHealth != null;
+            },
+        ),
+    currentHealth: yup
+        .number()
+        .integer("Current health be a integer (No decimal point)")
+        .nullable()
+        .typeError("Current health be a valid number"),
 });
 export type CharacterHealth = InferType<typeof characterHealthValidator>;
 
@@ -117,12 +136,33 @@ export const playerCharacterValidator = characterValidator.shape({
 export type PlayerCharacter = InferType<typeof playerCharacterValidator>;
 
 // Campaign Member
+export enum ResourceVisibilityOptions {
+    Private = 0,
+    DMsOnly = 1,
+    Public = 2,
+}
+export const resourceVisibilityKeys = ["Private", "DMsOnly", "Public"] as const;
+export const campaignMemberResourceValidator = yup.object({
+    name: yup.string().required(),
+    link: yup.string().required(),
+    visibility: yup
+        .mixed<ResourceVisibilityOptions>()
+        .oneOf(
+            Object.values(
+                ResourceVisibilityOptions,
+            ) as ResourceVisibilityOptions[],
+        ),
+});
+export type CampaignMemberResource = InferType<
+    typeof campaignMemberResourceValidator
+>;
 export const campaignMemberValidator = yup.object({
     id: yup.string().required(),
     userId: yup.string().required(),
     campaignId: yup.string().required(),
     isDungeonMaster: yup.boolean().required(),
     characters: yup.array(playerCharacterValidator),
+    resources: yup.array(campaignMemberResourceValidator),
 });
 export type CampaignMember = InferType<typeof campaignMemberValidator>;
 

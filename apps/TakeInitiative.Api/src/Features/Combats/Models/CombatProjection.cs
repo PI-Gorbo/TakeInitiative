@@ -302,10 +302,12 @@ public class CombatProjection : SingleStreamProjection<Combat>
 
     public async Task<Combat> Apply(StagedCharactersRolledIntoInitiativeEvent @event, Combat Combat, IEvent<StagedCharactersRolledIntoInitiativeEvent> eventDetails, IQuerySession session)
     {
-        Guid characterWithCurrentTurn = Combat.InitiativeList[Combat.InitiativeIndex].Id;
         var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
+
+        // Determine new Initiative list.
         var newInitiativeList = @event.InitiativeRolls.Select((charInitiative, index) =>
         {
+            // If there is an existing character, return it with the newly computed rolls.
             var exitingCharacter = Combat.InitiativeList.Find(x => x.Id == charInitiative.id).AsMaybe();
             if (exitingCharacter.HasValue)
             {
@@ -315,12 +317,13 @@ public class CombatProjection : SingleStreamProjection<Combat>
                 };
             }
 
-            var stagedChar = Combat.StagedList.FirstOrDefault(x => x.Id == charInitiative.id, null);
-            if (stagedChar == null)
+            // Otherwise, we expect there to be a staged character.
+            var stagedChar = Combat.StagedList.FirstOrDefault(x => x.Id == charInitiative.id, null).AsMaybe();
+            if (stagedChar.HasNoValue) // If there is not one (due to poor data), then return null, it will be filtered out later.
             {
                 return null;
             }
-            return stagedChar with
+            return stagedChar.Value with
             {
                 InitiativeValue = charInitiative.rolls
             };
@@ -330,13 +333,19 @@ public class CombatProjection : SingleStreamProjection<Combat>
         .OrderByDescending(x => x.InitiativeValue, new InitiativeComparer())
         .ToImmutableList();
 
+        // Determine new Staged List
         var stagedCharactersToRemove = @event.InitiativeRolls.Select(x => x.id).ToArray();
+        var newStagedList = Combat.StagedList.Where(x => !x.Id.In(stagedCharactersToRemove)).ToImmutableList();
+
+        // Determine new Initiative Index
+        Maybe<Guid> characterWithCurrentTurn = Combat.InitiativeList.Count > 0 ? Combat.InitiativeList[Combat.InitiativeIndex].Id : Maybe.None;
+        var newInitiativeIndex = characterWithCurrentTurn.HasValue ? newInitiativeList.FindIndex(x => x.Id == characterWithCurrentTurn) : 0; // Maintains the initiative index, so that it still points to the character whos turn it was before.
         return Combat with
         {
             CombatLogs = Combat.CombatLogs.Add($"{user?.UserName} rolled {@event.InitiativeRolls.Count} characters into initiative at {eventDetails.Timestamp:R}"),
-            StagedList = Combat.StagedList.Where(x => !x.Id.In(stagedCharactersToRemove)).ToImmutableList(),
+            StagedList = newStagedList,
             InitiativeList = newInitiativeList,
-            InitiativeIndex = newInitiativeList.FindIndex(x => x.Id == characterWithCurrentTurn)
+            InitiativeIndex = newInitiativeIndex
         };
     }
 

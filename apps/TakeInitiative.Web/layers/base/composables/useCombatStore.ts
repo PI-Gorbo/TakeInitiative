@@ -36,7 +36,14 @@ export const useCombatStore = defineStore("combatStore", () => {
 
     connection.onreconnected(async () => {
         await setCombat(state.combat?.id!);
+        await connection.send(
+            // Rejoin, as users are kicked from all groups on disconnect
+            "joinCombat",
+            userStore.state.user?.userId,
+            state.combat?.id,
+        );
     });
+
     connection.on("combatUpdated", (combat: Combat) => {
         state.combat = combat;
         return;
@@ -290,11 +297,11 @@ export const useCombatStore = defineStore("combatStore", () => {
         }) => {
             const currentUserId = userStore.state.user?.userId;
 
-            if (charInfo.user.userId == state.combat?.dungeonMaster) {
+            if (charInfo.user?.userId == state.combat?.dungeonMaster) {
                 return "crown";
             }
 
-            if (charInfo.user.userId == currentUserId) {
+            if (charInfo.user?.userId == currentUserId) {
                 return "circle-user";
             }
 

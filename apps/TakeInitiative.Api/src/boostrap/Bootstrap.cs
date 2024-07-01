@@ -18,11 +18,11 @@ using Weasel.Postgresql;
 namespace TakeInitiative.Api.Bootstrap;
 public static class Bootstrap
 {
-    public static WebApplicationBuilder AddMartenDB(this WebApplicationBuilder builder)
+    public static IServiceCollection AddMartenDB(this IServiceCollection services, IConfiguration config, bool IsDevelopment)
     {
-        var martenOpts = builder.Services.AddMarten(opts =>
+        var martenOpts = services.AddMarten(opts =>
         {
-            opts.Connection(builder.Configuration.GetConnectionString("TakeDB") ?? throw new OperationCanceledException("Required Configuration 'ConnectionStrings:Marten' is missing."));
+            opts.Connection(config.GetConnectionString("TakeDB") ?? throw new OperationCanceledException("Required Configuration 'ConnectionStrings:Marten' is missing."));
 
             // Use system.text.json
             opts.UseDefaultSerialization(serializerType: SerializerType.SystemTextJson);
@@ -50,19 +50,19 @@ public static class Bootstrap
 
         }).AddAsyncDaemon(DaemonMode.Solo);
 
-        if (builder.Environment.IsDevelopment())
+        if (IsDevelopment)
         {
             martenOpts.ApplyAllDatabaseChangesOnStartup();
         }
 
         martenOpts.UseLightweightSessions();
 
-        return builder;
+        return services;
     }
 
-    public static WebApplicationBuilder AddIdentityAuthenticationAndAuthorization(this WebApplicationBuilder builder)
+    public static IServiceCollection AddIdentityAuthenticationAndAuthorization(this IServiceCollection services, IConfiguration config)
     {
-        builder.Services
+        services
             .AddIdentityCore<ApplicationUser>(opts =>
             {
                 opts.SignIn.RequireConfirmedAccount = false;
@@ -81,7 +81,7 @@ public static class Bootstrap
             .AddSignInManager() // Sign in manager allows users to sign in and out, and validates these operations.
             .AddDefaultTokenProviders(); // Default token providers for password changes and other temporary auth needs.
 
-        builder.Services
+        services
             .AddTransient<IAuthorizationHandler, RequireUserToExistInDatabaseAuthorizationHandler>()
             .AddTransient<IAuthorizationHandler, RequireNotInMaintenanceModeAuthorizationHandler>()
             .AddCookieAuth(validFor: TimeSpan.FromHours(12), opts =>
@@ -99,7 +99,7 @@ public static class Bootstrap
                     ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
                     return Task.CompletedTask;
                 };
-                opts.Cookie.Domain = builder.Configuration.GetValue<string>("CookieDomain") ?? throw new InvalidOperationException("Attempted to find configuration for the value CookieDomain but there was none provided.");
+                opts.Cookie.Domain = config.GetValue<string>("CookieDomain") ?? throw new InvalidOperationException("Attempted to find configuration for the value CookieDomain but there was none provided.");
             })
             .AddAuthorization(opts =>
             {
@@ -124,34 +124,34 @@ public static class Bootstrap
                 opts.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
             });
 
-        builder.Services.AddTransient<ConfirmEmailSender>();
-        builder.Services.AddTransient<ResetPasswordEmailSender>();
-        return builder;
+        services.AddTransient<ConfirmEmailSender>();
+        services.AddTransient<ResetPasswordEmailSender>();
+        return services;
     }
 
-    public static WebApplicationBuilder AddSerilog(this WebApplicationBuilder builder)
+    public static IServiceCollection AddSerilog(this IServiceCollection services)
     {
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Information()
             .WriteTo.Console()
             .CreateLogger();
 
-        builder.Services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog()); // Uses the static logger.
+        services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog()); // Uses the static logger.
+        return services;
+    }
+
+    public static IServiceCollection AddOptionObjects(this IServiceCollection builder, IConfiguration config)
+    {
+        builder.Configure<SendGridOptions>(config.GetSection(SendGridOptions.SendGridOptionsKey));
+        builder.Configure<EmailOptions>(config.GetSection(EmailOptions.EmailOptionsKey));
+        builder.Configure<UrlsOptions>(config.GetSection(UrlsOptions.UrlsOptionsKey));
+        builder.Configure<JWTOptions>(config);
         return builder;
     }
 
-    public static WebApplicationBuilder AddOptionObjects(this WebApplicationBuilder builder)
+    public static IServiceCollection AddPython(this IServiceCollection services, IConfiguration configuration)
     {
-        builder.Services.Configure<SendGridOptions>(builder.Configuration.GetSection(SendGridOptions.SendGridOptionsKey));
-        builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection(EmailOptions.EmailOptionsKey));
-        builder.Services.Configure<UrlsOptions>(builder.Configuration.GetSection(UrlsOptions.UrlsOptionsKey));
-        builder.Services.Configure<JWTOptions>(builder.Configuration);
-        return builder;
-    }
-
-    public static WebApplicationBuilder AddPython(this WebApplicationBuilder builder)
-    {
-        var pythonConfig = builder.Configuration.GetValue<string>("PythonDLL") ?? throw new InvalidConfigurationException("There is no configuration value for PythonDLL. Please set a value.");
+        var pythonConfig = configuration.GetValue<string>("PythonDLL") ?? throw new InvalidConfigurationException("There is no configuration value for PythonDLL. Please set a value.");
         if (pythonConfig == "null")
         {
             // /usr/lib/python3.11/config-3.11-x86_64-linux-gnu/libpython3.11.so
@@ -170,19 +170,18 @@ public static class Bootstrap
         PythonEngine.BeginAllowThreads();
 
         // Add dice roller.
-        builder.Services.AddTransient<IDiceRoller, DiceRoller>();
-        return builder;
+        services.AddTransient<IDiceRoller, DiceRoller>();
+        return services;
     }
 
-    public static WebApplicationBuilder AddSendGrid(this WebApplicationBuilder builder)
+    public static IServiceCollection AddSendGrid(this IServiceCollection services, IConfiguration configuration)
     {
-        builder.Services.AddSendGrid((_) =>
+        services.AddSendGrid((_) =>
         {
-            _.ApiKey = builder.Configuration.GetValue<string>("SendGrid:ApiKey");
+            _.ApiKey = configuration.GetValue<string>("SendGrid:ApiKey");
         });
 
-        builder.Services.AddTransient<IEmailSender, SendGridEmailSender>();
-
-        return builder;
+        services.AddTransient<IEmailSender, SendGridEmailSender>();
+        return services;
     }
 }
