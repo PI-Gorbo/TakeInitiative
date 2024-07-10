@@ -23,12 +23,14 @@ export const useCampaignCombatsStore = defineStore(
                           id: string;
                       }
                     | undefined;
+                selectedCombatHistory: undefined | object;
             }
         >({
             campaignId: undefined,
             combats: undefined,
             plannedCombats: undefined,
             selectedCombat: undefined,
+            selectedCombatHistory: undefined,
         });
 
         function init(campaignId: string) {
@@ -53,14 +55,19 @@ export const useCampaignCombatsStore = defineStore(
             state.selectedCombat = undefined;
         }
 
-        function selectCombat(combatId: string) {
+        async function selectCombat(combatId: string) {
             state.selectedCombat = {
                 id: combatId,
                 type: "Normal",
             };
+            const result = await api.combat.getHistory({
+                combatId,
+            });
+            state.selectedCombatHistory = result.data;
         }
 
         function selectPlannedCombat(combatId: string) {
+            state.selectedCombatHistory = undefined;
             state.selectedCombat = {
                 id: combatId,
                 type: "Planned",
