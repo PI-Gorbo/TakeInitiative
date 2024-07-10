@@ -60,7 +60,7 @@
         </div>
         <div v-else class="flex justify-between gap-2">
             <FormButton
-                label="Save"
+                label="Edit"
                 :loadingDisplay="{
                     showSpinner: true,
                     loadingText: 'Saving...',

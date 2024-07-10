@@ -1,5 +1,6 @@
 <template>
     <li class="menu p-0">
+        <label class="p-0 pb-1" v-if="props.label">{{ props.label }}</label>
         <details
             ref="details"
             class="dropdown text-base text-white"
@@ -12,9 +13,8 @@
             >
                 {{
                     props.selectedItem != null
-                        ? (props.headerLabel ? props.headerLabel + " " : "") +
-                          props.displayFunc(props.selectedItem)
-                        : labelFallback
+                        ? computedSelectedItemDisplayFunc(props.selectedItem)
+                        : selectedItemFallbackDisplay
                 }}
             </summary>
             <ul
@@ -47,10 +47,11 @@ const props = withDefaults(
     defineProps<{
         selectedItem: TListItem | undefined | null;
         items: TListItem[];
+        selectedItemDisplayFunc?: (item: TListItem) => string;
         displayFunc: (item: TListItem) => string;
         keyFunc: (item: TListItem) => string;
-        labelFallback?: string;
-        headerLabel?: string;
+        label?: string | undefined;
+        selectedItemFallbackDisplay?: string;
         colour: TakeInitColour;
         hoverColour: TakeInitColour;
         hoverOverContent?: boolean;
@@ -72,4 +73,8 @@ function onSelectedItem(item: TListItem) {
         details.value.open = false;
     }
 }
+
+const computedSelectedItemDisplayFunc = computed(
+    () => props.selectedItemDisplayFunc ?? props.displayFunc,
+);
 </script>

@@ -66,23 +66,19 @@
             >
                 <Dropdown
                     v-if="isCampaignsRoute"
-                    colour="take-purple-light"
-                    hoverColour="take-navy-medium"
-                    labelFallback="Campaigns"
-                    inDropdownLabel="Campaign: "
+                    :selectedItem="selectedCampaignFromDropdown"
                     :items="userStore.campaignList!"
+                    hoverColour="take-navy-medium"
+                    selectedItemFallbackDisplay="Campaigns"
                     :displayFunc="(c) => c.campaignName"
-                    :keyFunc="(c) => c.campaignId"
-                    :selectedItem="
-                        userStore.campaignList?.find(
-                            (x) =>
-                                x.campaignId ==
-                                selectedCampaignInfo.campaign?.id,
-                        )
+                    :selectedItemDisplayFunc="
+                        (c) => `Campaign: ${c.campaignName}`
                     "
+                    :keyFunc="(c) => c.campaignId"
                     @update:selectedItem="
                         (item) => onSetSelectedCampaign(item.campaignId)
                     "
+                    colour="take-purple-light"
                 >
                     <template #Footer>
                         <li
@@ -249,7 +245,11 @@ const isCampaignsRoute = computed(() =>
     routeInfo.name?.toString().startsWith("campaign-id"),
 );
 const selectedCampaignInfo = computed(() => useCampaignStore().state);
-
+const selectedCampaignFromDropdown = computed(() =>
+    userStore.campaignList?.find(
+        (x) => x.campaignId == selectedCampaignInfo.value.campaign?.id,
+    ),
+);
 const isCombatRoute = computed(() => routeInfo.name == "combat-id");
 const combatInfo = computed(() => useCombatStore().state?.combat);
 

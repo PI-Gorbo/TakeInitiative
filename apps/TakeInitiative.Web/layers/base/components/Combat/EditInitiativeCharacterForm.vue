@@ -38,11 +38,14 @@
 
             <CharacterArmourClass v-model:value="armourClass" />
 
-            <CharacterConditionsInput v-model:conditions="conditions" />
+            <CharacterConditionsInput
+                v-model:conditions="conditions"
+                :error="conditionsInputProps.errorMessage"
+            />
         </main>
         <footer class="flex justify-between">
             <FormButton
-                label="Save"
+                label="Edit"
                 :loadingDisplay="{
                     showSpinner: true,
                     loadingText: 'Saving...',
