@@ -6,26 +6,7 @@
                 {{ campaignStore.state.campaign?.campaignName }}!</label
             >
         </header>
-        <header
-            v-if="currentCombatInfo"
-            :class="[
-                'cursor-pointer select-none rounded-lg px-4 py-3 text-center text-xl text-take-navy',
-                currentCombatInfo.state == CombatState.Open
-                    ? 'bg-take-teal'
-                    : 'bg-take-red',
-                isMobile ? 'flex-1' : 'w-full',
-            ]"
-            @click="
-                async () => await navigateTo(`/combat/${currentCombatInfo?.id}`)
-            "
-        >
-            <div v-if="currentCombatInfo.state == CombatState.Open">
-                {{ openCombatText }}
-            </div>
-            <div v-else>
-                {{ combatStartedText }}
-            </div>
-        </header>
+        <IndexCombatBanner />
 
         <section class="flex flex-col rounded-md bg-take-purple-dark p-2">
             <FormBase
@@ -101,8 +82,6 @@ definePageMeta({
     layout: "campaign-tabs",
 });
 
-const { isMobile } = useDevice();
-const userStore = useUserStore();
 const campaignStore = useCampaignStore();
 const campaign = computed(() => campaignStore.state.campaign);
 const formState = reactive({
@@ -132,10 +111,6 @@ watch(
 
 const { state: campaignStoreState } = storeToRefs(campaignStore);
 
-const currentCombatInfo = computed(() => {
-    return campaignStoreState.value.currentCombatInfo;
-});
-
 const descriptionHasChanges = computed(() => {
     return (
         campaignStore.state.campaign?.campaignDescription != description.value
@@ -147,23 +122,6 @@ async function submitDetails(): Promise<unknown> {
         campaignDescription: description.value ?? "",
     });
 }
-
-const openCombatText = computed(() => {
-    const combatDto = campaignStore.state.currentCombatInfo;
-    const combatOpedByName = campaignStore.memberDtos.find(
-        (x) => x.userId == combatDto?.dungeonMaster,
-    )?.username;
-
-    return `The combat '${combatDto?.combatName}' has been opened. Click to join.`;
-});
-const combatStartedText = computed(() => {
-    const combatDto = campaignStore.state.currentCombatInfo;
-    const combatOpedByName = campaignStore.memberDtos.find(
-        (x) => x.userId == combatDto?.dungeonMaster,
-    )?.username;
-
-    return `The combat '${combatDto?.combatName}' has started! Click to join.`;
-});
 const formattedCampaignStartDate = computed(
     () =>
         "Created on " +

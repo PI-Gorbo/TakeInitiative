@@ -10,7 +10,9 @@
             Planned: 'Add Planned',
         }"
         class="py-2"
-        backgroundColour="take-navy-medium"
+        backgroundColour="take-purple"
+        notSelectedTabColour="take-purple-light"
+        selectedTabColour="take-yellow"
     >
         <template #Characters>
             <CombatCampaignMemberCharactersSection

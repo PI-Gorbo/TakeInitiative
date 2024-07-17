@@ -95,14 +95,15 @@ function reset() {
 }
 
 function onInputMaxHealth(value: string | undefined | null) {
+    debugger;
     try {
-        if (!value) {
+        if (value == null) {
             emit("update:maxHealth", null);
         } else {
             emit("update:maxHealth", healthExpressionParser.evaluate(value));
         }
     } catch {
-        emit("update:maxHealth", value);
+        emit("update:maxHealth", null);
     } finally {
         if (!props.hasHealth) {
             emit("update:hasHealth", true);
@@ -112,7 +113,7 @@ function onInputMaxHealth(value: string | undefined | null) {
 
 function onInputCurrentHealth(value: string | undefined | null) {
     try {
-        if (!value) {
+        if (value == null) {
             emit("update:currentHealth", null);
         } else {
             emit(
@@ -121,7 +122,7 @@ function onInputCurrentHealth(value: string | undefined | null) {
             );
         }
     } catch {
-        emit("update:currentHealth", value);
+        emit("update:currentHealth", null);
     } finally {
         if (!props.hasHealth) {
             emit("update:hasHealth", true);

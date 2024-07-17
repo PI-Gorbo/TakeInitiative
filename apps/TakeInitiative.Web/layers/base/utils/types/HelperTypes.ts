@@ -43,12 +43,12 @@ export const TakeInitContrastColour: Record<TakeInitColour, string> = {
     "take-grey-dark": "white",
     white: "take-navy",
     "take-teal": "take-navy",
-    "take-blue": "take-grey-light",
     "take-purple": "take-grey-light",
     "take-purple-dark": "take-grey-light",
     "take-purple-very-dark": "take-grey-light",
     "take-purple-light": "take-grey-light",
     "take-creme": "take-navy",
+    "take-charcoal": "white",
 };
 
 export type FontAwesomeIconSize =
