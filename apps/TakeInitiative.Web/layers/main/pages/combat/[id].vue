@@ -1,12 +1,14 @@
 <template>
-    <div class="flex h-full w-full">
-        <div class="flex h-full w-full flex-1 flex-col overflow-y-auto">
+    <div class="flex h-full w-full justify-center">
+        <div
+            class="flex h-full w-full flex-1 flex-col overflow-y-auto md:w-4/5 md:max-w-[1200px]"
+        >
             <!-- MAIN CONTENT -->
             <header class="grid grid-cols-3 p-2">
                 <div class="">
                     <FormButton
                         v-if="!combatIsFinished"
-                        :label="combatIsOpen ? 'Add' : 'Staged List'"
+                        :label="combatIsOpen ? 'Stage' : 'Stage'"
                         :icon="combatIsOpen ? 'plus' : 'users'"
                         @clicked="
                             () => {
@@ -19,8 +21,7 @@
                             }
                         "
                         buttonColour="take-purple-light"
-                        hoverButtonColour="take-navy-medium"
-                        hoverTextColour="white"
+                        hoverButtonColour="take-yellow"
                     />
                 </div>
                 <div>
@@ -84,7 +85,17 @@
                     />
                 </section>
             </main>
-            <footer class="flex items-center justify-end px-2 pb-2">
+            <footer class="flex items-center justify-between px-2 pb-2">
+                <div class="rounded-md bg-take-purple p-2 text-sm">
+                    Phase:
+                    {{
+                        combatIsOpen
+                            ? "Staging"
+                            : combatIsStarted
+                              ? "Started"
+                              : "Finished"
+                    }}
+                </div>
                 <FormButton
                     v-if="
                         combatIsStarted &&
@@ -100,6 +111,19 @@
                         loadingText: 'End...',
                     }"
                     :click="combatStore.endTurn"
+                />
+                <FormButton
+                    v-else-if="combatIsFinished"
+                    icon="house"
+                    label="Go Home"
+                    buttonColour="take-purple"
+                    hoverButtonColour="take-yellow-dark"
+                    :disabled="!isUsersTurn"
+                    :loadingDisplay="{
+                        showSpinner: true,
+                        loadingText: 'End...',
+                    }"
+                    :click="goHome"
                 />
             </footer>
         </div>
@@ -248,7 +272,7 @@ function showModal(modalType: CombatPageModalType) {
             modalState.title = "Edit Staged Character";
             break;
         case "Combat Started Staged Character Menu":
-            modalState.title = "Staged Characters";
+            modalState.title = "Stage Characters";
             break;
         case "Edit Initiative Character":
             modalState.title = "Edit Character in Initiative";
@@ -315,6 +339,14 @@ const isUsersTurn = computed(() => {
     }
     return false;
 });
+
+// Navigation on finished combat
+const goHome = async () => {
+    await useNavigator().toCampaignTab(
+        combatStore.state.combat?.campaignId!,
+        "summary",
+    );
+};
 </script>
 
 <style>

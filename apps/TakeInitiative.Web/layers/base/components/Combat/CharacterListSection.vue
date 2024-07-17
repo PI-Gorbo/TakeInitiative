@@ -136,7 +136,7 @@
             ]"
             @click="emit('CombatOpenedStageCharacters')"
         >
-            + Add
+            + Stage Characters
         </li>
     </TransitionGroup>
 </template>

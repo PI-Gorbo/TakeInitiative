@@ -23,8 +23,7 @@
                 />
             </div>
         </div>
-        <slot :key="id" />
-        <div class="flex flex-1 justify-end py-4"></div>
+        <slot :key="id" class="overflow-visible" />
     </dialog>
 </template>
 <script setup lang="ts">

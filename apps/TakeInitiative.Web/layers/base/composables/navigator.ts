@@ -7,5 +7,6 @@ export const useNavigator = () => {
         toCreateOrJoinCampaign: () => navigateTo("/createOrJoinCampaign"),
         confirmEmail: () => navigateTo("/confirm"),
         toLogin: () => navigateTo("/login"),
+        toCombat: (id: string) => navigateTo(`/combat/${id}`),
     };
 };
