@@ -1,5 +1,7 @@
 
 using Alba;
+using CSharpFunctionalExtensions;
+using FluentAssertions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
@@ -11,17 +13,24 @@ using Testcontainers.PostgreSql;
 
 namespace TakeInitiative.Api.Tests.Integration;
 
+public static class TakeApiClientExtensions
+{
+    public static Result Try<TRequest, TResponse>(this Func<TRequest, TResponse> requestFunc, )
+}
+
 public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppClient
 {
     public IAlbaHost AlbaHost { get; private set; } = null!;
-    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder()
+    public PostgreSqlContainer PostgreSqlContainer { get; private set; } = new PostgreSqlBuilder()
         .WithImage("postgres:15-alpine")
         .Build();
     public TakeApiClient Client { get; private set; }
 
+    IAlbaHost IWebAppClient.AlbaHost => throw new NotImplementedException();
+
     public async Task InitializeAsync()
     {
-        await _postgres.StartAsync();
+        await this.PostgreSqlContainer.StartAsync();
         this.AlbaHost = await Alba.AlbaHost.For<Api.Program>(x =>
             x.UseEnvironment(Environments.Development)
             .ConfigureAppConfiguration((context, configBuilder) =>
@@ -29,7 +38,7 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
                     configBuilder.AddInMemoryCollection(
                         new Dictionary<string, string?>
                         {
-                            ["ConnectionStrings:TakeDB"] = _postgres.GetConnectionString()
+                            ["ConnectionStrings:TakeDB"] = this.PostgreSqlContainer.GetConnectionString()
                         });
                 })
            .ConfigureServices((context, services) =>
@@ -41,6 +50,13 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
         // Create a user in the database, with a campaign.
         this.Client = new TakeApiClient(AlbaHost.Server.BaseAddress.ToString(), AlbaHost.GetTestClient());
 
+        // Sign Up.
+        var signup = await Result.Try(() => Client.TakeInitiativeApiFeaturesUsersPostSignUpAsync(new PostSignUpRequest() { Username = "TESTING", Password = "Besbing!99", Email = "testing@testing.com" }));
+        signup.Should().Succeed();
+        // Login and get cookie???
+        var login = await Result.Try(() => Client.TakeInitiativeApiFeaturesUsersPutLoginAsync(new PutLoginRequest() { Email = "testing@testing.com", Password = "Besbing!99" }));
+        login.Should().Succeed();
+
     }
     public async Task DisposeAsync()
     {
@@ -48,7 +64,11 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
         {
             await AlbaHost.StopAsync();
         }
-        await _postgres.StopAsync();
+
+        if (PostgreSqlContainer != null)
+        {
+            await this.PostgreSqlContainer.StopAsync();
+        }
     }
 
 }

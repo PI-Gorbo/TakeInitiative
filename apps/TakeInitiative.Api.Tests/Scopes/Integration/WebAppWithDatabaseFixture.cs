@@ -12,20 +12,21 @@ namespace TakeInitiative.Api.Tests.Integration;
 public class WebAppWithDatabaseFixture : IAsyncLifetime, IWebAppClient
 {
     public IAlbaHost AlbaHost { get; private set; } = null!;
-    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder()
+
+    public PostgreSqlContainer PostgreSqlContainer { get; private set; } = new PostgreSqlBuilder()
         .WithImage("postgres:15-alpine")
         .Build();
 
     public async Task InitializeAsync()
     {
-        await _postgres.StartAsync();
+        await PostgreSqlContainer.StartAsync();
         AlbaHost = await Alba.AlbaHost.For<TakeInitiative.Api.Program>(x =>
             x.ConfigureAppConfiguration((context, configBuilder) =>
                 {
                     configBuilder.AddInMemoryCollection(
                         new Dictionary<string, string?>
                         {
-                            ["ConnectionStrings:TakeDB"] = _postgres.GetConnectionString()
+                            ["ConnectionStrings:TakeDB"] = PostgreSqlContainer.GetConnectionString()
                         });
                 })
            .ConfigureServices((context, services) =>
@@ -40,7 +41,7 @@ public class WebAppWithDatabaseFixture : IAsyncLifetime, IWebAppClient
         {
             await AlbaHost.StopAsync();
         }
-        await _postgres.StopAsync();
+        await PostgreSqlContainer.StopAsync();
     }
 
 }

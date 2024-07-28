@@ -1,5 +1,5 @@
 namespace TakeInitiative.Api.Tests.Integration;
-public class ComprehensiveCombatTests(WebAppWithDatabaseFixture fixture) : IClassFixture<WebAppWithDatabaseFixture>
+public class ComprehensiveCombatTests(AuthenticatedWebAppWithDatabaseFixture fixture) : IClassFixture<AuthenticatedWebAppWithDatabaseFixture>
 {
     [Fact]
     public async Task AttemptToRetrieveContentButUnauthenticated()
