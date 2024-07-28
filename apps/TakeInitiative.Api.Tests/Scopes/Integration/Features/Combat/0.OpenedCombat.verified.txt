@@ -1,0 +1,16 @@
+﻿{
+  Id: Guid_1,
+  CampaignId: Guid_2,
+  CombatName: My planned combat,
+  DungeonMaster: Guid_3,
+  CombatLogs: [
+    TESTING opened the Combat at Sun, 28 Jul 2024 10:57:46 GMT
+  ],
+  PlannedStages: [
+    {
+      Id: Guid_4,
+      Name: Stage One
+    }
+  ],
+  InitiativeIndex: -1
+}

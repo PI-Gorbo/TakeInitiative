@@ -16,19 +16,6 @@
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development"
             }
-        },
-        {
-            "name": ".NET Core Launch (swagger)",
-            "type": "coreclr",
-            "request": "launch",
-            "preLaunchTask": "build",
-            "program": "${workspaceFolder}/apps/TakeInitiative.Api.Client/bin/Debug/net8.0/TakeInitiative.Api.Client.dll",
-            "args": [],
-            "cwd": "${workspaceFolder}/apps/TakeInitiative.Api",
-            "stopAtEntry": false,
-            "env": {
-                "ASPNETCORE_ENVIRONMENT": "Development"
-            }
         }
     ]
 }

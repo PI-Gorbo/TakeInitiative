@@ -3,6 +3,7 @@ using Alba;
 using CSharpFunctionalExtensions;
 using FluentAssertions;
 using TakeInitiative.Api.Features.Users;
+using TakeInitiative.Utilities;
 using Testcontainers.PostgreSql;
 namespace TakeInitiative.Api.Tests.Integration;
 
@@ -10,6 +11,7 @@ public interface IWebAppClient
 {
     public IAlbaHost AlbaHost { get; }
     public PostgreSqlContainer PostgreSqlContainer { get; }
+    public IDiceRoller DiceRollerSubstitute { get; }
 }
 
 public static class WebAppClientExtensions

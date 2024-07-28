@@ -242,7 +242,7 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesUsersPutLogin(body: PutLoginRequest): Promise<any> {
+    takeInitiativeApiFeaturesUsersPutLogin(body: PutLoginRequest): Promise<void> {
         let url_ = this.baseUrl + "/api/login";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -253,7 +253,6 @@ export class Client {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",
-                "Accept": "text/plain"
             }
         };
 
@@ -262,29 +261,25 @@ export class Client {
         });
     }
 
-    protected processTakeInitiativeApiFeaturesUsersPutLogin(response: Response): Promise<any> {
+    protected processTakeInitiativeApiFeaturesUsersPutLogin(response: Response): Promise<void> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-                result200 = resultData200 !== undefined ? resultData200 : <any>null;
-    
-            return result200;
+            return;
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<any>(null as any);
+        return Promise.resolve<void>(null as any);
     }
 
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesUsersPutResetPassword(body: PutResetPasswordRequest): Promise<any> {
+    takeInitiativeApiFeaturesUsersPutResetPassword(body: PutResetPasswordRequest): Promise<void> {
         let url_ = this.baseUrl + "/api/resetPassword";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -295,7 +290,6 @@ export class Client {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",
-                "Accept": "text/plain"
             }
         };
 
@@ -304,36 +298,32 @@ export class Client {
         });
     }
 
-    protected processTakeInitiativeApiFeaturesUsersPutResetPassword(response: Response): Promise<any> {
+    protected processTakeInitiativeApiFeaturesUsersPutResetPassword(response: Response): Promise<void> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-                result200 = resultData200 !== undefined ? resultData200 : <any>null;
-    
-            return result200;
-            });
-        } else if (status === 400) {
+        if (status === 400) {
             return response.text().then((_responseText) => {
             let result400: any = null;
             let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
             result400 = ErrorResponse.fromJS(resultData400);
             return throwException("Bad Request", status, _responseText, _headers, result400);
             });
+        } else if (status === 200) {
+            return response.text().then((_responseText) => {
+            return;
+            });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<any>(null as any);
+        return Promise.resolve<void>(null as any);
     }
 
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesUsersPutSendResetPasswordEmail(body: PutSendResetPasswordEmailRequest): Promise<any> {
+    takeInitiativeApiFeaturesUsersPutSendResetPasswordEmail(body: PutSendResetPasswordEmailRequest): Promise<void> {
         let url_ = this.baseUrl + "/api/sendResetPasswordEmail";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -344,7 +334,6 @@ export class Client {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",
-                "Accept": "text/plain"
             }
         };
 
@@ -353,30 +342,26 @@ export class Client {
         });
     }
 
-    protected processTakeInitiativeApiFeaturesUsersPutSendResetPasswordEmail(response: Response): Promise<any> {
+    protected processTakeInitiativeApiFeaturesUsersPutSendResetPasswordEmail(response: Response): Promise<void> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-                result200 = resultData200 !== undefined ? resultData200 : <any>null;
-    
-            return result200;
-            });
-        } else if (status === 400) {
+        if (status === 400) {
             return response.text().then((_responseText) => {
             let result400: any = null;
             let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
             result400 = ErrorResponse.fromJS(resultData400);
             return throwException("Bad Request", status, _responseText, _headers, result400);
             });
+        } else if (status === 200) {
+            return response.text().then((_responseText) => {
+            return;
+            });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<any>(null as any);
+        return Promise.resolve<void>(null as any);
     }
 
     /**
@@ -641,7 +626,7 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesCampaignsDeleteCampaign(body: DeleteCampaignRequest): Promise<any> {
+    takeInitiativeApiFeaturesCampaignsDeleteCampaign(body: DeleteCampaignRequest): Promise<void> {
         let url_ = this.baseUrl + "/api/campaign";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -652,7 +637,6 @@ export class Client {
             method: "DELETE",
             headers: {
                 "Content-Type": "*/*",
-                "Accept": "text/plain"
             }
         };
 
@@ -661,18 +645,10 @@ export class Client {
         });
     }
 
-    protected processTakeInitiativeApiFeaturesCampaignsDeleteCampaign(response: Response): Promise<any> {
+    protected processTakeInitiativeApiFeaturesCampaignsDeleteCampaign(response: Response): Promise<void> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-                result200 = resultData200 !== undefined ? resultData200 : <any>null;
-    
-            return result200;
-            });
-        } else if (status === 401) {
+        if (status === 401) {
             return response.text().then((_responseText) => {
             return throwException("Unauthorized", status, _responseText, _headers);
             });
@@ -680,12 +656,16 @@ export class Client {
             return response.text().then((_responseText) => {
             return throwException("Forbidden", status, _responseText, _headers);
             });
+        } else if (status === 200) {
+            return response.text().then((_responseText) => {
+            return;
+            });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<any>(null as any);
+        return Promise.resolve<void>(null as any);
     }
 
     /**
@@ -1323,7 +1303,7 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesCombatsDeletePlannedCombat(body: DeletePlannedCombatRequest): Promise<any> {
+    takeInitiativeApiFeaturesCombatsDeletePlannedCombat(body: DeletePlannedCombatRequest): Promise<void> {
         let url_ = this.baseUrl + "/api/combat/planned";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -1334,7 +1314,6 @@ export class Client {
             method: "DELETE",
             headers: {
                 "Content-Type": "*/*",
-                "Accept": "text/plain"
             }
         };
 
@@ -1343,18 +1322,10 @@ export class Client {
         });
     }
 
-    protected processTakeInitiativeApiFeaturesCombatsDeletePlannedCombat(response: Response): Promise<any> {
+    protected processTakeInitiativeApiFeaturesCombatsDeletePlannedCombat(response: Response): Promise<void> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-                result200 = resultData200 !== undefined ? resultData200 : <any>null;
-    
-            return result200;
-            });
-        } else if (status === 401) {
+        if (status === 401) {
             return response.text().then((_responseText) => {
             return throwException("Unauthorized", status, _responseText, _headers);
             });
@@ -1362,12 +1333,16 @@ export class Client {
             return response.text().then((_responseText) => {
             return throwException("Forbidden", status, _responseText, _headers);
             });
+        } else if (status === 200) {
+            return response.text().then((_responseText) => {
+            return;
+            });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<any>(null as any);
+        return Promise.resolve<void>(null as any);
     }
 
     /**
@@ -2173,7 +2148,7 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesAdminPutMaintenanceConfig(body: MaintenanceConfig): Promise<any> {
+    takeInitiativeApiFeaturesAdminPutMaintenanceConfig(body: MaintenanceConfig): Promise<void> {
         let url_ = this.baseUrl + "/api/admin/maintenance";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -2184,7 +2159,6 @@ export class Client {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",
-                "Accept": "text/plain"
             }
         };
 
@@ -2193,23 +2167,19 @@ export class Client {
         });
     }
 
-    protected processTakeInitiativeApiFeaturesAdminPutMaintenanceConfig(response: Response): Promise<any> {
+    protected processTakeInitiativeApiFeaturesAdminPutMaintenanceConfig(response: Response): Promise<void> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-                result200 = resultData200 !== undefined ? resultData200 : <any>null;
-    
-            return result200;
+            return;
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<any>(null as any);
+        return Promise.resolve<void>(null as any);
     }
 }
 

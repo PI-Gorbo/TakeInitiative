@@ -19,10 +19,6 @@ public class PostSignUp(
     {
         Post("/api/signup");
         Tags("AllowAnonymous");
-        Summary(cfg =>
-        {
-            cfg.Response((int)HttpStatusCode.OK, contentType: null);
-        });
     }
 
     public override async Task HandleAsync(PostSignUpRequest req, CancellationToken ct)

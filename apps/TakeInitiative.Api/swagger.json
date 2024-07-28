@@ -170,15 +170,7 @@
         },
         "responses": {
           "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": { }
-              },
-              "application/json": {
-                "schema": { }
-              }
-            }
+            "description": "Success"
           }
         }
       }
@@ -200,17 +192,6 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": { }
-              },
-              "application/json": {
-                "schema": { }
-              }
-            }
-          },
           "400": {
             "description": "Bad Request",
             "content": {
@@ -220,6 +201,9 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "Success"
           }
         }
       }
@@ -241,17 +225,6 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": { }
-              },
-              "application/json": {
-                "schema": { }
-              }
-            }
-          },
           "400": {
             "description": "Bad Request",
             "content": {
@@ -261,6 +234,9 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "Success"
           }
         }
       }
@@ -493,22 +469,14 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": { }
-              },
-              "application/json": {
-                "schema": { }
-              }
-            }
-          },
           "401": {
             "description": "Unauthorized"
           },
           "403": {
             "description": "Forbidden"
+          },
+          "200": {
+            "description": "Success"
           }
         }
       },
@@ -1010,22 +978,14 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": { }
-              },
-              "application/json": {
-                "schema": { }
-              }
-            }
-          },
           "401": {
             "description": "Unauthorized"
           },
           "403": {
             "description": "Forbidden"
+          },
+          "200": {
+            "description": "Success"
           }
         }
       },
@@ -1680,15 +1640,7 @@
         },
         "responses": {
           "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": { }
-              },
-              "application/json": {
-                "schema": { }
-              }
-            }
+            "description": "Success"
           }
         }
       }
