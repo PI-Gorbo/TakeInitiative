@@ -42,7 +42,7 @@ public class PutLogin(
 
                 return UnitResult.Success<ApiError>();
             });
-
+        this.SendOkAsync(result);
         await this.ReturnApiResult(result);
     }
 }

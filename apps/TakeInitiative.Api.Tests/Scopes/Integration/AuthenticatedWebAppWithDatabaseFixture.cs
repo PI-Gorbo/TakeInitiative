@@ -13,11 +13,6 @@ using Testcontainers.PostgreSql;
 
 namespace TakeInitiative.Api.Tests.Integration;
 
-public static class TakeApiClientExtensions
-{
-    public static Result Try<TRequest, TResponse>(this Func<TRequest, TResponse> requestFunc, )
-}
-
 public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppClient
 {
     public IAlbaHost AlbaHost { get; private set; } = null!;
