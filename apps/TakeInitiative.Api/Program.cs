@@ -1,9 +1,11 @@
 using System.Text.Json;
 using FastEndpoints;
+using FastEndpoints.Swagger;
 using JasperFx.Core;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+namespace TakeInitiative.Api;
 internal class Program
 {
     private static void Main(string[] args)
@@ -27,6 +29,13 @@ internal class Program
         builder.Services.AddFastEndpoints();
         builder.Services.AddSignalR();
 
+        // Dev only
+        if (builder.Environment.IsDevelopment())
+        {
+            builder.Services.AddOpenApiDocument(doc => doc.DocumentName = "A");
+            builder.Services.SwaggerDocument(doc => doc.DocumentSettings = (doc) => doc.DocumentName = "B"); //define a swagger document;
+        }
+
         // Custom Injection
         builder.Services.AddOptionObjects(builder.Configuration);
         builder.Services.AddMartenDB(builder.Configuration, builder.Environment.IsDevelopment());
@@ -36,7 +45,6 @@ internal class Program
         builder.Services.AddSendGrid(builder.Configuration);
 
         // Cors
-
         builder.Services.AddCors(
             opts =>
             {
@@ -62,13 +70,6 @@ internal class Program
             });
 
         var app = builder.Build();
-
-        // Configure the HTTP request pipeline.
-        if (app.Environment.IsDevelopment())
-        {
-            app.UseSwagger();
-            app.UseSwaggerUI();
-        }
 
         // Map SignalR Hubs
         app.MapHub<CombatHub>("/combatHub");
@@ -98,7 +99,16 @@ internal class Program
             .UseAuthentication()
             .UseAuthorization();
 
+        // Configure the HTTP request pipeline.
+        if (app.Environment.IsDevelopment())
+        {
+            app.UseSwaggerGen();
+        }
+
         app.UseHealthChecks("/healthz");
+
+
+        app.UseSwaggerGen();
         app.Run();
     }
 }

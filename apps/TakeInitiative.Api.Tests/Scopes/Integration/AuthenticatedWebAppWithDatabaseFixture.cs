@@ -6,21 +6,25 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using TakeInitiative.Api.Bootstrap;
+using TakeInitiative.Api.Client;
 using Testcontainers.PostgreSql;
+
 namespace TakeInitiative.Api.Tests.Integration;
 
-public class WebAppWithDatabaseFixture : IAsyncLifetime, IWebAppClient
+public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppClient
 {
     public IAlbaHost AlbaHost { get; private set; } = null!;
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder()
         .WithImage("postgres:15-alpine")
         .Build();
+    public TakeApiClient Client { get; private set; }
 
     public async Task InitializeAsync()
     {
         await _postgres.StartAsync();
-        AlbaHost = await Alba.AlbaHost.For<TakeInitiative.Api.Program>(x =>
-            x.ConfigureAppConfiguration((context, configBuilder) =>
+        this.AlbaHost = await Alba.AlbaHost.For<Api.Program>(x =>
+            x.UseEnvironment(Environments.Development)
+            .ConfigureAppConfiguration((context, configBuilder) =>
                 {
                     configBuilder.AddInMemoryCollection(
                         new Dictionary<string, string?>
@@ -33,6 +37,10 @@ public class WebAppWithDatabaseFixture : IAsyncLifetime, IWebAppClient
                     services.AddMartenDB(context.Configuration, IsDevelopment: true);
                 })
         );
+
+        // Create a user in the database, with a campaign.
+        this.Client = new TakeApiClient(AlbaHost.Server.BaseAddress.ToString(), AlbaHost.GetTestClient());
+
     }
     public async Task DisposeAsync()
     {

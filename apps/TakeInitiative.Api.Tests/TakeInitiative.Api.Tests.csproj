@@ -33,6 +33,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\TakeInitiative.Api\TakeInitiative.Api.csproj" />
+        <ProjectReference Include="..\TakeInitiative.Api.Client\TakeInitiative.Api.Client.csproj" />
     </ItemGroup>
 
 </Project>
