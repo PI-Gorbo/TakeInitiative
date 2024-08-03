@@ -50,7 +50,6 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
         var newInitiativeIndex = characterWithCurrentTurn.HasValue ? newInitiativeList.FindIndex(x => x.Id == characterWithCurrentTurn) : 0; // Maintains the initiative index, so that it still points to the character whos turn it was before.
         return Combat with
         {
-            CombatLogs = Combat.CombatLogs.Add($"{user?.UserName} rolled {@event.InitiativeRolls.Count} characters into initiative at {eventDetails.Timestamp:R}"),
             StagedList = newStagedList,
             InitiativeList = newInitiativeList,
             InitiativeIndex = newInitiativeIndex

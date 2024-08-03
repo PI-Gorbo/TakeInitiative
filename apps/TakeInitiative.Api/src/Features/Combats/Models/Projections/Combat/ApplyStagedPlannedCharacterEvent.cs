@@ -121,7 +121,6 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
 
         return Combat with
         {
-            CombatLogs = Combat.CombatLogs.Add($"{user?.UserName} staged {CharactersToStage.Count} characters."),
             StagedList = Combat.StagedList.AddRange(CharactersToStage),
             PlannedStages = plannedStages.ToImmutableList()
         };

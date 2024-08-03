@@ -18,7 +18,6 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
 
         return Combat with
         {
-            CombatLogs = Combat.CombatLogs.Add($"{user?.UserName} edited the character {@event.Character.Name} at {eventDetails.Timestamp:R}"),
             InitiativeList = Combat.InitiativeList.SetItem(index, character with
             {
                 Name = @event.Character.Name,

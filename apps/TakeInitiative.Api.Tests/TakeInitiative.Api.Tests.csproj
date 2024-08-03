@@ -12,6 +12,7 @@
     <ItemGroup>
         <PackageReference Include="Alba" Version="7.4.1" />
         <PackageReference Include="CSharpFunctionalExtensions.FluentAssertions" Version="2.0.0" />
+        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.7" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.6.0" />
         <PackageReference Include="NSubstitute" Version="5.1.0" />
         <PackageReference Include="NSubstitute.Analyzers.CSharp" Version="1.0.17">

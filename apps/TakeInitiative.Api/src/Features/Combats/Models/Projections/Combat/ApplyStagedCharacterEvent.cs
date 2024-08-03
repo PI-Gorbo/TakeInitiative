@@ -12,7 +12,6 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
         var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
         return Combat with
         {
-            CombatLogs = [.. Combat.CombatLogs, $"{user?.UserName} staged {@event.Character.Name} at {eventDetails.Timestamp:R}"],
             StagedList = (Combat.StagedList ?? [])
                 .Add(@event.Character)
         };

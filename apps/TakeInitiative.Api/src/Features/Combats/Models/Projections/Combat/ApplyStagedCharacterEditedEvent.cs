@@ -13,7 +13,6 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
         var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
         return Combat with
         {
-            CombatLogs = [.. Combat.CombatLogs, $"{user?.UserName} edited staged character {@event.Character.Name} at {eventDetails.Timestamp:R}"],
             StagedList = Combat.StagedList!
                 .ReplaceOrInsertIfExists(x => x.Id == @event.Character.Id, @event.Character)
         };

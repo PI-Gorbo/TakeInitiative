@@ -2442,7 +2442,7 @@ export interface ICampaignMemberInfo {
 export class CampaignMemberResource implements ICampaignMemberResource {
     name?: string | undefined;
     link?: string | undefined;
-    visibility?: ResourceVisibilityOptions;
+    visibility?: CampaignMemberResourceVisibility;
 
     constructor(data?: ICampaignMemberResource) {
         if (data) {
@@ -2480,7 +2480,7 @@ export class CampaignMemberResource implements ICampaignMemberResource {
 export interface ICampaignMemberResource {
     name?: string | undefined;
     link?: string | undefined;
-    visibility?: ResourceVisibilityOptions;
+    visibility?: CampaignMemberResourceVisibility;
 }
 
 export class CampaignSettings implements ICampaignSettings {
@@ -2568,7 +2568,7 @@ export interface ICharacterHealth {
 }
 
 export class CharacterInitiative implements ICharacterInitiative {
-    strategy?: InitiativeStrategy;
+    strategy?: CharacterInitiativeStrategy;
     value?: string | undefined;
     readonly fixed?: number | undefined;
     readonly roll?: string | undefined;
@@ -2609,14 +2609,14 @@ export class CharacterInitiative implements ICharacterInitiative {
 }
 
 export interface ICharacterInitiative {
-    strategy?: InitiativeStrategy;
+    strategy?: CharacterInitiativeStrategy;
     value?: string | undefined;
     fixed?: number | undefined;
     roll?: string | undefined;
 }
 
 export class CharacterOriginDetails implements ICharacterOriginDetails {
-    characterOrigin?: CharacterOriginOptions;
+    characterOrigin?: CharacterOriginDetailsCharacterOrigin;
     id?: string | undefined;
 
     constructor(data?: ICharacterOriginDetails) {
@@ -2651,14 +2651,8 @@ export class CharacterOriginDetails implements ICharacterOriginDetails {
 }
 
 export interface ICharacterOriginDetails {
-    characterOrigin?: CharacterOriginOptions;
+    characterOrigin?: CharacterOriginDetailsCharacterOrigin;
     id?: string | undefined;
-}
-
-export enum CharacterOriginOptions {
-    _0 = 0,
-    _1 = 1,
-    _2 = 2,
 }
 
 export class Combat implements ICombat {
@@ -2786,8 +2780,8 @@ export interface ICombat {
 }
 
 export class CombatArmourClassDisplaySettings implements ICombatArmourClassDisplaySettings {
-    dmCharacterDisplayMethod?: CombatArmourDisplayOptions;
-    otherPlayerCharacterDisplayMethod?: CombatArmourDisplayOptions;
+    dmCharacterDisplayMethod?: CombatArmourClassDisplaySettingsDmCharacterDisplayMethod;
+    otherPlayerCharacterDisplayMethod?: CombatArmourClassDisplaySettingsOtherPlayerCharacterDisplayMethod;
 
     constructor(data?: ICombatArmourClassDisplaySettings) {
         if (data) {
@@ -2821,13 +2815,8 @@ export class CombatArmourClassDisplaySettings implements ICombatArmourClassDispl
 }
 
 export interface ICombatArmourClassDisplaySettings {
-    dmCharacterDisplayMethod?: CombatArmourDisplayOptions;
-    otherPlayerCharacterDisplayMethod?: CombatArmourDisplayOptions;
-}
-
-export enum CombatArmourDisplayOptions {
-    _0 = 0,
-    _2 = 2,
+    dmCharacterDisplayMethod?: CombatArmourClassDisplaySettingsDmCharacterDisplayMethod;
+    otherPlayerCharacterDisplayMethod?: CombatArmourClassDisplaySettingsOtherPlayerCharacterDisplayMethod;
 }
 
 export class CombatCharacter implements ICombatCharacter {
@@ -2977,7 +2966,7 @@ export interface ICombatCharacterDto {
 export class CombatDto implements ICombatDto {
     combatId?: string;
     combatName?: string | undefined;
-    state?: CombatState;
+    state?: CombatDtoState;
     finishedTimestamp?: Date | undefined;
 
     constructor(data?: ICombatDto) {
@@ -3018,19 +3007,13 @@ export class CombatDto implements ICombatDto {
 export interface ICombatDto {
     combatId?: string;
     combatName?: string | undefined;
-    state?: CombatState;
+    state?: CombatDtoState;
     finishedTimestamp?: Date | undefined;
 }
 
-export enum CombatHealthDisplayOptions {
-    _0 = 0,
-    _1 = 1,
-    _2 = 2,
-}
-
 export class CombatHealthDisplaySettings implements ICombatHealthDisplaySettings {
-    dmCharacterDisplayMethod?: CombatHealthDisplayOptions;
-    otherPlayerCharacterDisplayMethod?: CombatHealthDisplayOptions;
+    dmCharacterDisplayMethod?: CombatHealthDisplaySettingsDmCharacterDisplayMethod;
+    otherPlayerCharacterDisplayMethod?: CombatHealthDisplaySettingsOtherPlayerCharacterDisplayMethod;
 
     constructor(data?: ICombatHealthDisplaySettings) {
         if (data) {
@@ -3064,8 +3047,8 @@ export class CombatHealthDisplaySettings implements ICombatHealthDisplaySettings
 }
 
 export interface ICombatHealthDisplaySettings {
-    dmCharacterDisplayMethod?: CombatHealthDisplayOptions;
-    otherPlayerCharacterDisplayMethod?: CombatHealthDisplayOptions;
+    dmCharacterDisplayMethod?: CombatHealthDisplaySettingsDmCharacterDisplayMethod;
+    otherPlayerCharacterDisplayMethod?: CombatHealthDisplaySettingsOtherPlayerCharacterDisplayMethod;
 }
 
 export class CombatHistoryDto implements ICombatHistoryDto {
@@ -3144,16 +3127,9 @@ export interface ICombatResponse {
     combat?: Combat;
 }
 
-export enum CombatState {
-    _0 = 0,
-    _1 = 1,
-    _2 = 2,
-    _3 = 3,
-}
-
 export class CurrentCombatDto implements ICurrentCombatDto {
     id?: string;
-    state?: CombatState;
+    state?: CurrentCombatDtoState;
     combatName?: string | undefined;
     dungeonMaster?: string;
     currentPlayers?: PlayerDto[] | undefined;
@@ -3205,7 +3181,7 @@ export class CurrentCombatDto implements ICurrentCombatDto {
 
 export interface ICurrentCombatDto {
     id?: string;
-    state?: CombatState;
+    state?: CurrentCombatDtoState;
     combatName?: string | undefined;
     dungeonMaster?: string;
     currentPlayers?: PlayerDto[] | undefined;
@@ -3985,11 +3961,6 @@ export class HistoryEvent implements IHistoryEvent {
 export interface IHistoryEvent {
     eventName?: string | undefined;
     userId?: string;
-}
-
-export enum InitiativeStrategy {
-    _0 = 0,
-    _1 = 1,
 }
 
 export class JoinCampaignByJoinCodeRequest implements IJoinCampaignByJoinCodeRequest {
@@ -5416,12 +5387,6 @@ export interface IPutUpsertStagedCharacterRequest {
     character?: StagedCombatCharacterDto;
 }
 
-export enum ResourceVisibilityOptions {
-    _0 = 0,
-    _1 = 1,
-    _2 = 2,
-}
-
 export class StagePlannedCharacterDto implements IStagePlannedCharacterDto {
     characterId?: string;
     quantity?: number;
@@ -5516,6 +5481,66 @@ export interface IStagedCombatCharacterDto {
     initiative?: CharacterInitiative;
     armourClass?: number | undefined;
     hidden?: boolean;
+}
+
+export enum CampaignMemberResourceVisibility {
+    _0 = 0,
+    _1 = 1,
+    _2 = 2,
+}
+
+export enum CharacterInitiativeStrategy {
+    _0 = 0,
+    _1 = 1,
+}
+
+export enum CharacterOriginDetailsCharacterOrigin {
+    _0 = 0,
+    _1 = 1,
+    _2 = 2,
+}
+
+export enum CombatState {
+    _0 = 0,
+    _1 = 1,
+    _2 = 2,
+    _3 = 3,
+}
+
+export enum CombatArmourClassDisplaySettingsDmCharacterDisplayMethod {
+    _0 = 0,
+    _2 = 2,
+}
+
+export enum CombatArmourClassDisplaySettingsOtherPlayerCharacterDisplayMethod {
+    _0 = 0,
+    _2 = 2,
+}
+
+export enum CombatDtoState {
+    _0 = 0,
+    _1 = 1,
+    _2 = 2,
+    _3 = 3,
+}
+
+export enum CombatHealthDisplaySettingsDmCharacterDisplayMethod {
+    _0 = 0,
+    _1 = 1,
+    _2 = 2,
+}
+
+export enum CombatHealthDisplaySettingsOtherPlayerCharacterDisplayMethod {
+    _0 = 0,
+    _1 = 1,
+    _2 = 2,
+}
+
+export enum CurrentCombatDtoState {
+    _0 = 0,
+    _1 = 1,
+    _2 = 2,
+    _3 = 3,
 }
 
 export class ApiException extends Error {

@@ -25,16 +25,19 @@ internal class Program
         // Add services to the container.
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddSwaggerGen();
         builder.Services.AddHealthChecks();
         builder.Services.AddFastEndpoints();
+        builder.Services.AddSwaggerGen(genOptions =>
+        {
+            genOptions.UseInlineDefinitionsForEnums();
+        });
         builder.Services.AddSignalR();
 
         // Dev only
         if (builder.Environment.IsDevelopment())
         {
-            builder.Services.AddOpenApiDocument(doc => doc.DocumentName = "A");
-            builder.Services.SwaggerDocument(doc => doc.DocumentSettings = (doc) => doc.DocumentName = "B"); //define a swagger document;
+            builder.Services.AddOpenApiDocument(doc => doc.DocumentName = "TakeInitiativeApi");
+            builder.Services.SwaggerDocument(); //define a swagger document;
         }
 
         // Custom Injection
@@ -73,6 +76,7 @@ internal class Program
         var app = builder.Build();
 
         // Map SignalR Hubs
+
         app.MapHub<CombatHub>("/combatHub");
         app.MapHub<CampaignHub>("/campaignHub");
 

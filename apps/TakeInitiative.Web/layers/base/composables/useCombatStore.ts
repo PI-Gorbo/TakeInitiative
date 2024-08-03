@@ -39,7 +39,6 @@ export const useCombatStore = defineStore("combatStore", () => {
         await connection.send(
             // Rejoin, as users are kicked from all groups on disconnect
             "joinCombat",
-            userStore.state.user?.userId,
             state.combat?.id,
         );
     });
@@ -77,13 +76,12 @@ export const useCombatStore = defineStore("combatStore", () => {
     async function leaveCombat(): Promise<void> {
         if (connection.state != signalR.HubConnectionState.Connected) return;
 
-        const userId = userStore.state.user?.userId;
         if (state.combat?.currentPlayers.find((x) => x.userId) == null) {
             return Promise.resolve();
         }
 
         return await connection
-            .send("leaveCombat", userId, state.combat?.id)
+            .send("leaveCombat", state.combat?.id)
             .then(() => connection.stop());
     }
 

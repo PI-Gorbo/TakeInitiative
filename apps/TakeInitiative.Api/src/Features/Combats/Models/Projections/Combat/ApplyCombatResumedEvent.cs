@@ -12,7 +12,6 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
         return Combat with
         {
             State = CombatState.Started,
-            CombatLogs = [.. Combat.CombatLogs, $"{user?.UserName} resumed the combat at {eventDetails.Timestamp:R}"],
         };
     }
 }

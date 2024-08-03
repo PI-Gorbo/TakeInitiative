@@ -22,7 +22,6 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
         {
             InitiativeIndex = nextInitiativeIndex,
             RoundNumber = nextRoundNumber,
-            CombatLogs = Combat.CombatLogs.Add(consoleMessage),
         };
     }
 }

@@ -12,7 +12,6 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
         var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
         return Combat with
         {
-            CombatLogs = [.. Combat.CombatLogs, $"{user?.UserName} staged {@event.Characters.Length} character(s) with the names {string.Join(", ", @event.Characters.Select(x => x.Name))} at {eventDetails.Timestamp:R}"],
             StagedList = (Combat.StagedList ?? [])
                 .AddRange(@event.Characters.Select(x => CombatCharacter.NewCombatCharacter(
                     playerId: @event.UserId,

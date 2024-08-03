@@ -1785,7 +1785,13 @@
             "nullable": true
           },
           "visibility": {
-            "$ref": "#/components/schemas/ResourceVisibilityOptions"
+            "enum": [
+              0,
+              1,
+              2
+            ],
+            "type": "integer",
+            "format": "int32"
           }
         },
         "additionalProperties": false
@@ -1825,7 +1831,12 @@
         "type": "object",
         "properties": {
           "strategy": {
-            "$ref": "#/components/schemas/InitiativeStrategy"
+            "enum": [
+              0,
+              1
+            ],
+            "type": "integer",
+            "format": "int32"
           },
           "value": {
             "type": "string",
@@ -1849,7 +1860,13 @@
         "type": "object",
         "properties": {
           "characterOrigin": {
-            "$ref": "#/components/schemas/CharacterOriginOptions"
+            "enum": [
+              0,
+              1,
+              2
+            ],
+            "type": "integer",
+            "format": "int32"
           },
           "id": {
             "type": "string",
@@ -1858,15 +1875,6 @@
           }
         },
         "additionalProperties": false
-      },
-      "CharacterOriginOptions": {
-        "enum": [
-          0,
-          1,
-          2
-        ],
-        "type": "integer",
-        "format": "int32"
       },
       "Combat": {
         "type": "object",
@@ -1880,7 +1888,14 @@
             "format": "uuid"
           },
           "state": {
-            "$ref": "#/components/schemas/CombatState"
+            "enum": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "type": "integer",
+            "format": "int32"
           },
           "combatName": {
             "type": "string",
@@ -1946,21 +1961,23 @@
         "type": "object",
         "properties": {
           "dmCharacterDisplayMethod": {
-            "$ref": "#/components/schemas/CombatArmourDisplayOptions"
+            "enum": [
+              0,
+              2
+            ],
+            "type": "integer",
+            "format": "int32"
           },
           "otherPlayerCharacterDisplayMethod": {
-            "$ref": "#/components/schemas/CombatArmourDisplayOptions"
+            "enum": [
+              0,
+              2
+            ],
+            "type": "integer",
+            "format": "int32"
           }
         },
         "additionalProperties": false
-      },
-      "CombatArmourDisplayOptions": {
-        "enum": [
-          0,
-          2
-        ],
-        "type": "integer",
-        "format": "int32"
       },
       "CombatCharacter": {
         "type": "object",
@@ -2055,7 +2072,14 @@
             "nullable": true
           },
           "state": {
-            "$ref": "#/components/schemas/CombatState"
+            "enum": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "type": "integer",
+            "format": "int32"
           },
           "finishedTimestamp": {
             "type": "string",
@@ -2065,23 +2089,26 @@
         },
         "additionalProperties": false
       },
-      "CombatHealthDisplayOptions": {
-        "enum": [
-          0,
-          1,
-          2
-        ],
-        "type": "integer",
-        "format": "int32"
-      },
       "CombatHealthDisplaySettings": {
         "type": "object",
         "properties": {
           "dmCharacterDisplayMethod": {
-            "$ref": "#/components/schemas/CombatHealthDisplayOptions"
+            "enum": [
+              0,
+              1,
+              2
+            ],
+            "type": "integer",
+            "format": "int32"
           },
           "otherPlayerCharacterDisplayMethod": {
-            "$ref": "#/components/schemas/CombatHealthDisplayOptions"
+            "enum": [
+              0,
+              1,
+              2
+            ],
+            "type": "integer",
+            "format": "int32"
           }
         },
         "additionalProperties": false
@@ -2110,16 +2137,6 @@
         },
         "additionalProperties": false
       },
-      "CombatState": {
-        "enum": [
-          0,
-          1,
-          2,
-          3
-        ],
-        "type": "integer",
-        "format": "int32"
-      },
       "CurrentCombatDto": {
         "type": "object",
         "properties": {
@@ -2128,7 +2145,14 @@
             "format": "uuid"
           },
           "state": {
-            "$ref": "#/components/schemas/CombatState"
+            "enum": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "type": "integer",
+            "format": "int32"
           },
           "combatName": {
             "type": "string",
@@ -2434,14 +2458,6 @@
           }
         },
         "additionalProperties": false
-      },
-      "InitiativeStrategy": {
-        "enum": [
-          0,
-          1
-        ],
-        "type": "integer",
-        "format": "int32"
       },
       "JoinCampaignByJoinCodeRequest": {
         "type": "object",
@@ -2994,15 +3010,6 @@
           }
         },
         "additionalProperties": false
-      },
-      "ResourceVisibilityOptions": {
-        "enum": [
-          0,
-          1,
-          2
-        ],
-        "type": "integer",
-        "format": "int32"
       },
       "StagePlannedCharacterDto": {
         "type": "object",

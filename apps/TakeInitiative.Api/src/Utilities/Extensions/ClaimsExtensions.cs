@@ -1,4 +1,5 @@
 using System.Net;
+using System.Security.Claims;
 using CSharpFunctionalExtensions;
 using FastEndpoints;
 using FastEndpoints.Security;
@@ -8,12 +9,7 @@ public static class ClaimsExtensions
 {
     public static Guid GetUserIdOrThrowUnauthorized<TReq, TResp>(this Endpoint<TReq, TResp> endpoint) where TReq : notnull
     {
-        var outcome = endpoint.User
-            .ClaimValue("UserID")
-            .AsMaybe()
-            .ToResult("The claims principal does not have a UserID")
-            .Bind(id => Result.SuccessIf(Guid.TryParse(id, out Guid result), result, "Could not parse user id as Guid"));
-
+        var outcome = endpoint.User.GetUserId();
         if (outcome.IsFailure)
         {
             endpoint.ThrowError("Invalid cookie.", (int)HttpStatusCode.Unauthorized);
@@ -21,4 +17,10 @@ public static class ClaimsExtensions
 
         return outcome.Value;
     }
+
+    public static Result<Guid> GetUserId(this ClaimsPrincipal principal)
+         => principal.ClaimValue("UserID")
+            .AsMaybe()
+            .ToResult("The claims principal does not have a UserID")
+            .Bind(id => Result.SuccessIf(Guid.TryParse(id, out Guid result), result, "Could not parse user id as Guid"));
 }

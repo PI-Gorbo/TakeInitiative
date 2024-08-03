@@ -18,7 +18,7 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
             Timing: [
                 new CombatTimingRecord(StartTime: eventDetails.Timestamp, EndTime: null)
             ],
-            CombatLogs: [$"{user?.UserName} opened the Combat at {eventDetails.Timestamp:R}"],
+            CombatLogs: [],
             CurrentPlayers: [],
             PlannedStages: @event.Stages.ToImmutableList(),
             InitiativeList: [],

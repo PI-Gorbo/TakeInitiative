@@ -18,7 +18,6 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
 
         return Combat with
         {
-            CombatLogs = [.. Combat.CombatLogs, $"{user?.UserName} unstaged {character.Name} at {eventDetails.Timestamp:R}"],
             StagedList = Combat.StagedList
                 .Remove(character)
         };

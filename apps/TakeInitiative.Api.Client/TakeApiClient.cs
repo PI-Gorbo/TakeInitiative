@@ -4540,7 +4540,7 @@ namespace TakeInitiative.Api.Client
         public string Link { get; set; }
 
         [Newtonsoft.Json.JsonProperty("visibility", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public ResourceVisibilityOptions Visibility { get; set; }
+        public CampaignMemberResourceVisibility Visibility { get; set; }
 
     }
 
@@ -4573,7 +4573,7 @@ namespace TakeInitiative.Api.Client
     public partial class CharacterInitiative
     {
         [Newtonsoft.Json.JsonProperty("strategy", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public InitiativeStrategy Strategy { get; set; }
+        public CharacterInitiativeStrategy Strategy { get; set; }
 
         [Newtonsoft.Json.JsonProperty("value", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string Value { get; set; }
@@ -4590,22 +4590,10 @@ namespace TakeInitiative.Api.Client
     public partial class CharacterOriginDetails
     {
         [Newtonsoft.Json.JsonProperty("characterOrigin", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public CharacterOriginOptions CharacterOrigin { get; set; }
+        public CharacterOriginDetailsCharacterOrigin CharacterOrigin { get; set; }
 
         [Newtonsoft.Json.JsonProperty("id", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.Guid? Id { get; set; }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
-    public enum CharacterOriginOptions
-    {
-
-        _0 = 0,
-
-        _1 = 1,
-
-        _2 = 2,
 
     }
 
@@ -4657,20 +4645,10 @@ namespace TakeInitiative.Api.Client
     public partial class CombatArmourClassDisplaySettings
     {
         [Newtonsoft.Json.JsonProperty("dmCharacterDisplayMethod", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public CombatArmourDisplayOptions DmCharacterDisplayMethod { get; set; }
+        public CombatArmourClassDisplaySettingsDmCharacterDisplayMethod DmCharacterDisplayMethod { get; set; }
 
         [Newtonsoft.Json.JsonProperty("otherPlayerCharacterDisplayMethod", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public CombatArmourDisplayOptions OtherPlayerCharacterDisplayMethod { get; set; }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
-    public enum CombatArmourDisplayOptions
-    {
-
-        _0 = 0,
-
-        _2 = 2,
+        public CombatArmourClassDisplaySettingsOtherPlayerCharacterDisplayMethod OtherPlayerCharacterDisplayMethod { get; set; }
 
     }
 
@@ -4742,7 +4720,7 @@ namespace TakeInitiative.Api.Client
         public string CombatName { get; set; }
 
         [Newtonsoft.Json.JsonProperty("state", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public CombatState State { get; set; }
+        public CombatDtoState State { get; set; }
 
         [Newtonsoft.Json.JsonProperty("finishedTimestamp", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.DateTimeOffset? FinishedTimestamp { get; set; }
@@ -4750,25 +4728,13 @@ namespace TakeInitiative.Api.Client
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
-    public enum CombatHealthDisplayOptions
-    {
-
-        _0 = 0,
-
-        _1 = 1,
-
-        _2 = 2,
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
     public partial class CombatHealthDisplaySettings
     {
         [Newtonsoft.Json.JsonProperty("dmCharacterDisplayMethod", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public CombatHealthDisplayOptions DmCharacterDisplayMethod { get; set; }
+        public CombatHealthDisplaySettingsDmCharacterDisplayMethod DmCharacterDisplayMethod { get; set; }
 
         [Newtonsoft.Json.JsonProperty("otherPlayerCharacterDisplayMethod", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public CombatHealthDisplayOptions OtherPlayerCharacterDisplayMethod { get; set; }
+        public CombatHealthDisplaySettingsOtherPlayerCharacterDisplayMethod OtherPlayerCharacterDisplayMethod { get; set; }
 
     }
 
@@ -4792,27 +4758,13 @@ namespace TakeInitiative.Api.Client
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
-    public enum CombatState
-    {
-
-        _0 = 0,
-
-        _1 = 1,
-
-        _2 = 2,
-
-        _3 = 3,
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
     public partial class CurrentCombatDto
     {
         [Newtonsoft.Json.JsonProperty("id", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.Guid Id { get; set; }
 
         [Newtonsoft.Json.JsonProperty("state", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public CombatState State { get; set; }
+        public CurrentCombatDtoState State { get; set; }
 
         [Newtonsoft.Json.JsonProperty("combatName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string CombatName { get; set; }
@@ -5027,16 +4979,6 @@ namespace TakeInitiative.Api.Client
 
         [Newtonsoft.Json.JsonProperty("userId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.Guid UserId { get; set; }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
-    public enum InitiativeStrategy
-    {
-
-        _0 = 0,
-
-        _1 = 1,
 
     }
 
@@ -5462,18 +5404,6 @@ namespace TakeInitiative.Api.Client
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
-    public enum ResourceVisibilityOptions
-    {
-
-        _0 = 0,
-
-        _1 = 1,
-
-        _2 = 2,
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
     public partial class StagePlannedCharacterDto
     {
         [Newtonsoft.Json.JsonProperty("characterId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
@@ -5504,6 +5434,126 @@ namespace TakeInitiative.Api.Client
 
         [Newtonsoft.Json.JsonProperty("hidden", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public bool Hidden { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public enum CampaignMemberResourceVisibility
+    {
+
+        _0 = 0,
+
+        _1 = 1,
+
+        _2 = 2,
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public enum CharacterInitiativeStrategy
+    {
+
+        _0 = 0,
+
+        _1 = 1,
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public enum CharacterOriginDetailsCharacterOrigin
+    {
+
+        _0 = 0,
+
+        _1 = 1,
+
+        _2 = 2,
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public enum CombatState
+    {
+
+        _0 = 0,
+
+        _1 = 1,
+
+        _2 = 2,
+
+        _3 = 3,
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public enum CombatArmourClassDisplaySettingsDmCharacterDisplayMethod
+    {
+
+        _0 = 0,
+
+        _2 = 2,
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public enum CombatArmourClassDisplaySettingsOtherPlayerCharacterDisplayMethod
+    {
+
+        _0 = 0,
+
+        _2 = 2,
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public enum CombatDtoState
+    {
+
+        _0 = 0,
+
+        _1 = 1,
+
+        _2 = 2,
+
+        _3 = 3,
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public enum CombatHealthDisplaySettingsDmCharacterDisplayMethod
+    {
+
+        _0 = 0,
+
+        _1 = 1,
+
+        _2 = 2,
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public enum CombatHealthDisplaySettingsOtherPlayerCharacterDisplayMethod
+    {
+
+        _0 = 0,
+
+        _1 = 1,
+
+        _2 = 2,
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public enum CurrentCombatDtoState
+    {
+
+        _0 = 0,
+
+        _1 = 1,
+
+        _2 = 2,
+
+        _3 = 3,
 
     }
 
