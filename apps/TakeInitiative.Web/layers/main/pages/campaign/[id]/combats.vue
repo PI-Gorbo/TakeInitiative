@@ -35,6 +35,18 @@
                     },
                 ]"
             >
+                <div class="flex flex-col gap-2" v-if="hasActiveCombat">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <FontAwesomeIcon icon="hand-fist" />
+                            <span class="font-NovaCut text-take-yellow">
+                                Active Combat
+                            </span>
+                        </div>
+                    </div>
+                    <IndexCombatBanner />
+                </div>
+
                 <div class="flex flex-col gap-2">
                     <div class="flex items-center justify-between">
                         <div>
@@ -283,9 +295,8 @@ async function onCreatePlannedCombat(
 
 async function onOpenCombat(plannedCombatId: string) {
     return await campaignStore.openCombat(plannedCombatId).then(async () => {
-        await useNavigator().toCampaignTab(
-            route.params.id as string,
-            "summary",
+        await useNavigator().toCombat(
+            campaignStore.state.currentCombatInfo?.id!,
         );
     });
 }

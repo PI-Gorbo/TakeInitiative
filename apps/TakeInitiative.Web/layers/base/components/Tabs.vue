@@ -17,7 +17,7 @@
                                       props.selectedTabColour
                                   ]
                               }`
-                            : `bg-${props.notSelectedTabColour} text-take-navy-light`, // PLEASE CHANGE TO MANUALLY CONTROLLED TEXT COLOUR
+                            : `bg-${props.notSelectedTabColour} text-${TakeInitContrastColour[props.notSelectedTabColour]}`, // PLEASE CHANGE TO MANUALLY CONTROLLED TEXT COLOUR
                         `flex cursor-pointer select-none items-center rounded-md px-2 py-1 transition-colors md:text-lg hover:bg-${
                             props.hoveredTabColour
                         } hover:text-${
@@ -43,9 +43,12 @@
 </template>
 <script setup lang="ts">
 import { ObjectSchema } from "yup";
-import type { TakeInitColour } from "../layers/base/utils/types/HelperTypes";
-import { TakeInitContrastColour } from "../layers/base/utils/types/HelperTypes";
+
 import gsap from "gsap";
+import {
+    type TakeInitColour,
+    TakeInitContrastColour,
+} from "base/utils/types/HelperTypes";
 
 const slots = useSlots();
 type Tab = {

@@ -63,6 +63,7 @@ public class ResetPasswordEmailSender(
         if (env.IsDevelopment())
         {
             logger.LogInformation("Reset Link: {ConfirmationLink}", link);
+            return Result.Success(); // In Development, do not send the email, instead just log the link.
         }
 
         return await emailSender.SendEmail(

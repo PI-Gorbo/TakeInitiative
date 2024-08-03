@@ -66,6 +66,7 @@ public class ConfirmEmailSender(
         if (env.IsDevelopment())
         {
             logger.LogInformation("Confirmation Link: {ConfirmationLink}", link);
+            return Result.Success(); // In development, do not send an email, but log a confirmation link.
         }
 
         return await emailSender.SendEmail(
