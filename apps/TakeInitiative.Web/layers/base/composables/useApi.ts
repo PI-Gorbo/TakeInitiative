@@ -38,10 +38,23 @@ import { putSendResetPasswordRequest } from "../utils/api/user/putSendResetPassw
 import { putResetPassword } from "../utils/api/user/putResetPasswordRequest";
 import { getMaintenanceRequest } from "base/utils/api/admin/getMaintainenceRequest";
 import { putCampaignMemberResourcesRequest } from "base/utils/api/campaign/putCampaignMemberResourcesRequest";
-import { getCombatHistoryRequest } from "base/utils/api/combat/getCombatHistory";
+import { Client, GetCombatRequest } from "base/utils/api/TakeApiClient";
+// import { getCombatHistoryRequest } from "base/utils/api/combat/getCombatHistory";
 
 export const useApi = () => {
     const { $axios } = useNuxtApp();
+
+    // Create a client with the generated ts.
+    const client = new Client("", {
+        // No base Url bc axios already has it.
+        fetch(url: RequestInfo, init: RequestInit | undefined) {
+            return $axios(url.toString(), {
+                method: init?.method,
+                data: init?.body,
+            });
+        },
+    });
+
     return {
         user: {
             getUser: getUserRequest($axios),
@@ -85,7 +98,8 @@ export const useApi = () => {
         combat: {
             getAll: getCombatsRequest($axios),
             get: getCombatRequest($axios),
-            getHistory: getCombatHistoryRequest($axios),
+            getHistory: (r: GetCombatRequest) =>
+                client.takeInitiativeApiFeaturesCombatsGetCombatHistory(r),
             start: postStartCombatRequest($axios),
             finish: postFinishCombatRequest($axios),
             open: openCombatRequest($axios),

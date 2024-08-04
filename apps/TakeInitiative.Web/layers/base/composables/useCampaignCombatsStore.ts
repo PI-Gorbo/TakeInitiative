@@ -9,6 +9,7 @@ import type { UpdatePlannedCombatNpcRequest } from "../utils/api/plannedCombat/s
 import type { UpdatePlannedCombatStageRequest } from "../utils/api/plannedCombat/stages/updatePlannedCombatStageRequest";
 import type { GetCombatsResponse } from "../utils/api/combat/getCombatsRequest";
 import type { CreatePlannedCombatRequest } from "../utils/api/plannedCombat/createPlannedCombatRequest";
+import { GetCombatRequest } from "base/utils/api/TakeApiClient";
 export const useCampaignCombatsStore = defineStore(
     "campaignCombatsStore",
     () => {
@@ -60,10 +61,13 @@ export const useCampaignCombatsStore = defineStore(
                 id: combatId,
                 type: "Normal",
             };
-            const result = await api.combat.getHistory({
-                combatId,
-            });
-            state.selectedCombatHistory = result.data;
+            debugger;
+            const result = await api.combat.getHistory(
+                new GetCombatRequest({
+                    id: combatId,
+                }),
+            );
+            state.selectedCombatHistory = result;
         }
 
         function selectPlannedCombat(combatId: string) {

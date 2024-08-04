@@ -37,20 +37,9 @@ export default defineNuxtPlugin((nuxtApp) => {
         },
     );
 
-    // Create a client with the generated ts.
-    const client = new Client(undefined, {
-        fetch(url: RequestInfo, init: RequestInit | undefined) {
-            return Axios(url.toString(), {
-                method: init?.method,
-                data: init?.body,
-            }).then((resp) => resp.data);
-        },
-    });
-
     return {
         provide: {
             axios: Axios,
-            client,
         },
     };
 });
