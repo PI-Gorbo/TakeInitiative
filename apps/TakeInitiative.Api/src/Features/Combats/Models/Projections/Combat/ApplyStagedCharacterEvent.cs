@@ -9,9 +9,9 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
 {
     public async Task<Combat> Apply(StagedCharacterEvent @event, Combat Combat, IEvent<StagedCharacterEvent> eventDetails, IQuerySession session)
     {
-        var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
         return Combat with
         {
+            CurrentPlayers = this.ComputePlayersList(Combat.CurrentPlayers, @event.UserId),
             StagedList = (Combat.StagedList ?? [])
                 .Add(@event.Character)
         };
