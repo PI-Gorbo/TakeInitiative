@@ -1,8 +1,8 @@
+import type { GetUserResponse } from "base/utils/api/TakeApiClient";
 import type { CreateCampaignRequest } from "../utils/api/campaign/createCampaignRequest";
 import type { DeleteCampaignRequest } from "../utils/api/campaign/deleteCampaignRequest";
 import type { JoinCampaignRequest } from "../utils/api/campaign/joinCampaignRequest";
 import type { UpdateCampaignDetailsRequest } from "../utils/api/campaign/updateCampaignDetailsRequest";
-import type { GetUserResponse } from "../utils/api/user/getUserRequest";
 import type { LoginRequest } from "../utils/api/user/loginRequest";
 import type { SignUpRequest } from "../utils/api/user/signUpRequest";
 import type { Campaign } from "../utils/types/models";
@@ -21,7 +21,11 @@ export const useUserStore = defineStore("userStore", () => {
     const username = computed(() => state.user?.username);
 
     const campaignCount = computed(() => {
-        if (state.user == null) {
+        if (
+            state.user == null ||
+            state.user.dmCampaigns == null ||
+            state.user.memberCampaigns == null
+        ) {
             return 0;
         }
 
@@ -31,10 +35,14 @@ export const useUserStore = defineStore("userStore", () => {
     });
 
     const campaignList = computed(() => {
-        return state.user?.dmCampaigns
-            .map((campaign) => ({ ...campaign, isDm: true }))
+        if (state.user == null) {
+            return [];
+        }
+
+        return state.user
+            .dmCampaigns!.map((campaign) => ({ ...campaign, isDm: true }))
             .concat(
-                state.user.memberCampaigns.map((c) => ({
+                state.user.memberCampaigns!.map((c) => ({
                     ...c,
                     isDm: false,
                 })),
@@ -47,8 +55,10 @@ export const useUserStore = defineStore("userStore", () => {
     }
 
     async function fetchUser(): Promise<User> {
-        // fetch the user.
-        return await api.user.getUser().then((user) => (state.user = user));
+        // fetch the user.k
+        const userData = await api.user.getUser();
+        state.user = userData;
+        return userData;
     }
 
     async function isLoggedIn(): Promise<Boolean> {
@@ -144,7 +154,7 @@ export const useUserStore = defineStore("userStore", () => {
 
                 if ((campaignList.value?.length ?? 0) > 0) {
                     return useNavigator().toCampaignTab(
-                        campaignList.value![0].campaignId,
+                        campaignList.value![0].campaignId!,
                         "summary",
                     );
                 }
@@ -157,15 +167,15 @@ export const useUserStore = defineStore("userStore", () => {
         }
 
         // Get the first campaign available
-        const campaign = state.user.memberCampaigns.concat(
-            state.user.dmCampaigns,
+        const campaign = state.user.memberCampaigns!.concat(
+            state.user.dmCampaigns!,
         )[0];
 
         if (campaign == null) {
             return useNavigator().toCreateOrJoinCampaign();
         }
 
-        return useNavigator().toCampaignTab(campaign.campaignId, "summary");
+        return useNavigator().toCampaignTab(campaign.campaignId!, "summary");
     }
 
     // Helper functions

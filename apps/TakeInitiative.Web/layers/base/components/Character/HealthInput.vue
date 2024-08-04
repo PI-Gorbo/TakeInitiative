@@ -95,7 +95,6 @@ function reset() {
 }
 
 function onInputMaxHealth(value: string | undefined | null) {
-    debugger;
     try {
         if (value == null) {
             emit("update:maxHealth", null);

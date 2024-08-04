@@ -28,7 +28,6 @@ import { createPlannedCombatNpcRequest } from "../utils/api/plannedCombat/stages
 import { deletePlannedCombatNpcRequest } from "../utils/api/plannedCombat/stages/npcs/deletePlannedCombatNpcRequest";
 import { updatePlannedCombatNpcRequest } from "../utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
 import { updatePlannedCombatStageRequest } from "../utils/api/plannedCombat/stages/updatePlannedCombatStageRequest";
-import { getUserRequest } from "../utils/api/user/getUserRequest";
 import { loginRequest } from "../utils/api/user/loginRequest";
 import { logoutRequest } from "../utils/api/user/logoutRequest";
 import { signUpRequest } from "../utils/api/user/signUpRequest";
@@ -38,30 +37,28 @@ import { putSendResetPasswordRequest } from "../utils/api/user/putSendResetPassw
 import { putResetPassword } from "../utils/api/user/putResetPasswordRequest";
 import { getMaintenanceRequest } from "base/utils/api/admin/getMaintainenceRequest";
 import { putCampaignMemberResourcesRequest } from "base/utils/api/campaign/putCampaignMemberResourcesRequest";
-import { Client, GetCombatRequest } from "base/utils/api/TakeApiClient";
+import {
+    Client,
+    GetCombatRequest,
+    PostConfirmEmailRequest,
+} from "base/utils/api/TakeApiClient";
 // import { getCombatHistoryRequest } from "base/utils/api/combat/getCombatHistory";
 
 export const useApi = () => {
-    const { $axios } = useNuxtApp();
-
-    // Create a client with the generated ts.
-    const client = new Client("", {
-        // No base Url bc axios already has it.
-        fetch(url: RequestInfo, init: RequestInit | undefined) {
-            return $axios(url.toString(), {
-                method: init?.method,
-                data: init?.body,
-            });
-        },
-    });
+    const { $axios, $client: client } = useNuxtApp();
 
     return {
         user: {
-            getUser: getUserRequest($axios),
+            getUser: () => client.takeInitiativeApiFeaturesUsersGetUser(),
             signUp: signUpRequest($axios),
             login: loginRequest($axios),
             logout: logoutRequest($axios),
-            confirmEmailWithToken: confirmEmailRequest($axios),
+            confirmEmailWithToken: (code: string) =>
+                client.takeInitiativeApiFeaturesUsersPostConfirmEmail(
+                    new PostConfirmEmailRequest({
+                        confirmEmailToken: code,
+                    }),
+                ),
             sendConfirmationEmail: postSendConfirmEmailRequest($axios),
             sendResetPasswordEmail: putSendResetPasswordRequest($axios),
             resetPasswordWithToken: putResetPassword($axios),

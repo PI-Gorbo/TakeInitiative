@@ -37,9 +37,13 @@ export default defineNuxtPlugin((nuxtApp) => {
         },
     );
 
+    // Create a client with the generated ts.
+    const client = new Client("", Axios);
+
     return {
         provide: {
             axios: Axios,
+            client,
         },
     };
 });

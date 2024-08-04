@@ -8,57 +8,76 @@
 /* eslint-disable */
 // ReSharper disable InconsistentNaming
 
+import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse, CancelToken } from 'axios';
+
 export class Client {
-    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
-    private baseUrl: string;
+    protected instance: AxiosInstance;
+    protected baseUrl: string;
     protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
 
-    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
-        this.http = http ? http : window as any;
+    constructor(baseUrl?: string, instance?: AxiosInstance) {
+
+        this.instance = instance || axios.create();
+
         this.baseUrl = baseUrl ?? "";
+
     }
 
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesUsersGetUser(): Promise<GetUserResponse> {
+    takeInitiativeApiFeaturesUsersGetUser( cancelToken?: CancelToken): Promise<GetUserResponse> {
         let url_ = this.baseUrl + "/api/user";
         url_ = url_.replace(/[?&]$/, "");
 
-        let options_: RequestInit = {
+        let options_: AxiosRequestConfig = {
             method: "GET",
+            url: url_,
             headers: {
                 "Accept": "application/json"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesUsersGetUser(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesUsersGetUser(response: Response): Promise<GetUserResponse> {
+    protected processTakeInitiativeApiFeaturesUsersGetUser(response: AxiosResponse): Promise<GetUserResponse> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
             result200 = GetUserResponse.fromJS(resultData200);
-            return result200;
-            });
+            return Promise.resolve<GetUserResponse>(result200);
+
         } else if (status === 401) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Unauthorized", status, _responseText, _headers);
-            });
+
         } else if (status === 403) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Forbidden", status, _responseText, _headers);
-            });
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<GetUserResponse>(null as any);
     }
@@ -66,47 +85,61 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesUsersPostConfirmEmail(body: PostConfirmEmailRequest): Promise<GetUserResponse> {
+    takeInitiativeApiFeaturesUsersPostConfirmEmail(body: PostConfirmEmailRequest, cancelToken?: CancelToken): Promise<GetUserResponse> {
         let url_ = this.baseUrl + "/api/confirmEmail";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "POST",
+            url: url_,
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesUsersPostConfirmEmail(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesUsersPostConfirmEmail(response: Response): Promise<GetUserResponse> {
+    protected processTakeInitiativeApiFeaturesUsersPostConfirmEmail(response: AxiosResponse): Promise<GetUserResponse> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
             result200 = GetUserResponse.fromJS(resultData200);
-            return result200;
-            });
+            return Promise.resolve<GetUserResponse>(result200);
+
         } else if (status === 400) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result400: any = null;
-            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData400  = _responseText;
             result400 = ErrorResponse.fromJS(resultData400);
             return throwException("Bad Request", status, _responseText, _headers, result400);
-            });
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<GetUserResponse>(null as any);
     }
@@ -114,45 +147,59 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesUsersPostLogout(): Promise<any> {
+    takeInitiativeApiFeaturesUsersPostLogout( cancelToken?: CancelToken): Promise<any> {
         let url_ = this.baseUrl + "/api/logout";
         url_ = url_.replace(/[?&]$/, "");
 
-        let options_: RequestInit = {
+        let options_: AxiosRequestConfig = {
             method: "POST",
+            url: url_,
             headers: {
                 "Accept": "text/plain"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesUsersPostLogout(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesUsersPostLogout(response: Response): Promise<any> {
+    protected processTakeInitiativeApiFeaturesUsersPostLogout(response: AxiosResponse): Promise<any> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
                 result200 = resultData200 !== undefined ? resultData200 : <any>null;
     
-            return result200;
-            });
+            return Promise.resolve<any>(result200);
+
         } else if (status === 401) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Unauthorized", status, _responseText, _headers);
-            });
+
         } else if (status === 403) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Forbidden", status, _responseText, _headers);
-            });
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<any>(null as any);
     }
@@ -160,37 +207,51 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesUsersPostSendConfirmEmail(): Promise<any> {
+    takeInitiativeApiFeaturesUsersPostSendConfirmEmail( cancelToken?: CancelToken): Promise<any> {
         let url_ = this.baseUrl + "/api/sendConfirmEmail";
         url_ = url_.replace(/[?&]$/, "");
 
-        let options_: RequestInit = {
+        let options_: AxiosRequestConfig = {
             method: "POST",
+            url: url_,
             headers: {
                 "Accept": "text/plain"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesUsersPostSendConfirmEmail(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesUsersPostSendConfirmEmail(response: Response): Promise<any> {
+    protected processTakeInitiativeApiFeaturesUsersPostSendConfirmEmail(response: AxiosResponse): Promise<any> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
                 result200 = resultData200 !== undefined ? resultData200 : <any>null;
     
-            return result200;
-            });
+            return Promise.resolve<any>(result200);
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<any>(null as any);
     }
@@ -198,43 +259,57 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesUsersPostSignUp(body: PostSignUpRequest): Promise<void> {
+    takeInitiativeApiFeaturesUsersPostSignUp(body: PostSignUpRequest, cancelToken?: CancelToken): Promise<void> {
         let url_ = this.baseUrl + "/api/signup";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "POST",
+            url: url_,
             headers: {
                 "Content-Type": "application/json",
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesUsersPostSignUp(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesUsersPostSignUp(response: Response): Promise<void> {
+    protected processTakeInitiativeApiFeaturesUsersPostSignUp(response: AxiosResponse): Promise<void> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 400) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result400: any = null;
-            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData400  = _responseText;
             result400 = ErrorResponse.fromJS(resultData400);
             return throwException("Bad Request", status, _responseText, _headers, result400);
-            });
+
         } else if (status === 200) {
-            return response.text().then((_responseText) => {
-            return;
-            });
+            const _responseText = response.data;
+            return Promise.resolve<void>(null as any);
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<void>(null as any);
     }
@@ -242,36 +317,50 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesUsersPutLogin(body: PutLoginRequest): Promise<void> {
+    takeInitiativeApiFeaturesUsersPutLogin(body: PutLoginRequest, cancelToken?: CancelToken): Promise<void> {
         let url_ = this.baseUrl + "/api/login";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "PUT",
+            url: url_,
             headers: {
                 "Content-Type": "application/json",
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesUsersPutLogin(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesUsersPutLogin(response: Response): Promise<void> {
+    protected processTakeInitiativeApiFeaturesUsersPutLogin(response: AxiosResponse): Promise<void> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
-            return;
-            });
+            const _responseText = response.data;
+            return Promise.resolve<void>(null as any);
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<void>(null as any);
     }
@@ -279,43 +368,57 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesUsersPutResetPassword(body: PutResetPasswordRequest): Promise<void> {
+    takeInitiativeApiFeaturesUsersPutResetPassword(body: PutResetPasswordRequest, cancelToken?: CancelToken): Promise<void> {
         let url_ = this.baseUrl + "/api/resetPassword";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "PUT",
+            url: url_,
             headers: {
                 "Content-Type": "application/json",
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesUsersPutResetPassword(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesUsersPutResetPassword(response: Response): Promise<void> {
+    protected processTakeInitiativeApiFeaturesUsersPutResetPassword(response: AxiosResponse): Promise<void> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 400) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result400: any = null;
-            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData400  = _responseText;
             result400 = ErrorResponse.fromJS(resultData400);
             return throwException("Bad Request", status, _responseText, _headers, result400);
-            });
+
         } else if (status === 200) {
-            return response.text().then((_responseText) => {
-            return;
-            });
+            const _responseText = response.data;
+            return Promise.resolve<void>(null as any);
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<void>(null as any);
     }
@@ -323,43 +426,57 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesUsersPutSendResetPasswordEmail(body: PutSendResetPasswordEmailRequest): Promise<void> {
+    takeInitiativeApiFeaturesUsersPutSendResetPasswordEmail(body: PutSendResetPasswordEmailRequest, cancelToken?: CancelToken): Promise<void> {
         let url_ = this.baseUrl + "/api/sendResetPasswordEmail";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "PUT",
+            url: url_,
             headers: {
                 "Content-Type": "application/json",
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesUsersPutSendResetPasswordEmail(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesUsersPutSendResetPasswordEmail(response: Response): Promise<void> {
+    protected processTakeInitiativeApiFeaturesUsersPutSendResetPasswordEmail(response: AxiosResponse): Promise<void> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 400) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result400: any = null;
-            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData400  = _responseText;
             result400 = ErrorResponse.fromJS(resultData400);
             return throwException("Bad Request", status, _responseText, _headers, result400);
-            });
+
         } else if (status === 200) {
-            return response.text().then((_responseText) => {
-            return;
-            });
+            const _responseText = response.data;
+            return Promise.resolve<void>(null as any);
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<void>(null as any);
     }
@@ -367,48 +484,62 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesCampaignsDeletePlayerCharacter(body: DeletePlayerCharacterRequest): Promise<CampaignMember> {
+    takeInitiativeApiFeaturesCampaignsDeletePlayerCharacter(body: DeletePlayerCharacterRequest, cancelToken?: CancelToken): Promise<CampaignMember> {
         let url_ = this.baseUrl + "/api/campaign/member/character";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "DELETE",
+            url: url_,
             headers: {
                 "Content-Type": "*/*",
                 "Accept": "application/json"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesCampaignsDeletePlayerCharacter(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesCampaignsDeletePlayerCharacter(response: Response): Promise<CampaignMember> {
+    protected processTakeInitiativeApiFeaturesCampaignsDeletePlayerCharacter(response: AxiosResponse): Promise<CampaignMember> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
             result200 = CampaignMember.fromJS(resultData200);
-            return result200;
-            });
+            return Promise.resolve<CampaignMember>(result200);
+
         } else if (status === 401) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Unauthorized", status, _responseText, _headers);
-            });
+
         } else if (status === 403) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Forbidden", status, _responseText, _headers);
-            });
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<CampaignMember>(null as any);
     }
@@ -416,55 +547,69 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesCampaignsPostPlayerCharacter(body: PostPlayerCharacterRequest): Promise<CampaignMember> {
+    takeInitiativeApiFeaturesCampaignsPostPlayerCharacter(body: PostPlayerCharacterRequest, cancelToken?: CancelToken): Promise<CampaignMember> {
         let url_ = this.baseUrl + "/api/campaign/member/character";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "POST",
+            url: url_,
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesCampaignsPostPlayerCharacter(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesCampaignsPostPlayerCharacter(response: Response): Promise<CampaignMember> {
+    protected processTakeInitiativeApiFeaturesCampaignsPostPlayerCharacter(response: AxiosResponse): Promise<CampaignMember> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
             result200 = CampaignMember.fromJS(resultData200);
-            return result200;
-            });
+            return Promise.resolve<CampaignMember>(result200);
+
         } else if (status === 401) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Unauthorized", status, _responseText, _headers);
-            });
+
         } else if (status === 403) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Forbidden", status, _responseText, _headers);
-            });
+
         } else if (status === 400) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result400: any = null;
-            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData400  = _responseText;
             result400 = ErrorResponse.fromJS(resultData400);
             return throwException("Bad Request", status, _responseText, _headers, result400);
-            });
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<CampaignMember>(null as any);
     }
@@ -472,55 +617,69 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesCampaignsPutPlayerCharacter(body: PutPlayerCharacterRequest): Promise<CampaignMember> {
+    takeInitiativeApiFeaturesCampaignsPutPlayerCharacter(body: PutPlayerCharacterRequest, cancelToken?: CancelToken): Promise<CampaignMember> {
         let url_ = this.baseUrl + "/api/campaign/member/character";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "PUT",
+            url: url_,
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesCampaignsPutPlayerCharacter(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesCampaignsPutPlayerCharacter(response: Response): Promise<CampaignMember> {
+    protected processTakeInitiativeApiFeaturesCampaignsPutPlayerCharacter(response: AxiosResponse): Promise<CampaignMember> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
             result200 = CampaignMember.fromJS(resultData200);
-            return result200;
-            });
+            return Promise.resolve<CampaignMember>(result200);
+
         } else if (status === 401) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Unauthorized", status, _responseText, _headers);
-            });
+
         } else if (status === 403) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Forbidden", status, _responseText, _headers);
-            });
+
         } else if (status === 400) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result400: any = null;
-            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData400  = _responseText;
             result400 = ErrorResponse.fromJS(resultData400);
             return throwException("Bad Request", status, _responseText, _headers, result400);
-            });
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<CampaignMember>(null as any);
     }
@@ -528,48 +687,62 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesCampaignsGetCampaignMember(body: GetCampaignMemberRequest): Promise<CampaignMember> {
+    takeInitiativeApiFeaturesCampaignsGetCampaignMember(body: GetCampaignMemberRequest, cancelToken?: CancelToken): Promise<CampaignMember> {
         let url_ = this.baseUrl + "/api/campaign/member";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "GET",
+            url: url_,
             headers: {
                 "Content-Type": "*/*",
                 "Accept": "application/json"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesCampaignsGetCampaignMember(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesCampaignsGetCampaignMember(response: Response): Promise<CampaignMember> {
+    protected processTakeInitiativeApiFeaturesCampaignsGetCampaignMember(response: AxiosResponse): Promise<CampaignMember> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
             result200 = CampaignMember.fromJS(resultData200);
-            return result200;
-            });
+            return Promise.resolve<CampaignMember>(result200);
+
         } else if (status === 401) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Unauthorized", status, _responseText, _headers);
-            });
+
         } else if (status === 403) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Forbidden", status, _responseText, _headers);
-            });
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<CampaignMember>(null as any);
     }
@@ -577,48 +750,62 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesCampaignsPutCampaignMemberResources(body: PutCampaignMemberResourcesRequest): Promise<CampaignMember> {
+    takeInitiativeApiFeaturesCampaignsPutCampaignMemberResources(body: PutCampaignMemberResourcesRequest, cancelToken?: CancelToken): Promise<CampaignMember> {
         let url_ = this.baseUrl + "/api/campaign/member/resources";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "PUT",
+            url: url_,
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesCampaignsPutCampaignMemberResources(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesCampaignsPutCampaignMemberResources(response: Response): Promise<CampaignMember> {
+    protected processTakeInitiativeApiFeaturesCampaignsPutCampaignMemberResources(response: AxiosResponse): Promise<CampaignMember> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
             result200 = CampaignMember.fromJS(resultData200);
-            return result200;
-            });
+            return Promise.resolve<CampaignMember>(result200);
+
         } else if (status === 401) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Unauthorized", status, _responseText, _headers);
-            });
+
         } else if (status === 403) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Forbidden", status, _responseText, _headers);
-            });
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<CampaignMember>(null as any);
     }
@@ -626,44 +813,58 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesCampaignsDeleteCampaign(body: DeleteCampaignRequest): Promise<void> {
+    takeInitiativeApiFeaturesCampaignsDeleteCampaign(body: DeleteCampaignRequest, cancelToken?: CancelToken): Promise<void> {
         let url_ = this.baseUrl + "/api/campaign";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "DELETE",
+            url: url_,
             headers: {
                 "Content-Type": "*/*",
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesCampaignsDeleteCampaign(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesCampaignsDeleteCampaign(response: Response): Promise<void> {
+    protected processTakeInitiativeApiFeaturesCampaignsDeleteCampaign(response: AxiosResponse): Promise<void> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 401) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Unauthorized", status, _responseText, _headers);
-            });
+
         } else if (status === 403) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Forbidden", status, _responseText, _headers);
-            });
+
         } else if (status === 200) {
-            return response.text().then((_responseText) => {
-            return;
-            });
+            const _responseText = response.data;
+            return Promise.resolve<void>(null as any);
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<void>(null as any);
     }
@@ -671,48 +872,62 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesCampaignsPostCreateCampaign(body: PostCreateCampaignRequest): Promise<Campaign> {
+    takeInitiativeApiFeaturesCampaignsPostCreateCampaign(body: PostCreateCampaignRequest, cancelToken?: CancelToken): Promise<Campaign> {
         let url_ = this.baseUrl + "/api/campaign";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "POST",
+            url: url_,
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesCampaignsPostCreateCampaign(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesCampaignsPostCreateCampaign(response: Response): Promise<Campaign> {
+    protected processTakeInitiativeApiFeaturesCampaignsPostCreateCampaign(response: AxiosResponse): Promise<Campaign> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
             result200 = Campaign.fromJS(resultData200);
-            return result200;
-            });
+            return Promise.resolve<Campaign>(result200);
+
         } else if (status === 401) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Unauthorized", status, _responseText, _headers);
-            });
+
         } else if (status === 403) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Forbidden", status, _responseText, _headers);
-            });
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<Campaign>(null as any);
     }
@@ -720,48 +935,62 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesCampaignsPutCampaignDetails(body: PutCampaignDetailsRequest): Promise<Campaign> {
+    takeInitiativeApiFeaturesCampaignsPutCampaignDetails(body: PutCampaignDetailsRequest, cancelToken?: CancelToken): Promise<Campaign> {
         let url_ = this.baseUrl + "/api/campaign";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "PUT",
+            url: url_,
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesCampaignsPutCampaignDetails(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesCampaignsPutCampaignDetails(response: Response): Promise<Campaign> {
+    protected processTakeInitiativeApiFeaturesCampaignsPutCampaignDetails(response: AxiosResponse): Promise<Campaign> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
             result200 = Campaign.fromJS(resultData200);
-            return result200;
-            });
+            return Promise.resolve<Campaign>(result200);
+
         } else if (status === 401) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Unauthorized", status, _responseText, _headers);
-            });
+
         } else if (status === 403) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Forbidden", status, _responseText, _headers);
-            });
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<Campaign>(null as any);
     }
@@ -769,48 +998,62 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesCampaignsGetCampaign(body: GetCampaignRequest): Promise<GetCampaignResponse> {
+    takeInitiativeApiFeaturesCampaignsGetCampaign(body: GetCampaignRequest, cancelToken?: CancelToken): Promise<GetCampaignResponse> {
         let url_ = this.baseUrl + "/api/campaign/{CampaignId}";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "GET",
+            url: url_,
             headers: {
                 "Content-Type": "*/*",
                 "Accept": "application/json"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesCampaignsGetCampaign(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesCampaignsGetCampaign(response: Response): Promise<GetCampaignResponse> {
+    protected processTakeInitiativeApiFeaturesCampaignsGetCampaign(response: AxiosResponse): Promise<GetCampaignResponse> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
             result200 = GetCampaignResponse.fromJS(resultData200);
-            return result200;
-            });
+            return Promise.resolve<GetCampaignResponse>(result200);
+
         } else if (status === 401) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Unauthorized", status, _responseText, _headers);
-            });
+
         } else if (status === 403) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Forbidden", status, _responseText, _headers);
-            });
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<GetCampaignResponse>(null as any);
     }
@@ -818,48 +1061,62 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesCampaignsPostJoinCampaign(body: JoinCampaignByJoinCodeRequest): Promise<Campaign> {
+    takeInitiativeApiFeaturesCampaignsPostJoinCampaign(body: JoinCampaignByJoinCodeRequest, cancelToken?: CancelToken): Promise<Campaign> {
         let url_ = this.baseUrl + "/api/campaign/join";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "POST",
+            url: url_,
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesCampaignsPostJoinCampaign(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesCampaignsPostJoinCampaign(response: Response): Promise<Campaign> {
+    protected processTakeInitiativeApiFeaturesCampaignsPostJoinCampaign(response: AxiosResponse): Promise<Campaign> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
             result200 = Campaign.fromJS(resultData200);
-            return result200;
-            });
+            return Promise.resolve<Campaign>(result200);
+
         } else if (status === 401) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Unauthorized", status, _responseText, _headers);
-            });
+
         } else if (status === 403) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Forbidden", status, _responseText, _headers);
-            });
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<Campaign>(null as any);
     }
@@ -867,37 +1124,51 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesCombatsPutReadAndSaveCampaigns(): Promise<any> {
+    takeInitiativeApiFeaturesCombatsPutReadAndSaveCampaigns( cancelToken?: CancelToken): Promise<any> {
         let url_ = this.baseUrl + "/api/admin/readAndSave/campaigns";
         url_ = url_.replace(/[?&]$/, "");
 
-        let options_: RequestInit = {
+        let options_: AxiosRequestConfig = {
             method: "PUT",
+            url: url_,
             headers: {
                 "Accept": "text/plain"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesCombatsPutReadAndSaveCampaigns(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesCombatsPutReadAndSaveCampaigns(response: Response): Promise<any> {
+    protected processTakeInitiativeApiFeaturesCombatsPutReadAndSaveCampaigns(response: AxiosResponse): Promise<any> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
                 result200 = resultData200 !== undefined ? resultData200 : <any>null;
     
-            return result200;
-            });
+            return Promise.resolve<any>(result200);
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<any>(null as any);
     }
@@ -905,37 +1176,51 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesCombatsPutReprojectCombats(): Promise<any> {
+    takeInitiativeApiFeaturesCombatsPutReprojectCombats( cancelToken?: CancelToken): Promise<any> {
         let url_ = this.baseUrl + "/api/admin/reproject/combat";
         url_ = url_.replace(/[?&]$/, "");
 
-        let options_: RequestInit = {
+        let options_: AxiosRequestConfig = {
             method: "PUT",
+            url: url_,
             headers: {
                 "Accept": "text/plain"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesCombatsPutReprojectCombats(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesCombatsPutReprojectCombats(response: Response): Promise<any> {
+    protected processTakeInitiativeApiFeaturesCombatsPutReprojectCombats(response: AxiosResponse): Promise<any> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
                 result200 = resultData200 !== undefined ? resultData200 : <any>null;
     
-            return result200;
-            });
+            return Promise.resolve<any>(result200);
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<any>(null as any);
     }
@@ -943,55 +1228,69 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesCombatsDeleteInitiativeCharacter(body: DeleteInitiativeCharacterRequest): Promise<CombatResponse> {
+    takeInitiativeApiFeaturesCombatsDeleteInitiativeCharacter(body: DeleteInitiativeCharacterRequest, cancelToken?: CancelToken): Promise<CombatResponse> {
         let url_ = this.baseUrl + "/api/combat/initiative/character";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "DELETE",
+            url: url_,
             headers: {
                 "Content-Type": "*/*",
                 "Accept": "application/json"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesCombatsDeleteInitiativeCharacter(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesCombatsDeleteInitiativeCharacter(response: Response): Promise<CombatResponse> {
+    protected processTakeInitiativeApiFeaturesCombatsDeleteInitiativeCharacter(response: AxiosResponse): Promise<CombatResponse> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
             result200 = CombatResponse.fromJS(resultData200);
-            return result200;
-            });
+            return Promise.resolve<CombatResponse>(result200);
+
         } else if (status === 401) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Unauthorized", status, _responseText, _headers);
-            });
+
         } else if (status === 403) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Forbidden", status, _responseText, _headers);
-            });
+
         } else if (status === 400) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result400: any = null;
-            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData400  = _responseText;
             result400 = ErrorResponse.fromJS(resultData400);
             return throwException("Bad Request", status, _responseText, _headers, result400);
-            });
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<CombatResponse>(null as any);
     }
@@ -999,55 +1298,69 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesCombatsPutUpdateInitiativeCharacter(body: PutUpdateInitiativeCharacterRequest): Promise<CombatResponse> {
+    takeInitiativeApiFeaturesCombatsPutUpdateInitiativeCharacter(body: PutUpdateInitiativeCharacterRequest, cancelToken?: CancelToken): Promise<CombatResponse> {
         let url_ = this.baseUrl + "/api/combat/initiative/character";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "PUT",
+            url: url_,
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesCombatsPutUpdateInitiativeCharacter(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesCombatsPutUpdateInitiativeCharacter(response: Response): Promise<CombatResponse> {
+    protected processTakeInitiativeApiFeaturesCombatsPutUpdateInitiativeCharacter(response: AxiosResponse): Promise<CombatResponse> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
             result200 = CombatResponse.fromJS(resultData200);
-            return result200;
-            });
+            return Promise.resolve<CombatResponse>(result200);
+
         } else if (status === 401) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Unauthorized", status, _responseText, _headers);
-            });
+
         } else if (status === 403) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Forbidden", status, _responseText, _headers);
-            });
+
         } else if (status === 400) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result400: any = null;
-            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData400  = _responseText;
             result400 = ErrorResponse.fromJS(resultData400);
             return throwException("Bad Request", status, _responseText, _headers, result400);
-            });
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<CombatResponse>(null as any);
     }
@@ -1055,48 +1368,62 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesCombatsDeleteStagedCharacter(body: DeleteStagedCharacterRequest): Promise<CombatResponse> {
+    takeInitiativeApiFeaturesCombatsDeleteStagedCharacter(body: DeleteStagedCharacterRequest, cancelToken?: CancelToken): Promise<CombatResponse> {
         let url_ = this.baseUrl + "/api/combat/stage/character";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "DELETE",
+            url: url_,
             headers: {
                 "Content-Type": "*/*",
                 "Accept": "application/json"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesCombatsDeleteStagedCharacter(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesCombatsDeleteStagedCharacter(response: Response): Promise<CombatResponse> {
+    protected processTakeInitiativeApiFeaturesCombatsDeleteStagedCharacter(response: AxiosResponse): Promise<CombatResponse> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
             result200 = CombatResponse.fromJS(resultData200);
-            return result200;
-            });
+            return Promise.resolve<CombatResponse>(result200);
+
         } else if (status === 401) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Unauthorized", status, _responseText, _headers);
-            });
+
         } else if (status === 403) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Forbidden", status, _responseText, _headers);
-            });
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<CombatResponse>(null as any);
     }
@@ -1104,55 +1431,69 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesCombatsPutUpsertStagedCharacter(body: PutUpsertStagedCharacterRequest): Promise<CombatResponse> {
+    takeInitiativeApiFeaturesCombatsPutUpsertStagedCharacter(body: PutUpsertStagedCharacterRequest, cancelToken?: CancelToken): Promise<CombatResponse> {
         let url_ = this.baseUrl + "/api/combat/stage/character";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "PUT",
+            url: url_,
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesCombatsPutUpsertStagedCharacter(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesCombatsPutUpsertStagedCharacter(response: Response): Promise<CombatResponse> {
+    protected processTakeInitiativeApiFeaturesCombatsPutUpsertStagedCharacter(response: AxiosResponse): Promise<CombatResponse> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
             result200 = CombatResponse.fromJS(resultData200);
-            return result200;
-            });
+            return Promise.resolve<CombatResponse>(result200);
+
         } else if (status === 401) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Unauthorized", status, _responseText, _headers);
-            });
+
         } else if (status === 403) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Forbidden", status, _responseText, _headers);
-            });
+
         } else if (status === 400) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result400: any = null;
-            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData400  = _responseText;
             result400 = ErrorResponse.fromJS(resultData400);
             return throwException("Bad Request", status, _responseText, _headers, result400);
-            });
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<CombatResponse>(null as any);
     }
@@ -1160,48 +1501,62 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesCombatsGetCombatHistory(body: GetCombatRequest): Promise<GetCombatHistoryResponse> {
+    takeInitiativeApiFeaturesCombatsGetCombatHistory(body: GetCombatRequest, cancelToken?: CancelToken): Promise<GetCombatHistoryResponse> {
         let url_ = this.baseUrl + "/api/combat/{id}/history";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "GET",
+            url: url_,
             headers: {
                 "Content-Type": "*/*",
                 "Accept": "application/json"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesCombatsGetCombatHistory(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesCombatsGetCombatHistory(response: Response): Promise<GetCombatHistoryResponse> {
+    protected processTakeInitiativeApiFeaturesCombatsGetCombatHistory(response: AxiosResponse): Promise<GetCombatHistoryResponse> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
             result200 = GetCombatHistoryResponse.fromJS(resultData200);
-            return result200;
-            });
+            return Promise.resolve<GetCombatHistoryResponse>(result200);
+
         } else if (status === 401) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Unauthorized", status, _responseText, _headers);
-            });
+
         } else if (status === 403) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Forbidden", status, _responseText, _headers);
-            });
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<GetCombatHistoryResponse>(null as any);
     }
@@ -1209,44 +1564,58 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesCombatsGetCombats(): Promise<GetCombatsResponse> {
+    takeInitiativeApiFeaturesCombatsGetCombats( cancelToken?: CancelToken): Promise<GetCombatsResponse> {
         let url_ = this.baseUrl + "/api/combats";
         url_ = url_.replace(/[?&]$/, "");
 
-        let options_: RequestInit = {
+        let options_: AxiosRequestConfig = {
             method: "GET",
+            url: url_,
             headers: {
                 "Accept": "application/json"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesCombatsGetCombats(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesCombatsGetCombats(response: Response): Promise<GetCombatsResponse> {
+    protected processTakeInitiativeApiFeaturesCombatsGetCombats(response: AxiosResponse): Promise<GetCombatsResponse> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
             result200 = GetCombatsResponse.fromJS(resultData200);
-            return result200;
-            });
+            return Promise.resolve<GetCombatsResponse>(result200);
+
         } else if (status === 401) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Unauthorized", status, _responseText, _headers);
-            });
+
         } else if (status === 403) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Forbidden", status, _responseText, _headers);
-            });
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<GetCombatsResponse>(null as any);
     }
@@ -1254,48 +1623,62 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesCombatsGetCombat(body: GetCombatRequest): Promise<CombatResponse> {
+    takeInitiativeApiFeaturesCombatsGetCombat(body: GetCombatRequest, cancelToken?: CancelToken): Promise<CombatResponse> {
         let url_ = this.baseUrl + "/api/combat/{Id}";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "GET",
+            url: url_,
             headers: {
                 "Content-Type": "*/*",
                 "Accept": "application/json"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesCombatsGetCombat(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesCombatsGetCombat(response: Response): Promise<CombatResponse> {
+    protected processTakeInitiativeApiFeaturesCombatsGetCombat(response: AxiosResponse): Promise<CombatResponse> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
             result200 = CombatResponse.fromJS(resultData200);
-            return result200;
-            });
+            return Promise.resolve<CombatResponse>(result200);
+
         } else if (status === 401) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Unauthorized", status, _responseText, _headers);
-            });
+
         } else if (status === 403) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Forbidden", status, _responseText, _headers);
-            });
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<CombatResponse>(null as any);
     }
@@ -1303,44 +1686,58 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesCombatsDeletePlannedCombat(body: DeletePlannedCombatRequest): Promise<void> {
+    takeInitiativeApiFeaturesCombatsDeletePlannedCombat(body: DeletePlannedCombatRequest, cancelToken?: CancelToken): Promise<void> {
         let url_ = this.baseUrl + "/api/combat/planned";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "DELETE",
+            url: url_,
             headers: {
                 "Content-Type": "*/*",
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesCombatsDeletePlannedCombat(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesCombatsDeletePlannedCombat(response: Response): Promise<void> {
+    protected processTakeInitiativeApiFeaturesCombatsDeletePlannedCombat(response: AxiosResponse): Promise<void> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 401) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Unauthorized", status, _responseText, _headers);
-            });
+
         } else if (status === 403) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Forbidden", status, _responseText, _headers);
-            });
+
         } else if (status === 200) {
-            return response.text().then((_responseText) => {
-            return;
-            });
+            const _responseText = response.data;
+            return Promise.resolve<void>(null as any);
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<void>(null as any);
     }
@@ -1348,48 +1745,62 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesCombatsPostPlannedCombat(body: PostPlannedCombatRequest): Promise<PlannedCombat> {
+    takeInitiativeApiFeaturesCombatsPostPlannedCombat(body: PostPlannedCombatRequest, cancelToken?: CancelToken): Promise<PlannedCombat> {
         let url_ = this.baseUrl + "/api/combat/planned";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "POST",
+            url: url_,
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesCombatsPostPlannedCombat(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesCombatsPostPlannedCombat(response: Response): Promise<PlannedCombat> {
+    protected processTakeInitiativeApiFeaturesCombatsPostPlannedCombat(response: AxiosResponse): Promise<PlannedCombat> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
             result200 = PlannedCombat.fromJS(resultData200);
-            return result200;
-            });
+            return Promise.resolve<PlannedCombat>(result200);
+
         } else if (status === 401) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Unauthorized", status, _responseText, _headers);
-            });
+
         } else if (status === 403) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Forbidden", status, _responseText, _headers);
-            });
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<PlannedCombat>(null as any);
     }
@@ -1397,48 +1808,62 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesCombatsDeletePlannedCombatStage(body: DeletePlannedCombatStageRequest): Promise<PlannedCombat> {
+    takeInitiativeApiFeaturesCombatsDeletePlannedCombatStage(body: DeletePlannedCombatStageRequest, cancelToken?: CancelToken): Promise<PlannedCombat> {
         let url_ = this.baseUrl + "/api/campaign/planned-combat/stage";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "DELETE",
+            url: url_,
             headers: {
                 "Content-Type": "*/*",
                 "Accept": "application/json"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesCombatsDeletePlannedCombatStage(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesCombatsDeletePlannedCombatStage(response: Response): Promise<PlannedCombat> {
+    protected processTakeInitiativeApiFeaturesCombatsDeletePlannedCombatStage(response: AxiosResponse): Promise<PlannedCombat> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
             result200 = PlannedCombat.fromJS(resultData200);
-            return result200;
-            });
+            return Promise.resolve<PlannedCombat>(result200);
+
         } else if (status === 401) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Unauthorized", status, _responseText, _headers);
-            });
+
         } else if (status === 403) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Forbidden", status, _responseText, _headers);
-            });
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<PlannedCombat>(null as any);
     }
@@ -1446,55 +1871,69 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesCombatsPostPlannedCombatStage(body: PostPlannedCombatStageRequest): Promise<PlannedCombat> {
+    takeInitiativeApiFeaturesCombatsPostPlannedCombatStage(body: PostPlannedCombatStageRequest, cancelToken?: CancelToken): Promise<PlannedCombat> {
         let url_ = this.baseUrl + "/api/campaign/planned-combat/stage";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "POST",
+            url: url_,
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesCombatsPostPlannedCombatStage(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesCombatsPostPlannedCombatStage(response: Response): Promise<PlannedCombat> {
+    protected processTakeInitiativeApiFeaturesCombatsPostPlannedCombatStage(response: AxiosResponse): Promise<PlannedCombat> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
             result200 = PlannedCombat.fromJS(resultData200);
-            return result200;
-            });
+            return Promise.resolve<PlannedCombat>(result200);
+
         } else if (status === 401) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Unauthorized", status, _responseText, _headers);
-            });
+
         } else if (status === 403) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Forbidden", status, _responseText, _headers);
-            });
+
         } else if (status === 400) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result400: any = null;
-            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData400  = _responseText;
             result400 = ErrorResponse.fromJS(resultData400);
             return throwException("Bad Request", status, _responseText, _headers, result400);
-            });
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<PlannedCombat>(null as any);
     }
@@ -1502,55 +1941,69 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesCombatsPutPlannedCombatStage(body: PutPlannedCombatStageRequest): Promise<PlannedCombat> {
+    takeInitiativeApiFeaturesCombatsPutPlannedCombatStage(body: PutPlannedCombatStageRequest, cancelToken?: CancelToken): Promise<PlannedCombat> {
         let url_ = this.baseUrl + "/api/campaign/planned-combat/stage";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "PUT",
+            url: url_,
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesCombatsPutPlannedCombatStage(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesCombatsPutPlannedCombatStage(response: Response): Promise<PlannedCombat> {
+    protected processTakeInitiativeApiFeaturesCombatsPutPlannedCombatStage(response: AxiosResponse): Promise<PlannedCombat> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
             result200 = PlannedCombat.fromJS(resultData200);
-            return result200;
-            });
+            return Promise.resolve<PlannedCombat>(result200);
+
         } else if (status === 401) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Unauthorized", status, _responseText, _headers);
-            });
+
         } else if (status === 403) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Forbidden", status, _responseText, _headers);
-            });
+
         } else if (status === 400) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result400: any = null;
-            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData400  = _responseText;
             result400 = ErrorResponse.fromJS(resultData400);
             return throwException("Bad Request", status, _responseText, _headers, result400);
-            });
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<PlannedCombat>(null as any);
     }
@@ -1558,55 +2011,69 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesCombatsDeletePlannedCombatNpc(body: DeletePlannedCombatNpcRequest): Promise<PlannedCombat> {
+    takeInitiativeApiFeaturesCombatsDeletePlannedCombatNpc(body: DeletePlannedCombatNpcRequest, cancelToken?: CancelToken): Promise<PlannedCombat> {
         let url_ = this.baseUrl + "/api/campaign/planned-combat/stage/npc";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "DELETE",
+            url: url_,
             headers: {
                 "Content-Type": "*/*",
                 "Accept": "application/json"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesCombatsDeletePlannedCombatNpc(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesCombatsDeletePlannedCombatNpc(response: Response): Promise<PlannedCombat> {
+    protected processTakeInitiativeApiFeaturesCombatsDeletePlannedCombatNpc(response: AxiosResponse): Promise<PlannedCombat> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
             result200 = PlannedCombat.fromJS(resultData200);
-            return result200;
-            });
+            return Promise.resolve<PlannedCombat>(result200);
+
         } else if (status === 401) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Unauthorized", status, _responseText, _headers);
-            });
+
         } else if (status === 403) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Forbidden", status, _responseText, _headers);
-            });
+
         } else if (status === 400) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result400: any = null;
-            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData400  = _responseText;
             result400 = ErrorResponse.fromJS(resultData400);
             return throwException("Bad Request", status, _responseText, _headers, result400);
-            });
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<PlannedCombat>(null as any);
     }
@@ -1614,55 +2081,69 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesCombatsPostPlannedCombatNpc(body: PostPlannedCombatNpcRequest): Promise<PlannedCombat> {
+    takeInitiativeApiFeaturesCombatsPostPlannedCombatNpc(body: PostPlannedCombatNpcRequest, cancelToken?: CancelToken): Promise<PlannedCombat> {
         let url_ = this.baseUrl + "/api/campaign/planned-combat/stage/npc";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "POST",
+            url: url_,
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesCombatsPostPlannedCombatNpc(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesCombatsPostPlannedCombatNpc(response: Response): Promise<PlannedCombat> {
+    protected processTakeInitiativeApiFeaturesCombatsPostPlannedCombatNpc(response: AxiosResponse): Promise<PlannedCombat> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
             result200 = PlannedCombat.fromJS(resultData200);
-            return result200;
-            });
+            return Promise.resolve<PlannedCombat>(result200);
+
         } else if (status === 401) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Unauthorized", status, _responseText, _headers);
-            });
+
         } else if (status === 403) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Forbidden", status, _responseText, _headers);
-            });
+
         } else if (status === 400) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result400: any = null;
-            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData400  = _responseText;
             result400 = ErrorResponse.fromJS(resultData400);
             return throwException("Bad Request", status, _responseText, _headers, result400);
-            });
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<PlannedCombat>(null as any);
     }
@@ -1670,55 +2151,69 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesCombatsPutPlannedCombatNpc(body: PutPlannedCombatNpcRequest): Promise<PlannedCombat> {
+    takeInitiativeApiFeaturesCombatsPutPlannedCombatNpc(body: PutPlannedCombatNpcRequest, cancelToken?: CancelToken): Promise<PlannedCombat> {
         let url_ = this.baseUrl + "/api/campaign/planned-combat/stage/npc";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "PUT",
+            url: url_,
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesCombatsPutPlannedCombatNpc(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesCombatsPutPlannedCombatNpc(response: Response): Promise<PlannedCombat> {
+    protected processTakeInitiativeApiFeaturesCombatsPutPlannedCombatNpc(response: AxiosResponse): Promise<PlannedCombat> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
             result200 = PlannedCombat.fromJS(resultData200);
-            return result200;
-            });
+            return Promise.resolve<PlannedCombat>(result200);
+
         } else if (status === 401) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Unauthorized", status, _responseText, _headers);
-            });
+
         } else if (status === 403) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Forbidden", status, _responseText, _headers);
-            });
+
         } else if (status === 400) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result400: any = null;
-            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData400  = _responseText;
             result400 = ErrorResponse.fromJS(resultData400);
             return throwException("Bad Request", status, _responseText, _headers, result400);
-            });
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<PlannedCombat>(null as any);
     }
@@ -1726,55 +2221,69 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesCombatsPostEndTurn(body: PostEndTurnRequest): Promise<CombatResponse> {
+    takeInitiativeApiFeaturesCombatsPostEndTurn(body: PostEndTurnRequest, cancelToken?: CancelToken): Promise<CombatResponse> {
         let url_ = this.baseUrl + "/api/combat/turn/end";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "POST",
+            url: url_,
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesCombatsPostEndTurn(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesCombatsPostEndTurn(response: Response): Promise<CombatResponse> {
+    protected processTakeInitiativeApiFeaturesCombatsPostEndTurn(response: AxiosResponse): Promise<CombatResponse> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
             result200 = CombatResponse.fromJS(resultData200);
-            return result200;
-            });
+            return Promise.resolve<CombatResponse>(result200);
+
         } else if (status === 401) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Unauthorized", status, _responseText, _headers);
-            });
+
         } else if (status === 403) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Forbidden", status, _responseText, _headers);
-            });
+
         } else if (status === 400) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result400: any = null;
-            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData400  = _responseText;
             result400 = ErrorResponse.fromJS(resultData400);
             return throwException("Bad Request", status, _responseText, _headers, result400);
-            });
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<CombatResponse>(null as any);
     }
@@ -1782,55 +2291,69 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesCombatsPostFinishCombat(body: PostFinishCombatRequest): Promise<CombatResponse> {
+    takeInitiativeApiFeaturesCombatsPostFinishCombat(body: PostFinishCombatRequest, cancelToken?: CancelToken): Promise<CombatResponse> {
         let url_ = this.baseUrl + "/api/combat/finish";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "POST",
+            url: url_,
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesCombatsPostFinishCombat(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesCombatsPostFinishCombat(response: Response): Promise<CombatResponse> {
+    protected processTakeInitiativeApiFeaturesCombatsPostFinishCombat(response: AxiosResponse): Promise<CombatResponse> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
             result200 = CombatResponse.fromJS(resultData200);
-            return result200;
-            });
+            return Promise.resolve<CombatResponse>(result200);
+
         } else if (status === 401) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Unauthorized", status, _responseText, _headers);
-            });
+
         } else if (status === 403) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Forbidden", status, _responseText, _headers);
-            });
+
         } else if (status === 400) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result400: any = null;
-            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData400  = _responseText;
             result400 = ErrorResponse.fromJS(resultData400);
             return throwException("Bad Request", status, _responseText, _headers, result400);
-            });
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<CombatResponse>(null as any);
     }
@@ -1838,48 +2361,62 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesCombatsPostOpenCombat(body: PostOpenCombatRequest): Promise<CombatResponse> {
+    takeInitiativeApiFeaturesCombatsPostOpenCombat(body: PostOpenCombatRequest, cancelToken?: CancelToken): Promise<CombatResponse> {
         let url_ = this.baseUrl + "/api/combat/open";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "POST",
+            url: url_,
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesCombatsPostOpenCombat(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesCombatsPostOpenCombat(response: Response): Promise<CombatResponse> {
+    protected processTakeInitiativeApiFeaturesCombatsPostOpenCombat(response: AxiosResponse): Promise<CombatResponse> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
             result200 = CombatResponse.fromJS(resultData200);
-            return result200;
-            });
+            return Promise.resolve<CombatResponse>(result200);
+
         } else if (status === 401) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Unauthorized", status, _responseText, _headers);
-            });
+
         } else if (status === 403) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Forbidden", status, _responseText, _headers);
-            });
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<CombatResponse>(null as any);
     }
@@ -1887,55 +2424,69 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesCombatsPostRollStagedCharactersIntoInitiative(body: PostRollStagedCharactersIntoInitiativeRequest): Promise<CombatResponse> {
+    takeInitiativeApiFeaturesCombatsPostRollStagedCharactersIntoInitiative(body: PostRollStagedCharactersIntoInitiativeRequest, cancelToken?: CancelToken): Promise<CombatResponse> {
         let url_ = this.baseUrl + "/api/combat/stage/roll";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "POST",
+            url: url_,
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesCombatsPostRollStagedCharactersIntoInitiative(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesCombatsPostRollStagedCharactersIntoInitiative(response: Response): Promise<CombatResponse> {
+    protected processTakeInitiativeApiFeaturesCombatsPostRollStagedCharactersIntoInitiative(response: AxiosResponse): Promise<CombatResponse> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
             result200 = CombatResponse.fromJS(resultData200);
-            return result200;
-            });
+            return Promise.resolve<CombatResponse>(result200);
+
         } else if (status === 401) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Unauthorized", status, _responseText, _headers);
-            });
+
         } else if (status === 403) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Forbidden", status, _responseText, _headers);
-            });
+
         } else if (status === 400) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result400: any = null;
-            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData400  = _responseText;
             result400 = ErrorResponse.fromJS(resultData400);
             return throwException("Bad Request", status, _responseText, _headers, result400);
-            });
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<CombatResponse>(null as any);
     }
@@ -1943,55 +2494,69 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesCombatsPostStagePlannedCharacters(body: PutStagePlannedCharactersRequest): Promise<CombatResponse> {
+    takeInitiativeApiFeaturesCombatsPostStagePlannedCharacters(body: PutStagePlannedCharactersRequest, cancelToken?: CancelToken): Promise<CombatResponse> {
         let url_ = this.baseUrl + "/api/combat/stage/planned-character";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "POST",
+            url: url_,
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesCombatsPostStagePlannedCharacters(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesCombatsPostStagePlannedCharacters(response: Response): Promise<CombatResponse> {
+    protected processTakeInitiativeApiFeaturesCombatsPostStagePlannedCharacters(response: AxiosResponse): Promise<CombatResponse> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
             result200 = CombatResponse.fromJS(resultData200);
-            return result200;
-            });
+            return Promise.resolve<CombatResponse>(result200);
+
         } else if (status === 401) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Unauthorized", status, _responseText, _headers);
-            });
+
         } else if (status === 403) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Forbidden", status, _responseText, _headers);
-            });
+
         } else if (status === 400) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result400: any = null;
-            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData400  = _responseText;
             result400 = ErrorResponse.fromJS(resultData400);
             return throwException("Bad Request", status, _responseText, _headers, result400);
-            });
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<CombatResponse>(null as any);
     }
@@ -1999,55 +2564,69 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesCombatsPostStagePlayerCharacters(body: PostStagePlayerCharactersRequest): Promise<CombatResponse> {
+    takeInitiativeApiFeaturesCombatsPostStagePlayerCharacters(body: PostStagePlayerCharactersRequest, cancelToken?: CancelToken): Promise<CombatResponse> {
         let url_ = this.baseUrl + "/api/combat/stage/player-character";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "POST",
+            url: url_,
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesCombatsPostStagePlayerCharacters(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesCombatsPostStagePlayerCharacters(response: Response): Promise<CombatResponse> {
+    protected processTakeInitiativeApiFeaturesCombatsPostStagePlayerCharacters(response: AxiosResponse): Promise<CombatResponse> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
             result200 = CombatResponse.fromJS(resultData200);
-            return result200;
-            });
+            return Promise.resolve<CombatResponse>(result200);
+
         } else if (status === 401) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Unauthorized", status, _responseText, _headers);
-            });
+
         } else if (status === 403) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Forbidden", status, _responseText, _headers);
-            });
+
         } else if (status === 400) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result400: any = null;
-            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData400  = _responseText;
             result400 = ErrorResponse.fromJS(resultData400);
             return throwException("Bad Request", status, _responseText, _headers, result400);
-            });
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<CombatResponse>(null as any);
     }
@@ -2055,55 +2634,69 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesCombatsPostStartCombat(body: PostStartCombatRequest): Promise<CombatResponse> {
+    takeInitiativeApiFeaturesCombatsPostStartCombat(body: PostStartCombatRequest, cancelToken?: CancelToken): Promise<CombatResponse> {
         let url_ = this.baseUrl + "/api/combat/start";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "POST",
+            url: url_,
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesCombatsPostStartCombat(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesCombatsPostStartCombat(response: Response): Promise<CombatResponse> {
+    protected processTakeInitiativeApiFeaturesCombatsPostStartCombat(response: AxiosResponse): Promise<CombatResponse> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
             result200 = CombatResponse.fromJS(resultData200);
-            return result200;
-            });
+            return Promise.resolve<CombatResponse>(result200);
+
         } else if (status === 401) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Unauthorized", status, _responseText, _headers);
-            });
+
         } else if (status === 403) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("Forbidden", status, _responseText, _headers);
-            });
+
         } else if (status === 400) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result400: any = null;
-            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData400  = _responseText;
             result400 = ErrorResponse.fromJS(resultData400);
             return throwException("Bad Request", status, _responseText, _headers, result400);
-            });
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<CombatResponse>(null as any);
     }
@@ -2111,36 +2704,50 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesAdminGetMaintenanceConfig(): Promise<MaintenanceConfig> {
+    takeInitiativeApiFeaturesAdminGetMaintenanceConfig( cancelToken?: CancelToken): Promise<MaintenanceConfig> {
         let url_ = this.baseUrl + "/api/admin/maintenance";
         url_ = url_.replace(/[?&]$/, "");
 
-        let options_: RequestInit = {
+        let options_: AxiosRequestConfig = {
             method: "GET",
+            url: url_,
             headers: {
                 "Accept": "application/json"
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesAdminGetMaintenanceConfig(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesAdminGetMaintenanceConfig(response: Response): Promise<MaintenanceConfig> {
+    protected processTakeInitiativeApiFeaturesAdminGetMaintenanceConfig(response: AxiosResponse): Promise<MaintenanceConfig> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            let resultData200  = _responseText;
             result200 = MaintenanceConfig.fromJS(resultData200);
-            return result200;
-            });
+            return Promise.resolve<MaintenanceConfig>(result200);
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<MaintenanceConfig>(null as any);
     }
@@ -2148,36 +2755,50 @@ export class Client {
     /**
      * @return Success
      */
-    takeInitiativeApiFeaturesAdminPutMaintenanceConfig(body: MaintenanceConfig): Promise<void> {
+    takeInitiativeApiFeaturesAdminPutMaintenanceConfig(body: MaintenanceConfig, cancelToken?: CancelToken): Promise<void> {
         let url_ = this.baseUrl + "/api/admin/maintenance";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
 
-        let options_: RequestInit = {
-            body: content_,
+        let options_: AxiosRequestConfig = {
+            data: content_,
             method: "PUT",
+            url: url_,
             headers: {
                 "Content-Type": "application/json",
-            }
+            },
+            cancelToken
         };
 
-        return this.http.fetch(url_, options_).then((_response: Response) => {
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
             return this.processTakeInitiativeApiFeaturesAdminPutMaintenanceConfig(_response);
         });
     }
 
-    protected processTakeInitiativeApiFeaturesAdminPutMaintenanceConfig(response: Response): Promise<void> {
+    protected processTakeInitiativeApiFeaturesAdminPutMaintenanceConfig(response: AxiosResponse): Promise<void> {
         const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
         if (status === 200) {
-            return response.text().then((_responseText) => {
-            return;
-            });
+            const _responseText = response.data;
+            return Promise.resolve<void>(null as any);
+
         } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
+            const _responseText = response.data;
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
         }
         return Promise.resolve<void>(null as any);
     }
@@ -5572,4 +6193,8 @@ function throwException(message: string, status: number, response: string, heade
         throw result;
     else
         throw new ApiException(message, status, response, headers, null);
+}
+
+function isAxiosError(obj: any): obj is AxiosError {
+    return obj && obj.isAxiosError === true;
 }

@@ -61,7 +61,6 @@ export const useCampaignCombatsStore = defineStore(
                 id: combatId,
                 type: "Normal",
             };
-            debugger;
             const result = await api.combat.getHistory(
                 new GetCombatRequest({
                     id: combatId,
