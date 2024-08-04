@@ -31,7 +31,7 @@ public class CombatHub : Hub
         .Bind((userId) => Store.Try(async (session) =>
         {
             // Verify the combat exists and the player is a member of the campaign the combat is apart of.
-            Guid? campaignId = await session.Query<Combat>().Where(x => x.Id == CombatId).Select(x => x.CampaignId).SingleOrDefaultAsync(null);
+            Guid? campaignId = await session.Query<Combat>().Where(x => x.Id == CombatId).Select(x => x.CampaignId).SingleOrDefaultAsync();
             if (!campaignId.HasValue)
             {
                 return Result.Failure("Combat with provided id does not exist.");

@@ -1,5 +1,6 @@
 import type { AxiosError, AxiosInstance, CreateAxiosDefaults } from "axios";
 import axios from "axios";
+import { Client } from "base/utils/api/TakeApiClient";
 export default defineNuxtPlugin((nuxtApp) => {
     // Destructure the environment variables to get axios config
     const {
@@ -36,9 +37,20 @@ export default defineNuxtPlugin((nuxtApp) => {
         },
     );
 
+    // Create a client with the generated ts.
+    const client = new Client(undefined, {
+        fetch(url: RequestInfo, init: RequestInit | undefined) {
+            return Axios(url.toString(), {
+                method: init?.method,
+                data: init?.body,
+            }).then((resp) => resp.data);
+        },
+    });
+
     return {
         provide: {
             axios: Axios,
+            client,
         },
     };
 });

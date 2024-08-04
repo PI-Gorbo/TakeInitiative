@@ -69,7 +69,7 @@ export const useCombatStore = defineStore("combatStore", () => {
         const userId = userStore.state.user?.userId;
 
         return await connection
-            .send("joinCombat", userId, state.combat?.id)
+            .send("joinCombat", state.combat?.id)
             .catch((error) => (state.signalRError = error));
     }
 
