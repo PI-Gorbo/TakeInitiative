@@ -37,28 +37,29 @@ import { putSendResetPasswordRequest } from "../utils/api/user/putSendResetPassw
 import { putResetPassword } from "../utils/api/user/putResetPasswordRequest";
 import { getMaintenanceRequest } from "base/utils/api/admin/getMaintainenceRequest";
 import { putCampaignMemberResourcesRequest } from "base/utils/api/campaign/putCampaignMemberResourcesRequest";
-import {
-    Client,
-    GetCombatRequest,
-    PostConfirmEmailRequest,
-} from "base/utils/api/TakeApiClient";
+import type { Client } from "base/utils/api/OpenApiTakeApiClient.d.ts";
+import type { AxiosInstance } from "axios";
 // import { getCombatHistoryRequest } from "base/utils/api/combat/getCombatHistory";
 
 export const useApi = () => {
-    const { $axios, $client: client } = useNuxtApp();
-
+    const { $axios, $openApi } = useNuxtApp();
     return {
         user: {
-            getUser: () => client.takeInitiativeApiFeaturesUsersGetUser(),
+            getUser: async () => {
+                const client = await $openApi.init<Client>();
+                const resp =
+                    await client.TakeInitiativeApiFeaturesUsersGetUser();
+                return resp.data;
+            },
             signUp: signUpRequest($axios),
             login: loginRequest($axios),
             logout: logoutRequest($axios),
-            confirmEmailWithToken: (code: string) =>
-                client.takeInitiativeApiFeaturesUsersPostConfirmEmail(
-                    new PostConfirmEmailRequest({
-                        confirmEmailToken: code,
-                    }),
-                ),
+            // confirmEmailWithToken: (code: string) =>
+            //     client.takeInitiativeApiFeaturesUsersPostConfirmEmail(
+            //         new PostConfirmEmailRequest({
+            //             confirmEmailToken: code,
+            //         }),
+            //     ),
             sendConfirmationEmail: postSendConfirmEmailRequest($axios),
             sendResetPasswordEmail: putSendResetPasswordRequest($axios),
             resetPasswordWithToken: putResetPassword($axios),
@@ -95,8 +96,8 @@ export const useApi = () => {
         combat: {
             getAll: getCombatsRequest($axios),
             get: getCombatRequest($axios),
-            getHistory: (r: GetCombatRequest) =>
-                client.takeInitiativeApiFeaturesCombatsGetCombatHistory(r),
+            // getHistory: (r: GetCombatRequest) =>
+            //     client.takeInitiativeApiFeaturesCombatsGetCombatHistory(r),
             start: postStartCombatRequest($axios),
             finish: postFinishCombatRequest($axios),
             open: openCombatRequest($axios),

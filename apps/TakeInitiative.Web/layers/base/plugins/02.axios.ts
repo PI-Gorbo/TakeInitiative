@@ -1,6 +1,9 @@
 import type { AxiosError, AxiosInstance, CreateAxiosDefaults } from "axios";
 import axios from "axios";
-import { Client } from "base/utils/api/TakeApiClient";
+
+import OpenAPIClientAxios from "openapi-client-axios";
+import definition from "~/../../../TakeInitiative.Api/swagger.json";
+
 export default defineNuxtPlugin((nuxtApp) => {
     // Destructure the environment variables to get axios config
     const {
@@ -37,13 +40,17 @@ export default defineNuxtPlugin((nuxtApp) => {
         },
     );
 
-    // Create a client with the generated ts.
-    const client = new Client("", Axios);
+    const api = new OpenAPIClientAxios({
+        definition,
+        axiosConfigDefaults: {
+            ...axiosConfig,
+        },
+    });
 
     return {
         provide: {
             axios: Axios,
-            client,
+            openApi: api,
         },
     };
 });
