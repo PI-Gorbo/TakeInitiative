@@ -17,7 +17,6 @@ RUN npm ci
 ENV NODE_ENV=production 
 
 COPY . .
-
 RUN npm run postinstall
 RUN npm run build:main
 RUN npm prune

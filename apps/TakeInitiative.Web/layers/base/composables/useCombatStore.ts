@@ -1,9 +1,5 @@
 import { deleteInitiativeCharacterRequest } from "../utils/api/combat/deleteInitiativeCharacterRequest";
-import {
-    CombatState,
-    type Combat,
-    type CombatCharacter,
-} from "../utils/types/models";
+import { CombatState } from "../utils/types/models";
 import * as signalR from "@microsoft/signalr";
 import type {
     StagedCharacterDTO,
@@ -17,10 +13,7 @@ import type {
     CombatCharacterDto,
     PutUpdateInitiativeCharacterRequest,
 } from "../utils/api/combat/putUpdateInitiativeCharacterRequest";
-export type CombatPlayerDto = {
-    user: CampaignMemberDto;
-    character: CombatCharacter;
-};
+import type { Combat, CombatResponse } from "base/utils/api/api";
 export const useCombatStore = defineStore("combatStore", () => {
     const userStore = useUserStore();
     const campaignStore = useCampaignStore();
@@ -48,18 +41,18 @@ export const useCombatStore = defineStore("combatStore", () => {
         return;
     });
 
-    const state = reactive<{
-        combat: Combat | null;
-        signalRError: string | null;
-    }>({
-        combat: null,
+    const state = reactive<
+        CombatResponse & {
+            signalRError: string | null;
+        }
+    >({
         signalRError: null,
     });
 
     async function setCombat(combatId: string): Promise<void> {
-        return await api.combat.get({ combatId }).then(async (resp) => {
+        return await api.combat.get({ id: combatId }).then(async (resp) => {
             state.combat = resp.combat;
-            await campaignStore.setCampaignById(resp.combat.campaignId);
+            await campaignStore.setCampaignById(resp.combat!.campaignId!);
         });
     }
 

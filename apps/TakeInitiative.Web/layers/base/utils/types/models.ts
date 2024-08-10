@@ -212,7 +212,6 @@ export type CombatTiming = InferType<typeof combatTimingRecordValidator>;
 export const playerDtoValidator = yup.object({
     userId: yup.string().required(),
 });
-export type PlayerDto = InferType<typeof playerDtoValidator>;
 
 export const CharacterOriginOptions = {
     PlayerCharacter: 0,
@@ -236,7 +235,6 @@ export const combatCharacterValidator = yup.object({
     armourClass: yup.number().nullable(),
     copyNumber: yup.number().nullable(),
 });
-export type CombatCharacter = InferType<typeof combatCharacterValidator>;
 
 export const combatValidator = yup.object({
     id: yup.string().required(),
@@ -254,4 +252,3 @@ export const combatValidator = yup.object({
     initiativeIndex: yup.number(),
     roundNumber: yup.string().nullable(),
 });
-export type Combat = InferType<typeof combatValidator>;
