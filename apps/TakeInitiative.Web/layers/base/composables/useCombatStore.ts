@@ -1,19 +1,21 @@
-import { deleteInitiativeCharacterRequest } from "../utils/api/combat/deleteInitiativeCharacterRequest";
 import { CombatState } from "../utils/types/models";
 import * as signalR from "@microsoft/signalr";
 import type {
-    StagedCharacterDTO,
-    UpsertStagedCharacterRequest,
-} from "../utils/api/combat/putUpsertStagedCharacter";
-import type { DeleteStagedCharacterRequest } from "../utils/api/combat/deleteStagedCharacterRequest";
-import type { PostStagePlannedCharactersRequest } from "../utils/api/combat/postStagePlannedCharactersRequest";
-import type { CampaignMemberDto } from "../utils/api/campaign/getCampaignRequest";
-import type { PostRollStagedCharactersIntoInitiativeRequest } from "../utils/api/combat/postRollStagedCharactersIntoInitiative";
-import type {
+    CampaignMemberDto,
+    Combat,
+    CombatCharacter,
     CombatCharacterDto,
-    PutUpdateInitiativeCharacterRequest,
-} from "../utils/api/combat/putUpdateInitiativeCharacterRequest";
-import type { Combat, CombatResponse } from "base/utils/api/api";
+    CombatResponse,
+    DeleteStagedCharacterRequest,
+    PostRollStagedCharactersIntoInitiativeRequest,
+    PutStagePlannedCharactersRequest,
+    StagedCombatCharacterDto,
+} from "base/utils/api/api";
+
+export type CombatPlayerDto = {
+    user: CampaignMemberDto;
+    character: CombatCharacter;
+};
 export const useCombatStore = defineStore("combatStore", () => {
     const userStore = useUserStore();
     const campaignStore = useCampaignStore();
@@ -69,7 +71,7 @@ export const useCombatStore = defineStore("combatStore", () => {
     async function leaveCombat(): Promise<void> {
         if (connection.state != signalR.HubConnectionState.Connected) return;
 
-        if (state.combat?.currentPlayers.find((x) => x.userId) == null) {
+        if (state.combat?.currentPlayers?.find((x) => x.userId) == null) {
             return Promise.resolve();
         }
 
@@ -92,7 +94,7 @@ export const useCombatStore = defineStore("combatStore", () => {
         });
     }
 
-    async function upsertStagedCharacter(req: StagedCharacterDTO) {
+    async function upsertStagedCharacter(req: StagedCombatCharacterDto) {
         return await api.combat.stage.character.upsert({
             character: req,
             combatId: state.combat?.id!,
@@ -133,7 +135,7 @@ export const useCombatStore = defineStore("combatStore", () => {
     }
 
     async function stagePlannedCharacters(
-        req: PostStagePlannedCharactersRequest["plannedCharactersToStage"],
+        req: PutStagePlannedCharactersRequest["plannedCharactersToStage"],
     ) {
         return await api.combat.stage.planned({
             combatId: state.combat?.id!,
@@ -197,7 +199,10 @@ export const useCombatStore = defineStore("combatStore", () => {
             }
 
             // Then sort by character name
-            result = compareStrings(a.character.name, b.character.name);
+            result = compareStrings(
+                a.character?.name ?? "",
+                b.character?.name ?? "",
+            );
             if (result != 0) {
                 return result;
             }
@@ -212,12 +217,12 @@ export const useCombatStore = defineStore("combatStore", () => {
         };
 
         return (
-            state.combat?.stagedList
-                .map(
+            state.combat
+                ?.stagedList!.map(
                     (x) =>
                         ({
                             user: campaignStore.getMemberDetailsFor(
-                                x.playerId,
+                                x.playerId!,
                             )!,
                             character: x,
                         }) satisfies CombatPlayerDto,
@@ -257,17 +262,17 @@ export const useCombatStore = defineStore("combatStore", () => {
         }),
         anyPlannedCharacters: computed(
             () =>
-                (state.combat?.plannedStages.flatMap((x) => x.npcs).length ??
+                (state.combat?.plannedStages?.flatMap((x) => x.npcs).length ??
                     0) > 0,
         ),
         orderedStagedCharacterListWithPlayerInfo,
         initiativeListWithPlayerInfo: computed(
             () =>
-                state.combat?.initiativeList.map(
+                state.combat?.initiativeList?.map(
                     (x) =>
                         ({
                             user: campaignStore.getMemberDetailsFor(
-                                x.playerId,
+                                x.playerId!,
                             )!,
                             character: x,
                         }) satisfies CombatPlayerDto,

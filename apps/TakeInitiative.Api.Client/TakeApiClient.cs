@@ -2431,22 +2431,29 @@ namespace TakeInitiative.Api.Client
 
         /// <returns>Success</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual System.Threading.Tasks.Task<GetCombatsResponse> TakeInitiativeApiFeaturesCombatsGetCombatsAsync()
+        public virtual System.Threading.Tasks.Task<GetCombatsResponse> TakeInitiativeApiFeaturesCombatsGetCombatsAsync(GetCombatsRequest body)
         {
-            return TakeInitiativeApiFeaturesCombatsGetCombatsAsync(System.Threading.CancellationToken.None);
+            return TakeInitiativeApiFeaturesCombatsGetCombatsAsync(body, System.Threading.CancellationToken.None);
         }
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>Success</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<GetCombatsResponse> TakeInitiativeApiFeaturesCombatsGetCombatsAsync(System.Threading.CancellationToken cancellationToken)
+        public virtual async System.Threading.Tasks.Task<GetCombatsResponse> TakeInitiativeApiFeaturesCombatsGetCombatsAsync(GetCombatsRequest body, System.Threading.CancellationToken cancellationToken)
         {
+            if (body == null)
+                throw new System.ArgumentNullException("body");
+
             var client_ = _httpClient;
             var disposeClient_ = false;
             try
             {
                 using (var request_ = new System.Net.Http.HttpRequestMessage())
                 {
+                    var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                    var content_ = new System.Net.Http.StringContent(json_);
+                    content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("*/*");
+                    request_.Content = content_;
                     request_.Method = new System.Net.Http.HttpMethod("GET");
                     request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
@@ -4923,6 +4930,14 @@ namespace TakeInitiative.Api.Client
     {
         [Newtonsoft.Json.JsonProperty("id", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.Guid Id { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class GetCombatsRequest
+    {
+        [Newtonsoft.Json.JsonProperty("campaignId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public System.Guid CampaignId { get; set; }
 
     }
 

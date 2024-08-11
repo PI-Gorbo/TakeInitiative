@@ -73,7 +73,7 @@ export const campaignValidator = yup.object({
     createdTimestamp: yup.string(),
     campaignSettings: campaignSettingsValidator.required(),
 });
-export type Campaign = InferType<typeof campaignValidator>;
+
 
 // Character Initiative
 export enum InitiativeStrategy {

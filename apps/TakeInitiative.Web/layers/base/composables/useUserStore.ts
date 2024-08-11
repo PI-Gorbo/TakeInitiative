@@ -1,11 +1,12 @@
-import type { GetUserResponse } from "base/utils/api/TakeApiClient";
-import type { CreateCampaignRequest } from "../utils/api/campaign/createCampaignRequest";
-import type { DeleteCampaignRequest } from "../utils/api/campaign/deleteCampaignRequest";
-import type { JoinCampaignRequest } from "../utils/api/campaign/joinCampaignRequest";
-import type { UpdateCampaignDetailsRequest } from "../utils/api/campaign/updateCampaignDetailsRequest";
-import type { LoginRequest } from "../utils/api/user/loginRequest";
-import type { SignUpRequest } from "../utils/api/user/signUpRequest";
-import type { Campaign } from "../utils/types/models";
+import type {
+    Campaign,
+    DeleteCampaignRequest,
+    GetUserResponse,
+    JoinCampaignByJoinCodeRequest,
+    PostCreateCampaignRequest,
+    PostSignUpRequest,
+    PutLoginRequest,
+} from "base/utils/api/api";
 
 type User = GetUserResponse;
 export const useUserStore = defineStore("userStore", () => {
@@ -73,14 +74,14 @@ export const useUserStore = defineStore("userStore", () => {
             });
     }
 
-    async function login(request: LoginRequest): Promise<void> {
+    async function login(request: PutLoginRequest): Promise<void> {
         await api.user.login(request).then(async () => {
             return await fetchUser();
         });
     }
 
     async function signUp(
-        signUpRequest: SignUpRequest,
+        signUpRequest: PostSignUpRequest,
         redirectPath: string | null,
     ): Promise<unknown> {
         return await api.user.signUp(signUpRequest).then(async () => {
@@ -108,7 +109,7 @@ export const useUserStore = defineStore("userStore", () => {
     }
 
     async function createCampaign(
-        request: CreateCampaignRequest,
+        request: PostCreateCampaignRequest,
     ): Promise<Campaign> {
         return await api.campaign
             .create(request)
@@ -116,7 +117,7 @@ export const useUserStore = defineStore("userStore", () => {
     }
 
     async function joinCampaign(
-        request: JoinCampaignRequest,
+        request: JoinCampaignByJoinCodeRequest,
     ): Promise<Campaign> {
         return await api.campaign
             .join(request)

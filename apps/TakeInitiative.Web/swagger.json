@@ -895,6 +895,21 @@
           "TakeInitiative.Api, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"
         ],
         "operationId": "TakeInitiativeApiFeaturesCombatsGetCombats",
+        "requestBody": {
+          "content": {
+            "*/*": {
+              "schema": {
+                "$ref": "#/components/schemas/GetCombatsRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetCombatsRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "Success",
@@ -2370,6 +2385,16 @@
         "type": "object",
         "properties": {
           "id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "additionalProperties": false
+      },
+      "GetCombatsRequest": {
+        "type": "object",
+        "properties": {
+          "campaignId": {
             "type": "string",
             "format": "uuid"
           }

@@ -6,7 +6,9 @@ import type {
     DeletePlannedCombatStageRequest,
     DeletePlayerCharacterRequest,
     DeleteStagedCharacterRequest,
+    GetCampaignRequest,
     GetCombatRequest,
+    GetCombatsRequest,
     JoinCampaignByJoinCodeRequest,
     PostCreateCampaignRequest,
     PostEndTurnRequest,
@@ -88,11 +90,12 @@ export const useApi = () => {
                 client.api
                     .takeInitiativeApiFeaturesCampaignsPutCampaignDetails(req)
                     .then(getData),
-            get: (req: string) =>
+            get: (req: GetCampaignRequest) =>
                 client.api
-                    .takeInitiativeApiFeaturesCampaignsGetCampaign(req, {
-                        campaignId: req,
-                    })
+                    .takeInitiativeApiFeaturesCampaignsGetCampaign(
+                        req.campaignId!,
+                        req,
+                    )
                     .then(getData),
             delete: (req: DeleteCampaignRequest) =>
                 client.api
@@ -178,9 +181,9 @@ export const useApi = () => {
             },
         },
         combat: {
-            getAll: () =>
+            getAll: (req: GetCombatsRequest) =>
                 client.api
-                    .takeInitiativeApiFeaturesCombatsGetCombats()
+                    .takeInitiativeApiFeaturesCombatsGetCombats(req)
                     .then(getData),
             get: (req: GetCombatRequest) =>
                 client.api

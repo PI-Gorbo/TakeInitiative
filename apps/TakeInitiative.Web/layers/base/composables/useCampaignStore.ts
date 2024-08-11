@@ -1,20 +1,11 @@
-import { useCampaignCombatsStore } from "./useCampaignCombatsStore";
 import type {
     CampaignMemberDto,
-    CombatDto,
-    GetCampaignResponse,
-} from "../utils/api/campaign/getCampaignRequest";
-import type {
-    Campaign,
-    CampaignMemberInfo,
     CampaignMemberResource,
-    PlannedCombat,
-    PlayerCharacter,
-} from "../utils/types/models";
-import type { CampaignMember } from "../utils/types/models";
-import type { UpdateCampaignDetailsRequest } from "../utils/api/campaign/updateCampaignDetailsRequest";
-import type { CreatePlannedCombatRequest } from "../utils/api/plannedCombat/createPlannedCombatRequest";
-import type { PlayerCharacterDto } from "../utils/api/campaign/createPlayerCharacterRequest";
+    GetCampaignResponse,
+    PlayerCharacterDTO,
+    PutCampaignDetailsRequest,
+} from "base/utils/api/api";
+import { useCampaignCombatsStore } from "./useCampaignCombatsStore";
 import * as signalR from "@microsoft/signalr";
 
 export const useCampaignStore = defineStore("campaignStore", () => {
@@ -69,7 +60,6 @@ export const useCampaignStore = defineStore("campaignStore", () => {
     async function fetchCampaign(
         campaignId: string,
     ): Promise<GetCampaignResponse> {
-        console.log("refetching campaign info");
         return await api.campaign.get({ campaignId });
     }
 
@@ -83,11 +73,10 @@ export const useCampaignStore = defineStore("campaignStore", () => {
         campaignDetails: GetCampaignResponse,
     ): Promise<void> {
         if (
-            state.campaign?.id != null &&
+            state.campaign?.id != undefined &&
             connection.state == signalR.HubConnectionState.Connected &&
-            state.campaign?.id != campaignDetails.campaign.id
+            state.campaign?.id != campaignDetails.campaign?.id
         ) {
-            console.log("Left old group");
             await connection.send("Leave", state.campaign?.id);
         }
 
@@ -98,7 +87,7 @@ export const useCampaignStore = defineStore("campaignStore", () => {
     }
 
     async function updateCampaignDetails(
-        request: Omit<UpdateCampaignDetailsRequest, "campaignId">,
+        request: Omit<PutCampaignDetailsRequest, "campaignId">,
     ) {
         return await api.campaign
             .update({
@@ -137,7 +126,7 @@ export const useCampaignStore = defineStore("campaignStore", () => {
     }
 
     // Player Character Management //
-    async function createPlayerCharacter(dto: PlayerCharacterDto) {
+    async function createPlayerCharacter(dto: PlayerCharacterDTO) {
         return await api.campaign.playerCharacters
             .create({
                 campaignMemberId: state.userCampaignMember?.id!,
@@ -148,7 +137,7 @@ export const useCampaignStore = defineStore("campaignStore", () => {
 
     async function updatePlayerCharacter(
         characterId: string,
-        dto: PlayerCharacterDto,
+        dto: PlayerCharacterDTO,
     ) {
         return await api.campaign.playerCharacters
             .update({
@@ -208,8 +197,8 @@ export const useCampaignStore = defineStore("campaignStore", () => {
                             multiplePropertyAlphabeticalSort(
                                 a,
                                 b,
-                                (ob) => ob.link,
-                                (ob) => ob.name,
+                                (ob) => ob.link ?? "",
+                                (ob) => ob.name ?? "",
                             ),
                     ),
                     isDm: state.userCampaignMember?.isDungeonMaster,
@@ -221,8 +210,8 @@ export const useCampaignStore = defineStore("campaignStore", () => {
                         multiplePropertyAlphabeticalSort(
                             a,
                             b,
-                            (ob) => ob.link,
-                            (ob) => ob.name,
+                            (ob) => ob.link ?? "",
+                            (ob) => ob.name ?? "",
                         ),
                     ),
                     isDm: member.isDungeonMaster,

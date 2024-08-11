@@ -275,6 +275,11 @@ export interface GetCombatRequest {
     id?: string;
 }
 
+export interface GetCombatsRequest {
+    /** @format uuid */
+    campaignId?: string;
+}
+
 export interface GetCombatsResponse {
     plannedCombats?: PlannedCombat[] | null;
     combats?: CombatDto[] | null;
@@ -1147,10 +1152,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
          * @name TakeInitiativeApiFeaturesCombatsGetCombats
          * @request GET:/api/combats
          */
-        takeInitiativeApiFeaturesCombatsGetCombats: (params: RequestParams = {}) =>
+        takeInitiativeApiFeaturesCombatsGetCombats: (data: GetCombatsRequest, params: RequestParams = {}) =>
             this.request<GetCombatsResponse, void>({
                 path: `/api/combats`,
                 method: "GET",
+                body: data,
+                type: ContentType.Json,
                 format: "json",
                 ...params,
             }),
