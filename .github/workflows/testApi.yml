@@ -35,4 +35,4 @@ jobs:
             - name: Test
               run: |
                   export PythonDLL=/opt/hostedtoolcache/Python/3.11.9/x64/lib/libpython3.11.so
-                  dotnet test -- --verbosity normal
+                  dotnet test --no-build --no-restore --configuration Release
