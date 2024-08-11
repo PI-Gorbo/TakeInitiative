@@ -121,7 +121,6 @@ public class ComprehensiveCombatTests(AuthenticatedWebAppWithDatabaseFixture fix
         var verifySettings = new VerifySettings();
         verifySettings.DontIgnoreEmptyCollections();
         verifySettings.UseFileName(fileName);
-
         return Verify(target, verifySettings);
     }
 }
