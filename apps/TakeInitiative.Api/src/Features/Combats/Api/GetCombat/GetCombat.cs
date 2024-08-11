@@ -2,27 +2,29 @@ using System.Net;
 using FastEndpoints;
 using Marten;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Mvc;
 using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Combats;
-public class GetCombat(IDocumentStore Store) : Endpoint<GetCombatRequest, CombatResponse>
+public class GetCombat(IDocumentStore Store) : EndpointWithoutRequest<CombatResponse>
 {
     public override void Configure()
     {
         Get("/api/combat/{Id}");
     }
 
-    public override async Task HandleAsync(GetCombatRequest request, CancellationToken ct)
+    public override async Task HandleAsync(CancellationToken ct)
     {
+        var combatId = Route<Guid>("Id");
         var userId = this.GetUserIdOrThrowUnauthorized();
 
         var result = await Store.Try(
             async (session) =>
             {
-                var combat = await session.LoadAsync<Combat>(request.Id, ct);
+                var combat = await session.LoadAsync<Combat>(combatId, ct);
                 if (combat == null)
                 {
-                    ThrowError(x => x.Id, "There is no combat with the given id.");
+                    ThrowError("There is no combat with the given id.");
                 }
 
                 // Fetch the campaign and check the user is apart of the campaign

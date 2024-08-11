@@ -251,11 +251,6 @@ export interface GetCampaignMemberRequest {
     campaignMemberId?: string;
 }
 
-export interface GetCampaignRequest {
-    /** @format uuid */
-    campaignId?: string;
-}
-
 export interface GetCampaignResponse {
     campaign?: Campaign;
     userCampaignMember?: CampaignMember;
@@ -980,16 +975,10 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
          * @name TakeInitiativeApiFeaturesCampaignsGetCampaign
          * @request GET:/api/campaign/{CampaignId}
          */
-        takeInitiativeApiFeaturesCampaignsGetCampaign: (
-            campaignId: string,
-            data: GetCampaignRequest,
-            params: RequestParams = {},
-        ) =>
+        takeInitiativeApiFeaturesCampaignsGetCampaign: (campaignId: string, params: RequestParams = {}) =>
             this.request<GetCampaignResponse, void>({
                 path: `/api/campaign/${campaignId}`,
                 method: "GET",
-                body: data,
-                type: ContentType.Json,
                 format: "json",
                 ...params,
             }),
@@ -1169,12 +1158,10 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
          * @name TakeInitiativeApiFeaturesCombatsGetCombat
          * @request GET:/api/combat/{Id}
          */
-        takeInitiativeApiFeaturesCombatsGetCombat: (id: string, data: GetCombatRequest, params: RequestParams = {}) =>
+        takeInitiativeApiFeaturesCombatsGetCombat: (id: string, params: RequestParams = {}) =>
             this.request<CombatResponse, void>({
                 path: `/api/combat/${id}`,
                 method: "GET",
-                body: data,
-                type: ContentType.Json,
                 format: "json",
                 ...params,
             }),

@@ -60,7 +60,7 @@ export const useCampaignStore = defineStore("campaignStore", () => {
     async function fetchCampaign(
         campaignId: string,
     ): Promise<GetCampaignResponse> {
-        return await api.campaign.get({ campaignId });
+        return await api.campaign.get(campaignId);
     }
 
     const setCampaignById = async (campaignId: string): Promise<void> => {
