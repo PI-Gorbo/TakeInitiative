@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 
 namespace TakeInitiative.Api.Features.Users;
 
+
 public class PostSignUp(
     IHostEnvironment environment,
     UserManager<ApplicationUser> UserManager,
@@ -67,6 +68,8 @@ public class PostSignUp(
             u["UserId"] = user.Id.ToString();
         });
 
+
+        this.Response = new object();
         await SendOkAsync(ct);
     }
 }

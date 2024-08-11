@@ -8,9 +8,7 @@ export type GetCombatRequest = {
     combatId: string;
 };
 
-export type GetCombatResponse = yup.InferType<
-    typeof combatResponseValidator
->;
+export type GetCombatResponse = yup.InferType<typeof combatResponseValidator>;
 
 export function getCombatRequest(axios: AxiosInstance) {
     return async function (

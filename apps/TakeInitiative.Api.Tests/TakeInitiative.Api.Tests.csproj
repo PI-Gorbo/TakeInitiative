@@ -12,6 +12,7 @@
     <ItemGroup>
         <PackageReference Include="Alba" Version="7.4.1" />
         <PackageReference Include="CSharpFunctionalExtensions.FluentAssertions" Version="2.0.0" />
+        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.7" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.6.0" />
         <PackageReference Include="NSubstitute" Version="5.1.0" />
         <PackageReference Include="NSubstitute.Analyzers.CSharp" Version="1.0.17">
@@ -20,7 +21,8 @@
         </PackageReference>
         <PackageReference Include="Testcontainers" Version="3.9.0" />
         <PackageReference Include="Testcontainers.PostgreSql" Version="3.9.0" />
-        <PackageReference Include="xunit" Version="2.8.0" />
+        <PackageReference Include="Verify.Xunit" Version="26.1.2" />
+        <PackageReference Include="xunit" Version="2.9.0" />
         <PackageReference Include="xunit.runner.visualstudio" Version="2.4.5">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
@@ -33,6 +35,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\TakeInitiative.Api\TakeInitiative.Api.csproj" />
+        <ProjectReference Include="..\TakeInitiative.Api.Client\TakeInitiative.Api.Client.csproj" />
     </ItemGroup>
 
 </Project>

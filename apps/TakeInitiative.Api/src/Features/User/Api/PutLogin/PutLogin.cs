@@ -1,3 +1,4 @@
+using System.Net;
 using CSharpFunctionalExtensions;
 using FastEndpoints;
 using FastEndpoints.Security;
@@ -44,5 +45,6 @@ public class PutLogin(
             });
 
         await this.ReturnApiResult(result);
+        await this.SendOkAsync();
     }
 }
