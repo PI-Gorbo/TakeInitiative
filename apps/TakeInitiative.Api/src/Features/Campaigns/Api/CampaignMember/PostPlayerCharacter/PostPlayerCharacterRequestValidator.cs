@@ -10,7 +10,7 @@ public class PostPlayerCharacterRequestValidator : Validator<PostPlayerCharacter
     {
         RuleFor(x => x.CampaignMemberId)
             .NotEmpty();
-            
+
         RuleFor(x => x.PlayerCharacter)
             .SetValidator(new PlayerCharacterDTOValidator(roller));
     }

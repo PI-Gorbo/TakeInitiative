@@ -1,16 +1,19 @@
 using System.Net;
 using System.Text.Json;
 using FastEndpoints;
+using FastEndpoints.ClientGen.Kiota;
 using FastEndpoints.Swagger;
 using JasperFx.Core;
+using Kiota.Builder;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 namespace TakeInitiative.Api;
 internal class Program
 {
-    private static void Main(string[] args)
+    private static async Task Main(string[] args)
     {
+        var generateClientArgsPassedIn = args is ["--generateclients", "true"];
         var builder = WebApplication.CreateBuilder(args);
 
         // Build config
@@ -29,20 +32,19 @@ internal class Program
         builder.Services.AddFastEndpoints();
         builder.Services.AddSwaggerGen(genOptions =>
         {
-            genOptions.UseInlineDefinitionsForEnums();
-        });
-        builder.Services.AddSignalR();
+            genOptions.UseOneOfForPolymorphism();
+            genOptions.UseAllOfForInheritance();
+            genOptions.SelectSubTypesUsing(baseType =>
+                    typeof(Program).Assembly.GetTypes().Where(type => type.IsSubclassOf(baseType))
+                );
 
-        // Dev only
-        if (builder.Environment.IsDevelopment())
-        {
-            // builder.Services.AddOpenApiDocument(doc => doc.DocumentName = "TakeInitiativeApi");
-            builder.Services.SwaggerDocument(); //define a swagger document;
-        }
+        });
+
+        builder.Services.AddSignalR();
 
         // Custom Injection
         builder.Services.AddOptionObjects(builder.Configuration);
-        builder.Services.AddMartenDB(builder.Configuration, builder.Environment.IsDevelopment());
+        builder.Services.AddMartenDB(builder.Configuration, !generateClientArgsPassedIn && builder.Environment.IsDevelopment());
         builder.Services.AddSerilog();
         builder.Services.AddIdentityAuthenticationAndAuthorization(builder.Configuration);
         builder.Services.AddPython(builder.Configuration);
@@ -80,8 +82,8 @@ internal class Program
         app.MapHub<CombatHub>("/combatHub");
         app.MapHub<CampaignHub>("/campaignHub");
 
-        app.UseCors("MainAppCors")
-            .UseFastEndpoints(cfg =>
+        app.UseCors("MainAppCors");
+        app.UseFastEndpoints(cfg =>
             {
                 cfg.Endpoints.Configurator = (endpoint) =>
                 {
@@ -109,19 +111,14 @@ internal class Program
                     }
 
                 };
-            })
-            .UseAuthentication()
-            .UseAuthorization();
+            });
 
-        // Configure the HTTP request pipeline.
-        if (app.Environment.IsDevelopment())
-        {
-            app.UseSwaggerGen();
-        }
+        app.UseAuthentication();
+        app.UseAuthorization();
 
         app.UseHealthChecks("/healthz");
-
         app.UseSwaggerGen();
+
         app.Run();
     }
 }

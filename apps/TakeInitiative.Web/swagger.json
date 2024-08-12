@@ -1770,13 +1770,7 @@
             "nullable": true
           },
           "visibility": {
-            "enum": [
-              0,
-              1,
-              2
-            ],
-            "type": "integer",
-            "format": "int32"
+            "$ref": "#/components/schemas/ResourceVisibilityOptions"
           }
         },
         "additionalProperties": false
@@ -1789,6 +1783,31 @@
           },
           "combatArmourClassDisplaySettings": {
             "$ref": "#/components/schemas/CombatArmourClassDisplaySettings"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Character": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "health": {
+            "$ref": "#/components/schemas/CharacterHealth"
+          },
+          "initiative": {
+            "$ref": "#/components/schemas/CharacterInitiative"
+          },
+          "armourClass": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -1816,12 +1835,7 @@
         "type": "object",
         "properties": {
           "strategy": {
-            "enum": [
-              0,
-              1
-            ],
-            "type": "integer",
-            "format": "int32"
+            "$ref": "#/components/schemas/InitiativeStrategy"
           },
           "value": {
             "type": "string",
@@ -1845,13 +1859,7 @@
         "type": "object",
         "properties": {
           "characterOrigin": {
-            "enum": [
-              0,
-              1,
-              2
-            ],
-            "type": "integer",
-            "format": "int32"
+            "$ref": "#/components/schemas/CharacterOriginOptions"
           },
           "id": {
             "type": "string",
@@ -1860,6 +1868,15 @@
           }
         },
         "additionalProperties": false
+      },
+      "CharacterOriginOptions": {
+        "enum": [
+          0,
+          1,
+          2
+        ],
+        "type": "integer",
+        "format": "int32"
       },
       "Combat": {
         "type": "object",
@@ -1873,14 +1890,7 @@
             "format": "uuid"
           },
           "state": {
-            "enum": [
-              0,
-              1,
-              2,
-              3
-            ],
-            "type": "integer",
-            "format": "int32"
+            "$ref": "#/components/schemas/CombatState"
           },
           "combatName": {
             "type": "string",
@@ -1946,46 +1956,30 @@
         "type": "object",
         "properties": {
           "dmCharacterDisplayMethod": {
-            "enum": [
-              0,
-              2
-            ],
-            "type": "integer",
-            "format": "int32"
+            "$ref": "#/components/schemas/CombatArmourDisplayOptions"
           },
           "otherPlayerCharacterDisplayMethod": {
-            "enum": [
-              0,
-              2
-            ],
-            "type": "integer",
-            "format": "int32"
+            "$ref": "#/components/schemas/CombatArmourDisplayOptions"
           }
         },
         "additionalProperties": false
       },
+      "CombatArmourDisplayOptions": {
+        "enum": [
+          0,
+          2
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
       "CombatCharacter": {
         "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Character"
+          }
+        ],
         "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "name": {
-            "type": "string",
-            "nullable": true
-          },
-          "health": {
-            "$ref": "#/components/schemas/CharacterHealth"
-          },
-          "initiative": {
-            "$ref": "#/components/schemas/CharacterInitiative"
-          },
-          "armourClass": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
           "playerId": {
             "type": "string",
             "format": "uuid"
@@ -2057,14 +2051,7 @@
             "nullable": true
           },
           "state": {
-            "enum": [
-              0,
-              1,
-              2,
-              3
-            ],
-            "type": "integer",
-            "format": "int32"
+            "$ref": "#/components/schemas/CombatState"
           },
           "finishedTimestamp": {
             "type": "string",
@@ -2074,26 +2061,23 @@
         },
         "additionalProperties": false
       },
+      "CombatHealthDisplayOptions": {
+        "enum": [
+          0,
+          1,
+          2
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
       "CombatHealthDisplaySettings": {
         "type": "object",
         "properties": {
           "dmCharacterDisplayMethod": {
-            "enum": [
-              0,
-              1,
-              2
-            ],
-            "type": "integer",
-            "format": "int32"
+            "$ref": "#/components/schemas/CombatHealthDisplayOptions"
           },
           "otherPlayerCharacterDisplayMethod": {
-            "enum": [
-              0,
-              1,
-              2
-            ],
-            "type": "integer",
-            "format": "int32"
+            "$ref": "#/components/schemas/CombatHealthDisplayOptions"
           }
         },
         "additionalProperties": false
@@ -2143,6 +2127,16 @@
         },
         "additionalProperties": false
       },
+      "CombatState": {
+        "enum": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
       "CurrentCombatDto": {
         "type": "object",
         "properties": {
@@ -2151,14 +2145,7 @@
             "format": "uuid"
           },
           "state": {
-            "enum": [
-              0,
-              1,
-              2,
-              3
-            ],
-            "type": "integer",
-            "format": "int32"
+            "$ref": "#/components/schemas/CombatState"
           },
           "combatName": {
             "type": "string",
@@ -2469,6 +2456,14 @@
         "type": "object",
         "additionalProperties": false
       },
+      "InitiativeStrategy": {
+        "enum": [
+          0,
+          1
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
       "JoinCampaignByJoinCodeRequest": {
         "type": "object",
         "properties": {
@@ -2523,26 +2518,12 @@
       },
       "PlannedCombatCharacter": {
         "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Character"
+          }
+        ],
         "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "name": {
-            "type": "string",
-            "nullable": true
-          },
-          "health": {
-            "$ref": "#/components/schemas/CharacterHealth"
-          },
-          "initiative": {
-            "$ref": "#/components/schemas/CharacterInitiative"
-          },
-          "armourClass": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
           "stageId": {
             "type": "string",
             "format": "uuid"
@@ -2577,26 +2558,12 @@
       },
       "PlayerCharacter": {
         "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Character"
+          }
+        ],
         "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "name": {
-            "type": "string",
-            "nullable": true
-          },
-          "health": {
-            "$ref": "#/components/schemas/CharacterHealth"
-          },
-          "initiative": {
-            "$ref": "#/components/schemas/CharacterInitiative"
-          },
-          "armourClass": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
           "playerId": {
             "type": "string",
             "format": "uuid"
@@ -3021,6 +2988,15 @@
         },
         "additionalProperties": false
       },
+      "ResourceVisibilityOptions": {
+        "enum": [
+          0,
+          1,
+          2
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
       "StagePlannedCharacterDto": {
         "type": "object",
         "properties": {
@@ -3037,26 +3013,12 @@
       },
       "StagedCombatCharacterDto": {
         "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Character"
+          }
+        ],
         "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "name": {
-            "type": "string",
-            "nullable": true
-          },
-          "health": {
-            "$ref": "#/components/schemas/CharacterHealth"
-          },
-          "initiative": {
-            "$ref": "#/components/schemas/CharacterInitiative"
-          },
-          "armourClass": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
           "hidden": {
             "type": "boolean"
           }

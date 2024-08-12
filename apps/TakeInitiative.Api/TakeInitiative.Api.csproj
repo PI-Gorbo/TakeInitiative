@@ -11,6 +11,7 @@
     <ItemGroup>
         <PackageReference Include="CSharpFunctionalExtensions" Version="2.40.3" />
         <PackageReference Include="FastEndpoints" Version="5.27.0" />
+        <PackageReference Include="FastEndpoints.ClientGen.Kiota" Version="5.28.0" />
         <PackageReference Include="FastEndpoints.Security" Version="5.21.2" />
         <PackageReference Include="FastEndpoints.Swagger" Version="5.27.0" />
         <PackageReference Include="Handlebars.Net" Version="2.1.6" />
@@ -43,9 +44,6 @@
     <Target Name="CreateSwaggerJson" AfterTargets="Build" Condition="$(Configuration)=='Debug'">
         <Exec
             Command="dotnet swagger tofile --output ./swagger.json $(OutputPath)$(AssemblyName).dll v1"
-            WorkingDirectory="$(ProjectDir)" />
-        <Exec
-            Command="dotnet swagger tofile --output ../TakeInitiative.Web/swagger.json $(OutputPath)$(AssemblyName).dll v1"
             WorkingDirectory="$(ProjectDir)" />
         <Exec Command="make generate.client" WorkingDirectory="$(ProjectDir)" />
     </Target>

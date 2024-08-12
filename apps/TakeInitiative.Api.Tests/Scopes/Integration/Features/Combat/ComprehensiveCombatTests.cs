@@ -107,7 +107,7 @@ public class ComprehensiveCombatTests(AuthenticatedWebAppWithDatabaseFixture fix
                     Initiative = new()
                     {
                         Value = "1d20 + 1",
-                        Strategy = Client.CharacterInitiativeStrategy._1 // Roll,
+                        Strategy = Client.InitiativeStrategy._1 // Roll,
                     }
                 },
             }));
