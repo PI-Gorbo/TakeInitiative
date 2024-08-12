@@ -56,13 +56,22 @@ export interface CampaignMemberInfo {
 export interface CampaignMemberResource {
     name?: string | null;
     link?: string | null;
-    /** @format int32 */
-    visibility?: 0 | 1 | 2;
+    visibility?: ResourceVisibilityOptions;
 }
 
 export interface CampaignSettings {
     combatHealthDisplaySettings?: CombatHealthDisplaySettings;
     combatArmourClassDisplaySettings?: CombatArmourClassDisplaySettings;
+}
+
+export interface Character {
+    /** @format uuid */
+    id?: string;
+    name?: string | null;
+    health?: CharacterHealth;
+    initiative?: CharacterInitiative;
+    /** @format int32 */
+    armourClass?: number | null;
 }
 
 export interface CharacterHealth {
@@ -74,8 +83,7 @@ export interface CharacterHealth {
 }
 
 export interface CharacterInitiative {
-    /** @format int32 */
-    strategy?: 0 | 1;
+    strategy?: InitiativeStrategy;
     value?: string | null;
     /** @format int32 */
     fixed?: number | null;
@@ -83,10 +91,16 @@ export interface CharacterInitiative {
 }
 
 export interface CharacterOriginDetails {
-    /** @format int32 */
-    characterOrigin?: 0 | 1 | 2;
+    characterOrigin?: CharacterOriginOptions;
     /** @format uuid */
     id?: string | null;
+}
+
+/** @format int32 */
+export enum CharacterOriginOptions {
+    Value0 = 0,
+    Value1 = 1,
+    Value2 = 2,
 }
 
 export interface Combat {
@@ -94,12 +108,11 @@ export interface Combat {
     id?: string;
     /** @format uuid */
     campaignId?: string;
-    /** @format int32 */
-    state?: 0 | 1 | 2 | 3;
+    state?: CombatState;
     combatName?: string | null;
     /** @format uuid */
     dungeonMaster?: string;
-    combatLogs?: string[] | null;
+    history?: CombatLog[] | null;
     currentPlayers?: PlayerDto[] | null;
     plannedStages?: PlannedCombatStage[] | null;
     stagedList?: CombatCharacter[] | null;
@@ -113,20 +126,17 @@ export interface Combat {
 }
 
 export interface CombatArmourClassDisplaySettings {
-    /** @format int32 */
-    dmCharacterDisplayMethod?: 0 | 2;
-    /** @format int32 */
-    otherPlayerCharacterDisplayMethod?: 0 | 2;
+    dmCharacterDisplayMethod?: CombatArmourDisplayOptions;
+    otherPlayerCharacterDisplayMethod?: CombatArmourDisplayOptions;
 }
 
-export interface CombatCharacter {
-    /** @format uuid */
-    id?: string;
-    name?: string | null;
-    health?: CharacterHealth;
-    initiative?: CharacterInitiative;
-    /** @format int32 */
-    armourClass?: number | null;
+/** @format int32 */
+export enum CombatArmourDisplayOptions {
+    Value0 = 0,
+    Value2 = 2,
+}
+
+export type CombatCharacter = Character & {
     /** @format uuid */
     playerId?: string;
     characterOriginDetails?: CharacterOriginDetails;
@@ -134,7 +144,7 @@ export interface CombatCharacter {
     hidden?: boolean;
     /** @format int32 */
     copyNumber?: number | null;
-}
+};
 
 export interface CombatCharacterDto {
     /** @format uuid */
@@ -151,17 +161,21 @@ export interface CombatDto {
     /** @format uuid */
     combatId?: string;
     combatName?: string | null;
-    /** @format int32 */
-    state?: 0 | 1 | 2 | 3;
+    state?: CombatState;
     /** @format date-time */
     finishedTimestamp?: string | null;
 }
 
+/** @format int32 */
+export enum CombatHealthDisplayOptions {
+    Value0 = 0,
+    Value1 = 1,
+    Value2 = 2,
+}
+
 export interface CombatHealthDisplaySettings {
-    /** @format int32 */
-    dmCharacterDisplayMethod?: 0 | 1 | 2;
-    /** @format int32 */
-    otherPlayerCharacterDisplayMethod?: 0 | 1 | 2;
+    dmCharacterDisplayMethod?: CombatHealthDisplayOptions;
+    otherPlayerCharacterDisplayMethod?: CombatHealthDisplayOptions;
 }
 
 export interface CombatHistoryDto {
@@ -171,15 +185,30 @@ export interface CombatHistoryDto {
     totalCombats?: number;
 }
 
+export interface CombatLog {
+    operations?: ICombatOperation[] | null;
+    /** @format uuid */
+    operatorId?: string;
+    /** @format date-time */
+    time?: string;
+}
+
 export interface CombatResponse {
     combat?: Combat;
+}
+
+/** @format int32 */
+export enum CombatState {
+    Value0 = 0,
+    Value1 = 1,
+    Value2 = 2,
+    Value3 = 3,
 }
 
 export interface CurrentCombatDto {
     /** @format uuid */
     id?: string;
-    /** @format int32 */
-    state?: 0 | 1 | 2 | 3;
+    state?: CombatState;
     combatName?: string | null;
     /** @format uuid */
     dungeonMaster?: string;
@@ -302,6 +331,14 @@ export interface HistoryEvent {
     userId?: string;
 }
 
+export type ICombatOperation = object;
+
+/** @format int32 */
+export enum InitiativeStrategy {
+    Value0 = 0,
+    Value1 = 1,
+}
+
 export interface JoinCampaignByJoinCodeRequest {
     joinCode?: string | null;
 }
@@ -322,19 +359,12 @@ export interface PlannedCombat {
     stages?: PlannedCombatStage[] | null;
 }
 
-export interface PlannedCombatCharacter {
-    /** @format uuid */
-    id?: string;
-    name?: string | null;
-    health?: CharacterHealth;
-    initiative?: CharacterInitiative;
-    /** @format int32 */
-    armourClass?: number | null;
+export type PlannedCombatCharacter = Character & {
     /** @format uuid */
     stageId?: string;
     /** @format int32 */
     quantity?: number;
-}
+};
 
 export interface PlannedCombatStage {
     /** @format uuid */
@@ -343,17 +373,10 @@ export interface PlannedCombatStage {
     npcs?: PlannedCombatCharacter[] | null;
 }
 
-export interface PlayerCharacter {
-    /** @format uuid */
-    id?: string;
-    name?: string | null;
-    health?: CharacterHealth;
-    initiative?: CharacterInitiative;
-    /** @format int32 */
-    armourClass?: number | null;
+export type PlayerCharacter = Character & {
     /** @format uuid */
     playerId?: string;
-}
+};
 
 export interface PlayerCharacterDTO {
     name?: string | null;
@@ -525,6 +548,13 @@ export interface PutUpsertStagedCharacterRequest {
     character?: StagedCombatCharacterDto;
 }
 
+/** @format int32 */
+export enum ResourceVisibilityOptions {
+    Value0 = 0,
+    Value1 = 1,
+    Value2 = 2,
+}
+
 export interface StagePlannedCharacterDto {
     /** @format uuid */
     characterId?: string;
@@ -532,16 +562,9 @@ export interface StagePlannedCharacterDto {
     quantity?: number;
 }
 
-export interface StagedCombatCharacterDto {
-    /** @format uuid */
-    id?: string;
-    name?: string | null;
-    health?: CharacterHealth;
-    initiative?: CharacterInitiative;
-    /** @format int32 */
-    armourClass?: number | null;
+export type StagedCombatCharacterDto = Character & {
     hidden?: boolean;
-}
+};
 
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse, HeadersDefaults, ResponseType } from "axios";
 import axios from "axios";

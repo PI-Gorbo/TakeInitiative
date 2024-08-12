@@ -1,5 +1,5 @@
 ifeq ($(OS),Windows_NT)
-SHELL := powershell.exe
+SHELL := pwsh.exe
 .SHELLFLAGS := -NoProfile -Command
 endif
 
@@ -9,5 +9,6 @@ api.watch:
 	dotnet watch run
 
 generate.client:
-	cp swagger.json ../TakeInitiative.Web/swagger.json
+
 	nswag openapi2csclient /input:swagger.json /classname:TakeApiClient /namespace:TakeInitiative.Api.Client /output:../TakeInitiative.Api.Client/TakeApiClient.cs
+	cd ../TakeInitiative.Web/ && npx swagger-typescript-api -p ../TakeInitiative.Api/swagger.json -o ./layers/base/utils/api -n api.ts --axios

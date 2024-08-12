@@ -3,7 +3,7 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "generate-api-client": "npx swagger-typescript-api -p ./swagger.json -o ./layers/base/utils/api -n api.ts --axios",
+        "generate-api-client": "npx swagger-typescript-api -p ../TakeInitiative.Api/swagger.json -o ./layers/base/utils/api -n api.ts --axios",
         "build:main": "npm run generate-api-client && nuxt build ./layers/main",
         "build:admin": "npm run generate-api-client && nuxt build ./layers/admin",
         "dev": "npm run dev:main",
