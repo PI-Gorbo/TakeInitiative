@@ -8,7 +8,6 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
 {
     public async Task<Combat> Apply(CombatResumedEvent @event, Combat Combat, IEvent<CombatResumedEvent> eventDetails, IQuerySession session)
     {
-        var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
         return Combat with
         {
             State = CombatState.Started,

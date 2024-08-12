@@ -3,6 +3,7 @@ using Marten;
 using Marten.Events;
 using Marten.Events.Aggregation;
 using TakeInitiative.Utilities;
+using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Combats;
 public partial class CombatProjection : SingleStreamProjection<Combat>
@@ -10,7 +11,7 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
     public async Task<Combat> Apply(InitiativeCharacterEditedEvent @event, Combat Combat, IEvent<InitiativeCharacterEditedEvent> eventDetails, IQuerySession session)
     {
         var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
-        var (character, index) = Combat.InitiativeList.Select((value, index) => (value, index)).FirstOrDefault(x => x.value.Id == @event.Character.Id, (null, -1));
+        var (character, index) = Combat.InitiativeList.Select((value, index) => (value, index)).FirstOrDefault(x => x.value?.Id == @event.Character.Id, (null, -1));
         if (character == null)
         {
             return Combat; // Ignore this character if it cannot be found.
@@ -26,6 +27,15 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
                 Hidden = @event.Character.Hidden,
                 ArmourClass = @event.Character.ArmourClass,
             }),
+            History = Combat.History
+                .AppendIf(() =>
+                {
+                    var hasHealth = (character.Health?.HasHealth ?? false) && (@event.Character.Health?.HasHealth ?? false);
+                    var currentHealthChanged = character.Health?.CurrentHealth != @event.Character.Health?.CurrentHealth;
+                    return hasHealth && currentHealthChanged;
+                }, new([
+                    new CharacterHealthChanged(character.Id, character.Health?.CurrentHealth ?? -1, @event.Character.Health?.CurrentHealth ?? -1)
+                ], @event.UserId, eventDetails.Timestamp))
         };
     }
 }

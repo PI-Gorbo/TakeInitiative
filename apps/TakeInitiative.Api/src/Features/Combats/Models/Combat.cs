@@ -9,7 +9,7 @@ public record Combat
     public CombatState State { get; set; }
     public string? CombatName { get; init; }
     public Guid DungeonMaster { get; init; }
-    public ImmutableList<string> CombatLogs { get; set; } = [];
+    public ImmutableList<CombatLog> History { get; set; } = [];
     public ImmutableList<PlayerDto> CurrentPlayers { get; set; } = [];
     public ImmutableList<PlannedCombatStage> PlannedStages { get; set; } = [];
     public ImmutableList<CombatCharacter> StagedList { get; set; } = [];
@@ -24,8 +24,7 @@ public record Combat
             CombatState State,
             string? CombatName,
             Guid DungeonMaster,
-            ImmutableList<CombatTimingRecord> Timing,
-            ImmutableList<string> CombatLogs,
+            ImmutableList<CombatLog> History,
             ImmutableList<PlayerDto> CurrentPlayers,
 
             // Actual Initiative List
@@ -43,7 +42,7 @@ public record Combat
             State = State,
             CombatName = CombatName,
             DungeonMaster = DungeonMaster,
-            CombatLogs = CombatLogs,
+            History = History,
             CurrentPlayers = CurrentPlayers,
             StagedList = StagedList,
             InitiativeList = InitiativeList,

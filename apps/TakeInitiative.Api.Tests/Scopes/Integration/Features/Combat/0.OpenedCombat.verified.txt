@@ -1,9 +1,18 @@
 ﻿{
   Id: Guid_1,
   CampaignId: Guid_2,
+  State: 0,
   CombatName: My planned combat,
   DungeonMaster: Guid_3,
-  CombatLogs: [],
+  History: [
+    {
+      Operations: [
+        {}
+      ],
+      OperatorId: Guid_3,
+      Time: DateTimeOffset_1
+    }
+  ],
   CurrentPlayers: [],
   PlannedStages: [
     {
@@ -19,8 +28,9 @@
             CurrentHealth: 0
           },
           Initiative: {
-            Strategy: _1,
+            Strategy: 1,
             Value: 1d20 + 1,
+            Fixed: null,
             Roll: 1d20 + 1
           },
           ArmourClass: 12,
@@ -42,8 +52,9 @@
             CurrentHealth: 0
           },
           Initiative: {
-            Strategy: _1,
+            Strategy: 1,
             Value: 1d20 + 4,
+            Fixed: null,
             Roll: 1d20 + 4
           },
           ArmourClass: 12,
@@ -55,5 +66,7 @@
   ],
   StagedList: [],
   InitiativeList: [],
-  InitiativeIndex: -1
+  InitiativeIndex: -1,
+  RoundNumber: null,
+  FinishedTimestamp: null
 }

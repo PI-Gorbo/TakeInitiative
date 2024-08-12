@@ -1890,10 +1890,10 @@
             "type": "string",
             "format": "uuid"
           },
-          "combatLogs": {
+          "history": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/CombatLog"
             },
             "nullable": true
           },
@@ -2109,6 +2109,27 @@
           "totalCombats": {
             "type": "integer",
             "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CombatLog": {
+        "type": "object",
+        "properties": {
+          "operations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ICombatOperation"
+            },
+            "nullable": true
+          },
+          "operatorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "additionalProperties": false
@@ -2442,6 +2463,10 @@
             "format": "uuid"
           }
         },
+        "additionalProperties": false
+      },
+      "ICombatOperation": {
+        "type": "object",
         "additionalProperties": false
       },
       "JoinCampaignByJoinCodeRequest": {

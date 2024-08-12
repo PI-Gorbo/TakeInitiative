@@ -1,4 +1,5 @@
 using System.Formats.Tar;
+using System.Text.Json;
 using CSharpFunctionalExtensions;
 using FluentAssertions;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -121,6 +122,9 @@ public class ComprehensiveCombatTests(AuthenticatedWebAppWithDatabaseFixture fix
         var verifySettings = new VerifySettings();
         verifySettings.DontIgnoreEmptyCollections();
         verifySettings.UseFileName(fileName);
-        return Verify(target, verifySettings);
+        var serializerOptions = new JsonSerializerOptions();
+        serializerOptions.TypeInfoResolverChain.Add(new PolymorphicTypeResolver());
+        var serializedValue = JsonSerializer.Serialize(target, options: serializerOptions);
+        return VerifyJson(serializedValue, verifySettings);
     }
 }

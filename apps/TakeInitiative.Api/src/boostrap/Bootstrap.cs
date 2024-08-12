@@ -25,7 +25,8 @@ public static class Bootstrap
             opts.Connection(config.GetConnectionString("TakeDB") ?? throw new OperationCanceledException("Required Configuration 'ConnectionStrings:Marten' is missing."));
 
             // Use system.text.json
-            opts.UseDefaultSerialization(serializerType: SerializerType.SystemTextJson);
+            var serializer = new Marten.Services.SystemTextJsonSerializer();
+            serializer.Customize(customize => customize.TypeInfoResolverChain.Add(new PolymorphicTypeResolver()));
 
             opts.Schema.For<ApplicationUser>();
             opts.Schema.For<ApplicationUserRole>();
@@ -46,6 +47,7 @@ public static class Bootstrap
             // Event Projections
             opts.Projections
                 .Add(new CombatProjection(), ProjectionLifecycle.Inline, null);
+
 
 
         }).AddAsyncDaemon(DaemonMode.Solo);

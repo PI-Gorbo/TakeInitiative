@@ -19,4 +19,14 @@ public static class ImmutableListExtensions
         var matchingIndex = matchingIndexes[0].index;
         return list.SetItem(matchingIndex, item);
     }
+
+    public static ImmutableList<T> AppendIf<T>(this ImmutableList<T> list, Func<bool> predicate, T item)
+    {
+        if (!predicate())
+        {
+            return list;
+        }
+
+        return list.Add(item);
+    }
 }

@@ -9,19 +9,24 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
 {
     public async Task<Combat> Apply(TurnEndedEvent @event, Combat Combat, IEvent<TurnEndedEvent> eventDetails, IQuerySession session)
     {
-        var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
-        var dungeonMasterEndedTurn = user?.Id == Combat.DungeonMaster;
-        var isDungeonMastersTurn = Combat.InitiativeList[Combat.InitiativeIndex].PlayerId == user?.Id;
-        var consoleMessage = dungeonMasterEndedTurn && !isDungeonMastersTurn
-            ? $"{user?.UserName} had their turn ended by the DM at {eventDetails.Timestamp:R}"
-            : $"{user?.UserName} ended their turn at {eventDetails.Timestamp:R}";
-
+        var currentCharacterId = Combat.InitiativeList[Combat.InitiativeIndex].Id;
         var (nextInitiativeIndex, nextRoundNumber) = Combat.GetNextTurnInfo();
+
+        // Compose the history information.
+        List<ICombatOperation> historyToAppend = [new TurnEnded(currentCharacterId)];
+        if (nextRoundNumber != Combat.RoundNumber)
+        {  // The next round has started.
+            historyToAppend.Add(new RoundEnded());
+        }
+        historyToAppend.Add(new TurnStarted(Combat.InitiativeList[nextInitiativeIndex].Id));
 
         return Combat with
         {
             InitiativeIndex = nextInitiativeIndex,
             RoundNumber = nextRoundNumber,
+            History = [.. Combat.History,
+                new([..historyToAppend], @event.UserId, eventDetails.Timestamp),
+            ]
         };
     }
 }

@@ -10,24 +10,43 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
     public async Task<Combat> Apply(InitiativeCharacterRemovedEvent @event, Combat Combat, IEvent<InitiativeCharacterRemovedEvent> eventDetails, IQuerySession session)
     {
         var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
-        var (character, index) = Combat.InitiativeList.Select((value, index) => (value, index)).FirstOrDefault(x => x.value.Id == @event.CharacterId, (null, -1));
-        if (character == null)
+
+        // Determine the new initiative & round numbers.
+        var removeCharacterIndex = Combat.InitiativeList.FindIndex(x => x.Id == @event.CharacterId);
+        if (removeCharacterIndex == Combat.InitiativeIndex) // It is the character who is being removed turn. 
         {
-            return Combat;
+            var (newInitiativeIndex, newRoundNumber) = Combat.GetNextTurnInfo();
+            return Combat with
+            {
+                InitiativeList = Combat.InitiativeList.RemoveAt(removeCharacterIndex),
+                InitiativeIndex = newInitiativeIndex,
+                RoundNumber = newRoundNumber,
+                History = [
+                    ..Combat.History,
+                    new(
+                        [
+                            new TurnEnded(@event.CharacterId),
+                            new CharacterRemoved(@event.CharacterId),
+                            new TurnStarted(Combat.InitiativeList[newInitiativeIndex].Id)
+                        ],
+                        @event.UserId,
+                        eventDetails.Timestamp
+                    )
+                ]
+            };
         }
 
-        var initiativeIndex = Combat.InitiativeIndex;
-        var roundNumber = Combat.RoundNumber;
-        if (index == Combat.InitiativeIndex)
-        {
-            (initiativeIndex, roundNumber) = Combat.GetNextTurnInfo();
-        }
-
+        var currentTurnCharacterId = Combat.InitiativeList[Combat.InitiativeIndex].Id;
+        var updatedInitiativeList = Combat.InitiativeList.RemoveAt(removeCharacterIndex);
         return Combat with
         {
-            InitiativeList = Combat.InitiativeList.RemoveAt(index),
-            InitiativeIndex = initiativeIndex,
-            RoundNumber = roundNumber
+            InitiativeList = updatedInitiativeList,
+            InitiativeIndex = updatedInitiativeList.FindIndex(x => x.Id == currentTurnCharacterId), // In case it has updated
+            RoundNumber = Combat.RoundNumber,
+            History = [
+                .. Combat.History,
+                new( [ new CharacterRemoved(@event.CharacterId) ], @event.UserId, eventDetails.Timestamp)
+              ]
         };
     }
 }

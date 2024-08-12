@@ -15,10 +15,7 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
             CombatName: @event.CombatName,
             State: CombatState.Open,
             DungeonMaster: @event.UserId,
-            Timing: [
-                new CombatTimingRecord(StartTime: eventDetails.Timestamp, EndTime: null)
-            ],
-            CombatLogs: [],
+            History: [new([new CombatOpened()], user!.Id, eventDetails.Timestamp)],
             CurrentPlayers: [],
             PlannedStages: @event.Stages.ToImmutableList(),
             InitiativeList: [],

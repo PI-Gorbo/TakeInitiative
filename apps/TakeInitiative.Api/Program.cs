@@ -36,7 +36,7 @@ internal class Program
         // Dev only
         if (builder.Environment.IsDevelopment())
         {
-            builder.Services.AddOpenApiDocument(doc => doc.DocumentName = "TakeInitiativeApi");
+            // builder.Services.AddOpenApiDocument(doc => doc.DocumentName = "TakeInitiativeApi");
             builder.Services.SwaggerDocument(); //define a swagger document;
         }
 

@@ -35,6 +35,7 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
             InitiativeList = newInitiativeList,
             RoundNumber = 1,
             InitiativeIndex = 0,
+            History = [.. Combat.History, new([new CombatStarted()], user!.Id, eventDetails.Timestamp)]
         };
     }
 }
