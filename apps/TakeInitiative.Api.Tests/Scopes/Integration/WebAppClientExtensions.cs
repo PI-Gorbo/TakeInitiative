@@ -5,44 +5,29 @@ using TakeInitiative.Api.Features.Combats;
 using TakeInitiative.Api.Features.Users;
 namespace TakeInitiative.Api.Tests.Integration;
 
-
-// public class Post<TRequest, TResponse>(IWebAppClient client, string url, TRequest request, int statusCode = 200) where TRequest : class
-// {
-//     public Task<Result<TResponse>> Run(TRequest req) => Result.Try(async () =>
-//     {
-//         var result = await client.AlbaHost.Scenario(_ =>
-//         {
-//             _.Post.Json(req).ToUrl(url);
-//             _.StatusCodeShouldBe(statusCode);
-//         });
-
-//         return await result.ReadAsJsonAsync<TResponse>() ?? throw new InvalidCastException($"Could not cast response to type of {typeof(TResponse).Name}");
-//     });
-// }
-
 public static class WebAppClientExtensions
 {
     private static Task<Result<TResponse>> Post<TRequest, TResponse>(this IWebAppClient client, TRequest req, string url, int statusCode = 200) where TRequest : class
         => Result.Try(async () =>
-        {
-            var result = await client.AlbaHost.Scenario(_ =>
             {
-                _.Post.Json(req).ToUrl(url);
-                _.StatusCodeShouldBe(statusCode);
+                var result = await client.AlbaHost.Scenario(_ =>
+                {
+                    _.Post.Json(req).ToUrl(url);
+                    _.StatusCodeShouldBe(statusCode);
+                });
+                return await result.ReadAsJsonAsync<TResponse>() ?? throw new InvalidCastException($"Could not cast response to type of {typeof(TResponse).Name}");
             });
-            return await result.ReadAsJsonAsync<TResponse>() ?? throw new InvalidCastException($"Could not cast response to type of {typeof(TResponse).Name}");
-        });
 
     private static Task<Result<TResponse>> Put<TRequest, TResponse>(this IWebAppClient client, TRequest req, string url, int statusCode = 200) where TRequest : class
-    => Result.Try(async () =>
-    {
-        var result = await client.AlbaHost.Scenario(_ =>
-        {
-            _.Put.Json(req).ToUrl(url);
-            _.StatusCodeShouldBe(statusCode);
-        });
-        return await result.ReadAsJsonAsync<TResponse>() ?? throw new InvalidCastException($"Could not cast response to type of {typeof(TResponse).Name}");
-    });
+        => Result.Try(async () =>
+            {
+                var result = await client.AlbaHost.Scenario(_ =>
+                {
+                    _.Put.Json(req).ToUrl(url);
+                    _.StatusCodeShouldBe(statusCode);
+                });
+                return await result.ReadAsJsonAsync<TResponse>() ?? throw new InvalidCastException($"Could not cast response to type of {typeof(TResponse).Name}");
+            });
 
     public static Task<Result<GetUserResponse>> GetUser(this IWebAppClient client)
         => Result.Try(async () =>
@@ -68,25 +53,25 @@ public static class WebAppClientExtensions
                 return cookie;
             });
 
-    public static Task<Result<Campaign>> PostCreateCampaign(this IWebAppClient client, PostCreateCampaignRequest request) => client.
-        Post<PostCreateCampaignRequest, Campaign>(request, "/api/campaign");
+    public static Task<Result<Campaign>> PostCreateCampaign(this IWebAppClient client, PostCreateCampaignRequest request)
+        => client.Post<PostCreateCampaignRequest, Campaign>(request, "/api/campaign");
 
-    public static Task<Result<PlannedCombat>> PostPlannedCombat(this IWebAppClient client, PostPlannedCombatRequest request) => client.
-    Post<PostPlannedCombatRequest, PlannedCombat>(request, "/api/combat/planned");
+    public static Task<Result<PlannedCombat>> PostPlannedCombat(this IWebAppClient client, PostPlannedCombatRequest request)
+        => client.Post<PostPlannedCombatRequest, PlannedCombat>(request, "/api/combat/planned");
 
-    public static Task<Result<PlannedCombat>> PostPlannedCombatNpc(this IWebAppClient client, PostPlannedCombatNpcRequest request) =>
- client.Post<PostPlannedCombatNpcRequest, PlannedCombat>(request, "/api/campaign/planned-combat/stage/npc");
+    public static Task<Result<PlannedCombat>> PostPlannedCombatNpc(this IWebAppClient client, PostPlannedCombatNpcRequest request)
+        => client.Post<PostPlannedCombatNpcRequest, PlannedCombat>(request, "/api/campaign/planned-combat/stage/npc");
 
-    public static Task<Result<PlannedCombat>> PostPlannedCombatStage(this IWebAppClient client, PostPlannedCombatStageRequest request) =>
-client.Post<PostPlannedCombatStageRequest, PlannedCombat>(request, "/api/campaign/planned-combat/stage");
+    public static Task<Result<PlannedCombat>> PostPlannedCombatStage(this IWebAppClient client, PostPlannedCombatStageRequest request)
+        => client.Post<PostPlannedCombatStageRequest, PlannedCombat>(request, "/api/campaign/planned-combat/stage");
 
-    public static Task<Result<CombatResponse>> PostOpenCombat(this IWebAppClient client, PostOpenCombatRequest request) =>
-client.Post<PostOpenCombatRequest, CombatResponse>(request, "/api/combat/open");
+    public static Task<Result<CombatResponse>> PostOpenCombat(this IWebAppClient client, PostOpenCombatRequest request)
+         => client.Post<PostOpenCombatRequest, CombatResponse>(request, "/api/combat/open");
 
-    public static Task<Result<PlannedCombat>> PutPlannedCombatNpc(this IWebAppClient client, PutPlannedCombatNpcRequest request) =>
-    client.Put<PutPlannedCombatNpcRequest, PlannedCombat>(request, "/api/campaign/planned-combat/stage/npc");
+    public static Task<Result<PlannedCombat>> PutPlannedCombatNpc(this IWebAppClient client, PutPlannedCombatNpcRequest request)
+        => client.Put<PutPlannedCombatNpcRequest, PlannedCombat>(request, "/api/campaign/planned-combat/stage/npc");
 
-    public static Task<Result<CombatResponse>> PutUpsertStagedCharacter(this IWebAppClient client, PutUpsertStagedCharacterRequest request) =>
-client.Put<PutUpsertStagedCharacterRequest, CombatResponse>(request, "/api/combat/stage/character");
+    public static Task<Result<CombatResponse>> PutUpsertStagedCharacter(this IWebAppClient client, PutUpsertStagedCharacterRequest request)
+        => client.Put<PutUpsertStagedCharacterRequest, CombatResponse>(request, "/api/combat/stage/character");
 
 }

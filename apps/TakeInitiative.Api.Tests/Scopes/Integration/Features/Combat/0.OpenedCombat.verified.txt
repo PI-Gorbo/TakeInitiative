@@ -1,11 +1,21 @@
 ﻿{
   Id: Guid_1,
   CampaignId: Guid_2,
+  State: 0,
   CombatName: My planned combat,
   DungeonMaster: Guid_3,
-  CombatLogs: [
-    TESTING opened the Combat at Wed, 14 Aug 2024 02:58:36 GMT
+  History: [
+    {
+      Timestamp: DateTimeOffset_1,
+      Events: [
+        {
+          TYPE: CombatOpened
+        }
+      ],
+      Executor: Guid_3
+    }
   ],
+  CombatLogs: [],
   CurrentPlayers: [],
   PlannedStages: [
     {
@@ -23,8 +33,9 @@
             CurrentHealth: 0
           },
           Initiative: {
-            Strategy: Roll,
+            Strategy: 1,
             Value: 1d20 + 1,
+            Fixed: null,
             Roll: 1d20 + 1
           },
           ArmourClass: 12
@@ -46,8 +57,9 @@
             CurrentHealth: 0
           },
           Initiative: {
-            Strategy: Roll,
+            Strategy: 1,
             Value: 1d20 + 4,
+            Fixed: null,
             Roll: 1d20 + 4
           },
           ArmourClass: 12
@@ -57,5 +69,7 @@
   ],
   StagedList: [],
   InitiativeList: [],
-  InitiativeIndex: -1
+  InitiativeIndex: -1,
+  RoundNumber: null,
+  FinishedTimestamp: null
 }

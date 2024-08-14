@@ -88,7 +88,8 @@ public class ComprehensiveCombatTests(AuthenticatedWebAppWithDatabaseFixture fix
         await VerifyWithFileName(combat, "0.OpenedCombat");
 
         // Player adds their character to the combat.
-        var addStagedCharacterResult = await fixture.LoginAsUser(Users.Player)
+        var addStagedCharacterResult = await fixture
+            .LoginAsUser(Users.Player)
             .PutUpsertStagedCharacter(new()
             {
                 CombatId = openedCombat.Value.Combat.Id,
@@ -113,7 +114,7 @@ public class ComprehensiveCombatTests(AuthenticatedWebAppWithDatabaseFixture fix
             });
 
         addStagedCharacterResult.Should().Succeed();
-        await VerifyWithFileName(combat, "1.PlayerStagedCharacter");
+        await VerifyWithFileName(addStagedCharacterResult.Value, "1.PlayerStagedCharacter");
 
     }
 
@@ -122,6 +123,10 @@ public class ComprehensiveCombatTests(AuthenticatedWebAppWithDatabaseFixture fix
         var verifySettings = new VerifySettings();
         verifySettings.DontIgnoreEmptyCollections();
         verifySettings.UseFileName(fileName);
-        return Verify(target, verifySettings);
+        var options = new JsonSerializerOptions();
+        options.TypeInfoResolverChain.Add(new PolymorphicTypeResolver());
+        var serializedValue = JsonSerializer.Serialize(target, options: options);
+        serializedValue = serializedValue.Replace("$type", "TYPE");
+        return VerifyJson(serializedValue, verifySettings);
     }
 }

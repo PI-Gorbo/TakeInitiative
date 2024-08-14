@@ -47,7 +47,6 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
     public PostgreSqlContainer PostgreSqlContainer { get; private set; } = new PostgreSqlBuilder()
         .WithImage("postgres:15-alpine")
         .Build();
-    private HttpClient albaHttpClient;
     private Users CurrentUser;
     public AuthenticatedWebAppWithDatabaseFixtureSeededData SeedData { get; set; }
     public IDiceRoller DiceRollerSubstitute => Substitute.For<IDiceRoller>();
@@ -74,6 +73,7 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
                     services.AddMartenDB(context.Configuration, IsDevelopment: true);
                 })
         );
+
 
         // Seed database with tiny seed.
         // Sign Up With User1 Credentials.
@@ -146,8 +146,7 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
 
     public AuthenticatedWebAppWithDatabaseFixture LoginAsUser(Users user)
     {
-
-
+        this.CurrentUser = user;
         return this;
     }
 

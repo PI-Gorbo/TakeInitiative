@@ -38,7 +38,6 @@ internal class Program
         builder.Services.AddSendGrid(builder.Configuration);
 
         // Cors
-
         builder.Services.AddCors(
             opts =>
             {
@@ -62,6 +61,8 @@ internal class Program
                                 .AllowAnyMethod()
                                 .AllowCredentials());
             });
+
+
 
         var app = builder.Build();
 
@@ -96,6 +97,8 @@ internal class Program
                         endpoint.Policies(TakePolicies.NotInMaintenanceMode, TakePolicies.UserExists);
                     }
                 };
+
+                // cfg.Serializer.Options.TypeInfoResolverChain.Add(new PolymorphicTypeResolver());
             })
             .UseAuthentication()
             .UseAuthorization();
