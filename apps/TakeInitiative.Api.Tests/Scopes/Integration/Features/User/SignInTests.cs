@@ -23,7 +23,11 @@ public class SignInTests(WebAppWithDatabaseFixture fixture) : IClassFixture<WebA
             Email = "testing@gmail.com",
             Password = "Testing!99",
         })
-        .Bind(fixture.GetUser);
+        .Bind(cookie =>
+        {
+            fixture.AlbaHost.BeforeEach(ctx => ctx.Request.Headers.Cookie = cookie);
+            return fixture.GetUser();
+        });
         result.Should().Succeed();
     }
 }
