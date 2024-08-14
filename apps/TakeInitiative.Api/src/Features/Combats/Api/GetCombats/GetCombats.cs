@@ -6,24 +6,24 @@ using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Combats;
 
-
-
-public class GetCombats(IDocumentStore Store) : Endpoint<GetCombatsRequest, GetCombatsResponse>
+public class GetCombats(IDocumentStore Store) : EndpointWithoutRequest<GetCombatsResponse>
 {
     public override void Configure()
     {
         Get("/api/combats/");
     }
-    public async override Task HandleAsync(GetCombatsRequest req, CancellationToken ct)
+
+    public override async Task HandleAsync(CancellationToken ct)
     {
+        var campaignId = Query<Guid>("campaignId", isRequired: true);
         var userId = this.GetUserIdOrThrowUnauthorized();
 
         var result = await Store.Try(async session =>
         {
-            var campaign = await session.LoadAsync<Campaign>(req.CampaignId);
+            var campaign = await session.LoadAsync<Campaign>(campaignId);
             if (campaign == null)
             {
-                ThrowError((req) => req.CampaignId, $"There is no campaign that corresponds to the id {req.CampaignId}.");
+                ThrowError((req) => campaignId, $"There is no campaign that corresponds to the id {campaignId}.");
             }
 
             // Check that the user is a dungeon master
@@ -36,11 +36,11 @@ public class GetCombats(IDocumentStore Store) : Endpoint<GetCombatsRequest, GetC
             var plannedCombats = await session.LoadManyAsync<PlannedCombat>(campaign.PlannedCombatIds);
             if (plannedCombats == null)
             {
-                ThrowError($"Failed to retrieve planned combats for the campaign {req.CampaignId}", (int)HttpStatusCode.NotFound);
+                ThrowError($"Failed to retrieve planned combats for the campaign {campaignId}", (int)HttpStatusCode.NotFound);
             }
 
             var combats = await session.Query<Combat>()
-                .Where(x => x.CampaignId == req.CampaignId)
+                .Where(x => x.CampaignId == campaignId)
                 .Select(x => new
                 {
                     x.Id,

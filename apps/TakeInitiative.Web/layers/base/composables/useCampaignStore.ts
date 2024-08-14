@@ -1,11 +1,20 @@
+import { useCampaignCombatsStore } from "./useCampaignCombatsStore";
 import type {
     CampaignMemberDto,
-    CampaignMemberResource,
+    CombatDto,
     GetCampaignResponse,
-    PlayerCharacterDTO,
-    PutCampaignDetailsRequest,
-} from "base/utils/api/api";
-import { useCampaignCombatsStore } from "./useCampaignCombatsStore";
+} from "../utils/api/campaign/getCampaignRequest";
+import type {
+    Campaign,
+    CampaignMemberInfo,
+    CampaignMemberResource,
+    PlannedCombat,
+    PlayerCharacter,
+} from "../utils/types/models";
+import type { CampaignMember } from "../utils/types/models";
+import type { UpdateCampaignDetailsRequest } from "../utils/api/campaign/updateCampaignDetailsRequest";
+import type { CreatePlannedCombatRequest } from "../utils/api/plannedCombat/createPlannedCombatRequest";
+import type { PlayerCharacterDto } from "../utils/api/campaign/createPlayerCharacterRequest";
 import * as signalR from "@microsoft/signalr";
 
 export const useCampaignStore = defineStore("campaignStore", () => {
@@ -60,7 +69,8 @@ export const useCampaignStore = defineStore("campaignStore", () => {
     async function fetchCampaign(
         campaignId: string,
     ): Promise<GetCampaignResponse> {
-        return await api.campaign.get(campaignId);
+        console.log("refetching campaign info");
+        return await api.campaign.get({ campaignId });
     }
 
     const setCampaignById = async (campaignId: string): Promise<void> => {
@@ -73,10 +83,11 @@ export const useCampaignStore = defineStore("campaignStore", () => {
         campaignDetails: GetCampaignResponse,
     ): Promise<void> {
         if (
-            state.campaign?.id != undefined &&
+            state.campaign?.id != null &&
             connection.state == signalR.HubConnectionState.Connected &&
-            state.campaign?.id != campaignDetails.campaign?.id
+            state.campaign?.id != campaignDetails.campaign.id
         ) {
+            console.log("Left old group");
             await connection.send("Leave", state.campaign?.id);
         }
 
@@ -87,7 +98,7 @@ export const useCampaignStore = defineStore("campaignStore", () => {
     }
 
     async function updateCampaignDetails(
-        request: Omit<PutCampaignDetailsRequest, "campaignId">,
+        request: Omit<UpdateCampaignDetailsRequest, "campaignId">,
     ) {
         return await api.campaign
             .update({
@@ -126,7 +137,7 @@ export const useCampaignStore = defineStore("campaignStore", () => {
     }
 
     // Player Character Management //
-    async function createPlayerCharacter(dto: PlayerCharacterDTO) {
+    async function createPlayerCharacter(dto: PlayerCharacterDto) {
         return await api.campaign.playerCharacters
             .create({
                 campaignMemberId: state.userCampaignMember?.id!,
@@ -137,7 +148,7 @@ export const useCampaignStore = defineStore("campaignStore", () => {
 
     async function updatePlayerCharacter(
         characterId: string,
-        dto: PlayerCharacterDTO,
+        dto: PlayerCharacterDto,
     ) {
         return await api.campaign.playerCharacters
             .update({
@@ -197,8 +208,8 @@ export const useCampaignStore = defineStore("campaignStore", () => {
                             multiplePropertyAlphabeticalSort(
                                 a,
                                 b,
-                                (ob) => ob.link ?? "",
-                                (ob) => ob.name ?? "",
+                                (ob) => ob.link,
+                                (ob) => ob.name,
                             ),
                     ),
                     isDm: state.userCampaignMember?.isDungeonMaster,
@@ -210,8 +221,8 @@ export const useCampaignStore = defineStore("campaignStore", () => {
                         multiplePropertyAlphabeticalSort(
                             a,
                             b,
-                            (ob) => ob.link ?? "",
-                            (ob) => ob.name ?? "",
+                            (ob) => ob.link,
+                            (ob) => ob.name,
                         ),
                     ),
                     isDm: member.isDungeonMaster,

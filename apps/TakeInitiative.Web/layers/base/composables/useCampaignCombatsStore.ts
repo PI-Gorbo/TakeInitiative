@@ -1,13 +1,14 @@
+import type { CreatePlannedCombatStageRequest } from "../utils/api/plannedCombat/stages/createPlannedCombatStageRequest";
 import type {
-    GetCombatsResponse,
     PlannedCombat,
+    PlannedCombatCharacter,
     PlannedCombatStage,
-    PostPlannedCombatNpcRequest,
-    PostPlannedCombatRequest,
-    PutPlannedCombatNpcRequest,
-    PutPlannedCombatStageRequest,
-} from "base/utils/api/api";
-
+} from "../utils/types/models";
+import type { CreatePlannedCombatNpcRequest } from "../utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
+import type { UpdatePlannedCombatNpcRequest } from "../utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
+import type { UpdatePlannedCombatStageRequest } from "../utils/api/plannedCombat/stages/updatePlannedCombatStageRequest";
+import type { GetCombatsResponse } from "../utils/api/combat/getCombatsRequest";
+import type { CreatePlannedCombatRequest } from "../utils/api/plannedCombat/createPlannedCombatRequest";
 export const useCampaignCombatsStore = defineStore(
     "campaignCombatsStore",
     () => {
@@ -22,14 +23,12 @@ export const useCampaignCombatsStore = defineStore(
                           id: string;
                       }
                     | undefined;
-                selectedCombatHistory: undefined | object;
             }
         >({
             campaignId: undefined,
             combats: undefined,
             plannedCombats: undefined,
             selectedCombat: undefined,
-            selectedCombatHistory: undefined,
         });
 
         function init(campaignId: string) {
@@ -54,19 +53,14 @@ export const useCampaignCombatsStore = defineStore(
             state.selectedCombat = undefined;
         }
 
-        async function selectCombat(combatId: string) {
+        function selectCombat(combatId: string) {
             state.selectedCombat = {
                 id: combatId,
                 type: "Normal",
             };
-            const result = await api.combat.getHistory({
-                id: combatId,
-            });
-            state.selectedCombatHistory = result;
         }
 
         function selectPlannedCombat(combatId: string) {
-            state.selectedCombatHistory = undefined;
             state.selectedCombat = {
                 id: combatId,
                 type: "Planned",
@@ -82,7 +76,7 @@ export const useCampaignCombatsStore = defineStore(
 
         // Planned Combats
         async function createPlannedCombat(
-            request: Omit<PostPlannedCombatRequest, "campaignId">,
+            request: Omit<CreatePlannedCombatRequest, "campaignId">,
         ): Promise<PlannedCombat> {
             return await api.plannedCombat
                 .create({
@@ -91,7 +85,7 @@ export const useCampaignCombatsStore = defineStore(
                 })
                 .then((pc) => {
                     state.plannedCombats?.push(pc);
-                    selectPlannedCombat(pc.id!);
+                    selectPlannedCombat(pc.id);
                     return pc;
                 });
         }
@@ -114,7 +108,7 @@ export const useCampaignCombatsStore = defineStore(
         }
 
         async function addStage(
-            request: Omit<PutPlannedCombatStageRequest, "combatId">,
+            request: Omit<CreatePlannedCombatStageRequest, "combatId">,
         ) {
             return await api.plannedCombat.stage
                 .create({
@@ -135,7 +129,7 @@ export const useCampaignCombatsStore = defineStore(
 
         async function addNpc(
             stage: PlannedCombatStage,
-            npc: Omit<PostPlannedCombatNpcRequest, "combatId" | "stageId">,
+            npc: Omit<CreatePlannedCombatNpcRequest, "combatId" | "stageId">,
         ) {
             return await api.plannedCombat.stage.npc
                 .create({
@@ -158,7 +152,7 @@ export const useCampaignCombatsStore = defineStore(
 
         async function updateNpc(
             stage: PlannedCombatStage,
-            npc: Omit<PutPlannedCombatNpcRequest, "combatId" | "stageId">,
+            npc: Omit<UpdatePlannedCombatNpcRequest, "combatId" | "stageId">,
         ) {
             return await api.plannedCombat.stage.npc
                 .update({
@@ -171,7 +165,7 @@ export const useCampaignCombatsStore = defineStore(
         }
 
         async function updateStage(
-            req: Omit<PutPlannedCombatStageRequest, "combatId">,
+            req: Omit<UpdatePlannedCombatStageRequest, "combatId">,
         ) {
             const request = {
                 combatId: state.selectedCombat?.id!,

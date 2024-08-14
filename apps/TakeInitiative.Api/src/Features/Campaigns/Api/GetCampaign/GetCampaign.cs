@@ -8,22 +8,21 @@ using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Campaigns;
 
-public class GetCampaign(IDocumentStore Store) : EndpointWithoutRequest<GetCampaignResponse>
+public class GetCampaign(IDocumentStore Store) : Endpoint<GetCampaignRequest, GetCampaignResponse>
 {
     public override void Configure()
     {
         Get("/api/campaign/{CampaignId}");
     }
 
-    public override async Task HandleAsync(CancellationToken ct)
+    public override async Task HandleAsync(GetCampaignRequest req, CancellationToken ct)
     {
-        var campaignId = Route<Guid>("CampaignId");
         var userId = this.GetUserIdOrThrowUnauthorized();
 
         var result = await Store.Try(
             async (session) =>
             {
-                var campaign = await session.LoadAsync<Campaign>(campaignId, ct);
+                var campaign = await session.LoadAsync<Campaign>(req.CampaignId, ct);
                 if (campaign == null)
                 {
                     ThrowError("There is no campaign with the given id.", (int)HttpStatusCode.NotFound);

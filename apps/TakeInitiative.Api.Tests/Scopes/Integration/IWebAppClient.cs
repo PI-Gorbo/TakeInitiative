@@ -2,45 +2,44 @@
 using Alba;
 using CSharpFunctionalExtensions;
 using FluentAssertions;
-using TakeInitiative.Api.Client;
 using TakeInitiative.Api.Features.Users;
-using TakeInitiative.Utilities;
-using Testcontainers.PostgreSql;
 namespace TakeInitiative.Api.Tests.Integration;
 
 public interface IWebAppClient
 {
     public IAlbaHost AlbaHost { get; }
-    public PostgreSqlContainer PostgreSqlContainer { get; }
-    public IDiceRoller DiceRollerSubstitute { get; }
-    public TakeApiClient Client { get; }
 }
 
-public static class IWebAppClientExtensions
+public static class WebAppClientExtensions
 {
-    public static async Task<UnitResult<ApiException>> Scenario(this IWebAppClient fixture, Func<TakeApiClient, Task> func)
-    {
-        try
-        {
-            await func(fixture.Client);
-            return UnitResult.Success<ApiException>();
-        }
-        catch (ApiException ex)
-        {
-            return UnitResult.Failure(ex);
-        }
-    }
+    public static Task<Result<GetUserResponse>> GetUser(this IWebAppClient client)
+        => Result.Try(async () =>
+            {
+                var result = await client.AlbaHost.Scenario(_ =>
+                {
+                    _.Get.Url("/api/user");
+                    _.StatusCodeShouldBe(200);
+                });
 
-    public static async Task<Result<T, ApiException>> Scenario<T>(this IWebAppClient fixture, Func<TakeApiClient, Task<T>> func)
-    {
-        try
-        {
-            var result = await func(fixture.Client);
-            return result;
-        }
-        catch (ApiException ex)
-        {
-            return ex;
-        }
-    }
+                return await result.ReadAsJsonAsync<GetUserResponse>() ?? throw new InvalidCastException($"Could not cast response to type of {typeof(GetUserResponse).Name}");
+            });
+
+    public static Task<Result> SignUp(this IWebAppClient client, PostSignUpRequest request)
+        => Result.Try(async () =>
+            {
+                var result = await client.AlbaHost.Scenario(_ =>
+                {
+                    _.Post.Json(request).ToUrl("/api/signup");
+                    _.StatusCodeShouldBe(200);
+                });
+                var cookie = result.Context.Response.Headers.SetCookie;
+
+                // Set the cookie before each following request.
+                client.AlbaHost.BeforeEachAsync(async (client) =>
+                {
+                    client.Request.Headers.Cookie = cookie;
+                });
+            });
+
+
 }

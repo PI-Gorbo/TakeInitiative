@@ -200,7 +200,7 @@
                     buttonColour="take-navy"
                     @click="() => campaignCombatsStore.unselectCombat()"
                 />
-                <CombatHistoryDisplay />
+                Finished combat summary coming soon...
             </main>
         </TransitionGroup>
 
@@ -313,7 +313,6 @@ onMounted(() => {
         return;
     }
 
-    // Set the selected combat
     if (
         campaignCombatsStore.hasAnyPlannedCombats &&
         campaignCombatsStore.state.plannedCombats

@@ -3,27 +3,27 @@ using Xunit.Sdk;
 namespace TakeInitiative.Api.Features.Campaigns;
 public record CombatHealthDisplaySettings
 {
-    public enum CombatHealthDisplayOptions
+    public enum DisplayOptions
     {
         RealValue = 0,
         HealthyBloodied = 1,
         Hidden = 2
     }
 
-    public CombatHealthDisplayOptions DmCharacterDisplayMethod { get; set; } = CombatHealthDisplayOptions.HealthyBloodied;
-    public CombatHealthDisplayOptions OtherPlayerCharacterDisplayMethod { get; set; } = CombatHealthDisplayOptions.RealValue;
+    public DisplayOptions DmCharacterDisplayMethod { get; set; } = DisplayOptions.HealthyBloodied;
+    public DisplayOptions OtherPlayerCharacterDisplayMethod { get; set; } = DisplayOptions.RealValue;
 }
 
 public record CombatArmourClassDisplaySettings
 {
-    public enum CombatArmourDisplayOptions
+    public enum DisplayOptions
     {
         RealValue = 0,
         Hidden = 2
     }
 
-    public CombatArmourDisplayOptions DmCharacterDisplayMethod { get; set; } = CombatArmourDisplayOptions.Hidden;
-    public CombatArmourDisplayOptions OtherPlayerCharacterDisplayMethod { get; set; } = CombatArmourDisplayOptions.RealValue;
+    public DisplayOptions DmCharacterDisplayMethod { get; set; } = DisplayOptions.Hidden;
+    public DisplayOptions OtherPlayerCharacterDisplayMethod { get; set; } = DisplayOptions.RealValue;
 }
 public record CampaignSettings
 {

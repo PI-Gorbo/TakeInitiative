@@ -1,4 +1,3 @@
-using System.Net;
 using CSharpFunctionalExtensions;
 using FastEndpoints;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -31,16 +30,12 @@ public static class ApiErrorExtensions
         return;
     }
 
-    public static Task ReturnApiResult<TRequest>(this Endpoint<TRequest> endpoint, UnitResult<ApiError> result, HttpStatusCode successStatusCode = HttpStatusCode.OK)
+    public static Task ReturnApiResult<TRequest>(this Endpoint<TRequest> endpoint, UnitResult<ApiError> result)
         where TRequest : notnull
     {
         if (result.IsFailure)
         {
             endpoint.ThrowError(result.Error.Message, (int)result.Error.StatusCode);
-        }
-        else
-        {
-            endpoint.HttpContext.Response.StatusCode = (int)successStatusCode;
         }
 
         return Task.CompletedTask;

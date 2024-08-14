@@ -1,12 +1,9 @@
-using System.Net;
 using System.Text.Json;
 using FastEndpoints;
-using FastEndpoints.Swagger;
 using JasperFx.Core;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-namespace TakeInitiative.Api;
 internal class Program
 {
     private static void Main(string[] args)
@@ -25,20 +22,10 @@ internal class Program
         // Add services to the container.
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen();
         builder.Services.AddHealthChecks();
         builder.Services.AddFastEndpoints();
-        builder.Services.AddSwaggerGen(genOptions =>
-        {
-            genOptions.UseInlineDefinitionsForEnums();
-        });
         builder.Services.AddSignalR();
-
-        // Dev only
-        if (builder.Environment.IsDevelopment())
-        {
-            builder.Services.AddOpenApiDocument(doc => doc.DocumentName = "TakeInitiativeApi");
-            builder.Services.SwaggerDocument(); //define a swagger document;
-        }
 
         // Custom Injection
         builder.Services.AddOptionObjects(builder.Configuration);
@@ -49,6 +36,7 @@ internal class Program
         builder.Services.AddSendGrid(builder.Configuration);
 
         // Cors
+
         builder.Services.AddCors(
             opts =>
             {
@@ -75,8 +63,14 @@ internal class Program
 
         var app = builder.Build();
 
-        // Map SignalR Hubs
+        // Configure the HTTP request pipeline.
+        if (app.Environment.IsDevelopment())
+        {
+            app.UseSwagger();
+            app.UseSwaggerUI();
+        }
 
+        // Map SignalR Hubs
         app.MapHub<CombatHub>("/combatHub");
         app.MapHub<CampaignHub>("/campaignHub");
 
@@ -85,43 +79,26 @@ internal class Program
             {
                 cfg.Endpoints.Configurator = (endpoint) =>
                 {
-                    // Set the auth scheme for the endpoints
-                    if (endpoint.Routes?.Any(route => route.StartsWith("/api/admin")) ?? false) // All the endpoints that start with /api/admin must only be accessed by the admin portal.
+                    if (endpoint.Routes?.Any(route => route.StartsWith("/api/admin")) ?? false)
                     {
                         endpoint.Options(opts => opts.RequireCors("AdminAppCors"));
                         endpoint.AllowAnonymous(["GET", "POST", "PUT", "DELETE"]);
                     }
-                    else if (endpoint.EndpointTags?.Any(tag => tag == "AllowAnonymous") ?? false) // Endpoints must opt into the AllowAnonymous.
+                    else if (endpoint.EndpointTags?.Any(tag => tag == "AllowAnonymous") ?? false)
                     {
                         endpoint.AllowAnonymous();
                     }
-                    else // Otherwise default auth policies are required.
+                    else
                     {
                         endpoint.AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
                         endpoint.Policies(TakePolicies.NotInMaintenanceMode, TakePolicies.UserExists);
                     }
-
-                    // // Swagger fixes.
-                    var endpointType = endpoint.EndpointType;
-                    if (endpointType.BaseType != null && endpointType.BaseType.IsGenericType && endpointType.BaseType?.GetGenericTypeDefinition() == typeof(Endpoint<>))
-                    {
-                        endpoint.Summary(summary => summary.Response((int)HttpStatusCode.OK));
-                    }
-
                 };
             })
             .UseAuthentication()
             .UseAuthorization();
 
-        // Configure the HTTP request pipeline.
-        if (app.Environment.IsDevelopment())
-        {
-            app.UseSwaggerGen();
-        }
-
         app.UseHealthChecks("/healthz");
-
-        app.UseSwaggerGen();
         app.Run();
     }
 }

@@ -29,7 +29,6 @@ export async function parseAsApiError<TRequest extends {}>(
             errors: result.errors,
             getErrorFor: (error) => {
                 if (error in result.errors) {
-                    // @ts-ignore
                     return result.errors[error][0];
                 }
 
@@ -37,14 +36,11 @@ export async function parseAsApiError<TRequest extends {}>(
                     const accessors = error.split(".");
                     let errorValue = result.errors;
                     for (let index = 0; index < accessors.length; index++) {
-                        // @ts-ignore
                         errorValue = errorValue[accessors[index]];
                     }
-                    // @ts-ignore
                     if (errorValue == null || errorValue.length == 0) {
                         return null;
                     }
-                    // @ts-ignore
                     return errorValue[0];
                 } catch {
                     return null;

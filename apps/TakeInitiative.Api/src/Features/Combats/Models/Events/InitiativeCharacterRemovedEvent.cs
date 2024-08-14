@@ -1,5 +1,5 @@
 namespace TakeInitiative.Api.Features.Combats;
-public record InitiativeCharacterRemovedEvent : ICombatEvent
+public record InitiativeCharacterRemovedEvent
 {
     public required Guid UserId { get; set; }
     public required Guid CharacterId { get; set; }

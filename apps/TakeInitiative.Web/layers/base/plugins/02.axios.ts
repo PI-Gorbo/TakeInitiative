@@ -1,17 +1,18 @@
 import type { AxiosError, AxiosInstance, CreateAxiosDefaults } from "axios";
-import { Api } from "base/utils/api/api";
-
-export default defineNuxtPlugin(async (nuxtApp) => {
+import axios from "axios";
+export default defineNuxtPlugin((nuxtApp) => {
     // Destructure the environment variables to get axios config
     const {
         public: { axios: axiosConfig },
     } = useRuntimeConfig();
 
-    const api = new Api({ ...axiosConfig });
+    // Register axios
+    const defaultAxios: CreateAxiosDefaults = { ...axiosConfig };
+    const Axios: AxiosInstance = axios.create(defaultAxios);
 
     // Register to use an auth token if there is one.
     const aspNetCoreCookie = useCookie(".AspNetCore.Cookies"); // Axios does not attach the cookie on the first request. so we have to manually do it.
-    api.instance.interceptors.request.use((config) => {
+    Axios.interceptors.request.use((config) => {
         if (aspNetCoreCookie.value) {
             config.headers["Cookie"] =
                 `.AspNetCore.Cookies=${aspNetCoreCookie.value}`;
@@ -20,7 +21,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
         return config;
     });
 
-    api.instance.interceptors.response.use(
+    Axios.interceptors.response.use(
         (resp) => {
             return resp;
         },
@@ -37,8 +38,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 
     return {
         provide: {
-            axios: api.instance,
-            api,
+            axios: Axios,
         },
     };
 });

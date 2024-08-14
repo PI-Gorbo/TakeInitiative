@@ -1,269 +1,112 @@
-import type {
-    DeleteCampaignRequest,
-    DeleteInitiativeCharacterRequest,
-    DeletePlannedCombatNpcRequest,
-    DeletePlannedCombatRequest,
-    DeletePlannedCombatStageRequest,
-    DeletePlayerCharacterRequest,
-    DeleteStagedCharacterRequest,
-    GetCombatRequest,
-    GetCombatsRequest,
-    JoinCampaignByJoinCodeRequest,
-    PostCreateCampaignRequest,
-    PostEndTurnRequest,
-    PostFinishCombatRequest,
-    PostOpenCombatRequest,
-    PostPlannedCombatNpcRequest,
-    PostPlannedCombatRequest,
-    PostPlayerCharacterRequest,
-    PostRollStagedCharactersIntoInitiativeRequest,
-    PostSignUpRequest,
-    PostStagePlayerCharactersRequest,
-    PostStartCombatRequest,
-    PutCampaignDetailsRequest,
-    PutCampaignMemberResourcesRequest,
-    PutLoginRequest,
-    PutPlannedCombatNpcRequest,
-    PutPlannedCombatStageRequest,
-    PutPlayerCharacterRequest,
-    PutResetPasswordRequest,
-    PutSendResetPasswordEmailRequest,
-    PutStagePlannedCharactersRequest,
-    PutUpdateInitiativeCharacterRequest,
-    PutUpsertStagedCharacterRequest,
-} from "base/utils/api/api";
-import type { AxiosResponse } from "axios";
+import { createCampaignRequest } from "../utils/api/campaign/createCampaignRequest";
+import { createPlayerCharacterRequest } from "../utils/api/campaign/createPlayerCharacterRequest";
+import { deleteCampaignRequest } from "../utils/api/campaign/deleteCampaignRequest";
+import { deletePlayerCharacterRequest } from "../utils/api/campaign/deletePlayerCharacterRequest";
 
-function getData<TResponse>(resp: AxiosResponse<TResponse, any>) {
-    return resp.data;
-}
+import { getCampaignRequest } from "../utils/api/campaign/getCampaignRequest";
+import { joinCampaignRequest } from "../utils/api/campaign/joinCampaignRequest";
+import { updateCampaignDetailsRequest } from "../utils/api/campaign/updateCampaignDetailsRequest";
+import { updatePlayerCharacterRequest } from "../utils/api/campaign/updatePlayerCharacterRequest";
+import { deleteInitiativeCharacterRequest } from "../utils/api/combat/deleteInitiativeCharacterRequest";
+import { deleteStagedCharacter } from "../utils/api/combat/deleteStagedCharacterRequest";
+import { getCombatRequest } from "../utils/api/combat/getCombatRequest";
+import { openCombatRequest } from "../utils/api/combat/openCombatRequest";
+import { postFinishCombatRequest } from "../utils/api/combat/postFinishCombatRequest";
+import { postEndTurnRequest } from "../utils/api/combat/postNextTurn";
+import { postRollStagedCharactersIntoInitiativeRequest } from "../utils/api/combat/postRollStagedCharactersIntoInitiative";
+import { postStagedPlannedCharactersRequest } from "../utils/api/combat/postStagePlannedCharactersRequest";
+import { postStagePlayerCharactersRequest as postStagePlayerCharactersRequest } from "../utils/api/combat/postStagePlayerCharactersRequest";
+import { postStartCombatRequest } from "../utils/api/combat/postStartCombat";
+import { putUpdateInitiativeCharacterRequest } from "../utils/api/combat/putUpdateInitiativeCharacterRequest";
+import { putUpsertStagedCharacter } from "../utils/api/combat/putUpsertStagedCharacter";
+import { createPlannedCombatRequest } from "../utils/api/plannedCombat/createPlannedCombatRequest";
+import { deletePlannedCombatRequest } from "../utils/api/plannedCombat/deletePlannedCombatRequest";
+import { getCombatsRequest } from "../utils/api/combat/getCombatsRequest";
+import { createPlannedCombatStageRequest } from "../utils/api/plannedCombat/stages/createPlannedCombatStageRequest";
+import { deletePlannedCombatStageRequest } from "../utils/api/plannedCombat/stages/deletePlannedCombatStageRequest";
+import { createPlannedCombatNpcRequest } from "../utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
+import { deletePlannedCombatNpcRequest } from "../utils/api/plannedCombat/stages/npcs/deletePlannedCombatNpcRequest";
+import { updatePlannedCombatNpcRequest } from "../utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
+import { updatePlannedCombatStageRequest } from "../utils/api/plannedCombat/stages/updatePlannedCombatStageRequest";
+import { getUserRequest } from "../utils/api/user/getUserRequest";
+import { loginRequest } from "../utils/api/user/loginRequest";
+import { logoutRequest } from "../utils/api/user/logoutRequest";
+import { signUpRequest } from "../utils/api/user/signUpRequest";
+import { postConfirmEmailRequest as confirmEmailRequest } from "../utils/api/user/postConfirmEmailRequest";
+import { postSendConfirmEmailRequest } from "../utils/api/user/postSendConfirmEmailRequest";
+import { putSendResetPasswordRequest } from "../utils/api/user/putSendResetPasswordRequest";
+import { putResetPassword } from "../utils/api/user/putResetPasswordRequest";
+import { getMaintenanceRequest } from "base/utils/api/admin/getMaintainenceRequest";
+import { putCampaignMemberResourcesRequest } from "base/utils/api/campaign/putCampaignMemberResourcesRequest";
 
 export const useApi = () => {
-    const { $axios, $api: client } = useNuxtApp();
+    const { $axios } = useNuxtApp();
     return {
         user: {
-            getUser: () =>
-                client.api
-                    .takeInitiativeApiFeaturesUsersGetUser()
-                    .then(getData),
-            signUp: (req: PostSignUpRequest) =>
-                client.api
-                    .takeInitiativeApiFeaturesUsersPostSignUp(req)
-                    .then(getData),
-            login: (req: PutLoginRequest) =>
-                client.api
-                    .takeInitiativeApiFeaturesUsersPutLogin(req)
-                    .then(getData),
-            logout: () => client.api.takeInitiativeApiFeaturesUsersPostLogout(),
-            confirmEmailWithToken: (code: string) =>
-                client.api
-                    .takeInitiativeApiFeaturesUsersPostConfirmEmail({
-                        confirmEmailToken: code,
-                    })
-                    .then(getData),
-            sendConfirmationEmail: () =>
-                client.api
-                    .takeInitiativeApiFeaturesUsersPostSendConfirmEmail()
-                    .then(getData),
-            sendResetPasswordEmail: (req: PutSendResetPasswordEmailRequest) =>
-                client.api
-                    .takeInitiativeApiFeaturesUsersPutSendResetPasswordEmail(
-                        req,
-                    )
-                    .then(getData),
-            resetPasswordWithToken: (req: PutResetPasswordRequest) =>
-                client.api
-                    .takeInitiativeApiFeaturesUsersPutResetPassword(req)
-                    .then(getData),
+            getUser: getUserRequest($axios),
+            signUp: signUpRequest($axios),
+            login: loginRequest($axios),
+            logout: logoutRequest($axios),
+            confirmEmailWithToken: confirmEmailRequest($axios),
+            sendConfirmationEmail: postSendConfirmEmailRequest($axios),
+            sendResetPasswordEmail: putSendResetPasswordRequest($axios),
+            resetPasswordWithToken: putResetPassword($axios),
         },
         campaign: {
-            create: (req: PostCreateCampaignRequest) =>
-                client.api
-                    .takeInitiativeApiFeaturesCampaignsPostCreateCampaign(req)
-                    .then(getData),
-            join: (req: JoinCampaignByJoinCodeRequest) =>
-                client.api
-                    .takeInitiativeApiFeaturesCampaignsPostJoinCampaign(req)
-                    .then(getData),
-            update: (req: PutCampaignDetailsRequest) =>
-                client.api
-                    .takeInitiativeApiFeaturesCampaignsPutCampaignDetails(req)
-                    .then(getData),
-            get: (campaignId: string) =>
-                client.api
-                    .takeInitiativeApiFeaturesCampaignsGetCampaign(campaignId)
-                    .then(getData),
-            delete: (req: DeleteCampaignRequest) =>
-                client.api
-                    .takeInitiativeApiFeaturesCampaignsDeleteCampaign(req)
-                    .then(getData),
+            create: createCampaignRequest($axios),
+            join: joinCampaignRequest($axios),
+            update: updateCampaignDetailsRequest($axios),
+            get: getCampaignRequest($axios),
+            delete: deleteCampaignRequest($axios),
             playerCharacters: {
-                create: (req: PostPlayerCharacterRequest) =>
-                    client.api
-                        .takeInitiativeApiFeaturesCampaignsPostPlayerCharacter(
-                            req,
-                        )
-                        .then(getData),
-                update: (req: PutPlayerCharacterRequest) =>
-                    client.api
-                        .takeInitiativeApiFeaturesCampaignsPutPlayerCharacter(
-                            req,
-                        )
-                        .then(getData),
-                delete: (req: DeletePlayerCharacterRequest) =>
-                    client.api
-                        .takeInitiativeApiFeaturesCampaignsDeletePlayerCharacter(
-                            req,
-                        )
-                        .then(getData),
+                create: createPlayerCharacterRequest($axios),
+                update: updatePlayerCharacterRequest($axios),
+                delete: deletePlayerCharacterRequest($axios),
             },
             member: {
-                setResources: (req: PutCampaignMemberResourcesRequest) =>
-                    client.api
-                        .takeInitiativeApiFeaturesCampaignsPutCampaignMemberResources(
-                            req,
-                        )
-                        .then(getData),
+                setResources: putCampaignMemberResourcesRequest($axios),
             },
         },
         plannedCombat: {
-            create: (req: PostPlannedCombatRequest) =>
-                client.api
-                    .takeInitiativeApiFeaturesCombatsPostPlannedCombat(req)
-                    .then(getData),
-            delete: (req: DeletePlannedCombatRequest) =>
-                client.api
-                    .takeInitiativeApiFeaturesCombatsDeletePlannedCombat(req)
-                    .then(getData),
+            create: createPlannedCombatRequest($axios),
+            delete: deletePlannedCombatRequest($axios),
             stage: {
-                create: (req: PutPlannedCombatStageRequest) =>
-                    client.api
-                        .takeInitiativeApiFeaturesCombatsPostPlannedCombatStage(
-                            req,
-                        )
-                        .then(getData),
-                delete: (req: DeletePlannedCombatStageRequest) =>
-                    client.api
-                        .takeInitiativeApiFeaturesCombatsDeletePlannedCombatStage(
-                            req,
-                        )
-                        .then(getData),
-                update: (req: PutPlannedCombatStageRequest) =>
-                    client.api
-                        .takeInitiativeApiFeaturesCombatsPutPlannedCombatStage(
-                            req,
-                        )
-                        .then(getData),
+                create: createPlannedCombatStageRequest($axios),
+                delete: deletePlannedCombatStageRequest($axios),
+                update: updatePlannedCombatStageRequest($axios),
                 npc: {
-                    create: (req: PostPlannedCombatNpcRequest) =>
-                        client.api
-                            .takeInitiativeApiFeaturesCombatsPostPlannedCombatNpc(
-                                req,
-                            )
-                            .then(getData),
-                    update: (req: PutPlannedCombatNpcRequest) =>
-                        client.api
-                            .takeInitiativeApiFeaturesCombatsPutPlannedCombatNpc(
-                                req,
-                            )
-                            .then(getData),
-                    delete: (req: DeletePlannedCombatNpcRequest) =>
-                        client.api
-                            .takeInitiativeApiFeaturesCombatsDeletePlannedCombatNpc(
-                                req,
-                            )
-                            .then(getData),
+                    create: createPlannedCombatNpcRequest($axios),
+                    update: updatePlannedCombatNpcRequest($axios),
+                    delete: deletePlannedCombatNpcRequest($axios),
                 },
             },
         },
         combat: {
-            getAll: (req: GetCombatsRequest) =>
-                client.api
-                    .takeInitiativeApiFeaturesCombatsGetCombats(req)
-                    .then(getData),
-            get: (req: GetCombatRequest) =>
-                client.api
-                    .takeInitiativeApiFeaturesCombatsGetCombat(req.id!)
-                    .then(getData),
-            getHistory: (r: GetCombatRequest) =>
-                client.api.takeInitiativeApiFeaturesCombatsGetCombatHistory(
-                    r.id!,
-                    r,
-                ),
-            start: (req: PostStartCombatRequest) =>
-                client.api
-                    .takeInitiativeApiFeaturesCombatsPostStartCombat(req)
-                    .then(getData),
-            finish: (req: PostFinishCombatRequest) =>
-                client.api
-                    .takeInitiativeApiFeaturesCombatsPostFinishCombat(req)
-                    .then(getData),
-            open: (req: PostOpenCombatRequest) =>
-                client.api
-                    .takeInitiativeApiFeaturesCombatsPostOpenCombat(req)
-                    .then(getData),
-            endTurn: (req: PostEndTurnRequest) =>
-                client.api
-                    .takeInitiativeApiFeaturesCombatsPostEndTurn(req)
-                    .then(getData),
+            getAll: getCombatsRequest($axios),
+            get: getCombatRequest($axios),
+            start: postStartCombatRequest($axios),
+            finish: postFinishCombatRequest($axios),
+            open: openCombatRequest($axios),
+            endTurn: postEndTurnRequest($axios),
             stage: {
                 character: {
-                    upsert: (req: PutUpsertStagedCharacterRequest) =>
-                        client.api
-                            .takeInitiativeApiFeaturesCombatsPutUpsertStagedCharacter(
-                                req,
-                            )
-                            .then(getData),
-                    delete: (req: DeleteStagedCharacterRequest) =>
-                        client.api
-                            .takeInitiativeApiFeaturesCombatsDeleteStagedCharacter(
-                                req,
-                            )
-                            .then(getData),
+                    upsert: putUpsertStagedCharacter($axios),
+                    delete: deleteStagedCharacter($axios),
                 },
-                planned: (req: PutStagePlannedCharactersRequest) =>
-                    client.api
-                        .takeInitiativeApiFeaturesCombatsPostStagePlannedCharacters(
-                            req,
-                        )
-                        .then(getData),
-                rollIntoInitiative: (
-                    req: PostRollStagedCharactersIntoInitiativeRequest,
-                ) =>
-                    client.api
-                        .takeInitiativeApiFeaturesCombatsPostRollStagedCharactersIntoInitiative(
-                            req,
-                        )
-                        .then(getData),
-                playerCharacters: (req: PostStagePlayerCharactersRequest) =>
-                    client.api
-                        .takeInitiativeApiFeaturesCombatsPostStagePlayerCharacters(
-                            req,
-                        )
-                        .then(getData),
+                planned: postStagedPlannedCharactersRequest($axios),
+                rollIntoInitiative:
+                    postRollStagedCharactersIntoInitiativeRequest($axios),
+                playerCharacters: postStagePlayerCharactersRequest($axios),
             },
             initiative: {
                 character: {
-                    update: (req: PutUpdateInitiativeCharacterRequest) =>
-                        client.api
-                            .takeInitiativeApiFeaturesCombatsPutUpdateInitiativeCharacter(
-                                req,
-                            )
-                            .then(getData),
-                    delete: (req: DeleteInitiativeCharacterRequest) =>
-                        client.api
-                            .takeInitiativeApiFeaturesCombatsDeleteInitiativeCharacter(
-                                req,
-                            )
-                            .then(getData),
+                    update: putUpdateInitiativeCharacterRequest($axios),
+                    delete: deleteInitiativeCharacterRequest($axios),
                 },
             },
         },
         admin: {
-            getMaintenance: () =>
-                client.api
-                    .takeInitiativeApiFeaturesAdminGetMaintenanceConfig()
-                    .then(getData),
+            getMaintenance: getMaintenanceRequest($axios),
         },
     };
 };
