@@ -1,6 +1,6 @@
 namespace TakeInitiative.Api.Features.Combats;
 
-public record StagedPlayerCharacterEvent : IHistoryVisibleCombatEvent
+public record StagedPlayerCharacterEvent
 {
 
     public required Guid UserId { get; set; }

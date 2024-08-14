@@ -1,6 +1,6 @@
 namespace TakeInitiative.Api.Features.Combats;
 
-public record CombatOpenedEvent : ICombatEvent
+public record CombatOpenedEvent
 {
     public required Guid UserId { get; set; }
     public required Guid CampaignId { get; set; }

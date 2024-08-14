@@ -9,8 +9,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TakeInitiative.Api", "apps\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TakeInitiative.Api.Tests", "apps\TakeInitiative.Api.Tests\TakeInitiative.Api.Tests.csproj", "{EAE43750-0316-450C-B61B-3CCD023EF06E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TakeInitiative.Api.Client", "apps\TakeInitiative.Api.Client\TakeInitiative.Api.Client.csproj", "{F742DF66-E32C-40A0-89E4-E4BEF5977726}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -28,14 +26,9 @@ Global
 		{EAE43750-0316-450C-B61B-3CCD023EF06E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EAE43750-0316-450C-B61B-3CCD023EF06E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EAE43750-0316-450C-B61B-3CCD023EF06E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F742DF66-E32C-40A0-89E4-E4BEF5977726}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F742DF66-E32C-40A0-89E4-E4BEF5977726}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F742DF66-E32C-40A0-89E4-E4BEF5977726}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F742DF66-E32C-40A0-89E4-E4BEF5977726}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{745EE20A-57EE-4CE6-A090-01A2C373C9EE} = {CFC275A3-AD62-4ABC-A90B-AFDA010134E3}
 		{EAE43750-0316-450C-B61B-3CCD023EF06E} = {CFC275A3-AD62-4ABC-A90B-AFDA010134E3}
-		{F742DF66-E32C-40A0-89E4-E4BEF5977726} = {CFC275A3-AD62-4ABC-A90B-AFDA010134E3}
 	EndGlobalSection
 EndGlobal

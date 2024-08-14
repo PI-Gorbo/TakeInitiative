@@ -24,29 +24,42 @@ public class CombatHub : Hub
             .SendAsync("combatUpdated", combat);
     }
 
-    public async Task JoinCombat(IDocumentStore Store, Guid CombatId)
+    public async Task JoinCombat(IDocumentStore Store, Guid UserId, Guid CombatId)
     {
         // Check the user can join the combat. 
-        Result joinedCombatResult = await this.Context.User!.GetUserId()
-        .Bind((userId) => Store.Try(async (session) =>
+        Result joinedCombatResult = await Store.Try(async (session) =>
         {
-            // Verify the combat exists and the player is a member of the campaign the combat is apart of.
-            Guid? campaignId = await session.Query<Combat>().Where(x => x.Id == CombatId).Select(x => x.CampaignId).SingleOrDefaultAsync();
-            if (!campaignId.HasValue)
+            var combat = await session.LoadAsync<Combat>(CombatId);
+            if (combat == null)
             {
-                return Result.Failure("Combat with provided id does not exist.");
+                return Result.Failure("Combat does not exist.");
             }
 
-            // Verify the user is a member of the campaign.
-            var campaignMemberExists = await session.Query<CampaignMember>().Where(x => x.UserId == userId && x.CampaignId == campaignId).AnyAsync();
-            if (!campaignMemberExists)
+            // Check if the user is already part of the combat.
+            if (combat.CurrentPlayers.Any(x => x.UserId == UserId))
             {
-                return Result.Failure("In order to join the combat, you must be a member of the combat's campaign.");
+                await Groups.AddToGroupAsync(Context.ConnectionId, combat.Id.ToString());
+                return Result.Success(combat);
             }
 
-            await Groups.AddToGroupAsync(Context.ConnectionId, CombatId.ToString());
-            return Result.Success();
-        }));
+            // Check the user is in the combat, if they are, they can be added to the combat.
+            var isApartOfCampaign = await session.UserIsApartOfCampaign(UserId, combat.CampaignId);
+            if (!isApartOfCampaign)
+            {
+                return Result.Failure("Cannot join a combat of a campaign you are not apart of.");
+            }
+
+            // Create a join campaign event.
+            PlayerJoinedEvent @event = new PlayerJoinedEvent() { UserId = UserId };
+            var stream = session.Events.Append(CombatId, @event);
+            await session.SaveChangesAsync();
+
+            combat = await session.LoadAsync<Combat>(CombatId);
+            await Groups.AddToGroupAsync(Context.ConnectionId, combat.Id.ToString());
+            await this.NotifyCombatUpdated(combat);
+
+            return Result.Success(combat);
+        });
 
         if (joinedCombatResult.IsFailure)
         {
@@ -56,11 +69,36 @@ public class CombatHub : Hub
         return;
     }
 
-    public async Task LeaveCombat(Guid CombatId)
+    public async Task LeaveCombat(IDocumentStore Store, Guid UserId, Guid CombatId)
     {
         // Check the user can leave the combat. 
-        Result leaveCombatResult = await Context.User!.GetUserId()
-        .TapTry(async (userId) => await Groups.RemoveFromGroupAsync(Context.ConnectionId, CombatId.ToString()));
+        Result leaveCombatResult = await Store.Try(async (session) =>
+        {
+            var combat = await session.LoadAsync<Combat>(CombatId);
+            if (combat == null)
+            {
+                return Result.Failure("Combat does not exist.");
+            }
+
+            // Check if the user is already part of the combat.
+            if (!combat.CurrentPlayers.Any(x => x.UserId == UserId))
+            {
+                await Groups.RemoveFromGroupAsync(Context.ConnectionId, combat.Id.ToString());
+                return Result.Failure("User is not apart of the combat.");
+            }
+
+            // Create a join campaign event.
+            PlayerLeftEvent @event = new PlayerLeftEvent() { UserId = UserId };
+            var stream = session.Events.Append(CombatId, @event);
+            await session.SaveChangesAsync();
+
+            combat = await session.LoadAsync<Combat>(CombatId);
+
+            await NotifyCombatUpdated(combat);
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, combat.Id.ToString());
+
+            return Result.Success(combat);
+        });
 
         if (leaveCombatResult.IsFailure)
         {

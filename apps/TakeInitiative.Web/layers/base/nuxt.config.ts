@@ -21,9 +21,6 @@ export default defineNuxtConfig({
     routeRules: {
         "/combat/**": { ssr: false },
     },
-    typescript: {
-        typeCheck: true,
-    },
     devtools: { enabled: true },
     runtimeConfig: {
         public: {

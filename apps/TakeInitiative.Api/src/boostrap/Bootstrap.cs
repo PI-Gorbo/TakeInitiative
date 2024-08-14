@@ -164,20 +164,13 @@ public static class Bootstrap
             Log.Information($"Found! {pythonConfig}");
         }
 
-        // services.AddTransient<>
+
         Runtime.PythonDLL = pythonConfig;
+        PythonEngine.Initialize();
+        PythonEngine.BeginAllowThreads();
 
         // Add dice roller.
-        services.AddTransient<IDiceRoller, DiceRoller>((s) =>
-        {
-            if (!PythonEngine.IsInitialized)
-            {
-                PythonEngine.Initialize();
-                PythonEngine.BeginAllowThreads();
-            }
-            return new DiceRoller();
-        });
-
+        services.AddTransient<IDiceRoller, DiceRoller>();
         return services;
     }
 
