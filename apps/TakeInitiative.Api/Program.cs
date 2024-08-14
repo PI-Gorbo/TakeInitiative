@@ -4,6 +4,8 @@ using JasperFx.Core;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+
+namespace TakeInitiative.Api;
 internal class Program
 {
     private static void Main(string[] args)

@@ -11,9 +11,9 @@ public record Combat
     public Guid DungeonMaster { get; init; }
     public ImmutableList<string> CombatLogs { get; set; } = [];
     public ImmutableList<PlayerDto> CurrentPlayers { get; set; } = [];
-    public ImmutableList<PlannedCombatStage> PlannedStages { get; set; } = []; 
-    public ImmutableList<CombatCharacter> StagedList { get; set; } = []; 
-    public ImmutableList<CombatCharacter> InitiativeList { get; set; } = []; 
+    public ImmutableList<PlannedCombatStage> PlannedStages { get; set; } = [];
+    public ImmutableList<CombatCharacter> StagedList { get; set; } = [];
+    public ImmutableList<CombatCharacter> InitiativeList { get; set; } = [];
     public int InitiativeIndex { get; set; }
     public int? RoundNumber { get; set; }
     public DateTimeOffset? FinishedTimestamp { get; set; }
