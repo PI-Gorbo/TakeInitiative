@@ -11,7 +11,7 @@ public record StartCombatCommand : ICommand<Result<Combat>>
     public required Guid UserId { get; set; }
 }
 
-public class StartCombatCommandHandler(IDocumentStore Store, IDiceRoller roller) : CommandHandler<StartCombatCommand, Result<Combat>>
+public class StartCombatCommandHandler(IDocumentStore Store, IInitiativeRoller roller) : CommandHandler<StartCombatCommand, Result<Combat>>
 {
 
     public override async Task<Result<Combat>> ExecuteAsync(StartCombatCommand command, CancellationToken ct = default)

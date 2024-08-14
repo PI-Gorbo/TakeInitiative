@@ -16,10 +16,9 @@ public class DiceRoller : IDiceRoller
                 var result = d20.roll(roll);
                 return (int)result.total;
             };
-        }, ex =>
-        {
-            return $"Failed to evaluate dice roll, please check your syntax. {ex.Message}";
-        });
+        }, ex => $"Failed to evaluate dice roll, please check your syntax. {ex.Message}");
     }
+
+    public int RollD20() => EvaluateRoll("1d20").Value;
 }
 

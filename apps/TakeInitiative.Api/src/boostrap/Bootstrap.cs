@@ -181,6 +181,7 @@ public static class Bootstrap
 
             return new DiceRoller();
         });
+        services.AddTransient<IInitiativeRoller, InitiativeRoller>();
         return services;
     }
 

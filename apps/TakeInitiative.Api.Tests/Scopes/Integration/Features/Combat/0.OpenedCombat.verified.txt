@@ -58,9 +58,9 @@
           },
           Initiative: {
             Strategy: 1,
-            Value: 1d20 + 4,
+            Value: 1d20 + 2,
             Fixed: null,
-            Roll: 1d20 + 4
+            Roll: 1d20 + 2
           },
           ArmourClass: 12
         }

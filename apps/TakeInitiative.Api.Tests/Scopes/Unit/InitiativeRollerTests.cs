@@ -11,16 +11,19 @@ namespace TakeInitiative.Api.Tests.Unit;
 
 public class DiceRollerTests
 {
-    private IDiceRoller DiceRoller;
+    private IDiceRoller diceRoller;
+    private InitiativeRoller initiativeRoller;
 
     public DiceRollerTests()
     {
-        this.DiceRoller = Substitute.For<IDiceRoller>();
+        this.diceRoller = Substitute.For<IDiceRoller>();
+        this.initiativeRoller = new InitiativeRoller(diceRoller);
     }
 
     [Fact]
     public void MergesRollsSuccessfully_Situation2()
     {
+
         Guid playerId = Guid.NewGuid();
         var incomingChar = CombatCharacter.NewCombatCharacter(
                     playerId,
@@ -53,13 +56,13 @@ public class DiceRollerTests
                 );
         existingChar.InitiativeValue = [6];
 
-        this.DiceRoller.EvaluateRoll("1d20 + 5").Returns(6);
+        this.diceRoller.EvaluateRoll("1d20 + 5").Returns(6);
         int callCount = 1;
-        this.DiceRoller.EvaluateRoll("1d20").Returns((CallInfo callInfo) =>
+        this.diceRoller.EvaluateRoll("1d20").Returns((CallInfo callInfo) =>
         {
             return callCount++;
         });
-        var result = this.DiceRoller.ComputeRolls(
+        var result = this.initiativeRoller.ComputeRolls(
             [incomingChar],
             [existingChar]
         );
@@ -123,13 +126,13 @@ public class DiceRollerTests
                 );
         existingChar2.InitiativeValue = [6, 5];
 
-        this.DiceRoller.EvaluateRoll("1d20 + 5").Returns(6);
+        this.diceRoller.EvaluateRoll("1d20 + 5").Returns(6);
         int callCount = 1;
-        this.DiceRoller.EvaluateRoll("1d20").Returns((CallInfo callInfo) =>
+        this.diceRoller.EvaluateRoll("1d20").Returns((CallInfo callInfo) =>
         {
             return callCount++;
         });
-        var result = this.DiceRoller.ComputeRolls(
+        var result = this.initiativeRoller.ComputeRolls(
             [incomingChar],
             [existingChar1, existingChar2]
         );
@@ -199,13 +202,13 @@ public class DiceRollerTests
                 );
         existingChar2.InitiativeValue = [6, 5];
 
-        this.DiceRoller.EvaluateRoll("1d20 + 3").Returns(6);
+        this.diceRoller.EvaluateRoll("1d20 + 3").Returns(6);
         int callCount = 5;
-        this.DiceRoller.EvaluateRoll("1d20").Returns((CallInfo callInfo) =>
+        this.diceRoller.EvaluateRoll("1d20").Returns((CallInfo callInfo) =>
         {
             return callCount++;
         });
-        var result = this.DiceRoller.ComputeRolls(
+        var result = this.initiativeRoller.ComputeRolls(
             [incomingChar],
             [existingChar1, existingChar2]
         );

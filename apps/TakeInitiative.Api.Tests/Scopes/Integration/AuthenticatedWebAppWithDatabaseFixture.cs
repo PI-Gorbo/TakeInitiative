@@ -49,8 +49,7 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
         .Build();
     private Users CurrentUser;
     public AuthenticatedWebAppWithDatabaseFixtureSeededData SeedData { get; set; }
-    public IDiceRoller DiceRollerSubstitute => Substitute.For<IDiceRoller>();
-
+    public IInitiativeRoller InitiativeRoller { get; } = Substitute.For<IInitiativeRoller>();
 
     public async Task InitializeAsync()
     {
@@ -68,7 +67,7 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
            .ConfigureServices((context, services) =>
                 {
                     services.Replace(
-                        new ServiceDescriptor(typeof(IDiceRoller), DiceRollerSubstitute)
+                        new ServiceDescriptor(typeof(IDiceRoller), InitiativeRoller)
                     );
                     services.AddMartenDB(context.Configuration, IsDevelopment: true);
                 })

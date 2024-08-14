@@ -24,36 +24,12 @@
   PlannedStages: [
     {
       Id: Guid_5,
-      Name: Stage One,
-      Npcs: [
-        {
-          StageId: Guid_5,
-          Quantity: 1,
-          Id: Guid_6,
-          Name: Intro Enemy,
-          Health: {
-            HasHealth: false,
-            MaxHealth: 0,
-            CurrentHealth: 0
-          },
-          Initiative: {
-            Strategy: 1,
-            Value: 1d20 + 1,
-            Fixed: null,
-            Roll: 1d20 + 1
-          },
-          ArmourClass: 12
-        }
-      ]
-    },
-    {
-      Id: Guid_7,
       Name: Boss Fight,
       Npcs: [
         {
-          StageId: Guid_7,
+          StageId: Guid_5,
           Quantity: 10,
-          Id: Guid_8,
+          Id: Guid_6,
           Name: 10 goblins in a trench coat,
           Health: {
             HasHealth: false,
@@ -81,7 +57,7 @@
       InitiativeValue: [],
       Hidden: false,
       CopyNumber: null,
-      Id: Guid_9,
+      Id: Guid_7,
       Name: My Super Duper Character,
       Health: {
         HasHealth: true,
@@ -95,6 +71,30 @@
         Roll: 1d20 + 3
       },
       ArmourClass: 20
+    },
+    {
+      PlayerId: Guid_3,
+      CharacterOriginDetails: {
+        CharacterOrigin: 0,
+        Id: Guid_8
+      },
+      InitiativeValue: [],
+      Hidden: true,
+      CopyNumber: null,
+      Id: Guid_9,
+      Name: Intro Enemy,
+      Health: {
+        HasHealth: false,
+        MaxHealth: 0,
+        CurrentHealth: 0
+      },
+      Initiative: {
+        Strategy: 1,
+        Value: 1d20 + 1,
+        Fixed: null,
+        Roll: 1d20 + 1
+      },
+      ArmourClass: 12
     }
   ],
   InitiativeList: [],

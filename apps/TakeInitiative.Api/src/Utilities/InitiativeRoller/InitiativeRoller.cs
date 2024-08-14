@@ -1,35 +1,32 @@
 using System.Collections.Immutable;
 using CSharpFunctionalExtensions;
 using Marten;
-using Python.Runtime;
 
 namespace TakeInitiative.Utilities;
 
-public static class DiceRollerExtensions
+public class InitiativeRoller(IDiceRoller roller) : IInitiativeRoller
 {
-    public static int RollD20(this IDiceRoller roller) => roller.EvaluateRoll("1d20").Value;
-
-    public static Result<List<CharacterInitiativeRoll>> ComputeRolls(this IDiceRoller roller, IEnumerable<CombatCharacter> characters)
+    public Result<List<CharacterInitiativeRoll>> ComputeRolls(IEnumerable<CombatCharacter> characters)
     {
-        return roller.ComputeRolls_Recursive(characters, isFirstRoll: true);
+        return this.ComputeRolls_Recursive(characters, isFirstRoll: true);
     }
 
-    public static Result<List<CharacterInitiativeRoll>> ComputeRolls(this IDiceRoller roller, List<CombatCharacter> newCharacters, ImmutableList<CombatCharacter> existingInitiativeList)
+    public Result<List<CharacterInitiativeRoll>> ComputeRolls(List<CombatCharacter> newCharacters, ImmutableList<CombatCharacter> existingInitiativeList)
     {
         // 1. Compute the rolls of the new characters, to produce a set that has no conflicts.
-        var incomingComputedRolls = roller.ComputeRolls(newCharacters);
+        var incomingComputedRolls = this.ComputeRolls(newCharacters);
         if (incomingComputedRolls.IsFailure)
         {
             return incomingComputedRolls;
         }
 
-        return roller.MergeRolls(existingInitiativeList, incomingComputedRolls);
+        return this.MergeRolls(existingInitiativeList, incomingComputedRolls);
     }
 
-    internal static Result<List<CharacterInitiativeRoll>> ComputeRolls_Recursive(this IDiceRoller roller, IEnumerable<CombatCharacter> characters, bool isFirstRoll)
+    internal Result<List<CharacterInitiativeRoll>> ComputeRolls_Recursive(IEnumerable<CombatCharacter> characters, bool isFirstRoll)
     {
         // 1. For the input list, compute the rolls.
-        var computedRollsResult = roller.ComputeOneRollForEachCharacter(characters, isFirstRoll);
+        var computedRollsResult = this.ComputeOneRollForEachCharacter(characters, isFirstRoll);
         if (computedRollsResult.IsFailure)
         {
             return computedRollsResult.ConvertFailure<List<CharacterInitiativeRoll>>();
@@ -48,7 +45,7 @@ public static class DiceRollerExtensions
                 var ids = group.Select(x => x.id).ToArray();
                 var charactersOfGroup = characters.Where(x => x.Id.IsOneOf(ids));
                 // Re-Roll for characters of the group.
-                var recursivelyComputedRolls = roller.ComputeRolls_Recursive(charactersOfGroup, false).GetValueOrDefault(new());
+                var recursivelyComputedRolls = this.ComputeRolls_Recursive(charactersOfGroup, false).GetValueOrDefault(new());
                 return group
                     .Select(groupedValue =>
                         new CharacterInitiativeRoll(id: groupedValue.id, rolls: recursivelyComputedRolls.First(x => groupedValue.id == x.id).rolls.Prepend(groupedValue.roll).ToArray())
@@ -58,27 +55,7 @@ public static class DiceRollerExtensions
             .ToList();
     }
 
-    internal static Result<List<(Guid id, int roll)>> ComputeOneRollForEachCharacter(this IDiceRoller roller, IEnumerable<CombatCharacter> characters, bool isFirstRoll)
-    {
-        return characters.Select(x => (id: x.Id, roll: isFirstRoll ? x.Initiative.RollInitiative(roller) : roller.RollD20()))
-            .Aggregate(Result.Success<List<(Guid id, int roll)>>(new()), (current, nextValue) =>
-            {
-                if (current.IsFailure)
-                {
-                    return current.MapError(x => x + (nextValue.roll.IsFailure ? $", {nextValue.roll.Error}" : ""));
-                }
-
-
-                if (nextValue.roll.IsFailure)
-                {
-                    return nextValue.roll.ConvertFailure<List<(Guid id, int roll)>>();
-                }
-
-                return current.Value.Append((id: nextValue.id, roll: nextValue.roll.Value)).ToList();
-            });
-    }
-
-    internal static Result<List<CharacterInitiativeRoll>> MergeRolls(this IDiceRoller roller, ImmutableList<CombatCharacter> existingInitiativeList, Result<List<CharacterInitiativeRoll>> incomingComputedRolls)
+    internal Result<List<CharacterInitiativeRoll>> MergeRolls(ImmutableList<CombatCharacter> existingInitiativeList, Result<List<CharacterInitiativeRoll>> incomingComputedRolls)
     {
         Dictionary<Guid, CharacterInitiativeRoll> outgoingCharacterInitiative = existingInitiativeList
             .Select(x => new CharacterInitiativeRoll(x.Id, x.InitiativeValue))
@@ -160,6 +137,25 @@ public static class DiceRollerExtensions
         }
 
         return outgoingCharacterInitiative.Values.ToList();
+    }
+    internal Result<List<(Guid id, int roll)>> ComputeOneRollForEachCharacter(IEnumerable<CombatCharacter> characters, bool isFirstRoll)
+    {
+        return characters.Select(x => (id: x.Id, roll: isFirstRoll ? x.Initiative.RollInitiative(roller) : roller.RollD20()))
+            .Aggregate(Result.Success<List<(Guid id, int roll)>>(new()), (current, nextValue) =>
+            {
+                if (current.IsFailure)
+                {
+                    return current.MapError(x => x + (nextValue.roll.IsFailure ? $", {nextValue.roll.Error}" : ""));
+                }
+
+
+                if (nextValue.roll.IsFailure)
+                {
+                    return nextValue.roll.ConvertFailure<List<(Guid id, int roll)>>();
+                }
+
+                return current.Value.Append((id: nextValue.id, roll: nextValue.roll.Value)).ToList();
+            });
     }
 }
 

@@ -1,5 +1,7 @@
 using System.Text.Json;
+using CSharpFunctionalExtensions;
 using FluentAssertions;
+using NSubstitute;
 using TakeInitiative.Api.Features;
 using TakeInitiative.Api.Features.Combats;
 using VerifyTests;
@@ -64,7 +66,7 @@ public class ComprehensiveCombatTests(AuthenticatedWebAppWithDatabaseFixture fix
             StageId = plannedCombat.Stages.ElementAt(1).Id,
             Initiative = new CharacterInitiative()
             {
-                Value = "1d20 + 4",
+                Value = "1d20 + 2",
                 Strategy = InitiativeStrategy.Roll // Roll,
             },
             Health = new()
@@ -88,7 +90,7 @@ public class ComprehensiveCombatTests(AuthenticatedWebAppWithDatabaseFixture fix
         await VerifyWithFileName(combat, "0.OpenedCombat");
 
         // Player adds their character to the combat.
-        var addStagedCharacterResult = await fixture
+        var addStagedPlayerCharacterResult = await fixture
             .LoginAsUser(Users.Player)
             .PutUpsertStagedCharacter(new()
             {
@@ -107,14 +109,51 @@ public class ComprehensiveCombatTests(AuthenticatedWebAppWithDatabaseFixture fix
                     Name = "My Super Duper Character",
                     Initiative = new()
                     {
-                        Value = "1d20 + 1",
+                        Value = "1d20 + 3",
                         Strategy = InitiativeStrategy.Roll // Roll,
                     }
                 },
             });
+        addStagedPlayerCharacterResult.Should().Succeed();
+        combat = addStagedPlayerCharacterResult.Value.Combat;
+        await VerifyWithFileName(combat, "1.PlayerStagedCharacter");
 
-        addStagedCharacterResult.Should().Succeed();
-        await VerifyWithFileName(addStagedCharacterResult.Value, "1.PlayerStagedCharacter");
+        // DM stages their own characters
+        var addPlannedCharactersResult = await fixture
+            .LoginAsUser(Users.DM)
+            .PostStagePlannedCharacters(new PutStagePlannedCharactersRequest()
+            {
+                CombatId = combat.Id,
+                PlannedCharactersToStage = new()
+                {
+                    [combat.PlannedStages.First().Id] = [
+                        new () {
+                            CharacterId = combat.PlannedStages.First().Npcs.First().Id, Quantity = 1
+                        },
+                    ]
+                }
+            });
+        addPlannedCharactersResult.Should().Succeed();
+        combat = addPlannedCharactersResult.Value.Combat;
+        await VerifyWithFileName(combat, "2.DmStagedPlannedCharacter");
+
+        // Setup a mock for the initial initiative rolls.
+        fixture.InitiativeRoller.ComputeRolls(default, default)
+            .ReturnsForAnyArgs(new List<CharacterInitiativeRoll>()
+            {
+                new(combat.StagedList[0].Id, [20]),
+                new(combat.StagedList[1].Id, [15]),
+            });
+
+        // Start the combat.
+        var startCombatResult = await fixture.PostStartCombat(new PostStartCombatRequest()
+        {
+            CombatId = combat.Id,
+        });
+        startCombatResult.Should().Succeed();
+        combat = startCombatResult.Value.Combat;
+        await VerifyWithFileName(combat, "3.CombatStarted");
+
 
     }
 
