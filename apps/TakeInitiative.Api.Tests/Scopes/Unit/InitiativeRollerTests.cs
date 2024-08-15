@@ -58,7 +58,7 @@ public class DiceRollerTests
 
         this.diceRoller.EvaluateRoll("1d20 + 5").Returns(6);
         int callCount = 1;
-        this.diceRoller.EvaluateRoll("1d20").Returns((CallInfo callInfo) =>
+        this.diceRoller.RollD20().Returns((CallInfo callInfo) =>
         {
             return callCount++;
         });
@@ -128,7 +128,7 @@ public class DiceRollerTests
 
         this.diceRoller.EvaluateRoll("1d20 + 5").Returns(6);
         int callCount = 1;
-        this.diceRoller.EvaluateRoll("1d20").Returns((CallInfo callInfo) =>
+        this.diceRoller.RollD20().Returns((CallInfo callInfo) =>
         {
             return callCount++;
         });
@@ -204,7 +204,7 @@ public class DiceRollerTests
 
         this.diceRoller.EvaluateRoll("1d20 + 3").Returns(6);
         int callCount = 5;
-        this.diceRoller.EvaluateRoll("1d20").Returns((CallInfo callInfo) =>
+        this.diceRoller.RollD20().Returns((CallInfo callInfo) =>
         {
             return callCount++;
         });

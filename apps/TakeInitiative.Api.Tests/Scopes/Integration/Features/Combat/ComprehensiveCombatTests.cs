@@ -1,6 +1,7 @@
 using System.Text.Json;
 using CSharpFunctionalExtensions;
 using FluentAssertions;
+using Marten;
 using NSubstitute;
 using TakeInitiative.Api.Features;
 using TakeInitiative.Api.Features.Combats;
@@ -87,7 +88,7 @@ public class ComprehensiveCombatTests(AuthenticatedWebAppWithDatabaseFixture fix
         openedCombat.Should().Succeed();
 
         var combat = openedCombat.Value.Combat;
-        await VerifyWithFileName(combat, "0.OpenedCombat");
+        await VerifyWithFileName(combat, "00.OpenedCombat");
 
         // Player adds their character to the combat.
         var addStagedPlayerCharacterResult = await fixture
@@ -116,7 +117,7 @@ public class ComprehensiveCombatTests(AuthenticatedWebAppWithDatabaseFixture fix
             });
         addStagedPlayerCharacterResult.Should().Succeed();
         combat = addStagedPlayerCharacterResult.Value.Combat;
-        await VerifyWithFileName(combat, "1.PlayerStagedCharacter");
+        await VerifyWithFileName(combat, "01.PlayerStagedCharacter");
 
         // DM stages their own characters
         var addPlannedCharactersResult = await fixture
@@ -135,10 +136,11 @@ public class ComprehensiveCombatTests(AuthenticatedWebAppWithDatabaseFixture fix
             });
         addPlannedCharactersResult.Should().Succeed();
         combat = addPlannedCharactersResult.Value.Combat;
-        await VerifyWithFileName(combat, "2.DmStagedPlannedCharacter");
+        await VerifyWithFileName(combat, "02.DmStagedPlannedCharacter");
 
         // Setup a mock for the initial initiative rolls.
-        fixture.InitiativeRoller.ComputeRolls(default, default)
+        combat.StagedList.Count.Should().Be(2);
+        fixture.InitiativeRoller.ComputeRolls(default)
             .ReturnsForAnyArgs(new List<CharacterInitiativeRoll>()
             {
                 new(combat.StagedList[0].Id, [20]),
@@ -152,7 +154,63 @@ public class ComprehensiveCombatTests(AuthenticatedWebAppWithDatabaseFixture fix
         });
         startCombatResult.Should().Succeed();
         combat = startCombatResult.Value.Combat;
-        await VerifyWithFileName(combat, "3.CombatStarted");
+        await VerifyWithFileName(combat, "03.CombatStarted");
+
+        // The DM will update the character to be not be hidden.
+        CombatCharacter notVisibleDmCharacter = combat.InitiativeList[0];
+        var setDmCharacterToVisible = await fixture.PutUpdateInitiativeCharacter(new()
+        {
+            Character = new()
+            {
+                Id = notVisibleDmCharacter.Id,
+                Name = notVisibleDmCharacter.Name,
+                ArmourClass = notVisibleDmCharacter.ArmourClass,
+                Hidden = false,
+                InitiativeValue = notVisibleDmCharacter.InitiativeValue,
+                Health = notVisibleDmCharacter.Health,
+            },
+            CombatId = combat.Id,
+        });
+        setDmCharacterToVisible.Should().Succeed();
+        combat = startCombatResult.Value.Combat;
+        await VerifyWithFileName(combat, "04.DmSetsCharacterToVisible");
+
+        // It is the player's turn.
+        // Imagine the player rolls and does some damage to the enemy.
+        // The DM would subtract some damage from their character's health.
+        CombatCharacter dmCharacter = combat.InitiativeList[0];
+        var damageDmCharacter = await fixture.PutUpdateInitiativeCharacter(new()
+        {
+            Character = new()
+            {
+                Id = dmCharacter.Id,
+                Name = dmCharacter.Name,
+                ArmourClass = dmCharacter.ArmourClass,
+                Hidden = dmCharacter.Hidden,
+                InitiativeValue = dmCharacter.InitiativeValue,
+                Health = dmCharacter.Health! with
+                {
+                    CurrentHealth = dmCharacter.Health.CurrentHealth - 5,
+                },
+            },
+            CombatId = combat.Id,
+        });
+        damageDmCharacter.Should().Succeed();
+        combat = damageDmCharacter.Value.Combat;
+        await VerifyWithFileName(combat, "05.DamageDmCharacter");
+
+        // Player ends their turn.
+        var endTurnResult = await fixture
+            .LoginAsUser(Users.Player)
+            .PostEndTurn(new PostEndTurnRequest()
+            {
+                CombatId = combat.Id,
+            });
+        endTurnResult.Should().Succeed();
+        combat = endTurnResult.Value.Combat;
+        await VerifyWithFileName(combat, "06.PlayerEndsTurn");
+
+
 
 
     }

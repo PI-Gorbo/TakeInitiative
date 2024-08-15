@@ -67,7 +67,7 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
            .ConfigureServices((context, services) =>
                 {
                     services.Replace(
-                        new ServiceDescriptor(typeof(IDiceRoller), InitiativeRoller)
+                        new ServiceDescriptor(typeof(IInitiativeRoller), InitiativeRoller)
                     );
                     services.AddMartenDB(context.Configuration, IsDevelopment: true);
                 })
