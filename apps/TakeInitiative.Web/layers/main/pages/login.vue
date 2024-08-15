@@ -117,7 +117,7 @@ async function onLogin() {
             if (redirectToPath != null) {
                 await navigateTo(redirectToPath);
             } else {
-                await userStore.navigateToFirstAvailableCampaign();
+                await userStore.navigateToFirstAvailableCampaignOrFallbackToCreateOrJoin();
             }
         })
         .finally(() => (state.isSubmitting = false));

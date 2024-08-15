@@ -17,5 +17,5 @@ export default defineNuxtRouteMiddleware(async (to) => {
         return navigateTo("/createOrJoinCampaign");
     }
 
-    return userStore.navigateToFirstAvailableCampaign();
+    return userStore.navigateToFirstAvailableCampaignOrFallbackToCreateOrJoin();
 });
