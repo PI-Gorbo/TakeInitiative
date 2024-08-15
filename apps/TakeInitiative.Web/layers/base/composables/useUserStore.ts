@@ -77,7 +77,7 @@ export const useUserStore = defineStore("userStore", () => {
             if (redirectPath != null) {
                 return await navigateTo(redirectPath);
             } else {
-                return await navigateToFirstAvailableCampaign();
+                return await navigateToFirstAvailableCampaignOrFallbackToCreateOrJoin();
             }
         });
     }
@@ -151,7 +151,7 @@ export const useUserStore = defineStore("userStore", () => {
             });
     }
 
-    function navigateToFirstAvailableCampaign() {
+    function navigateToFirstAvailableCampaignOrFallbackToCreateOrJoin() {
         if (state.user == null) {
             return;
         }
@@ -184,6 +184,6 @@ export const useUserStore = defineStore("userStore", () => {
         username,
         campaignCount,
         campaignList,
-        navigateToFirstAvailableCampaign,
+        navigateToFirstAvailableCampaignOrFallbackToCreateOrJoin,
     };
 });
