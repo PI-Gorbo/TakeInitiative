@@ -37,6 +37,7 @@ export default defineNuxtConfig({
     },
     build: {
         transpile: [
+            "@fortawesome/free-brands-svg-icons",
             "@fortawesome/vue-fontawesome",
             "@fortawesome/fontawesome-svg-core",
             "vue-toastification",

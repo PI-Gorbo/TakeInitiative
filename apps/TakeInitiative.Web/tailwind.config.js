@@ -37,11 +37,13 @@ export default {
                 },
                 "take-creme": {
                     DEFAULT: "#FDF2C1",
+                    medium: "#F2CC8F",
                 },
             },
         },
         fontFamily: {
             NovaCut: ["NovaCut"],
+            Overpass: ["Overpass"],
         },
     },
     safelist: [

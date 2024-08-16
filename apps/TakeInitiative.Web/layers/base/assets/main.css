@@ -6,6 +6,7 @@
     width: 100dvw;
     height: 100dvh;
     overflow: auto;
+    font-family: "Overpass";
 }
 
 @font-face {

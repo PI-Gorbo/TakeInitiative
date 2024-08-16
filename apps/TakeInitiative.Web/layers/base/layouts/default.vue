@@ -11,17 +11,20 @@
         <div class="drawer-content w-full">
             <main class="flex h-full w-full flex-col">
                 <header
-                    class="navbar border border-take-navy-medium border-b-take-yellow bg-take-purple-dark"
+                    class="navbar border-b border-b-take-yellow bg-take-purple-dark"
                 >
                     <section class="navbar-start flex gap-2">
-                        <label class="flex items-center gap-2">
+                        <label
+                            class="flex cursor-pointer items-center gap-2"
+                            @click="() => useNavigator().toHomePage()"
+                        >
                             <img
                                 class="h-[3em] w-[3em]"
                                 src="/img/yellowDice.png"
                             />
-                            <label
+                            <span
                                 class="select-none font-NovaCut text-xl text-take-yellow md:text-3xl lg:text-2xl"
-                                >Take Initiative</label
+                                >Take Initiative</span
                             >
                         </label>
                     </section>
