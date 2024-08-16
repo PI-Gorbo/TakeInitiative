@@ -1,6 +1,4 @@
-import { Body } from "../../../.nuxt/components";
 import type { AxiosInstance } from "axios";
-import * as yup from "yup";
 import { getUserResponseSchema, type GetUserResponse } from "./getUserRequest";
 
 export type ConfirmEmailRequest = {};

@@ -10,7 +10,7 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
     {
         return Combat with
         {
-            State = CombatState.Started,
+            State = CombatState.InitiativeRolled,
         };
     }
 }

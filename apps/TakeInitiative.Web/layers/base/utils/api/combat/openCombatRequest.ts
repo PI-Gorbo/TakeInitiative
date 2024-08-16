@@ -8,16 +8,14 @@ export type OpenCombatRequest = {
     plannedCombatId: string;
 };
 
-export type OpenCombatResponse = yup.InferType<
-    typeof combatResponseValidator
->;
+export type OpenCombatResponse = yup.InferType<typeof combatResponseValidator>;
 
 export function openCombatRequest(axios: AxiosInstance) {
     return async function (
         request: OpenCombatRequest,
     ): Promise<OpenCombatResponse> {
         return await axios
-            .post("/api/combat/open", request)
+            .post("/api/combat/start", request)
             .then(async (response) =>
                 validateWithSchema(response.data, combatResponseValidator),
             );

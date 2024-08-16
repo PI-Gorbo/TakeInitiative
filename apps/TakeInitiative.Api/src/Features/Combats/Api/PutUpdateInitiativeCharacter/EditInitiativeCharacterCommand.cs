@@ -20,7 +20,7 @@ public class EditInitiativeCharacterCommandHandler(IDocumentSession session) : C
     {
         return Result.Try(() => session.LoadAsync<Combat>(command.CombatId), ex => "Failed initial fetch of the combat from the database.")
             .EnsureNotNull("Combat does not exist.")
-            .Ensure(combat => combat.State == CombatState.Started, "Combat's initiative list cannot be edited ")
+            .Ensure(combat => combat.State == CombatState.InitiativeRolled, "Combat's initiative list cannot be edited ")
             .Bind((combat) =>
             {
                 // Ensure the player's character exists.

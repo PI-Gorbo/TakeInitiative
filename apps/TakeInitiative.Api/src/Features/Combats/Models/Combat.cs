@@ -1,65 +1,6 @@
 using System.Collections.Immutable;
-using System.Text.Json.Serialization;
 
 namespace TakeInitiative.Api.Features.Combats;
-[JsonDerivedType(typeof(CombatOpened), typeDiscriminator: "CombatOpened")]
-[JsonDerivedType(typeof(CombatStarted), typeDiscriminator: "CombatStarted")]
-[JsonDerivedType(typeof(CharacterHealthChanged), typeDiscriminator: "CharacterHealthChanged")]
-[JsonDerivedType(typeof(CombatFinished), typeDiscriminator: "CombatFinished")]
-[JsonDerivedType(typeof(TurnStarted), typeDiscriminator: "TurnStarted")]
-[JsonDerivedType(typeof(TurnEnded), typeDiscriminator: "TurnEnded")]
-[JsonDerivedType(typeof(RoundEnded), typeDiscriminator: "RoundEnded")]
-[JsonDerivedType(typeof(PlayerCharacterJoined), typeDiscriminator: "PlayerCharacterJoined")]
-[JsonDerivedType(typeof(PlannedCharactersAdded), typeDiscriminator: "PlannedCharactersAdded")]
-[JsonDerivedType(typeof(CharacterRemoved), typeDiscriminator: "CharacterRemoved")]
-[JsonPolymorphic(TypeDiscriminatorPropertyName = "!")]
-public abstract record HistoryEvent
-{
-}
-public record CombatOpened : HistoryEvent { }
-
-public record CombatStarted : HistoryEvent { }
-
-public record CombatFinished : HistoryEvent { }
-
-public record TurnStarted : HistoryEvent
-{
-    public required Guid CharacterId { get; set; }
-}
-
-public record TurnEnded : HistoryEvent
-{
-    public required Guid CharacterId { get; set; }
-}
-
-public record RoundEnded : HistoryEvent { }
-
-public record PlayerCharacterJoined : HistoryEvent
-{
-    public required Guid CharacterId { get; set; }
-}
-
-public record PlannedCharactersAdded : HistoryEvent { }
-
-public record CharacterRemoved : HistoryEvent
-{
-    public required Guid CharacterId { get; set; }
-}
-
-public record CharacterHealthChanged : HistoryEvent
-{
-    public required Guid CharacterId { get; set; }
-    public required int From { get; set; }
-    public required int To { get; set; }
-}
-
-
-public record HistoryEntry
-{
-    public required DateTimeOffset Timestamp { get; set; }
-    public required ImmutableList<HistoryEvent> Events { get; set; }
-    public required Guid Executor { get; set; }
-}
 
 public record Combat
 {

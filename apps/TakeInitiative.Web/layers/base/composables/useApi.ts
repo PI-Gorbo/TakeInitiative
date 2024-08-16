@@ -10,7 +10,7 @@ import { updatePlayerCharacterRequest } from "../utils/api/campaign/updatePlayer
 import { deleteInitiativeCharacterRequest } from "../utils/api/combat/deleteInitiativeCharacterRequest";
 import { deleteStagedCharacter } from "../utils/api/combat/deleteStagedCharacterRequest";
 import { getCombatRequest } from "../utils/api/combat/getCombatRequest";
-import { openCombatRequest } from "../utils/api/combat/openCombatRequest";
+import { openCombatRequest } from "../utils/api/combat/openCombatRequest.js";
 import { postFinishCombatRequest } from "../utils/api/combat/postFinishCombatRequest";
 import { postEndTurnRequest } from "../utils/api/combat/postNextTurn";
 import { postRollStagedCharactersIntoInitiativeRequest } from "../utils/api/combat/postRollStagedCharactersIntoInitiative";

@@ -148,7 +148,7 @@ public class ComprehensiveCombatTests(AuthenticatedWebAppWithDatabaseFixture fix
             });
 
         // Start the combat.
-        var startCombatResult = await fixture.PostStartCombat(new PostStartCombatRequest()
+        var startCombatResult = await fixture.PostStartCombat(new PostRollCombatInitiativeRequest()
         {
             CombatId = combat.Id,
         });

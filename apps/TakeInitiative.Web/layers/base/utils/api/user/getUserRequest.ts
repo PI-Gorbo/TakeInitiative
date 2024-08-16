@@ -1,4 +1,3 @@
-import { Body } from "./../../../.nuxt/components.d";
 import type { AxiosInstance } from "axios";
 import * as yup from "yup";
 

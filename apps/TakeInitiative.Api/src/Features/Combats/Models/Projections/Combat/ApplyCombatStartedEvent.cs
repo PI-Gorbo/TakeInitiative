@@ -2,44 +2,28 @@ using System.Collections.Immutable;
 using Marten;
 using Marten.Events;
 using Marten.Events.Aggregation;
-using TakeInitiative.Utilities;
 
 namespace TakeInitiative.Api.Features.Combats;
 public partial class CombatProjection : SingleStreamProjection<Combat>
 {
-    public async Task<Combat> Apply(CombatStartedEvent @event, Combat Combat, IEvent<CombatStartedEvent> eventDetails, IQuerySession session)
+    public async Task<Combat> Apply(CombatOpenedEvent @event, Combat Combat, IEvent<CombatOpenedEvent> eventDetails, IQuerySession session)
     {
         var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
-        var newInitiativeList = @event.InitiativeRolls.Select((charInitiative, index) =>
-        {
-            var stagedCharacter = Combat.StagedList.FirstOrDefault(x => x.Id == charInitiative.id, null);
-            if (stagedCharacter == null)
-            {
-                return null;
-            }
-
-            return stagedCharacter with
-            {
-                InitiativeValue = charInitiative.rolls
-            };
-        })
-        .Where(x => x != null)
-        .Cast<CombatCharacter>()
-        .OrderByDescending(x => x.InitiativeValue, new InitiativeComparer())
-        .ToImmutableList();
-
-        return Combat with
-        {
-            State = CombatState.Started,
-            StagedList = [],
-            InitiativeList = newInitiativeList,
-            RoundNumber = 1,
-            InitiativeIndex = 0,
-            History = [.. Combat.History, new() {
+        return Combat.New(
+            Id: Combat.Id,
+            CampaignId: @event.CampaignId,
+            CombatName: @event.CombatName,
+            State: CombatState.Started,
+            DungeonMaster: @event.UserId,
+            History: [new() {
                 Events = [new CombatStarted()],
                 Executor = user!.Id,
                 Timestamp = eventDetails.Timestamp
-            }]
-        };
+            }],
+            CurrentPlayers: [],
+            PlannedStages: @event.Stages.ToImmutableList(),
+            InitiativeList: [],
+            StagedList: []
+        );
     }
 }

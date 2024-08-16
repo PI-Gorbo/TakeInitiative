@@ -17,7 +17,7 @@ export function postStartCombatRequest(axios: AxiosInstance) {
         request: PostStartCombatRequest,
     ): Promise<PostStartCombatResponse> {
         return await axios
-            .post("/api/combat/start", request)
+            .post("/api/combat/roll-initiative", request)
             .then(async (response) =>
                 validateWithSchema(response.data, combatResponseValidator),
             );
