@@ -9,7 +9,7 @@
       Timestamp: DateTimeOffset_1,
       Events: [
         {
-          TYPE: CombatOpened
+          TYPE: CombatStarted
         }
       ],
       Executor: Guid_3
