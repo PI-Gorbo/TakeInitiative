@@ -238,6 +238,12 @@ export const combatCharacterValidator = yup.object({
 });
 export type CombatCharacter = InferType<typeof combatCharacterValidator>;
 
+export const historyEntryValidator = yup.object({
+    timestamp: yup.string().required(),
+    events: yup.array().required(),
+    executor: yup.string().uuid().required(),
+});
+
 export const combatValidator = yup.object({
     id: yup.string().required(),
     campaignId: yup.string().required(),

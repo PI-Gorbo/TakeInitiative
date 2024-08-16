@@ -13,6 +13,11 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
 
         // Determine the new initiative & round numbers.
         var removeCharacterIndex = Combat.InitiativeList.FindIndex(x => x.Id == @event.CharacterId);
+        if (removeCharacterIndex == -1)
+        {
+            return Combat;
+        }
+
         if (removeCharacterIndex == Combat.InitiativeIndex) // It is the character who is being removed turn. 
         {
             var (newInitiativeIndex, newRoundNumber) = Combat.GetNextTurnInfo();

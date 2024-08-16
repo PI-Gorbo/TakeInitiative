@@ -28,6 +28,20 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
         .OrderByDescending(x => x.InitiativeValue, new InitiativeComparer())
         .ToImmutableList();
 
+        List<HistoryEvent> events = [
+            new CombatInitiativeRolled {
+                Rolls = [..@event.InitiativeRolls.OrderByDescending(x => x.rolls, new InitiativeComparer())]
+            }
+        ];
+
+        if (newInitiativeList.Count != 0)
+        {
+            events.Add(new TurnStarted
+            {
+                CharacterId = newInitiativeList[0].Id
+            });
+        }
+
         return Combat with
         {
             State = CombatState.InitiativeRolled,
@@ -36,7 +50,7 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
             RoundNumber = 1,
             InitiativeIndex = 0,
             History = [.. Combat.History, new() {
-                Events = [new CombatInitiativeRolled()],
+                Events = [.. events],
                 Executor = user!.Id,
                 Timestamp = eventDetails.Timestamp
             }]

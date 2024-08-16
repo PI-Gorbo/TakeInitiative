@@ -18,7 +18,25 @@
       Timestamp: DateTimeOffset_2,
       Events: [
         {
-          TYPE: CombatInitiativeRolled
+          TYPE: CombatInitiativeRolled,
+          Rolls: [
+            {
+              id: Guid_4,
+              rolls: [
+                20
+              ]
+            },
+            {
+              id: Guid_5,
+              rolls: [
+                15
+              ]
+            }
+          ]
+        },
+        {
+          TYPE: TurnStarted,
+          CharacterId: Guid_4
         }
       ],
       Executor: Guid_3
@@ -27,18 +45,18 @@
   CombatLogs: [],
   CurrentPlayers: [
     {
-      UserId: Guid_4
+      UserId: Guid_6
     }
   ],
   PlannedStages: [
     {
-      Id: Guid_5,
+      Id: Guid_7,
       Name: Boss Fight,
       Npcs: [
         {
-          StageId: Guid_5,
+          StageId: Guid_7,
           Quantity: 10,
-          Id: Guid_6,
+          Id: Guid_8,
           Name: 10 goblins in a trench coat,
           Health: {
             HasHealth: false,
@@ -59,7 +77,7 @@
   StagedList: [],
   InitiativeList: [
     {
-      PlayerId: Guid_4,
+      PlayerId: Guid_6,
       CharacterOriginDetails: {
         CharacterOrigin: 0,
         Id: null
@@ -69,7 +87,7 @@
       ],
       Hidden: false,
       CopyNumber: null,
-      Id: Guid_7,
+      Id: Guid_4,
       Name: My Super Duper Character,
       Health: {
         HasHealth: true,
@@ -88,14 +106,14 @@
       PlayerId: Guid_3,
       CharacterOriginDetails: {
         CharacterOrigin: 0,
-        Id: Guid_8
+        Id: Guid_9
       },
       InitiativeValue: [
         15
       ],
       Hidden: true,
       CopyNumber: null,
-      Id: Guid_9,
+      Id: Guid_5,
       Name: Intro Enemy,
       Health: {
         HasHealth: false,

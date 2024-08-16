@@ -10,7 +10,6 @@ public record Combat
     public string? CombatName { get; init; }
     public Guid DungeonMaster { get; init; }
     public ImmutableList<HistoryEntry> History { get; set; } = [];
-    public ImmutableList<string> CombatLogs { get; set; } = [];
     public ImmutableList<PlayerDto> CurrentPlayers { get; set; } = [];
     public ImmutableList<PlannedCombatStage> PlannedStages { get; set; } = [];
     public ImmutableList<CombatCharacter> StagedList { get; set; } = [];

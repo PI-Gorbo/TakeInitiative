@@ -9,6 +9,11 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
 {
     public async Task<Combat> Apply(TurnEndedEvent @event, Combat Combat, IEvent<TurnEndedEvent> eventDetails, IQuerySession session)
     {
+        if (Combat.InitiativeIndex < 0 || Combat.InitiativeList.Count == 0 || Combat.InitiativeIndex > Combat.InitiativeList.Count)
+        {
+            return Combat; // WHY??
+        }
+
         var currentCharacterId = Combat.InitiativeList[Combat.InitiativeIndex].Id;
         var (nextInitiativeIndex, nextRoundNumber) = Combat.GetNextTurnInfo();
 

@@ -18,7 +18,25 @@
       Timestamp: DateTimeOffset_2,
       Events: [
         {
-          TYPE: CombatInitiativeRolled
+          TYPE: CombatInitiativeRolled,
+          Rolls: [
+            {
+              id: Guid_4,
+              rolls: [
+                20
+              ]
+            },
+            {
+              id: Guid_5,
+              rolls: [
+                15
+              ]
+            }
+          ]
+        },
+        {
+          TYPE: TurnStarted,
+          CharacterId: Guid_4
         }
       ],
       Executor: Guid_3

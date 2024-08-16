@@ -48,11 +48,26 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
         // Determine new Initiative Index
         Maybe<Guid> characterWithCurrentTurn = Combat.InitiativeList.Count > 0 ? Combat.InitiativeList[Combat.InitiativeIndex].Id : Maybe.None;
         var newInitiativeIndex = characterWithCurrentTurn.HasValue ? newInitiativeList.FindIndex(x => x.Id == characterWithCurrentTurn) : 0; // Maintains the initiative index, so that it still points to the character whos turn it was before.
+
+        // If there was no characters in the combat before, add a turn started event.
+        ImmutableList<HistoryEntry> newHistory = characterWithCurrentTurn.HasValue
+            ? Combat.History
+            : [..Combat.History, new() {
+                Events = [
+                    new TurnStarted {
+                        CharacterId = newInitiativeList[0].Id
+                    }
+                ],
+                Executor = @event.UserId,
+                Timestamp = @eventDetails.Timestamp
+            }];
+
         return Combat with
         {
             StagedList = newStagedList,
             InitiativeList = newInitiativeList,
-            InitiativeIndex = newInitiativeIndex
+            InitiativeIndex = newInitiativeIndex,
+            History = newHistory
         };
     }
 }
