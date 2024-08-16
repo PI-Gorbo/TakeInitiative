@@ -22,23 +22,49 @@
         }
       ],
       Executor: Guid_3
+    },
+    {
+      Timestamp: DateTimeOffset_3,
+      Events: [
+        {
+          TYPE: CharacterHealthChanged,
+          CharacterId: Guid_4,
+          From: 10,
+          To: 5
+        }
+      ],
+      Executor: Guid_3
+    },
+    {
+      Timestamp: DateTimeOffset_4,
+      Events: [
+        {
+          TYPE: TurnEnded,
+          CharacterId: Guid_4
+        },
+        {
+          TYPE: TurnStarted,
+          CharacterId: Guid_5
+        }
+      ],
+      Executor: Guid_6
     }
   ],
   CombatLogs: [],
   CurrentPlayers: [
     {
-      UserId: Guid_4
+      UserId: Guid_6
     }
   ],
   PlannedStages: [
     {
-      Id: Guid_5,
+      Id: Guid_7,
       Name: Boss Fight,
       Npcs: [
         {
-          StageId: Guid_5,
+          StageId: Guid_7,
           Quantity: 10,
-          Id: Guid_6,
+          Id: Guid_8,
           Name: 10 goblins in a trench coat,
           Health: {
             HasHealth: false,
@@ -59,7 +85,7 @@
   StagedList: [],
   InitiativeList: [
     {
-      PlayerId: Guid_4,
+      PlayerId: Guid_6,
       CharacterOriginDetails: {
         CharacterOrigin: 0,
         Id: null
@@ -69,12 +95,12 @@
       ],
       Hidden: false,
       CopyNumber: null,
-      Id: Guid_7,
+      Id: Guid_4,
       Name: My Super Duper Character,
       Health: {
         HasHealth: true,
         MaxHealth: 20,
-        CurrentHealth: 10
+        CurrentHealth: 5
       },
       Initiative: {
         Strategy: 1,
@@ -88,14 +114,14 @@
       PlayerId: Guid_3,
       CharacterOriginDetails: {
         CharacterOrigin: 0,
-        Id: Guid_8
+        Id: Guid_9
       },
       InitiativeValue: [
         15
       ],
       Hidden: true,
       CopyNumber: null,
-      Id: Guid_9,
+      Id: Guid_5,
       Name: Intro Enemy,
       Health: {
         HasHealth: false,
@@ -111,7 +137,7 @@
       ArmourClass: 12
     }
   ],
-  InitiativeIndex: 0,
+  InitiativeIndex: 1,
   RoundNumber: 1,
   FinishedTimestamp: null
 }

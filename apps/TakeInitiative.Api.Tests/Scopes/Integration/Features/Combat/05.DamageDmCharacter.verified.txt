@@ -22,23 +22,35 @@
         }
       ],
       Executor: Guid_3
+    },
+    {
+      Timestamp: DateTimeOffset_3,
+      Events: [
+        {
+          TYPE: CharacterHealthChanged,
+          CharacterId: Guid_4,
+          From: 10,
+          To: 5
+        }
+      ],
+      Executor: Guid_3
     }
   ],
   CombatLogs: [],
   CurrentPlayers: [
     {
-      UserId: Guid_4
+      UserId: Guid_5
     }
   ],
   PlannedStages: [
     {
-      Id: Guid_5,
+      Id: Guid_6,
       Name: Boss Fight,
       Npcs: [
         {
-          StageId: Guid_5,
+          StageId: Guid_6,
           Quantity: 10,
-          Id: Guid_6,
+          Id: Guid_7,
           Name: 10 goblins in a trench coat,
           Health: {
             HasHealth: false,
@@ -59,7 +71,7 @@
   StagedList: [],
   InitiativeList: [
     {
-      PlayerId: Guid_4,
+      PlayerId: Guid_5,
       CharacterOriginDetails: {
         CharacterOrigin: 0,
         Id: null
@@ -69,12 +81,12 @@
       ],
       Hidden: false,
       CopyNumber: null,
-      Id: Guid_7,
+      Id: Guid_4,
       Name: My Super Duper Character,
       Health: {
         HasHealth: true,
         MaxHealth: 20,
-        CurrentHealth: 10
+        CurrentHealth: 5
       },
       Initiative: {
         Strategy: 1,

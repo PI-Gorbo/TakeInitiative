@@ -22,7 +22,7 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
         var newHistory = (hasHealth && currentHealthChanged)
             ? [.. Combat.History, new() {
                 Events = [
-                    new CharacterHealthChanged() {
+                    new CharacterHealthChanged {
                         CharacterId =character.Id,
                         From = character.Health?.CurrentHealth ?? -1,
                         To = @event.Character.Health?.CurrentHealth ?? -1

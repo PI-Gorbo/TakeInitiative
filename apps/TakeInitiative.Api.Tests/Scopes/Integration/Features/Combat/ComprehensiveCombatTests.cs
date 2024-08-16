@@ -209,10 +209,6 @@ public class ComprehensiveCombatTests(AuthenticatedWebAppWithDatabaseFixture fix
         endTurnResult.Should().Succeed();
         combat = endTurnResult.Value.Combat;
         await VerifyWithFileName(combat, "06.PlayerEndsTurn");
-
-
-
-
     }
 
     private Task VerifyWithFileName(object target, string fileName)
@@ -220,10 +216,8 @@ public class ComprehensiveCombatTests(AuthenticatedWebAppWithDatabaseFixture fix
         var verifySettings = new VerifySettings();
         verifySettings.DontIgnoreEmptyCollections();
         verifySettings.UseFileName(fileName);
-        var options = new JsonSerializerOptions();
-        options.TypeInfoResolverChain.Add(new PolymorphicTypeResolver());
-        var serializedValue = JsonSerializer.Serialize(target, options: options);
-        serializedValue = serializedValue.Replace("$type", "TYPE");
+        var serializedValue = JsonSerializer.Serialize(target);
+        serializedValue = serializedValue.Replace("!", "TYPE");
         return VerifyJson(serializedValue, verifySettings);
     }
 }
