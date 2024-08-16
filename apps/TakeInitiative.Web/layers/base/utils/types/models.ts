@@ -1,15 +1,13 @@
-import type { InferType } from "yup";
-import { yup } from "./HelperTypes";
-
-type ValuesOf<T extends {}> = T[keyof T];
+import { HistoryEvent } from "./models";
+import { z } from "zod";
 
 // Campaign Member
-const campaignMemberInfoValidator = yup.object({
-    memberId: yup.string(),
-    userId: yup.string(),
-    isDungeonMaster: yup.boolean(),
+const campaignMemberInfoValidator = z.object({
+    memberId: z.string(),
+    userId: z.string(),
+    isDungeonMaster: z.boolean(),
 });
-export type CampaignMemberInfo = InferType<typeof campaignMemberInfoValidator>;
+export type CampaignMemberInfo = z.infer<typeof campaignMemberInfoValidator>;
 
 // Campaign
 export const HealthDisplayOptionsEnum = {
@@ -39,101 +37,105 @@ export type ArmourClassDisplayOptionKeys =
 export type ArmourClassDisplayOptionValues =
     (typeof ArmourClassDisplayOptionsEnum)[ArmourClassDisplayOptionKeys];
 
-const campaignSettingsValidator = yup.object({
-    combatHealthDisplaySettings: yup
+const campaignSettingsValidator = z.object({
+    combatHealthDisplaySettings: z
         .object({
-            dmCharacterDisplayMethod: yup
-                .mixed<HealthDisplayOptionValues>()
-                .required(),
-            otherPlayerCharacterDisplayMethod: yup
-                .mixed<HealthDisplayOptionValues>()
-                .required(),
+            dmCharacterDisplayMethod: z.nativeEnum(HealthDisplayOptionsEnum),
+            otherPlayerCharacterDisplayMethod: z.nativeEnum(
+                HealthDisplayOptionsEnum,
+            ),
         })
         .required(),
-    combatArmourClassDisplaySettings: yup.object({
-        dmCharacterDisplayMethod: yup
-            .mixed<ArmourClassDisplayOptionValues>()
-            .required(),
-        otherPlayerCharacterDisplayMethod: yup
-            .mixed<ArmourClassDisplayOptionValues>()
-            .required(),
+    combatArmourClassDisplaySettings: z.object({
+        dmCharacterDisplayMethod: z.nativeEnum(ArmourClassDisplayOptionsEnum),
+        otherPlayerCharacterDisplayMethod: z.nativeEnum(
+            ArmourClassDisplayOptionsEnum,
+        ),
     }),
 });
-export type CampaignSettings = InferType<typeof campaignSettingsValidator>;
+export type CampaignSettings = z.infer<typeof campaignSettingsValidator>;
 
-export const campaignValidator = yup.object({
-    id: yup.string().required(),
-    ownerId: yup.string().required(),
-    campaignName: yup.string().required(),
-    campaignDescription: yup.string(),
-    campaignResources: yup.string(),
-    plannedCombatIds: yup.array(yup.string()),
-    campaignMemberInfo: yup.array(campaignMemberInfoValidator),
-    activeCombatId: yup.string().nullable(),
-    createdTimestamp: yup.string(),
-    campaignSettings: campaignSettingsValidator.required(),
-});
-export type Campaign = InferType<typeof campaignValidator>;
+export const campaignValidator = z
+    .object({
+        id: z.string(),
+        ownerId: z.string(),
+        campaignName: z.string(),
+        campaignDescription: z.string(),
+        campaignResources: z.string(),
+        plannedCombatIds: z.array(z.string()),
+        campaignMemberInfo: z.array(campaignMemberInfoValidator),
+        activeCombatId: z.string().nullable(),
+        createdTimestamp: z.string(),
+        campaignSettings: campaignSettingsValidator,
+    })
+    .required({
+        id: true,
+        ownerId: true,
+        campaignName: true,
+        campaignSettings: true,
+    });
+export type Campaign = z.infer<typeof campaignValidator>;
 
 // Character Initiative
 export enum InitiativeStrategy {
     Fixed = 0,
     Roll = 1,
 }
-export const characterInitiativeValidator = yup.object({
-    strategy: yup
-        .mixed<InitiativeStrategy>()
-        .oneOf(
-            Object.values(InitiativeStrategy).map(
-                (x) => x as InitiativeStrategy,
-            ),
-        ),
-    value: yup.string().required("An initiative value is required"),
-});
-export type CharacterInitiative = InferType<
-    typeof characterInitiativeValidator
->;
+export const characterInitiativeValidator = z
+    .object({
+        strategy: z.nativeEnum(InitiativeStrategy),
+        value: z.string({ message: "An initiative value is required." }),
+    })
+    .required({ value: true });
+export type CharacterInitiative = z.infer<typeof characterInitiativeValidator>;
 
 // Character Health
-export const characterHealthValidator = yup.object({
-    hasHealth: yup.boolean().required(),
-    maxHealth: yup
-        .number()
-        .integer("Max health be a integer (No decimal point)")
-        .typeError("Max health be a valid number")
-        .nullable()
-        .test(
-            "value",
-            "Either set current and max health to empty with the reset button, or provide a value for both",
-            (maxHealth, ctx) => {
-                if (!ctx.parent.hasHealth) {
-                    return true;
-                }
+export const characterHealthValidator = z
+    .object({
+        hasHealth: z.boolean(),
+        maxHealth: z
+            .number({ message: "Max health be a valid number" })
+            .int("Max health be a integer (No decimal point)")
+            .nullable(),
+        currentHealth: z
+            .number()
+            .int("Current health be a integer (No decimal point)")
+            .nullable(),
+    })
+    .required({ hasHealth: true })
+    .refine(
+        (characterHealth) => {
+            if (!characterHealth.hasHealth) {
+                return true;
+            }
 
-                return maxHealth != null && ctx.parent.currentHealth != null;
-            },
-        ),
-    currentHealth: yup
-        .number()
-        .integer("Current health be a integer (No decimal point)")
-        .nullable()
-        .typeError("Current health be a valid number"),
-});
-export type CharacterHealth = InferType<typeof characterHealthValidator>;
+            return (
+                characterHealth.maxHealth != null &&
+                characterHealth.currentHealth != null
+            );
+        },
+        {
+            message:
+                "Either set current and max health to empty with the reset button, or provide a value for both",
+        },
+    );
+export type CharacterHealth = z.infer<typeof characterHealthValidator>;
 
 // Player Character
-export const characterValidator = yup.object({
-    id: yup.string().required(),
-    name: yup.string().required(),
-    health: characterHealthValidator.nullable(),
-    initiative: characterInitiativeValidator,
-    armourClass: yup.number().nullable(),
-});
-export type ICharacter = InferType<typeof characterValidator>;
-export const playerCharacterValidator = characterValidator.shape({
-    playerId: yup.string().required(),
-});
-export type PlayerCharacter = InferType<typeof playerCharacterValidator>;
+export const characterValidator = z
+    .object({
+        id: z.string(),
+        name: z.string(),
+        health: characterHealthValidator.nullable(),
+        initiative: characterInitiativeValidator,
+        armourClass: z.number().nullable(),
+    })
+    .required({ id: true, name: true });
+export type ICharacter = z.infer<typeof characterValidator>;
+export const playerCharacterValidator = characterValidator
+    .extend({ playerId: z.string() })
+    .required({ playerId: true });
+export type PlayerCharacter = z.infer<typeof playerCharacterValidator>;
 
 // Campaign Member
 export enum ResourceVisibilityOptions {
@@ -142,59 +144,68 @@ export enum ResourceVisibilityOptions {
     Public = 2,
 }
 export const resourceVisibilityKeys = ["Private", "DMsOnly", "Public"] as const;
-export const campaignMemberResourceValidator = yup.object({
-    name: yup.string().required(),
-    link: yup.string().required(),
-    visibility: yup
-        .mixed<ResourceVisibilityOptions>()
-        .oneOf(
-            Object.values(
-                ResourceVisibilityOptions,
-            ) as ResourceVisibilityOptions[],
-        ),
-});
-export type CampaignMemberResource = InferType<
+export const campaignMemberResourceValidator = z
+    .object({
+        name: z.string(),
+        link: z.string(),
+        visibility: z.nativeEnum(ResourceVisibilityOptions),
+    })
+    .required({ name: true, link: true });
+export type CampaignMemberResource = z.infer<
     typeof campaignMemberResourceValidator
 >;
-export const campaignMemberValidator = yup.object({
-    id: yup.string().required(),
-    userId: yup.string().required(),
-    campaignId: yup.string().required(),
-    isDungeonMaster: yup.boolean().required(),
-    characters: yup.array(playerCharacterValidator),
-    resources: yup.array(campaignMemberResourceValidator),
-});
-export type CampaignMember = InferType<typeof campaignMemberValidator>;
+export const campaignMemberValidator = z
+    .object({
+        id: z.string(),
+        userId: z.string(),
+        campaignId: z.string(),
+        isDungeonMaster: z.boolean(),
+        characters: z.array(playerCharacterValidator),
+        resources: z.array(campaignMemberResourceValidator),
+    })
+    .required({
+        id: true,
+        userId: true,
+        campaignId: true,
+        isDungeonMaster: true,
+    });
+export type CampaignMember = z.infer<typeof campaignMemberValidator>;
 
 // Planned Combat NPC
-export const plannedCombatCharacterValidator = yup.object({
-    id: yup.string(),
-    name: yup.string().required("Please provide a name"),
-    health: characterHealthValidator.notRequired(),
-    armourClass: yup.number().notRequired(),
-    initiative: characterInitiativeValidator,
-    quantity: yup.number(),
-});
-export type PlannedCombatCharacter = InferType<
+export const plannedCombatCharacterValidator = z
+    .object({
+        id: z.string(),
+        name: z.string({ message: "Please provide a name" }),
+        health: characterHealthValidator,
+        armourClass: z.number(),
+        initiative: characterInitiativeValidator,
+        quantity: z.number(),
+    })
+    .required({ name: true });
+export type PlannedCombatCharacter = z.infer<
     typeof plannedCombatCharacterValidator
 >;
 
 // Planned Combat Stage
-export const plannedCombatStageValidator = yup.object({
-    id: yup.string().required(),
-    name: yup.string().required(),
-    npcs: yup.array(plannedCombatCharacterValidator),
-});
-export type PlannedCombatStage = InferType<typeof plannedCombatStageValidator>;
+export const plannedCombatStageValidator = z
+    .object({
+        id: z.string().uuid(),
+        name: z.string(),
+        npcs: z.array(plannedCombatCharacterValidator),
+    })
+    .required({ id: true, name: true });
+export type PlannedCombatStage = z.infer<typeof plannedCombatStageValidator>;
 
 // Planned Combat
-export const plannedCombatValidator = yup.object({
-    id: yup.string().required(),
-    campaignId: yup.string().required(),
-    combatName: yup.string().required(),
-    stages: yup.array(plannedCombatStageValidator),
-});
-export type PlannedCombat = InferType<typeof plannedCombatValidator>;
+export const plannedCombatValidator = z
+    .object({
+        id: z.string().uuid(),
+        campaignId: z.string().uuid(),
+        combatName: z.string(),
+        stages: z.array(plannedCombatStageValidator),
+    })
+    .required({ id: true, campaignId: true, combatName: true });
+export type PlannedCombat = z.infer<typeof plannedCombatValidator>;
 
 // Combat
 export enum CombatState {
@@ -204,60 +215,140 @@ export enum CombatState {
     Finished = 3,
 }
 
-export const combatTimingRecordValidator = yup.object({
-    startTime: yup.string(),
-    endTime: yup.string().nullable(),
+export const combatTimingRecordValidator = z.object({
+    startTime: z.string(),
+    endTime: z.string().nullable(),
 });
-export type CombatTiming = InferType<typeof combatTimingRecordValidator>;
-export const playerDtoValidator = yup.object({
-    userId: yup.string().required(),
-});
-export type PlayerDto = InferType<typeof playerDtoValidator>;
+export type CombatTiming = z.infer<typeof combatTimingRecordValidator>;
+export const playerDtoValidator = z
+    .object({
+        userId: z.string(),
+    })
+    .required({ userId: true });
+export type PlayerDto = z.infer<typeof playerDtoValidator>;
 
 export const CharacterOriginOptions = {
     PlayerCharacter: 0,
     PlannedCharacter: 1,
     CustomCharacter: 2,
 } as const;
-export const combatCharacterValidator = yup.object({
-    id: yup.string().required(),
-    characterOriginDetails: yup.object({
-        characterOrigin: yup
-            .mixed()
-            .oneOf(Object.values(CharacterOriginOptions)),
-        id: yup.string().nullable(),
+export const combatCharacterValidator = z
+    .object({
+        id: z.string(),
+        characterOriginDetails: z.object({
+            characterOrigin: z.nativeEnum(CharacterOriginOptions),
+            id: z.string().nullable(),
+        }),
+        playerId: z.string(),
+        initiativeValue: z.array(z.number()).nullable(),
+        hidden: z.boolean(),
+        name: z.string(),
+        health: characterHealthValidator.nullable(),
+        initiative: characterInitiativeValidator,
+        armourClass: z.number().nullable(),
+        copyNumber: z.number().nullable(),
+    })
+    .required({ id: true, playerId: true, hidden: true, name: true });
+export type CombatCharacter = z.infer<typeof combatCharacterValidator>;
+
+export const CombatStartedHistoryEvent = z.object({});
+export const CombatInitiativeRolledHistoryEvent = z.object({
+    rolls: z.array(
+        z.object({
+            id: z.string().uuid(),
+            rolls: z.array(z.number().int()),
+        }),
+    ),
+});
+export const CharacterHealthChangedHistoryEvent = z.object({
+    characterId: z.string().uuid(),
+    from: z.number().int(),
+    to: z.number().int(),
+});
+export const CombatFinishedHistoryEvent = z.object({});
+export const TurnStartedHistoryEvent = z.object({
+    characterId: z.string().uuid(),
+});
+export const TurnEndedHistoryEvent = z.object({
+    characterId: z.string().uuid(),
+});
+export const RoundEndedHistoryEvent = z.object({});
+export const PlayerCharacterJoinedHistoryEvent = z.object({
+    characterId: z.string().uuid(),
+});
+export const PlannedCharactersAddedHistoryEvent = z.object({});
+export const CharacterRemovedHistoryEvent = z.object({
+    characterId: z.string().uuid(),
+});
+
+export const historyEventValidator = z.discriminatedUnion("!", [
+    CombatStartedHistoryEvent.extend({
+        "!": z.literal("CombatStarted"),
     }),
-    playerId: yup.string().required(),
-    initiativeValue: yup.array(yup.number().required()).nullable(),
-    hidden: yup.boolean().required(),
-    name: yup.string().required(),
-    health: characterHealthValidator.nullable(),
-    initiative: characterInitiativeValidator.required(),
-    armourClass: yup.number().nullable(),
-    copyNumber: yup.number().nullable(),
-});
-export type CombatCharacter = InferType<typeof combatCharacterValidator>;
+    CombatInitiativeRolledHistoryEvent.extend({
+        "!": z.literal("CombatInitiativeRolled"),
+    }),
+    CharacterHealthChangedHistoryEvent.extend({
+        "!": z.literal("CharacterHealthChanged"),
+    }),
+    CombatFinishedHistoryEvent.extend({
+        "!": z.literal("CombatFinished"),
+    }),
+    TurnStartedHistoryEvent.extend({
+        "!": z.literal("TurnStarted"),
+    }),
+    TurnEndedHistoryEvent.extend({
+        "!": z.literal("TurnEnded"),
+    }),
+    RoundEndedHistoryEvent.extend({
+        "!": z.literal("RoundEnded"),
+    }),
+    PlayerCharacterJoinedHistoryEvent.extend({
+        "!": z.literal("PlayerCharacterJoined"),
+    }),
+    PlannedCharactersAddedHistoryEvent.extend({
+        "!": z.literal("PlannedCharactersAdded"),
+    }),
+    CharacterRemovedHistoryEvent.extend({
+        "!": z.literal("CharacterRemoved"),
+    }),
+]);
+export type HistoryEvent = z.infer<typeof historyEntryValidator>;
 
-export const historyEntryValidator = yup.object({
-    timestamp: yup.string().required(),
-    events: yup.array().required(),
-    executor: yup.string().uuid().required(),
-});
+export const historyEntryValidator = z
+    .object({
+        timestamp: z.string(),
+        events: z.array(historyEventValidator),
+        executor: z.string().uuid(),
+    })
+    .required({ timestamp: true, events: true, executor: true });
+export type HistoryEntry = z.infer<typeof historyEntryValidator>;
 
-export const combatValidator = yup.object({
-    id: yup.string().required(),
-    campaignId: yup.string().required(),
-    state: yup
-        .mixed<CombatState>()
-        .oneOf(Object.values(CombatState) as CombatState[]),
-    combatName: yup.string().required(),
-    dungeonMaster: yup.string().required(),
-    combatLogs: yup.array(yup.string()).required(),
-    currentPlayers: yup.array(playerDtoValidator).required(),
-    plannedStages: yup.array(plannedCombatStageValidator).required(),
-    initiativeList: yup.array(combatCharacterValidator).required(),
-    stagedList: yup.array(combatCharacterValidator).required(),
-    initiativeIndex: yup.number(),
-    roundNumber: yup.string().nullable(),
-});
-export type Combat = InferType<typeof combatValidator>;
+export const combatValidator = z
+    .object({
+        id: z.string(),
+        campaignId: z.string(),
+        state: z.nativeEnum(CombatState),
+        combatName: z.string(),
+        dungeonMaster: z.string(),
+        combatLogs: z.array(z.string()),
+        currentPlayers: z.array(playerDtoValidator),
+        plannedStages: z.array(plannedCombatStageValidator),
+        initiativeList: z.array(combatCharacterValidator),
+        stagedList: z.array(combatCharacterValidator),
+        initiativeIndex: z.number(),
+        roundNumber: z.string().nullable(),
+    })
+    .required({
+        id: true,
+        campaignId: true,
+        state: true,
+        combatName: true,
+        dungeonMaster: true,
+        combatLogs: true,
+        currentPlayers: true,
+        plannedStages: true,
+        initiativeList: true,
+        stagedList: true,
+    });
+export type Combat = z.infer<typeof combatValidator>;
