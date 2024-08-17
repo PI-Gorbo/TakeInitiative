@@ -1,5 +1,6 @@
+import { validateResponse } from "base/utils/apiErrorParser";
 import type { AxiosInstance } from "axios";
-import * as yup from "yup";
+import { z } from "zod";
 import {
     campaignMemberValidator,
     campaignValidator,
@@ -8,7 +9,6 @@ import {
     type CharacterHealth,
     type CharacterInitiative,
 } from "../../types/models";
-import type { PlayerCharacterDto } from "./createPlayerCharacterRequest";
 
 export type PutCampaignMemberResourcesRequest = {
     memberId: string;
@@ -22,10 +22,7 @@ export function putCampaignMemberResourcesRequest(axios: AxiosInstance) {
         return await axios
             .put("/api/campaign/member/resources", request)
             .then(async (response) => {
-                return validateWithSchema(
-                    response.data,
-                    campaignMemberValidator,
-                );
+                return validateResponse(response, campaignMemberValidator);
             });
     };
 }

@@ -12,7 +12,7 @@ export type DeletePlannedCombatRequest = yup.InferType<
 >;
 
 export function deletePlannedCombatRequest(axios: AxiosInstance) {
-    return async function getUser(
+    return function getUser(
         request: DeletePlannedCombatRequest,
     ): Promise<void> {
         return axios.delete("/api/combat/planned", { data: request });

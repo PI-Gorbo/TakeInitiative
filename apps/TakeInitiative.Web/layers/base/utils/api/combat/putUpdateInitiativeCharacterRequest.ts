@@ -1,7 +1,8 @@
 import type { AxiosInstance } from "axios";
-import * as yup from "yup";
+import { z } from "zod";
 import { combatValidator, type CharacterHealth } from "../../types/models";
 import { combatResponseValidator } from "./combatResponse";
+import { validateResponse } from "base/utils/apiErrorParser";
 
 // Create Campaign
 export type CombatCharacterDto = {
@@ -17,7 +18,7 @@ export type PutUpdateInitiativeCharacterRequest = {
     character: CombatCharacterDto;
 };
 
-export type PutUpdateInitiativeCharacterResponse = yup.InferType<
+export type PutUpdateInitiativeCharacterResponse = z.infer<
     typeof combatResponseValidator
 >;
 
@@ -28,7 +29,7 @@ export function putUpdateInitiativeCharacterRequest(axios: AxiosInstance) {
         return await axios
             .put("/api/combat/initiative/character", request)
             .then(async (response) =>
-                validateWithSchema(response.data, combatResponseValidator),
+                validateResponse(response, combatResponseValidator),
             );
     };
 }

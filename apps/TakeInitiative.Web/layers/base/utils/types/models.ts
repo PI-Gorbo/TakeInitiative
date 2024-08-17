@@ -1,4 +1,3 @@
-import { HistoryEvent } from "./models";
 import { z } from "zod";
 
 // Campaign Member

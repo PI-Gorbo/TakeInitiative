@@ -1,14 +1,15 @@
 import type { AxiosInstance } from "axios";
-import * as yup from "yup";
+import { z } from "zod";
 import { combatValidator } from "../../types/models";
 import { combatResponseValidator } from "./combatResponse";
+import { validateResponse } from "base/utils/apiErrorParser";
 
 // Create Campaign
 export type GetCombatRequest = {
     combatId: string;
 };
 
-export type GetCombatResponse = yup.InferType<typeof combatResponseValidator>;
+export type GetCombatResponse = z.infer<typeof combatResponseValidator>;
 
 export function getCombatHistory(axios: AxiosInstance) {
     return async function (
@@ -16,8 +17,8 @@ export function getCombatHistory(axios: AxiosInstance) {
     ): Promise<GetCombatResponse> {
         return await axios
             .get(`/api/combat/${request.combatId}`)
-            .then(async (response) =>
-                validateWithSchema(response.data, combatResponseValidator),
+            .then((response) =>
+                validateResponse(response, combatResponseValidator),
             );
     };
 }

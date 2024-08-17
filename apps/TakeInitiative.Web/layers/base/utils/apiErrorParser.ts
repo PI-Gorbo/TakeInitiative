@@ -1,4 +1,4 @@
-import type { AxiosError } from "axios";
+import type { AxiosError, AxiosResponse } from "axios";
 import type { extendNuxtSchema } from "nuxt/kit";
 import type { Path, YupSchema } from "vee-validate";
 import * as yup from "yup";
@@ -64,16 +64,11 @@ export async function parseAsApiError<TRequest extends {}>(
     }
 }
 
-export async function validateWithSchema<T extends {}>(
-    data: any,
+export function validateResponse<T extends {}>(
+    resp: AxiosResponse<T, any>,
     schema: {
-        validate: (data: any) => Promise<T>;
+        parse: (data: any) => T;
     },
-): Promise<T> {
-    return await schema
-        .validate(data)
-        .catch((validationError) => {
-            console.error("API VALIDATION ERROR: ", validationError);
-        })
-        .then((data) => data as unknown as T); // Typescript workaround.
+): T {
+    return schema.parse(resp.data);
 }

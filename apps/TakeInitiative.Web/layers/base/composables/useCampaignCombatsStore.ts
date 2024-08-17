@@ -26,8 +26,8 @@ export const useCampaignCombatsStore = defineStore(
             }
         >({
             campaignId: undefined,
-            combats: undefined,
-            plannedCombats: undefined,
+            combats: [],
+            plannedCombats: [],
             selectedCombat: undefined,
         });
 

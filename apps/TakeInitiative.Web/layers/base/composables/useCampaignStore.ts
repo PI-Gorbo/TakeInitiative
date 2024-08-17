@@ -123,11 +123,10 @@ export const useCampaignStore = defineStore("campaignStore", () => {
         return [
             ...state.nonUserCampaignMembers,
             {
-                userId: state.userCampaignMember.userId,
-                isDungeonMaster: state.userCampaignMember.isDungeonMaster,
+                ...state.userCampaignMember,
                 username: userStore.state.user?.username!,
             },
-        ];
+        ] satisfies CampaignMemberDto[];
     });
 
     async function openCombat(plannedCombatId: string) {

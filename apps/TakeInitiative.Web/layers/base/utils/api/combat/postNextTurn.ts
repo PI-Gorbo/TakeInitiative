@@ -1,20 +1,21 @@
 import type { AxiosInstance } from "axios";
-import * as yup from "yup";
+import { z } from "zod";
 import { combatResponseValidator } from "./combatResponse";
+import { validateResponse } from "base/utils/apiErrorParser";
 
 // Create Campaign
 export type PostEndTurn = {
     combatId: string;
 };
 
-export type PostEndTurnResponse = yup.InferType<typeof combatResponseValidator>;
+export type PostEndTurnResponse = z.infer<typeof combatResponseValidator>;
 
 export function postEndTurnRequest(axios: AxiosInstance) {
     return async function (request: PostEndTurn): Promise<PostEndTurnResponse> {
         return await axios
             .post("/api/combat/turn/end", request)
             .then(async (response) =>
-                validateWithSchema(response.data, combatResponseValidator),
+                validateResponse(response, combatResponseValidator),
             );
     };
 }

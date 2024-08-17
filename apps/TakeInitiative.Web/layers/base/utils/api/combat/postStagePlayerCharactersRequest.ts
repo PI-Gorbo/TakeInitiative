@@ -1,13 +1,14 @@
 import type { AxiosInstance } from "axios";
-import * as yup from "yup";
+import { z } from "zod";
 import { combatResponseValidator } from "./combatResponse";
+import { validateResponse } from "base/utils/apiErrorParser";
 
 export type PostStagePlannedCharactersRequest = {
     combatId: string;
     characterIds: string[];
 };
 
-export type PostStagePlannedCharactersResponse = yup.InferType<
+export type PostStagePlannedCharactersResponse = z.infer<
     typeof combatResponseValidator
 >;
 
@@ -17,8 +18,8 @@ export function postStagePlayerCharactersRequest(axios: AxiosInstance) {
     ): Promise<PostStagePlannedCharactersResponse> {
         return await axios
             .post("/api/combat/stage/player-character", request)
-            .then(async (response) =>
-                validateWithSchema(response.data, combatResponseValidator),
+            .then((response) =>
+                validateResponse(response, combatResponseValidator),
             );
     };
 }

@@ -1,5 +1,6 @@
+import { validateResponse } from "base/utils/apiErrorParser";
 import type { AxiosInstance } from "axios";
-import * as yup from "yup";
+import { z } from "zod";
 import {
     CombatState,
     campaignMemberResourceValidator,
@@ -15,47 +16,49 @@ export type GetCampaignRequest = {
     campaignId: string;
 };
 
-const campaignMemberDtoValidator = yup.object({
-    userId: yup.string().required(),
-    username: yup.string().required(),
-    isDungeonMaster: yup.boolean().required(),
-    resources: yup.array(campaignMemberResourceValidator),
-});
+const campaignMemberDtoValidator = z
+    .object({
+        userId: z.string(),
+        username: z.string(),
+        isDungeonMaster: z.boolean(),
+        resources: z.array(campaignMemberResourceValidator),
+    })
+    .required();
 
-const combatDtoValidator = yup.object({
-    id: yup.string().required(),
-    state: yup.mixed().oneOf(Object.values(CombatState)).required(),
-    combatName: yup.string().required(),
-    dungeonMaster: yup.string().required(),
-    currentPlayers: yup.array(playerDtoValidator).required(),
-});
+const combatDtoValidator = z
+    .object({
+        id: z.string(),
+        state: z.nativeEnum(CombatState),
+        combatName: z.string(),
+        dungeonMaster: z.string(),
+        currentPlayers: z.array(playerDtoValidator),
+    })
+    .required();
 
-const finishedCombatDtoValidator = yup.object({
-    combatId: yup.string().required(),
-    name: yup.string().required(),
-});
-export type FinishedCombatDto = yup.InferType<
-    typeof finishedCombatDtoValidator
->;
+const finishedCombatDtoValidator = z
+    .object({
+        combatId: z.string(),
+        name: z.string(),
+    })
+    .required();
+export type FinishedCombatDto = z.infer<typeof finishedCombatDtoValidator>;
 
-export type CombatDto = yup.InferType<typeof combatDtoValidator>;
-export type CampaignMemberDto = yup.InferType<
-    typeof campaignMemberDtoValidator
->;
-const getCampaignResponseSchema = yup.object({
-    campaign: campaignValidator,
-    userCampaignMember: campaignMemberValidator,
-    nonUserCampaignMembers: yup.array(campaignMemberDtoValidator),
-    joinCode: yup.string().required(),
-    currentCombatInfo: combatDtoValidator.nullable(),
-    combatHistoryInfo: yup.object({
-        lastCombatTimestamp: yup.string().nullable(),
-        totalCombats: yup.number(),
-    }),
-});
-export type GetCampaignResponse = yup.InferType<
-    typeof getCampaignResponseSchema
->;
+export type CombatDto = z.infer<typeof combatDtoValidator>;
+export type CampaignMemberDto = z.infer<typeof campaignMemberDtoValidator>;
+const getCampaignResponseSchema = z
+    .object({
+        campaign: campaignValidator,
+        userCampaignMember: campaignMemberValidator,
+        nonUserCampaignMembers: z.array(campaignMemberDtoValidator),
+        joinCode: z.string(),
+        currentCombatInfo: combatDtoValidator.nullable(),
+        combatHistoryInfo: z.object({
+            lastCombatTimestamp: z.string().nullable(),
+            totalCombats: z.number(),
+        }),
+    })
+    .required();
+export type GetCampaignResponse = z.infer<typeof getCampaignResponseSchema>;
 export function getCampaignRequest(axios: AxiosInstance) {
     return async function (
         request: GetCampaignRequest,
@@ -63,10 +66,7 @@ export function getCampaignRequest(axios: AxiosInstance) {
         return await axios
             .get(`/api/campaign/${encodeURI(request.campaignId)}`)
             .then(async (response) =>
-                validateWithSchema(response.data, getCampaignResponseSchema),
-            )
-            .then((resp) => {
-                return resp;
-            });
+                validateResponse(response, getCampaignResponseSchema),
+            );
     };
 }
