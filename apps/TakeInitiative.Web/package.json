@@ -22,7 +22,6 @@
         "@microsoft/signalr": "^8.0.0",
         "@pinia/nuxt": "^0.5.1",
         "@types/node": "^20.11.24",
-        "@vee-validate/yup": "^4.12.5",
         "@vee-validate/zod": "^4.13.2",
         "axios": "^1.6.7",
         "date-fns": "^3.3.1",

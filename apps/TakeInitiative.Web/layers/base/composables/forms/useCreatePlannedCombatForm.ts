@@ -1,8 +1,8 @@
-import { toTypedSchema } from "@vee-validate/yup";
 import type { AxiosError } from "axios";
 import { useForm } from "vee-validate";
 import type { CreatePlannedCombatRequest } from "../../utils/api/plannedCombat/createPlannedCombatRequest";
-import { yup } from "../../utils/types/HelperTypes";
+import { toTypedSchema } from "@vee-validate/zod";
+import { z } from "zod";
 
 export const useCreatePlannedCombatForm = () => {
     const formState = reactive({
@@ -12,11 +12,13 @@ export const useCreatePlannedCombatForm = () => {
     // Form Definition
     const { values, errors, defineField, validate } = useForm({
         validationSchema: toTypedSchema(
-            yup.object({
-                combatName: yup
-                    .string()
-                    .required("Please provide a name for the combat."),
-            }),
+            z
+                .object({
+                    combatName: z.string({
+                        required_error: "Please provide a name for the combat.",
+                    }),
+                })
+                .required(),
         ),
     });
 
