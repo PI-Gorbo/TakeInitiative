@@ -15,7 +15,7 @@ export const updatePlannedCombatNpcRequestValidator = z
         npcId: z.string(),
         name: z.string(),
         health: characterHealthValidator,
-        armourClass: z.number(),
+        armourClass: z.number().nullable(),
         initiative: characterInitiativeValidator,
         quantity: z.number().min(1),
     })

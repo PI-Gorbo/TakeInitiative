@@ -1,12 +1,8 @@
 import { validateResponse } from "base/utils/apiErrorParser";
 import type { AxiosInstance } from "axios";
-import * as yup from "yup";
 import {
     campaignMemberValidator,
-    campaignValidator,
     type CampaignMember,
-    type CharacterHealth,
-    type CharacterInitiative,
 } from "../../types/models";
 import type { PlayerCharacterDto } from "./createPlayerCharacterRequest";
 

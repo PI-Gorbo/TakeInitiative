@@ -44,13 +44,10 @@
 </template>
 
 <script setup lang="ts">
-import { Form } from "vee-validate";
+import { toTypedSchema } from "@vee-validate/zod";
+import type { SignUpRequest } from "base/utils/api/user/signUpRequest";
 import { useForm } from "vee-validate";
-import { toTypedSchema } from "@vee-validate/yup";
-import * as yup from "yup";
-import { formatDiagnosticsWithColorAndContext } from "typescript";
-import type { SignUpRequest } from "../../utils/api/user/signUpRequest";
-import type { LocationQueryValue } from "vue-router";
+import { z } from "zod";
 const route = useRoute();
 definePageMeta({
     requiresAuth: false,
@@ -63,22 +60,18 @@ const formState = reactive({
 });
 const { values, errors, defineField, validate } = useForm({
     validationSchema: toTypedSchema(
-        yup.object({
-            password: yup.string().required(),
-            confirmPassword: yup
-                .string()
-                .required("Please confirm your password")
-                .test("matches password", function (value) {
-                    const { path, createError } = this;
-                    if (value != password.value) {
-                        return createError({
-                            path,
-                            message: "Passwords do not match.",
-                        });
-                    }
-                    return true;
+        z
+            .object({
+                password: z.string(),
+                confirmPassword: z.string({
+                    required_error: "Please confirm your password",
                 }),
-        }),
+            })
+            .required()
+            .refine(
+                (obj) => obj.password == obj.confirmPassword,
+                "Passwords do not match.",
+            ),
     ),
 });
 

@@ -8,15 +8,6 @@ export function postConfirmEmailRequest(axios: AxiosInstance) {
             .post("/api/confirmEmail", {
                 ConfirmEmailToken: code,
             })
-            .then(async function (response) {
-                try {
-                    const result = await getUserResponseSchema.validate(
-                        response.data,
-                    );
-                    return result;
-                } catch (error) {
-                    throw error;
-                }
-            });
+            .then((resp) => validateResponse(resp, getUserResponseSchema));
     };
 }

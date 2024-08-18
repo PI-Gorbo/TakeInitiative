@@ -60,14 +60,13 @@
 <script setup lang="ts">
 import { useForm } from "vee-validate";
 import type { SubmittingState } from "../Form/Base.vue";
-import { toTypedSchema } from "@vee-validate/yup";
-import { yup } from "base/utils/types/HelperTypes";
 import {
     characterHealthValidator,
-    characterInitiativeValidator,
     type CombatCharacter,
 } from "base/utils/types/models";
 import type { CombatCharacterDto } from "base/utils/api/combat/putUpdateInitiativeCharacterRequest";
+import { toTypedSchema } from "@vee-validate/zod";
+import { z } from "zod";
 const userStore = useUserStore();
 const { userIsDm } = storeToRefs(useCombatStore());
 
@@ -87,12 +86,14 @@ const formState = reactive({
 
 const { values, errors, defineField, validate } = useForm({
     validationSchema: toTypedSchema(
-        yup.object({
-            name: yup.string().required("Please provide a name"),
-            isHidden: yup.boolean(),
-            armourClass: yup.number().nullable(),
-            health: characterHealthValidator.required(),
-        }),
+        z
+            .object({
+                name: z.string({ required_error: "Please provide a name" }),
+                isHidden: z.boolean(),
+                armourClass: z.number().nullable(),
+                health: characterHealthValidator,
+            })
+            .required({ name: true, health: true }),
     ),
 });
 

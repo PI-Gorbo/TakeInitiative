@@ -1,11 +1,12 @@
 import type { AxiosInstance } from "axios";
-import type { InferType } from "yup";
-import { yup } from "../../types/HelperTypes";
+import { z } from "zod";
 
-export const SendResetPasswordEmailRequestValidator = yup.object({
-    email: yup.string().email().required(),
-});
-export type SendResetPasswordEmailRequest = InferType<
+export const SendResetPasswordEmailRequestValidator = z
+    .object({
+        email: z.string().email(),
+    })
+    .required();
+export type SendResetPasswordEmailRequest = z.infer<
     typeof SendResetPasswordEmailRequestValidator
 >;
 

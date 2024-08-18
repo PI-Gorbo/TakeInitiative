@@ -1,6 +1,3 @@
-import * as yupPkg from "yup";
-export const yup = yupPkg;
-
 export type TakeInitColour =
     | "take-navy"
     | "take-navy-light"

@@ -55,5 +55,6 @@ export function validateResponse<T extends {}>(
         parse: (data: any) => T;
     },
 ): T {
-    return schema.parse(resp.data);
+    const data = schema.parse(resp.data);
+    return data;
 }

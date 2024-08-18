@@ -60,7 +60,6 @@ export const campaignValidator = z
         ownerId: z.string(),
         campaignName: z.string(),
         campaignDescription: z.string(),
-        campaignResources: z.string(),
         plannedCombatIds: z.array(z.string()),
         campaignMemberInfo: z.array(campaignMemberInfoValidator),
         activeCombatId: z.string().nullable(),

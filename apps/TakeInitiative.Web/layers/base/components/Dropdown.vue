@@ -52,7 +52,7 @@ const props = withDefaults(
         labelFallback?: string;
         headerLabel?: string;
         colour: TakeInitColour;
-        hoverColour: TakeInitColour;
+        hoverColour?: TakeInitColour;
         hoverOverContent?: boolean;
     }>(),
     {

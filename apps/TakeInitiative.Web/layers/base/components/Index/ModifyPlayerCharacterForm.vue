@@ -66,24 +66,18 @@
 </template>
 
 <script setup lang="ts">
-import { Form } from "vee-validate";
-import { toTypedSchema } from "@vee-validate/yup";
 import { useForm } from "vee-validate";
-import * as yup from "yup";
 import {
     InitiativeStrategy,
-    plannedCombatCharacterValidator,
-    type PlannedCombatCharacter,
-    type PlannedCombatStage,
     characterInitiativeValidator,
     type PlayerCharacter,
     characterHealthValidator,
 } from "base/utils/types/models";
 import type { CreatePlannedCombatNpcRequest } from "base/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
-import type { UpdatePlannedCombatNpcRequest } from "base/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
-import type { DeletePlannedCombatNpcRequest } from "base/utils/api/plannedCombat/stages/npcs/deletePlannedCombatNpcRequest";
 import type { PlayerCharacterDto } from "base/utils/api/campaign/createPlayerCharacterRequest";
 import type { SubmittingState } from "../Form/Base.vue";
+import { toTypedSchema } from "@vee-validate/zod";
+import { z } from "zod";
 
 const formState = reactive({
     error: null as ApiError<CreatePlannedCombatNpcRequest> | null,
@@ -99,12 +93,14 @@ const props = defineProps<{
 // Form Definition
 const { values, errors, defineField, validate } = useForm({
     validationSchema: toTypedSchema(
-        yup.object({
-            name: yup.string().required("Please provide a name"),
-            initiative: characterInitiativeValidator.required(),
-            armourClass: yup.number().nullable(),
-            health: characterHealthValidator.required(),
-        }),
+        z
+            .object({
+                name: z.string({ required_error: "Please provide a name" }),
+                initiative: characterInitiativeValidator.required(),
+                armourClass: z.number().nullable(),
+                health: characterHealthValidator,
+            })
+            .required({ name: true, health: true }),
     ),
 });
 const [name, nameInputProps] = defineField("name", {
@@ -255,8 +251,8 @@ async function onCreate() {
         .onCreate({
             health: {
                 hasHealth: hasHealth.value ?? false,
-                currentHealth: currentHealth.value,
-                maxHealth: maxHealth.value,
+                currentHealth: currentHealth.value!,
+                maxHealth: maxHealth.value!,
             },
             initiative: {
                 strategy: initiativeStrategy.value!,

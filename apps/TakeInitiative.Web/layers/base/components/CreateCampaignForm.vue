@@ -36,10 +36,10 @@
 
 <script setup lang="ts">
 import { Form } from "vee-validate";
-import { toTypedSchema } from "@vee-validate/yup";
 import { useForm } from "vee-validate";
-import * as yup from "yup";
 import type { CreateCampaignRequest } from "base/utils/api/campaign/createCampaignRequest";
+import { toTypedSchema } from "@vee-validate/zod";
+import { z } from "zod";
 const formState = reactive({
     formError: null as null | ApiError<CreateCampaignRequest>,
 });
@@ -50,9 +50,11 @@ const props = defineProps<{
 
 const { values, errors, defineField, validate } = useForm({
     validationSchema: toTypedSchema(
-        yup.object({
-            campaignName: yup.string().required(),
-        }),
+        z
+            .object({
+                campaignName: z.string(),
+            })
+            .required(),
     ),
 });
 const [campaignName, campaignNameInputProps] = defineField("campaignName", {

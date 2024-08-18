@@ -80,9 +80,7 @@
 
 <script setup lang="ts">
 import { ErrorMessage, Form } from "vee-validate";
-import { toTypedSchema } from "@vee-validate/yup";
 import { useForm } from "vee-validate";
-import * as yup from "yup";
 import {
     InitiativeStrategy,
     plannedCombatCharacterValidator,
@@ -95,6 +93,8 @@ import {
 import type { StagedCharacterDTO } from "base/utils/api/combat/putUpsertStagedCharacter";
 import type { SubmittingState } from "../Form/Base.vue";
 import type { DeleteStagedCharacterRequest } from "base/utils/api/combat/deleteStagedCharacterRequest";
+import { toTypedSchema } from "@vee-validate/zod";
+import { z } from "zod";
 const { userIsDm } = storeToRefs(useCombatStore());
 const formState = reactive({
     error: null as ApiError<StagedCharacterDTO> | null,
@@ -112,14 +112,16 @@ const props = defineProps<{
 // Form Definition
 const { values, errors, defineField, validate } = useForm({
     validationSchema: toTypedSchema(
-        yup.object({
-            name: yup.string().required("Please provide a name"),
-            initiative: characterInitiativeValidator,
-            quantity: yup.number().min(1),
-            isHidden: yup.boolean(),
-            armourClass: yup.number().nullable(),
-            health: characterHealthValidator.required(),
-        }),
+        z
+            .object({
+                name: z.string({ required_error: "Please provide a name" }),
+                initiative: characterInitiativeValidator,
+                quantity: z.number().min(1),
+                isHidden: z.boolean(),
+                armourClass: z.number().nullable(),
+                health: characterHealthValidator,
+            })
+            .required({ name: true, health: true }),
     ),
 });
 const [name, nameInputProps] = defineField("name", {
@@ -273,8 +275,8 @@ async function onEdit() {
             hidden: isHidden.value!,
             health: {
                 hasHealth: hasHealth.value ?? false,
-                currentHealth: currentHealth.value,
-                maxHealth: maxHealth.value,
+                currentHealth: currentHealth.value!,
+                maxHealth: maxHealth.value!,
             },
             armourClass: armourClass.value ?? null,
         })
@@ -304,8 +306,8 @@ async function onCreate() {
             hidden: isHidden.value!,
             health: {
                 hasHealth: hasHealth.value ?? false,
-                currentHealth: currentHealth.value,
-                maxHealth: maxHealth.value,
+                currentHealth: currentHealth.value!,
+                maxHealth: maxHealth.value!,
             },
             armourClass: armourClass.value ?? null,
         })

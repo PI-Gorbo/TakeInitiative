@@ -36,10 +36,10 @@
 </template>
 
 <script setup lang="ts">
-import { toTypedSchema } from "@vee-validate/yup";
+import { toTypedSchema } from "@vee-validate/zod";
+import type { JoinCampaignRequest } from "base/utils/api/campaign/joinCampaignRequest";
 import { useForm } from "vee-validate";
-import * as yup from "yup";
-import type { JoinCampaignRequest } from "../layers/base/utils/api/campaign/joinCampaignRequest";
+import { z } from "zod";
 
 const formState = reactive({
     formError: null as null | ApiError<JoinCampaignRequest>,
@@ -52,9 +52,11 @@ const props = defineProps<{
 // Form Definition
 const { values, errors, defineField, validate } = useForm({
     validationSchema: toTypedSchema(
-        yup.object({
-            joinCode: yup.string().required(),
-        }),
+        z
+            .object({
+                joinCode: z.string(),
+            })
+            .required(),
     ),
 });
 const [joinCode, joinCodeInputProps] = defineField("joinCode", {
