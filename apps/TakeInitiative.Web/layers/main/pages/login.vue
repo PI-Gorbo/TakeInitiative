@@ -110,8 +110,8 @@ async function onLogin() {
 
     await userStore
         .login({ email: email.value ?? "", password: password.value ?? "" })
-        .catch(async (error) => {
-            state.errorObject = await parseAsApiError(error);
+        .catch((error) => {
+            state.errorObject = parseAsApiError(error);
         })
         .then(async () => {
             if (redirectToPath != null) {

@@ -69,6 +69,6 @@ async function onSubmit(): Promise<void> {
     formState.formError = null;
     return await props
         .submit({ joinCode: joinCode.value! })
-        .catch(async (e) => (formState.formError = await parseAsApiError(e)));
+        .catch((e) => (formState.formError = parseAsApiError(e)));
 }
 </script>

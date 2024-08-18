@@ -111,6 +111,6 @@ async function submit() {
             token: route.params.code as string,
         })
         .then(async () => await useNavigator().toLogin())
-        .catch(async (e) => (formState.submitError = await parseAsApiError(e)));
+        .catch((e) => (formState.submitError = parseAsApiError(e)));
 }
 </script>

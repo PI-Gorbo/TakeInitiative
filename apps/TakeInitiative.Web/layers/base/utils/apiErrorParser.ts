@@ -20,7 +20,7 @@ const apiErrorSchema = z
     })
     .required();
 
-export async function parseAsApiError<TRequest extends {}>(
+export function parseAsApiError<TRequest extends {}>(
     error: AxiosError<any>,
 ): ApiError<TRequest> {
     try {
@@ -31,31 +31,14 @@ export async function parseAsApiError<TRequest extends {}>(
             errors: result.errors,
             getErrorFor: (error) => {
                 if (error in result.errors) {
-                    //@ts-ignore
                     return result.errors[error][0];
                 }
 
-                try {
-                    const accessors = error.split(".");
-                    let errorValue = result.errors;
-                    for (let index = 0; index < accessors.length; index++) {
-                        //@ts-ignore
-                        errorValue = errorValue[accessors[index]];
-                    }
-                    //@ts-ignore
-                    if (errorValue == null || errorValue.length == 0) {
-                        return null;
-                    }
-                    //@ts-ignore
-                    return errorValue[0];
-                } catch {
-                    return null;
-                }
+                return null;
             },
             error,
         };
     } catch (err) {
-        const validationError: yup.ValidationError = err as yup.ValidationError;
         return {
             statusCode: error.status ?? 500,
             message: "Something went wrong",

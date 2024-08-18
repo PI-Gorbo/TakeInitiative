@@ -247,8 +247,8 @@ async function onDelete() {
     if (!props.onDelete) return;
     return await props
         .onDelete({ characterId: props.character?.id! })
-        .catch(async (err) => {
-            formState.error = await parseAsApiError(err);
+        .catch((err) => {
+            formState.error = parseAsApiError(err);
         });
 }
 
@@ -278,8 +278,8 @@ async function onEdit() {
             },
             armourClass: armourClass.value ?? null,
         })
-        .catch(async (error) => {
-            formState.error = await parseAsApiError(error);
+        .catch((error) => {
+            formState.error = parseAsApiError(error);
         });
 }
 
@@ -309,8 +309,8 @@ async function onCreate() {
             },
             armourClass: armourClass.value ?? null,
         })
-        .catch(async (error) => {
-            formState.error = await parseAsApiError(error);
+        .catch((error) => {
+            formState.error = parseAsApiError(error);
         });
 }
 </script>

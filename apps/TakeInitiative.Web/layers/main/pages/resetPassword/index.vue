@@ -99,9 +99,9 @@ async function onLogin() {
             state.sentResetEmail = true;
         })
         .catch(
-            async (e) =>
+            (e) =>
                 (state.errorObject =
-                    await parseAsApiError<SendResetPasswordEmailRequest>(e)),
+                    parseAsApiError<SendResetPasswordEmailRequest>(e)),
         );
 }
 </script>

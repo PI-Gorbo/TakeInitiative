@@ -228,11 +228,9 @@ async function onSubmit(formSubmittingState: SubmittingState) {
 
 async function onDelete() {
     if (!props.onDelete) return;
-    return await props
-        .onDelete({ npcId: props.npc?.id! })
-        .catch(async (err) => {
-            formState.error = await parseAsApiError(err);
-        });
+    return await props.onDelete({ npcId: props.npc?.id! }).catch((err) => {
+        formState.error = parseAsApiError(err);
+    });
 }
 
 async function onEdit() {
@@ -260,8 +258,8 @@ async function onEdit() {
             armourClass: armourClass.value ?? null,
             npcId: props.npc?.id!,
         })
-        .catch(async (error) => {
-            formState.error = await parseAsApiError(error);
+        .catch((error) => {
+            formState.error = parseAsApiError(error);
         });
 }
 
@@ -288,8 +286,8 @@ async function onCreate() {
             quantity: quantity.value!,
             armourClass: armourClass.value ?? null,
         })
-        .catch(async (error) => {
-            formState.error = await parseAsApiError(error);
+        .catch((error) => {
+            formState.error = parseAsApiError(error);
         });
 }
 </script>

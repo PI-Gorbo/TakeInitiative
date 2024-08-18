@@ -208,8 +208,8 @@ async function onSubmit(formSubmittingState: SubmittingState) {
 
 async function onDelete() {
     if (!props.onDelete) return;
-    return await props.onDelete().catch(async (err) => {
-        formState.error = await parseAsApiError(err);
+    return await props.onDelete().catch((err) => {
+        formState.error = parseAsApiError(err);
     });
 }
 
@@ -237,8 +237,8 @@ async function onEdit() {
             name: name.value!,
             armourClass: armourClass.value ?? null,
         })
-        .catch(async (error) => {
-            formState.error = await parseAsApiError(error);
+        .catch((error) => {
+            formState.error = parseAsApiError(error);
         });
 }
 
@@ -265,8 +265,8 @@ async function onCreate() {
             name: name.value!,
             armourClass: armourClass.value ?? null,
         })
-        .catch(async (error) => {
-            formState.error = await parseAsApiError(error);
+        .catch((error) => {
+            formState.error = parseAsApiError(error);
         });
 }
 </script>

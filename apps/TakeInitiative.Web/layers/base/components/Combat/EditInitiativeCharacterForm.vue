@@ -185,15 +185,11 @@ async function onEdit() {
             },
             armourClass: armourClass.value ?? null,
         })
-        .catch(
-            async (error) => (formState.error = await parseAsApiError(error)),
-        );
+        .catch((error) => (formState.error = parseAsApiError(error)));
 }
 async function onDelete() {
     return await props
         .onDelete(props.character.id)
-        .catch(
-            async (error) => (formState.error = await parseAsApiError(error)),
-        );
+        .catch((error) => (formState.error = parseAsApiError(error)));
 }
 </script>

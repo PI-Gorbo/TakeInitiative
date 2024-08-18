@@ -72,6 +72,6 @@ async function onSubmit(): Promise<void> {
     }
     return await props
         .submit({ campaignName: campaignName.value ?? "" })
-        .catch(async (e) => (formState.formError = await parseAsApiError(e)));
+        .catch((e) => (formState.formError = parseAsApiError(e)));
 }
 </script>
