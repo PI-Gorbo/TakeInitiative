@@ -1,7 +1,7 @@
 import type { AxiosError, AxiosResponse } from "axios";
 import type { extendNuxtSchema } from "nuxt/kit";
-import type { Path, YupSchema } from "vee-validate";
-import * as yup from "yup";
+import type { Path } from "vee-validate";
+import { z } from "zod";
 
 export type ApiError<TRequest extends {}> = {
     statusCode: number;
@@ -12,17 +12,19 @@ export type ApiError<TRequest extends {}> = {
     ) => string | null;
     error: AxiosError<any>;
 };
-const apiErrorSchema = yup.object({
-    statusCode: yup.number().required(),
-    message: yup.string().required(),
-    errors: yup.object().required(),
-});
+const apiErrorSchema = z
+    .object({
+        statusCode: z.number(),
+        message: z.string(),
+        errors: z.record(z.string(), z.array(z.string())),
+    })
+    .required();
 
 export async function parseAsApiError<TRequest extends {}>(
     error: AxiosError<any>,
-): Promise<ApiError<TRequest>> {
+): ApiError<TRequest> {
     try {
-        const result = await apiErrorSchema.validate(error?.response?.data);
+        const result = apiErrorSchema.parse(error?.response?.data);
         return {
             statusCode: result.statusCode,
             message: result.message,
