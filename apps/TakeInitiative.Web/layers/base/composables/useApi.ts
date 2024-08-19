@@ -38,6 +38,7 @@ import { putSendResetPasswordRequest } from "../utils/api/user/putSendResetPassw
 import { putResetPassword } from "../utils/api/user/putResetPasswordRequest";
 import { getMaintenanceRequest } from "base/utils/api/admin/getMaintainenceRequest";
 import { putCampaignMemberResourcesRequest } from "base/utils/api/campaign/putCampaignMemberResourcesRequest";
+import { getCombatHistory } from "base/utils/api/combat/getCombatHistoryRequest";
 
 export const useApi = () => {
     const { $axios } = useNuxtApp();
@@ -84,6 +85,7 @@ export const useApi = () => {
         combat: {
             getAll: getCombatsRequest($axios),
             get: getCombatRequest($axios),
+            history: getCombatHistory($axios),
             start: postStartCombatRequest($axios),
             finish: postFinishCombatRequest($axios),
             open: openCombatRequest($axios),

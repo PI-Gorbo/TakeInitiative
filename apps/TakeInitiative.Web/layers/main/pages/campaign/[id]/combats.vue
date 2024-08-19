@@ -200,7 +200,9 @@
                     buttonColour="take-navy"
                     @click="() => campaignCombatsStore.unselectCombat()"
                 />
-                Finished combat summary coming soon...
+                <CombatHistorySection
+                    :combatInfo="campaignCombatsStore.selectedCombat"
+                />
             </main>
         </TransitionGroup>
 
