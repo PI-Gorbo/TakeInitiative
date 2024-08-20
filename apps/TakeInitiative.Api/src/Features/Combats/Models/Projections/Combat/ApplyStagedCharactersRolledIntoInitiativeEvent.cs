@@ -55,7 +55,7 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
             : [..Combat.History, new() {
                 Events = [
                     new TurnStarted {
-                        CharacterId = newInitiativeList[0].Id
+                        CharacterId = newInitiativeList[0].Id,
                     }
                 ],
                 Executor = @event.UserId,

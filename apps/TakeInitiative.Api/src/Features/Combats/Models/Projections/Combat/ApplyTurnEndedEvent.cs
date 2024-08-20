@@ -25,7 +25,7 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
         }
         historyToAppend.Add(new TurnStarted()
         {
-            CharacterId = Combat.InitiativeList[nextInitiativeIndex].Id
+            CharacterId = Combat.InitiativeList[nextInitiativeIndex].Id,
         });
 
         return Combat with

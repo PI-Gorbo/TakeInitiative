@@ -311,7 +311,7 @@ export const historyEventValidator = z.discriminatedUnion("!", [
         "!": z.literal("CharacterRemoved"),
     }),
 ]);
-export type HistoryEvent = z.infer<typeof historyEntryValidator>;
+export type HistoryEvent = z.infer<typeof historyEventValidator>;
 
 export const historyEntryValidator = z
     .object({

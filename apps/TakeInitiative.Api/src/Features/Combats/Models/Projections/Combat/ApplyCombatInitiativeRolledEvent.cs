@@ -30,7 +30,9 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
 
         List<HistoryEvent> events = [
             new CombatInitiativeRolled {
-                Rolls = [..@event.InitiativeRolls.OrderByDescending(x => x.rolls, new InitiativeComparer())]
+                Rolls = [..@event.InitiativeRolls.OrderByDescending(x => x.rolls, new InitiativeComparer())],
+                CharacterNames = newInitiativeList
+                    .ToDictionary(x => x)
             }
         ];
 
@@ -38,7 +40,7 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
         {
             events.Add(new TurnStarted
             {
-                CharacterId = newInitiativeList[0].Id
+                CharacterId = newInitiativeList[0].Id,
             });
         }
 

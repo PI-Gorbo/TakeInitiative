@@ -1,3 +1,4 @@
+import { validateResponse } from "base/utils/apiErrorParser";
 import type { AxiosInstance } from "axios";
 import {
     type MaintenanceConfig,
@@ -8,7 +9,6 @@ export function putMaintenanceRequest(axios: AxiosInstance) {
     return (cfg: MaintenanceConfig): Promise<MaintenanceConfig> =>
         axios
             .put("/api/admin/maintenance", cfg)
-            .then((resp) =>
-                validateWithSchema(resp.data, MaintenanceConfigValidator),
-            );
+            .then((resp) => validateResponse(resp, MaintenanceConfigValidator));
 }
+z;
