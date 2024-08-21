@@ -15,29 +15,16 @@
                     <input
                         class="w-full rounded-md bg-take-navy-light p-2"
                         placeholder="Current"
-                        :value="props.currentHealth ?? null"
-                        @input="
-                            (e: Event) =>
-                                onInputCurrentHealth(
-                                    (e.target as HTMLInputElement).value,
-                                )
-                        "
-                        @blur="onSubmitCurrentHealth"
+                        v-model="currentHealth"
                     />
                 </div>
-                <span>/</span>
+                <span class="cursor-default">/</span>
                 <div class="flex-1">
                     <input
+                        tabindex="0"
                         class="w-full rounded-md bg-take-navy-light p-2"
                         placeholder="Max"
-                        :value="props.maxHealth ?? null"
-                        @input="
-                            (e: Event) =>
-                                onInputMaxHealth(
-                                    (e.target as HTMLInputElement).value,
-                                )
-                        "
-                        @blur="onSubmitMaxHealth"
+                        v-model="maxHealth"
                     />
                 </div>
             </section>
@@ -50,13 +37,20 @@
                 />
             </div>
         </div>
-        <label class="text-red-500" v-if="props.error">{{ props.error }}</label>
+        {{ state }}
+        <!-- <label class="text-red-500" v-if="errors"> {{ errors }}</label> -->
     </section>
 </template>
 <script setup lang="ts">
+import { toTypedSchema } from "@vee-validate/zod";
 import type { FormContext } from "base/composables/forms/useFormContext";
+import {
+    characterHealthValidator,
+    type CharacterHealth,
+} from "base/utils/types/models";
 import { Parser } from "expr-eval";
-import { boolean } from "zod";
+import { useForm } from "vee-validate";
+import { boolean, z } from "zod";
 const healthExpressionParser = new Parser({
     operators: {
         // Only enable add, subtract, multiple and divide
@@ -84,7 +78,6 @@ const props = defineProps<{
     hasHealth: boolean | undefined;
     currentHealth: number | undefined | null;
     maxHealth: number | undefined | null;
-    error: string | undefined | null;
 }>();
 
 const state = reactive<{
@@ -93,71 +86,102 @@ const state = reactive<{
     maxHealth: string | undefined | null;
 }>({
     hasHealth: props.hasHealth,
-    currentHealth: props.currentHealth?.toString(),
-    maxHealth: props.maxHealth?.toString(),
+    currentHealth: props.currentHealth?.toString() ?? null,
+    maxHealth: props.maxHealth?.toString() ?? null,
 });
 
-const emit = defineEmits<{
-    (e: "update:hasHealth", value: boolean): void;
-    (e: "update:currentHealth", value: number | null): void;
-    (e: "update:maxHealth", value: number | null): void;
-}>();
+// function onSubmitMaxHealth() {
+//     try {
+//         if (state.maxHealth == null) {
+//             emit("update:maxHealth", null);
+//         } else {
+//             emit(
+//                 "update:maxHealth",
+//                 healthExpressionParser.evaluate(state.maxHealth),
+//             );
+//         }
+//     } catch {
+//         emit("update:maxHealth", null);
+//     } finally {
+//         if (!props.hasHealth) {
+//             emit("update:hasHealth", true);
+//         }
+//     }
+// }
 
-function reset() {
-    emit("update:hasHealth", false);
-    emit("update:currentHealth", null);
-    emit("update:maxHealth", null);
-}
+// function onInputMaxHealth(value: string | undefined | null) {
+//     state.maxHealth = value;
+// }
 
-function onSubmitMaxHealth() {
+// function onSubmitCurrentHealth() {
+//     try {
+//         if (state.currentHealth == null) {
+//             emit("update:currentHealth", null);
+//         } else {
+//             emit(
+//                 "update:currentHealth",
+//                 healthExpressionParser.evaluate(state.currentHealth),
+//             );
+//         }
+//     } catch {
+//         emit("update:currentHealth", null);
+//     } finally {
+//         if (!props.hasHealth) {
+//             emit("update:hasHealth", true);
+//         }
+//     }
+// }
+
+// function onInputCurrentHealth(value: string | undefined | null) {
+//     state.currentHealth = value;
+// }
+
+const tryParseNumber = (num: string | null): string | number | null => {
+    if (num == null) return null;
+
     try {
-        if (state.maxHealth == null) {
-            emit("update:maxHealth", null);
-        } else {
-            emit(
-                "update:maxHealth",
-                healthExpressionParser.evaluate(state.maxHealth),
-            );
-        }
-    } catch {
-        emit("update:maxHealth", null);
-    } finally {
-        if (!props.hasHealth) {
-            emit("update:hasHealth", true);
-        }
+        return healthExpressionParser.evaluate(num);
+    } catch (e) {
+        return JSON.stringify(e);
     }
-}
+};
 
-function onInputMaxHealth(value: string | undefined | null) {
-    state.maxHealth = value;
-}
+const { values, errors, defineField, validate } = useForm({
+    validationSchema: toTypedSchema(
+        z
+            .object({
+                currentHealth: z.string().nullable(),
+                maxHealth: z.string().nullable(),
+            })
+            .transform((healthValues, ctx) => {
+                const parsedCurrentHealth = tryParseNumber(
+                    healthValues.currentHealth,
+                );
 
-function onSubmitCurrentHealth() {
-    try {
-        if (state.currentHealth == null) {
-            emit("update:currentHealth", null);
-        } else {
-            emit(
-                "update:currentHealth",
-                healthExpressionParser.evaluate(state.currentHealth),
-            );
-        }
-    } catch {
-        emit("update:currentHealth", null);
-    } finally {
-        if (!props.hasHealth) {
-            emit("update:hasHealth", true);
-        }
-    }
-}
-
-function onInputCurrentHealth(value: string | undefined | null) {
-    state.currentHealth = value;
-}
+                return {
+                    hasHealth:
+                        healthValues.currentHealth == null &&
+                        healthValues.maxHealth == null,
+                };
+            }),
+    ),
+});
+const [currentHealth, currentHealthAttrs] = defineField("currentHealth");
+const [maxHealth, maxHealthAttrs] = defineField("maxHealth");
 
 defineExpose({
     getHealth: () => {
-        return;
+        if (state.currentHealth == null && state.maxHealth == null) {
+            const model: CharacterHealth = {
+                hasHealth: false,
+                currentHealth: null,
+                maxHealth: null,
+            };
+
+            return model;
+        }
+
+        // const parsedMaxHealth = tryParseNumber(state.maxHealth);
     },
 });
 </script>
