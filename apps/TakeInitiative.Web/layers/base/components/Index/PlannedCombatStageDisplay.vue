@@ -37,7 +37,7 @@
                 name="fade"
             >
                 <section
-                    v-for="npc in stage.npcs"
+                    v-for="npc in npcList"
                     :key="npc.id"
                     class="min-h-fit min-w-fit cursor-pointer rounded-xl border border-take-purple-light hover:border-take-yellow"
                 >
@@ -99,4 +99,14 @@ const props = defineProps<{
     ) => Promise<any>;
 }>();
 const stageName = ref<string>(props.stage.name);
+const npcList = computed(() =>
+    props.stage.npcs.toSorted((npc1, npc2) => {
+        // Sort Alphabetically, then by Id.
+        if (npc1.name < npc2.name) return -1;
+        if (npc1.name > npc2.name) return 1;
+        if (npc1.id < npc2.id) return -1;
+        if (npc1.id > npc2.id) return 1;
+        return 0;
+    }),
+);
 </script>

@@ -175,7 +175,7 @@ export const plannedCombatCharacterValidator = z
         id: z.string(),
         name: z.string({ message: "Please provide a name" }),
         health: characterHealthValidator,
-        armourClass: z.number(),
+        armourClass: z.number().nullable(),
         initiative: characterInitiativeValidator,
         quantity: z.number(),
     })
@@ -252,10 +252,13 @@ export type CombatCharacter = z.infer<typeof combatCharacterValidator>;
 export const CombatStartedHistoryEvent = z.object({});
 export const CombatInitiativeRolledHistoryEvent = z.object({
     rolls: z.array(
-        z.object({
-            id: z.string().uuid(),
-            rolls: z.array(z.number().int()),
-        }),
+        z
+            .object({
+                characterId: z.string().uuid(),
+                roll: z.array(z.number().int()),
+                characterName: z.string(),
+            })
+            .required(),
     ),
 });
 export const CharacterHealthChangedHistoryEvent = z.object({
@@ -335,7 +338,7 @@ export const combatValidator = z
         initiativeList: z.array(combatCharacterValidator),
         stagedList: z.array(combatCharacterValidator),
         initiativeIndex: z.number(),
-        roundNumber: z.string().nullable(),
+        roundNumber: z.number().nullable(),
     })
     .required({
         id: true,

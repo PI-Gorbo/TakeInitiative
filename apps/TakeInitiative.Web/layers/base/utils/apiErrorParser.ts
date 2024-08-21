@@ -55,6 +55,11 @@ export function validateResponse<T extends {}>(
         parse: (data: any) => T;
     },
 ): T {
-    const data = schema.parse(resp.data);
-    return data;
+    try {
+        const data = schema.parse(resp.data);
+        return data;
+    } catch (e) {
+        console.error(`Failed to validate response. ${e}`);
+        throw e;
+    }
 }

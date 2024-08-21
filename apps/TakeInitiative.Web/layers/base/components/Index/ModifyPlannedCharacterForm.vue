@@ -90,6 +90,7 @@ import type { DeletePlannedCombatNpcRequest } from "base/utils/api/plannedCombat
 import type { SubmittingState } from "../Form/Base.vue";
 import { toTypedSchema } from "@vee-validate/zod";
 import { z } from "zod";
+import { useFormContext } from "base/composables/forms/useFormContext";
 
 const formState = reactive({
     error: null as ApiError<CreatePlannedCombatNpcRequest> | null,
@@ -109,6 +110,7 @@ const props = defineProps<{
 }>();
 
 // Form Definition
+
 const { values, errors, defineField, validate } = useForm({
     validationSchema: toTypedSchema(
         z
@@ -216,6 +218,7 @@ onMounted(() => {
 
 async function onSubmit(formSubmittingState: SubmittingState) {
     if (formSubmittingState.submitterName == "Create") {
+        formContext.triggerBeforeSubmit();
         await onCreate();
     }
 
@@ -224,6 +227,7 @@ async function onSubmit(formSubmittingState: SubmittingState) {
     }
 
     if (formSubmittingState.submitterName == "Save") {
+        formContext.triggerBeforeSubmit();
         await onEdit();
     }
 }

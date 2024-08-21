@@ -30,6 +30,7 @@
                 currentHealthInputProps.errorMessage ??
                 maxHealthInputProps.errorMessage
             "
+            :formContext="formContext"
         />
 
         <CharacterArmourClass v-model:value="armourClass" />
@@ -78,6 +79,7 @@ import type { PlayerCharacterDto } from "base/utils/api/campaign/createPlayerCha
 import type { SubmittingState } from "../Form/Base.vue";
 import { toTypedSchema } from "@vee-validate/zod";
 import { z } from "zod";
+import { useFormContext } from "base/composables/forms/useFormContext";
 
 const formState = reactive({
     error: null as ApiError<CreatePlannedCombatNpcRequest> | null,
@@ -188,8 +190,10 @@ onMounted(() => {
     }
 });
 
+const formContext = useFormContext();
 async function onSubmit(formSubmittingState: SubmittingState) {
     if (formSubmittingState.submitterName == "Create") {
+        formContext.triggerBeforeSubmit();
         await onCreate();
     }
 
@@ -198,6 +202,7 @@ async function onSubmit(formSubmittingState: SubmittingState) {
     }
 
     if (formSubmittingState.submitterName == "Save") {
+        formContext.triggerBeforeSubmit();
         await onEdit();
     }
 }
@@ -223,8 +228,8 @@ async function onEdit() {
         .onEdit({
             health: {
                 hasHealth: hasHealth.value ?? false,
-                currentHealth: currentHealth.value,
-                maxHealth: maxHealth.value,
+                currentHealth: currentHealth.value!,
+                maxHealth: maxHealth.value!,
             },
             initiative: {
                 strategy: initiativeStrategy.value!,

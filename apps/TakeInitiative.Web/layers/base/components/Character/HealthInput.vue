@@ -15,13 +15,14 @@
                     <input
                         class="w-full rounded-md bg-take-navy-light p-2"
                         placeholder="Current"
-                        :value="props.currentHealth"
-                        @blur="
+                        :value="props.currentHealth ?? null"
+                        @input="
                             (e: Event) =>
                                 onInputCurrentHealth(
                                     (e.target as HTMLInputElement).value,
                                 )
                         "
+                        @blur="onSubmitCurrentHealth"
                     />
                 </div>
                 <span>/</span>
@@ -29,13 +30,14 @@
                     <input
                         class="w-full rounded-md bg-take-navy-light p-2"
                         placeholder="Max"
-                        :value="props.maxHealth"
-                        @blur="
+                        :value="props.maxHealth ?? null"
+                        @input="
                             (e: Event) =>
                                 onInputMaxHealth(
                                     (e.target as HTMLInputElement).value,
                                 )
                         "
+                        @blur="onSubmitMaxHealth"
                     />
                 </div>
             </section>
@@ -52,7 +54,9 @@
     </section>
 </template>
 <script setup lang="ts">
+import type { FormContext } from "base/composables/forms/useFormContext";
 import { Parser } from "expr-eval";
+import { boolean } from "zod";
 const healthExpressionParser = new Parser({
     operators: {
         // Only enable add, subtract, multiple and divide
@@ -75,12 +79,23 @@ const healthExpressionParser = new Parser({
         assignment: false,
     },
 });
+
 const props = defineProps<{
     hasHealth: boolean | undefined;
     currentHealth: number | undefined | null;
     maxHealth: number | undefined | null;
     error: string | undefined | null;
 }>();
+
+const state = reactive<{
+    hasHealth: boolean | undefined;
+    currentHealth: string | undefined | null;
+    maxHealth: string | undefined | null;
+}>({
+    hasHealth: props.hasHealth,
+    currentHealth: props.currentHealth?.toString(),
+    maxHealth: props.maxHealth?.toString(),
+});
 
 const emit = defineEmits<{
     (e: "update:hasHealth", value: boolean): void;
@@ -94,13 +109,15 @@ function reset() {
     emit("update:maxHealth", null);
 }
 
-function onInputMaxHealth(value: string | undefined | null) {
-    debugger;
+function onSubmitMaxHealth() {
     try {
-        if (value == null) {
+        if (state.maxHealth == null) {
             emit("update:maxHealth", null);
         } else {
-            emit("update:maxHealth", healthExpressionParser.evaluate(value));
+            emit(
+                "update:maxHealth",
+                healthExpressionParser.evaluate(state.maxHealth),
+            );
         }
     } catch {
         emit("update:maxHealth", null);
@@ -111,14 +128,18 @@ function onInputMaxHealth(value: string | undefined | null) {
     }
 }
 
-function onInputCurrentHealth(value: string | undefined | null) {
+function onInputMaxHealth(value: string | undefined | null) {
+    state.maxHealth = value;
+}
+
+function onSubmitCurrentHealth() {
     try {
-        if (value == null) {
+        if (state.currentHealth == null) {
             emit("update:currentHealth", null);
         } else {
             emit(
                 "update:currentHealth",
-                healthExpressionParser.evaluate(value),
+                healthExpressionParser.evaluate(state.currentHealth),
             );
         }
     } catch {
@@ -129,4 +150,14 @@ function onInputCurrentHealth(value: string | undefined | null) {
         }
     }
 }
+
+function onInputCurrentHealth(value: string | undefined | null) {
+    state.currentHealth = value;
+}
+
+defineExpose({
+    getHealth: () => {
+        return;
+    },
+});
 </script>

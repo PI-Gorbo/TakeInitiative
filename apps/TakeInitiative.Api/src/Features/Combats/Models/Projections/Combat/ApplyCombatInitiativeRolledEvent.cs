@@ -30,9 +30,12 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
 
         List<HistoryEvent> events = [
             new CombatInitiativeRolled {
-                Rolls = [..@event.InitiativeRolls.OrderByDescending(x => x.rolls, new InitiativeComparer())],
-                CharacterNames = newInitiativeList
-                    .ToDictionary(x => x)
+                Rolls = [..@event.InitiativeRolls.OrderByDescending(x => x.rolls, new InitiativeComparer())
+                    .Select(rollDto => new InitiativeRolledDto() {
+                        CharacterId = rollDto.id,
+                        Roll = rollDto.rolls,
+                        CharacterName = newInitiativeList.Find(c => c.Id == rollDto.id)?.Name ?? "UNKNOWN",
+                    })],
             }
         ];
 
