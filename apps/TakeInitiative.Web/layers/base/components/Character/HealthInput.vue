@@ -15,7 +15,7 @@
                     <input
                         class="w-full rounded-md bg-take-navy-light p-2"
                         placeholder="Current"
-                        v-model="currentHealth"
+                        v-model="state.currentHealth"
                     />
                 </div>
                 <span class="cursor-default">/</span>
@@ -24,7 +24,7 @@
                         tabindex="0"
                         class="w-full rounded-md bg-take-navy-light p-2"
                         placeholder="Max"
-                        v-model="maxHealth"
+                        v-model="state.maxHealth"
                     />
                 </div>
             </section>
@@ -37,8 +37,9 @@
                 />
             </div>
         </div>
-        {{ state }}
-        <!-- <label class="text-red-500" v-if="errors"> {{ errors }}</label> -->
+        <label class="text-red-500" v-if="formState.error">
+            {{ formState.error }}</label
+        >
     </section>
 </template>
 <script setup lang="ts">
@@ -81,96 +82,80 @@ const props = defineProps<{
 }>();
 
 const state = reactive<{
-    hasHealth: boolean | undefined;
     currentHealth: string | undefined | null;
     maxHealth: string | undefined | null;
 }>({
-    hasHealth: props.hasHealth,
-    currentHealth: props.currentHealth?.toString() ?? null,
-    maxHealth: props.maxHealth?.toString() ?? null,
+    currentHealth: null,
+    maxHealth: null,
 });
 
-// function onSubmitMaxHealth() {
-//     try {
-//         if (state.maxHealth == null) {
-//             emit("update:maxHealth", null);
-//         } else {
-//             emit(
-//                 "update:maxHealth",
-//                 healthExpressionParser.evaluate(state.maxHealth),
-//             );
-//         }
-//     } catch {
-//         emit("update:maxHealth", null);
-//     } finally {
-//         if (!props.hasHealth) {
-//             emit("update:hasHealth", true);
-//         }
-//     }
-// }
+watch(
+    () => [{ ...props }],
+    () => {
+        if (props.hasHealth == true) {
+            state.currentHealth = props.currentHealth?.toString() ?? null;
+            state.maxHealth = props.maxHealth?.toString() ?? null;
+        }
+    },
+);
 
-// function onInputMaxHealth(value: string | undefined | null) {
-//     state.maxHealth = value;
-// }
+function reset() {
+    state.currentHealth = null;
+    state.maxHealth = null;
+}
 
-// function onSubmitCurrentHealth() {
-//     try {
-//         if (state.currentHealth == null) {
-//             emit("update:currentHealth", null);
-//         } else {
-//             emit(
-//                 "update:currentHealth",
-//                 healthExpressionParser.evaluate(state.currentHealth),
-//             );
-//         }
-//     } catch {
-//         emit("update:currentHealth", null);
-//     } finally {
-//         if (!props.hasHealth) {
-//             emit("update:hasHealth", true);
-//         }
-//     }
-// }
-
-// function onInputCurrentHealth(value: string | undefined | null) {
-//     state.currentHealth = value;
-// }
-
-const tryParseNumber = (num: string | null): string | number | null => {
-    if (num == null) return null;
+const tryParseNumber = (
+    num: string | null,
+):
+    | { isSuccess: true; value: number | null }
+    | { isSuccess: false; error: string } => {
+    if (num == null) return { isSuccess: true, value: null };
 
     try {
-        return healthExpressionParser.evaluate(num);
+        return { isSuccess: true, value: healthExpressionParser.evaluate(num) };
     } catch (e) {
-        return JSON.stringify(e);
+        return { isSuccess: false, error: JSON.stringify(e) };
     }
 };
 
-const { values, errors, defineField, validate } = useForm({
-    validationSchema: toTypedSchema(
-        z
-            .object({
-                currentHealth: z.string().nullable(),
-                maxHealth: z.string().nullable(),
-            })
-            .transform((healthValues, ctx) => {
-                const parsedCurrentHealth = tryParseNumber(
-                    healthValues.currentHealth,
-                );
+const schema = z
+    .object({
+        currentHealth: z.string().nullable(),
+        maxHealth: z.string().nullable(),
+    })
+    .transform((healthValues, ctx) => {
+        const parsedCurrentHealth = tryParseNumber(healthValues.currentHealth);
+        if (!parsedCurrentHealth.isSuccess) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: parsedCurrentHealth.error,
+            });
+            return z.NEVER;
+        }
 
-                return {
-                    hasHealth:
-                        healthValues.currentHealth == null &&
-                        healthValues.maxHealth == null,
-                };
-            }),
-    ),
+        const parsedMaxHealth = tryParseNumber(healthValues.maxHealth);
+        if (!parsedMaxHealth.isSuccess) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: parsedMaxHealth.error,
+            });
+            return z.NEVER;
+        }
+
+        return {
+            hasHealth:
+                healthValues.currentHealth != null &&
+                healthValues.maxHealth != null,
+            currentHealth: parsedCurrentHealth.value,
+            maxHealth: parsedMaxHealth.value,
+        };
+    });
+
+const formState = reactive<{ error: string | null }>({
+    error: null,
 });
-const [currentHealth, currentHealthAttrs] = defineField("currentHealth");
-const [maxHealth, maxHealthAttrs] = defineField("maxHealth");
-
 defineExpose({
-    getHealth: () => {
+    getHealth: (): CharacterHealth | false => {
         if (state.currentHealth == null && state.maxHealth == null) {
             const model: CharacterHealth = {
                 hasHealth: false,
@@ -181,7 +166,16 @@ defineExpose({
             return model;
         }
 
-        // const parsedMaxHealth = tryParseNumber(state.maxHealth);
+        const model = {
+            ...state,
+        };
+        const paredModel = schema.safeParse(model);
+        if (paredModel.error) {
+            formState.error = paredModel.error.message;
+            return false;
+        }
+
+        return paredModel.data;
     },
 });
 </script>

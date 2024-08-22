@@ -30,14 +30,10 @@
         />
 
         <CharacterHealthInput
-            v-model:hasHealth="hasHealth"
-            v-model:currentHealth="currentHealth"
-            v-model:maxHealth="maxHealth"
-            :error="
-                hasHealthInputProps.errorMessage ??
-                currentHealthInputProps.errorMessage ??
-                maxHealthInputProps.errorMessage
-            "
+            :hasHealth="hasHealth"
+            :currentHealth="currentHealth"
+            :maxHealth="maxHealth"
+            ref="characterHealthInput"
         />
 
         <CharacterArmourClass v-model:value="armourClass" />
@@ -74,13 +70,10 @@
 </template>
 
 <script setup lang="ts">
-import { Form } from "vee-validate";
 import { useForm } from "vee-validate";
 import {
     InitiativeStrategy,
-    plannedCombatCharacterValidator,
     type PlannedCombatCharacter,
-    type PlannedCombatStage,
     characterInitiativeValidator,
     characterHealthValidator,
 } from "base/utils/types/models";
@@ -90,7 +83,8 @@ import type { DeletePlannedCombatNpcRequest } from "base/utils/api/plannedCombat
 import type { SubmittingState } from "../Form/Base.vue";
 import { toTypedSchema } from "@vee-validate/zod";
 import { z } from "zod";
-import { useFormContext } from "base/composables/forms/useFormContext";
+import HealthInput from "../Character/HealthInput.vue";
+const characterHealthInput = ref<InstanceType<typeof HealthInput> | null>(null);
 
 const formState = reactive({
     error: null as ApiError<CreatePlannedCombatNpcRequest> | null,
@@ -218,7 +212,6 @@ onMounted(() => {
 
 async function onSubmit(formSubmittingState: SubmittingState) {
     if (formSubmittingState.submitterName == "Create") {
-        formContext.triggerBeforeSubmit();
         await onCreate();
     }
 
@@ -227,7 +220,6 @@ async function onSubmit(formSubmittingState: SubmittingState) {
     }
 
     if (formSubmittingState.submitterName == "Save") {
-        formContext.triggerBeforeSubmit();
         await onEdit();
     }
 }
@@ -243,6 +235,16 @@ async function onEdit() {
     if (!props.onEdit) return;
 
     formState.error = null;
+
+    // Fetch & Set the computed health values from the health component upon submission
+    const health = characterHealthInput.value?.getHealth();
+    if (health == false) {
+        return;
+    }
+    hasHealth.value = health?.hasHealth;
+    currentHealth.value = health?.currentHealth;
+    maxHealth.value = health?.maxHealth;
+
     const validateResult = await validate();
     if (!validateResult.valid) {
         return;
@@ -273,6 +275,16 @@ async function onCreate() {
     if (!props.onCreate) return;
 
     formState.error = null;
+
+    // Fetch & Set the computed health values from the health component upon submission
+    const health = characterHealthInput.value?.getHealth();
+    if (health == false) {
+        return;
+    }
+    hasHealth.value = health?.hasHealth;
+    currentHealth.value = health?.currentHealth;
+    maxHealth.value = health?.maxHealth;
+
     const validateResult = await validate();
     if (!validateResult.valid) {
         return;

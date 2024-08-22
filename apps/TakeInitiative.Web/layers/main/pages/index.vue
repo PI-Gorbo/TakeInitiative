@@ -35,8 +35,8 @@
                     </h1>
                     <p class="max-w-lg text-take-grey">
                         Make in-person tabletop games easy with Take Initiative
-                        - An online tool for Dungeon Masters to plan combats and
-                        run initiative live for your players.
+                        - A tool for Dungeon Masters to plan combats and run
+                        initiative live for your players.
                     </p>
                     <button
                         class="btn bg-take-teal text-lg text-white transition-colors hover:bg-take-teal hover:brightness-90 md:text-xl"
