@@ -95,6 +95,9 @@ watch(
         if (props.hasHealth == true) {
             state.currentHealth = props.currentHealth?.toString() ?? null;
             state.maxHealth = props.maxHealth?.toString() ?? null;
+        } else {
+            state.currentHealth = null;
+            state.maxHealth = null;
         }
     },
 );
@@ -114,7 +117,10 @@ const tryParseNumber = (
     try {
         return { isSuccess: true, value: healthExpressionParser.evaluate(num) };
     } catch (e) {
-        return { isSuccess: false, error: JSON.stringify(e) };
+        return {
+            isSuccess: false,
+            error: `failed to evaluate expression '${num}'`,
+        };
     }
 };
 
@@ -128,7 +134,7 @@ const schema = z
         if (!parsedCurrentHealth.isSuccess) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: parsedCurrentHealth.error,
+                message: parsedCurrentHealth.error + " for current health",
             });
             return z.NEVER;
         }
@@ -137,7 +143,7 @@ const schema = z
         if (!parsedMaxHealth.isSuccess) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: parsedMaxHealth.error,
+                message: parsedMaxHealth.error + " for max health",
             });
             return z.NEVER;
         }
@@ -171,7 +177,8 @@ defineExpose({
         };
         const paredModel = schema.safeParse(model);
         if (paredModel.error) {
-            formState.error = paredModel.error.message;
+            debugger;
+            formState.error = paredModel.error.issues[0].message;
             return false;
         }
 

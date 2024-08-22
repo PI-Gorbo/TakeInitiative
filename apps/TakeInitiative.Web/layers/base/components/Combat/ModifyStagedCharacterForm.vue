@@ -35,14 +35,10 @@
         />
 
         <CharacterHealthInput
-            v-model:hasHealth="hasHealth"
-            v-model:currentHealth="currentHealth"
-            v-model:maxHealth="maxHealth"
-            :error="
-                hasHealthInputProps.errorMessage ??
-                currentHealthInputProps.errorMessage ??
-                maxHealthInputProps.errorMessage
-            "
+            :hasHealth="hasHealth"
+            :currentHealth="currentHealth"
+            :maxHealth="maxHealth"
+            ref="characterHealthInput"
         />
 
         <CharacterArmourClass v-model:value="armourClass" />
@@ -95,6 +91,8 @@ import type { SubmittingState } from "../Form/Base.vue";
 import type { DeleteStagedCharacterRequest } from "base/utils/api/combat/deleteStagedCharacterRequest";
 import { toTypedSchema } from "@vee-validate/zod";
 import { z } from "zod";
+import HealthInput from "../Character/HealthInput.vue";
+const characterHealthInput = ref<InstanceType<typeof HealthInput> | null>(null);
 const { userIsDm } = storeToRefs(useCombatStore());
 const formState = reactive({
     error: null as ApiError<StagedCharacterDTO> | null,
@@ -116,7 +114,6 @@ const { values, errors, defineField, validate } = useForm({
             .object({
                 name: z.string({ required_error: "Please provide a name" }),
                 initiative: characterInitiativeValidator,
-                quantity: z.number().min(1),
                 isHidden: z.boolean(),
                 armourClass: z.number().nullable(),
                 health: characterHealthValidator,
@@ -258,6 +255,16 @@ async function onEdit() {
     if (!props.onEdit) return;
 
     formState.error = null;
+
+    // Fetch & Set the computed health values from the health component upon submission
+    const health = characterHealthInput.value?.getHealth();
+    if (health == false) {
+        return;
+    }
+    hasHealth.value = health?.hasHealth;
+    currentHealth.value = health?.currentHealth;
+    maxHealth.value = health?.maxHealth;
+
     const validateResult = await validate();
     if (!validateResult.valid) {
         return;
@@ -289,6 +296,16 @@ async function onCreate() {
     if (!props.onCreate) return;
 
     formState.error = null;
+
+    // Fetch & Set the computed health values from the health component upon submission
+    const health = characterHealthInput.value?.getHealth();
+    if (health == false) {
+        return;
+    }
+    hasHealth.value = health?.hasHealth;
+    currentHealth.value = health?.currentHealth;
+    maxHealth.value = health?.maxHealth;
+
     const validateResult = await validate();
     if (!validateResult.valid) {
         return;

@@ -147,7 +147,8 @@
             />
             <div v-if="modalState.modalType == 'Edit Initiative Character'">
                 <CombatEditInitiativeCharacterForm
-                    :character="lastClickedInitiativeCharacter!"
+                    v-if="lastClickedInitiativeCharacter"
+                    :character="lastClickedInitiativeCharacter"
                     :onEdit="
                         (character) =>
                             combatStore

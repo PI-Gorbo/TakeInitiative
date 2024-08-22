@@ -296,11 +296,15 @@ async function onCreatePlannedCombat(
 }
 
 async function onOpenCombat(plannedCombatId: string) {
-    return await campaignStore.openCombat(plannedCombatId).then(async () => {
-        await useNavigator().toCombat(
-            campaignStore.state.currentCombatInfo?.id!,
+    return campaignStore
+        .openCombat(plannedCombatId)
+        .then((c) =>
+            Promise.resolve(
+                useNavigator().toCombat(
+                    campaignStore.state.currentCombatInfo?.id!,
+                ),
+            ),
         );
-    });
 }
 
 onMounted(() => {

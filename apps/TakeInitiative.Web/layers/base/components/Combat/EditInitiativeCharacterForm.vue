@@ -26,14 +26,10 @@
             </div>
 
             <CharacterHealthInput
-                v-model:hasHealth="hasHealth"
-                v-model:currentHealth="currentHealth"
-                v-model:maxHealth="maxHealth"
-                :error="
-                    hasHealthInputProps.errorMessage ??
-                    currentHealthInputProps.errorMessage ??
-                    maxHealthInputProps.errorMessage
-                "
+                ref="characterHealthInput"
+                :hasHealth="hasHealth"
+                :currentHealth="currentHealth"
+                :maxHealth="maxHealth"
             />
 
             <CharacterArmourClass v-model:value="armourClass" />
@@ -67,6 +63,9 @@ import {
 import type { CombatCharacterDto } from "base/utils/api/combat/putUpdateInitiativeCharacterRequest";
 import { toTypedSchema } from "@vee-validate/zod";
 import { z } from "zod";
+import HealthInput from "../Character/HealthInput.vue";
+
+const characterHealthInput = ref<InstanceType<typeof HealthInput> | null>(null);
 const userStore = useUserStore();
 const { userIsDm } = storeToRefs(useCombatStore());
 
@@ -156,11 +155,11 @@ function setValuesFromProps() {
     isHidden.value = props.character.hidden;
     armourClass.value = props.character.armourClass ?? null;
     hasHealth.value = props.character.health?.hasHealth ?? false;
-    currentHealth.value = props.character.health?.currentHealth ?? 0;
-    maxHealth.value = props.character.health?.maxHealth ?? 0;
+    currentHealth.value = props.character.health?.currentHealth;
+    maxHealth.value = props.character.health?.maxHealth;
 }
 onMounted(setValuesFromProps);
-watch(() => props.character, setValuesFromProps);
+watch(() => props.character.id, setValuesFromProps);
 
 async function submit(formSubmittingState: SubmittingState) {
     if (formSubmittingState.submitterName == "trash") {
@@ -173,6 +172,15 @@ async function submit(formSubmittingState: SubmittingState) {
 }
 
 async function onEdit() {
+    // Fetch & Set the computed health values from the health component upon submission
+    const health = characterHealthInput.value?.getHealth();
+    if (health == false) {
+        return;
+    }
+    hasHealth.value = health?.hasHealth;
+    currentHealth.value = health?.currentHealth;
+    maxHealth.value = health?.maxHealth;
+
     return await props
         .onEdit({
             id: props.character.id,
@@ -180,9 +188,9 @@ async function onEdit() {
             hidden: isHidden.value!,
             initiativeValue: props.character.initiativeValue!,
             health: {
-                hasHealth: hasHealth.value ?? false,
-                currentHealth: currentHealth.value ?? 0,
-                maxHealth: maxHealth.value ?? 0,
+                hasHealth: hasHealth.value!,
+                currentHealth: currentHealth.value!,
+                maxHealth: maxHealth.value!,
             },
             armourClass: armourClass.value ?? null,
         })
