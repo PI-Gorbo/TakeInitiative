@@ -69,7 +69,6 @@ export const useCampaignStore = defineStore("campaignStore", () => {
     async function fetchCampaign(
         campaignId: string,
     ): Promise<GetCampaignResponse> {
-        console.log("refetching campaign info");
         return await api.campaign.get({ campaignId });
     }
 

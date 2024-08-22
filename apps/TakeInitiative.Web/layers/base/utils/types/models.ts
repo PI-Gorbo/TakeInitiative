@@ -1,3 +1,4 @@
+import { CombatInitiativeRolledEvent } from "./../../../main/.nuxt/components.d";
 import { z } from "zod";
 
 // Campaign Member
@@ -261,6 +262,9 @@ export const CombatInitiativeRolledHistoryEvent = z.object({
             .required(),
     ),
 });
+export type CombatInitiativeRolledEvent = z.infer<
+    typeof CombatInitiativeRolledHistoryEvent
+>;
 export const CharacterHealthChangedHistoryEvent = z.object({
     characterId: z.string().uuid(),
     from: z.number().int(),

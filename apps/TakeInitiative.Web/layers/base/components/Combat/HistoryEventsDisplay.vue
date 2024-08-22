@@ -47,9 +47,22 @@
             <main>
                 <ul>
                     <li v-for="(event, eventIndex) in entry.events">
-                        <span v-if="shouldDisplayEventDescription(event)">{{
-                            getEventDescription(event)
-                        }}</span>
+                        <span
+                            v-if="
+                                typeof eventBodyComponentMap[event['!']] ==
+                                'string'
+                            "
+                            class="px-2"
+                        >
+                            {{ eventBodyComponentMap[event["!"]] }}
+                        </span>
+                        <component
+                            v-else-if="
+                                eventBodyComponentMap[event['!']] != undefined
+                            "
+                            :is="eventBodyComponentMap[event['!']]"
+                            :event="event"
+                        />
                     </li>
                 </ul>
             </main>
@@ -60,7 +73,9 @@
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import type { CampaignMemberDto } from "base/utils/api/campaign/getCampaignRequest";
 import type { GetCombatHistoryResponse } from "base/utils/api/combat/getCombatHistoryRequest";
-import type { HistoryEntry, HistoryEvent } from "base/utils/types/models";
+import { type HistoryEntry, type HistoryEvent } from "base/utils/types/models";
+import type { Component } from "vue";
+import InitiativeRolledEvent from "./InitiativeRolledEvent.vue";
 
 const campaignStore = useCampaignStore();
 
@@ -77,20 +92,20 @@ function getMemberDto(id: string) {
 }
 
 function getEntryHeader(entry: HistoryEntry): string {
-    if (entry.events.length == 1) {
+    if (entry.events.length >= 1) {
         // If the entry is the combat started entry, display a specialized header.
         const event = entry.events[0];
+
         switch (event["!"]) {
             case "CombatStarted":
-                return "started the Combat";
+                return "started the combat";
+            case "CombatFinished":
+                return "finished the combat";
             case "CombatInitiativeRolled":
                 if (event.rolls.length == 0) {
                     return "rolled initiative with no characters.";
                 }
-
-                return JSON.stringify(entry.events);
-            case "CombatFinished":
-                return "finished the Combat";
+                return "rolled initiative";
             default:
                 break;
         }
@@ -99,23 +114,33 @@ function getEntryHeader(entry: HistoryEntry): string {
     return ""; // Otherwise display nothing.
 }
 
-function shouldDisplayEventDescription(event: HistoryEvent): boolean {
-    switch (event["!"]) {
-        case "CombatStarted":
-            return false;
-        case "CombatInitiativeRolled":
-            return false;
-        case "CombatFinished":
-            return false;
-        default:
-            return true;
-    }
-}
+const eventBodyComponentMap: Record<
+    HistoryEvent["!"],
+    Component | string | undefined
+> = {
+    CombatStarted: undefined,
+    CombatInitiativeRolled: InitiativeRolledEvent,
+    CharacterHealthChanged: "CharacterHealthChanged",
+    CombatFinished: "CombatFinished",
+    TurnStarted: "TurnStarted",
+    TurnEnded: "TurnEnded",
+    RoundEnded: "RoundEnded",
+    PlayerCharacterJoined: "PlayerCharacterJoined",
+    PlannedCharactersAdded: "PlannedCharactersAdded",
+    CharacterRemoved: "CharacterRemoved",
+};
 
-function getEventDescription(event: HistoryEvent): string {
+function getEventDescription(event: HistoryEvent): string | false {
     switch (event["!"]) {
         case "CombatStarted":
             return "Started the Combat";
+        case "CombatFinished":
+            return false;
+        case "CombatInitiativeRolled":
+            if (event.rolls.length == 0) {
+                return "rolled initiative with no characters.";
+            }
+
         default:
             return JSON.stringify(event);
     }

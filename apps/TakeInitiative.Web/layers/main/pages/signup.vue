@@ -218,17 +218,23 @@ async function onSignUp() {
     }
 
     await userStore
-        .signUp(
-            {
-                email: email.value!,
-                username: username.value!,
-                password: password.value!,
-            },
-            redirectToPath,
-        )
+        .signUp({
+            email: email.value!,
+            username: username.value!,
+            password: password.value!,
+        })
         .then(() => (formState.success = true))
         .catch((error) => {
             formState.submitError = parseAsApiError<SignUpRequest>(error);
+        })
+        .then(() => {
+            if (redirectToPath != null) {
+                return Promise.resolve(navigateTo(redirectToPath));
+            } else {
+                return Promise.resolve(
+                    userStore.navigateToFirstAvailableCampaignOrFallbackToCreateOrJoin(),
+                );
+            }
         })
         .finally(() => (formState.submitting = false));
 }

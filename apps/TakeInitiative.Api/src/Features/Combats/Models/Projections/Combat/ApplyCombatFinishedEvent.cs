@@ -13,7 +13,7 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
         return Combat with
         {
             State = CombatState.Finished,
-            FinishedTimestamp = DateTimeOffset.UtcNow,
+            FinishedTimestamp = eventDetails.Timestamp,
             History = [.. Combat.History, new() {
                 Events = [new CombatFinished()],
                 Executor = user!.Id,

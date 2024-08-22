@@ -116,8 +116,7 @@
                     </div>
                     <ul class="flex flex-col gap-2 overflow-y-auto">
                         <li
-                            v-for="finishedCombat in campaignCombatsStore.state
-                                ?.combats ?? []"
+                            v-for="finishedCombat in orderedFinishedCombats"
                             :key="finishedCombat.combatName"
                             :class="[
                                 'flex select-none items-center justify-between rounded-md border border-take-purple bg-take-purple p-1 transition-colors',
@@ -200,6 +199,7 @@
                     buttonColour="take-navy"
                     @click="() => campaignCombatsStore.unselectCombat()"
                 />
+
                 <CombatHistorySection
                     :combatInfo="campaignCombatsStore.selectedCombat"
                 />
@@ -335,4 +335,32 @@ onMounted(() => {
         );
     }
 });
+
+const orderedFinishedCombats = computed(() =>
+    (campaignCombatsStore.state?.combats ?? [])
+        .toSorted((a, b) => {
+            if (a.finishedTimestamp == null && b.finishedTimestamp != null) {
+                return -1;
+            }
+
+            if (a.finishedTimestamp != null && b.finishedTimestamp == null) {
+                return 1;
+            }
+
+            if (a.finishedTimestamp == b.finishedTimestamp) {
+                return 0;
+            }
+
+            if (a.finishedTimestamp! < b.finishedTimestamp!) {
+                return -1;
+            }
+
+            if (a.finishedTimestamp! > b.finishedTimestamp!) {
+                return 1;
+            }
+
+            return 0;
+        })
+        .reverse(),
+);
 </script>
