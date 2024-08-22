@@ -51,7 +51,7 @@
                     <div class="flex items-center justify-between">
                         <div>
                             <FontAwesomeIcon icon="pen-to-square" />
-                            <span class="font-NovaCut text-take-yellow">
+                            <span class="font-NovaCut text-lg text-take-yellow">
                                 Planned Combats
                             </span>
                         </div>
@@ -110,7 +110,7 @@
                 <div class="flex flex-col gap-2">
                     <div>
                         <FontAwesomeIcon icon="flag-checkered" />
-                        <span class="font-NovaCut text-take-yellow">
+                        <span class="font-NovaCut text-lg text-take-yellow">
                             Combat History
                         </span>
                     </div>

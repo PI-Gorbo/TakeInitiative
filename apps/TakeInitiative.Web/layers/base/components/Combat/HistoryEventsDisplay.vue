@@ -1,10 +1,10 @@
 <template>
     <ul class="flex flex-col gap-2 p-2">
         <li
-            v-for="(entry, index) in props.historyResponse.history"
-            class="rounded bg-take-purple p-1"
+            v-for="(entry, index) in enrichedEventStream"
+            class="rounded bg-take-purple py-1"
         >
-            <header class="flex flex-row justify-between">
+            <header class="flex flex-row justify-between px-2">
                 <div class="flex items-center gap-2">
                     <FontAwesomeIcon
                         :class="
@@ -26,7 +26,7 @@
                     >
                 </div>
                 <div
-                    class="max-w-fit rounded bg-take-creme-medium px-1 align-middle text-black"
+                    class="max-w-fit rounded bg-take-creme-medium px-1 align-middle text-black shadow"
                 >
                     <span class="border-r border-r-take-navy pr-1">{{
                         index + 1
@@ -46,23 +46,30 @@
             </header>
             <main>
                 <ul>
-                    <li v-for="(event, eventIndex) in entry.events">
+                    <li
+                        v-for="(event, eventIndex) in entry.events"
+                        class="px-2 py-1"
+                    >
                         <span
                             v-if="
                                 typeof eventBodyComponentMap[event['!']] ==
                                 'string'
                             "
-                            class="px-2"
                         >
                             {{ eventBodyComponentMap[event["!"]] }}
                         </span>
-                        <component
+                        <div
                             v-else-if="
                                 eventBodyComponentMap[event['!']] != undefined
                             "
-                            :is="eventBodyComponentMap[event['!']]"
-                            :event="event"
-                        />
+                        >
+                            <component
+                                :roundNumber="entry.roundNumber"
+                                :is="eventBodyComponentMap[event['!']]"
+                                :event="event"
+                                :nameMap="characterNameMapping"
+                            />
+                        </div>
                     </li>
                 </ul>
             </main>
@@ -76,21 +83,59 @@ import type { GetCombatHistoryResponse } from "base/utils/api/combat/getCombatHi
 import { type HistoryEntry, type HistoryEvent } from "base/utils/types/models";
 import type { Component } from "vue";
 import InitiativeRolledEvent from "./InitiativeRolledEvent.vue";
+import TurnStartedEvent from "./TurnStartedEventDisplay.vue";
+import TurnEndedEventDisplay from "./TurnEndedEventDisplay.vue";
+import RoundEndedEventDisplay from "./RoundEndedEventDisplay.vue";
+import CharacterRemovedEventDisplay from "./CharacterRemovedEventDisplay.vue";
+import CharacterHealthChangedEventDisplay from "./CharacterHealthChangedEventDisplay.vue";
 
 const campaignStore = useCampaignStore();
 
 const props = defineProps<{
     historyResponse: GetCombatHistoryResponse;
 }>();
+
+const enrichedEventStream = computed(() => {
+    const output = [];
+    let roundNumber = 1;
+    for (const entry of props.historyResponse.history) {
+        const roundEndedEvent = entry.events.find(
+            (x) => x["!"] == "RoundEnded",
+        );
+
+        output.push({ ...entry, roundNumber });
+
+        if (roundEndedEvent != null) {
+            roundNumber++;
+        }
+    }
+
+    return output;
+});
+
+// Computed data from the props.
 const startTime = computed(
-    () => new Date(props.historyResponse.history[0].timestamp),
+    () => new Date(enrichedEventStream.value[0].timestamp),
 );
-const endTime = computed(() => props.historyResponse.history.at(-1)?.timestamp);
+const endTime = computed(
+    () => new Date(enrichedEventStream.value.at(-1)?.timestamp!),
+);
+const characterNameMapping = computed(() => {
+    const initiativeRolledEvent = enrichedEventStream.value
+        .flatMap((x) => x.events)
+        .filter((event) => event["!"] == "CombatInitiativeRolled")[0];
+
+    const mapping: Record<string, string> = {};
+    for (const ele of initiativeRolledEvent.rolls) {
+        mapping[ele.characterId] = ele.characterName;
+    }
+
+    return mapping;
+});
 
 function getMemberDto(id: string) {
     return campaignStore.memberDtos.find((x) => x.userId == id);
 }
-
 function getEntryHeader(entry: HistoryEntry): string {
     if (entry.events.length >= 1) {
         // If the entry is the combat started entry, display a specialized header.
@@ -98,14 +143,31 @@ function getEntryHeader(entry: HistoryEntry): string {
 
         switch (event["!"]) {
             case "CombatStarted":
-                return "started the combat";
+                return `started the combat on ${startTime.value.toLocaleString(
+                    "en-US",
+                    {
+                        weekday: "long",
+                        day: "numeric",
+                        month: "numeric",
+                        year: "numeric",
+                    },
+                )} at ${startTime.value.toLocaleString("en-US", {
+                    minute: "numeric",
+                    hour: "numeric",
+                })}`;
             case "CombatFinished":
-                return "finished the combat";
-            case "CombatInitiativeRolled":
-                if (event.rolls.length == 0) {
-                    return "rolled initiative with no characters.";
-                }
-                return "rolled initiative";
+                return `finished the combat on ${endTime.value.toLocaleString(
+                    "en-US",
+                    {
+                        weekday: "long",
+                        day: "numeric",
+                        month: "numeric",
+                        year: "numeric",
+                    },
+                )} at ${endTime.value.toLocaleString("en-US", {
+                    minute: "numeric",
+                    hour: "numeric",
+                })}`;
             default:
                 break;
         }
@@ -119,30 +181,14 @@ const eventBodyComponentMap: Record<
     Component | string | undefined
 > = {
     CombatStarted: undefined,
+    CombatFinished: undefined,
     CombatInitiativeRolled: InitiativeRolledEvent,
-    CharacterHealthChanged: "CharacterHealthChanged",
-    CombatFinished: "CombatFinished",
-    TurnStarted: "TurnStarted",
-    TurnEnded: "TurnEnded",
-    RoundEnded: "RoundEnded",
+    CharacterHealthChanged: CharacterHealthChangedEventDisplay,
+    TurnStarted: TurnStartedEvent,
+    TurnEnded: TurnEndedEventDisplay,
+    RoundEnded: RoundEndedEventDisplay,
     PlayerCharacterJoined: "PlayerCharacterJoined",
     PlannedCharactersAdded: "PlannedCharactersAdded",
-    CharacterRemoved: "CharacterRemoved",
+    CharacterRemoved: CharacterRemovedEventDisplay,
 };
-
-function getEventDescription(event: HistoryEvent): string | false {
-    switch (event["!"]) {
-        case "CombatStarted":
-            return "Started the Combat";
-        case "CombatFinished":
-            return false;
-        case "CombatInitiativeRolled":
-            if (event.rolls.length == 0) {
-                return "rolled initiative with no characters.";
-            }
-
-        default:
-            return JSON.stringify(event);
-    }
-}
 </script>

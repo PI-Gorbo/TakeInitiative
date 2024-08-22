@@ -30,7 +30,7 @@
                                 selectedTab == tab.name
                                     ? `bg-take-yellow text-take-navy`
                                     : `bg-take-purple-very-dark text-take-grey-dark hover:bg-take-navy-medium hover:text-take-grey-light`, // PLEASE CHANGE TO MANUALLY CONTROLLED TEXT COLOUR
-                                `flex cursor-pointer select-none items-center rounded-md px-2 py-1 font-NovaCut transition-colors   md:text-lg`,
+                                `flex cursor-pointer select-none items-center rounded-md px-2 py-1 font-NovaCut transition-colors   md:text-xl`,
                             ]"
                             @click="() => navigateToSelectedTab(tab.name)"
                         >

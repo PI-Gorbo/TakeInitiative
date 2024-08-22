@@ -1,4 +1,3 @@
-import { CombatInitiativeRolledEvent } from "./../../../main/.nuxt/components.d";
 import { z } from "zod";
 
 // Campaign Member
@@ -262,7 +261,7 @@ export const CombatInitiativeRolledHistoryEvent = z.object({
             .required(),
     ),
 });
-export type CombatInitiativeRolledEvent = z.infer<
+export type CombatInitiativeRolledHistoryEvent = z.infer<
     typeof CombatInitiativeRolledHistoryEvent
 >;
 export const CharacterHealthChangedHistoryEvent = z.object({
@@ -270,14 +269,20 @@ export const CharacterHealthChangedHistoryEvent = z.object({
     from: z.number().int(),
     to: z.number().int(),
 });
+export type CharacterHealthChangedHistoryEvent = z.infer<
+    typeof CharacterHealthChangedHistoryEvent
+>;
 export const CombatFinishedHistoryEvent = z.object({});
-export const TurnStartedHistoryEvent = z.object({
+export const turnStartedHistoryEvent = z.object({
     characterId: z.string().uuid(),
 });
-export const TurnEndedHistoryEvent = z.object({
+export type TurnStartedHistoryEvent = z.infer<typeof turnStartedHistoryEvent>;
+export const turnEndedHistoryEvent = z.object({
     characterId: z.string().uuid(),
 });
+export type TurnEndedHistoryEvent = z.infer<typeof turnEndedHistoryEvent>;
 export const RoundEndedHistoryEvent = z.object({});
+export type RoundEndedHistoryEvent = z.infer<typeof RoundEndedHistoryEvent>;
 export const PlayerCharacterJoinedHistoryEvent = z.object({
     characterId: z.string().uuid(),
 });
@@ -285,6 +290,9 @@ export const PlannedCharactersAddedHistoryEvent = z.object({});
 export const CharacterRemovedHistoryEvent = z.object({
     characterId: z.string().uuid(),
 });
+export type CharacterRemovedHistoryEvent = z.infer<
+    typeof CharacterRemovedHistoryEvent
+>;
 
 export const historyEventValidator = z.discriminatedUnion("!", [
     CombatStartedHistoryEvent.extend({
@@ -299,10 +307,10 @@ export const historyEventValidator = z.discriminatedUnion("!", [
     CombatFinishedHistoryEvent.extend({
         "!": z.literal("CombatFinished"),
     }),
-    TurnStartedHistoryEvent.extend({
+    turnStartedHistoryEvent.extend({
         "!": z.literal("TurnStarted"),
     }),
-    TurnEndedHistoryEvent.extend({
+    turnEndedHistoryEvent.extend({
         "!": z.literal("TurnEnded"),
     }),
     RoundEndedHistoryEvent.extend({

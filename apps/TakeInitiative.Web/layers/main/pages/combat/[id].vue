@@ -118,7 +118,6 @@
                     label="Go Home"
                     buttonColour="take-purple"
                     hoverButtonColour="take-yellow-dark"
-                    :disabled="!isUsersTurn"
                     :loadingDisplay="{
                         showSpinner: true,
                         loadingText: 'End...',

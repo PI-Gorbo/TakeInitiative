@@ -11,7 +11,7 @@
                 .filter((x) => userIsDm || !x.char.character.hidden)"
             :key="charInfo.character.id"
             :class="[
-                'flex gap-2 rounded-xl border-2 border-take-purple-light p-2 transition-colors',
+                'flex flex-wrap gap-2 rounded-xl border-2 border-take-purple-light p-2 transition-colors',
                 {
                     'cursor-pointer':
                         (combatIsOpen || combatIsStarted) &&
@@ -93,6 +93,7 @@
                     <CharacterHealthDisplay
                         :health="charInfo.character.health"
                         :displayMethod="getHealthDisplayMethod(charInfo)"
+                        class="min-w-max"
                     />
                     <CharacterArmourClassDisplay
                         :armourClass="charInfo.character.armourClass"
