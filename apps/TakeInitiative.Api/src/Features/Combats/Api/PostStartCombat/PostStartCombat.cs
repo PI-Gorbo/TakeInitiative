@@ -2,12 +2,12 @@ using System.Net;
 using FastEndpoints;
 using Marten;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using TakeInitiative.Utilities.Extensions;
 using Microsoft.AspNetCore.SignalR;
+using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Combats;
 
-public class PostStartCombat(IDocumentSession session, IHubContext<CombatHub> combatHub, IHubContext<CampaignHub> campaignHub) : Endpoint<PostStartCombatRequest, CombatResponse>
+public class PostStartCombat(IDocumentSession session, IHubContext<CampaignHub> campaignHub) : Endpoint<PostStartCombatRequest, CombatResponse>
 {
     public override void Configure()
     {
@@ -16,10 +16,12 @@ public class PostStartCombat(IDocumentSession session, IHubContext<CombatHub> co
 
     public override async Task HandleAsync(PostStartCombatRequest req, CancellationToken ct)
     {
-        var result = await new StartCombatCommand()
+        var userId = this.GetUserIdOrThrowUnauthorized();
+
+        var result = await new OpenCombatCommand()
         {
-            CombatId = req.CombatId,
-            UserId = this.GetUserIdOrThrowUnauthorized()
+            PlannedCombatId = req.PlannedCombatId,
+            UserId = userId
         }.ExecuteAsync();
 
         if (result.IsFailure)
@@ -27,11 +29,7 @@ public class PostStartCombat(IDocumentSession session, IHubContext<CombatHub> co
             ThrowError(result.Error, (int)HttpStatusCode.ServiceUnavailable);
         }
 
-        await SendAsync(new CombatResponse()
-        {
-            Combat = result.Value,
-        });
-        await combatHub.NotifyCombatUpdated(result.Value);
+        await SendAsync(new CombatResponse() { Combat = result.Value });
         await campaignHub.NotifyCampaignStateUpdated(result.Value.CampaignId);
     }
 }

@@ -5,16 +5,16 @@ using TakeInitiative.Utilities;
 using TakeInitiative.Utilities.Extensions;
 namespace TakeInitiative.Api.Features.Combats;
 
-public record StartCombatCommand : ICommand<Result<Combat>>
+public record RollCombatInitiativeCommand : ICommand<Result<Combat>>
 {
     public required Guid CombatId { get; set; }
     public required Guid UserId { get; set; }
 }
 
-public class StartCombatCommandHandler(IDocumentStore Store, IDiceRoller roller) : CommandHandler<StartCombatCommand, Result<Combat>>
+public class RollCombatInitiativeCommandHandler(IDocumentStore Store, IInitiativeRoller roller) : CommandHandler<RollCombatInitiativeCommand, Result<Combat>>
 {
 
-    public override async Task<Result<Combat>> ExecuteAsync(StartCombatCommand command, CancellationToken ct = default)
+    public override async Task<Result<Combat>> ExecuteAsync(RollCombatInitiativeCommand command, CancellationToken ct = default)
     {
         return await Store.Try(
             async (session) =>
@@ -31,7 +31,7 @@ public class StartCombatCommandHandler(IDocumentStore Store, IDiceRoller roller)
                     ThrowError($"Cannot activate character because the combat is {combat.State.ToString().ToLower()}.");
                 }
 
-                if (combat.State != CombatState.Open)
+                if (combat.State != CombatState.Started)
                 {
                     ThrowError($"Combat has already been started.");
                 }

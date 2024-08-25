@@ -1,5 +1,6 @@
+import { validateResponse } from "base/utils/apiErrorParser";
 import type { AxiosInstance } from "axios";
-import * as yup from "yup";
+import { z } from "zod";
 import {
     campaignMemberValidator,
     campaignValidator,
@@ -26,10 +27,7 @@ export function createPlayerCharacterRequest(axios: AxiosInstance) {
         return await axios
             .post("/api/campaign/member/character", request)
             .then(async (response) => {
-                return validateWithSchema(
-                    response.data,
-                    campaignMemberValidator,
-                );
+                return validateResponse(response, campaignMemberValidator);
             });
     };
 }

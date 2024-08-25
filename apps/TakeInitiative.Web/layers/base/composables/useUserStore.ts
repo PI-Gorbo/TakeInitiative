@@ -69,17 +69,8 @@ export const useUserStore = defineStore("userStore", () => {
         });
     }
 
-    async function signUp(
-        signUpRequest: SignUpRequest,
-        redirectPath: string | null,
-    ): Promise<unknown> {
-        return await api.user.signUp(signUpRequest).then(async () => {
-            if (redirectPath != null) {
-                return await navigateTo(redirectPath);
-            } else {
-                return await navigateToFirstAvailableCampaignOrFallbackToCreateOrJoin();
-            }
-        });
+    async function signUp(signUpRequest: SignUpRequest): Promise<unknown> {
+        return await api.user.signUp(signUpRequest);
     }
 
     async function confirmEmail(code: string): Promise<unknown> {

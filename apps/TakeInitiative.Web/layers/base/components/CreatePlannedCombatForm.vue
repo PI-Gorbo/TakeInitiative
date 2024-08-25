@@ -48,12 +48,12 @@ const emit = defineEmits<{
     (e: "update:campaignName", campaignName: string | undefined): void;
 }>();
 
-async function submit(): ReturnType<typeof createPlannedCombatForm.submit> {
-    return await createPlannedCombatForm
+function submit(): ReturnType<typeof createPlannedCombatForm.submit> {
+    return createPlannedCombatForm
         .submit()
         .then(props.onCreatePlannedCombat)
-        .catch(async (error) =>
-            createPlannedCombatForm.setError(await parseAsApiError(error)),
+        .catch((error) =>
+            createPlannedCombatForm.setError(parseAsApiError(error)),
         );
 }
 </script>

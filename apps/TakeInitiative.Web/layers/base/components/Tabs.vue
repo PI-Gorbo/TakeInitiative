@@ -42,9 +42,6 @@
     </main>
 </template>
 <script setup lang="ts">
-import { ObjectSchema } from "yup";
-
-import gsap from "gsap";
 import {
     type TakeInitColour,
     TakeInitContrastColour,
@@ -68,7 +65,9 @@ const props = withDefaults(
         negativeSectionId?: string;
     }>(),
     {
+        //@ts-ignore Cannot initialize empty record???
         showTabs: {},
+        //@ts-ignore Cannot initialize empty record???
         renameTabs: {},
         backgroundColour: "take-navy",
         hoveredTabColour: "take-yellow",

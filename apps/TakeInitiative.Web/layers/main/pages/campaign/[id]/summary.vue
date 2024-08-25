@@ -71,10 +71,10 @@
 </template>
 <script setup lang="ts">
 import { CombatState } from "base/utils/types/models";
-import { toTypedSchema } from "@vee-validate/yup";
 import { useForm } from "vee-validate";
-import { yup } from "base/utils/types/HelperTypes";
 import { parseISO, format } from "date-fns";
+import { toTypedSchema } from "@vee-validate/zod";
+import { z } from "zod";
 
 // Page info
 definePageMeta({
@@ -92,8 +92,8 @@ const formState = reactive({
 // Form Definition
 const { values, errors, defineField, validate } = useForm({
     validationSchema: toTypedSchema(
-        yup.object({
-            description: yup.string(),
+        z.object({
+            description: z.string(),
         }),
     ),
     initialValues: {

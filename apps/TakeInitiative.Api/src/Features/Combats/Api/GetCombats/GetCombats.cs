@@ -40,14 +40,15 @@ public class GetCombats(IDocumentStore Store) : EndpointWithoutRequest<GetCombat
             }
 
             var combats = await session.Query<Combat>()
-                .Where(x => x.CampaignId == campaignId)
+                .Where(x => x.CampaignId == campaignId && x.State == CombatState.Finished)
                 .Select(x => new
                 {
                     x.Id,
                     x.CombatName,
                     x.State,
                     x.FinishedTimestamp,
-                }).ToListAsync();
+                })
+                .ToListAsync();
 
             return new GetCombatsResponse()
             {

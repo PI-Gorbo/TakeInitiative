@@ -61,11 +61,10 @@
 
 <script setup lang="ts">
 import { useForm } from "vee-validate";
-import { toTypedSchema } from "@vee-validate/yup";
-import * as yup from "yup";
 import type { LoginRequest } from "base/utils/api/user/loginRequest";
-import { getDefaultLibFileName } from "typescript";
 import type { LocationQueryValue } from "vue-router";
+import { toTypedSchema } from "@vee-validate/zod";
+import { z } from "zod";
 const redirectToPath = useRoute().query.redirectTo as LocationQueryValue;
 const state = reactive({
     isSubmitting: false,
@@ -80,10 +79,12 @@ definePageMeta({
 // Form Definition
 const { values, errors, defineField, validate } = useForm({
     validationSchema: toTypedSchema(
-        yup.object({
-            email: yup.string().required().email(),
-            password: yup.string().required(),
-        }),
+        z
+            .object({
+                email: z.string().email(),
+                password: z.string(),
+            })
+            .required(),
     ),
 });
 const [email, emailInputProps] = defineField("email", {
@@ -110,8 +111,8 @@ async function onLogin() {
 
     await userStore
         .login({ email: email.value ?? "", password: password.value ?? "" })
-        .catch(async (error) => {
-            state.errorObject = await parseAsApiError(error);
+        .catch((error) => {
+            state.errorObject = parseAsApiError(error);
         })
         .then(async () => {
             if (redirectToPath != null) {

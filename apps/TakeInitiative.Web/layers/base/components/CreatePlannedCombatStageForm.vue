@@ -47,8 +47,8 @@ async function submit(): ReturnType<
     return await createPlannedCombatStageForm
         .submit()
         .then(props.onSubmit)
-        .catch(async (error) => {
-            createPlannedCombatStageForm.setError(await parseAsApiError(error));
+        .catch((error) => {
+            createPlannedCombatStageForm.setError(parseAsApiError(error));
         });
 }
 </script>

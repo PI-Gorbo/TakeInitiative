@@ -4,6 +4,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     const navigate = useNavigator();
     // If the user is not logged in, return them to the 'does not require auth zone'
     if (!isLoggedIn && to.meta.requiresAuth) {
+        console.log("navigating to login because the user is not logged in.");
         navigateTo({
             path: "/login",
             query: {

@@ -35,14 +35,10 @@
         />
 
         <CharacterHealthInput
-            v-model:hasHealth="hasHealth"
-            v-model:currentHealth="currentHealth"
-            v-model:maxHealth="maxHealth"
-            :error="
-                hasHealthInputProps.errorMessage ??
-                currentHealthInputProps.errorMessage ??
-                maxHealthInputProps.errorMessage
-            "
+            :hasHealth="hasHealth"
+            :currentHealth="currentHealth"
+            :maxHealth="maxHealth"
+            ref="characterHealthInput"
         />
 
         <CharacterArmourClass v-model:value="armourClass" />
@@ -80,9 +76,7 @@
 
 <script setup lang="ts">
 import { ErrorMessage, Form } from "vee-validate";
-import { toTypedSchema } from "@vee-validate/yup";
 import { useForm } from "vee-validate";
-import * as yup from "yup";
 import {
     InitiativeStrategy,
     plannedCombatCharacterValidator,
@@ -95,6 +89,10 @@ import {
 import type { StagedCharacterDTO } from "base/utils/api/combat/putUpsertStagedCharacter";
 import type { SubmittingState } from "../Form/Base.vue";
 import type { DeleteStagedCharacterRequest } from "base/utils/api/combat/deleteStagedCharacterRequest";
+import { toTypedSchema } from "@vee-validate/zod";
+import { z } from "zod";
+import HealthInput from "../Character/HealthInput.vue";
+const characterHealthInput = ref<InstanceType<typeof HealthInput> | null>(null);
 const { userIsDm } = storeToRefs(useCombatStore());
 const formState = reactive({
     error: null as ApiError<StagedCharacterDTO> | null,
@@ -112,14 +110,15 @@ const props = defineProps<{
 // Form Definition
 const { values, errors, defineField, validate } = useForm({
     validationSchema: toTypedSchema(
-        yup.object({
-            name: yup.string().required("Please provide a name"),
-            initiative: characterInitiativeValidator,
-            quantity: yup.number().min(1),
-            isHidden: yup.boolean(),
-            armourClass: yup.number().nullable(),
-            health: characterHealthValidator.required(),
-        }),
+        z
+            .object({
+                name: z.string({ required_error: "Please provide a name" }),
+                initiative: characterInitiativeValidator,
+                isHidden: z.boolean(),
+                armourClass: z.number().nullable(),
+                health: characterHealthValidator,
+            })
+            .required({ name: true, health: true }),
     ),
 });
 const [name, nameInputProps] = defineField("name", {
@@ -247,8 +246,8 @@ async function onDelete() {
     if (!props.onDelete) return;
     return await props
         .onDelete({ characterId: props.character?.id! })
-        .catch(async (err) => {
-            formState.error = await parseAsApiError(err);
+        .catch((err) => {
+            formState.error = parseAsApiError(err);
         });
 }
 
@@ -256,6 +255,16 @@ async function onEdit() {
     if (!props.onEdit) return;
 
     formState.error = null;
+
+    // Fetch & Set the computed health values from the health component upon submission
+    const health = characterHealthInput.value?.getHealth();
+    if (health == false) {
+        return;
+    }
+    hasHealth.value = health?.hasHealth;
+    currentHealth.value = health?.currentHealth;
+    maxHealth.value = health?.maxHealth;
+
     const validateResult = await validate();
     if (!validateResult.valid) {
         return;
@@ -273,13 +282,13 @@ async function onEdit() {
             hidden: isHidden.value!,
             health: {
                 hasHealth: hasHealth.value ?? false,
-                currentHealth: currentHealth.value,
-                maxHealth: maxHealth.value,
+                currentHealth: currentHealth.value!,
+                maxHealth: maxHealth.value!,
             },
             armourClass: armourClass.value ?? null,
         })
-        .catch(async (error) => {
-            formState.error = await parseAsApiError(error);
+        .catch((error) => {
+            formState.error = parseAsApiError(error);
         });
 }
 
@@ -287,6 +296,16 @@ async function onCreate() {
     if (!props.onCreate) return;
 
     formState.error = null;
+
+    // Fetch & Set the computed health values from the health component upon submission
+    const health = characterHealthInput.value?.getHealth();
+    if (health == false) {
+        return;
+    }
+    hasHealth.value = health?.hasHealth;
+    currentHealth.value = health?.currentHealth;
+    maxHealth.value = health?.maxHealth;
+
     const validateResult = await validate();
     if (!validateResult.valid) {
         return;
@@ -304,13 +323,13 @@ async function onCreate() {
             hidden: isHidden.value!,
             health: {
                 hasHealth: hasHealth.value ?? false,
-                currentHealth: currentHealth.value,
-                maxHealth: maxHealth.value,
+                currentHealth: currentHealth.value!,
+                maxHealth: maxHealth.value!,
             },
             armourClass: armourClass.value ?? null,
         })
-        .catch(async (error) => {
-            formState.error = await parseAsApiError(error);
+        .catch((error) => {
+            formState.error = parseAsApiError(error);
         });
 }
 </script>

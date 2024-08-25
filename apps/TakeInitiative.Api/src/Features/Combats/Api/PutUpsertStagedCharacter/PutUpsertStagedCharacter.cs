@@ -27,7 +27,6 @@ public class PutUpsertStagedCharacter(IDocumentSession session, IHubContext<Comb
                 .Ensure(
                     combat => combat.State != CombatState.Paused && combat.State != CombatState.Finished,
                     combat => $"Cannot stage character because the combat is {combat.State.ToString().ToLower()}.")
-                .Ensure(combat => combat.CurrentPlayers.Any(x => x.UserId == userId), "Must be a current player in order to stage enemies")
             .Bind(async fetchedCombat =>
             {
                 Maybe<CombatCharacter> existingCharacter = fetchedCombat.StagedList.SingleOrDefault(x => x.Id == req.Character.Id).AsMaybe();
@@ -64,6 +63,7 @@ public class PutUpsertStagedCharacter(IDocumentSession session, IHubContext<Comb
                     {
                         UserId = userId,
                         Character = CombatCharacter.NewCombatCharacter(
+                            Id: Guid.NewGuid(),
                             playerId: userId,
                             name: req.Character.Name,
                             initiative: req.Character.Initiative,

@@ -25,7 +25,11 @@ public static class Bootstrap
             opts.Connection(config.GetConnectionString("TakeDB") ?? throw new OperationCanceledException("Required Configuration 'ConnectionStrings:Marten' is missing."));
 
             // Use system.text.json
+            // Use system.text.json
+            // var serializer = new Marten.Services.SystemTextJsonSerializer();
             opts.UseDefaultSerialization(serializerType: SerializerType.SystemTextJson);
+            // serializer.Customize(customize => customize.TypeInfoResolverChain.Add(new PolymorphicTypeResolver()));
+            // opts.Serializer(serializer);
 
             opts.Schema.For<ApplicationUser>();
             opts.Schema.For<ApplicationUserRole>();
@@ -151,26 +155,33 @@ public static class Bootstrap
 
     public static IServiceCollection AddPython(this IServiceCollection services, IConfiguration configuration)
     {
-        var pythonConfig = configuration.GetValue<string>("PythonDLL") ?? throw new InvalidConfigurationException("There is no configuration value for PythonDLL. Please set a value.");
-        if (pythonConfig == "null")
-        {
-            // /usr/lib/python3.11/config-3.11-x86_64-linux-gnu/libpython3.11.so
-            Log.Information("Identified PythonDLL path as null and attempting to identify .so location...");
-            var configName = new DirectoryInfo("/usr/lib/python3.11")
-                .EnumerateDirectories("config-3.11-*")
-                .First();
-
-            pythonConfig = configName.FullName + "/libpython3.11.so";
-            Log.Information($"Found! {pythonConfig}");
-        }
-
-
-        Runtime.PythonDLL = pythonConfig;
-        PythonEngine.Initialize();
-        PythonEngine.BeginAllowThreads();
-
         // Add dice roller.
-        services.AddTransient<IDiceRoller, DiceRoller>();
+        services.AddTransient<IDiceRoller, DiceRoller>((_) =>
+        {
+            if (!PythonEngine.IsInitialized)
+            {
+                var pythonConfig = configuration.GetValue<string>("PythonDLL") ?? throw new InvalidConfigurationException("There is no configuration value for PythonDLL. Please set a value.");
+                if (pythonConfig == "null")
+                {
+                    // /usr/lib/python3.11/config-3.11-x86_64-linux-gnu/libpython3.11.so
+                    Log.Information("Identified PythonDLL path as null and attempting to identify .so location...");
+                    var configName = new DirectoryInfo("/usr/lib/python3.11")
+                        .EnumerateDirectories("config-3.11-*")
+                        .First();
+
+                    pythonConfig = configName.FullName + "/libpython3.11.so";
+                    Log.Information($"Found! {pythonConfig}");
+                }
+
+
+                Runtime.PythonDLL = pythonConfig;
+                PythonEngine.Initialize();
+                PythonEngine.BeginAllowThreads();
+            }
+
+            return new DiceRoller();
+        });
+        services.AddTransient<IInitiativeRoller, InitiativeRoller>();
         return services;
     }
 

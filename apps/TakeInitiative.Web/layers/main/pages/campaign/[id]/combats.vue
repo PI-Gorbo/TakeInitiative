@@ -51,7 +51,7 @@
                     <div class="flex items-center justify-between">
                         <div>
                             <FontAwesomeIcon icon="pen-to-square" />
-                            <span class="font-NovaCut text-take-yellow">
+                            <span class="font-NovaCut text-lg text-take-yellow">
                                 Planned Combats
                             </span>
                         </div>
@@ -110,14 +110,13 @@
                 <div class="flex flex-col gap-2">
                     <div>
                         <FontAwesomeIcon icon="flag-checkered" />
-                        <span class="font-NovaCut text-take-yellow">
+                        <span class="font-NovaCut text-lg text-take-yellow">
                             Combat History
                         </span>
                     </div>
                     <ul class="flex flex-col gap-2 overflow-y-auto">
                         <li
-                            v-for="finishedCombat in campaignCombatsStore.state
-                                ?.combats ?? []"
+                            v-for="finishedCombat in orderedFinishedCombats"
                             :key="finishedCombat.combatName"
                             :class="[
                                 'flex select-none items-center justify-between rounded-md border border-take-purple bg-take-purple p-1 transition-colors',
@@ -200,7 +199,10 @@
                     buttonColour="take-navy"
                     @click="() => campaignCombatsStore.unselectCombat()"
                 />
-                Finished combat summary coming soon...
+
+                <CombatHistorySection
+                    :combatInfo="campaignCombatsStore.selectedCombat"
+                />
             </main>
         </TransitionGroup>
 
@@ -294,11 +296,15 @@ async function onCreatePlannedCombat(
 }
 
 async function onOpenCombat(plannedCombatId: string) {
-    return await campaignStore.openCombat(plannedCombatId).then(async () => {
-        await useNavigator().toCombat(
-            campaignStore.state.currentCombatInfo?.id!,
+    return campaignStore
+        .openCombat(plannedCombatId)
+        .then((c) =>
+            Promise.resolve(
+                useNavigator().toCombat(
+                    campaignStore.state.currentCombatInfo?.id!,
+                ),
+            ),
         );
-    });
 }
 
 onMounted(() => {
@@ -329,4 +335,32 @@ onMounted(() => {
         );
     }
 });
+
+const orderedFinishedCombats = computed(() =>
+    (campaignCombatsStore.state?.combats ?? [])
+        .toSorted((a, b) => {
+            if (a.finishedTimestamp == null && b.finishedTimestamp != null) {
+                return -1;
+            }
+
+            if (a.finishedTimestamp != null && b.finishedTimestamp == null) {
+                return 1;
+            }
+
+            if (a.finishedTimestamp == b.finishedTimestamp) {
+                return 0;
+            }
+
+            if (a.finishedTimestamp! < b.finishedTimestamp!) {
+                return -1;
+            }
+
+            if (a.finishedTimestamp! > b.finishedTimestamp!) {
+                return 1;
+            }
+
+            return 0;
+        })
+        .reverse(),
+);
 </script>

@@ -1,6 +1,4 @@
-import { Body } from "../../../.nuxt/components";
 import type { AxiosInstance } from "axios";
-import * as yup from "yup";
 import { getUserResponseSchema, type GetUserResponse } from "./getUserRequest";
 
 export type ConfirmEmailRequest = {};
@@ -10,15 +8,6 @@ export function postConfirmEmailRequest(axios: AxiosInstance) {
             .post("/api/confirmEmail", {
                 ConfirmEmailToken: code,
             })
-            .then(async function (response) {
-                try {
-                    const result = await getUserResponseSchema.validate(
-                        response.data,
-                    );
-                    return result;
-                } catch (error) {
-                    throw error;
-                }
-            });
+            .then((resp) => validateResponse(resp, getUserResponseSchema));
     };
 }

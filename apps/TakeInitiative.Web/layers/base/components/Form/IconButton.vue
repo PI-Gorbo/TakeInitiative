@@ -20,7 +20,7 @@ import { TakeInitContrastColour } from "base/utils/types/HelperTypes";
 const props = withDefaults(
     defineProps<{
         icon: string;
-        type: "button" | "submit";
+        type?: "button" | "submit";
         clicked?: () => Promise<void>;
         isLoading?: boolean;
         buttonColour: TakeInitColour;

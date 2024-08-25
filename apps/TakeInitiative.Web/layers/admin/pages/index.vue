@@ -116,13 +116,15 @@
     </body>
 </template>
 <script setup lang="ts">
-import { toTypedSchema } from "@vee-validate/yup";
+import { toTypedSchema } from "@vee-validate/zod";
 import { useForm } from "vee-validate";
 import {
     MaintenanceConfigValidator,
     type MaintenanceConfig,
 } from "base/utils/api/admin/getMaintainenceRequest";
 import { useToast } from "vue-toastification";
+import { reactive } from "vue";
+import { useAdminApi } from "../composables/useAdminApi";
 
 definePageMeta({
     layout: "admin",
@@ -151,7 +153,9 @@ const maintenanceModeForm = reactive<{
 });
 const { values, errors, defineField, validate } = useForm({
     validationSchema: toTypedSchema(
-        MaintenanceConfigValidator.omit(["inMaintenanceMode"]),
+        MaintenanceConfigValidator.omit({
+            inMaintenanceMode: true,
+        }),
     ),
 });
 const [reason, reasonInputProps] = defineField("reason", {
@@ -164,9 +168,9 @@ const [reason, reasonInputProps] = defineField("reason", {
 });
 
 async function onEnableMaintenanceMode() {
-    maintenanceModeForm.error = null;
     const validateResult = await validate();
     if (!validateResult.valid) {
+        console.log(validateResult);
         return Promise.resolve();
     }
 

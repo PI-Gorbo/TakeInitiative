@@ -55,14 +55,12 @@
 
 <script setup lang="ts">
 import { useForm } from "vee-validate";
-import { toTypedSchema } from "@vee-validate/yup";
-import * as yup from "yup";
-import { getDefaultLibFileName } from "typescript";
 import type { LocationQueryValue } from "vue-router";
 import {
     SendResetPasswordEmailRequestValidator,
     type SendResetPasswordEmailRequest,
 } from "base/utils/api/user/putSendResetPasswordRequest";
+import { toTypedSchema } from "@vee-validate/zod";
 const redirectToPath = useRoute().query.redirectTo as LocationQueryValue;
 const state = reactive({
     errorObject: null as null | ApiError<SendResetPasswordEmailRequest>,
@@ -99,9 +97,9 @@ async function onLogin() {
             state.sentResetEmail = true;
         })
         .catch(
-            async (e) =>
+            (e) =>
                 (state.errorObject =
-                    await parseAsApiError<SendResetPasswordEmailRequest>(e)),
+                    parseAsApiError<SendResetPasswordEmailRequest>(e)),
         );
 }
 </script>

@@ -15,27 +15,16 @@
                     <input
                         class="w-full rounded-md bg-take-navy-light p-2"
                         placeholder="Current"
-                        :value="props.currentHealth"
-                        @blur="
-                            (e: Event) =>
-                                onInputCurrentHealth(
-                                    (e.target as HTMLInputElement).value,
-                                )
-                        "
+                        v-model="state.currentHealth"
                     />
                 </div>
-                <span>/</span>
+                <span class="cursor-default">/</span>
                 <div class="flex-1">
                     <input
+                        tabindex="0"
                         class="w-full rounded-md bg-take-navy-light p-2"
                         placeholder="Max"
-                        :value="props.maxHealth"
-                        @blur="
-                            (e: Event) =>
-                                onInputMaxHealth(
-                                    (e.target as HTMLInputElement).value,
-                                )
-                        "
+                        v-model="state.maxHealth"
                     />
                 </div>
             </section>
@@ -48,11 +37,21 @@
                 />
             </div>
         </div>
-        <label class="text-red-500" v-if="props.error">{{ props.error }}</label>
+        <label class="text-red-500" v-if="formState.error">
+            {{ formState.error }}</label
+        >
     </section>
 </template>
 <script setup lang="ts">
+import { toTypedSchema } from "@vee-validate/zod";
+import type { FormContext } from "base/composables/forms/useFormContext";
+import {
+    characterHealthValidator,
+    type CharacterHealth,
+} from "base/utils/types/models";
 import { Parser } from "expr-eval";
+import { useForm } from "vee-validate";
+import { boolean, z } from "zod";
 const healthExpressionParser = new Parser({
     operators: {
         // Only enable add, subtract, multiple and divide
@@ -75,58 +74,115 @@ const healthExpressionParser = new Parser({
         assignment: false,
     },
 });
+
 const props = defineProps<{
     hasHealth: boolean | undefined;
     currentHealth: number | undefined | null;
     maxHealth: number | undefined | null;
-    error: string | undefined | null;
 }>();
 
-const emit = defineEmits<{
-    (e: "update:hasHealth", value: boolean): void;
-    (e: "update:currentHealth", value: number | null): void;
-    (e: "update:maxHealth", value: number | null): void;
-}>();
+const state = reactive<{
+    currentHealth: string | undefined | null;
+    maxHealth: string | undefined | null;
+}>({
+    currentHealth: null,
+    maxHealth: null,
+});
+
+watch(
+    () => [{ ...props }],
+    () => {
+        if (props.hasHealth == true) {
+            state.currentHealth = props.currentHealth?.toString() ?? null;
+            state.maxHealth = props.maxHealth?.toString() ?? null;
+        } else {
+            state.currentHealth = null;
+            state.maxHealth = null;
+        }
+    },
+);
 
 function reset() {
-    emit("update:hasHealth", false);
-    emit("update:currentHealth", null);
-    emit("update:maxHealth", null);
+    state.currentHealth = null;
+    state.maxHealth = null;
 }
 
-function onInputMaxHealth(value: string | undefined | null) {
-    debugger;
-    try {
-        if (value == null) {
-            emit("update:maxHealth", null);
-        } else {
-            emit("update:maxHealth", healthExpressionParser.evaluate(value));
-        }
-    } catch {
-        emit("update:maxHealth", null);
-    } finally {
-        if (!props.hasHealth) {
-            emit("update:hasHealth", true);
-        }
-    }
-}
+const tryParseNumber = (
+    num: string | null,
+):
+    | { isSuccess: true; value: number | null }
+    | { isSuccess: false; error: string } => {
+    if (num == null) return { isSuccess: true, value: null };
 
-function onInputCurrentHealth(value: string | undefined | null) {
     try {
-        if (value == null) {
-            emit("update:currentHealth", null);
-        } else {
-            emit(
-                "update:currentHealth",
-                healthExpressionParser.evaluate(value),
-            );
-        }
-    } catch {
-        emit("update:currentHealth", null);
-    } finally {
-        if (!props.hasHealth) {
-            emit("update:hasHealth", true);
-        }
+        return { isSuccess: true, value: healthExpressionParser.evaluate(num) };
+    } catch (e) {
+        return {
+            isSuccess: false,
+            error: `failed to evaluate expression '${num}'`,
+        };
     }
-}
+};
+
+const schema = z
+    .object({
+        currentHealth: z.string().nullable(),
+        maxHealth: z.string().nullable(),
+    })
+    .transform((healthValues, ctx) => {
+        const parsedCurrentHealth = tryParseNumber(healthValues.currentHealth);
+        if (!parsedCurrentHealth.isSuccess) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: parsedCurrentHealth.error + " for current health",
+            });
+            return z.NEVER;
+        }
+
+        const parsedMaxHealth = tryParseNumber(healthValues.maxHealth);
+        if (!parsedMaxHealth.isSuccess) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: parsedMaxHealth.error + " for max health",
+            });
+            return z.NEVER;
+        }
+
+        return {
+            hasHealth:
+                healthValues.currentHealth != null &&
+                healthValues.maxHealth != null,
+            currentHealth: parsedCurrentHealth.value,
+            maxHealth: parsedMaxHealth.value,
+        };
+    });
+
+const formState = reactive<{ error: string | null }>({
+    error: null,
+});
+defineExpose({
+    getHealth: (): CharacterHealth | false => {
+        if (state.currentHealth == null && state.maxHealth == null) {
+            const model: CharacterHealth = {
+                hasHealth: false,
+                currentHealth: null,
+                maxHealth: null,
+            };
+
+            return model;
+        }
+
+        const model = {
+            ...state,
+        };
+        const paredModel = schema.safeParse(model);
+        if (paredModel.error) {
+            debugger;
+            formState.error = paredModel.error.issues[0].message;
+            return false;
+        }
+
+        return paredModel.data;
+    },
+});
 </script>

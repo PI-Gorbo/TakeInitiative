@@ -1,19 +1,20 @@
 import type { AxiosInstance } from "axios";
-import * as yup from "yup";
+import { z } from "zod";
 import { plannedCombatValidator } from "../../types/models";
+import { validateResponse } from "base/utils/apiErrorParser";
 
 // Get User
-export const createPlannedCombatRequestValidator = yup.object({
-    campaignId: yup.string().required(),
-    combatName: yup.string().required(),
+export const createPlannedCombatRequestValidator = z.object({
+    campaignId: z.string(),
+    combatName: z.string(),
 });
-export type CreatePlannedCombatRequest = yup.InferType<
+export type CreatePlannedCombatRequest = z.infer<
     typeof createPlannedCombatRequestValidator
 >;
 
 export const postPlannedCombatResponseValidator = plannedCombatValidator;
 
-export type CreatePlannedCombatResponse = yup.InferType<
+export type CreatePlannedCombatResponse = z.infer<
     typeof postPlannedCombatResponseValidator
 >;
 
@@ -23,12 +24,8 @@ export function createPlannedCombatRequest(axios: AxiosInstance) {
     ): Promise<CreatePlannedCombatResponse> {
         return axios
             .post("/api/combat/planned", request)
-            .then(async function (response) {
-                const result =
-                    await postPlannedCombatResponseValidator.validate(
-                        response.data,
-                    );
-                return result;
-            });
+            .then((resp) =>
+                validateResponse(resp, postPlannedCombatResponseValidator),
+            );
     };
 }

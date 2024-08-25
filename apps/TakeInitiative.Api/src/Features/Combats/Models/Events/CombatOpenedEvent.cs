@@ -1,6 +1,6 @@
 namespace TakeInitiative.Api.Features.Combats;
 
-public record CombatOpenedEvent
+public record CombatOpenedEvent // Renamed semantically to CombatStartedEvent.
 {
     public required Guid UserId { get; set; }
     public required Guid CampaignId { get; set; }

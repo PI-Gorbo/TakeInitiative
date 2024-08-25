@@ -1,19 +1,21 @@
 import type { AxiosInstance } from "axios";
-import * as yup from "yup";
+import { z } from "zod";
 import { plannedCombatValidator } from "../../../types/models";
+import { validateResponse } from "base/utils/apiErrorParser";
 
-export const updatePlannedCombatStageRequestValidator = yup.object({
-    combatId: yup.string().required(),
-    stageId: yup.string().required(),
-    name: yup.string().required(),
-});
-export type UpdatePlannedCombatStageRequest = yup.InferType<
+export const updatePlannedCombatStageRequestValidator = z
+    .object({
+        combatId: z.string(),
+        stageId: z.string(),
+        name: z.string(),
+    })
+    .required();
+export type UpdatePlannedCombatStageRequest = z.infer<
     typeof updatePlannedCombatStageRequestValidator
 >;
 
-export const updatePlannedCombatStageResponseValidator = plannedCombatValidator;
-export type UpdatePlannedCombatStageResponse = yup.InferType<
-    typeof updatePlannedCombatStageResponseValidator
+export type UpdatePlannedCombatStageResponse = z.infer<
+    typeof plannedCombatValidator
 >;
 
 export function updatePlannedCombatStageRequest(axios: AxiosInstance) {
@@ -22,12 +24,6 @@ export function updatePlannedCombatStageRequest(axios: AxiosInstance) {
     ): Promise<UpdatePlannedCombatStageResponse> {
         return axios
             .put("/api/campaign/planned-combat/stage", request)
-            .then(async function (response) {
-                const result =
-                    await updatePlannedCombatStageResponseValidator.validate(
-                        response.data,
-                    );
-                return result;
-            });
+            .then((resp) => validateResponse(resp, plannedCombatValidator));
     };
 }

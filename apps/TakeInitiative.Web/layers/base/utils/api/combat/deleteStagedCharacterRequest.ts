@@ -1,15 +1,14 @@
-import { characterHealthValidator, type CharacterHealth, type CharacterInitiative } from '../../types/models';
 import type { AxiosInstance } from "axios";
-import * as yup from "yup";
-import { combatValidator } from "../../types/models";
+import { z } from "zod";
 import { combatResponseValidator } from "./combatResponse";
+import { validateResponse } from "base/utils/apiErrorParser";
 
 export type DeleteStagedCharacterRequest = {
-    combatId: string,
-    characterId: string
+    combatId: string;
+    characterId: string;
 };
 
-export type DeleteStagedCharacterResponse = yup.InferType<
+export type DeleteStagedCharacterResponse = z.infer<
     typeof combatResponseValidator
 >;
 
@@ -18,9 +17,9 @@ export function deleteStagedCharacter(axios: AxiosInstance) {
         request: DeleteStagedCharacterRequest,
     ): Promise<DeleteStagedCharacterResponse> {
         return await axios
-            .delete("/api/combat/stage/character", {data: request})
-            .then(async (response) =>
-                validateWithSchema(response.data, combatResponseValidator),
+            .delete("/api/combat/stage/character", { data: request })
+            .then((response) =>
+                validateResponse(response, combatResponseValidator),
             );
     };
 }

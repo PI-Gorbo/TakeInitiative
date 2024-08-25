@@ -114,14 +114,12 @@
 </template>
 
 <script setup lang="ts">
-import { Form } from "vee-validate";
 import { useForm } from "vee-validate";
-import { toTypedSchema } from "@vee-validate/yup";
-import * as yup from "yup";
-import { formatDiagnosticsWithColorAndContext } from "typescript";
 import type { LocationQueryValue } from "vue-router";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import type { SignUpRequest } from "base/utils/api/user/signUpRequest";
+import { toTypedSchema } from "@vee-validate/zod";
+import { z } from "zod";
 const redirectToPath = useRoute().query.redirectTo as LocationQueryValue;
 definePageMeta({
     requiresAuth: false,
@@ -143,51 +141,43 @@ const testPasswordHasSpecial = (p: string) => p.match(/[^a-zA-Z0-9]/) != null;
 
 const { values, errors, defineField, validate } = useForm({
     validationSchema: toTypedSchema(
-        yup.object({
-            username: yup.string().required(),
-            email: yup.string().required().email(),
-            password: yup
-                .string()
-                .required("A password is required")
-                .test(
-                    "length",
-                    "Must be at least 6 characters long",
-                    testPasswordLength,
-                )
-                .test(
-                    "One lowercase",
-                    "Must have at least one lowercase character.",
-                    testPasswordHasLower,
-                )
-                .test(
-                    "One uppercase",
-                    "Must have at least one uppercase character.",
-                    testPasswordHasUpper,
-                )
-                .test(
-                    "At least one digit",
-                    "Must have at least one digit character.",
-                    testPasswordHasDigit,
-                )
-                .test(
-                    "At least one special character",
-                    "Must have at least one special character.",
-                    testPasswordHasSpecial,
-                ),
-            confirmPassword: yup
-                .string()
-                .required("Please confirm your password")
-                .test("matches password", function (value) {
-                    const { path, createError } = this;
-                    if (value != password.value) {
-                        return createError({
-                            path,
-                            message: "Passwords do not match.",
-                        });
-                    }
-                    return true;
+        z
+            .object({
+                username: z.string(),
+                email: z.string().email(),
+                password: z
+                    .string({
+                        required_error: "A password is required",
+                    })
+                    .refine(
+                        testPasswordLength,
+                        "Must be at least 6 characters long",
+                    )
+                    .refine(
+                        testPasswordHasLower,
+                        "Must have at least one lowercase character.",
+                    )
+                    .refine(
+                        testPasswordHasUpper,
+                        "Must have at least one uppercase character.",
+                    )
+                    .refine(
+                        testPasswordHasDigit,
+                        "Must have at least one digit character.",
+                    )
+                    .refine(
+                        testPasswordHasSpecial,
+                        "Must have at least one special character.",
+                    ),
+                confirmPassword: z.string({
+                    required_error: "Please confirm your password",
                 }),
-        }),
+            })
+            .required()
+            .refine(
+                (obj) => obj.password == obj.confirmPassword,
+                "Passwords do not match.",
+            ),
     ),
 });
 const [email, emailInputProps] = defineField("email", {
@@ -228,34 +218,22 @@ async function onSignUp() {
     }
 
     await userStore
-        .signUp(
-            {
-                email: email.value!,
-                username: username.value!,
-                password: password.value!,
-            },
-            redirectToPath,
-        )
+        .signUp({
+            email: email.value!,
+            username: username.value!,
+            password: password.value!,
+        })
         .then(() => (formState.success = true))
-        .catch(async (error) => {
-            try {
-                formState.submitError =
-                    await parseAsApiError<SignUpRequest>(error);
-            } catch {
-                formState.submitError = {
-                    // TODO : Refactor
-                    statusCode: 500,
-                    message: "Something went wrong while trying to sign in.",
-                    errors: {
-                        generalErrors: [
-                            "Something went wrong while trying to sign in.",
-                        ],
-                    },
-                    getErrorFor: (error) =>
-                        error == "generalErrors"
-                            ? "Something went wrong while trying to sign in."
-                            : null,
-                };
+        .catch((error) => {
+            formState.submitError = parseAsApiError<SignUpRequest>(error);
+        })
+        .then(() => {
+            if (redirectToPath != null) {
+                return Promise.resolve(navigateTo(redirectToPath));
+            } else {
+                return Promise.resolve(
+                    userStore.navigateToFirstAvailableCampaignOrFallbackToCreateOrJoin(),
+                );
             }
         })
         .finally(() => (formState.submitting = false));

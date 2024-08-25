@@ -34,15 +34,17 @@
                         Take Initiative
                     </h1>
                     <p class="max-w-lg text-take-grey">
-                        Make combats quick and easy with Take Initiative - An
-                        online tool for Dungeon Masters to plan combats and run
+                        Make in-person tabletop games easy with Take Initiative
+                        - A tool for Dungeon Masters to plan combats and run
                         initiative live for your players.
                     </p>
                     <button
                         class="btn bg-take-teal text-lg text-white transition-colors hover:bg-take-teal hover:brightness-90 md:text-xl"
                         @click="() => useNavigator().toSignUp()"
+                        :class="{}"
                     >
-                        Sign Up for Free
+                        <span v-if="!userIsLoggedIn">Sign Up for Free</span>
+                        <span v-else>Continue to your campaigns</span>
                     </button>
                 </div>
             </div>
@@ -91,11 +93,18 @@
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { faDiscord } from "@fortawesome/free-brands-svg-icons";
 
+const userStore = useUserStore();
+const { data: userIsLoggedIn } = useAsyncData(
+    "homePage-CheckUserIsLoggedIn",
+    userStore.isLoggedIn,
+);
+
 useHead({
     title: "Take Initiative",
 });
 
 definePageMeta({
     layout: false,
+    requiresAuth: false,
 });
 </script>

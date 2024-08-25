@@ -1,18 +1,17 @@
 import type { AxiosInstance } from "axios";
-import * as yup from "yup";
-import { plannedCombatValidator } from "../../types/models";
+import { z } from "zod";
 
 // Get User
-export const deletePlannedCombatRequestValidator = yup.object({
-    campaignId: yup.string().required(),
-    combatId: yup.string().required(),
+export const deletePlannedCombatRequestValidator = z.object({
+    campaignId: z.string(),
+    combatId: z.string(),
 });
-export type DeletePlannedCombatRequest = yup.InferType<
+export type DeletePlannedCombatRequest = z.infer<
     typeof deletePlannedCombatRequestValidator
 >;
 
 export function deletePlannedCombatRequest(axios: AxiosInstance) {
-    return async function getUser(
+    return function getUser(
         request: DeletePlannedCombatRequest,
     ): Promise<void> {
         return axios.delete("/api/combat/planned", { data: request });

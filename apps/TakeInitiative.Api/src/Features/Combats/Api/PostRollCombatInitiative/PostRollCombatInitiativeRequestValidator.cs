@@ -3,9 +3,9 @@ using FluentValidation;
 
 namespace TakeInitiative.Api.Features.Combats;
 
-public class PostStartCombatValidator : Validator<PostStartCombatRequest>
+public class PostRollCombatInitiativeRequestValidator : Validator<PostRollCombatInitiativeRequest>
 {
-    public PostStartCombatValidator()
+    public PostRollCombatInitiativeRequestValidator()
     {
         RuleFor(x => x.CombatId)
             .NotEmpty();

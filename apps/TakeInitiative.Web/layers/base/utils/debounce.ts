@@ -3,7 +3,7 @@ export function debounce(func: (...args: any[]) => unknown, timeout: number) {
     return (...args: any[]) => {
         clearTimeout(timer);
         timer = setTimeout(() => {
-            func.apply(this, args);
+            func(args);
         }, timeout);
     };
 }

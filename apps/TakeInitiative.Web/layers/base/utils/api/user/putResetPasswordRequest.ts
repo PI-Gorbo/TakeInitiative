@@ -1,6 +1,4 @@
 import type { AxiosInstance } from "axios";
-import type { InferType } from "yup";
-import { yup } from "../../types/HelperTypes";
 
 export type ResetPasswordRequest = {
     email: string;
