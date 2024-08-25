@@ -11,7 +11,7 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
     {
         return Combat with
         {
-            CurrentPlayers = this.ComputePlayersList(Combat.CurrentPlayers, @event.UserId),
+            CurrentPlayers = ComputePlayersList(Combat.CurrentPlayers, @event.UserId),
             StagedList = (Combat.StagedList ?? [])
                 .Add(@event.Character)
         };

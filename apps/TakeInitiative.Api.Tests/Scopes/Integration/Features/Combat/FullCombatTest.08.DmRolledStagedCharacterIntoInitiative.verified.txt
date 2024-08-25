@@ -144,11 +144,11 @@
         CharacterOrigin: 0,
         Id: null
       },
+      Hidden: false,
+      CopyNumber: null,
       InitiativeValue: [
         20
       ],
-      Hidden: false,
-      CopyNumber: null,
       Id: Guid_2,
       Name: My Super Duper Character,
       Health: {
@@ -170,11 +170,11 @@
         CharacterOrigin: 0,
         Id: Guid_7
       },
+      Hidden: true,
+      CopyNumber: null,
       InitiativeValue: [
         15
       ],
-      Hidden: true,
-      CopyNumber: null,
       Id: Guid_3,
       Name: Intro Enemy,
       Health: {
@@ -196,11 +196,11 @@
         CharacterOrigin: 0,
         Id: null
       },
+      Hidden: false,
+      CopyNumber: null,
       InitiativeValue: [
         10
       ],
-      Hidden: false,
-      CopyNumber: null,
       Id: Guid_4,
       Name: Another EnemyTYPE,
       Health: {

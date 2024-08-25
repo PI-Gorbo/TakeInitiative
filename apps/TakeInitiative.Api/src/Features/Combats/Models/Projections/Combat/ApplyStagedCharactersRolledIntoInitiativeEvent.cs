@@ -32,13 +32,10 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
                 return null;
             }
 
-            return stagedChar.Value with
-            {
-                InitiativeValue = charInitiative.rolls
-            };
+            return InitiativeCharacter.FromStagedCharacter(stagedChar.Value, charInitiative.rolls);
         })
         .Where(x => x != null)
-        .Cast<CombatCharacter>()
+        .Cast<InitiativeCharacter>()
         .OrderByDescending(x => x.InitiativeValue, new InitiativeComparer())
         .ToImmutableList();
 

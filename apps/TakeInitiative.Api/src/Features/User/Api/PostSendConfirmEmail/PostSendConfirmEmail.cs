@@ -35,6 +35,6 @@ public class PostSendConfirmEmail(
             ThrowError($"Failed to send confirmation email. {confirmResult.Error}", (int)HttpStatusCode.BadRequest);
         }
 
-        await this.SendOkAsync(ct);
+        await SendOkAsync(ct);
     }
 }

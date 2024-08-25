@@ -15,16 +15,16 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
             StagedList = (Combat.StagedList ?? [])
                 .AddRange(
                     @event.Characters
-                    .Select(x => CombatCharacter.NewCombatCharacter(
+                    .Select(x => new StagedCharacter(
                         x.Id,
-                        playerId: @event.UserId,
-                        name: x.Name,
-                        initiative: x.Initiative,
-                        armourClass: x.ArmourClass,
-                        health: x.Health,
-                        hidden: Combat.DungeonMaster == user!.Id,
-                        characterOriginDetails: CharacterOriginDetails.PlayerCharacter(@event.UserId),
-                        copyNumber: null
+                        PlayerId: @event.UserId,
+                        Name: x.Name,
+                        Initiative: x.Initiative,
+                        ArmourClass: x.ArmourClass,
+                        Health: x.Health,
+                        Hidden: Combat.DungeonMaster == user!.Id,
+                        CharacterOriginDetails: CharacterOriginDetails.PlayerCharacter(@event.UserId),
+                        CopyNumber: null
                     ))
                 )
         };

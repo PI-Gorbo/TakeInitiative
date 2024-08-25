@@ -24,12 +24,8 @@ public static class Bootstrap
         {
             opts.Connection(config.GetConnectionString("TakeDB") ?? throw new OperationCanceledException("Required Configuration 'ConnectionStrings:Marten' is missing."));
 
-            // Use system.text.json
-            // Use system.text.json
-            // var serializer = new Marten.Services.SystemTextJsonSerializer();
+            // Use system.text.json            
             opts.UseDefaultSerialization(serializerType: SerializerType.SystemTextJson);
-            // serializer.Customize(customize => customize.TypeInfoResolverChain.Add(new PolymorphicTypeResolver()));
-            // opts.Serializer(serializer);
 
             opts.Schema.For<ApplicationUser>();
             opts.Schema.For<ApplicationUserRole>();

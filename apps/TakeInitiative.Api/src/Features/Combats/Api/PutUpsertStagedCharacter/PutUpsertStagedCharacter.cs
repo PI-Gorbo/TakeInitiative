@@ -29,7 +29,7 @@ public class PutUpsertStagedCharacter(IDocumentSession session, IHubContext<Comb
                     combat => $"Cannot stage character because the combat is {combat.State.ToString().ToLower()}.")
             .Bind(async fetchedCombat =>
             {
-                Maybe<CombatCharacter> existingCharacter = fetchedCombat.StagedList.SingleOrDefault(x => x.Id == req.Character.Id).AsMaybe();
+                Maybe<StagedCharacter> existingCharacter = fetchedCombat.StagedList.SingleOrDefault(x => x.Id == req.Character.Id).AsMaybe();
 
                 if (existingCharacter.HasValue)
                 {
@@ -39,7 +39,7 @@ public class PutUpsertStagedCharacter(IDocumentSession session, IHubContext<Comb
                         return ApiError.Invalid<PutUpsertStagedCharacterRequest>(x => x.Character, "Only a dungeon master can edit this character.");
                     }
 
-                    CombatCharacter updatedCharacter = existingCharacter.Value with
+                    StagedCharacter updatedCharacter = existingCharacter.Value with
                     {
                         Name = req.Character.Name,
                         Health = req.Character.Health,
@@ -62,16 +62,16 @@ public class PutUpsertStagedCharacter(IDocumentSession session, IHubContext<Comb
                     StagedCharacterEvent addEvent = new()
                     {
                         UserId = userId,
-                        Character = CombatCharacter.NewCombatCharacter(
+                        Character = new StagedCharacter(
                             Id: Guid.NewGuid(),
-                            playerId: userId,
-                            name: req.Character.Name,
-                            initiative: req.Character.Initiative,
-                            armourClass: req.Character.ArmourClass,
-                            health: req.Character.Health,
-                            hidden: req.Character.Hidden,
-                            characterOriginDetails: CharacterOriginDetails.CustomCharacter(),
-                            copyNumber: null
+                            PlayerId: userId,
+                            Name: req.Character.Name,
+                            Initiative: req.Character.Initiative,
+                            ArmourClass: req.Character.ArmourClass,
+                            Health: req.Character.Health,
+                            Hidden: req.Character.Hidden,
+                            CharacterOriginDetails: CharacterOriginDetails.CustomCharacter(),
+                            CopyNumber: null
                         )
                     };
                     session.Events.Append(req.CombatId, addEvent);

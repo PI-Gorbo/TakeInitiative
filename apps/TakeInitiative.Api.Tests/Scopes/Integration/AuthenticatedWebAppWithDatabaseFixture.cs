@@ -51,15 +51,15 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
 
     public async Task InitializeAsync()
     {
-        await this.PostgreSqlContainer.StartAsync();
-        this.AlbaHost = await Alba.AlbaHost.For<Api.Program>(x =>
+        await PostgreSqlContainer.StartAsync();
+        AlbaHost = await Alba.AlbaHost.For<Api.Program>(x =>
             x.UseEnvironment(Environments.Development)
             .ConfigureAppConfiguration((context, configBuilder) =>
                 {
                     configBuilder.AddInMemoryCollection(
                         new Dictionary<string, string?>
                         {
-                            ["ConnectionStrings:TakeDB"] = this.PostgreSqlContainer.GetConnectionString()
+                            ["ConnectionStrings:TakeDB"] = PostgreSqlContainer.GetConnectionString()
                         });
                 })
            .ConfigureServices((context, services) =>
@@ -101,7 +101,7 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
         var createResponse = await this.PostCreateCampaign(new() { CampaignName = "Super Testing Campaign" });
         createResponse.Should().Succeed();
 
-        this.SeedData = new()
+        SeedData = new()
         {
             CampaignName = createResponse.Value.CampaignName,
             CampaignId = createResponse.Value.Id,
@@ -146,7 +146,7 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
 
     public AuthenticatedWebAppWithDatabaseFixture LoginAsUser(Users user)
     {
-        this.CurrentUser = user;
+        CurrentUser = user;
         return this;
     }
 
@@ -204,7 +204,7 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
 
         if (PostgreSqlContainer != null)
         {
-            await this.PostgreSqlContainer.StopAsync();
+            await PostgreSqlContainer.StopAsync();
         }
     }
 

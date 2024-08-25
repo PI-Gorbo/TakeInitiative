@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Text.Json.Serialization;
 
 namespace TakeInitiative.Api.Features.Combats;
 
@@ -12,11 +13,14 @@ public record Combat
     public ImmutableList<HistoryEntry> History { get; set; } = [];
     public ImmutableList<PlayerDto> CurrentPlayers { get; set; } = [];
     public ImmutableList<PlannedCombatStage> PlannedStages { get; set; } = [];
-    public ImmutableList<CombatCharacter> StagedList { get; set; } = [];
-    public ImmutableList<CombatCharacter> InitiativeList { get; set; } = [];
+    public ImmutableList<StagedCharacter> StagedList { get; set; } = [];
+    public ImmutableList<InitiativeCharacter> InitiativeList { get; set; } = [];
     public int InitiativeIndex { get; set; }
     public int? RoundNumber { get; set; }
     public DateTimeOffset? FinishedTimestamp { get; set; }
+
+    [JsonConstructor]
+    private Combat() { }
 
     public static Combat New(
             Guid Id,
@@ -28,8 +32,8 @@ public record Combat
             ImmutableList<PlayerDto> CurrentPlayers,
 
             // Actual Initiative List
-            ImmutableList<CombatCharacter> StagedList,
-            ImmutableList<CombatCharacter> InitiativeList,
+            ImmutableList<StagedCharacter> StagedList,
+            ImmutableList<InitiativeCharacter> InitiativeList,
 
             // Planning 
             ImmutableList<PlannedCombatStage> PlannedStages
@@ -53,7 +57,7 @@ public record Combat
         };
     }
 
-    public (int initiative, int turnNumber) GetNextTurnInfo() => this.InitiativeIndex + 1 == this.InitiativeList.Count
-        ? (0, (this.RoundNumber ?? 0) + 1) // At the end of the round, reset to top of initiative and increment round number count.
-        : (this.InitiativeIndex + 1, this.RoundNumber ?? 0); // Otherwise, just increment initiative index.
+    public (int initiative, int turnNumber) GetNextTurnInfo() => InitiativeIndex + 1 == InitiativeList.Count
+        ? (0, (RoundNumber ?? 0) + 1) // At the end of the round, reset to top of initiative and increment round number count.
+        : (InitiativeIndex + 1, RoundNumber ?? 0); // Otherwise, just increment initiative index.
 }

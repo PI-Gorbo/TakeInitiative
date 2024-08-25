@@ -16,8 +16,8 @@ public class DiceRollerTests
 
     public DiceRollerTests()
     {
-        this.diceRoller = Substitute.For<IDiceRoller>();
-        this.initiativeRoller = new InitiativeRoller(diceRoller);
+        diceRoller = Substitute.For<IDiceRoller>();
+        initiativeRoller = new InitiativeRoller(diceRoller);
     }
 
     [Fact]
@@ -25,119 +25,118 @@ public class DiceRollerTests
     {
 
         Guid playerId = Guid.NewGuid();
-        var incomingChar = CombatCharacter.NewCombatCharacter(
+        var incomingChar = new StagedCharacter(
                     Id: Guid.NewGuid(),
-                    playerId,
-                    "incoming",
-                    new CharacterInitiative()
+                    PlayerId: playerId,
+                    Name: "incoming",
+                    Initiative: new CharacterInitiative()
                     {
                         Strategy = InitiativeStrategy.Roll,
                         Value = "1d20 + 5"
                     },
-                    null,
-                    null,
-                    false,
-                    CharacterOriginDetails.CustomCharacter(),
-                    null
+                    Health: null,
+                    ArmourClass: null,
+                    Hidden: false,
+                    CharacterOriginDetails: CharacterOriginDetails.CustomCharacter(),
+                    CopyNumber: null
                 );
 
-        var existingChar = CombatCharacter.NewCombatCharacter(
+        var existingChar = new InitiativeCharacter(
                     Id: Guid.NewGuid(),
-                    playerId,
-                    "Char1",
-                    new CharacterInitiative()
+                    PlayerId: playerId,
+                    Name: "Char1",
+                    Initiative: new CharacterInitiative()
                     {
                         Strategy = InitiativeStrategy.Roll,
                         Value = "1d20 + 5"
                     },
-                    null,
-                    null,
-                    false,
-                    CharacterOriginDetails.CustomCharacter(),
-                    null
+                    Health: null,
+                    ArmourClass: null,
+                    Hidden: false,
+                    CharacterOriginDetails: CharacterOriginDetails.CustomCharacter(),
+                    CopyNumber: null,
+                    InitiativeValue: [6]
                 );
-        existingChar.InitiativeValue = [6];
 
-        this.diceRoller.EvaluateRoll("1d20 + 5").Returns(6);
+        diceRoller.EvaluateRoll("1d20 + 5").Returns(6);
         int callCount = 1;
-        this.diceRoller.RollD20().Returns((CallInfo callInfo) =>
+        diceRoller.RollD20().Returns((CallInfo callInfo) =>
         {
             return callCount++;
         });
-        var result = this.initiativeRoller.ComputeRolls(
+        var result = initiativeRoller.ComputeRolls(
             [incomingChar],
             [existingChar]
         );
         result.Should().Succeed();
         var existingCharAfterRoll = result.Value.Find(x => x.id == existingChar.Id);
         existingCharAfterRoll.Should().NotBeNull();
-        existingCharAfterRoll.rolls.SequenceEqual([6, 1]).Should().BeTrue();
+        existingCharAfterRoll!.rolls.SequenceEqual([6, 1]).Should().BeTrue();
         var newCharAfterRoll = result.Value.Find(x => x.id == incomingChar.Id);
         newCharAfterRoll.Should().NotBeNull();
-        newCharAfterRoll.rolls.SequenceEqual([6, 2]).Should().BeTrue();
+        newCharAfterRoll!.rolls.SequenceEqual([6, 2]).Should().BeTrue();
     }
 
     [Fact]
     public void MergesRollsSuccessfully_NoCollide()
     {
         Guid playerId = Guid.NewGuid();
-        var incomingChar = CombatCharacter.NewCombatCharacter(
+        var incomingChar = new StagedCharacter(
+            Id: Guid.NewGuid(),
+            PlayerId: playerId,
+            Name: "Incoming",
+            Health: null,
+            Initiative: new CharacterInitiative()
+            {
+                Strategy = InitiativeStrategy.Roll,
+                Value = "1d20 + 5"
+            },
+            ArmourClass: null,
+            CharacterOriginDetails: CharacterOriginDetails.CustomCharacter(),
+            Hidden: false,
+            CopyNumber: null);
+
+        var existingChar1 = new InitiativeCharacter(
                     Id: Guid.NewGuid(),
-                    playerId,
-                    "Incoming",
-                    new CharacterInitiative()
+                    PlayerId: playerId,
+                    Name: "Char1",
+                    Initiative: new CharacterInitiative()
                     {
                         Strategy = InitiativeStrategy.Roll,
                         Value = "1d20 + 5"
                     },
-                    null,
-                    null,
-                    false,
-                    CharacterOriginDetails.CustomCharacter(),
-                    null
+                    Health: null,
+                    ArmourClass: null,
+                    Hidden: false,
+                    CharacterOriginDetails: CharacterOriginDetails.CustomCharacter(),
+                    CopyNumber: null,
+                    InitiativeValue: [6, 2]
                 );
 
-        var existingChar1 = CombatCharacter.NewCombatCharacter(
+        var existingChar2 = new InitiativeCharacter(
                     Id: Guid.NewGuid(),
-                    playerId,
-                    "Char1",
-                    new CharacterInitiative()
+                    PlayerId: playerId,
+                    Name: "Char2",
+                    Initiative: new CharacterInitiative()
                     {
                         Strategy = InitiativeStrategy.Roll,
                         Value = "1d20 + 5"
                     },
-                    null,
-                    null,
-                    false,
-                    CharacterOriginDetails.CustomCharacter(),
-                    null
+                    Health: null,
+                    ArmourClass: null,
+                    Hidden: false,
+                    CharacterOriginDetails: CharacterOriginDetails.CustomCharacter(),
+                    CopyNumber: null,
+                    InitiativeValue: [6, 5]
                 );
-        existingChar1.InitiativeValue = [6, 2];
 
-        var existingChar2 = CombatCharacter.NewCombatCharacter(
-                    Id: Guid.NewGuid(),
-                    playerId,
-                    "Char2",
-                    new CharacterInitiative()
-                    {
-                        Strategy = InitiativeStrategy.Roll,
-                        Value = "1d20 + 5"
-                    },
-                    null,
-                    null,
-                    false,
-                    CharacterOriginDetails.CustomCharacter(),
-                    null
-                );
-        existingChar2.InitiativeValue = [6, 5];
-
-        this.diceRoller.EvaluateRoll("1d20 + 5").Returns(6);
+        diceRoller.EvaluateRoll("1d20 + 5").Returns(6);
         int callCount = 1;
-        this.diceRoller.RollD20().Returns((CallInfo callInfo) =>
+        diceRoller.RollD20().Returns((CallInfo callInfo) =>
         {
             return callCount++;
         });
-        var result = this.initiativeRoller.ComputeRolls(
+        var result = initiativeRoller.ComputeRolls(
             [incomingChar],
             [existingChar1, existingChar2]
         );
@@ -145,78 +144,78 @@ public class DiceRollerTests
 
         var existingChar1AfterRoll = result.Value.Find(x => x.id == existingChar1.Id);
         existingChar1AfterRoll.Should().NotBeNull();
-        existingChar1AfterRoll.rolls.SequenceEqual([6, 2]).Should().BeTrue();
+        existingChar1AfterRoll!.rolls.SequenceEqual([6, 2]).Should().BeTrue();
 
         var existingChar2AfterRoll = result.Value.Find(x => x.id == existingChar2.Id);
         existingChar2AfterRoll.Should().NotBeNull();
-        existingChar2AfterRoll.rolls.SequenceEqual([6, 5]).Should().BeTrue();
+        existingChar2AfterRoll!.rolls.SequenceEqual([6, 5]).Should().BeTrue();
 
         var newCharAfterRoll = result.Value.Find(x => x.id == incomingChar.Id);
         newCharAfterRoll.Should().NotBeNull();
-        newCharAfterRoll.rolls.SequenceEqual([6, 1]).Should().BeTrue();
+        newCharAfterRoll!.rolls.SequenceEqual([6, 1]).Should().BeTrue();
     }
 
     [Fact]
     public void MergesRollsSuccessfully_CollideOnMerge()
     {
         Guid playerId = Guid.NewGuid();
-        var incomingChar = CombatCharacter.NewCombatCharacter(
+        var incomingChar = new StagedCharacter(
                     Id: Guid.NewGuid(),
-                    playerId,
-                    "Incoming",
-                    new CharacterInitiative()
+                    PlayerId: playerId,
+                    Name: "Incoming",
+                    Initiative: new CharacterInitiative()
                     {
                         Strategy = InitiativeStrategy.Roll,
                         Value = "1d20 + 3"
                     },
-                    null,
-                    null,
-                    false,
-                    CharacterOriginDetails.CustomCharacter(),
-                    null
+                    Health: null,
+                    ArmourClass: null,
+                    Hidden: false,
+                    CharacterOriginDetails: CharacterOriginDetails.CustomCharacter(),
+                    CopyNumber: null
                 );
 
-        var existingChar1 = CombatCharacter.NewCombatCharacter(
+        var existingChar1 = new InitiativeCharacter(
                     Id: Guid.NewGuid(),
-                    playerId,
-                    "Char1",
-                    new CharacterInitiative()
+                    PlayerId: playerId,
+                    Name: "Char1",
+                    Initiative: new CharacterInitiative()
                     {
                         Strategy = InitiativeStrategy.Roll,
                         Value = "1d20 + 4"
                     },
-                    null,
-                    null,
-                    false,
-                    CharacterOriginDetails.CustomCharacter(),
-                    null
+                    Health: null,
+                    ArmourClass: null,
+                    Hidden: false,
+                    CharacterOriginDetails: CharacterOriginDetails.CustomCharacter(),
+                    CopyNumber: null,
+                    InitiativeValue: [6, 2]
                 );
-        existingChar1.InitiativeValue = [6, 2];
 
-        var existingChar2 = CombatCharacter.NewCombatCharacter(
+        var existingChar2 = new InitiativeCharacter(
                     Id: Guid.NewGuid(),
-                    playerId,
-                    "Char2",
-                    new CharacterInitiative()
+                    PlayerId: playerId,
+                    Name: "Char2",
+                    Initiative: new CharacterInitiative()
                     {
                         Strategy = InitiativeStrategy.Roll,
                         Value = "1d20 + 5"
                     },
-                    null,
-                    null,
-                    false,
-                    CharacterOriginDetails.CustomCharacter(),
-                    null
+                    Health: null,
+                    ArmourClass: null,
+                    Hidden: false,
+                    CharacterOriginDetails: CharacterOriginDetails.CustomCharacter(),
+                    CopyNumber: null,
+                    InitiativeValue: [6, 5]
                 );
-        existingChar2.InitiativeValue = [6, 5];
 
-        this.diceRoller.EvaluateRoll("1d20 + 3").Returns(6);
+        diceRoller.EvaluateRoll("1d20 + 3").Returns(6);
         int callCount = 5;
-        this.diceRoller.RollD20().Returns((CallInfo callInfo) =>
+        diceRoller.RollD20().Returns((CallInfo callInfo) =>
         {
             return callCount++;
         });
-        var result = this.initiativeRoller.ComputeRolls(
+        var result = initiativeRoller.ComputeRolls(
             [incomingChar],
             [existingChar1, existingChar2]
         );
@@ -224,14 +223,14 @@ public class DiceRollerTests
 
         var existingChar1AfterRoll = result.Value.Find(x => x.id == existingChar1.Id);
         existingChar1AfterRoll.Should().NotBeNull();
-        existingChar1AfterRoll.rolls.SequenceEqual([6, 2]).Should().BeTrue();
+        existingChar1AfterRoll!.rolls.SequenceEqual([6, 2]).Should().BeTrue();
 
         var existingChar2AfterRoll = result.Value.Find(x => x.id == existingChar2.Id);
         existingChar2AfterRoll.Should().NotBeNull();
-        existingChar2AfterRoll.rolls.SequenceEqual([6, 5, 6]).Should().BeTrue();
+        existingChar2AfterRoll!.rolls.SequenceEqual([6, 5, 6]).Should().BeTrue();
 
         var newCharAfterRoll = result.Value.Find(x => x.id == incomingChar.Id);
         newCharAfterRoll.Should().NotBeNull();
-        newCharAfterRoll.rolls.SequenceEqual([6, 5, 7]).Should().BeTrue();
+        newCharAfterRoll!.rolls.SequenceEqual([6, 5, 7]).Should().BeTrue();
     }
 }

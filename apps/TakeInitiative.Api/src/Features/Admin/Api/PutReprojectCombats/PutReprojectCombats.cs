@@ -24,7 +24,7 @@ public class PutReprojectCombats(IProjectionCoordinator projectionCoordinator) :
             var daemon = projectionCoordinator.DaemonForMainDatabase();
             await daemon.RebuildProjectionAsync("combat", ct);
         }, ApiError.DbInteractionFailed)
-        .Tap(() => this.SendOkAsync());
+        .Tap(() => SendOkAsync());
 
         await this.ReturnApiResult(result);
     }

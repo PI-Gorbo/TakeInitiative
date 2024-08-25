@@ -67,11 +67,11 @@
         CharacterOrigin: 0,
         Id: null
       },
+      Hidden: false,
+      CopyNumber: null,
       InitiativeValue: [
         10
       ],
-      Hidden: false,
-      CopyNumber: null,
       Id: Guid_2,
       Name: Another EnemyTYPE,
       Health: {

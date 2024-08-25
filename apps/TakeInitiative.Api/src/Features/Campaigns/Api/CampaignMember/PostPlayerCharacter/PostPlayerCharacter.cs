@@ -20,8 +20,13 @@ public class PostPlayerCharacter(IDocumentSession session) : Endpoint<PostPlayer
         var userId = this.GetUserIdOrThrowUnauthorized();
 
         // Construct new player character 
-        PlayerCharacter newCharacter = PlayerCharacter.
-            New(userId, req.PlayerCharacter.Name, req.PlayerCharacter.Initiative, req.PlayerCharacter.ArmourClass, req.PlayerCharacter.Health);
+        PlayerCharacter newCharacter = new(
+            Id: Guid.NewGuid(),
+            Name: req.PlayerCharacter.Name,
+            Health: req.PlayerCharacter.Health,
+            Initiative: req.PlayerCharacter.Initiative,
+            ArmourClass: req.PlayerCharacter.ArmourClass,
+            PlayerId: userId);
 
         // Validate and add the new character
         var result = await Result

@@ -77,7 +77,6 @@
         CharacterOrigin: 0,
         Id: null
       },
-      InitiativeValue: [],
       Hidden: false,
       CopyNumber: null,
       Id: Guid_6,

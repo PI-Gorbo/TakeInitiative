@@ -18,7 +18,7 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
     public FullCombatTest(AuthenticatedWebAppWithDatabaseFixture fixture)
     {
         this.fixture = fixture;
-        this.verifier = new CombatVerifier();
+        verifier = new CombatVerifier();
     }
 
     [Fact]
@@ -111,24 +111,23 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
             .PutUpsertStagedCharacter(new()
             {
                 CombatId = openedCombat.Value.Combat.Id,
-                Character = new StagedCombatCharacterDto()
-                {
-                    Id = firstCharacterId,
-                    ArmourClass = 20,
-                    Health = new CharacterHealth()
+                Character = new StagedCombatCharacterDto(
+                    Id: firstCharacterId,
+                    ArmourClass: 20,
+                    Health: new CharacterHealth()
                     {
                         CurrentHealth = 10,
                         MaxHealth = 20,
                         HasHealth = true,
                     },
-                    Hidden = false,
-                    Name = "My Super Duper Character",
-                    Initiative = new()
+                    Hidden: false,
+                    Name: "My Super Duper Character",
+                    Initiative: new()
                     {
                         Value = "1d20 + 3",
                         Strategy = InitiativeStrategy.Roll // Roll,
                     }
-                },
+                )
             });
         addStagedPlayerCharacterResult.Should().Succeed();
         combat = addStagedPlayerCharacterResult.Value.Combat;
@@ -159,7 +158,7 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
 
         // Setup a mock for the initial initiative rolls.
         combat.StagedList.Count.Should().Be(2);
-        A.CallTo(() => fixture.InitiativeRoller.ComputeRolls(A<IEnumerable<CombatCharacter>>._))
+        A.CallTo(() => fixture.InitiativeRoller.ComputeRolls(A<IEnumerable<StagedCharacter>>._))
             .Returns(new List<CharacterInitiativeRoll>()
             {
                 new(combat.StagedList[0].Id, [20]),
@@ -176,7 +175,7 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
         await verifier.Verify(combat, "FullCombatTest.03.CombatStarted");
 
         // The DM will update the character to be not be hidden.
-        CombatCharacter notVisibleDmCharacter = combat.InitiativeList[0];
+        InitiativeCharacter notVisibleDmCharacter = combat.InitiativeList[0];
         var setDmCharacterToVisible = await fixture.PutUpdateInitiativeCharacter(new()
         {
             Character = new()
@@ -197,7 +196,7 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
         // It is the player's turn.
         // Imagine the player rolls and does some damage to the enemy.
         // The DM would subtract some damage from their character's health.
-        CombatCharacter dmCharacter = combat.InitiativeList[0];
+        InitiativeCharacter dmCharacter = combat.InitiativeList[0];
         var damageDmCharacter = await fixture.PutUpdateInitiativeCharacter(new()
         {
             Character = new()
@@ -235,22 +234,23 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
             .PutUpsertStagedCharacter(new()
             {
                 CombatId = combat.Id,
-                Character = new()
-                {
-                    Id = Guid.NewGuid(),
-                    Health = new()
+                Character = new(
+                    Id: Guid.NewGuid(),
+                    Health: new()
                     {
                         CurrentHealth = 10,
                         MaxHealth = 20,
                         HasHealth = true,
                     },
-                    Initiative = new()
+                    Initiative: new()
                     {
                         Strategy = InitiativeStrategy.Roll,
                         Value = "10"
                     },
-                    Name = "Another Enemy!"
-                }
+                    Name: "Another Enemy!",
+                    ArmourClass: null,
+                    Hidden: false
+                )
             });
         addStagedCharacterResult.Should().Succeed();
         combat = addStagedCharacterResult.Value.Combat;
@@ -258,7 +258,7 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
 
         // The DM then rolls the character into initiative.
         var characterId = combat.StagedList.First().Id;
-        A.CallTo(() => fixture.InitiativeRoller.ComputeRolls(A<List<CombatCharacter>>._, A<List<CombatCharacter>>._))
+        A.CallTo(() => fixture.InitiativeRoller.ComputeRolls(A<List<StagedCharacter>>._, A<List<InitiativeCharacter>>._))
             .Returns(new List<CharacterInitiativeRoll>()
             {
                 new(combat.InitiativeList[0].Id, [20]),

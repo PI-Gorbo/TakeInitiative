@@ -56,7 +56,7 @@ public class CombatHub : Hub
 
             combat = await session.LoadAsync<Combat>(CombatId);
             await Groups.AddToGroupAsync(Context.ConnectionId, combat.Id.ToString());
-            await this.NotifyCombatUpdated(combat);
+            await NotifyCombatUpdated(combat);
 
             return Result.Success(combat);
         });

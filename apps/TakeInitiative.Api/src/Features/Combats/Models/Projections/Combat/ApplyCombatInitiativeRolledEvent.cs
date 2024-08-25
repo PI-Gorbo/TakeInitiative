@@ -18,13 +18,13 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
                 return null;
             }
 
-            return stagedCharacter with
-            {
-                InitiativeValue = charInitiative.rolls
-            };
+            return InitiativeCharacter.FromStagedCharacter(
+                stagedCharacter,
+                charInitiative.rolls
+            );
         })
         .Where(x => x != null)
-        .Cast<CombatCharacter>()
+        .Cast<InitiativeCharacter>()
         .OrderByDescending(x => x.InitiativeValue, new InitiativeComparer())
         .ToImmutableList();
 

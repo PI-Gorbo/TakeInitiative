@@ -18,7 +18,7 @@ public class CharactersAddedAfterCombatStartedTest : IClassFixture<Authenticated
     public CharactersAddedAfterCombatStartedTest(AuthenticatedWebAppWithDatabaseFixture fixture)
     {
         this.fixture = fixture;
-        this.verifier = new CombatVerifier();
+        verifier = new CombatVerifier();
     }
 
     [Fact]
@@ -50,7 +50,7 @@ public class CharactersAddedAfterCombatStartedTest : IClassFixture<Authenticated
             .Verify(combat, "CharactersAddedAfterCombatStartedTest.00.OpenedCombat");
 
         // Setup a mock for the initial initiative rolls.
-        A.CallTo(() => fixture.InitiativeRoller.ComputeRolls(A<IEnumerable<CombatCharacter>>._))
+        A.CallTo(() => fixture.InitiativeRoller.ComputeRolls(A<IEnumerable<StagedCharacter>>._))
             .Returns(new List<CharacterInitiativeRoll>() { });
 
         // Start the combat.
@@ -67,22 +67,23 @@ public class CharactersAddedAfterCombatStartedTest : IClassFixture<Authenticated
             .PutUpsertStagedCharacter(new()
             {
                 CombatId = combat.Id,
-                Character = new()
-                {
-                    Id = Guid.NewGuid(),
-                    Health = new()
+                Character = new(
+                    Id: Guid.NewGuid(),
+                    Health: new()
                     {
                         CurrentHealth = 10,
                         MaxHealth = 20,
                         HasHealth = true,
                     },
-                    Initiative = new()
+                    Initiative: new()
                     {
                         Strategy = InitiativeStrategy.Roll,
                         Value = "10"
                     },
-                    Name = "Another Enemy!"
-                }
+                    Name: "Another Enemy!",
+                    ArmourClass: null,
+                    Hidden: false
+                )
             });
         addStagedCharacterResult.Should().Succeed();
         combat = addStagedCharacterResult.Value.Combat;
@@ -90,7 +91,7 @@ public class CharactersAddedAfterCombatStartedTest : IClassFixture<Authenticated
 
         // The DM then rolls the character into initiative.
         var characterId = combat.StagedList.First().Id;
-        A.CallTo(() => fixture.InitiativeRoller.ComputeRolls(A<List<CombatCharacter>>._, A<List<CombatCharacter>>._))
+        A.CallTo(() => fixture.InitiativeRoller.ComputeRolls(A<List<StagedCharacter>>._, A<List<InitiativeCharacter>>._))
             .Returns(new List<CharacterInitiativeRoll>()
             {
                 new(characterId, [10])
