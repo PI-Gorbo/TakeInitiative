@@ -11,7 +11,7 @@ public class InitiativeRoller(IDiceRoller roller) : IInitiativeRoller
         return this.ComputeRolls_Recursive(characters, isFirstRoll: true);
     }
 
-    public Result<List<CharacterInitiativeRoll>> ComputeRolls(List<CombatCharacter> newCharacters, ImmutableList<CombatCharacter> existingInitiativeList)
+    public Result<List<CharacterInitiativeRoll>> ComputeRolls(List<CombatCharacter> newCharacters, List<CombatCharacter> existingInitiativeList)
     {
         // 1. Compute the rolls of the new characters, to produce a set that has no conflicts.
         var incomingComputedRolls = this.ComputeRolls(newCharacters);
@@ -55,7 +55,7 @@ public class InitiativeRoller(IDiceRoller roller) : IInitiativeRoller
             .ToList();
     }
 
-    internal Result<List<CharacterInitiativeRoll>> MergeRolls(ImmutableList<CombatCharacter> existingInitiativeList, Result<List<CharacterInitiativeRoll>> incomingComputedRolls)
+    internal Result<List<CharacterInitiativeRoll>> MergeRolls(List<CombatCharacter> existingInitiativeList, Result<List<CharacterInitiativeRoll>> incomingComputedRolls)
     {
         Dictionary<Guid, CharacterInitiativeRoll> outgoingCharacterInitiative = existingInitiativeList
             .Select(x => new CharacterInitiativeRoll(x.Id, x.InitiativeValue))

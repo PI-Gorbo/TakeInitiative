@@ -1,17 +1,14 @@
 
 using System.Net;
 using Alba;
-using CSharpFunctionalExtensions;
+using FakeItEasy;
 using FluentAssertions;
-using JasperFx.Core;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Primitives;
-using NSubstitute;
 using TakeInitiative.Api.Bootstrap;
 using TakeInitiative.Api.Features.Users;
 using TakeInitiative.Utilities;
@@ -49,7 +46,7 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
         .Build();
     private Users CurrentUser;
     public AuthenticatedWebAppWithDatabaseFixtureSeededData SeedData { get; set; }
-    public IInitiativeRoller InitiativeRoller { get; } = Substitute.For<IInitiativeRoller>();
+    public IInitiativeRoller InitiativeRoller { get; } = A.Fake<IInitiativeRoller>();
 
     public async Task InitializeAsync()
     {

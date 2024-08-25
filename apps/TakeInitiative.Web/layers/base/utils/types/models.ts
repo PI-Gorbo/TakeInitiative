@@ -293,6 +293,20 @@ export const CharacterRemovedHistoryEvent = z.object({
 export type CharacterRemovedHistoryEvent = z.infer<
     typeof CharacterRemovedHistoryEvent
 >;
+export const CharactersAddedToInitiative = z.object({
+    rolls: z.array(
+        z
+            .object({
+                characterId: z.string().uuid(),
+                roll: z.array(z.number().int()),
+                characterName: z.string(),
+            })
+            .required(),
+    ),
+});
+export type CharactersAddedToInitiative = z.infer<
+    typeof CharactersAddedToInitiative
+>;
 
 export const historyEventValidator = z.discriminatedUnion("!", [
     CombatStartedHistoryEvent.extend({
@@ -316,11 +330,8 @@ export const historyEventValidator = z.discriminatedUnion("!", [
     RoundEndedHistoryEvent.extend({
         "!": z.literal("RoundEnded"),
     }),
-    PlayerCharacterJoinedHistoryEvent.extend({
-        "!": z.literal("PlayerCharacterJoined"),
-    }),
-    PlannedCharactersAddedHistoryEvent.extend({
-        "!": z.literal("PlannedCharactersAdded"),
+    CharactersAddedToInitiative.extend({
+        "!": z.literal("CharactersAddedToInitiative"),
     }),
     CharacterRemovedHistoryEvent.extend({
         "!": z.literal("CharacterRemoved"),

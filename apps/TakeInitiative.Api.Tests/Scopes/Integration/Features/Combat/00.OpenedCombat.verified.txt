@@ -1,9 +1,9 @@
 ﻿{
-  Id: Guid_1,
-  CampaignId: Guid_2,
+  Id: CombatId,
+  CampaignId: Guid_1,
   State: 0,
   CombatName: My planned combat,
-  DungeonMaster: Guid_3,
+  DungeonMaster: DmId,
   History: [
     {
       Timestamp: DateTimeOffset_1,
@@ -12,20 +12,19 @@
           TYPE: CombatStarted
         }
       ],
-      Executor: Guid_3
+      Executor: DmId
     }
   ],
-  CombatLogs: [],
   CurrentPlayers: [],
   PlannedStages: [
     {
-      Id: Guid_4,
+      Id: Guid_2,
       Name: Stage One,
       Npcs: [
         {
-          StageId: Guid_4,
+          StageId: Guid_2,
           Quantity: 1,
-          Id: Guid_5,
+          Id: Guid_3,
           Name: Intro Enemy,
           Health: {
             HasHealth: false,
@@ -43,13 +42,13 @@
       ]
     },
     {
-      Id: Guid_6,
+      Id: Guid_4,
       Name: Boss Fight,
       Npcs: [
         {
-          StageId: Guid_6,
+          StageId: Guid_4,
           Quantity: 10,
-          Id: Guid_7,
+          Id: Guid_5,
           Name: 10 goblins in a trench coat,
           Health: {
             HasHealth: false,

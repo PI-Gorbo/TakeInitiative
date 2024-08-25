@@ -31,6 +31,7 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
             {
                 return null;
             }
+
             return stagedChar.Value with
             {
                 InitiativeValue = charInitiative.rolls
@@ -47,27 +48,39 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
 
         // Determine new Initiative Index
         Maybe<Guid> characterWithCurrentTurn = Combat.InitiativeList.Count > 0 ? Combat.InitiativeList[Combat.InitiativeIndex].Id : Maybe.None;
-        var newInitiativeIndex = characterWithCurrentTurn.HasValue ? newInitiativeList.FindIndex(x => x.Id == characterWithCurrentTurn) : 0; // Maintains the initiative index, so that it still points to the character whos turn it was before.
+        var newInitiativeIndex = characterWithCurrentTurn.HasValue ? newInitiativeList.FindIndex(x => x.Id == characterWithCurrentTurn.Value) : 0; // Maintains the initiative index, so that it still points to the character whos turn it was before.
 
-        // If there was no characters in the combat before, add a turn started event.
-        ImmutableList<HistoryEntry> newHistory = characterWithCurrentTurn.HasValue
-            ? Combat.History
-            : [..Combat.History, new() {
-                Events = [
-                    new TurnStarted {
-                        CharacterId = newInitiativeList[0].Id,
-                    }
-                ],
-                Executor = @event.UserId,
-                Timestamp = @eventDetails.Timestamp
-            }];
+        // Determine History
+        HistoryEntry historyEvent = new HistoryEntry()
+        {
+            Timestamp = eventDetails.Timestamp,
+            Events = [
+                new CharactersAddedToInitiative() {
+                    NewInitiativeList = @event.InitiativeRolls
+                        .Select(x => new InitiativeRolledDto() {
+                            CharacterId = x.id,
+                            CharacterName = newInitiativeList.Find(x => x.Id == x.Id)!.Name,
+                            Roll = x.rolls
+                        }).ToArray()
+                }
+            ],
+            Executor = @event.UserId,
+        };
+
+        if (Combat.InitiativeList.Count == 0) // if there were no characters in the combat, then post a turn started event.
+        {
+            historyEvent.Events.Add(new TurnStarted
+            {
+                CharacterId = newInitiativeList[0].Id,
+            });
+        }
 
         return Combat with
         {
             StagedList = newStagedList,
             InitiativeList = newInitiativeList,
             InitiativeIndex = newInitiativeIndex,
-            History = newHistory
+            History = [.. Combat.History, historyEvent]
         };
     }
 }

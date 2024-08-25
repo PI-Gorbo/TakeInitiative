@@ -10,6 +10,7 @@ namespace TakeInitiative.Api.Features.Combats;
 [JsonDerivedType(typeof(TurnEnded), typeDiscriminator: "TurnEnded")]
 [JsonDerivedType(typeof(RoundEnded), typeDiscriminator: "RoundEnded")]
 [JsonDerivedType(typeof(CharacterRemoved), typeDiscriminator: "CharacterRemoved")]
+[JsonDerivedType(typeof(CharactersAddedToInitiative), typeDiscriminator: "CharactersAddedToInitiative")]
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "!")]
 public abstract record HistoryEvent
 {

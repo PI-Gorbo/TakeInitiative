@@ -1,16 +1,26 @@
 using System.Text.Json;
 using CSharpFunctionalExtensions;
+using FakeItEasy;
 using FluentAssertions;
 using Marten;
-using NSubstitute;
 using TakeInitiative.Api.Features;
 using TakeInitiative.Api.Features.Combats;
 using VerifyTests;
 
 namespace TakeInitiative.Api.Tests.Integration;
 
-public class ComprehensiveCombatTests(AuthenticatedWebAppWithDatabaseFixture fixture) : IClassFixture<AuthenticatedWebAppWithDatabaseFixture>
+
+public class ComprehensiveCombatTests : IClassFixture<AuthenticatedWebAppWithDatabaseFixture>
 {
+    private readonly AuthenticatedWebAppWithDatabaseFixture fixture;
+    private readonly CombatVerifier verifier;
+
+    public ComprehensiveCombatTests(AuthenticatedWebAppWithDatabaseFixture fixture)
+    {
+        this.fixture = fixture;
+        this.verifier = new CombatVerifier();
+    }
+
     [Fact]
     public async Task FullCombatTest()
     {
@@ -88,9 +98,14 @@ public class ComprehensiveCombatTests(AuthenticatedWebAppWithDatabaseFixture fix
         openedCombat.Should().Succeed();
 
         var combat = openedCombat.Value.Combat;
-        await VerifyWithFileName(combat, "00.OpenedCombat");
+
+        await verifier
+            .RegisterKnownGuid(combat.Id, "CombatId")
+            .RegisterKnownGuid(combat.DungeonMaster, "DmId")
+            .Verify(combat, "00.OpenedCombat");
 
         // Player adds their character to the combat.
+        var firstCharacterId = Guid.NewGuid();
         var addStagedPlayerCharacterResult = await fixture
             .LoginAsUser(Users.Player)
             .PutUpsertStagedCharacter(new()
@@ -98,7 +113,7 @@ public class ComprehensiveCombatTests(AuthenticatedWebAppWithDatabaseFixture fix
                 CombatId = openedCombat.Value.Combat.Id,
                 Character = new StagedCombatCharacterDto()
                 {
-                    Id = Guid.NewGuid(), // ??????
+                    Id = firstCharacterId,
                     ArmourClass = 20,
                     Health = new CharacterHealth()
                     {
@@ -117,7 +132,10 @@ public class ComprehensiveCombatTests(AuthenticatedWebAppWithDatabaseFixture fix
             });
         addStagedPlayerCharacterResult.Should().Succeed();
         combat = addStagedPlayerCharacterResult.Value.Combat;
-        await VerifyWithFileName(combat, "01.PlayerStagedCharacter");
+        await verifier
+            .RegisterKnownGuid(firstCharacterId, "PlayerFirstCharacterId")
+            .RegisterKnownGuid(combat.CurrentPlayers[0].UserId, "PlayerId")
+            .Verify(combat, "01.PlayerStagedCharacter");
 
         // DM stages their own characters
         var addPlannedCharactersResult = await fixture
@@ -136,12 +154,12 @@ public class ComprehensiveCombatTests(AuthenticatedWebAppWithDatabaseFixture fix
             });
         addPlannedCharactersResult.Should().Succeed();
         combat = addPlannedCharactersResult.Value.Combat;
-        await VerifyWithFileName(combat, "02.DmStagedPlannedCharacter");
+        await verifier.Verify(combat, "02.DmStagedPlannedCharacter");
 
         // Setup a mock for the initial initiative rolls.
         combat.StagedList.Count.Should().Be(2);
-        fixture.InitiativeRoller.ComputeRolls(default)
-            .ReturnsForAnyArgs(new List<CharacterInitiativeRoll>()
+        A.CallTo(() => fixture.InitiativeRoller.ComputeRolls(A<IEnumerable<CombatCharacter>>._))
+            .Returns(new List<CharacterInitiativeRoll>()
             {
                 new(combat.StagedList[0].Id, [20]),
                 new(combat.StagedList[1].Id, [15]),
@@ -154,7 +172,7 @@ public class ComprehensiveCombatTests(AuthenticatedWebAppWithDatabaseFixture fix
         });
         startCombatResult.Should().Succeed();
         combat = startCombatResult.Value.Combat;
-        await VerifyWithFileName(combat, "03.CombatStarted");
+        await verifier.Verify(combat, "03.CombatStarted");
 
         // The DM will update the character to be not be hidden.
         CombatCharacter notVisibleDmCharacter = combat.InitiativeList[0];
@@ -173,7 +191,7 @@ public class ComprehensiveCombatTests(AuthenticatedWebAppWithDatabaseFixture fix
         });
         setDmCharacterToVisible.Should().Succeed();
         combat = startCombatResult.Value.Combat;
-        await VerifyWithFileName(combat, "04.DmSetsCharacterToVisible");
+        await verifier.Verify(combat, "04.DmSetsCharacterToVisible");
 
         // It is the player's turn.
         // Imagine the player rolls and does some damage to the enemy.
@@ -197,7 +215,7 @@ public class ComprehensiveCombatTests(AuthenticatedWebAppWithDatabaseFixture fix
         });
         damageDmCharacter.Should().Succeed();
         combat = damageDmCharacter.Value.Combat;
-        await VerifyWithFileName(combat, "05.DamageDmCharacter");
+        await verifier.Verify(combat, "05.DamageDmCharacter");
 
         // Player ends their turn.
         var endTurnResult = await fixture
@@ -208,16 +226,56 @@ public class ComprehensiveCombatTests(AuthenticatedWebAppWithDatabaseFixture fix
             });
         endTurnResult.Should().Succeed();
         combat = endTurnResult.Value.Combat;
-        await VerifyWithFileName(combat, "06.PlayerEndsTurn");
-    }
+        await verifier.Verify(combat, "06.PlayerEndsTurn");
 
-    private Task VerifyWithFileName(object target, string fileName)
-    {
-        var verifySettings = new VerifySettings();
-        verifySettings.DontIgnoreEmptyCollections();
-        verifySettings.UseFileName(fileName);
-        var serializedValue = JsonSerializer.Serialize(target);
-        serializedValue = serializedValue.Replace("!", "TYPE");
-        return VerifyJson(serializedValue, verifySettings);
+        // The DM adds a character to the staged list.
+        var addStagedCharacterResult = await fixture
+            .LoginAsUser(Users.DM)
+            .PutUpsertStagedCharacter(new()
+            {
+                CombatId = combat.Id,
+                Character = new()
+                {
+                    Id = Guid.NewGuid(),
+                    Health = new()
+                    {
+                        CurrentHealth = 10,
+                        MaxHealth = 20,
+                        HasHealth = true,
+                    },
+                    Initiative = new()
+                    {
+                        Strategy = InitiativeStrategy.Roll,
+                        Value = "10"
+                    },
+                    Name = "Another Enemy!"
+                }
+            });
+        addStagedCharacterResult.Should().Succeed();
+        combat = addStagedCharacterResult.Value.Combat;
+        await verifier.Verify(combat, "07.DmStagesAnotherCharacter");
+
+        // The DM then rolls the character into initiative.
+        var characterId = combat.StagedList.First().Id;
+        A.CallTo(() => fixture.InitiativeRoller.ComputeRolls(A<List<CombatCharacter>>._, A<List<CombatCharacter>>._))
+            .Returns(new List<CharacterInitiativeRoll>()
+            {
+                new(combat.InitiativeList[0].Id, [20]),
+                new(combat.InitiativeList[1].Id, [15]),
+                new(characterId, [10])
+            });
+        var addStagedCharacterToInitiativeResult = await fixture
+            .PostRollStagedCharactersIntoInitiative(new()
+            {
+                CombatId = combat.Id,
+                CharacterIds = [
+                    characterId
+                ]
+            });
+        addStagedCharacterToInitiativeResult.Should().Succeed();
+        combat = addStagedCharacterToInitiativeResult.Value.Combat;
+        await verifier.Verify(combat, "08.DmRolledStagedCharacterIntoInitiative");
+
+
     }
 }

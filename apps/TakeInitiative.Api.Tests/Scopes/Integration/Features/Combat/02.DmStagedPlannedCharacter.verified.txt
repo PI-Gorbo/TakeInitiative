@@ -1,9 +1,9 @@
 ﻿{
-  Id: Guid_1,
-  CampaignId: Guid_2,
+  Id: CombatId,
+  CampaignId: Guid_1,
   State: 0,
   CombatName: My planned combat,
-  DungeonMaster: Guid_3,
+  DungeonMaster: DmId,
   History: [
     {
       Timestamp: DateTimeOffset_1,
@@ -12,24 +12,23 @@
           TYPE: CombatStarted
         }
       ],
-      Executor: Guid_3
+      Executor: DmId
     }
   ],
-  CombatLogs: [],
   CurrentPlayers: [
     {
-      UserId: Guid_4
+      UserId: PlayerId
     }
   ],
   PlannedStages: [
     {
-      Id: Guid_5,
+      Id: Guid_2,
       Name: Boss Fight,
       Npcs: [
         {
-          StageId: Guid_5,
+          StageId: Guid_2,
           Quantity: 10,
-          Id: Guid_6,
+          Id: Guid_3,
           Name: 10 goblins in a trench coat,
           Health: {
             HasHealth: false,
@@ -49,7 +48,7 @@
   ],
   StagedList: [
     {
-      PlayerId: Guid_4,
+      PlayerId: PlayerId,
       CharacterOriginDetails: {
         CharacterOrigin: 0,
         Id: null
@@ -57,7 +56,7 @@
       InitiativeValue: [],
       Hidden: false,
       CopyNumber: null,
-      Id: Guid_7,
+      Id: Guid_4,
       Name: My Super Duper Character,
       Health: {
         HasHealth: true,
@@ -73,15 +72,15 @@
       ArmourClass: 20
     },
     {
-      PlayerId: Guid_3,
+      PlayerId: DmId,
       CharacterOriginDetails: {
         CharacterOrigin: 0,
-        Id: Guid_8
+        Id: Guid_5
       },
       InitiativeValue: [],
       Hidden: true,
       CopyNumber: null,
-      Id: Guid_9,
+      Id: Guid_6,
       Name: Intro Enemy,
       Health: {
         HasHealth: false,
