@@ -32,7 +32,7 @@ public class PostConfirmEmail(
 
         if (!user.EmailConfirmed)
         {
-            var confirmResult = await userManager.ConfirmEmailAsync(user, Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(req.ConfirmEmailToken)));
+            var confirmResult = await userManager.ConfirmEmailAsync(user, Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(req.ConfirmEmailToken!)));
             if (!confirmResult.Succeeded)
             {
                 ThrowError(string.Join(", ", confirmResult.Errors), (int)HttpStatusCode.BadRequest);

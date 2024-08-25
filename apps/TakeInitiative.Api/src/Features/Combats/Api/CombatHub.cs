@@ -55,7 +55,7 @@ public class CombatHub : Hub
             await session.SaveChangesAsync();
 
             combat = await session.LoadAsync<Combat>(CombatId);
-            await Groups.AddToGroupAsync(Context.ConnectionId, combat.Id.ToString());
+            await Groups.AddToGroupAsync(Context.ConnectionId, combat!.Id.ToString());
             await NotifyCombatUpdated(combat);
 
             return Result.Success(combat);
@@ -94,8 +94,8 @@ public class CombatHub : Hub
 
             combat = await session.LoadAsync<Combat>(CombatId);
 
-            await NotifyCombatUpdated(combat);
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, combat.Id.ToString());
+            await NotifyCombatUpdated(combat!);
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, combat!.Id.ToString());
 
             return Result.Success(combat);
         });

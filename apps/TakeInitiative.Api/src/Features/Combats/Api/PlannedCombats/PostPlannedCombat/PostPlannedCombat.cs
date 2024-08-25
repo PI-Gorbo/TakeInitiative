@@ -44,7 +44,7 @@ public class PostPlannedCombat(IDocumentStore Store) : Endpoint<PostPlannedComba
 
             // Add a reference to the campaign.
             var campaign = await session.LoadAsync<Campaign>(req.CampaignId);
-            campaign.PlannedCombatIds.Add(combat.Id);
+            campaign!.PlannedCombatIds.Add(combat.Id);
 
             session.Store(combat);
             session.Store(campaign);

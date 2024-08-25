@@ -67,7 +67,7 @@ public class ResetPasswordEmailSender(
         }
 
         return await emailSender.SendEmail(
-            user.Email,
+            user.Email!,
             $"no-reply@{emailOpts.Value.Domain}",
             "Take Initiative - Password Rest",
             html
@@ -78,7 +78,7 @@ public class ResetPasswordEmailSender(
     {
         var assembly = Assembly.GetExecutingAssembly();
         var resourceName = "TakeInitiative.Api.Embedded.ResetPasswordEmail.mjml";
-        using Stream stream = assembly.GetManifestResourceStream(resourceName);
+        using Stream stream = assembly.GetManifestResourceStream(resourceName)!;
         using StreamReader reader = new StreamReader(stream);
         return reader.ReadToEnd();
     }
@@ -87,6 +87,6 @@ public class ResetPasswordEmailSender(
     {
         var token = await userManager.GeneratePasswordResetTokenAsync(user);
         var urlEncodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
-        return new Uri(new Uri(urlsOpts.Value.Web), $"/resetPassword/{urlEncodedToken}-{Uri.EscapeDataString(user.Email)}").ToString();
+        return new Uri(new Uri(urlsOpts.Value.Web!), $"/resetPassword/{urlEncodedToken}-{Uri.EscapeDataString(user.Email!)}").ToString();
     }
 }

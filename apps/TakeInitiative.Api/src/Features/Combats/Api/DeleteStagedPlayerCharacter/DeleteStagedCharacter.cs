@@ -56,11 +56,11 @@ public class DeleteStagedCharacter(IDocumentStore Store, IHubContext<CombatHub> 
             await session.SaveChangesAsync();
 
             combat = await session.LoadAsync<Combat>(req.CombatId);
-            await hubContext.NotifyCombatUpdated(combat);
+            await hubContext.NotifyCombatUpdated(combat!);
 
             return new CombatResponse()
             {
-                Combat = combat
+                Combat = combat!
             };
         });
 

@@ -29,7 +29,7 @@ public class EmptyCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixt
         // Create a planned combat.
         var createPlannedCombat = await fixture.PostPlannedCombat(new()
         {
-            CampaignId = fixture.SeedData.CampaignId,
+            CampaignId = fixture.SeedData!.CampaignId,
             CombatName = "My planned combat"
         });
         createPlannedCombat.Should().Succeed();

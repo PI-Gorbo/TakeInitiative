@@ -12,7 +12,7 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
         var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
         var newInitiativeList = @event.InitiativeRolls.Select((charInitiative, index) =>
         {
-            var stagedCharacter = Combat.StagedList.FirstOrDefault(x => x.Id == charInitiative.id, null);
+            var stagedCharacter = Combat.StagedList.FirstOrDefault(x => x!.Id == charInitiative.id, null);
             if (stagedCharacter == null)
             {
                 return null;

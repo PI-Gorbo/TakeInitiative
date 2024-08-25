@@ -6,11 +6,11 @@ using Marten.Events.Aggregation;
 namespace TakeInitiative.Api.Features.Combats;
 public partial class CombatProjection : SingleStreamProjection<Combat>
 {
-    public async Task<Combat> Apply(CombatResumedEvent @event, Combat Combat, IEvent<CombatResumedEvent> eventDetails, IQuerySession session)
+    public Task<Combat> Apply(CombatResumedEvent @event, Combat Combat, IEvent<CombatResumedEvent> eventDetails, IQuerySession session)
     {
-        return Combat with
+        return Task.FromResult(Combat with
         {
             State = CombatState.InitiativeRolled,
-        };
+        });
     }
 }

@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace TakeInitiative.Api.Features.Combats;
 
-public class PostRollCombatInitiative(IDocumentSession session, IHubContext<CombatHub> combatHub, IHubContext<CampaignHub> campaignHub) : Endpoint<PostRollCombatInitiativeRequest, CombatResponse>
+public class PostRollCombatInitiative(IHubContext<CombatHub> combatHub, IHubContext<CampaignHub> campaignHub) : Endpoint<PostRollCombatInitiativeRequest, CombatResponse>
 {
     public override void Configure()
     {

@@ -11,7 +11,6 @@ namespace TakeInitiative.Api.Features.Users;
 
 public class PostSendConfirmEmail(
     IDocumentSession session,
-    UserManager<ApplicationUser> userManager,
     ConfirmEmailSender confirmEmailSender
     ) : EndpointWithoutRequest
 {

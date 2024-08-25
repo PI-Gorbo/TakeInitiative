@@ -45,7 +45,7 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
         .WithImage("postgres:15-alpine")
         .Build();
     private Users CurrentUser;
-    public AuthenticatedWebAppWithDatabaseFixtureSeededData SeedData { get; set; }
+    public AuthenticatedWebAppWithDatabaseFixtureSeededData? SeedData { get; set; }
     public IInitiativeRoller InitiativeRoller { get; } = A.Fake<IInitiativeRoller>();
     public IDiceRoller DiceRoller { get; } = A.Fake<IDiceRoller>();
 

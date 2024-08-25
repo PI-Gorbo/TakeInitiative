@@ -37,7 +37,15 @@ public record CharacterInitiative
 
     public Result<int> RollInitiative(IDiceRoller roller)
     {
-        return Fixed
-            ?? roller.EvaluateRoll(Roll);
+        if (this.Strategy == InitiativeStrategy.Fixed)
+        {
+            return Result.Success(Fixed)
+                .Ensure(x => x.HasValue, "No fixed value provided.")
+                .Map(x => x!.Value);
+        }
+
+        return Result.Success(Roll)
+            .EnsureNotNull("No roll value provided")
+            .Bind(roller.EvaluateRoll);
     }
 }
