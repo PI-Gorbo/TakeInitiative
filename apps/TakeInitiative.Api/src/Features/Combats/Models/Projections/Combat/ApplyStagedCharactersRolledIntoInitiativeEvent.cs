@@ -26,7 +26,7 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
             }
 
             // Otherwise, we expect there to be a staged character.
-            var stagedChar = Combat.StagedList.FirstOrDefault(x => x.Id == charInitiative.id, null).AsMaybe();
+            var stagedChar = Combat.StagedList.Find(x => x.Id == charInitiative.id).AsMaybe();
             if (stagedChar.HasNoValue) // If there is not one (due to poor data), then return null, it will be filtered out later.
             {
                 return null;
@@ -59,7 +59,7 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
                     NewInitiativeList = @event.InitiativeRolls
                         .Select(x => new InitiativeRolledDto() {
                             CharacterId = x.id,
-                            CharacterName = newInitiativeList.Find(x => x.Id == x.Id)!.Name,
+                            CharacterName = newInitiativeList.Find(x => x.Id == x.Id)?.Name ?? "UNKNOWN",
                             Roll = x.rolls
                         }).ToArray()
                 }
@@ -69,9 +69,9 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
 
         if (Combat.InitiativeList.Count == 0) // if there were no characters in the combat, then post a turn started event.
         {
-            historyEvent.Events.Add(new TurnStarted
+            historyEvent.Events = historyEvent.Events.Add(new TurnStarted
             {
-                CharacterId = newInitiativeList[0].Id,
+                CharacterId = newInitiativeList.FirstOrDefault()?.Id ?? Guid.Empty,
             });
         }
 

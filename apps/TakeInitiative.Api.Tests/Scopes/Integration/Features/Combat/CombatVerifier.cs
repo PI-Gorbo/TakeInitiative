@@ -4,13 +4,15 @@ using TakeInitiative.Api.Features.Combats;
 
 namespace TakeInitiative.Api.Tests.Integration;
 
+
+
 public class CombatVerifier
 {
     private VerifySettings settings;
 
     public CombatVerifier()
     {
-        DiffTools.UseOrder(DiffTool.WinMerge, DiffTool.VisualStudioCode);
+        // DiffTools.UseOrder(true, DiffTool.WinMerge);
         settings = new VerifySettings();
         settings.DontIgnoreEmptyCollections();
     }

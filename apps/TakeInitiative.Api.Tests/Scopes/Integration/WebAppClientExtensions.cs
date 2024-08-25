@@ -74,6 +74,10 @@ public static class WebAppClientExtensions
     public static Task<Result<CombatResponse>> PostStartCombat(this IWebAppClient client, PostRollCombatInitiativeRequest request)
          => client.Post<PostRollCombatInitiativeRequest, CombatResponse>(request, "/api/combat/roll-initiative");
 
+    public static Task<Result<CombatResponse>> PostFinishCombat(this IWebAppClient client, PostFinishCombatRequest request)
+     => client.Post<PostFinishCombatRequest, CombatResponse>(request, "/api/combat/finish");
+
+
     public static Task<Result<CombatResponse>> PostEndTurn(this IWebAppClient client, PostEndTurnRequest request)
      => client.Post<PostEndTurnRequest, CombatResponse>(request, "/api/combat/turn/end");
 
