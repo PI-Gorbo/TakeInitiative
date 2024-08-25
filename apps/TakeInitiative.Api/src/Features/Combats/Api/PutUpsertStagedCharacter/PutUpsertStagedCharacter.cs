@@ -63,6 +63,7 @@ public class PutUpsertStagedCharacter(IDocumentSession session, IHubContext<Comb
                     {
                         UserId = userId,
                         Character = CombatCharacter.NewCombatCharacter(
+                            Id: Guid.NewGuid(),
                             playerId: userId,
                             name: req.Character.Name,
                             initiative: req.Character.Initiative,

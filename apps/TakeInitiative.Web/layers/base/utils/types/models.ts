@@ -294,7 +294,7 @@ export type CharacterRemovedHistoryEvent = z.infer<
     typeof CharacterRemovedHistoryEvent
 >;
 export const CharactersAddedToInitiative = z.object({
-    rolls: z.array(
+    newInitiativeList: z.array(
         z
             .object({
                 characterId: z.string().uuid(),

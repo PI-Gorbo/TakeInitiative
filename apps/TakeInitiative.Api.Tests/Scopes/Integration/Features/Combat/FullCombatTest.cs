@@ -147,7 +147,8 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
                 {
                     [combat.PlannedStages.First().Id] = [
                         new () {
-                            CharacterId = combat.PlannedStages.First().Npcs.First().Id, Quantity = 1
+                            CharacterId = combat.PlannedStages.First().Npcs.First().Id,
+                            Quantity = 1,
                         },
                     ]
                 }

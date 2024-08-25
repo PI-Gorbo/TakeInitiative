@@ -26,6 +26,7 @@ public class DiceRollerTests
 
         Guid playerId = Guid.NewGuid();
         var incomingChar = CombatCharacter.NewCombatCharacter(
+                    Id: Guid.NewGuid(),
                     playerId,
                     "incoming",
                     new CharacterInitiative()
@@ -41,6 +42,7 @@ public class DiceRollerTests
                 );
 
         var existingChar = CombatCharacter.NewCombatCharacter(
+                    Id: Guid.NewGuid(),
                     playerId,
                     "Char1",
                     new CharacterInitiative()
@@ -80,6 +82,7 @@ public class DiceRollerTests
     {
         Guid playerId = Guid.NewGuid();
         var incomingChar = CombatCharacter.NewCombatCharacter(
+                    Id: Guid.NewGuid(),
                     playerId,
                     "Incoming",
                     new CharacterInitiative()
@@ -95,6 +98,7 @@ public class DiceRollerTests
                 );
 
         var existingChar1 = CombatCharacter.NewCombatCharacter(
+                    Id: Guid.NewGuid(),
                     playerId,
                     "Char1",
                     new CharacterInitiative()
@@ -111,6 +115,7 @@ public class DiceRollerTests
         existingChar1.InitiativeValue = [6, 2];
 
         var existingChar2 = CombatCharacter.NewCombatCharacter(
+                    Id: Guid.NewGuid(),
                     playerId,
                     "Char2",
                     new CharacterInitiative()
@@ -156,6 +161,7 @@ public class DiceRollerTests
     {
         Guid playerId = Guid.NewGuid();
         var incomingChar = CombatCharacter.NewCombatCharacter(
+                    Id: Guid.NewGuid(),
                     playerId,
                     "Incoming",
                     new CharacterInitiative()
@@ -171,6 +177,7 @@ public class DiceRollerTests
                 );
 
         var existingChar1 = CombatCharacter.NewCombatCharacter(
+                    Id: Guid.NewGuid(),
                     playerId,
                     "Char1",
                     new CharacterInitiative()
@@ -187,6 +194,7 @@ public class DiceRollerTests
         existingChar1.InitiativeValue = [6, 2];
 
         var existingChar2 = CombatCharacter.NewCombatCharacter(
+                    Id: Guid.NewGuid(),
                     playerId,
                     "Char2",
                     new CharacterInitiative()

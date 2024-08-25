@@ -23,8 +23,9 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
             }
 
             var characterDTOsToStage = @event.PlannedCharactersToStage[plannedStage.Id];
-            IEnumerable<PlannedCombatCharacter> npcsToKeepPlanned = Array.Empty<PlannedCombatCharacter>();
-            IEnumerable<PlannedCombatCharacter> npcsToStage = Array.Empty<PlannedCombatCharacter>();
+            // For each stage, divide the stage's npcs into two groups.
+            IEnumerable<PlannedCombatCharacter> npcsToKeepPlanned = [];
+            IEnumerable<(Guid[] newIdsToUse, PlannedCombatCharacter character)> npcsToStage = [];
             if (characterDTOsToStage.Length == 0)
             {
                 npcsToKeepPlanned = plannedStage.Npcs;
@@ -34,22 +35,23 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
                 foreach (var npc in plannedStage.Npcs)
                 {
                     var dto = @event.PlannedCharactersToStage[plannedStage.Id].FirstOrDefault(x => x.CharacterId == npc.Id);
-                    if (dto == null)
+                    if (dto == null) // In case of bad id.
                     {
                         npcsToKeepPlanned = npcsToKeepPlanned.Append(npc);
                         continue;
                     }
 
+                    // Add either all, or a subset of the number of planned npcs
                     if (npc.Quantity == dto.Quantity)
                     {
-                        npcsToStage = npcsToStage.Append(npc);
+                        npcsToStage = npcsToStage.Append((dto.NewGuidsToUse, npc));
                     }
                     else
                     {
-                        npcsToStage = npcsToStage.Append(npc with
+                        npcsToStage = npcsToStage.Append((dto.NewGuidsToUse, npc with
                         {
                             Quantity = dto.Quantity
-                        });
+                        }));
                         npcsToKeepPlanned = npcsToKeepPlanned.Append(npc with
                         {
                             Quantity = npc.Quantity - dto.Quantity
@@ -70,24 +72,28 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
 
             // Map the Npcs to stage to combat characters.
             CharactersToStage.AddRange(
-                npcsToStage.Select(npc =>
+                npcsToStage.Select(tuple =>
                 {
+                    var (ids, npc) = tuple;
+
                     // Check if there are any characters in the current initiative list with the same name as the npc to stage.
-                    var isMultipleQuantityCharacter = Combat.InitiativeList.Where(x => x.Name == npc.Name).Count() > 1 || npc.Quantity > 1;
-                    if (!isMultipleQuantityCharacter)
+                    if (npc.Quantity == 1)
                     {
-                        return [ new CombatCharacter() {
-                            Id = Guid.NewGuid(),
-                            CharacterOriginDetails = CharacterOriginDetails.PlannedCharacter(npc.Id),
-                            Name = npc.Name,
-                            Initiative = npc.Initiative,
-                            InitiativeValue = [],
-                            PlayerId = @event.UserId,
-                            ArmourClass = npc.ArmourClass,
-                            Health = npc.Health,
-                            Hidden = true,
-                            CopyNumber = null
-                        }];
+                        return [
+                            new CombatCharacter()
+                            {
+                                Id = ids.First(),
+                                CharacterOriginDetails = CharacterOriginDetails.PlannedCharacter(npc.Id),
+                                Name = npc.Name,
+                                Initiative = npc.Initiative,
+                                InitiativeValue = [],
+                                PlayerId = @event.UserId,
+                                ArmourClass = npc.ArmourClass,
+                                Health = npc.Health,
+                                Hidden = true,
+                                CopyNumber = null
+                            }
+                        ];
                     }
 
                     var nextQuantityNumber = Combat.InitiativeList.Where(x => x.Name == npc.Name)
@@ -100,7 +106,7 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
                         combatCharactersToOutput.Add(
                             new CombatCharacter()
                             {
-                                Id = Guid.NewGuid(),
+                                Id = ids[i],
                                 CharacterOriginDetails = CharacterOriginDetails.PlannedCharacter(npc.Id),
                                 Name = $"{npc.Name} ({nextQuantityNumber})",
                                 Initiative = npc.Initiative,
