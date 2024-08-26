@@ -64,11 +64,10 @@ public class CharactersAddedAfterCombatStartedTest : IClassFixture<Authenticated
 
         // The DM adds a character to the staged list.
         var addStagedCharacterResult = await fixture
-            .PutUpsertStagedCharacter(new()
+            .PostAddStagedCharacter(new()
             {
                 CombatId = combat.Id,
                 Character = new(
-                    Id: Guid.NewGuid(),
                     Health: new()
                     {
                         CurrentHealth = 10,

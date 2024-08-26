@@ -103,14 +103,12 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
             .Verify(combat, "FullCombatTest.00.OpenedCombat");
 
         // Player adds their character to the combat.
-        // var firstCharacterId = Guid.NewGuid();
         var addStagedPlayerCharacterResult = await fixture
             .LoginAsUser(Users.Player)
-            .PutUpsertStagedCharacter(new()
+            .PostAddStagedCharacter(new()
             {
                 CombatId = openedCombat.Value.Combat.Id,
-                Character = new StagedCombatCharacterDto(
-                    Id: Guid.NewGuid(),
+                Character = new(
                     ArmourClass: 20,
                     Health: new CharacterHealth()
                     {
@@ -239,11 +237,10 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
         // The DM adds a character to the staged list.
         var addStagedCharacterResult = await fixture
             .LoginAsUser(Users.DM)
-            .PutUpsertStagedCharacter(new()
+            .PostAddStagedCharacter(new()
             {
                 CombatId = combat.Id,
                 Character = new(
-                    Id: Guid.NewGuid(),
                     Health: new()
                     {
                         CurrentHealth = 10,
