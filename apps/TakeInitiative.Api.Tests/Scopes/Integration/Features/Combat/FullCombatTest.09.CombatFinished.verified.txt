@@ -158,6 +158,7 @@
       InitiativeValue: [
         20
       ],
+      Conditions: [],
       Id: Guid_2,
       Name: My Super Duper Character,
       Health: {
@@ -184,6 +185,7 @@
       InitiativeValue: [
         15
       ],
+      Conditions: [],
       Id: Guid_3,
       Name: Intro Enemy,
       Health: {
@@ -210,6 +212,7 @@
       InitiativeValue: [
         10
       ],
+      Conditions: [],
       Id: Guid_4,
       Name: Another EnemyTYPE,
       Health: {

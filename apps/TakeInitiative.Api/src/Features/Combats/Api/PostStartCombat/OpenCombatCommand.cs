@@ -40,7 +40,7 @@ public class OpenCombatCommandHandler(IDocumentStore Store) : CommandHandler<Ope
                 }
 
                 // publish the event
-                var openEvent = new CombatOpenedEvent()
+                var openEvent = new CombatStartedEvent()
                 {
                     UserId = command.UserId,
                     CampaignId = plannedCombat.CampaignId,

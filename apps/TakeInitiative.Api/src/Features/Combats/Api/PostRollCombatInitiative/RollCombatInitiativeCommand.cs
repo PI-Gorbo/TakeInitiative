@@ -49,7 +49,7 @@ public class RollCombatInitiativeCommandHandler(IDocumentStore Store, IInitiativ
                 }
 
                 // Publish the event
-                CombatStartedEvent activateEvent = new()
+                CombatInitiativeRolledEvent activateEvent = new()
                 {
                     UserId = command.UserId,
                     InitiativeRolls = computedInitiativeRolls.Value,

@@ -55,7 +55,8 @@ public class DiceRollerTests
                     Hidden: false,
                     CharacterOriginDetails: CharacterOriginDetails.CustomCharacter(),
                     CopyNumber: null,
-                    InitiativeValue: [6]
+                    InitiativeValue: [6],
+                    Conditions: []
                 );
 
         diceRoller.EvaluateRoll("1d20 + 5").Returns(6);
@@ -110,7 +111,8 @@ public class DiceRollerTests
                     Hidden: false,
                     CharacterOriginDetails: CharacterOriginDetails.CustomCharacter(),
                     CopyNumber: null,
-                    InitiativeValue: [6, 2]
+                    InitiativeValue: [6, 2],
+                    Conditions: []
                 );
 
         var existingChar2 = new InitiativeCharacter(
@@ -127,7 +129,8 @@ public class DiceRollerTests
                     Hidden: false,
                     CharacterOriginDetails: CharacterOriginDetails.CustomCharacter(),
                     CopyNumber: null,
-                    InitiativeValue: [6, 5]
+                    InitiativeValue: [6, 5],
+                    Conditions: []
                 );
 
         diceRoller.EvaluateRoll("1d20 + 5").Returns(6);
@@ -189,7 +192,8 @@ public class DiceRollerTests
                     Hidden: false,
                     CharacterOriginDetails: CharacterOriginDetails.CustomCharacter(),
                     CopyNumber: null,
-                    InitiativeValue: [6, 2]
+                    InitiativeValue: [6, 2],
+                    Conditions: []
                 );
 
         var existingChar2 = new InitiativeCharacter(
@@ -206,7 +210,8 @@ public class DiceRollerTests
                     Hidden: false,
                     CharacterOriginDetails: CharacterOriginDetails.CustomCharacter(),
                     CopyNumber: null,
-                    InitiativeValue: [6, 5]
+                    InitiativeValue: [6, 5],
+                    Conditions: []
                 );
 
         diceRoller.EvaluateRoll("1d20 + 3").Returns(6);

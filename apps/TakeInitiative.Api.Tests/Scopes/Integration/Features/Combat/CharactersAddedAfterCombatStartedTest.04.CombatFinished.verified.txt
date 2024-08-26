@@ -81,6 +81,7 @@
       InitiativeValue: [
         10
       ],
+      Conditions: [],
       Id: Guid_2,
       Name: Another EnemyTYPE,
       Health: {

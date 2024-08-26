@@ -7,7 +7,7 @@ using TakeInitiative.Utilities;
 namespace TakeInitiative.Api.Features.Combats;
 public partial class CombatProjection : SingleStreamProjection<Combat>
 {
-    public async Task<Combat> Apply(CombatStartedEvent @event, Combat Combat, IEvent<CombatStartedEvent> eventDetails, IQuerySession session)
+    public async Task<Combat> Apply(CombatInitiativeRolledEvent @event, Combat Combat, IEvent<CombatInitiativeRolledEvent> eventDetails, IQuerySession session)
     {
         var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
         var newInitiativeList = @event.InitiativeRolls.Select((charInitiative, index) =>

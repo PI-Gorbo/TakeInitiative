@@ -44,7 +44,8 @@ public record InitiativeCharacter(
     CharacterOriginDetails CharacterOriginDetails,
     bool Hidden,
     int? CopyNumber,
-    int[] InitiativeValue) : Character(Id, Name, Health, Initiative, ArmourClass)
+    int[] InitiativeValue,
+    Condition[] Conditions) : Character(Id, Name, Health, Initiative, ArmourClass)
 {
     public static InitiativeCharacter FromStagedCharacter(StagedCharacter stagedCharacter, int[] InitiativeValue) => new InitiativeCharacter(
         Id: stagedCharacter.Id,
@@ -56,7 +57,8 @@ public record InitiativeCharacter(
         CharacterOriginDetails: stagedCharacter.CharacterOriginDetails,
         Hidden: stagedCharacter.Hidden,
         CopyNumber: stagedCharacter.CopyNumber,
-        InitiativeValue: InitiativeValue
+        InitiativeValue: InitiativeValue,
+        Conditions: []
     );
 }
 
