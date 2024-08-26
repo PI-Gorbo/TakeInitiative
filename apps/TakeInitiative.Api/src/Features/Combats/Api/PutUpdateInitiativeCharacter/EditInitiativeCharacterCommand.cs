@@ -48,7 +48,8 @@ public class EditInitiativeCharacterCommandHandler(IDocumentSession session) : C
                     UserId = command.UserId,
                     Character = command.CharacterDto
                 };
-            }).TapTry(async (@event) =>
+            })
+            .TapTry(async (@event) =>
             {
                 session.Events.Append(command.CombatId, @event);
                 await session.SaveChangesAsync();

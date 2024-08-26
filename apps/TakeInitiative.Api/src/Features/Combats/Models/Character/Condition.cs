@@ -1,4 +1,4 @@
 namespace TakeInitiative.Api.Features.Combats;
 
-public record Condition(Guid Id, string Name, int StartingTurnNumber, int StaringRoundNumber, string Note);
+public record Condition(Guid Id, string Name, string Note);
 
