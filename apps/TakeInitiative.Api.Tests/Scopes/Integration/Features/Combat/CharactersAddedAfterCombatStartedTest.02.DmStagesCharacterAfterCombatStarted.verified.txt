@@ -47,7 +47,7 @@
       Hidden: false,
       CopyNumber: null,
       Id: Guid_3,
-      Name: Another EnemyTYPE,
+      Name: Another Enemy!,
       Health: {
         HasHealth: true,
         MaxHealth: 20,

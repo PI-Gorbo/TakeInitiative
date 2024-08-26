@@ -7,6 +7,18 @@ namespace TakeInitiative.Api.Tests.Integration;
 
 public static class WebAppClientExtensions
 {
+
+    private static Task<Result<TResponse>> Delete<TRequest, TResponse>(this IWebAppClient client, TRequest req, string url, int statusCode = 200) where TRequest : class
+    => Result.Try(async () =>
+        {
+            var result = await client.AlbaHost.Scenario(_ =>
+            {
+                _.Delete.Json(req).ToUrl(url);
+                _.StatusCodeShouldBe(statusCode);
+            });
+            return await result.ReadAsJsonAsync<TResponse>() ?? throw new InvalidCastException($"Could not cast response to type of {typeof(TResponse).Name}");
+        });
+
     private static Task<Result<TResponse>> Post<TRequest, TResponse>(this IWebAppClient client, TRequest req, string url, int statusCode = 200) where TRequest : class
         => Result.Try(async () =>
             {
@@ -95,5 +107,9 @@ public static class WebAppClientExtensions
 
     public static Task<Result<CombatResponse>> PutUpdateInitiativeCharacter(this IWebAppClient client, PutUpdateInitiativeCharacterRequest request)
     => client.Put<PutUpdateInitiativeCharacterRequest, CombatResponse>(request, "/api/combat/initiative/character");
+
+
+    public static Task<Result<CombatResponse>> DeleteInitiativeCharacter(this IWebAppClient client, DeleteInitiativeCharacterRequest request)
+=> client.Delete<DeleteInitiativeCharacterRequest, CombatResponse>(request, "/api/combat/initiative/character");
 
 }

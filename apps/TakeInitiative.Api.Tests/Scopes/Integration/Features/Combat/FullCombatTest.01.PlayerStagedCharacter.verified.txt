@@ -79,7 +79,7 @@
       },
       Hidden: false,
       CopyNumber: null,
-      Id: Guid_6,
+      Id: PlayerFirstCharacterId,
       Name: My Super Duper Character,
       Health: {
         HasHealth: true,

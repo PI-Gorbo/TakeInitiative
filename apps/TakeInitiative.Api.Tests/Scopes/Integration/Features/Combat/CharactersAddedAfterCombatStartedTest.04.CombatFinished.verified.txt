@@ -32,7 +32,7 @@
           NewInitiativeList: [
             {
               CharacterId: Guid_2,
-              CharacterName: Another EnemyTYPE,
+              CharacterName: Another Enemy!,
               Roll: [
                 10
               ]
@@ -83,7 +83,7 @@
       ],
       Conditions: [],
       Id: Guid_2,
-      Name: Another EnemyTYPE,
+      Name: Another Enemy!,
       Health: {
         HasHealth: true,
         MaxHealth: 20,

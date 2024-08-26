@@ -9,12 +9,12 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
 {
     public Task<Combat> Apply(TurnEndedEvent @event, Combat Combat, IEvent<TurnEndedEvent> eventDetails, IQuerySession session)
     {
-        if (Combat.InitiativeIndex < 0 || Combat.InitiativeList.Count == 0 || Combat.InitiativeIndex > Combat.InitiativeList.Count)
+        if (!Combat.InitiativeIndex.HasValue || Combat.InitiativeList.Count == 0 || Combat.InitiativeIndex > Combat.InitiativeList.Count)
         {
             return Task.FromResult(Combat); // WHY??
         }
 
-        var currentCharacterId = Combat.InitiativeList[Combat.InitiativeIndex].Id;
+        var currentCharacterId = Combat.InitiativeList[Combat.InitiativeIndex.Value].Id;
         var (nextInitiativeIndex, nextRoundNumber) = Combat.GetNextTurnInfo();
 
         // Compose the history information.

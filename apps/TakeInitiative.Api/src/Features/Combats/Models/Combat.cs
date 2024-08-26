@@ -15,7 +15,7 @@ public record Combat
     public ImmutableList<PlannedCombatStage> PlannedStages { get; set; } = [];
     public ImmutableList<StagedCharacter> StagedList { get; set; } = [];
     public ImmutableList<InitiativeCharacter> InitiativeList { get; set; } = [];
-    public int InitiativeIndex { get; set; }
+    public int? InitiativeIndex { get; set; }
     public int? RoundNumber { get; set; }
     public DateTimeOffset? FinishedTimestamp { get; set; }
 
@@ -57,7 +57,15 @@ public record Combat
         };
     }
 
-    public (int initiative, int turnNumber) GetNextTurnInfo() => InitiativeIndex + 1 == InitiativeList.Count
+    public (int initiative, int turnNumber) GetNextTurnInfo()
+    {
+        if (!InitiativeIndex.HasValue)
+        {
+            throw new InvalidOperationException("Combat has not been started");
+        }
+
+        return InitiativeIndex.Value + 1 == InitiativeList.Count
         ? (0, (RoundNumber ?? 0) + 1) // At the end of the round, reset to top of initiative and increment round number count.
-        : (InitiativeIndex + 1, RoundNumber ?? 0); // Otherwise, just increment initiative index.
+        : (InitiativeIndex.Value + 1, RoundNumber ?? 0); // Otherwise, just increment initiative index.
+    }
 }

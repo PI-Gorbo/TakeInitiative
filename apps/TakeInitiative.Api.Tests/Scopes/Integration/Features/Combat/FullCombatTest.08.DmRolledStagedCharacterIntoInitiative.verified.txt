@@ -21,14 +21,14 @@
           TYPE: CombatInitiativeRolled,
           Rolls: [
             {
-              CharacterId: Guid_2,
+              CharacterId: PlayerFirstCharacterId,
               CharacterName: My Super Duper Character,
               Roll: [
                 20
               ]
             },
             {
-              CharacterId: Guid_3,
+              CharacterId: Guid_2,
               CharacterName: Intro Enemy,
               Roll: [
                 15
@@ -38,7 +38,7 @@
         },
         {
           TYPE: TurnStarted,
-          CharacterId: Guid_2
+          CharacterId: PlayerFirstCharacterId
         }
       ],
       Executor: DmId
@@ -47,10 +47,12 @@
       Timestamp: DateTimeOffset_3,
       Events: [
         {
-          TYPE: CharacterHealthChanged,
-          CharacterId: Guid_2,
-          From: 10,
-          To: 5
+          TYPE: CharacterConditionAdded,
+          ConditionId: ConditionId,
+          CharacterId: PlayerFirstCharacterId,
+          Name: Paralyzed,
+          RoundNumber: 1,
+          InitiativeCount: 0
         }
       ],
       Executor: DmId
@@ -59,38 +61,50 @@
       Timestamp: DateTimeOffset_4,
       Events: [
         {
-          TYPE: TurnEnded,
-          CharacterId: Guid_2
-        },
-        {
-          TYPE: TurnStarted,
-          CharacterId: Guid_3
+          TYPE: CharacterHealthChanged,
+          CharacterId: PlayerFirstCharacterId,
+          From: 10,
+          To: 5
         }
       ],
-      Executor: PlayerId
+      Executor: DmId
     },
     {
       Timestamp: DateTimeOffset_5,
       Events: [
         {
+          TYPE: TurnEnded,
+          CharacterId: PlayerFirstCharacterId
+        },
+        {
+          TYPE: TurnStarted,
+          CharacterId: Guid_2
+        }
+      ],
+      Executor: PlayerId
+    },
+    {
+      Timestamp: DateTimeOffset_6,
+      Events: [
+        {
           TYPE: CharactersAddedToInitiative,
           NewInitiativeList: [
             {
-              CharacterId: Guid_2,
+              CharacterId: PlayerFirstCharacterId,
               CharacterName: My Super Duper Character,
               Roll: [
                 20
               ]
             },
             {
-              CharacterId: Guid_3,
+              CharacterId: Guid_2,
               CharacterName: My Super Duper Character,
               Roll: [
                 15
               ]
             },
             {
-              CharacterId: Guid_4,
+              CharacterId: Guid_3,
               CharacterName: My Super Duper Character,
               Roll: [
                 10
@@ -112,13 +126,13 @@
   ],
   PlannedStages: [
     {
-      Id: Guid_5,
+      Id: Guid_4,
       Name: Boss Fight,
       Npcs: [
         {
-          StageId: Guid_5,
+          StageId: Guid_4,
           Quantity: 10,
-          Id: Guid_6,
+          Id: Guid_5,
           Name: 10 goblins in a trench coat,
           Health: {
             HasHealth: false,
@@ -149,8 +163,14 @@
       InitiativeValue: [
         20
       ],
-      Conditions: [],
-      Id: Guid_2,
+      Conditions: [
+        {
+          Id: ConditionId,
+          Name: Paralyzed,
+          Note: AHHHH
+        }
+      ],
+      Id: PlayerFirstCharacterId,
       Name: My Super Duper Character,
       Health: {
         HasHealth: true,
@@ -169,7 +189,7 @@
       PlayerId: DmId,
       CharacterOriginDetails: {
         CharacterOrigin: 0,
-        Id: Guid_7
+        Id: Guid_6
       },
       Hidden: true,
       CopyNumber: null,
@@ -177,7 +197,7 @@
         15
       ],
       Conditions: [],
-      Id: Guid_3,
+      Id: Guid_2,
       Name: Intro Enemy,
       Health: {
         HasHealth: false,
@@ -204,8 +224,8 @@
         10
       ],
       Conditions: [],
-      Id: Guid_4,
-      Name: Another EnemyTYPE,
+      Id: Guid_3,
+      Name: Another Enemy!,
       Health: {
         HasHealth: true,
         MaxHealth: 20,

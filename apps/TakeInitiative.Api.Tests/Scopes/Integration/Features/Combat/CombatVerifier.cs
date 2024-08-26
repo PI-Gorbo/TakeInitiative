@@ -27,7 +27,7 @@ public class CombatVerifier
     {
         settings.UseFileName(fileName);
         var serializedValue = JsonSerializer.Serialize(combat);
-        serializedValue = serializedValue.Replace("!", "TYPE");
+        serializedValue = serializedValue.Replace("\"!\"", "\"TYPE\"");
         return VerifyJson(serializedValue, settings);
     }
 }

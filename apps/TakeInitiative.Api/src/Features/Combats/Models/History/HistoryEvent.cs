@@ -11,6 +11,8 @@ namespace TakeInitiative.Api.Features.Combats;
 [JsonDerivedType(typeof(RoundEnded), typeDiscriminator: "RoundEnded")]
 [JsonDerivedType(typeof(CharacterRemoved), typeDiscriminator: "CharacterRemoved")]
 [JsonDerivedType(typeof(CharactersAddedToInitiative), typeDiscriminator: "CharactersAddedToInitiative")]
+[JsonDerivedType(typeof(CharacterConditionAdded), typeDiscriminator: "CharacterConditionAdded")]
+[JsonDerivedType(typeof(CharacterConditionRemoved), typeDiscriminator: "CharacterConditionRemoved")]
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "!")]
 public abstract record HistoryEvent
 {

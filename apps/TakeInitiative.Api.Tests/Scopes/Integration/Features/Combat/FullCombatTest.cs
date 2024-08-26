@@ -96,23 +96,21 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
             PlannedCombatId = plannedCombat.Id,
         });
         openedCombat.Should().Succeed();
-
         var combat = openedCombat.Value.Combat;
-
         await verifier
             .RegisterKnownGuid(combat.Id, "CombatId")
             .RegisterKnownGuid(combat.DungeonMaster, "DmId")
             .Verify(combat, "FullCombatTest.00.OpenedCombat");
 
         // Player adds their character to the combat.
-        var firstCharacterId = Guid.NewGuid();
+        // var firstCharacterId = Guid.NewGuid();
         var addStagedPlayerCharacterResult = await fixture
             .LoginAsUser(Users.Player)
             .PutUpsertStagedCharacter(new()
             {
                 CombatId = openedCombat.Value.Combat.Id,
                 Character = new StagedCombatCharacterDto(
-                    Id: firstCharacterId,
+                    Id: Guid.NewGuid(),
                     ArmourClass: 20,
                     Health: new CharacterHealth()
                     {
@@ -131,6 +129,7 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
             });
         addStagedPlayerCharacterResult.Should().Succeed();
         combat = addStagedPlayerCharacterResult.Value.Combat;
+        var firstCharacterId = combat.StagedList.Find(x => x.Name == "My Super Duper Character")!.Id;
         await verifier
             .RegisterKnownGuid(firstCharacterId, "PlayerFirstCharacterId")
             .RegisterKnownGuid(combat.CurrentPlayers[0].UserId, "PlayerId")
@@ -176,6 +175,7 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
 
         // The DM will update the character to be not be hidden.
         InitiativeCharacter notVisibleDmCharacter = combat.InitiativeList[0];
+        Guid conditionId = Guid.NewGuid();
         var setDmCharacterToVisible = await fixture.PutUpdateInitiativeCharacter(new()
         {
             Character = new()
@@ -186,12 +186,17 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
                 Hidden = false,
                 InitiativeValue = notVisibleDmCharacter.InitiativeValue,
                 Health = notVisibleDmCharacter.Health,
+                Conditions = [
+                    new(conditionId, "Paralyzed", "AHHHH")
+                ]
             },
             CombatId = combat.Id,
         });
         setDmCharacterToVisible.Should().Succeed();
-        combat = startCombatResult.Value.Combat;
-        await verifier.Verify(combat, "FullCombatTest.04.DmSetsCharacterToVisible");
+        combat = setDmCharacterToVisible.Value.Combat;
+        await verifier
+            .RegisterKnownGuid(conditionId, "ConditionId")
+            .Verify(combat, "FullCombatTest.04.DmSetsCharacterToVisible");
 
         // It is the player's turn.
         // Imagine the player rolls and does some damage to the enemy.
@@ -210,6 +215,9 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
                 {
                     CurrentHealth = dmCharacter.Health.CurrentHealth - 5,
                 },
+                Conditions = [
+                    new(conditionId, "Paralyzed", "AHHHH")
+                ]
             },
             CombatId = combat.Id,
         });
@@ -277,6 +285,41 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
         combat = addStagedCharacterToInitiativeResult.Value.Combat;
         await verifier.Verify(combat, "FullCombatTest.08.DmRolledStagedCharacterIntoInitiative");
 
+        // Remove the paralyzed condition from the DM's character.
+        InitiativeCharacter dmCharacterWithCondition = combat.InitiativeList[0];
+        var removedCondition = await fixture.PutUpdateInitiativeCharacter(new()
+        {
+            Character = new()
+            {
+                Id = dmCharacterWithCondition.Id,
+                Name = dmCharacterWithCondition.Name,
+                ArmourClass = dmCharacterWithCondition.ArmourClass,
+                Hidden = dmCharacterWithCondition.Hidden,
+                InitiativeValue = dmCharacterWithCondition.InitiativeValue,
+                Health = dmCharacterWithCondition.Health! with
+                {
+                    CurrentHealth = dmCharacterWithCondition.Health.CurrentHealth - 5,
+                },
+                Conditions = []
+            },
+            CombatId = combat.Id,
+        });
+        removedCondition.Should().Succeed();
+        combat = removedCondition.Value.Combat;
+        await verifier.Verify(combat, "FullCombatTest.09.RemovedParalyzedCondition");
+
+        // Remove the player's character from the combat.
+        var deleteCharacterResponse = await fixture.DeleteInitiativeCharacter(
+            new()
+            {
+                CombatId = combat.Id,
+                CharacterId = firstCharacterId,
+            }
+        );
+        deleteCharacterResponse.Should().Succeed();
+        combat = deleteCharacterResponse.Value.Combat;
+        await verifier.Verify(combat, "FullCombatTest.10.CharacterRemoved");
+
         // Finish the combat
         var finishCombatResult = await fixture
             .LoginAsUser(Users.DM)
@@ -286,6 +329,6 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
             });
         finishCombatResult.Should().Succeed();
         combat = finishCombatResult.Value.Combat;
-        await verifier.Verify(combat, "FullCombatTest.09.CombatFinished");
+        await verifier.Verify(combat, "FullCombatTest.11.CombatFinished");
     }
 }

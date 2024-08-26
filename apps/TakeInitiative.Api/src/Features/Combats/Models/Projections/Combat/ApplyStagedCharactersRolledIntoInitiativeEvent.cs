@@ -44,7 +44,7 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
         var newStagedList = Combat.StagedList.Where(x => !x.Id.In(stagedCharactersToRemove)).ToImmutableList();
 
         // Determine new Initiative Index
-        Maybe<Guid> characterWithCurrentTurn = Combat.InitiativeList.Count > 0 ? Combat.InitiativeList[Combat.InitiativeIndex].Id : Maybe.None;
+        Maybe<Guid> characterWithCurrentTurn = Combat.InitiativeIndex.HasValue && Combat.InitiativeList.Count > 0 ? Combat.InitiativeList[Combat.InitiativeIndex.Value].Id : Maybe.None;
         var newInitiativeIndex = characterWithCurrentTurn.HasValue ? newInitiativeList.FindIndex(x => x.Id == characterWithCurrentTurn.Value) : 0; // Maintains the initiative index, so that it still points to the character whos turn it was before.
 
         // Determine History
