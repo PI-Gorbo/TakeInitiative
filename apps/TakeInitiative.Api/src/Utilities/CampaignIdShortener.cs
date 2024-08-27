@@ -19,7 +19,7 @@ public static class CampaignIdShortener
         return Result.SuccessIf(id != null, "No provided value")
         .MapTry(() =>
         {
-            var convertedId = id.Replace("_", "/")
+            var convertedId = id!.Replace("_", "/")
                                 .Replace("-", "+")
                                 + "==";
 

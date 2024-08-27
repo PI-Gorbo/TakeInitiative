@@ -24,7 +24,7 @@ export type TakeInitColour =
     | "take-grey"
     | "take-grey-light"
     | "take-grey-dark"
-    | "take-creme";
+    | "take-cream";
 
 export const TakeInitContrastColour: Record<TakeInitColour, string> = {
     "take-navy": "white",
@@ -44,7 +44,7 @@ export const TakeInitContrastColour: Record<TakeInitColour, string> = {
     "take-purple-dark": "take-grey-light",
     "take-purple-very-dark": "take-grey-light",
     "take-purple-light": "take-grey-light",
-    "take-creme": "take-navy",
+    "take-cream": "take-navy",
     "take-charcoal": "white",
 };
 

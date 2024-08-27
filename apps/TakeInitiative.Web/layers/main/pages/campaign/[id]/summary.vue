@@ -1,5 +1,5 @@
 <template>
-    <main class="flex flex-col gap-4 pt-2">
+    <main class="flex flex-col gap-4 px-2 pt-2">
         <header>
             <label class="font-NovaCut text-xl"
                 >Welcome to

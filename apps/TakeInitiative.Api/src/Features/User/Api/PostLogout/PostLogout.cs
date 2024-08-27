@@ -7,11 +7,7 @@ using Microsoft.Extensions.Options;
 
 namespace TakeInitiative.Api.Features.Users;
 
-public class PostLogout(
-    IOptions<JWTOptions> JWTOptions,
-    UserManager<ApplicationUser> UserManager,
-    SignInManager<ApplicationUser> SignInManager
-    ) : EndpointWithoutRequest
+public class PostLogout() : EndpointWithoutRequest
 {
     public override void Configure()
     {
@@ -23,7 +19,7 @@ public class PostLogout(
         {
             await CookieAuth.SignOutAsync();
         }
-        catch (InvalidOperationException e)
+        catch
         {
             ThrowError("User is not logged in", (int)HttpStatusCode.Unauthorized);
         }

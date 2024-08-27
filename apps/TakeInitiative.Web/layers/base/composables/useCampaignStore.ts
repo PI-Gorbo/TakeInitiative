@@ -86,7 +86,6 @@ export const useCampaignStore = defineStore("campaignStore", () => {
             connection.state == signalR.HubConnectionState.Connected &&
             state.campaign?.id != campaignDetails.campaign.id
         ) {
-            console.log("Left old group");
             await connection.send("Leave", state.campaign?.id);
         }
 

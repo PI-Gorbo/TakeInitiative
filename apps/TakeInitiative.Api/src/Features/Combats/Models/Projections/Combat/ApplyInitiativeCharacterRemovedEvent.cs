@@ -13,7 +13,7 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
 
         // Determine the new initiative & round numbers.
         var removeCharacterIndex = Combat.InitiativeList.FindIndex(x => x.Id == @event.CharacterId);
-        if (removeCharacterIndex == -1)
+        if (!Combat.InitiativeIndex.HasValue || removeCharacterIndex == -1)
         {
             return Combat;
         }
@@ -47,7 +47,7 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
             };
         }
 
-        var currentTurnCharacterId = Combat.InitiativeList[Combat.InitiativeIndex].Id;
+        var currentTurnCharacterId = Combat.InitiativeList[Combat.InitiativeIndex.Value].Id;
         var updatedInitiativeList = Combat.InitiativeList.RemoveAt(removeCharacterIndex);
         return Combat with
         {

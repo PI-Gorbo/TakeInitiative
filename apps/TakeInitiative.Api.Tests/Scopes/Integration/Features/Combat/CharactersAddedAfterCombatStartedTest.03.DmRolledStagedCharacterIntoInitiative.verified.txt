@@ -32,7 +32,7 @@
           NewInitiativeList: [
             {
               CharacterId: Guid_2,
-              CharacterName: Another EnemyTYPE,
+              CharacterName: Another Enemy!,
               Roll: [
                 10
               ]
@@ -67,13 +67,14 @@
         CharacterOrigin: 0,
         Id: null
       },
+      Hidden: false,
+      CopyNumber: null,
       InitiativeValue: [
         10
       ],
-      Hidden: false,
-      CopyNumber: null,
+      Conditions: [],
       Id: Guid_2,
-      Name: Another EnemyTYPE,
+      Name: Another Enemy!,
       Health: {
         HasHealth: true,
         MaxHealth: 20,

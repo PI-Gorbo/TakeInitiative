@@ -1,7 +1,9 @@
 <template>
     <div class="flex flex-col">
         <label
+            v-if="props.label"
             :class="[`text-${props.textColour} block text-sm font-medium`]"
+            list="suggestions"
             >{{ props.label }}</label
         >
         <input
@@ -24,6 +26,11 @@
         <label v-if="props.errorMessage != null" class="text-take-red">
             {{ props.errorMessage }}
         </label>
+        <datalist v-if="props.suggestions" id="suggestions">
+            <option v-for="(opt, index) in props.suggestions" :key="index">
+                {{ opt }}
+            </option>
+        </datalist>
     </div>
 </template>
 <script setup lang="ts">
@@ -39,6 +46,7 @@ const props = withDefaults(
             textColour?: TakeInitColour | "white";
             autoFocus?: boolean;
             disabled?: boolean;
+            suggestions?: string[] | undefined;
         }
     >(),
     {
@@ -49,6 +57,7 @@ const props = withDefaults(
         autoFocus: false,
         errorMessage: null,
         disabled: false,
+        suggestions: undefined,
     },
 );
 

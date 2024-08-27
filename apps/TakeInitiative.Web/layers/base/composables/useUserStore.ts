@@ -70,7 +70,7 @@ export const useUserStore = defineStore("userStore", () => {
     }
 
     async function signUp(signUpRequest: SignUpRequest): Promise<unknown> {
-        return await api.user.signUp(signUpRequest);
+        return await api.user.signUp(signUpRequest).then(fetchUser);
     }
 
     async function confirmEmail(code: string): Promise<unknown> {
@@ -111,9 +111,7 @@ export const useUserStore = defineStore("userStore", () => {
             .delete(request)
             .then(fetchUser)
             .then(async () => {
-                console.log(campaignList.value);
                 if ((campaignList.value?.length ?? 0) == 0) {
-                    console.log("Navigating to create or join page");
                     return useNavigator().toCreateOrJoinCampaign();
                 }
 

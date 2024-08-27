@@ -12,7 +12,7 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
         var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
 
         List<PlannedCombatStage> plannedStages = new(); // The new list of planned stages after the stage request is over.
-        List<CombatCharacter> CharactersToStage = new(); // The list of characters to put into the staged list, from the plannedStages list.
+        List<StagedCharacter> CharactersToStage = new(); // The list of characters to put into the staged list, from the plannedStages list.
         foreach (var plannedStage in Combat.PlannedStages)
         {
 
@@ -24,8 +24,8 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
 
             var characterDTOsToStage = @event.PlannedCharactersToStage[plannedStage.Id];
             // For each stage, divide the stage's npcs into two groups.
-            IEnumerable<PlannedCombatCharacter> npcsToKeepPlanned = [];
-            IEnumerable<(Guid[] newIdsToUse, PlannedCombatCharacter character)> npcsToStage = [];
+            IEnumerable<PlannedCharacter> npcsToKeepPlanned = [];
+            IEnumerable<(Guid[] newIdsToUse, PlannedCharacter character)> npcsToStage = [];
             if (characterDTOsToStage.Length == 0)
             {
                 npcsToKeepPlanned = plannedStage.Npcs;
@@ -80,19 +80,17 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
                     if (npc.Quantity == 1)
                     {
                         return [
-                            new CombatCharacter()
-                            {
-                                Id = ids.First(),
-                                CharacterOriginDetails = CharacterOriginDetails.PlannedCharacter(npc.Id),
-                                Name = npc.Name,
-                                Initiative = npc.Initiative,
-                                InitiativeValue = [],
-                                PlayerId = @event.UserId,
-                                ArmourClass = npc.ArmourClass,
-                                Health = npc.Health,
-                                Hidden = true,
-                                CopyNumber = null
-                            }
+                            new StagedCharacter(
+                                Id: ids.First(),
+                                CharacterOriginDetails: CharacterOriginDetails.PlannedCharacter(npc.Id),
+                                Name: npc.Name,
+                                Initiative: npc.Initiative,
+                                PlayerId: @event.UserId,
+                                ArmourClass: npc.ArmourClass,
+                                Health: npc.Health,
+                                Hidden: true,
+                                CopyNumber: null
+                            )
                         ];
                     }
 
@@ -100,23 +98,21 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
                         .Select(x => x.CopyNumber)
                         .Max() + 1 ?? 1;
 
-                    var combatCharactersToOutput = new List<CombatCharacter>();
+                    var combatCharactersToOutput = new List<StagedCharacter>();
                     for (int i = 0; i < npc.Quantity; i++)
                     {
                         combatCharactersToOutput.Add(
-                            new CombatCharacter()
-                            {
-                                Id = ids[i],
-                                CharacterOriginDetails = CharacterOriginDetails.PlannedCharacter(npc.Id),
-                                Name = $"{npc.Name} ({nextQuantityNumber})",
-                                Initiative = npc.Initiative,
-                                InitiativeValue = [],
-                                PlayerId = @event.UserId,
-                                ArmourClass = npc.ArmourClass,
-                                Health = npc.Health,
-                                Hidden = true,
-                                CopyNumber = nextQuantityNumber++
-                            }
+                            new StagedCharacter(
+                                Id: ids[i],
+                                CharacterOriginDetails: CharacterOriginDetails.PlannedCharacter(npc.Id),
+                                Name: $"{npc.Name} ({nextQuantityNumber})",
+                                Initiative: npc.Initiative,
+                                PlayerId: @event.UserId,
+                                ArmourClass: npc.ArmourClass,
+                                Health: npc.Health,
+                                Hidden: true,
+                                CopyNumber: nextQuantityNumber++
+                            )
                         );
                     }
 

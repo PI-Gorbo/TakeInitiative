@@ -91,7 +91,6 @@ const [confirmPassword, confirmPasswordProps] = defineField("confirmPassword", {
 const userStore = useUserStore();
 async function submit() {
     formState.submitError = null; // Reset the submit error.
-    console.log(password.value, confirmPassword.value);
     const validation = await validate();
     if (validation.valid == false) {
         return;

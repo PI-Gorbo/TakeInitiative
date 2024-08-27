@@ -13,8 +13,7 @@ using TakeInitiative.Utilities.Extensions;
 namespace TakeInitiative.Api.Features.Users;
 
 public class PutResetPassword(
-    UserManager<ApplicationUser> UserManager,
-    ResetPasswordEmailSender resetPasswordEmailSender
+    UserManager<ApplicationUser> UserManager
     ) : Endpoint<PutResetPasswordRequest>
 {
     public override void Configure()

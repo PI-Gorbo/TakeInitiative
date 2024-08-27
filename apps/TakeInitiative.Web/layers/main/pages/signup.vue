@@ -217,26 +217,26 @@ async function onSignUp() {
         return;
     }
 
-    await userStore
+    return await userStore
         .signUp({
             email: email.value!,
             username: username.value!,
             password: password.value!,
         })
-        .then(() => (formState.success = true))
         .catch((error) => {
             formState.submitError = parseAsApiError<SignUpRequest>(error);
         })
-        .then(() => {
+        .then(async () => {
             if (redirectToPath != null) {
-                return Promise.resolve(navigateTo(redirectToPath));
+                return await navigateTo(redirectToPath);
             } else {
-                return Promise.resolve(
-                    userStore.navigateToFirstAvailableCampaignOrFallbackToCreateOrJoin(),
-                );
+                return await userStore.navigateToFirstAvailableCampaignOrFallbackToCreateOrJoin();
             }
         })
-        .finally(() => (formState.submitting = false));
+        .finally(() => {
+            formState.success = true;
+            formState.submitting = false;
+        });
 }
 
 // Computed Form Password display

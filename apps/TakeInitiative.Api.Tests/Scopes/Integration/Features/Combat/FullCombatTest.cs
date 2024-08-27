@@ -18,7 +18,7 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
     public FullCombatTest(AuthenticatedWebAppWithDatabaseFixture fixture)
     {
         this.fixture = fixture;
-        this.verifier = new CombatVerifier();
+        verifier = new CombatVerifier();
     }
 
     [Fact]
@@ -29,7 +29,7 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
         // Create a planned combat.
         var createPlannedCombat = await fixture.PostPlannedCombat(new()
         {
-            CampaignId = fixture.SeedData.CampaignId,
+            CampaignId = fixture.SeedData!.CampaignId,
             CombatName = "My planned combat"
         });
         createPlannedCombat.Should().Succeed();
@@ -96,42 +96,38 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
             PlannedCombatId = plannedCombat.Id,
         });
         openedCombat.Should().Succeed();
-
         var combat = openedCombat.Value.Combat;
-
         await verifier
             .RegisterKnownGuid(combat.Id, "CombatId")
             .RegisterKnownGuid(combat.DungeonMaster, "DmId")
             .Verify(combat, "FullCombatTest.00.OpenedCombat");
 
         // Player adds their character to the combat.
-        var firstCharacterId = Guid.NewGuid();
         var addStagedPlayerCharacterResult = await fixture
             .LoginAsUser(Users.Player)
-            .PutUpsertStagedCharacter(new()
+            .PostAddStagedCharacter(new()
             {
                 CombatId = openedCombat.Value.Combat.Id,
-                Character = new StagedCombatCharacterDto()
-                {
-                    Id = firstCharacterId,
-                    ArmourClass = 20,
-                    Health = new CharacterHealth()
+                Character = new(
+                    ArmourClass: 20,
+                    Health: new CharacterHealth()
                     {
                         CurrentHealth = 10,
                         MaxHealth = 20,
                         HasHealth = true,
                     },
-                    Hidden = false,
-                    Name = "My Super Duper Character",
-                    Initiative = new()
+                    Hidden: false,
+                    Name: "My Super Duper Character",
+                    Initiative: new()
                     {
                         Value = "1d20 + 3",
                         Strategy = InitiativeStrategy.Roll // Roll,
                     }
-                },
+                )
             });
         addStagedPlayerCharacterResult.Should().Succeed();
         combat = addStagedPlayerCharacterResult.Value.Combat;
+        var firstCharacterId = combat.StagedList.Find(x => x.Name == "My Super Duper Character")!.Id;
         await verifier
             .RegisterKnownGuid(firstCharacterId, "PlayerFirstCharacterId")
             .RegisterKnownGuid(combat.CurrentPlayers[0].UserId, "PlayerId")
@@ -140,7 +136,7 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
         // DM stages their own characters
         var addPlannedCharactersResult = await fixture
             .LoginAsUser(Users.DM)
-            .PostStagePlannedCharacters(new PutStagePlannedCharactersRequest()
+            .PostStagePlannedCharacters(new PostStagePlannedCharactersRequest()
             {
                 CombatId = combat.Id,
                 PlannedCharactersToStage = new()
@@ -159,7 +155,7 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
 
         // Setup a mock for the initial initiative rolls.
         combat.StagedList.Count.Should().Be(2);
-        A.CallTo(() => fixture.InitiativeRoller.ComputeRolls(A<IEnumerable<CombatCharacter>>._))
+        A.CallTo(() => fixture.InitiativeRoller.ComputeRolls(A<IEnumerable<StagedCharacter>>._))
             .Returns(new List<CharacterInitiativeRoll>()
             {
                 new(combat.StagedList[0].Id, [20]),
@@ -176,7 +172,8 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
         await verifier.Verify(combat, "FullCombatTest.03.CombatStarted");
 
         // The DM will update the character to be not be hidden.
-        CombatCharacter notVisibleDmCharacter = combat.InitiativeList[0];
+        InitiativeCharacter notVisibleDmCharacter = combat.InitiativeList[0];
+        Guid conditionId = Guid.NewGuid();
         var setDmCharacterToVisible = await fixture.PutUpdateInitiativeCharacter(new()
         {
             Character = new()
@@ -187,17 +184,22 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
                 Hidden = false,
                 InitiativeValue = notVisibleDmCharacter.InitiativeValue,
                 Health = notVisibleDmCharacter.Health,
+                Conditions = [
+                    new(conditionId, "Paralyzed", "AHHHH")
+                ]
             },
             CombatId = combat.Id,
         });
         setDmCharacterToVisible.Should().Succeed();
-        combat = startCombatResult.Value.Combat;
-        await verifier.Verify(combat, "FullCombatTest.04.DmSetsCharacterToVisible");
+        combat = setDmCharacterToVisible.Value.Combat;
+        await verifier
+            .RegisterKnownGuid(conditionId, "ConditionId")
+            .Verify(combat, "FullCombatTest.04.DmSetsCharacterToVisible");
 
         // It is the player's turn.
         // Imagine the player rolls and does some damage to the enemy.
         // The DM would subtract some damage from their character's health.
-        CombatCharacter dmCharacter = combat.InitiativeList[0];
+        InitiativeCharacter dmCharacter = combat.InitiativeList[0];
         var damageDmCharacter = await fixture.PutUpdateInitiativeCharacter(new()
         {
             Character = new()
@@ -211,6 +213,9 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
                 {
                     CurrentHealth = dmCharacter.Health.CurrentHealth - 5,
                 },
+                Conditions = [
+                    new(conditionId, "Paralyzed", "AHHHH")
+                ]
             },
             CombatId = combat.Id,
         });
@@ -232,25 +237,25 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
         // The DM adds a character to the staged list.
         var addStagedCharacterResult = await fixture
             .LoginAsUser(Users.DM)
-            .PutUpsertStagedCharacter(new()
+            .PostAddStagedCharacter(new()
             {
                 CombatId = combat.Id,
-                Character = new()
-                {
-                    Id = Guid.NewGuid(),
-                    Health = new()
+                Character = new(
+                    Health: new()
                     {
                         CurrentHealth = 10,
                         MaxHealth = 20,
                         HasHealth = true,
                     },
-                    Initiative = new()
+                    Initiative: new()
                     {
                         Strategy = InitiativeStrategy.Roll,
                         Value = "10"
                     },
-                    Name = "Another Enemy!"
-                }
+                    Name: "Another Enemy!",
+                    ArmourClass: null,
+                    Hidden: false
+                )
             });
         addStagedCharacterResult.Should().Succeed();
         combat = addStagedCharacterResult.Value.Combat;
@@ -258,7 +263,7 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
 
         // The DM then rolls the character into initiative.
         var characterId = combat.StagedList.First().Id;
-        A.CallTo(() => fixture.InitiativeRoller.ComputeRolls(A<List<CombatCharacter>>._, A<List<CombatCharacter>>._))
+        A.CallTo(() => fixture.InitiativeRoller.ComputeRolls(A<List<StagedCharacter>>._, A<List<InitiativeCharacter>>._))
             .Returns(new List<CharacterInitiativeRoll>()
             {
                 new(combat.InitiativeList[0].Id, [20]),
@@ -277,6 +282,41 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
         combat = addStagedCharacterToInitiativeResult.Value.Combat;
         await verifier.Verify(combat, "FullCombatTest.08.DmRolledStagedCharacterIntoInitiative");
 
+        // Remove the paralyzed condition from the DM's character.
+        InitiativeCharacter dmCharacterWithCondition = combat.InitiativeList[0];
+        var removedCondition = await fixture.PutUpdateInitiativeCharacter(new()
+        {
+            Character = new()
+            {
+                Id = dmCharacterWithCondition.Id,
+                Name = dmCharacterWithCondition.Name,
+                ArmourClass = dmCharacterWithCondition.ArmourClass,
+                Hidden = dmCharacterWithCondition.Hidden,
+                InitiativeValue = dmCharacterWithCondition.InitiativeValue,
+                Health = dmCharacterWithCondition.Health! with
+                {
+                    CurrentHealth = dmCharacterWithCondition.Health.CurrentHealth - 5,
+                },
+                Conditions = []
+            },
+            CombatId = combat.Id,
+        });
+        removedCondition.Should().Succeed();
+        combat = removedCondition.Value.Combat;
+        await verifier.Verify(combat, "FullCombatTest.09.RemovedParalyzedCondition");
+
+        // Remove the player's character from the combat.
+        var deleteCharacterResponse = await fixture.DeleteInitiativeCharacter(
+            new()
+            {
+                CombatId = combat.Id,
+                CharacterId = firstCharacterId,
+            }
+        );
+        deleteCharacterResponse.Should().Succeed();
+        combat = deleteCharacterResponse.Value.Combat;
+        await verifier.Verify(combat, "FullCombatTest.10.CharacterRemoved");
+
         // Finish the combat
         var finishCombatResult = await fixture
             .LoginAsUser(Users.DM)
@@ -286,6 +326,6 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
             });
         finishCombatResult.Should().Succeed();
         combat = finishCombatResult.Value.Combat;
-        await verifier.Verify(combat, "FullCombatTest.09.CombatFinished");
+        await verifier.Verify(combat, "FullCombatTest.11.CombatFinished");
     }
 }

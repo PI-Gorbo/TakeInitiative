@@ -62,7 +62,7 @@ public class MartenRoleStore :
                 return null;
             }
 
-            return session.Query<ApplicationUserRole>().SingleOrDefaultAsync(x => x.Id == parsedId);
+            return await session.Query<ApplicationUserRole>().SingleOrDefaultAsync(x => x.Id == parsedId);
         }).Finally(x => x.IsSuccess ? x.Value : null);
     }
 
@@ -131,7 +131,7 @@ public class MartenRoleStore :
            session.Store(role);
            await session.SaveChangesAsync();
        }).Finally(
-            x => x.IsSuccess ? IdentityResult.Success : IdentityResult.Failed(new IdentityError() { Code = "UPDATEW ROLE ERROR", Description = x.Error })
+            x => x.IsSuccess ? IdentityResult.Success : IdentityResult.Failed(new IdentityError() { Code = "UPDATE ROLE ERROR", Description = x.Error })
         );
     }
 }

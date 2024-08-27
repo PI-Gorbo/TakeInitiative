@@ -1,5 +1,5 @@
 <template>
-    <TransitionGroup name="fade" class="h-full w-full" tag="main">
+    <TransitionGroup name="fade" class="h-full w-full p-2" tag="main">
         <div key="loading" v-if="pending || campaignStore.state == undefined">
             Loading...
         </div>
@@ -9,7 +9,7 @@
             tag="section"
             key="combatMainDisplay"
             :class="[
-                'h-full w-full grid-cols-10 overflow-y-auto p-2',
+                'h-full w-full grid-cols-10 overflow-y-auto',
                 {
                     '': isSmallScreen,
                     grid: !isSmallScreen,
@@ -171,6 +171,7 @@
                     </div>
                     <FormButton
                         icon="trash"
+                        label="Delete Combat"
                         buttonColour="take-purple-light"
                         hoverButtonColour="take-red"
                         :click="
@@ -207,14 +208,26 @@
         </TransitionGroup>
 
         <section
-            class="flex flex-col items-center px-2"
+            class="flex justify-center"
             v-else
             key="createFirstPlannedCombat"
         >
-            <h2 class="w-full text-center text-xl">Create planned combat</h2>
-            <CreatePlannedCombatForm
-                :onCreatePlannedCombat="(req) => onCreatePlannedCombat(req!)"
-            />
+            <div
+                class="flex w-full flex-col items-center rounded bg-take-purple-dark px-5 py-2 md:w-2/3"
+            >
+                <h2 class="w-full text-center text-lg">
+                    Plan your first Combat
+                </h2>
+                <p class="w-full text-center text-sm">
+                    Add NPCs now, and then start the combat when you are ready!
+                </p>
+                <CreatePlannedCombatForm
+                    class="w-full"
+                    :onCreatePlannedCombat="
+                        (req) => onCreatePlannedCombat(req!)
+                    "
+                />
+            </div>
         </section>
 
         <Modal

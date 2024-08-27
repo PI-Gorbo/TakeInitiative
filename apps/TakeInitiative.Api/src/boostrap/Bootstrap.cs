@@ -24,12 +24,8 @@ public static class Bootstrap
         {
             opts.Connection(config.GetConnectionString("TakeDB") ?? throw new OperationCanceledException("Required Configuration 'ConnectionStrings:Marten' is missing."));
 
-            // Use system.text.json
-            // Use system.text.json
-            // var serializer = new Marten.Services.SystemTextJsonSerializer();
+            // Use system.text.json            
             opts.UseDefaultSerialization(serializerType: SerializerType.SystemTextJson);
-            // serializer.Customize(customize => customize.TypeInfoResolverChain.Add(new PolymorphicTypeResolver()));
-            // opts.Serializer(serializer);
 
             opts.Schema.For<ApplicationUser>();
             opts.Schema.For<ApplicationUserRole>();
@@ -100,7 +96,7 @@ public static class Bootstrap
 
                 opts.Events.OnRedirectToAccessDenied = ctx =>
                 {
-                    ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
+                    ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
                     return Task.CompletedTask;
                 };
                 opts.Cookie.Domain = config.GetValue<string>("CookieDomain") ?? throw new InvalidOperationException("Attempted to find configuration for the value CookieDomain but there was none provided.");

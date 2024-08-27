@@ -7,13 +7,15 @@ using TakeInitiative.Utilities;
 namespace TakeInitiative.Api.Features.Combats;
 public partial class CombatProjection : SingleStreamProjection<Combat>
 {
-    public async Task<Combat> Apply(StagedCharacterEvent @event, Combat Combat, IEvent<StagedCharacterEvent> eventDetails, IQuerySession session)
+    public Task<Combat> Apply(StagedCharacterEvent @event, Combat Combat, IEvent<StagedCharacterEvent> eventDetails, IQuerySession session)
     {
-        return Combat with
-        {
-            CurrentPlayers = this.ComputePlayersList(Combat.CurrentPlayers, @event.UserId),
-            StagedList = (Combat.StagedList ?? [])
+        return Task.FromResult(
+            Combat with
+            {
+                CurrentPlayers = ComputePlayersList(Combat.CurrentPlayers, @event.UserId),
+                StagedList = (Combat.StagedList ?? [])
                 .Add(@event.Character)
-        };
+            }
+        );
     }
 }

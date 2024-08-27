@@ -40,7 +40,7 @@ public class DeletePlannedCombat(IDocumentStore Store) : Endpoint<DeletePlannedC
 
             // Add a reference to the campaign.
             var campaign = await session.LoadAsync<Campaign>(req.CampaignId);
-            campaign.PlannedCombatIds.Remove(combat.Id);
+            campaign!.PlannedCombatIds.Remove(combat.Id);
 
             session.Store(campaign);
             await session.SaveChangesAsync();

@@ -77,10 +77,9 @@
         CharacterOrigin: 0,
         Id: null
       },
-      InitiativeValue: [],
       Hidden: false,
       CopyNumber: null,
-      Id: Guid_6,
+      Id: PlayerFirstCharacterId,
       Name: My Super Duper Character,
       Health: {
         HasHealth: true,

@@ -9,7 +9,6 @@ using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Users;
 public class PutLogin(
-    IOptions<JWTOptions> JWTOptions,
     UserManager<ApplicationUser> UserManager,
     SignInManager<ApplicationUser> SignInManager) : Endpoint<PutLoginRequest>
 {

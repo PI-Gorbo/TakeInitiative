@@ -8,4 +8,5 @@ public record CombatCharacterDto
     public required bool Hidden { get; set; }
     public required int[] InitiativeValue { get; set; }
     public required int? ArmourClass { get; set; }
+    public required Condition[] Conditions { get; set; }
 }

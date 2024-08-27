@@ -13,11 +13,11 @@ public record CharacterInitiative
     {
         get
         {
-            if (this.Strategy != InitiativeStrategy.Fixed) return null;
+            if (Strategy != InitiativeStrategy.Fixed) return null;
 
             try
             {
-                return Convert.ToInt32(this.Value);
+                return Convert.ToInt32(Value);
             }
             catch
             {
@@ -30,14 +30,22 @@ public record CharacterInitiative
     {
         get
         {
-            if (this.Strategy != InitiativeStrategy.Roll) return null;
-            return this.Value;
+            if (Strategy != InitiativeStrategy.Roll) return null;
+            return Value;
         }
     }
 
     public Result<int> RollInitiative(IDiceRoller roller)
     {
-        return this.Fixed
-            ?? roller.EvaluateRoll(this.Roll);
+        if (this.Strategy == InitiativeStrategy.Fixed)
+        {
+            return Result.Success(Fixed)
+                .Ensure(x => x.HasValue, "No fixed value provided.")
+                .Map(x => x!.Value);
+        }
+
+        return Result.Success(Roll)
+            .EnsureNotNull("No roll value provided")
+            .Bind(roller.EvaluateRoll);
     }
 }

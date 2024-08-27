@@ -7,7 +7,7 @@ using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Combats;
 
-public class PostStartCombat(IDocumentSession session, IHubContext<CampaignHub> campaignHub) : Endpoint<PostStartCombatRequest, CombatResponse>
+public class PostStartCombat(IHubContext<CampaignHub> campaignHub) : Endpoint<PostStartCombatRequest, CombatResponse>
 {
     public override void Configure()
     {

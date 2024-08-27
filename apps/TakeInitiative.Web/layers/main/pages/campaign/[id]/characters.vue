@@ -1,5 +1,5 @@
 <template>
-    <main class="px-2 py-2 sm:px-0">
+    <main class="px-2 py-2">
         <div
             v-if="
                 campaignMember?.characters == null ||
@@ -7,12 +7,13 @@
             "
             class="flex justify-center"
         >
-            <section class="rounded-md bg-take-purple-dark p-5 md:w-2/3">
-                <label
-                    class="flex w-full justify-center font-NovaCut text-lg text-take-yellow"
-                    >Looks like you don't have any characters yet. Create
-                    one!</label
-                >
+            <section class="rounded bg-take-purple-dark px-5 py-2 md:w-2/3">
+                <h2 class="w-full text-center text-lg">
+                    Create your first character
+                </h2>
+                <p class="w-full text-center text-sm">
+                    Characters can be quickly added to combats later!
+                </p>
                 <IndexModifyPlayerCharacterForm
                     :onCreate="
                         (req: PlayerCharacterDto) =>

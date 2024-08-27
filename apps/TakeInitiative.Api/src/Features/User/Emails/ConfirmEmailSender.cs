@@ -70,7 +70,7 @@ public class ConfirmEmailSender(
         }
 
         return await emailSender.SendEmail(
-            user.Email,
+            user.Email!,
             $"no-reply@{emailOpts.Value.Domain}",
             "Take Initiative - Email Confirmation",
             html
@@ -81,7 +81,7 @@ public class ConfirmEmailSender(
     {
         var assembly = Assembly.GetExecutingAssembly();
         var resourceName = "TakeInitiative.Api.Embedded.ConfirmationEmail.mjml";
-        using Stream stream = assembly.GetManifestResourceStream(resourceName);
+        using Stream stream = assembly.GetManifestResourceStream(resourceName)!;
         using StreamReader reader = new StreamReader(stream);
         return reader.ReadToEnd();
     }
@@ -90,6 +90,6 @@ public class ConfirmEmailSender(
     {
         var emailConfirmationCode = await userManager.GenerateEmailConfirmationTokenAsync(user);
         var code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(emailConfirmationCode));
-        return new Uri(new Uri(urlsOpts.Value.Web), $"/confirm?code={code}").ToString();
+        return new Uri(new Uri(urlsOpts.Value.Web!), $"/confirm?code={code}").ToString();
     }
 }

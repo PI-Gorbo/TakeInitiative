@@ -7,24 +7,24 @@ using TakeInitiative.Utilities;
 namespace TakeInitiative.Api.Features.Combats;
 public partial class CombatProjection : SingleStreamProjection<Combat>
 {
-    public async Task<Combat> Apply(CombatStartedEvent @event, Combat Combat, IEvent<CombatStartedEvent> eventDetails, IQuerySession session)
+    public async Task<Combat> Apply(CombatInitiativeRolledEvent @event, Combat Combat, IEvent<CombatInitiativeRolledEvent> eventDetails, IQuerySession session)
     {
         var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
         var newInitiativeList = @event.InitiativeRolls.Select((charInitiative, index) =>
         {
-            var stagedCharacter = Combat.StagedList.FirstOrDefault(x => x.Id == charInitiative.id, null);
+            var stagedCharacter = Combat.StagedList.FirstOrDefault(x => x!.Id == charInitiative.id, null);
             if (stagedCharacter == null)
             {
                 return null;
             }
 
-            return stagedCharacter with
-            {
-                InitiativeValue = charInitiative.rolls
-            };
+            return InitiativeCharacter.FromStagedCharacter(
+                stagedCharacter,
+                charInitiative.rolls
+            );
         })
         .Where(x => x != null)
-        .Cast<CombatCharacter>()
+        .Cast<InitiativeCharacter>()
         .OrderByDescending(x => x.InitiativeValue, new InitiativeComparer())
         .ToImmutableList();
 

@@ -11,7 +11,7 @@
                 .filter((x) => userIsDm || !x.char.character.hidden)"
             :key="charInfo.character.id"
             :class="[
-                'flex flex-wrap gap-2 rounded-xl border-2 border-take-purple-light p-2 transition-colors',
+                'flex flex-col gap-2 rounded-xl border-2 border-take-purple-light p-2 transition-colors',
                 {
                     'cursor-pointer':
                         (combatIsOpen || combatIsStarted) &&
@@ -32,82 +32,111 @@
                         : null
             "
         >
-            <header class="flex items-center gap-2 text-white">
-                <!-- Initiative -->
-                <div v-if="!combatIsOpen" class="flex gap-2">
-                    <div
-                        v-for="(value, index) in charInfo.character
-                            .initiativeValue"
-                        :class="[
-                            'flex items-center rounded-lg  p-1',
-                            {
-                                'text-xs': index != 0,
-                                'bg-take-navy-light': index == 0,
-                                'bg-take-navy-medium': index != 0,
-                            },
-                        ]"
-                    >
-                        {{ value }}
-                    </div>
-                </div>
-                <!-- Username -->
-                <span
-                    :class="[
-                        {
-                            'cursor-pointer':
-                                isEditableForUser(charInfo) &&
-                                (combatIsOpen ||
-                                    combatIsStarted ||
-                                    props.listToDisplay == 'Staging'),
-                        },
-                    ]"
-                >
-                    <FontAwesomeIcon
-                        class="text-take-yellow"
-                        :icon="combatStore.getIconForUser(charInfo)"
-                    />
-                    {{ charInfo.user?.username }}
-                </span>
-                <!-- Character Name -->
-                <span>
-                    {{ charInfo.character.name }}
-                </span>
-            </header>
-            <body class="flex-1">
-                <ol
-                    class="flex flex-row flex-wrap items-center justify-end gap-5"
-                >
-                    <li
+            <main
+                class="flex flex-wrap items-center justify-between gap-2 text-white"
+            >
+                <!-- Initiative value when combat initiative has been rolled -->
+                <aside class="flex items-center gap-2">
+                    <section v-if="!combatIsOpen" class="flex gap-2">
+                        <div
+                            v-if="isInitiativeCharacter(charInfo.character)"
+                            v-for="(value, index) in charInfo.character
+                                .initiativeValue"
+                            :class="[
+                                'flex items-center rounded-lg  p-1',
+                                {
+                                    'text-xs': index != 0,
+                                    'bg-take-navy-light': index == 0,
+                                    'bg-take-navy-medium': index != 0,
+                                },
+                            ]"
+                        >
+                            {{ value }}
+                        </div>
+                    </section>
+                    <section class="flex gap-2">
+                        <!-- Username -->
+                        <span
+                            :class="[
+                                {
+                                    'cursor-pointer':
+                                        isEditableForUser(charInfo) &&
+                                        (combatIsOpen ||
+                                            combatIsStarted ||
+                                            props.listToDisplay == 'Staging'),
+                                },
+                            ]"
+                        >
+                            <FontAwesomeIcon
+                                class="text-take-yellow"
+                                :icon="combatStore.getIconForUser(charInfo)"
+                            />
+                            {{ charInfo.user?.username }}
+                        </span>
+                        <!-- Character Name -->
+                        <span>
+                            {{ charInfo.character.name }}
+                        </span>
+                    </section>
+                </aside>
+
+                <aside class="flex flex-wrap gap-2">
+                    <section
                         v-if="
                             userIsDm &&
                             charInfo.character.playerId ==
                                 userStore.state.user?.userId
                         "
+                        class="rounded bg-take-purple p-1"
                     >
                         <FontAwesomeIcon
                             :icon="
                                 charInfo.character.hidden ? 'eye-slash' : 'eye'
                             "
                         />
-                    </li>
+                    </section>
+
                     <CharacterHealthDisplay
                         :health="charInfo.character.health"
                         :displayMethod="getHealthDisplayMethod(charInfo)"
-                        class="min-w-max"
+                        class="min-w-max rounded bg-take-purple p-1"
                     />
+
                     <CharacterArmourClassDisplay
                         :armourClass="charInfo.character.armourClass"
                         :armourClassDisplayMethod="
                             getArmourClassDisplayMethod(charInfo)
                         "
+                        class="rounded bg-take-purple p-1"
                     />
-                    <li v-if="combatIsOpen">
+
+                    <section v-if="combatIsOpen">
                         <FontAwesomeIcon icon="shoe-prints" />
                         {{ charInfo.character.initiative.value }}
+                    </section>
+
+                    <li
+                        v-if="isInitiativeCharacter(charInfo.character)"
+                        v-for="(
+                            condition, index
+                        ) in charInfo.character.conditions.toSorted((a, b) =>
+                            a.name > b.name ? 1 : -1,
+                        )"
+                        :key="index"
+                        :class="[
+                            `bg-${getConditionBackgroundColour(condition.name)} text-${TakeInitContrastColour[getConditionBackgroundColour(condition.name)]} flex items-center gap-1 rounded p-1`,
+                        ]"
+                    >
+                        <FontAwesomeIcon
+                            :icon="getConditionIcon(condition.name)"
+                        />
+                        {{ condition.name }}
                     </li>
-                </ol>
-            </body>
+                </aside>
+            </main>
         </li>
+
+        <!-- When there are no characters displayed on the user, show a message -->
         <li
             v-if="
                 combatIsStarted &&
@@ -117,7 +146,6 @@
                     .length == 0
             "
         >
-            <!-- When there are no characters displayed on the user, show a message -->
             <label
                 class="flex justify-center text-take-grey"
                 v-if="characterList.find((x) => x.character.hidden)"
@@ -143,15 +171,17 @@
 </template>
 <script setup lang="ts">
 import {
-    type CombatCharacter,
+    type InitiativeCharacter,
     CombatState,
     type HealthDisplayOptionValues,
     HealthDisplayOptionsEnum,
     type ArmourClassDisplayOptionValues,
     ArmourClassDisplayOptionValueKeyMap,
     ArmourClassDisplayOptionsEnum,
+    type StagedCharacter,
 } from "base/utils/types/models";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+import { TakeInitContrastColour } from "base/utils/types/HelperTypes";
 
 const userStore = useUserStore();
 const campaignStore = useCampaignStore();
@@ -178,29 +208,33 @@ const props = withDefaults(
 
 const emit = defineEmits<{
     (e: "CombatOpenedStageCharacters"): void;
-    (e: "OnClickCharacter", character: CombatCharacter): void;
+    (
+        e: "OnClickCharacter",
+        character: InitiativeCharacter | StagedCharacter,
+    ): void;
 }>();
 
 const combatHasHiddenCharacters = computed(
     () => characterList.value.find((x) => x.character.hidden) != null,
 );
 
-const characterList = computed(() => {
-    if (props.listToDisplay == undefined) {
-        if (combat.value?.state == CombatState.Open) {
+const characterList: ComputedRef<(StagedPlayerDto | InitiativePlayerDto)[]> =
+    computed(() => {
+        if (props.listToDisplay == undefined) {
+            if (combat.value?.state == CombatState.Open) {
+                return orderedStagedCharacterListWithPlayerInfo.value;
+            } else {
+                return initiativeListWithPlayerInfo.value;
+            }
+        } else if (props.listToDisplay == "Staging") {
             return orderedStagedCharacterListWithPlayerInfo.value;
         } else {
             return initiativeListWithPlayerInfo.value;
         }
-    } else if (props.listToDisplay == "Staging") {
-        return orderedStagedCharacterListWithPlayerInfo.value;
-    } else {
-        return initiativeListWithPlayerInfo.value;
-    }
-});
+    });
 
 function getHealthDisplayMethod(
-    character: CombatPlayerDto,
+    character: StagedPlayerDto | InitiativePlayerDto,
 ): HealthDisplayOptionValues {
     if (userIsDm.value) {
         return HealthDisplayOptionsEnum["RealValue"];
@@ -216,7 +250,7 @@ function getHealthDisplayMethod(
 }
 
 function getArmourClassDisplayMethod(
-    character: CombatPlayerDto,
+    character: StagedPlayerDto | InitiativePlayerDto,
 ): ArmourClassDisplayOptionValues {
     if (userIsDm.value) {
         return ArmourClassDisplayOptionsEnum.RealValue;
@@ -229,6 +263,12 @@ function getArmourClassDisplayMethod(
 
     return campaignStore.state.campaign?.campaignSettings
         .combatArmourClassDisplaySettings.otherPlayerCharacterDisplayMethod!;
+}
+
+function isInitiativeCharacter(
+    character: InitiativeCharacter | StagedCharacter,
+): character is InitiativeCharacter {
+    return (character as InitiativeCharacter).initiativeValue !== undefined;
 }
 </script>
 

@@ -32,7 +32,7 @@
                 <FormIconButton
                     class="p-3"
                     icon="arrow-rotate-left"
-                    buttonColour="take-charcoal"
+                    buttonColour="take-purple-dark"
                     @clicked="reset"
                 />
             </div>
@@ -177,7 +177,6 @@ defineExpose({
         };
         const paredModel = schema.safeParse(model);
         if (paredModel.error) {
-            debugger;
             formState.error = paredModel.error.issues[0].message;
             return false;
         }

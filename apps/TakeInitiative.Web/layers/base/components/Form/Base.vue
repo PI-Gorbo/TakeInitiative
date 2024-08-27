@@ -1,5 +1,5 @@
 <template>
-    <form @submit.prevent="true" @submit="submit">
+    <form @submit.prevent="submit">
         <slot :submitting="state.submitting" />
     </form>
 </template>
@@ -19,8 +19,13 @@ export type SubmittingState = {
 };
 
 async function submit(event: SubmitEvent) {
+    event.stopPropagation();
+
     const submitter = event.submitter as HTMLButtonElement;
-    state.submitting = { submitterId: submitter.id, submitterName: submitter.name };
+    state.submitting = {
+        submitterId: submitter.id,
+        submitterName: submitter.name,
+    };
     await Promise.resolve(props.onSubmit(state.submitting)).finally(() => {
         state.submitting = null;
     });

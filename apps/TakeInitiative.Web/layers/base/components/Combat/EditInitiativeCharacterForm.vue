@@ -1,12 +1,11 @@
 <template>
     <FormBase :onSubmit="submit" v-slot="{ submitting }">
-        <main class="pb-2" v-if="props.character">
+        <main class="flex flex-col gap-2 pb-2" v-if="props.character">
             <div class="flex items-end justify-between gap-2">
                 <FormInput
                     class="flex-1"
                     :autoFocus="true"
                     textColour="white"
-                    label="Name"
                     v-model:value="name"
                     v-bind="nameInputProps"
                 />
@@ -33,6 +32,8 @@
             />
 
             <CharacterArmourClass v-model:value="armourClass" />
+
+            <CharacterConditionsInput v-model:conditions="conditions" />
         </main>
         <footer class="flex justify-between">
             <FormButton
@@ -58,7 +59,8 @@ import { useForm } from "vee-validate";
 import type { SubmittingState } from "../Form/Base.vue";
 import {
     characterHealthValidator,
-    type CombatCharacter,
+    conditionValidator,
+    type InitiativeCharacter,
 } from "base/utils/types/models";
 import type { CombatCharacterDto } from "base/utils/api/combat/putUpdateInitiativeCharacterRequest";
 import { toTypedSchema } from "@vee-validate/zod";
@@ -71,7 +73,7 @@ const { userIsDm } = storeToRefs(useCombatStore());
 
 const props = withDefaults(
     defineProps<{
-        character: CombatCharacter;
+        character: InitiativeCharacter;
         onEdit: (character: CombatCharacterDto) => Promise<any>;
         onDelete: (characterId: string) => Promise<any>;
     }>(),
@@ -91,6 +93,7 @@ const { values, errors, defineField, validate } = useForm({
                 isHidden: z.boolean(),
                 armourClass: z.number().nullable(),
                 health: characterHealthValidator,
+                conditions: z.array(conditionValidator),
             })
             .required({ name: true, health: true }),
     ),
@@ -102,48 +105,19 @@ const [name, nameInputProps] = defineField("name", {
     }),
 });
 
-const [isHidden, isHiddenInputProps] = defineField("isHidden", {
-    props: (state) => ({
-        errorMessage: formState.error?.getErrorFor("hidden") ?? state.errors[0],
-    }),
-});
+const [isHidden, isHiddenInputProps] = defineField("isHidden");
 
-const [hasHealth, hasHealthInputProps] = defineField("health.hasHealth", {
-    props: (state) => ({
-        errorMessage:
-            (formState.error?.getErrorFor("playerCharacter.Health.HasHealth") ||
-                formState.error?.getErrorFor("in")) ??
-            state.errors[0],
-    }),
-});
+const [hasHealth, hasHealthInputProps] = defineField("health.hasHealth");
 
 const [currentHealth, currentHealthInputProps] = defineField(
     "health.currentHealth",
-    {
-        props: (state) => ({
-            errorMessage:
-                formState.error?.getErrorFor(
-                    "playerCharacter.Health.CurrentHealth",
-                ) ?? state.errors[0],
-        }),
-    },
 );
 
-const [maxHealth, maxHealthInputProps] = defineField("health.maxHealth", {
-    props: (state) => ({
-        errorMessage:
-            formState.error?.getErrorFor("playerCharacter.Health.MaxHealth") ??
-            state.errors[0],
-    }),
-});
+const [maxHealth, maxHealthInputProps] = defineField("health.maxHealth");
 
-const [armourClass, armourClassInputProps] = defineField("armourClass", {
-    props: (state) => ({
-        errorMessage:
-            formState.error?.getErrorFor("playerCharacter.armourClass") ??
-            state.errors[0],
-    }),
-});
+const [armourClass, armourClassInputProps] = defineField("armourClass");
+
+const [conditions, conditionsInputProps] = defineField("conditions");
 
 function setValuesFromProps() {
     if (props.character == null) {
@@ -157,6 +131,7 @@ function setValuesFromProps() {
     hasHealth.value = props.character.health?.hasHealth ?? false;
     currentHealth.value = props.character.health?.currentHealth;
     maxHealth.value = props.character.health?.maxHealth;
+    conditions.value = props.character.conditions;
 }
 onMounted(setValuesFromProps);
 watch(() => props.character.id, setValuesFromProps);
@@ -193,6 +168,7 @@ async function onEdit() {
                 maxHealth: maxHealth.value!,
             },
             armourClass: armourClass.value ?? null,
+            conditions: conditions.value!,
         })
         .catch((error) => (formState.error = parseAsApiError(error)));
 }

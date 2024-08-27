@@ -3,9 +3,9 @@ using TakeInitiative.Utilities;
 
 namespace TakeInitiative.Api.Features.Combats;
 
-public class CombatCharacterValidator : CharacterValidator<CombatCharacter>
+public class InitiativeCharacterValidator : CharacterValidator<InitiativeCharacter>
 {
-    public CombatCharacterValidator(IDiceRoller roller) : base(roller)
+    public InitiativeCharacterValidator(IDiceRoller roller) : base(roller)
     {
         RuleFor(x => x.PlayerId)
             .NotEmpty();

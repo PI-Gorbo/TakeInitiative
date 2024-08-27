@@ -15,19 +15,19 @@ export type StagedCharacterDTO = {
     armourClass: number | null;
     hidden: boolean;
 };
-export type UpsertStagedCharacterRequest = {
+export type UpdateStagedCharacterRequest = {
     combatId: string;
     character: StagedCharacterDTO;
 };
 
-export type UpsertStagedCharacterResponse = z.infer<
+export type UpdateStagedCharacterResponse = z.infer<
     typeof combatResponseValidator
 >;
 
-export function putUpsertStagedCharacter(axios: AxiosInstance) {
+export function putUpdateStagedCharacter(axios: AxiosInstance) {
     return async function (
-        request: UpsertStagedCharacterRequest,
-    ): Promise<UpsertStagedCharacterResponse> {
+        request: UpdateStagedCharacterRequest,
+    ): Promise<UpdateStagedCharacterResponse> {
         return await axios
             .put("/api/combat/stage/character", request)
             .then(async (response) =>

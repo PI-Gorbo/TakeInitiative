@@ -51,13 +51,13 @@
         </main>
         <!-- <section class="flex justify-center p-4">
             <ul class="grid grid-cols-5 gap-4 p-2">
-                <li class="bg-take-creme-medium rounded p-2 text-take-navy">
+                <li class="bg-take-cream-medium rounded p-2 text-take-navy">
                     <header class="text-xl">
                         CREATE CAMPAIGNS FOR YOU AND YOUR PLAYERS
                     </header>
                     <p>Invite your friends | play</p>
                 </li>
-                <li class="bg-take-creme-medium rounded p-2 text-take-navy">
+                <li class="bg-take-cream-medium rounded p-2 text-take-navy">
                     <header class="text-xl">
                         PLAN AND RUN COMBATS IN ONE PLACE
                     </header>
@@ -70,17 +70,17 @@
                         to pivot and improvise as the adventure unfolds.
                     </p>
                 </li>
-                <li class="bg-take-creme-medium rounded p-2 text-take-navy">
+                <li class="bg-take-cream-medium rounded p-2 text-take-navy">
                     <header class="text-xl">
                         COMBATS ARE LIVE ONLINE LOBBIES
                     </header>
                     <p>Invite your friends | play</p>
                 </li>
-                <li class="bg-take-creme-medium rounded p-2 text-take-navy">
+                <li class="bg-take-cream-medium rounded p-2 text-take-navy">
                     <header class="text-xl">SPEED UP YOUR COMBATS</header>
                     <p>Invite your friends | play</p>
                 </li>
-                <li class="bg-take-creme-medium rounded p-2 text-take-navy">
+                <li class="bg-take-cream-medium rounded p-2 text-take-navy">
                     <header class="text-xl">MORE FEATURES COMING SOON</header>
                     <p>Invite your friends | play</p>
                 </li>

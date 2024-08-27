@@ -45,7 +45,8 @@ public class PostPlannedCombatNpc(IDocumentStore Store, IDiceRoller roller) : En
                 ThrowError(x => x.StageId, "There is no stage with the given id.");
             }
 
-            var npc = PlannedCombatCharacter.New(
+            PlannedCharacter npc = new(
+                Id: Guid.NewGuid(),
                 StageId: stage.Id,
                 Name: req.Name,
                 Initiative: req.Initiative,

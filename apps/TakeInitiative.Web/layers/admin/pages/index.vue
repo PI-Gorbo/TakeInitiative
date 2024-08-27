@@ -170,7 +170,6 @@ const [reason, reasonInputProps] = defineField("reason", {
 async function onEnableMaintenanceMode() {
     const validateResult = await validate();
     if (!validateResult.valid) {
-        console.log(validateResult);
         return Promise.resolve();
     }
 

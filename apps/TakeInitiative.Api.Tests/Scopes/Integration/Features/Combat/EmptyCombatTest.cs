@@ -18,7 +18,7 @@ public class EmptyCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixt
     public EmptyCombatTest(AuthenticatedWebAppWithDatabaseFixture fixture)
     {
         this.fixture = fixture;
-        this.verifier = new CombatVerifier();
+        verifier = new CombatVerifier();
     }
 
     [Fact]
@@ -29,7 +29,7 @@ public class EmptyCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixt
         // Create a planned combat.
         var createPlannedCombat = await fixture.PostPlannedCombat(new()
         {
-            CampaignId = fixture.SeedData.CampaignId,
+            CampaignId = fixture.SeedData!.CampaignId,
             CombatName = "My planned combat"
         });
         createPlannedCombat.Should().Succeed();
@@ -51,7 +51,7 @@ public class EmptyCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixt
 
         // Start the combat.
         // Prep the mock.
-        A.CallTo(() => fixture.InitiativeRoller.ComputeRolls(A<IEnumerable<CombatCharacter>>._))
+        A.CallTo(() => fixture.InitiativeRoller.ComputeRolls(A<IEnumerable<StagedCharacter>>._))
             .Returns(Result.Success(new List<CharacterInitiativeRoll>()));
 
         var startCombatResult = await fixture.PostStartCombat(new PostRollCombatInitiativeRequest()

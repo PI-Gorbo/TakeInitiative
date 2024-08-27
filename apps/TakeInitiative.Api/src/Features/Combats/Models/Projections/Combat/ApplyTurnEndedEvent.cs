@@ -7,14 +7,14 @@ using TakeInitiative.Utilities;
 namespace TakeInitiative.Api.Features.Combats;
 public partial class CombatProjection : SingleStreamProjection<Combat>
 {
-    public async Task<Combat> Apply(TurnEndedEvent @event, Combat Combat, IEvent<TurnEndedEvent> eventDetails, IQuerySession session)
+    public Task<Combat> Apply(TurnEndedEvent @event, Combat Combat, IEvent<TurnEndedEvent> eventDetails, IQuerySession session)
     {
-        if (Combat.InitiativeIndex < 0 || Combat.InitiativeList.Count == 0 || Combat.InitiativeIndex > Combat.InitiativeList.Count)
+        if (!Combat.InitiativeIndex.HasValue || Combat.InitiativeList.Count == 0 || Combat.InitiativeIndex > Combat.InitiativeList.Count)
         {
-            return Combat; // WHY??
+            return Task.FromResult(Combat); // WHY??
         }
 
-        var currentCharacterId = Combat.InitiativeList[Combat.InitiativeIndex].Id;
+        var currentCharacterId = Combat.InitiativeList[Combat.InitiativeIndex.Value].Id;
         var (nextInitiativeIndex, nextRoundNumber) = Combat.GetNextTurnInfo();
 
         // Compose the history information.
@@ -28,7 +28,7 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
             CharacterId = Combat.InitiativeList[nextInitiativeIndex].Id,
         });
 
-        return Combat with
+        return Task.FromResult(Combat with
         {
             InitiativeIndex = nextInitiativeIndex,
             RoundNumber = nextRoundNumber,
@@ -39,6 +39,6 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
                     Timestamp = eventDetails.Timestamp
                 },
             ]
-        };
+        });
     }
 }

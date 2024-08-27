@@ -21,7 +21,7 @@ public class InitiativeComparer : IComparer<int[]>, IEqualityComparer<int[]>
             return -1;
         }
 
-        var length = Math.Min(x.Length, y.Length);
+        var length = Math.Min(x!.Length, y!.Length);
         var currentIndex = 0;
         while (x[currentIndex] == y[currentIndex] && currentIndex != length - 1)
         {

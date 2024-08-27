@@ -11,7 +11,6 @@ namespace TakeInitiative.Api.Features.Users;
 
 public class PostSendConfirmEmail(
     IDocumentSession session,
-    UserManager<ApplicationUser> userManager,
     ConfirmEmailSender confirmEmailSender
     ) : EndpointWithoutRequest
 {
@@ -35,6 +34,6 @@ public class PostSendConfirmEmail(
             ThrowError($"Failed to send confirmation email. {confirmResult.Error}", (int)HttpStatusCode.BadRequest);
         }
 
-        await this.SendOkAsync(ct);
+        await SendOkAsync(ct);
     }
 }

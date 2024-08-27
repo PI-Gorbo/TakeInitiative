@@ -5,8 +5,8 @@ namespace TakeInitiative.Utilities;
 
 public interface IInitiativeRoller
 {
-    public Result<List<CharacterInitiativeRoll>> ComputeRolls(IEnumerable<CombatCharacter> characters);
+    public Result<List<CharacterInitiativeRoll>> ComputeRolls(IEnumerable<StagedCharacter> characters);
 
-    public Result<List<CharacterInitiativeRoll>> ComputeRolls(List<CombatCharacter> newCharacters, List<CombatCharacter> existingInitiativeList);
+    public Result<List<CharacterInitiativeRoll>> ComputeRolls(List<StagedCharacter> newCharacters, List<InitiativeCharacter> existingInitiativeList);
 }
 

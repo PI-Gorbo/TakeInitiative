@@ -1,6 +1,6 @@
 <template>
     <main>
-        <ul v-if="characters">
+        <ul v-if="characters" class="flex flex-col gap-2">
             <li
                 v-for="character in characters"
                 :key="character.id"
