@@ -83,7 +83,7 @@ import {
     type PlannedCombatCharacter,
     type PlannedCombatStage,
     characterInitiativeValidator,
-    type CombatCharacter,
+    type InitiativeCharacter,
     characterHealthValidator,
 } from "base/utils/types/models";
 import type { StagedCharacterDTO } from "base/utils/api/combat/putUpsertStagedCharacter";
@@ -92,6 +92,7 @@ import type { DeleteStagedCharacterRequest } from "base/utils/api/combat/deleteS
 import { toTypedSchema } from "@vee-validate/zod";
 import { z } from "zod";
 import HealthInput from "../Character/HealthInput.vue";
+import type { StagedCharacterWithoutIdDTO } from "base/utils/api/combat/postAddStagedCharacter";
 const characterHealthInput = ref<InstanceType<typeof HealthInput> | null>(null);
 const { userIsDm } = storeToRefs(useCombatStore());
 const formState = reactive({
@@ -99,8 +100,8 @@ const formState = reactive({
 });
 
 const props = defineProps<{
-    character?: CombatCharacter;
-    onCreate?: (request: StagedCharacterDTO) => Promise<any>;
+    character?: InitiativeCharacter;
+    onCreate?: (request: StagedCharacterWithoutIdDTO) => Promise<any>;
     onEdit?: (request: StagedCharacterDTO) => Promise<any>;
     onDelete?: (
         request: Omit<DeleteStagedCharacterRequest, "combatId">,
@@ -277,7 +278,6 @@ async function onEdit() {
                 value: initiativeValue.value!,
             },
             name: name.value!,
-
             id: props.character?.id!,
             hidden: isHidden.value!,
             health: {
@@ -318,8 +318,6 @@ async function onCreate() {
                 value: initiativeValue.value!,
             },
             name: name.value!,
-
-            id: props.character?.id! ?? crypto.randomUUID(),
             hidden: isHidden.value!,
             health: {
                 hasHealth: hasHealth.value ?? false,

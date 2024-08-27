@@ -2,12 +2,13 @@ import { deleteInitiativeCharacterRequest } from "../utils/api/combat/deleteInit
 import {
     CombatState,
     type Combat,
-    type CombatCharacter,
+    type InitiativeCharacter,
+    type StagedCharacter,
 } from "../utils/types/models";
 import * as signalR from "@microsoft/signalr";
 import type {
     StagedCharacterDTO,
-    UpsertStagedCharacterRequest,
+    UpdateStagedCharacterRequest,
 } from "../utils/api/combat/putUpsertStagedCharacter";
 import type { DeleteStagedCharacterRequest } from "../utils/api/combat/deleteStagedCharacterRequest";
 import type { PostStagePlannedCharactersRequest } from "../utils/api/combat/postStagePlannedCharactersRequest";
@@ -17,10 +18,16 @@ import type {
     CombatCharacterDto,
     PutUpdateInitiativeCharacterRequest,
 } from "../utils/api/combat/putUpdateInitiativeCharacterRequest";
-export type CombatPlayerDto = {
+import type { StagedCharacterWithoutIdDTO } from "base/utils/api/combat/postAddStagedCharacter";
+export type InitiativePlayerDto = {
     user: CampaignMemberDto;
-    character: CombatCharacter;
+    character: InitiativeCharacter;
 };
+export type StagedPlayerDto = {
+    user: CampaignMemberDto;
+    character: StagedCharacter;
+};
+
 export const useCombatStore = defineStore("combatStore", () => {
     const userStore = useUserStore();
     const campaignStore = useCampaignStore();
@@ -101,8 +108,15 @@ export const useCombatStore = defineStore("combatStore", () => {
         });
     }
 
-    async function upsertStagedCharacter(req: StagedCharacterDTO) {
-        return await api.combat.stage.character.upsert({
+    async function updateStagedCharacter(req: StagedCharacterDTO) {
+        return await api.combat.stage.character.update({
+            character: req,
+            combatId: state.combat?.id!,
+        });
+    }
+
+    async function addStagedCharacter(req: StagedCharacterWithoutIdDTO) {
+        return await api.combat.stage.character.add({
             character: req,
             combatId: state.combat?.id!,
         });
@@ -172,7 +186,7 @@ export const useCombatStore = defineStore("combatStore", () => {
     }
 
     const orderedStagedCharacterListWithPlayerInfo: ComputedRef<
-        CombatPlayerDto[]
+        StagedPlayerDto[]
     > = computed(() => {
         const compareStrings = (a: string, b: string) => {
             let fa = a.toLowerCase(),
@@ -188,8 +202,8 @@ export const useCombatStore = defineStore("combatStore", () => {
         };
 
         const openCombatCharacterSortFunc = (
-            a: CombatPlayerDto,
-            b: CombatPlayerDto,
+            a: StagedPlayerDto,
+            b: StagedPlayerDto,
         ): number => {
             const aIsDungeonMaster = a.user?.isDungeonMaster;
             const bIsDungeonMaster = b.user?.isDungeonMaster;
@@ -229,7 +243,7 @@ export const useCombatStore = defineStore("combatStore", () => {
                                 x.playerId,
                             )!,
                             character: x,
-                        }) satisfies CombatPlayerDto,
+                        }) satisfies StagedPlayerDto,
                 )
                 .sort(openCombatCharacterSortFunc) ?? []
         );
@@ -240,7 +254,8 @@ export const useCombatStore = defineStore("combatStore", () => {
         state,
         deleteInitiativeCharacter,
         updateInitiativeCharacter,
-        upsertStagedCharacter,
+        updateStagedCharacter,
+        addStagedCharacter,
         deleteStagedCharacter,
         stagePlannedCharacters,
         stagePlayerCharacters,
@@ -279,12 +294,12 @@ export const useCombatStore = defineStore("combatStore", () => {
                                 x.playerId,
                             )!,
                             character: x,
-                        }) satisfies CombatPlayerDto,
+                        }) satisfies InitiativePlayerDto,
                 ) ?? [],
         ),
         isEditableForUser: (charInfo: {
             user: CampaignMemberDto;
-            character: CombatCharacter;
+            character: InitiativeCharacter | StagedCharacter;
         }) => {
             return (
                 userStore.state.user?.userId == state.combat?.dungeonMaster ||
@@ -293,7 +308,7 @@ export const useCombatStore = defineStore("combatStore", () => {
         },
         getIconForUser: (charInfo: {
             user: CampaignMemberDto;
-            character: CombatCharacter;
+            character: InitiativeCharacter | StagedCharacter;
         }) => {
             const currentUserId = userStore.state.user?.userId;
 

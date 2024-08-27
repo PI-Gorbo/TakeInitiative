@@ -26,7 +26,7 @@
                     >
                 </div>
                 <div
-                    class="max-w-fit rounded bg-take-creme-medium px-1 align-middle text-black shadow"
+                    class="bg-take-cream-medium max-w-fit rounded px-1 align-middle text-black shadow"
                 >
                     <span class="border-r border-r-take-navy pr-1">{{
                         index + 1

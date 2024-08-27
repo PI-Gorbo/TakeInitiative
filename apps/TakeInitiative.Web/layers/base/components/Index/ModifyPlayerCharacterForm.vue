@@ -223,7 +223,6 @@ async function onEdit() {
 
     const validateResult = await validate();
     if (!validateResult.valid) {
-        console.log(formState.error);
         return;
     }
 

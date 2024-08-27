@@ -86,7 +86,7 @@ public class InitiativeRoller(IDiceRoller roller) : IInitiativeRoller
                 if (group.Select(x => x.rolls.Length).Distinct().Count() == 1)
                 {
                     // One of two situations:
-                    //// Situation 1, index = 0 -> here, we just need to increment index (ie: do nothing.)
+                    //// Situation 1, index = 0 -> here, we just need to increamnt index (ie: do nothing.)
                     // Incoming: 6 3
                     // Current:  6 2 
                     //           6 3

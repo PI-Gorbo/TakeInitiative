@@ -36,7 +36,6 @@ const textToDisplay = computed(() => {
         const percentage =
             ((props.health?.currentHealth ?? 0) * 1.0) /
             ((props.health?.maxHealth ?? 1) * 1.0);
-        console.log(percentage);
         if (percentage > 0.5) {
             return "Healthy";
         } else if (percentage <= 0.5 && percentage > 0.0) {

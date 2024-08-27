@@ -3,7 +3,7 @@
         class="flex w-full flex-col rounded-xl border-2 border-take-purple p-2"
     >
         <div
-            class="mb-2 flex w-full flex-row items-center justify-between gap-2"
+            class="mb-2 flex w-full flex-row flex-wrap items-center justify-between gap-2"
         >
             <FormToggleableInput
                 :value="stageName"
@@ -17,9 +17,10 @@
             <div class="flex flex-row gap-2">
                 <FormButton
                     icon="plus"
+                    label="Add NPC"
                     buttonColour="take-purple-light"
                     textColour="white"
-                    @click="() => createPlannedCharacterFormModal?.show()"
+                    @click="showCreatePlannedCharacterModal"
                 />
                 <FormButton
                     icon="trash"
@@ -109,4 +110,8 @@ const npcList = computed(() =>
         return 0;
     }),
 );
+
+const showCreatePlannedCharacterModal = () => {
+    createPlannedCharacterFormModal.value?.show();
+};
 </script>

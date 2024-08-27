@@ -7,29 +7,28 @@ import { z } from "zod";
 import { combatResponseValidator } from "./combatResponse";
 import { validateResponse } from "base/utils/apiErrorParser";
 
-export type StagedCharacterDTO = {
-    id: string;
+export type StagedCharacterWithoutIdDTO = {
     name: string;
     health: CharacterHealth | null;
     initiative: CharacterInitiative;
     armourClass: number | null;
     hidden: boolean;
 };
-export type UpdateStagedCharacterRequest = {
+export type AddStagedCharacterRequest = {
     combatId: string;
-    character: StagedCharacterDTO;
+    character: StagedCharacterWithoutIdDTO;
 };
 
-export type UpdateStagedCharacterResponse = z.infer<
+export type AddStagedCharacterResponse = z.infer<
     typeof combatResponseValidator
 >;
 
-export function putUpdateStagedCharacter(axios: AxiosInstance) {
+export function postAddStagedCharacter(axios: AxiosInstance) {
     return async function (
-        request: UpdateStagedCharacterRequest,
-    ): Promise<UpdateStagedCharacterResponse> {
+        request: AddStagedCharacterRequest,
+    ): Promise<AddStagedCharacterResponse> {
         return await axios
-            .put("/api/combat/stage/character", request)
+            .post("/api/combat/stage/character", request)
             .then(async (response) =>
                 validateResponse(response, combatResponseValidator),
             );

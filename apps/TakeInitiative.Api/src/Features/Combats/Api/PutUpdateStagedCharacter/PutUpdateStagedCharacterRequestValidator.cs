@@ -4,9 +4,9 @@ using TakeInitiative.Utilities;
 
 namespace TakeInitiative.Api.Features.Combats;
 
-public class PutUpsertStagedCharacterRequestValidator : Validator<PutUpsertStagedCharacterRequest>
+public class PutUpdateStagedCharacterRequestValidator : Validator<PutUpdateStagedCharacterRequest>
 {
-    public PutUpsertStagedCharacterRequestValidator(IDiceRoller roller)
+    public PutUpdateStagedCharacterRequestValidator(IDiceRoller roller)
     {
         RuleFor(x => x.CombatId)
             .NotEmpty();

@@ -23,7 +23,7 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
                         ArmourClass: x.ArmourClass,
                         Health: x.Health,
                         Hidden: Combat.DungeonMaster == user!.Id,
-                        CharacterOriginDetails: CharacterOriginDetails.PlayerCharacter(@event.UserId),
+                        CharacterOriginDetails: CharacterOriginDetails.PlayerCharacter(x.Id),
                         CopyNumber: null
                     ))
                 )

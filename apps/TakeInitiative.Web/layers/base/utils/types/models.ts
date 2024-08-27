@@ -213,11 +213,6 @@ export enum CombatState {
     Finished = 3,
 }
 
-export const combatTimingRecordValidator = z.object({
-    startTime: z.string(),
-    endTime: z.string().nullable(),
-});
-export type CombatTiming = z.infer<typeof combatTimingRecordValidator>;
 export const playerDtoValidator = z
     .object({
         userId: z.string(),
@@ -230,7 +225,15 @@ export const CharacterOriginOptions = {
     PlannedCharacter: 1,
     CustomCharacter: 2,
 } as const;
-export const combatCharacterValidator = z
+
+export const conditionValidator = z.object({
+    id: z.string(),
+    name: z.string(),
+    note: z.string(),
+});
+export type Condition = z.infer<typeof conditionValidator>;
+
+export const initiativeCharacterValidator = z
     .object({
         id: z.string(),
         characterOriginDetails: z.object({
@@ -245,9 +248,25 @@ export const combatCharacterValidator = z
         initiative: characterInitiativeValidator,
         armourClass: z.number().nullable(),
         copyNumber: z.number().nullable(),
+        conditions: z.array(conditionValidator),
     })
-    .required({ id: true, playerId: true, hidden: true, name: true });
-export type CombatCharacter = z.infer<typeof combatCharacterValidator>;
+    .required({
+        id: true,
+        playerId: true,
+        hidden: true,
+        name: true,
+        conditions: true,
+    });
+
+export type InitiativeCharacter = z.infer<typeof initiativeCharacterValidator>;
+
+export const stagedCharacterValidator = initiativeCharacterValidator.omit({
+    initiativeValue: true,
+    conditions: true,
+});
+export type StagedCharacter = z.infer<typeof stagedCharacterValidator>;
+
+/// COMBAT EVENTS
 
 export const CombatStartedHistoryEvent = z.object({});
 export const CombatInitiativeRolledHistoryEvent = z.object({
@@ -308,6 +327,19 @@ export type CharactersAddedToInitiative = z.infer<
     typeof CharactersAddedToInitiative
 >;
 
+export const CharacterConditionAdded = z.object({
+    conditionId: z.string().uuid(),
+    characterId: z.string().uuid(),
+    name: z.string(),
+});
+export type CharacterConditionAdded = z.infer<typeof CharacterConditionAdded>;
+
+export const CharacterConditionRemoved = z.object({
+    conditionId: z.string().uuid(),
+    characterId: z.string().uuid(),
+    name: z.string(),
+});
+
 export const historyEventValidator = z.discriminatedUnion("!", [
     CombatStartedHistoryEvent.extend({
         "!": z.literal("CombatStarted"),
@@ -336,6 +368,12 @@ export const historyEventValidator = z.discriminatedUnion("!", [
     CharacterRemovedHistoryEvent.extend({
         "!": z.literal("CharacterRemoved"),
     }),
+    CharacterConditionAdded.extend({
+        "!": z.literal("CharacterConditionAdded"),
+    }),
+    CharacterConditionRemoved.extend({
+        "!": z.literal("CharacterConditionRemoved"),
+    }),
 ]);
 export type HistoryEvent = z.infer<typeof historyEventValidator>;
 
@@ -348,6 +386,8 @@ export const historyEntryValidator = z
     .required({ timestamp: true, events: true, executor: true });
 export type HistoryEntry = z.infer<typeof historyEntryValidator>;
 
+/// COMBAT
+
 export const combatValidator = z
     .object({
         id: z.string(),
@@ -358,9 +398,9 @@ export const combatValidator = z
         history: z.array(historyEntryValidator),
         currentPlayers: z.array(playerDtoValidator),
         plannedStages: z.array(plannedCombatStageValidator),
-        initiativeList: z.array(combatCharacterValidator),
-        stagedList: z.array(combatCharacterValidator),
-        initiativeIndex: z.number(),
+        initiativeList: z.array(initiativeCharacterValidator),
+        stagedList: z.array(stagedCharacterValidator),
+        initiativeIndex: z.number().nullable(),
         roundNumber: z.number().nullable(),
     })
     .required({

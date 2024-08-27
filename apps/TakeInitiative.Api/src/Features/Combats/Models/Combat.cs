@@ -65,7 +65,7 @@ public record Combat
         }
 
         return InitiativeIndex.Value + 1 == InitiativeList.Count
-        ? (0, (RoundNumber ?? 0) + 1) // At the end of the round, reset to top of initiative and increment round number count.
-        : (InitiativeIndex.Value + 1, RoundNumber ?? 0); // Otherwise, just increment initiative index.
+        ? (0, (RoundNumber ?? 0) + 1) // At the end of the round, reset to top of initiative and increamnt round number count.
+        : (InitiativeIndex.Value + 1, RoundNumber ?? 0); // Otherwise, just increamnt initiative index.
     }
 }

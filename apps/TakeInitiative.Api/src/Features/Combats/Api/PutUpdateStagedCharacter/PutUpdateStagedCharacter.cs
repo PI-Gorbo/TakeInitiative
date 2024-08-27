@@ -8,14 +8,14 @@ using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Combats;
 
-public class PutUpsertStagedCharacter(IDocumentSession session, IHubContext<CombatHub> hubContext) : Endpoint<PutUpsertStagedCharacterRequest, CombatResponse>
+public class PutUpdateStagedCharacter(IDocumentSession session, IHubContext<CombatHub> hubContext) : Endpoint<PutUpdateStagedCharacterRequest, CombatResponse>
 {
     public override void Configure()
     {
         Put("/api/combat/stage/character");
     }
 
-    public override async Task HandleAsync(PutUpsertStagedCharacterRequest req, CancellationToken ct)
+    public override async Task HandleAsync(PutUpdateStagedCharacterRequest req, CancellationToken ct)
     {
         var userId = this.GetUserIdOrThrowUnauthorized();
         var result = await Result
@@ -32,13 +32,13 @@ public class PutUpsertStagedCharacter(IDocumentSession session, IHubContext<Comb
                 Maybe<StagedCharacter> existingCharacter = fetchedCombat.StagedList.SingleOrDefault(x => x.Id == req.Character.Id).AsMaybe();
                 if (!existingCharacter.HasValue)
                 {
-                    return ApiError.Invalid<PutUpsertStagedCharacterRequest>(x => x.Character.Id, "Character with the provided id does not exist.");
+                    return ApiError.Invalid<PutUpdateStagedCharacterRequest>(x => x.Character.Id, "Character with the provided id does not exist.");
                 }
 
                 var userIsAllowedToEditCharacter = existingCharacter.Value.PlayerId == userId || fetchedCombat.DungeonMaster == userId;
                 if (!userIsAllowedToEditCharacter)
                 {
-                    return ApiError.Invalid<PutUpsertStagedCharacterRequest>(x => x.Character, "Only a dungeon master can edit this character.");
+                    return ApiError.Invalid<PutUpdateStagedCharacterRequest>(x => x.Character, "Only a dungeon master can edit this character.");
                 }
 
                 StagedCharacter updatedCharacter = existingCharacter.Value with

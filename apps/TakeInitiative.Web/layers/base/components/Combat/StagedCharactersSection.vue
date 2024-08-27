@@ -81,7 +81,7 @@
                 :onEdit="
                     (req) =>
                         combatStore
-                            .upsertStagedCharacter(req)
+                            .updateStagedCharacter(req)
                             .then(transitionViewToList)
                 "
                 :onDelete="
@@ -116,7 +116,7 @@
 </template>
 <script setup lang="ts">
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import type { CombatCharacter } from "base/utils/types/models";
+import type { InitiativeCharacter } from "base/utils/types/models";
 
 const viewState = reactive<{
     currentView:
@@ -125,7 +125,7 @@ const viewState = reactive<{
           }
         | {
               name: "Edit";
-              characterToEdit: CombatCharacter;
+              characterToEdit: InitiativeCharacter;
           }
         | {
               name: "Add";
@@ -141,12 +141,11 @@ function transitionViewToAdd() {
     };
 }
 function transitionViewToList() {
-    console.log("here");
     viewState.currentView = {
         name: "List",
     };
 }
-function transitionViewToEdit(characterToEdit: CombatCharacter) {
+function transitionViewToEdit(characterToEdit: InitiativeCharacter) {
     viewState.currentView = {
         name: "Edit",
         characterToEdit,

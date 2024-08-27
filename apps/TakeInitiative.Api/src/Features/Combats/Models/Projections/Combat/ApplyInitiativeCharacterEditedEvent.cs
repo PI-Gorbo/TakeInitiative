@@ -46,8 +46,6 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
                 CharacterId = character.Id,
                 Name = condition.Name,
                 ConditionId = condition.Id,
-                RoundNumber = Combat.RoundNumber ?? -1,
-                InitiativeCount = Combat.InitiativeIndex ?? -1,
             });
         }
 

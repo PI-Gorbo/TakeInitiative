@@ -96,7 +96,7 @@ public static class Bootstrap
 
                 opts.Events.OnRedirectToAccessDenied = ctx =>
                 {
-                    ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
+                    ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
                     return Task.CompletedTask;
                 };
                 opts.Cookie.Domain = config.GetValue<string>("CookieDomain") ?? throw new InvalidOperationException("Attempted to find configuration for the value CookieDomain but there was none provided.");

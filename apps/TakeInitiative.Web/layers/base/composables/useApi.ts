@@ -18,7 +18,7 @@ import { postStagedPlannedCharactersRequest } from "../utils/api/combat/postStag
 import { postStagePlayerCharactersRequest as postStagePlayerCharactersRequest } from "../utils/api/combat/postStagePlayerCharactersRequest";
 import { postStartCombatRequest } from "../utils/api/combat/postStartCombat";
 import { putUpdateInitiativeCharacterRequest } from "../utils/api/combat/putUpdateInitiativeCharacterRequest";
-import { putUpsertStagedCharacter } from "../utils/api/combat/putUpsertStagedCharacter";
+import { putUpdateStagedCharacter } from "../utils/api/combat/putUpsertStagedCharacter";
 import { createPlannedCombatRequest } from "../utils/api/plannedCombat/createPlannedCombatRequest";
 import { deletePlannedCombatRequest } from "../utils/api/plannedCombat/deletePlannedCombatRequest";
 import { getCombatsRequest } from "../utils/api/combat/getCombatsRequest";
@@ -39,6 +39,7 @@ import { putResetPassword } from "../utils/api/user/putResetPasswordRequest";
 import { getMaintenanceRequest } from "base/utils/api/admin/getMaintainenceRequest";
 import { putCampaignMemberResourcesRequest } from "base/utils/api/campaign/putCampaignMemberResourcesRequest";
 import { getCombatHistory } from "base/utils/api/combat/getCombatHistoryRequest";
+import { postAddStagedCharacter } from "base/utils/api/combat/postAddStagedCharacter";
 
 export const useApi = () => {
     const { $axios } = useNuxtApp();
@@ -92,7 +93,8 @@ export const useApi = () => {
             endTurn: postEndTurnRequest($axios),
             stage: {
                 character: {
-                    upsert: putUpsertStagedCharacter($axios),
+                    update: putUpdateStagedCharacter($axios),
+                    add: postAddStagedCharacter($axios),
                     delete: deleteStagedCharacter($axios),
                 },
                 planned: postStagedPlannedCharactersRequest($axios),
