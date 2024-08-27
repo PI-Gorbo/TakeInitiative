@@ -136,7 +136,7 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
         // DM stages their own characters
         var addPlannedCharactersResult = await fixture
             .LoginAsUser(Users.DM)
-            .PostStagePlannedCharacters(new PutStagePlannedCharactersRequest()
+            .PostStagePlannedCharacters(new PostStagePlannedCharactersRequest()
             {
                 CombatId = combat.Id,
                 PlannedCharactersToStage = new()

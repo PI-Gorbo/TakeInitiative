@@ -3,9 +3,9 @@ using FluentValidation;
 
 namespace TakeInitiative.Api.Features.Combats;
 
-public class PutStagePlannedCharacterRequestValidator : Validator<PutStagePlannedCharactersRequest>
+public class PostStagePlannedCharacterRequestValidator : Validator<PostStagePlannedCharactersRequest>
 {
-    public PutStagePlannedCharacterRequestValidator()
+    public PostStagePlannedCharacterRequestValidator()
     {
         RuleFor(x => x.CombatId).NotEmpty();
         RuleFor(x => x.PlannedCharactersToStage)

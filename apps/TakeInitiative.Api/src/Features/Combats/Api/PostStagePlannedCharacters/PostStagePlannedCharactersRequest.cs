@@ -1,6 +1,6 @@
 namespace TakeInitiative.Api.Features.Combats;
 
-public class PutStagePlannedCharactersRequest
+public class PostStagePlannedCharactersRequest
 {
     public Guid CombatId { get; set; }
 

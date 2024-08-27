@@ -8,14 +8,14 @@ using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Combats;
 
-public class PostStagePlannedCharacters(IHubContext<CombatHub> hubContext) : Endpoint<PutStagePlannedCharactersRequest, CombatResponse>
+public class PostStagePlannedCharacters(IHubContext<CombatHub> hubContext) : Endpoint<PostStagePlannedCharactersRequest, CombatResponse>
 {
     public override void Configure()
     {
         Post("/api/combat/stage/planned-character");
     }
 
-    public override async Task HandleAsync(PutStagePlannedCharactersRequest req, CancellationToken ct)
+    public override async Task HandleAsync(PostStagePlannedCharactersRequest req, CancellationToken ct)
     {
         var userId = this.GetUserIdOrThrowUnauthorized();
 
