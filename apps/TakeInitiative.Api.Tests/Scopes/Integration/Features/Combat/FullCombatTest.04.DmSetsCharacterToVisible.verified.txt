@@ -50,9 +50,7 @@
           TYPE: CharacterConditionAdded,
           ConditionId: ConditionId,
           CharacterId: PlayerFirstCharacterId,
-          Name: Paralyzed,
-          RoundNumber: 1,
-          InitiativeCount: 0
+          Name: Paralyzed
         }
       ],
       Executor: DmId

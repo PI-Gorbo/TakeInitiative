@@ -85,6 +85,7 @@ import {
     characterInitiativeValidator,
     type InitiativeCharacter,
     characterHealthValidator,
+    type StagedCharacter,
 } from "base/utils/types/models";
 import type { StagedCharacterDTO } from "base/utils/api/combat/putUpsertStagedCharacter";
 import type { SubmittingState } from "../Form/Base.vue";
@@ -100,7 +101,7 @@ const formState = reactive({
 });
 
 const props = defineProps<{
-    character?: InitiativeCharacter;
+    character?: StagedCharacter;
     onCreate?: (request: StagedCharacterWithoutIdDTO) => Promise<any>;
     onEdit?: (request: StagedCharacterDTO) => Promise<any>;
     onDelete?: (

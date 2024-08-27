@@ -15,14 +15,14 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
             StagedList = (Combat.StagedList ?? [])
                 .AddRange(
                     @event.Characters
-                    .Select(x => new StagedCharacter(
-                        x.Id,
+                    .Select((x, index) => new StagedCharacter(
+                        @event.NewIdsToUse[index],
                         PlayerId: @event.UserId,
                         Name: x.Name,
                         Initiative: x.Initiative,
                         ArmourClass: x.ArmourClass,
                         Health: x.Health,
-                        Hidden: Combat.DungeonMaster == user!.Id,
+                        Hidden: Combat.DungeonMaster == user!.Id, // Hidden if its the DM's character.
                         CharacterOriginDetails: CharacterOriginDetails.PlayerCharacter(x.Id),
                         CopyNumber: null
                     ))

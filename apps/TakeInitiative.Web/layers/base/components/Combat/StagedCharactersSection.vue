@@ -34,9 +34,17 @@
                         "
                     />
                 </ul>
+                <ul
+                    class="text-sm italic"
+                    v-if="orderedStagedCharacterListWithPlayerInfo.length == 0"
+                >
+                    Looks like there are no staged characters yet. Click the
+                    'Stage Character' button to add one! If you are a player,
+                    you can then ask your DM to add the character to the combat.
+                </ul>
             </div>
             <footer
-                class="flex gap-4"
+                class="flex flex-wrap gap-4"
                 :class="[userIsDm ? 'justify-between' : 'justify-end']"
             >
                 <FormButton
@@ -61,7 +69,7 @@
                     "
                 />
                 <FormButton
-                    label="Stage character"
+                    label="Add"
                     size="sm"
                     buttonColour="take-purple-light"
                     icon="plus"
@@ -116,7 +124,10 @@
 </template>
 <script setup lang="ts">
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import type { InitiativeCharacter } from "base/utils/types/models";
+import type {
+    InitiativeCharacter,
+    StagedCharacter,
+} from "base/utils/types/models";
 
 const viewState = reactive<{
     currentView:
@@ -125,7 +136,7 @@ const viewState = reactive<{
           }
         | {
               name: "Edit";
-              characterToEdit: InitiativeCharacter;
+              characterToEdit: StagedCharacter;
           }
         | {
               name: "Add";
@@ -145,7 +156,7 @@ function transitionViewToList() {
         name: "List",
     };
 }
-function transitionViewToEdit(characterToEdit: InitiativeCharacter) {
+function transitionViewToEdit(characterToEdit: StagedCharacter) {
     viewState.currentView = {
         name: "Edit",
         characterToEdit,
@@ -161,7 +172,7 @@ const {
     anyPlannedCharacters,
 } = storeToRefs(combatStore);
 
-function onCharacterClicked(character: CombatPlayerDto) {
+function onCharacterClicked(character: StagedPlayerDto) {
     if (userIsDm.value) {
         clickedList.value.includes(character.character.id)
             ? (clickedList.value = clickedList.value.filter(
@@ -174,13 +185,4 @@ function onCharacterClicked(character: CombatPlayerDto) {
 const emit = defineEmits<{
     (e: "RolledCharactersIntoInitiative"): void;
 }>();
-
-// A hook to set the currentView based on if there are any staged characters
-onMounted(() => {
-    if (orderedStagedCharacterListWithPlayerInfo.value.length != 0) {
-        return;
-    }
-
-    transitionViewToAdd();
-});
 </script>

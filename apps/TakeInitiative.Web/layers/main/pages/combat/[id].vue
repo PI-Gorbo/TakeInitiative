@@ -8,7 +8,8 @@
                 <div class="">
                     <FormButton
                         v-if="!combatIsFinished"
-                        :label="combatHasStarted ? 'Stage' : 'Stage'"
+                        class="w-max"
+                        label="Staged List"
                         :icon="combatHasStarted ? 'plus' : 'users'"
                         @clicked="
                             () => {
@@ -261,7 +262,7 @@ function showModal(modalType: CombatPageModalType) {
             modalState.title = "Edit Staged Character";
             break;
         case "Combat Started Staged Character Menu":
-            modalState.title = "Stage Characters";
+            modalState.title = "Staged List";
             break;
         case "Edit Initiative Character":
             modalState.title = "Edit Character in Initiative";

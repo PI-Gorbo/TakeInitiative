@@ -88,7 +88,7 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
                                 PlayerId: @event.UserId,
                                 ArmourClass: npc.ArmourClass,
                                 Health: npc.Health,
-                                Hidden: false,
+                                Hidden: true,
                                 CopyNumber: null
                             )
                         ];
@@ -110,7 +110,7 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
                                 PlayerId: @event.UserId,
                                 ArmourClass: npc.ArmourClass,
                                 Health: npc.Health,
-                                Hidden: false,
+                                Hidden: true,
                                 CopyNumber: nextQuantityNumber++
                             )
                         );
