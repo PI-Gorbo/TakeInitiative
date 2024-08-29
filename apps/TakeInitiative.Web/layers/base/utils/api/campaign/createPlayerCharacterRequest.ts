@@ -11,8 +11,8 @@ import {
 
 export type PlayerCharacterDto = {
     name: string;
-    health: UnevaluatedCharacterHealth | null;
-    initiative: UnevaluatedCharacterInitiative | null;
+    health: UnevaluatedCharacterHealth;
+    initiative: UnevaluatedCharacterInitiative;
     armourClass: number | null;
 };
 export type CreatePlayerCharacterRequest = {

@@ -10,7 +10,7 @@ import { validateResponse } from "base/utils/apiErrorParser";
 export type StagedCharacterDTO = {
     id: string;
     name: string;
-    health: UnevaluatedCharacterHealth | null;
+    health: UnevaluatedCharacterHealth;
     initiative: UnevaluatedCharacterInitiative;
     armourClass: number | null;
     hidden: boolean;

@@ -1,15 +1,24 @@
 <template>
     <section>
         <header class="flex gap-2">
-            <label class="text-sm text-white">Health (Optional)</label>
+            <label class="text-sm text-white">Health</label>
             <TooltipButton
                 icon="circle-question"
                 tooltip="If you don't provide health, it won't be displayed to others. Click the arrow button to reset. The health fields support basic arithmetic including grouping with brackets (), add (+), subtract (-), multiply (*) and divide (/)."
             />
         </header>
         <div :class="['flex w-full items-center gap-2']">
+            <select
+                class="rounded bg-take-navy-light p-2"
+                v-model="state.healthStrategy"
+            >
+                <option class="font-Overpass">None</option>
+                <option class="font-Overpass">Fixed</option>
+                <option class="font-Overpass">Roll</option>
+            </select>
             <section
                 class="flex flex-1 items-center gap-2 rounded-md bg-take-navy-light"
+                v-if="state.healthStrategy != 'Roll'"
             >
                 <div class="flex-1">
                     <input
@@ -28,11 +37,18 @@
                     />
                 </div>
             </section>
+            <section class="flex w-full items-center" v-else>
+                <FormInput
+                    class="flex-1"
+                    v-model:value="state.roll"
+                    placeholder="10d20 + 40"
+                />
+            </section>
             <div>
                 <FormIconButton
                     class="p-3"
                     icon="arrow-rotate-left"
-                    buttonColour="take-purple-dark"
+                    buttonColour="take-purple"
                     @clicked="reset"
                 />
             </div>
@@ -43,15 +59,9 @@
     </section>
 </template>
 <script setup lang="ts">
-import { toTypedSchema } from "@vee-validate/zod";
-import type { FormContext } from "base/composables/forms/useFormContext";
-import {
-    unevaluatedCharacterHealthValidator,
-    type UnevaluatedCharacterHealth,
-} from "base/utils/types/models";
+import { type UnevaluatedCharacterHealth } from "base/utils/types/models";
 import { Parser } from "expr-eval";
-import { useForm } from "vee-validate";
-import { boolean, z } from "zod";
+import { z } from "zod";
 const healthExpressionParser = new Parser({
     operators: {
         // Only enable add, subtract, multiple and divide
@@ -76,35 +86,73 @@ const healthExpressionParser = new Parser({
 });
 
 const props = defineProps<{
-    hasHealth: boolean | undefined;
-    currentHealth: number | undefined | null;
-    maxHealth: number | undefined | null;
+    health: UnevaluatedCharacterHealth;
 }>();
 
 const state = reactive<{
+    healthStrategy: "None" | "Fixed" | "Roll";
     currentHealth: string | undefined | null;
     maxHealth: string | undefined | null;
+    roll: string | null;
 }>({
+    healthStrategy: "None",
     currentHealth: null,
     maxHealth: null,
+    roll: null,
 });
 
 watch(
-    () => [{ ...props }],
-    () => {
-        if (props.hasHealth == true) {
-            state.currentHealth = props.currentHealth?.toString() ?? null;
-            state.maxHealth = props.maxHealth?.toString() ?? null;
-        } else {
+    () => ({ ...state }),
+    (after, before) => {
+        if (before.healthStrategy != "None" && after.healthStrategy == "None") {
             state.currentHealth = null;
             state.maxHealth = null;
+        }
+
+        if (
+            (before.currentHealth == null && after.currentHealth != null) ||
+            (before.maxHealth == null && after.maxHealth != null)
+        ) {
+            state.healthStrategy = "Fixed";
+        }
+
+        if (after.currentHealth == null && after.maxHealth == null) {
+            state.healthStrategy = "None";
+        }
+    },
+);
+
+watch(
+    () => ({ ...props }),
+    () => {
+        if (props.health["!"] == "None") {
+            state.healthStrategy = "None";
+            state.currentHealth = null;
+            state.maxHealth = null;
+            state.roll = null;
+        }
+
+        if (props.health["!"] == "Fixed") {
+            state.healthStrategy = "Fixed";
+            state.currentHealth = props.health.currentHealth.toString();
+            state.maxHealth = props.health.maxHealth.toString();
+            state.roll = null;
+        }
+
+        if (props.health["!"] == "Roll") {
+            state.healthStrategy = "Roll";
+            state.currentHealth = null;
+            state.maxHealth = null;
+            state.roll = props.health.rollString;
         }
     },
 );
 
 function reset() {
+    state.healthStrategy = "None";
     state.currentHealth = null;
     state.maxHealth = null;
+    state.roll = null;
 }
 
 const tryParseNumber = (
@@ -163,13 +211,9 @@ const formState = reactive<{ error: string | null }>({
 defineExpose({
     getHealth: (): UnevaluatedCharacterHealth | false => {
         if (state.currentHealth == null && state.maxHealth == null) {
-            const model: UnevaluatedCharacterHealth = {
-                hasHealth: false,
-                currentHealth: null,
-                maxHealth: null,
-            };
-
-            return model;
+            return {
+                "!": "None",
+            } satisfies UnevaluatedCharacterHealth;
         }
 
         const model = {
@@ -181,7 +225,11 @@ defineExpose({
             return false;
         }
 
-        return paredModel.data;
+        return {
+            "!": "Fixed",
+            currentHealth: paredModel.data.currentHealth!,
+            maxHealth: paredModel.data.maxHealth!,
+        };
     },
 });
 </script>

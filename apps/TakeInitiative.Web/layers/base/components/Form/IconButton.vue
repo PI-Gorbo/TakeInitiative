@@ -1,6 +1,6 @@
 <template>
     <button
-        class="btn h-min min-h-0 p-2"
+        class="btn h-min min-h-0 border-0 p-2"
         :class="[
             `bg-${buttonColour} text-${TakeInitContrastColour[props.buttonColour]} hover:bg-${hoverColour} disabled:bg-${disabledColour} disabled:text-take-navy disabled:hover:bg-take-grey`,
         ]"

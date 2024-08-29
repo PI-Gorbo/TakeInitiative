@@ -9,7 +9,8 @@
         <input
             :autofocus="props.autoFocus"
             :class="[
-                `md:text-md mt-1 w-full rounded-md bg-${props.colour} p-2 disabled:brightness-75 text-${props.textColour}`,
+                props.label != null && 'mt-1',
+                `md:text-md  w-full rounded-md bg-${props.colour} p-2 disabled:brightness-75 text-${props.textColour}`,
             ]"
             :value="props.value"
             @input="
