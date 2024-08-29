@@ -46,8 +46,8 @@
 import { toTypedSchema } from "@vee-validate/zod";
 import type { FormContext } from "base/composables/forms/useFormContext";
 import {
-    characterHealthValidator,
-    type CharacterHealth,
+    unevaluatedCharacterHealthValidator,
+    type UnevaluatedCharacterHealth,
 } from "base/utils/types/models";
 import { Parser } from "expr-eval";
 import { useForm } from "vee-validate";
@@ -161,9 +161,9 @@ const formState = reactive<{ error: string | null }>({
     error: null,
 });
 defineExpose({
-    getHealth: (): CharacterHealth | false => {
+    getHealth: (): UnevaluatedCharacterHealth | false => {
         if (state.currentHealth == null && state.maxHealth == null) {
-            const model: CharacterHealth = {
+            const model: UnevaluatedCharacterHealth = {
                 hasHealth: false,
                 currentHealth: null,
                 maxHealth: null,

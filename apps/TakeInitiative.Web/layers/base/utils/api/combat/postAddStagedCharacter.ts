@@ -1,6 +1,6 @@
 import {
-    type CharacterHealth,
-    type CharacterInitiative,
+    type UnevaluatedCharacterHealth,
+    type UnevaluatedCharacterInitiative,
 } from "../../types/models";
 import type { AxiosInstance } from "axios";
 import { z } from "zod";
@@ -9,8 +9,8 @@ import { validateResponse } from "base/utils/apiErrorParser";
 
 export type StagedCharacterWithoutIdDTO = {
     name: string;
-    health: CharacterHealth | null;
-    initiative: CharacterInitiative;
+    health: UnevaluatedCharacterHealth | null;
+    initiative: UnevaluatedCharacterInitiative;
     armourClass: number | null;
     hidden: boolean;
 };

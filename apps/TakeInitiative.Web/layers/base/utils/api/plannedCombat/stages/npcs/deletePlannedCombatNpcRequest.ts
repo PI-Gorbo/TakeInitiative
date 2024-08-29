@@ -1,8 +1,8 @@
 import type { AxiosInstance } from "axios";
 import { z } from "zod";
 import {
-    characterHealthValidator,
-    characterInitiativeValidator,
+    unevaluatedCharacterHealthValidator,
+    unevaluatedCharacterInitiativeValidator,
     plannedCombatValidator,
 } from "../../../../types/models";
 import { validateResponse } from "base/utils/apiErrorParser";

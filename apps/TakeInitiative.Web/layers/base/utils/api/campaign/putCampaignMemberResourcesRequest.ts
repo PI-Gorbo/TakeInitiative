@@ -6,8 +6,8 @@ import {
     campaignValidator,
     type CampaignMember,
     type CampaignMemberResource,
-    type CharacterHealth,
-    type CharacterInitiative,
+    type UnevaluatedCharacterHealth,
+    type UnevaluatedCharacterInitiative,
 } from "../../types/models";
 
 export type PutCampaignMemberResourcesRequest = {

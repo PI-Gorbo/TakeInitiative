@@ -58,7 +58,7 @@
 import { useForm } from "vee-validate";
 import type { SubmittingState } from "../Form/Base.vue";
 import {
-    characterHealthValidator,
+    unevaluatedCharacterHealthValidator,
     conditionValidator,
     type InitiativeCharacter,
 } from "base/utils/types/models";
@@ -92,7 +92,7 @@ const { values, errors, defineField, validate } = useForm({
                 name: z.string({ required_error: "Please provide a name" }),
                 isHidden: z.boolean(),
                 armourClass: z.number().nullable(),
-                health: characterHealthValidator,
+                health: unevaluatedCharacterHealthValidator,
                 conditions: z.array(conditionValidator),
             })
             .required({ name: true, health: true }),

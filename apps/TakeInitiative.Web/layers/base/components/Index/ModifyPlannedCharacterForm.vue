@@ -74,8 +74,8 @@ import { useForm } from "vee-validate";
 import {
     InitiativeStrategy,
     type PlannedCombatCharacter,
-    characterInitiativeValidator,
-    characterHealthValidator,
+    unevaluatedCharacterInitiativeValidator,
+    unevaluatedCharacterHealthValidator,
 } from "base/utils/types/models";
 import type { CreatePlannedCombatNpcRequest } from "base/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
 import type { UpdatePlannedCombatNpcRequest } from "base/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
@@ -110,10 +110,10 @@ const { values, errors, defineField, validate } = useForm({
         z
             .object({
                 name: z.string({ required_error: "Please provide a name" }),
-                initiative: characterInitiativeValidator,
+                initiative: unevaluatedCharacterInitiativeValidator,
                 quantity: z.number().min(1, "Quantity must be 1 or more."),
                 armourClass: z.number().nullable(),
-                health: characterHealthValidator,
+                health: unevaluatedCharacterHealthValidator,
             })
             .required({ name: true, health: true }),
     ),

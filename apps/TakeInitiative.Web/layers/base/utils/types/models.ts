@@ -74,49 +74,55 @@ export const campaignValidator = z
     });
 export type Campaign = z.infer<typeof campaignValidator>;
 
-// Character Initiative
-export enum InitiativeStrategy {
-    Fixed = 0,
-    Roll = 1,
-}
-export const characterInitiativeValidator = z
+// Unevaluated Character Initiative
+export const unevaluatedCharacterInitiativeValidator = z
     .object({
-        strategy: z.nativeEnum(InitiativeStrategy),
         value: z.string({ message: "An initiative value is required." }),
     })
-    .required({ value: true });
-export type CharacterInitiative = z.infer<typeof characterInitiativeValidator>;
+    .required();
+export type UnevaluatedCharacterInitiative = z.infer<
+    typeof unevaluatedCharacterInitiativeValidator
+>;
+
+// Character Initiative
+export const characterInitiativeValidator = z.object({
+    value: z.array(z.number().int()),
+});
+
+// Unevaluated Character Health
+export const unevaluatedCharacterHealthValidator = z.discriminatedUnion("!", [
+    z
+        .object({
+            "!": z.literal("None"),
+        })
+        .required(),
+    z
+        .object({
+            "!": z.literal("Roll"),
+            rollString: z.string(),
+        })
+        .required(),
+    z.object({
+        "!": z.literal("Fixed"),
+        currentHealth: z.number().int(),
+        maxHealth: z.number().int(),
+    }),
+]);
+export type UnevaluatedCharacterHealth = z.infer<
+    typeof unevaluatedCharacterHealthValidator
+>;
 
 // Character Health
-export const characterHealthValidator = z
-    .object({
-        hasHealth: z.boolean(),
-        maxHealth: z
-            .number({ message: "Max health be a valid number" })
-            .int("Max health be a integer (No decimal point)")
-            .nullable(),
-        currentHealth: z
-            .number()
-            .int("Current health be a integer (No decimal point)")
-            .nullable(),
-    })
-    .required({ hasHealth: true })
-    .refine(
-        (characterHealth) => {
-            if (!characterHealth.hasHealth) {
-                return true;
-            }
-
-            return (
-                characterHealth.maxHealth != null &&
-                characterHealth.currentHealth != null
-            );
-        },
-        {
-            message:
-                "Either set current and max health to empty with the reset button, or provide a value for both",
-        },
-    );
+export const characterHealthValidator = z.discriminatedUnion("!", [
+    z.object({
+        "!": z.literal("None"),
+    }),
+    z.object({
+        "!": z.literal("Fixed"),
+        currentHealth: z.number().int(),
+        maxHealth: z.number().int(),
+    }),
+]);
 export type CharacterHealth = z.infer<typeof characterHealthValidator>;
 
 // Player Character
@@ -124,11 +130,11 @@ export const characterValidator = z
     .object({
         id: z.string(),
         name: z.string(),
-        health: characterHealthValidator.nullable(),
-        initiative: characterInitiativeValidator,
+        health: unevaluatedCharacterHealthValidator,
+        initiative: unevaluatedCharacterInitiativeValidator,
         armourClass: z.number().nullable(),
     })
-    .required({ id: true, name: true });
+    .required();
 export type ICharacter = z.infer<typeof characterValidator>;
 export const playerCharacterValidator = characterValidator
     .extend({ playerId: z.string() })
@@ -174,12 +180,12 @@ export const plannedCombatCharacterValidator = z
     .object({
         id: z.string(),
         name: z.string({ message: "Please provide a name" }),
-        health: characterHealthValidator,
+        health: unevaluatedCharacterHealthValidator,
+        initiative: unevaluatedCharacterInitiativeValidator,
         armourClass: z.number().nullable(),
-        initiative: characterInitiativeValidator,
         quantity: z.number(),
     })
-    .required({ name: true });
+    .required();
 export type PlannedCombatCharacter = z.infer<
     typeof plannedCombatCharacterValidator
 >;
@@ -191,7 +197,7 @@ export const plannedCombatStageValidator = z
         name: z.string(),
         npcs: z.array(plannedCombatCharacterValidator),
     })
-    .required({ id: true, name: true });
+    .required();
 export type PlannedCombatStage = z.infer<typeof plannedCombatStageValidator>;
 
 // Planned Combat
@@ -220,12 +226,7 @@ export const playerDtoValidator = z
     .required({ userId: true });
 export type PlayerDto = z.infer<typeof playerDtoValidator>;
 
-export const CharacterOriginOptions = {
-    PlayerCharacter: 0,
-    PlannedCharacter: 1,
-    CustomCharacter: 2,
-} as const;
-
+// Conditions
 export const conditionValidator = z.object({
     id: z.string(),
     name: z.string(),
@@ -233,41 +234,45 @@ export const conditionValidator = z.object({
 });
 export type Condition = z.infer<typeof conditionValidator>;
 
+// Character Origin Details
+export const CharacterOriginOptions = {
+    PlayerCharacter: 0,
+    PlannedCharacter: 1,
+    CustomCharacter: 2,
+} as const;
+export const characterOriginDetailsValidator = z
+    .object({
+        characterOrigin: z.nativeEnum(CharacterOriginOptions),
+        id: z.string().nullable(),
+    })
+    .required();
+
 export const initiativeCharacterValidator = z
     .object({
         id: z.string(),
-        characterOriginDetails: z.object({
-            characterOrigin: z.nativeEnum(CharacterOriginOptions),
-            id: z.string().nullable(),
-        }),
+        characterOriginDetails: characterOriginDetailsValidator,
         playerId: z.string(),
-        initiativeValue: z.array(z.number()).nullable(),
         hidden: z.boolean(),
         name: z.string(),
-        health: characterHealthValidator.nullable(),
+        health: characterHealthValidator,
         initiative: characterInitiativeValidator,
         armourClass: z.number().nullable(),
         copyNumber: z.number().nullable(),
         conditions: z.array(conditionValidator),
     })
-    .required({
-        id: true,
-        playerId: true,
-        hidden: true,
-        name: true,
-        conditions: true,
-    });
+    .required();
 
 export type InitiativeCharacter = z.infer<typeof initiativeCharacterValidator>;
 
-export const stagedCharacterValidator = initiativeCharacterValidator.omit({
-    initiativeValue: true,
-    conditions: true,
+export const stagedCharacterValidator = characterValidator.extend({
+    playerId: z.string().uuid(),
+    characterOriginDetails: characterOriginDetailsValidator,
+    hidden: z.boolean(),
+    copyNumber: z.number().int().nullable(),
 });
 export type StagedCharacter = z.infer<typeof stagedCharacterValidator>;
 
 /// COMBAT EVENTS
-
 export const CombatStartedHistoryEvent = z.object({});
 export const CombatInitiativeRolledHistoryEvent = z.object({
     rolls: z.array(
@@ -276,6 +281,7 @@ export const CombatInitiativeRolledHistoryEvent = z.object({
                 characterId: z.string().uuid(),
                 roll: z.array(z.number().int()),
                 characterName: z.string(),
+                rolledHealth: z.number().int().nullable(),
             })
             .required(),
     ),
@@ -387,7 +393,6 @@ export const historyEntryValidator = z
 export type HistoryEntry = z.infer<typeof historyEntryValidator>;
 
 /// COMBAT
-
 export const combatValidator = z
     .object({
         id: z.string(),

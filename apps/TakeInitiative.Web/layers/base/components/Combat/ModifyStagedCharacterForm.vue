@@ -82,9 +82,9 @@ import {
     plannedCombatCharacterValidator,
     type PlannedCombatCharacter,
     type PlannedCombatStage,
-    characterInitiativeValidator,
+    unevaluatedCharacterInitiativeValidator,
     type InitiativeCharacter,
-    characterHealthValidator,
+    unevaluatedCharacterHealthValidator,
     type StagedCharacter,
 } from "base/utils/types/models";
 import type { StagedCharacterDTO } from "base/utils/api/combat/putUpsertStagedCharacter";
@@ -115,10 +115,10 @@ const { values, errors, defineField, validate } = useForm({
         z
             .object({
                 name: z.string({ required_error: "Please provide a name" }),
-                initiative: characterInitiativeValidator,
+                initiative: unevaluatedCharacterInitiativeValidator,
                 isHidden: z.boolean(),
                 armourClass: z.number().nullable(),
-                health: characterHealthValidator,
+                health: unevaluatedCharacterHealthValidator,
             })
             .required({ name: true, health: true }),
     ),
