@@ -49,14 +49,11 @@
       Id: Guid_3,
       Name: Another Enemy!,
       Health: {
-        HasHealth: true,
-        MaxHealth: 20,
-        CurrentHealth: 10
+        TYPE: Fixed,
+        CurrentHealth: 10,
+        MaxHealth: 20
       },
       Initiative: {
-        Strategy: 1,
-        Value: 10,
-        Fixed: null,
         Roll: 10
       },
       ArmourClass: null

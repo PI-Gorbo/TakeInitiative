@@ -10,9 +10,9 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
     public async Task<Combat> Apply(CombatInitiativeRolledEvent @event, Combat Combat, IEvent<CombatInitiativeRolledEvent> eventDetails, IQuerySession session)
     {
         var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
-        var newInitiativeList = @event.InitiativeRolls.Select((charInitiative, index) =>
+        var newInitiativeList = @event.EvaluatedRolls.Select((charInitiative) =>
         {
-            var stagedCharacter = Combat.StagedList.FirstOrDefault(x => x!.Id == charInitiative.id, null);
+            var stagedCharacter = Combat.StagedList.FirstOrDefault(x => x!.Id == charInitiative.Key, null);
             if (stagedCharacter == null)
             {
                 return null;
@@ -20,21 +20,26 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
 
             return InitiativeCharacter.FromStagedCharacter(
                 stagedCharacter,
-                charInitiative.rolls
+                charInitiative.Value.Health,
+                charInitiative.Value.Initiative
             );
         })
         .Where(x => x != null)
         .Cast<InitiativeCharacter>()
-        .OrderByDescending(x => x.InitiativeValue, new InitiativeComparer())
+        .OrderByDescending(x => x.Initiative.Value, new InitiativeComparer())
         .ToImmutableList();
 
         List<HistoryEvent> events = [
             new CombatInitiativeRolled {
-                Rolls = [..@event.InitiativeRolls.OrderByDescending(x => x.rolls, new InitiativeComparer())
+                Rolls = [..@event.EvaluatedRolls.OrderByDescending(x => x.Value.Initiative.Value, new InitiativeComparer())
                     .Select(rollDto => new InitiativeRolledDto() {
-                        CharacterId = rollDto.id,
-                        Roll = rollDto.rolls,
-                        CharacterName = newInitiativeList.Find(c => c.Id == rollDto.id)?.Name ?? "UNKNOWN",
+                        CharacterId = rollDto.Key,
+                        Roll = rollDto.Value.Initiative.Value,
+                        CharacterName = newInitiativeList.Find(c => c.Id == rollDto.Key)?.Name ?? "UNKNOWN",
+                        RolledHealth = Combat.StagedList.Find(x => x.Id == rollDto.Key)?.Health switch {
+                            UnevaluatedCharacterHealth.Roll roll => ((CharacterHealth.Fixed)rollDto.Value.Health).CurrentHealth,
+                            null => null,
+                            _ => null, }
                     })],
             }
         ];

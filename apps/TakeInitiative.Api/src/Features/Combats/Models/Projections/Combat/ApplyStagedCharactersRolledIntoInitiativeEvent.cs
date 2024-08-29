@@ -13,34 +13,35 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
         var user = await session.LoadAsync<ApplicationUser>(@event.UserId);
 
         // Determine new Initiative list.
-        var newInitiativeList = @event.InitiativeRolls.Select((charInitiative, index) =>
+        var newInitiativeList = @event.Rolls.Select((characterRoll) =>
         {
             // If there is an existing character, return it with the newly computed rolls.
-            var exitingCharacter = Combat.InitiativeList.Find(x => x.Id == charInitiative.id).AsMaybe();
+            var exitingCharacter = Combat.InitiativeList.Find(x => x.Id == characterRoll.Key).AsMaybe();
             if (exitingCharacter.HasValue)
             {
                 return exitingCharacter.Value with
                 {
-                    InitiativeValue = charInitiative.rolls
+                    Initiative = characterRoll.Value.Initiative,
+                    Health = characterRoll.Value.Health,
                 };
             }
 
             // Otherwise, we expect there to be a staged character.
-            var stagedChar = Combat.StagedList.Find(x => x.Id == charInitiative.id).AsMaybe();
+            var stagedChar = Combat.StagedList.Find(x => x.Id == characterRoll.Key).AsMaybe();
             if (stagedChar.HasNoValue) // If there is not one (due to poor data), then return null, it will be filtered out later.
             {
                 return null;
             }
 
-            return InitiativeCharacter.FromStagedCharacter(stagedChar.Value, charInitiative.rolls);
+            return InitiativeCharacter.FromStagedCharacter(stagedChar.Value, characterRoll.Value.Health, characterRoll.Value.Initiative);
         })
         .Where(x => x != null)
         .Cast<InitiativeCharacter>()
-        .OrderByDescending(x => x.InitiativeValue, new InitiativeComparer())
+        .OrderByDescending(x => x.Initiative.Value, new InitiativeComparer())
         .ToImmutableList();
 
         // Determine new Staged List
-        var stagedCharactersToRemove = @event.InitiativeRolls.Select(x => x.id).ToArray();
+        var stagedCharactersToRemove = @event.Rolls.Keys.ToArray();
         var newStagedList = Combat.StagedList.Where(x => !x.Id.In(stagedCharactersToRemove)).ToImmutableList();
 
         // Determine new Initiative Index
@@ -53,11 +54,16 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
             Timestamp = eventDetails.Timestamp,
             Events = [
                 new CharactersAddedToInitiative() {
-                    NewInitiativeList = @event.InitiativeRolls
+                    NewInitiativeList = @event.Rolls
                         .Select(x => new InitiativeRolledDto() {
-                            CharacterId = x.id,
-                            CharacterName = newInitiativeList.Find(x => x.Id == x.Id)?.Name ?? "UNKNOWN",
-                            Roll = x.rolls
+                            CharacterId = x.Key,
+                            CharacterName = newInitiativeList.Find(init => init.Id == x.Key)?.Name ?? "UNKNOWN",
+                            Roll = x.Value.Initiative.Value,
+                            RolledHealth = Combat.StagedList.Find(staged => staged.Id == x.Key)?.Health switch {
+                                UnevaluatedCharacterHealth.Roll => ((CharacterHealth.Fixed)x.Value.Health).CurrentHealth,
+                                null => null,
+                                _ => null
+                             }
                         }).ToArray()
                 }
             ],

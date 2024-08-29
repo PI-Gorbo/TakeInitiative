@@ -18,6 +18,9 @@ public class CharacterValidator<TCharacter> : AbstractValidator<TCharacter>
 
         RuleFor(x => x.Initiative)
             .NotEmpty()
-            .SetValidator(new CharacterInitiativeValidator(diceRoller));
+            .SetValidator(new UnevaluatedCharacterInitiativeValidator(diceRoller));
+
+        RuleFor(x => x.Health)
+            .SetValidator(new UnevaluatedCharacterHealthValidator(diceRoller));
     }
 }

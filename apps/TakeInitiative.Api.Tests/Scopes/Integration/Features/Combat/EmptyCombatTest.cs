@@ -18,7 +18,7 @@ public class EmptyCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixt
     public EmptyCombatTest(AuthenticatedWebAppWithDatabaseFixture fixture)
     {
         this.fixture = fixture;
-        verifier = new CombatVerifier();
+        verifier = new CombatVerifier(nameof(EmptyCombatTest));
     }
 
     [Fact]
@@ -47,20 +47,20 @@ public class EmptyCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixt
         await verifier
             .RegisterKnownGuid(combat.Id, "CombatId")
             .RegisterKnownGuid(combat.DungeonMaster, "DmId")
-            .Verify(combat, "EmptyCombatTest.00.OpenedCombat");
+            .Verify(combat, "OpenedCombat");
 
         // Start the combat.
         // Prep the mock.
         A.CallTo(() => fixture.InitiativeRoller.ComputeRolls(A<IEnumerable<StagedCharacter>>._))
-            .Returns(Result.Success(new List<CharacterInitiativeRoll>()));
+            .Returns(new Dictionary<Guid, CharacterInitiative>());
 
-        var startCombatResult = await fixture.PostStartCombat(new PostRollCombatInitiativeRequest()
+        var startCombatResult = await fixture.PostRollCombatInitiative(new PostRollCombatInitiativeRequest()
         {
             CombatId = combat.Id,
         });
         startCombatResult.Should().Succeed();
         combat = startCombatResult.Value.Combat;
-        await verifier.Verify(combat, "EmptyCombatTest.01.CombatStarted");
+        await verifier.Verify(combat, "CombatStarted");
 
         // Dm finishes the combat.
         var finishCombatResult = await fixture.PostFinishCombat(new()
@@ -69,6 +69,6 @@ public class EmptyCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixt
         });
         finishCombatResult.Should().Succeed();
         combat = finishCombatResult.Value.Combat;
-        await verifier.Verify(combat, "EmptyCombatTest.02.CombatFinished");
+        await verifier.Verify(combat, "CombatFinished");
     }
 }

@@ -14,7 +14,7 @@ public class PlayerCharacterDTOValidator : AbstractValidator<PlayerCharacterDTO>
             .NotNull();
 
         RuleFor(x => x.Initiative)
-            .SetValidator(new CharacterInitiativeValidator(roller));
+            .SetValidator(new UnevaluatedCharacterInitiativeValidator(roller));
     }
 }
 

@@ -35,7 +35,8 @@
               CharacterName: Another Enemy!,
               Roll: [
                 10
-              ]
+              ],
+              RolledHealth: null
             }
           ]
         },
@@ -62,6 +63,19 @@
   StagedList: [],
   InitiativeList: [
     {
+      Id: Guid_2,
+      Name: Another Enemy!,
+      Health: {
+        TYPE: Fixed,
+        CurrentHealth: 10,
+        MaxHealth: 20
+      },
+      Initiative: {
+        Value: [
+          10
+        ]
+      },
+      ArmourClass: null,
       PlayerId: DmId,
       CharacterOriginDetails: {
         CharacterOrigin: 0,
@@ -69,24 +83,7 @@
       },
       Hidden: false,
       CopyNumber: null,
-      InitiativeValue: [
-        10
-      ],
-      Conditions: [],
-      Id: Guid_2,
-      Name: Another Enemy!,
-      Health: {
-        HasHealth: true,
-        MaxHealth: 20,
-        CurrentHealth: 10
-      },
-      Initiative: {
-        Strategy: 1,
-        Value: 10,
-        Fixed: null,
-        Roll: 10
-      },
-      ArmourClass: null
+      Conditions: []
     }
   ],
   InitiativeIndex: 0,

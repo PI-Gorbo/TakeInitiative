@@ -21,7 +21,7 @@ public class EditInitiativeCharacterCommandHandler(IDocumentSession session) : C
         return Result.Try(() => session.LoadAsync<Combat>(command.CombatId), ex => "Failed initial fetch of the combat from the database.")
             .EnsureNotNull("Combat does not exist.")
             .Ensure(combat => combat.State == CombatState.InitiativeRolled, "Combat's initiative list cannot be edited ")
-            .Bind((combat) =>
+            .Bind((Combat combat) =>
             {
                 // Ensure the player's character exists.
                 var character = combat.InitiativeList.Find(x => x.Id == command.CharacterDto.Id).AsMaybe();
@@ -37,7 +37,7 @@ public class EditInitiativeCharacterCommandHandler(IDocumentSession session) : C
                 }
 
                 // Check if the initiative value has changed. If it has, validate the change.
-                if (!character.Value.InitiativeValue.SequenceEqual(command.CharacterDto.InitiativeValue))
+                if (!character.Value.Initiative.Value.SequenceEqual(command.CharacterDto.Initiative.Value))
                 {
                     throw new NotImplementedException("Not implemented yet.");
                 }

@@ -25,14 +25,16 @@
               CharacterName: My Super Duper Character,
               Roll: [
                 20
-              ]
+              ],
+              RolledHealth: null
             },
             {
               CharacterId: Guid_2,
               CharacterName: Intro Enemy,
               Roll: [
                 15
-              ]
+              ],
+              RolledHealth: null
             }
           ]
         },
@@ -84,14 +86,10 @@
           Id: Guid_4,
           Name: 10 goblins in a trench coat,
           Health: {
-            HasHealth: false,
-            MaxHealth: 0,
-            CurrentHealth: 0
+            TYPE: Roll,
+            RollString: 20d20 + 10
           },
           Initiative: {
-            Strategy: 1,
-            Value: 1d20 + 2,
-            Fixed: null,
             Roll: 1d20 + 2
           },
           ArmourClass: 12
@@ -102,6 +100,19 @@
   StagedList: [],
   InitiativeList: [
     {
+      Id: PlayerFirstCharacterId,
+      Name: My Super Duper Character,
+      Health: {
+        TYPE: Fixed,
+        CurrentHealth: 5,
+        MaxHealth: 20
+      },
+      Initiative: {
+        Value: [
+          20
+        ]
+      },
+      ArmourClass: 20,
       PlayerId: PlayerId,
       CharacterOriginDetails: {
         CharacterOrigin: 0,
@@ -109,32 +120,28 @@
       },
       Hidden: false,
       CopyNumber: null,
-      InitiativeValue: [
-        20
-      ],
       Conditions: [
         {
           Id: ConditionId,
           Name: Paralyzed,
           Note: AHHHH
         }
-      ],
-      Id: PlayerFirstCharacterId,
-      Name: My Super Duper Character,
-      Health: {
-        HasHealth: true,
-        MaxHealth: 20,
-        CurrentHealth: 5
-      },
-      Initiative: {
-        Strategy: 1,
-        Value: 1d20 + 3,
-        Fixed: null,
-        Roll: 1d20 + 3
-      },
-      ArmourClass: 20
+      ]
     },
     {
+      Id: Guid_2,
+      Name: Intro Enemy,
+      Health: {
+        TYPE: Fixed,
+        CurrentHealth: 0,
+        MaxHealth: 0
+      },
+      Initiative: {
+        Value: [
+          15
+        ]
+      },
+      ArmourClass: 12,
       PlayerId: DmId,
       CharacterOriginDetails: {
         CharacterOrigin: 0,
@@ -142,24 +149,7 @@
       },
       Hidden: true,
       CopyNumber: null,
-      InitiativeValue: [
-        15
-      ],
-      Conditions: [],
-      Id: Guid_2,
-      Name: Intro Enemy,
-      Health: {
-        HasHealth: false,
-        MaxHealth: 0,
-        CurrentHealth: 0
-      },
-      Initiative: {
-        Strategy: 1,
-        Value: 1d20 + 1,
-        Fixed: null,
-        Roll: 1d20 + 1
-      },
-      ArmourClass: 12
+      Conditions: []
     }
   ],
   InitiativeIndex: 0,

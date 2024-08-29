@@ -34,7 +34,7 @@ internal class Program
         builder.Services.AddMartenDB(builder.Configuration, builder.Environment.IsDevelopment());
         builder.Services.AddSerilog();
         builder.Services.AddIdentityAuthenticationAndAuthorization(builder.Configuration);
-        builder.Services.AddPython(builder.Configuration);
+        builder.Services.AddDiceRollers(builder.Configuration);
         builder.Services.AddSendGrid(builder.Configuration);
 
         // Cors
