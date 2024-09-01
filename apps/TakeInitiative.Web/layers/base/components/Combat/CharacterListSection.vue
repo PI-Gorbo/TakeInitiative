@@ -112,7 +112,7 @@
 
                     <section v-if="combatIsOpen">
                         <FontAwesomeIcon icon="shoe-prints" />
-                        {{ charInfo.character.initiative.value }}
+                        {{ charInfo.character.initiative.roll }}
                     </section>
 
                     <li

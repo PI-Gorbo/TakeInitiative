@@ -77,7 +77,7 @@
                                     >
                                         <FontAwesomeIcon icon="shoe-prints" />
                                         <div>
-                                            {{ npc.initiative.value }}
+                                            {{ npc.initiative.roll }}
                                         </div>
                                     </div>
                                 </div>

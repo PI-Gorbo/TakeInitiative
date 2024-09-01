@@ -29,7 +29,7 @@ const props = withDefaults(
 const state = reactive<{
     value: string | undefined;
 }>({
-    value: props?.initiative?.value ?? "",
+    value: props?.initiative?.roll ?? "",
 });
 
 const error = computed(() => props.errorMessage);
@@ -37,7 +37,7 @@ const error = computed(() => props.errorMessage);
 defineExpose({
     getInitiative(): UnevaluatedCharacterInitiative | false {
         return {
-            value: state.value ?? "",
+            roll: state.value ?? "",
         } satisfies UnevaluatedCharacterInitiative;
     },
 });

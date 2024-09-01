@@ -200,7 +200,7 @@ onMounted(() => {
         maxHealth.value = 0;
     } else {
         initiativeStrategy.value = props.npc?.initiative.strategy;
-        initiativeValue.value = props.npc.initiative.value;
+        initiativeValue.value = props.npc.initiative.roll;
         quantity.value = props.npc.quantity;
         name.value = props.npc.name;
         armourClass.value = props.npc.armourClass ?? null;
@@ -259,7 +259,7 @@ async function onEdit() {
             },
             initiative: {
                 strategy: initiativeStrategy.value!,
-                value: initiativeValue.value!,
+                roll: initiativeValue.value!,
             },
             name: name.value!,
             quantity: quantity.value!,
@@ -298,7 +298,7 @@ async function onCreate() {
             },
             initiative: {
                 strategy: initiativeStrategy.value!,
-                value: initiativeValue.value!,
+                roll: initiativeValue.value!,
             },
             name: name.value!,
             quantity: quantity.value!,

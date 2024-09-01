@@ -13,6 +13,7 @@
         />
 
         <CharacterInitiative
+            ref="characterInitiativeInput"
             :initiative="initiative"
             :errorMessage="initiativeProps.errorMessage"
         />
@@ -87,14 +88,40 @@ const { values, errors, defineField, validate } = useForm({
     validationSchema: toTypedSchema(
         z
             .object({
-                name: z.string({ required_error: "Please provide a name" }),
-                initiative: unevaluatedCharacterInitiativeValidator.required(),
+                name: z
+                    .string({ required_error: "Please provide a name" })
+                    .min(1, "Please provide a name"),
+                initiative: unevaluatedCharacterInitiativeValidator,
                 armourClass: z.number().nullable(),
                 health: unevaluatedCharacterHealthValidator,
             })
             .required({ name: true, health: true }),
     ),
+    initialValues: {
+        initiative: props.npc?.initiative ?? { roll: undefined },
+        name: props.npc?.name ?? "",
+        armourClass: props.npc?.armourClass ?? null,
+        health: props.npc?.health ?? {
+            "!": "Fixed",
+            currentHealth: undefined,
+            maxHealth: undefined,
+        },
+    },
 });
+
+onMounted(() => {
+    if (props.npc) {
+        initiative.value = props.npc?.initiative ?? { roll: undefined };
+        name.value = props.npc?.name ?? "";
+        armourClass.value = props.npc?.armourClass ?? null;
+        health.value = props.npc?.health ?? {
+            "!": "Fixed",
+            currentHealth: undefined,
+            maxHealth: undefined,
+        };
+    }
+});
+
 const [name, nameInputProps] = defineField("name", {
     props: (state) => ({
         errorMessage: formState.error?.getErrorFor("name") ?? state.errors[0],
@@ -104,7 +131,8 @@ const [name, nameInputProps] = defineField("name", {
 const [initiative, initiativeProps] = defineField("initiative", {
     props: (state) => ({
         errorMessage:
-            formState.error?.getErrorFor("initiative") ?? state.errors[0],
+            formState.error?.getErrorFor("playerCharacter.Initiative") ??
+            state.errors[0],
     }),
 });
 
@@ -120,17 +148,6 @@ const [armourClass, armourClassInputProps] = defineField("armourClass", {
             formState.error?.getErrorFor("playerCharacter.armourClass") ??
             state.errors[0],
     }),
-});
-
-onMounted(() => {
-    initiative.value = props.npc?.initiative ?? { value: undefined };
-    name.value = props.npc?.name ?? "";
-    armourClass.value = props.npc?.armourClass ?? null;
-    health.value = props.npc?.health ?? {
-        "!": "Fixed",
-        currentHealth: undefined,
-        maxHealth: undefined,
-    };
 });
 
 async function onSubmit(formSubmittingState: SubmittingState) {
@@ -205,8 +222,8 @@ async function onCreate() {
     if (computedInitiative == false) {
         return;
     }
-    initiative.value = computedInitiative;
 
+    initiative.value = computedInitiative;
     const validateResult = await validate();
     if (!validateResult.valid) {
         return;

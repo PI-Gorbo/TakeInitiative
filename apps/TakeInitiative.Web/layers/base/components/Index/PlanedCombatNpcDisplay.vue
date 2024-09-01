@@ -15,7 +15,7 @@
                 </div>
                 <div class="flex select-none items-center gap-2">
                     <FontAwesomeIcon icon="shoe-prints" />
-                    <div>{{ npc.initiative.value }}</div>
+                    <div>{{ npc.initiative.roll }}</div>
                 </div>
             </div>
         </div>

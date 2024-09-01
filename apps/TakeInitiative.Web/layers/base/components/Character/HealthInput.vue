@@ -10,14 +10,23 @@
         <div :class="['flex w-full items-center gap-2']">
             <select
                 class="rounded bg-take-navy-light p-2"
-                v-model="state.healthStrategy"
+                :value="state.healthStrategy"
+                @input="
+                    (event: Event) =>
+                        (state.healthStrategy = (
+                            event.target as HTMLSelectElement
+                        ).value as 'None' | 'Fixed' | 'Roll')
+                "
             >
-                <option class="font-Overpass">None</option>
-                <option class="font-Overpass">Fixed</option>
-                <option class="font-Overpass">Roll</option>
+                <option class="font-Overpass" value="None">None</option>
+                <option class="font-Overpass" value="Fixed">Fixed</option>
+                <option class="font-Overpass" value="Roll">Roll</option>
             </select>
             <section
                 class="flex flex-1 items-center gap-2 rounded-md bg-take-navy-light"
+                :class="{
+                    'brightness-75': state.healthStrategy == 'None',
+                }"
                 v-if="state.healthStrategy != 'Roll'"
             >
                 <div class="flex-1">
@@ -25,6 +34,7 @@
                         class="w-full rounded-md bg-take-navy-light p-2"
                         placeholder="Current"
                         v-model="state.currentHealth"
+                        @blur="onBlurOfInput"
                     />
                 </div>
                 <span class="cursor-default">/</span>
@@ -34,6 +44,7 @@
                         class="w-full rounded-md bg-take-navy-light p-2"
                         placeholder="Max"
                         v-model="state.maxHealth"
+                        @blur="onBlurOfInput"
                     />
                 </div>
             </section>
@@ -53,7 +64,7 @@
                 />
             </div>
         </div>
-        <label class="text-red-500" v-if="formState.error">
+        <label class="text-take-red" v-if="formState.error">
             {{ formState.error }}</label
         >
     </section>
@@ -115,10 +126,6 @@ watch(
         ) {
             state.healthStrategy = "Fixed";
         }
-
-        if (after.currentHealth == null && after.maxHealth == null) {
-            state.healthStrategy = "None";
-        }
     },
 );
 
@@ -130,6 +137,7 @@ watch(
             state.currentHealth = null;
             state.maxHealth = null;
             state.roll = null;
+            return;
         }
 
         if (props.health["!"] == "Fixed") {
@@ -137,6 +145,7 @@ watch(
             state.currentHealth = props.health.currentHealth.toString();
             state.maxHealth = props.health.maxHealth.toString();
             state.roll = null;
+            return;
         }
 
         if (props.health["!"] == "Roll") {
@@ -144,6 +153,7 @@ watch(
             state.currentHealth = null;
             state.maxHealth = null;
             state.roll = props.health.rollString;
+            return;
         }
     },
 );
@@ -153,6 +163,22 @@ function reset() {
     state.currentHealth = null;
     state.maxHealth = null;
     state.roll = null;
+    formState.error = null;
+}
+
+function onBlurOfInput() {
+    if (state.healthStrategy == "Fixed") {
+        const health = getHealth();
+        if (health == false) {
+            return;
+        }
+        if (health["!"] != "Fixed") {
+            return;
+        }
+
+        state.currentHealth = health.currentHealth.toString();
+        state.maxHealth = health.maxHealth.toString();
+    }
 }
 
 const tryParseNumber = (
@@ -161,6 +187,7 @@ const tryParseNumber = (
     | { isSuccess: true; value: number | null }
     | { isSuccess: false; error: string } => {
     if (num == null) return { isSuccess: true, value: null };
+    if (num == "") return { isSuccess: false, error: "Please provide a value" };
 
     try {
         return { isSuccess: true, value: healthExpressionParser.evaluate(num) };
@@ -208,28 +235,32 @@ const schema = z
 const formState = reactive<{ error: string | null }>({
     error: null,
 });
-defineExpose({
-    getHealth: (): UnevaluatedCharacterHealth | false => {
-        if (state.currentHealth == null && state.maxHealth == null) {
-            return {
-                "!": "None",
-            } satisfies UnevaluatedCharacterHealth;
-        }
 
-        const model = {
-            ...state,
-        };
-        const paredModel = schema.safeParse(model);
-        if (paredModel.error) {
-            formState.error = paredModel.error.issues[0].message;
-            return false;
-        }
-
+function getHealth(): UnevaluatedCharacterHealth | false {
+    formState.error = null;
+    if (state.currentHealth == null && state.maxHealth == null) {
         return {
-            "!": "Fixed",
-            currentHealth: paredModel.data.currentHealth!,
-            maxHealth: paredModel.data.maxHealth!,
-        };
-    },
+            "!": "None",
+        } satisfies UnevaluatedCharacterHealth;
+    }
+
+    const model = {
+        ...state,
+    };
+    const paredModel = schema.safeParse(model);
+    if (paredModel.error) {
+        formState.error = paredModel.error.issues[0].message;
+        return false;
+    }
+
+    return {
+        "!": "Fixed",
+        currentHealth: paredModel.data.currentHealth!,
+        maxHealth: paredModel.data.maxHealth!,
+    };
+}
+
+defineExpose({
+    getHealth,
 });
 </script>

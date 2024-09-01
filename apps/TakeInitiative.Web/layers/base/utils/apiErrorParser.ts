@@ -29,12 +29,15 @@ export function parseAsApiError<TRequest extends {}>(
             statusCode: result.statusCode,
             message: result.message,
             errors: result.errors,
-            getErrorFor: (error) => {
-                if (error in result.errors) {
-                    return result.errors[error][0];
+            getErrorFor: (errorName) => {
+                try {
+                    const value = Object.entries(result.errors).find(
+                        ([errorKey, errors]) => errorKey.startsWith(errorName),
+                    )?.[1][0];
+                    return value ?? "";
+                } catch {
+                    return null;
                 }
-
-                return null;
             },
             error,
         };

@@ -77,7 +77,9 @@ export type Campaign = z.infer<typeof campaignValidator>;
 // Unevaluated Character Initiative
 export const unevaluatedCharacterInitiativeValidator = z
     .object({
-        value: z.string({ message: "An initiative value is required." }),
+        roll: z
+            .string({ required_error: "An initiative value is required." })
+            .min(1, "Please provide an initiative roll"),
     })
     .required();
 export type UnevaluatedCharacterInitiative = z.infer<

@@ -19,7 +19,7 @@
         </div>
         <div class="flex select-none items-center gap-2">
             <FontAwesomeIcon icon="shoe-prints" />
-            <div>{{ props.character.initiative.value }}</div>
+            <div>{{ props.character.initiative.roll }}</div>
         </div>
     </div>
 </template>
