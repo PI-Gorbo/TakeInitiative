@@ -234,6 +234,7 @@
             ref="createPlannedCombatModal"
             title="Create a planned combat"
             key="CreatePlannedCombatModal"
+            x
         >
             <CreatePlannedCombatForm
                 class="h-full w-full"
@@ -246,8 +247,6 @@
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import Modal from "base/components/Modal.vue";
 import ConfirmModal from "base/components/ConfirmModal.vue";
-import type { ButtonLoadingControl } from "base/components/Form/Button.vue";
-import type { PlannedCombat } from "base/utils/types/models";
 import type { CreatePlannedCombatRequest } from "base/utils/api/plannedCombat/createPlannedCombatRequest";
 import { getCombatsRequest } from "base/utils/api/combat/getCombatsRequest";
 
@@ -351,7 +350,7 @@ onMounted(() => {
 
 const orderedFinishedCombats = computed(() =>
     (campaignCombatsStore.state?.combats ?? [])
-        .toSorted((a, b) => {
+        .sort((a, b) => {
             if (a.finishedTimestamp == null && b.finishedTimestamp != null) {
                 return -1;
             }

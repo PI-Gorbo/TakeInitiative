@@ -238,10 +238,17 @@ const formState = reactive<{ error: string | null }>({
 
 function getHealth(): UnevaluatedCharacterHealth | false {
     formState.error = null;
-    if (state.currentHealth == null && state.maxHealth == null) {
+    if (state.healthStrategy == "None") {
         return {
             "!": "None",
         } satisfies UnevaluatedCharacterHealth;
+    }
+
+    if (state.healthStrategy == "Roll") {
+        return {
+            "!": "Roll",
+            rollString: state.roll!,
+        };
     }
 
     const model = {

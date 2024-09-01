@@ -29,11 +29,10 @@ const shouldDisplay = computed(
 const textToDisplay = computed(() => {
     if (props.health["!"] == "Roll") {
         switch (props.displayMethod) {
-            case value:
-                break;
-
+            case HealthDisplayOptionsEnum["RealValue"]:
+                return props.health.rollString;
             default:
-                break;
+                return null;
         }
     }
 
