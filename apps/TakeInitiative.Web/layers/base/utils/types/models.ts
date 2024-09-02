@@ -90,6 +90,7 @@ export type UnevaluatedCharacterInitiative = z.infer<
 export const characterInitiativeValidator = z.object({
     value: z.array(z.number().int()),
 });
+export type CharacterInitiative = z.infer<typeof characterInitiativeValidator>;
 
 // Unevaluated Character Health
 export const unevaluatedCharacterHealthValidator = z.discriminatedUnion("!", [

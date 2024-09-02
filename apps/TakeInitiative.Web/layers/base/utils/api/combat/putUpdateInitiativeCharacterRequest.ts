@@ -4,6 +4,8 @@ import {
     combatValidator,
     type UnevaluatedCharacterHealth,
     type Condition,
+    type CharacterHealth,
+    type CharacterInitiative,
 } from "../../types/models";
 import { combatResponseValidator } from "./combatResponse";
 import { validateResponse } from "base/utils/apiErrorParser";
@@ -12,9 +14,9 @@ import { validateResponse } from "base/utils/apiErrorParser";
 export type CombatCharacterDto = {
     id: string;
     name: string;
-    health?: UnevaluatedCharacterHealth;
+    health?: CharacterHealth;
     hidden: boolean;
-    initiativeValue: number[];
+    initiative: CharacterInitiative;
     armourClass: number | null;
     conditions: Condition[];
 };

@@ -20,15 +20,18 @@
             v-bind="quantityInputProps"
         />
 
-        <CharacterInitiative
+        <CharacterUnevaluatedInitiativeInput
             ref="characterInitiativeInput"
             :initiative="initiative"
             :errorMessage="initiativeProps.errorMessage"
         />
 
-        <CharacterHealthInput :health="health" ref="characterHealthInput" />
+        <CharacterUnevaluatedHealthInput
+            :health="health"
+            ref="characterHealthInput"
+        />
 
-        <CharacterArmourClass v-model:value="armourClass" />
+        <CharacterArmourClassInput v-model:value="armourClass" />
 
         <div class="flex w-full justify-center" v-if="!props.npc">
             <FormButton
@@ -74,8 +77,8 @@ import type { DeletePlannedCombatNpcRequest } from "base/utils/api/plannedCombat
 import type { SubmittingState } from "../Form/Base.vue";
 import { toTypedSchema } from "@vee-validate/zod";
 import { z } from "zod";
-import HealthInput from "../Character/HealthInput.vue";
-import Initiative from "../Character/Initiative.vue";
+import HealthInput from "../Character/UnevaluatedHealthInput.vue";
+import Initiative from "../Character/UnevaluatedInitiativeInput.vue";
 const characterHealthInput = ref<InstanceType<typeof HealthInput> | null>(null);
 const characterInitiativeInput = ref<InstanceType<typeof Initiative> | null>(
     null,
@@ -203,7 +206,6 @@ async function onEdit() {
     if (computedInitiative == false) {
         return;
     }
-    debugger;
     initiative.value = computedInitiative;
 
     const validateResult = await validate();

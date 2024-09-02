@@ -12,15 +12,18 @@
             v-bind="nameInputProps"
         />
 
-        <CharacterInitiative
+        <CharacterUnevaluatedInitiativeInput
             ref="characterInitiativeInput"
             :initiative="initiative"
             :errorMessage="initiativeProps.errorMessage"
         />
 
-        <CharacterHealthInput ref="characterHealthInput" :health="health" />
+        <CharacterUnevaluatedHealthInput
+            ref="characterHealthInput"
+            :health="health"
+        />
 
-        <CharacterArmourClass v-model:value="armourClass" />
+        <CharacterArmourClassInput v-model:value="armourClass" />
 
         <div class="flex w-full justify-end" v-if="!props.npc">
             <FormButton
@@ -65,8 +68,8 @@ import type { PlayerCharacterDto } from "base/utils/api/campaign/createPlayerCha
 import type { SubmittingState } from "../Form/Base.vue";
 import { toTypedSchema } from "@vee-validate/zod";
 import { z } from "zod";
-import HealthInput from "../Character/HealthInput.vue";
-import Initiative from "../Character/Initiative.vue";
+import HealthInput from "../Character/UnevaluatedHealthInput.vue";
+import Initiative from "../Character/UnevaluatedInitiativeInput.vue";
 const characterHealthInput = ref<InstanceType<typeof HealthInput> | null>(null);
 const characterInitiativeInput = ref<InstanceType<typeof Initiative> | null>(
     null,

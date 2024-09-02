@@ -24,14 +24,12 @@
                 />
             </div>
 
-            <CharacterHealthInput
+            <CharacterUnevaluatedHealthInput
                 ref="characterHealthInput"
-                :hasHealth="hasHealth"
-                :currentHealth="currentHealth"
-                :maxHealth="maxHealth"
+                :health="health"
             />
 
-            <CharacterArmourClass v-model:value="armourClass" />
+            <CharacterArmourClassInput v-model:value="armourClass" />
 
             <CharacterConditionsInput v-model:conditions="conditions" />
         </main>
@@ -65,7 +63,7 @@ import {
 import type { CombatCharacterDto } from "base/utils/api/combat/putUpdateInitiativeCharacterRequest";
 import { toTypedSchema } from "@vee-validate/zod";
 import { z } from "zod";
-import HealthInput from "../Character/HealthInput.vue";
+import HealthInput from "../Character/UnevaluatedHealthInput.vue";
 
 const characterHealthInput = ref<InstanceType<typeof HealthInput> | null>(null);
 const userStore = useUserStore();
@@ -97,6 +95,13 @@ const { values, errors, defineField, validate } = useForm({
             })
             .required({ name: true, health: true }),
     ),
+    initialValues: {
+        name: props.character.name,
+        isHidden: props.character.hidden,
+        armourClass: props.character.armourClass ?? null,
+        health: props.character.health,
+        conditions: props.character.conditions,
+    },
 });
 
 const [name, nameInputProps] = defineField("name", {
@@ -107,14 +112,11 @@ const [name, nameInputProps] = defineField("name", {
 
 const [isHidden, isHiddenInputProps] = defineField("isHidden");
 
-const [hasHealth, hasHealthInputProps] = defineField("health.hasHealth");
-
-const [currentHealth, currentHealthInputProps] = defineField(
-    "health.currentHealth",
-);
-
-const [maxHealth, maxHealthInputProps] = defineField("health.maxHealth");
-
+const [health, healthProps] = defineField("health", {
+    props: (state) => ({
+        errorMessage: formState.error?.getErrorFor("character.Initiative"),
+    }),
+});
 const [armourClass, armourClassInputProps] = defineField("armourClass");
 
 const [conditions, conditionsInputProps] = defineField("conditions");
@@ -128,9 +130,7 @@ function setValuesFromProps() {
     name.value = props.character.name;
     isHidden.value = props.character.hidden;
     armourClass.value = props.character.armourClass ?? null;
-    hasHealth.value = props.character.health?.hasHealth ?? false;
-    currentHealth.value = props.character.health?.currentHealth;
-    maxHealth.value = props.character.health?.maxHealth;
+    health.value = props.character.health;
     conditions.value = props.character.conditions;
 }
 onMounted(setValuesFromProps);
@@ -147,26 +147,27 @@ async function submit(formSubmittingState: SubmittingState) {
 }
 
 async function onEdit() {
+    formState.error = null;
+
     // Fetch & Set the computed health values from the health component upon submission
-    const health = characterHealthInput.value?.getHealth();
-    if (health == false) {
+    const computedHealth = characterHealthInput.value?.getHealth();
+    if (computedHealth == false) {
         return;
     }
-    hasHealth.value = health?.hasHealth;
-    currentHealth.value = health?.currentHealth;
-    maxHealth.value = health?.maxHealth;
+    health.value = computedHealth;
+
+    const validateResult = await validate();
+    if (!validateResult.valid) {
+        return;
+    }
 
     return await props
         .onEdit({
             id: props.character.id,
             name: name.value!,
             hidden: isHidden.value!,
-            initiativeValue: props.character.initiativeValue!,
-            health: {
-                hasHealth: hasHealth.value!,
-                currentHealth: currentHealth.value!,
-                maxHealth: maxHealth.value!,
-            },
+            health: computedHealth!,
+            initiative: props.character.initiative,
             armourClass: armourClass.value ?? null,
             conditions: conditions.value!,
         })

@@ -10,11 +10,12 @@ import {
     HealthDisplayOptionValueKeyMap,
     type UnevaluatedCharacterHealth,
     type HealthDisplayOptionValues,
+    type CharacterHealth,
 } from "base/utils/types/models";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 const props = withDefaults(
     defineProps<{
-        health: UnevaluatedCharacterHealth;
+        health: UnevaluatedCharacterHealth | CharacterHealth;
         displayMethod?: HealthDisplayOptionValues;
     }>(),
     {

@@ -17,7 +17,8 @@
             ]"
             v-else-if="
                 campaignCombatsStore.hasAnyPlannedCombats ||
-                campaignCombatsStore.hasAnyCombats
+                campaignCombatsStore.hasAnyCombats ||
+                hasActiveCombat
             "
         >
             <aside
@@ -204,6 +205,24 @@
                 <CombatHistorySection
                     :combatInfo="campaignCombatsStore.selectedCombat"
                 />
+            </main>
+
+            <main
+                key="no-combat"
+                v-else-if="
+                    !isSmallScreen &&
+                    !campaignCombatsStore.selectedCombat &&
+                    !campaignCombatsStore.selectedPlannedCombat
+                "
+                class="col-span-7 p-2 px-4"
+            >
+                <div
+                    class="flex h-full w-full cursor-pointer items-center justify-center rounded border border-dashed border-take-purple-light"
+                    @click="showCreatePlannedCombatModal"
+                >
+                    Create a planned combat or finish the current combat to see
+                    something here
+                </div>
             </main>
         </TransitionGroup>
 

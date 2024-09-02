@@ -25,15 +25,18 @@
             />
         </div>
 
-        <CharacterInitiative
+        <CharacterUnevaluatedInitiativeInput
             ref="characterInitiativeInput"
-            :initiative="initiative!"
+            :initiative="initiative"
             :errorMessage="initiativeInputProps.errorMessage"
         />
 
-        <CharacterHealthInput ref="characterHealthInput" />
+        <CharacterUnevaluatedHealthInput
+            :health="health"
+            ref="characterHealthInput"
+        />
 
-        <CharacterArmourClass v-model:value="armourClass" />
+        <CharacterArmourClassInput v-model:value="armourClass" />
 
         <div class="flex w-full justify-end" v-if="!props.character">
             <FormButton
@@ -78,9 +81,9 @@ import type { SubmittingState } from "../Form/Base.vue";
 import type { DeleteStagedCharacterRequest } from "base/utils/api/combat/deleteStagedCharacterRequest";
 import { toTypedSchema } from "@vee-validate/zod";
 import { z } from "zod";
-import HealthInput from "../Character/HealthInput.vue";
+import HealthInput from "../Character/UnevaluatedHealthInput.vue";
 import type { StagedCharacterWithoutIdDTO } from "base/utils/api/combat/postAddStagedCharacter";
-import type Initiative from "../Character/Initiative.vue";
+import type Initiative from "../Character/UnevaluatedInitiativeInput.vue";
 const characterHealthInput = ref<InstanceType<typeof HealthInput> | null>(null);
 const characterInitiativeInput = ref<InstanceType<typeof Initiative> | null>(
     null,
@@ -112,6 +115,13 @@ const { values, errors, defineField, validate } = useForm({
             })
             .required(),
     ),
+    initialValues: {
+        initiative: props.character?.initiative,
+        name: props.character?.name,
+        isHidden: props.character?.hidden ?? true,
+        armourClass: props.character?.armourClass ?? null,
+        health: props.character?.health,
+    },
 });
 const [name, nameInputProps] = defineField("name", {
     props: (state) => ({
@@ -164,11 +174,13 @@ watch(
 );
 
 onMounted(() => {
-    initiative.value = props.character?.initiative;
-    name.value = props.character?.name;
-    isHidden.value = props.character?.hidden;
-    armourClass.value = props.character?.armourClass ?? null;
-    health.value = props.character?.health;
+    if (props.character) {
+        initiative.value = props.character?.initiative;
+        name.value = props.character?.name;
+        isHidden.value = props.character?.hidden;
+        armourClass.value = props.character?.armourClass ?? null;
+        health.value = props.character?.health;
+    }
 });
 
 async function onSubmit(formSubmittingState: SubmittingState) {
@@ -200,15 +212,17 @@ async function onEdit() {
     formState.error = null;
 
     // Fetch & Set the computed health values from the health component upon submission
-    const health = characterHealthInput.value?.getHealth();
-    if (health == false) {
+    const computedHealth = characterHealthInput.value?.getHealth();
+    if (computedHealth == false) {
         return;
     }
+    health.value = computedHealth;
 
     const computedInitiative = characterInitiativeInput.value?.getInitiative();
     if (computedInitiative == false) {
         return;
     }
+    initiative.value = computedInitiative;
 
     const validateResult = await validate();
     if (!validateResult.valid) {
@@ -221,7 +235,7 @@ async function onEdit() {
             name: name.value!,
             id: props.character?.id!,
             hidden: isHidden.value!,
-            health: health!,
+            health: computedHealth!,
             armourClass: armourClass.value ?? null,
         })
         .catch((error) => {
@@ -233,17 +247,19 @@ async function onCreate() {
     if (!props.onCreate) return;
 
     formState.error = null;
-
+    debugger;
     // Fetch & Set the computed health values from the health component upon submission
     const computedHealth = characterHealthInput.value?.getHealth();
     if (computedHealth == false) {
         return;
     }
+    health.value = computedHealth;
 
     const computedInitiative = characterInitiativeInput.value?.getInitiative();
     if (computedInitiative == false) {
         return;
     }
+    initiative.value = computedInitiative;
 
     const validateResult = await validate();
     if (!validateResult.valid) {

@@ -32,6 +32,11 @@ const state = reactive<{
     value: props?.initiative?.roll ?? "",
 });
 
+watch(
+    () => props.initiative?.roll,
+    () => (state.value = props.initiative.roll),
+);
+
 const error = computed(() => props.errorMessage);
 
 defineExpose({
