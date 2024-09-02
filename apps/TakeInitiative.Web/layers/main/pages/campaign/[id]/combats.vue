@@ -275,6 +275,12 @@ definePageMeta({
     layout: "campaign-tabs",
 });
 
+// Screen Size
+const { isMobile } = useDevice();
+const isSmallScreen = computed(() => {
+    return isMobile || window?.matchMedia("(max-width: 640px)").matches;
+});
+
 // Stores
 const route = useRoute();
 const campaignCombatsStore = useCampaignCombatsStore();
@@ -290,24 +296,21 @@ const { pending, error } = await useAsyncData(
         const getData = getCombatsRequest(nuxtApp?.$axios!);
         return await getData({
             campaignId: route.params.id as string,
-        }).then((resp) => {
-            campaignCombatsStore.state.campaignId = route.params.id as string;
-            Object.keys(resp).forEach((key) => {
-                // @ts-ignore
-                campaignCombatsStore.state[key] = resp[key];
-            });
-        });
+        })
+            .then((resp) => {
+                campaignCombatsStore.state.campaignId = route.params
+                    .id as string;
+                Object.keys(resp).forEach((key) => {
+                    // @ts-ignore
+                    campaignCombatsStore.state[key] = resp[key];
+                });
+            })
+            .then(selectCombatIfNoneSelected);
     },
     {
         watch: [() => route.params.id],
     },
 );
-
-// Screen Size
-const { isMobile } = useDevice();
-const isSmallScreen = computed(() => {
-    return isMobile || window?.matchMedia("(max-width: 640px)").matches;
-});
 
 // Modals
 const deleteCombatModal = ref<InstanceType<typeof ConfirmModal> | null>(null);
@@ -338,11 +341,10 @@ async function onOpenCombat(plannedCombatId: string) {
         );
 }
 
-onMounted(() => {
+function selectCombatIfNoneSelected() {
     if (isSmallScreen.value) {
         return;
     }
-
     if (
         !campaignCombatsStore.hasAnyCombats &&
         !campaignCombatsStore.hasAnyPlannedCombats
@@ -365,7 +367,7 @@ onMounted(() => {
             campaignCombatsStore.state.combats[0].combatId,
         );
     }
-});
+}
 
 const orderedFinishedCombats = computed(() =>
     (campaignCombatsStore.state?.combats ?? [])

@@ -276,23 +276,27 @@ export const stagedCharacterValidator = characterValidator.extend({
 export type StagedCharacter = z.infer<typeof stagedCharacterValidator>;
 
 /// COMBAT EVENTS
-export const CombatStartedHistoryEvent = z.object({});
+export const InitiativeRollDto = z
+    .object({
+        characterId: z.string().uuid(),
+        roll: z.array(z.number().int()),
+        characterName: z.string(),
+        rolledHealth: z.number().int().nullable(),
+    })
+    .required();
+
+export const CombatStartedHistoryEvent = z.object({
+    "!": z.literal("CombatStarted"),
+});
 export const CombatInitiativeRolledHistoryEvent = z.object({
-    rolls: z.array(
-        z
-            .object({
-                characterId: z.string().uuid(),
-                roll: z.array(z.number().int()),
-                characterName: z.string(),
-                rolledHealth: z.number().int().nullable(),
-            })
-            .required(),
-    ),
+    "!": z.literal("CombatInitiativeRolled"),
+    rolls: z.array(InitiativeRollDto),
 });
 export type CombatInitiativeRolledHistoryEvent = z.infer<
     typeof CombatInitiativeRolledHistoryEvent
 >;
 export const CharacterHealthChangedHistoryEvent = z.object({
+    "!": z.literal("CharacterHealthChanged"),
     characterId: z.string().uuid(),
     from: z.number().int(),
     to: z.number().int(),
@@ -300,28 +304,32 @@ export const CharacterHealthChangedHistoryEvent = z.object({
 export type CharacterHealthChangedHistoryEvent = z.infer<
     typeof CharacterHealthChangedHistoryEvent
 >;
-export const CombatFinishedHistoryEvent = z.object({});
+export const CombatFinishedHistoryEvent = z.object({
+    "!": z.literal("CombatFinished"),
+});
 export const turnStartedHistoryEvent = z.object({
+    "!": z.literal("TurnStarted"),
     characterId: z.string().uuid(),
 });
 export type TurnStartedHistoryEvent = z.infer<typeof turnStartedHistoryEvent>;
 export const turnEndedHistoryEvent = z.object({
+    "!": z.literal("TurnEnded"),
     characterId: z.string().uuid(),
 });
 export type TurnEndedHistoryEvent = z.infer<typeof turnEndedHistoryEvent>;
-export const RoundEndedHistoryEvent = z.object({});
-export type RoundEndedHistoryEvent = z.infer<typeof RoundEndedHistoryEvent>;
-export const PlayerCharacterJoinedHistoryEvent = z.object({
-    characterId: z.string().uuid(),
+export const RoundEndedHistoryEvent = z.object({
+    "!": z.literal("RoundEnded"),
 });
-export const PlannedCharactersAddedHistoryEvent = z.object({});
+export type RoundEndedHistoryEvent = z.infer<typeof RoundEndedHistoryEvent>;
 export const CharacterRemovedHistoryEvent = z.object({
+    "!": z.literal("CharacterRemoved"),
     characterId: z.string().uuid(),
 });
 export type CharacterRemovedHistoryEvent = z.infer<
     typeof CharacterRemovedHistoryEvent
 >;
-export const CharactersAddedToInitiative = z.object({
+export const CombatInitiativeModifiedHistoryEvent = z.object({
+    "!": z.literal("CombatInitiativeModified"),
     newInitiativeList: z.array(
         z
             .object({
@@ -332,57 +340,39 @@ export const CharactersAddedToInitiative = z.object({
             .required(),
     ),
 });
-export type CharactersAddedToInitiative = z.infer<
-    typeof CharactersAddedToInitiative
+export type CombatInitiativeModifiedHistoryEvent = z.infer<
+    typeof CombatInitiativeModifiedHistoryEvent
 >;
 
-export const CharacterConditionAdded = z.object({
+export const CharacterConditionAddedHistoryEvent = z.object({
+    "!": z.literal("CharacterConditionAdded"),
     conditionId: z.string().uuid(),
     characterId: z.string().uuid(),
     name: z.string(),
 });
-export type CharacterConditionAdded = z.infer<typeof CharacterConditionAdded>;
+export type CharacterConditionAddedHistoryEvent = z.infer<
+    typeof CharacterConditionAddedHistoryEvent
+>;
 
-export const CharacterConditionRemoved = z.object({
+export const CharacterConditionRemovedHistoryEvent = z.object({
+    "!": z.literal("CharacterConditionRemoved"),
     conditionId: z.string().uuid(),
     characterId: z.string().uuid(),
     name: z.string(),
 });
 
 export const historyEventValidator = z.discriminatedUnion("!", [
-    CombatStartedHistoryEvent.extend({
-        "!": z.literal("CombatStarted"),
-    }),
-    CombatInitiativeRolledHistoryEvent.extend({
-        "!": z.literal("CombatInitiativeRolled"),
-    }),
-    CharacterHealthChangedHistoryEvent.extend({
-        "!": z.literal("CharacterHealthChanged"),
-    }),
-    CombatFinishedHistoryEvent.extend({
-        "!": z.literal("CombatFinished"),
-    }),
-    turnStartedHistoryEvent.extend({
-        "!": z.literal("TurnStarted"),
-    }),
-    turnEndedHistoryEvent.extend({
-        "!": z.literal("TurnEnded"),
-    }),
-    RoundEndedHistoryEvent.extend({
-        "!": z.literal("RoundEnded"),
-    }),
-    CharactersAddedToInitiative.extend({
-        "!": z.literal("CharactersAddedToInitiative"),
-    }),
-    CharacterRemovedHistoryEvent.extend({
-        "!": z.literal("CharacterRemoved"),
-    }),
-    CharacterConditionAdded.extend({
-        "!": z.literal("CharacterConditionAdded"),
-    }),
-    CharacterConditionRemoved.extend({
-        "!": z.literal("CharacterConditionRemoved"),
-    }),
+    CombatStartedHistoryEvent,
+    CombatInitiativeRolledHistoryEvent,
+    CharacterHealthChangedHistoryEvent,
+    CombatFinishedHistoryEvent,
+    turnStartedHistoryEvent,
+    turnEndedHistoryEvent,
+    RoundEndedHistoryEvent,
+    CharacterRemovedHistoryEvent,
+    CharacterConditionAddedHistoryEvent,
+    CharacterConditionRemovedHistoryEvent,
+    CombatInitiativeModifiedHistoryEvent,
 ]);
 export type HistoryEvent = z.infer<typeof historyEventValidator>;
 

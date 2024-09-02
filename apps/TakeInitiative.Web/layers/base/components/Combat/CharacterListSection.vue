@@ -121,6 +121,16 @@
                         {{ charInfo.character.initiative.roll }}
                     </section>
 
+                    <CharacterConditionDisplay
+                        v-if="isInitiativeCharacter(charInfo.character)"
+                        v-for="(
+                            condition, index
+                        ) in charInfo.character.conditions.toSorted((a, b) =>
+                            a.name > b.name ? 1 : -1,
+                        )"
+                        :key="index"
+                        :conditionName="condition.name"
+                    />
                     <li
                         v-if="isInitiativeCharacter(charInfo.character)"
                         v-for="(

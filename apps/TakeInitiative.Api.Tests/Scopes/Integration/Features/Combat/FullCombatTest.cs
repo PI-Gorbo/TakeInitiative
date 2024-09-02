@@ -5,6 +5,7 @@ using FluentAssertions;
 using Marten;
 using TakeInitiative.Api.Features;
 using TakeInitiative.Api.Features.Combats;
+using TakeInitiative.Utilities;
 using VerifyTests;
 
 namespace TakeInitiative.Api.Tests.Integration;
@@ -88,7 +89,7 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
             Initiative = npc.Initiative,
         });
         A.CallTo(() => fixture.DiceRoller.EvaluateRoll("20d20 + 10"))
-           .Returns(300);
+           .Returns(new DiceRoll(300, "20d20 + 10", "20d20(290) + 10 = 300"));
 
         // Open the combat
         var openedCombat = await fixture.PostOpenCombat(new()

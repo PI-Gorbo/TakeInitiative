@@ -31,8 +31,8 @@
             :errorMessage="initiativeInputProps.errorMessage"
         />
 
-        <CharacterUnevaluatedHealthInput
-            :health="health"
+        <CharacterHealthInput
+            :health="{ value: health, isUnevaluated: true }"
             ref="characterHealthInput"
         />
 
@@ -81,7 +81,7 @@ import type { SubmittingState } from "../Form/Base.vue";
 import type { DeleteStagedCharacterRequest } from "base/utils/api/combat/deleteStagedCharacterRequest";
 import { toTypedSchema } from "@vee-validate/zod";
 import { z } from "zod";
-import HealthInput from "../Character/UnevaluatedHealthInput.vue";
+import HealthInput from "../Character/HealthInput.vue";
 import type { StagedCharacterWithoutIdDTO } from "base/utils/api/combat/postAddStagedCharacter";
 import type Initiative from "../Character/UnevaluatedInitiativeInput.vue";
 const characterHealthInput = ref<InstanceType<typeof HealthInput> | null>(null);

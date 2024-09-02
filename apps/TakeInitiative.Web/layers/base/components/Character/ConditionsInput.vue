@@ -25,16 +25,18 @@
                             class="flex"
                         >
                             <label
-                                class="flex flex-1 items-center transition-colors"
+                                class="flex flex-1 cursor-pointer select-none items-center transition-colors"
                                 :class="{
                                     'text-take-grey':
                                         !defaultConditionsEnabled[
                                             defaultCondition.name
                                         ],
                                 }"
+                                :for="defaultCondition.name"
                                 >{{ defaultCondition.name }}</label
                             >
                             <input
+                                :id="defaultCondition.name"
                                 type="checkbox"
                                 class="toggle"
                                 :class="{

@@ -132,17 +132,16 @@ public class InitiativeRoller(IDiceRoller roller) : IInitiativeRoller
     internal Result<List<(Guid id, int roll)>> ComputeOneRollForEachCharacter(IEnumerable<StagedCharacter> characters, bool isFirstRoll)
     {
         return characters.Select(x => (id: x.Id, roll: isFirstRoll ? x.Initiative.RollInitiative(roller) : roller.RollD20()))
-            .Aggregate(Result.Success<List<(Guid id, int roll)>>(new()), (current, nextValue) =>
+            .Aggregate(Result.Success<List<(Guid id, DiceRoll roll)>>(new()), (current, nextValue) =>
             {
                 if (current.IsFailure)
                 {
                     return current.MapError(x => x + (nextValue.roll.IsFailure ? $", {nextValue.roll.Error}" : ""));
                 }
 
-
                 if (nextValue.roll.IsFailure)
                 {
-                    return nextValue.roll.ConvertFailure<List<(Guid id, int roll)>>();
+                    return nextValue.roll.ConvertFailure<List<(Guid id, DiceRoll roll)>>();
                 }
 
                 return current.Value.Append((id: nextValue.id, roll: nextValue.roll.Value)).ToList();

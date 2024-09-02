@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using FluentValidation;
+using TakeInitiative.Utilities;
 
 namespace TakeInitiative.Api.Features;
 
@@ -9,5 +10,5 @@ namespace TakeInitiative.Api.Features;
 public record CharacterHealth
 {
     public record None : CharacterHealth { }
-    public record Fixed(int CurrentHealth, int MaxHealth) : CharacterHealth { }
+    public record Fixed(int CurrentHealth, int MaxHealth, DiceRoll? DiceRollResult) : CharacterHealth { }
 }

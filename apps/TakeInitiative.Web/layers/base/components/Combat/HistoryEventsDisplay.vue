@@ -1,5 +1,5 @@
 <template>
-    <ul class="flex flex-col gap-2 p-2">
+    <ul class="flex flex-col gap-2 overflow-y-auto p-2">
         <li
             v-for="(entry, index) in enrichedEventStream"
             class="rounded bg-take-purple py-1"
@@ -26,7 +26,7 @@
                     >
                 </div>
                 <div
-                    class="bg-take-cream-medium max-w-fit rounded px-1 align-middle text-black shadow"
+                    class="max-w-fit rounded bg-take-cream-medium px-1 align-middle text-black shadow"
                 >
                     <span class="border-r border-r-take-navy pr-1">{{
                         index + 1
@@ -69,6 +69,9 @@
                                 :event="event"
                                 :nameMap="characterNameMapping"
                             />
+                        </div>
+                        <div v-else>
+                            No display settings for {{ event["!"] }}
                         </div>
                     </li>
                 </ul>
@@ -187,8 +190,9 @@ const eventBodyComponentMap: Record<
     TurnStarted: TurnStartedEvent,
     TurnEnded: TurnEndedEventDisplay,
     RoundEnded: RoundEndedEventDisplay,
-    PlayerCharacterJoined: "PlayerCharacterJoined",
-    PlannedCharactersAdded: "PlannedCharactersAdded",
     CharacterRemoved: CharacterRemovedEventDisplay,
+    CombatInitiativeModified: "CombatInitiativeModified",
+    CharacterConditionAdded: "CharacterConditionAdded",
+    CharacterConditionRemoved: "CharacterConditionRemoved",
 };
 </script>

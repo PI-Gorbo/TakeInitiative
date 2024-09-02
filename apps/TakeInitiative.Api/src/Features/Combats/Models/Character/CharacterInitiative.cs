@@ -1,3 +1,5 @@
+using TakeInitiative.Utilities;
+
 namespace TakeInitiative.Api.Features;
-public record CharacterInitiative(int[] Value);
+public record CharacterInitiative(DiceRoll[] Values);
 

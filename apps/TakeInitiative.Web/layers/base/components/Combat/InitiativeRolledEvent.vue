@@ -3,7 +3,7 @@
         <header>Rolled Initiative</header>
         <ul class="flex flex-col gap-2">
             <li
-                v-for="character in props.event.rolls"
+                v-for="character in rolls"
                 class="grid grid-cols-2 items-center gap-2 px-2"
             >
                 <span>{{ character.characterName }}</span>
@@ -27,9 +27,19 @@
     </main>
 </template>
 <script setup lang="ts">
-import type { CombatInitiativeRolledHistoryEvent } from "base/utils/types/models";
+import type {
+    CombatInitiativeModifiedHistoryEvent,
+    CombatInitiativeRolledHistoryEvent,
+} from "base/utils/types/models";
 
 const props = defineProps<{
-    event: CombatInitiativeRolledHistoryEvent;
+    event:
+        | CombatInitiativeRolledHistoryEvent
+        | CombatInitiativeModifiedHistoryEvent;
 }>();
+const rolls = computed(() =>
+    props.event["!"] == "CombatInitiativeRolled"
+        ? props.event.rolls
+        : props.event.newInitiativeList,
+);
 </script>

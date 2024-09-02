@@ -53,7 +53,7 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
         {
             Timestamp = eventDetails.Timestamp,
             Events = [
-                new CharactersAddedToInitiative() {
+                new CombatInitiativeModified() {
                     NewInitiativeList = @event.Rolls
                         .Select(x => new InitiativeRolledDto() {
                             CharacterId = x.Key,

@@ -5,7 +5,7 @@ namespace TakeInitiative.Api.Features;
 
 public record UnevaluatedCharacterInitiative(string Roll)
 {
-    public Result<int> RollInitiative(IDiceRoller roller)
+    public Result<DiceRoll> RollInitiative(IDiceRoller roller)
     {
         return Result.Success<string?>(Roll)
             .EnsureNotNull("No roll value provided")

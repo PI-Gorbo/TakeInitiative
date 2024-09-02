@@ -20,7 +20,13 @@
             >
                 <option class="font-Overpass" value="None">None</option>
                 <option class="font-Overpass" value="Fixed">Fixed</option>
-                <option class="font-Overpass" value="Roll">Roll</option>
+                <option
+                    class="font-Overpass"
+                    value="Roll"
+                    v-if="props.health.isUnevaluated"
+                >
+                    Roll
+                </option>
             </select>
             <section
                 class="flex flex-1 items-center gap-2 rounded-md bg-take-navy-light"
@@ -70,7 +76,10 @@
     </section>
 </template>
 <script setup lang="ts">
-import { type UnevaluatedCharacterHealth } from "base/utils/types/models";
+import {
+    type CharacterHealth,
+    type UnevaluatedCharacterHealth,
+} from "base/utils/types/models";
 import { Parser } from "expr-eval";
 import { z } from "zod";
 const healthExpressionParser = new Parser({
@@ -97,7 +106,15 @@ const healthExpressionParser = new Parser({
 });
 
 const props = defineProps<{
-    health: UnevaluatedCharacterHealth;
+    health:
+        | {
+              isUnevaluated: true;
+              value: UnevaluatedCharacterHealth;
+          }
+        | {
+              isUnevaluated: false;
+              value: CharacterHealth;
+          };
 }>();
 
 const state = reactive<{
@@ -132,7 +149,9 @@ watch(
 watch(
     () => ({ ...props }),
     () => {
-        if (props.health["!"] == "None") {
+        const health = props?.health?.value ?? { "!": "None" };
+
+        if (health["!"] == "None") {
             state.healthStrategy = "None";
             state.currentHealth = null;
             state.maxHealth = null;
@@ -140,19 +159,19 @@ watch(
             return;
         }
 
-        if (props.health["!"] == "Fixed") {
+        if (health["!"] == "Fixed") {
             state.healthStrategy = "Fixed";
-            state.currentHealth = props.health.currentHealth.toString();
-            state.maxHealth = props.health.maxHealth.toString();
+            state.currentHealth = health.currentHealth?.toString() ?? null;
+            state.maxHealth = health.maxHealth?.toString() ?? null;
             state.roll = null;
             return;
         }
 
-        if (props.health["!"] == "Roll") {
+        if (health["!"] == "Roll") {
             state.healthStrategy = "Roll";
             state.currentHealth = null;
             state.maxHealth = null;
-            state.roll = props.health.rollString;
+            state.roll = health.rollString;
             return;
         }
     },
@@ -176,8 +195,8 @@ function onBlurOfInput() {
             return;
         }
 
-        state.currentHealth = health.currentHealth.toString();
-        state.maxHealth = health.maxHealth.toString();
+        state.currentHealth = health.currentHealth?.toString();
+        state.maxHealth = health.maxHealth?.toString();
     }
 }
 
@@ -236,7 +255,7 @@ const formState = reactive<{ error: string | null }>({
     error: null,
 });
 
-function getHealth(): UnevaluatedCharacterHealth | false {
+function getHealth(): CharacterHealth | UnevaluatedCharacterHealth | false {
     formState.error = null;
     if (state.healthStrategy == "None") {
         return {

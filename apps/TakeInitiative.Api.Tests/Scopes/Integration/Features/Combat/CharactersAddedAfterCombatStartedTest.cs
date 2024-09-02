@@ -5,6 +5,7 @@ using FluentAssertions;
 using Marten;
 using TakeInitiative.Api.Features;
 using TakeInitiative.Api.Features.Combats;
+using TakeInitiative.Utilities;
 using VerifyTests;
 
 namespace TakeInitiative.Api.Tests.Integration;
@@ -84,7 +85,7 @@ public class CharactersAddedAfterCombatStartedTest : IClassFixture<Authenticated
         A.CallTo(() => fixture.InitiativeRoller.ComputeRolls(A<List<StagedCharacter>>._, A<List<InitiativeCharacter>>._))
             .Returns(new Dictionary<Guid, CharacterInitiative>()
             {
-                [characterId] = new CharacterInitiative([10])
+                [characterId] = new CharacterInitiative([new DiceRoll(10, "10", "10")])
             });
         var addStagedCharacterToInitiativeResult = await fixture
             .PostRollStagedCharactersIntoInitiative(new()

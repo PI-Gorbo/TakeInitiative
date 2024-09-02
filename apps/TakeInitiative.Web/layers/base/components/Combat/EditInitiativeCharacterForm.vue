@@ -24,9 +24,9 @@
                 />
             </div>
 
-            <CharacterUnevaluatedHealthInput
+            <CharacterHealthInput
                 ref="characterHealthInput"
-                :health="health"
+                :health="{ value: health, isUnevaluated: false }"
             />
 
             <CharacterArmourClassInput v-model:value="armourClass" />
@@ -59,11 +59,13 @@ import {
     unevaluatedCharacterHealthValidator,
     conditionValidator,
     type InitiativeCharacter,
+    type CharacterInitiative,
+    type CharacterHealth,
 } from "base/utils/types/models";
 import type { CombatCharacterDto } from "base/utils/api/combat/putUpdateInitiativeCharacterRequest";
 import { toTypedSchema } from "@vee-validate/zod";
 import { z } from "zod";
-import HealthInput from "../Character/UnevaluatedHealthInput.vue";
+import HealthInput from "../Character/HealthInput.vue";
 
 const characterHealthInput = ref<InstanceType<typeof HealthInput> | null>(null);
 const userStore = useUserStore();
@@ -166,7 +168,7 @@ async function onEdit() {
             id: props.character.id,
             name: name.value!,
             hidden: isHidden.value!,
-            health: computedHealth!,
+            health: computedHealth! as CharacterHealth,
             initiative: props.character.initiative,
             armourClass: armourClass.value ?? null,
             conditions: conditions.value!,

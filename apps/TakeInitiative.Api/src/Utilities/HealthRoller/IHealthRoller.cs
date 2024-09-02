@@ -18,11 +18,11 @@ public class HealthRoller(IDiceRoller roller) : IHealthRoller
                 Result<CharacterHealth> evaluatedHealth = x.Health switch
                 {
                     UnevaluatedCharacterHealth.None => Result.Success<CharacterHealth>(new CharacterHealth.None()),
-                    UnevaluatedCharacterHealth.Fixed @fixed => Result.Success<CharacterHealth>(new CharacterHealth.Fixed(@fixed.CurrentHealth, @fixed.MaxHealth)),
+                    UnevaluatedCharacterHealth.Fixed @fixed => Result.Success<CharacterHealth>(new CharacterHealth.Fixed(@fixed.CurrentHealth, @fixed.MaxHealth, null)),
                     UnevaluatedCharacterHealth.Roll roll => Result.Success(roll.RollString)
                         .EnsureNotNull("RollString was null.")
                         .Bind(roller.EvaluateRoll)
-                        .Map(rolledHealth => (CharacterHealth)new CharacterHealth.Fixed(rolledHealth, rolledHealth)),
+                        .Map(rolledHealth => (CharacterHealth)new CharacterHealth.Fixed(rolledHealth.Total, rolledHealth.Total, rolledHealth)),
                     _ => throw new InvalidOperationException("Invalid Operation")
                 };
 
