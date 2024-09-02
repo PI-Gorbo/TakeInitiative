@@ -150,8 +150,8 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
         A.CallTo(() => fixture.InitiativeRoller.ComputeRolls(A<IEnumerable<StagedCharacter>>._))
             .Returns(new Dictionary<Guid, CharacterInitiative>()
             {
-                [combat.StagedList[0].Id] = new CharacterInitiative([20]),
-                [combat.StagedList[1].Id] = new CharacterInitiative([15]),
+                [combat.StagedList[0].Id] = new CharacterInitiative([new(20, "1d20 + 1", "1d20 (19) + 1 = 20")]),
+                [combat.StagedList[1].Id] = new CharacterInitiative([new(15, "1d20 + 2", "1d20 (13) + 2 = 15")]),
             });
 
         // Roll Initiative
@@ -254,9 +254,9 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
         A.CallTo(() => fixture.InitiativeRoller.ComputeRolls(A<List<StagedCharacter>>._, A<List<InitiativeCharacter>>._))
             .Returns(new Dictionary<Guid, CharacterInitiative>()
             {
-                [combat.InitiativeList[0].Id] = new CharacterInitiative([20]),
-                [combat.InitiativeList[1].Id] = new CharacterInitiative([15]),
-                [characterId] = new CharacterInitiative([10])
+                [combat.InitiativeList[0].Id] = new CharacterInitiative([new(20, "1d20 + 1", "1d20 (19) + 1 = 20")]),
+                [combat.InitiativeList[1].Id] = new CharacterInitiative([new(15, "1d20 + 2", "1d20 (13) + 2 = 15")]),
+                [characterId] = new CharacterInitiative([new(10, "10", "10 = 10")])
             });
         var addStagedCharacterToInitiativeResult = await fixture
             .PostRollStagedCharactersIntoInitiative(new()

@@ -35,12 +35,12 @@ public class InitiativeRoller(IDiceRoller roller) : IInitiativeRoller
 
         // 2. Determine any groupings of those rolls.
         return computedRollsResult.Value
-            .GroupBy(x => x.roll)
+            .GroupBy(x => x.roll.Total)
             .Select(group =>
             {
                 if (group.Count() == 1)
                 {
-                    return new List<Tuple<Guid, int[]>>() { new Tuple<Guid, int[]>(group.First().id, new[] { group.Key }) };
+                    return new List<Tuple<Guid, DiceRoll[]>>() { new Tuple<Guid, DiceRoll[]>(group.First().id, [group.First().roll]) };
                 }
 
                 var ids = group.Select(x => x.id).ToArray();
@@ -49,7 +49,7 @@ public class InitiativeRoller(IDiceRoller roller) : IInitiativeRoller
                 var recursivelyComputedRolls = ComputeRolls_Recursive(charactersOfGroup, false).GetValueOrDefault(new());
                 return group
                     .Select(groupedValue =>
-                        new Tuple<Guid, int[]>(groupedValue.id, new List<int> { groupedValue.roll }.Concat(recursivelyComputedRolls[groupedValue.id].Value).ToArray())
+                        new Tuple<Guid, DiceRoll[]>(groupedValue.id, new List<DiceRoll> { groupedValue.roll }.Concat(recursivelyComputedRolls[groupedValue.id].Value).ToArray())
                     ).ToList();
             })
             .SelectMany(x => x)
@@ -66,7 +66,7 @@ public class InitiativeRoller(IDiceRoller roller) : IInitiativeRoller
         int rollIndex = 0;
         List<IGrouping<int, KeyValuePair<Guid, CharacterInitiative>>> rollsGroupedByConflict = outgoingCharacterInitiative
             .Where(x => x.Value.Value.Length > rollIndex)
-            .GroupBy(x => x.Value.Value[rollIndex])
+            .GroupBy(x => x.Value.Value[rollIndex].Total)
             .ToList();
 
         // Loop while there are any conflicts.
@@ -122,14 +122,14 @@ public class InitiativeRoller(IDiceRoller roller) : IInitiativeRoller
             // Re-compute if there are any conflicts.
             rollsGroupedByConflict = outgoingCharacterInitiative
                 .Where(x => x.Value.Value.Length > rollIndex)
-                .GroupBy(x => x.Value.Value[rollIndex])
+                .GroupBy(x => x.Value.Value[rollIndex].Total)
                 .ToList();
         }
 
         return outgoingCharacterInitiative;
     }
 
-    internal Result<List<(Guid id, int roll)>> ComputeOneRollForEachCharacter(IEnumerable<StagedCharacter> characters, bool isFirstRoll)
+    internal Result<List<(Guid id, DiceRoll roll)>> ComputeOneRollForEachCharacter(IEnumerable<StagedCharacter> characters, bool isFirstRoll)
     {
         return characters.Select(x => (id: x.Id, roll: isFirstRoll ? x.Initiative.RollInitiative(roller) : roller.RollD20()))
             .Aggregate(Result.Success<List<(Guid id, DiceRoll roll)>>(new()), (current, nextValue) =>

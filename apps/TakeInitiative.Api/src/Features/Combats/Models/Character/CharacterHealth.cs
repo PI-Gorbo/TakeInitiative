@@ -10,5 +10,5 @@ namespace TakeInitiative.Api.Features;
 public record CharacterHealth
 {
     public record None : CharacterHealth { }
-    public record Fixed(int CurrentHealth, int MaxHealth, DiceRoll? DiceRollResult) : CharacterHealth { }
+    public record Fixed(int CurrentHealth, int MaxHealth, DiceRoll? DiceRoll) : CharacterHealth { }
 }

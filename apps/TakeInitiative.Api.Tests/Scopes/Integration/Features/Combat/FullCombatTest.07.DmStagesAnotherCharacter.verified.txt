@@ -24,7 +24,11 @@
               CharacterId: PlayerFirstCharacterId,
               CharacterName: My Super Duper Character,
               Roll: [
-                20
+                {
+                  Total: 20,
+                  Roll: 1d20 + 1,
+                  Evaluation: 1d20 (19) + 1 = 20
+                }
               ],
               RolledHealth: null
             },
@@ -32,7 +36,11 @@
               CharacterId: Guid_2,
               CharacterName: Intro Enemy,
               Roll: [
-                15
+                {
+                  Total: 15,
+                  Roll: 1d20 + 2,
+                  Evaluation: 1d20 (13) + 2 = 15
+                }
               ],
               RolledHealth: null
             }
@@ -143,11 +151,16 @@
       Health: {
         TYPE: Fixed,
         CurrentHealth: 5,
-        MaxHealth: 20
+        MaxHealth: 20,
+        DiceRoll: null
       },
       Initiative: {
         Value: [
-          20
+          {
+            Total: 20,
+            Roll: 1d20 + 1,
+            Evaluation: 1d20 (19) + 1 = 20
+          }
         ]
       },
       ArmourClass: 20,
@@ -172,11 +185,16 @@
       Health: {
         TYPE: Fixed,
         CurrentHealth: 0,
-        MaxHealth: 0
+        MaxHealth: 0,
+        DiceRoll: null
       },
       Initiative: {
         Value: [
-          15
+          {
+            Total: 15,
+            Roll: 1d20 + 2,
+            Evaluation: 1d20 (13) + 2 = 15
+          }
         ]
       },
       ArmourClass: 12,

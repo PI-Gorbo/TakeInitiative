@@ -60,7 +60,7 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
                             CharacterName = newInitiativeList.Find(init => init.Id == x.Key)?.Name ?? "UNKNOWN",
                             Roll = x.Value.Initiative.Value,
                             RolledHealth = Combat.StagedList.Find(staged => staged.Id == x.Key)?.Health switch {
-                                UnevaluatedCharacterHealth.Roll => ((CharacterHealth.Fixed)x.Value.Health).CurrentHealth,
+                                UnevaluatedCharacterHealth.Roll => ((CharacterHealth.Fixed)x.Value.Health).DiceRoll,
                                 null => null,
                                 _ => null
                              }

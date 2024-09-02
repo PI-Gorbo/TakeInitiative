@@ -41,7 +41,7 @@ public class DiceRollerTests
                     Id: Guid.NewGuid(),
                     PlayerId: playerId,
                     Name: "Char1",
-                    Initiative: new CharacterInitiative([6]),
+                    Initiative: new CharacterInitiative([new(6, "1d20 + 1", "1d20(5) + 1 = 6")]),
                     Health: new CharacterHealth.None(),
                     ArmourClass: null,
                     Hidden: false,
@@ -50,11 +50,11 @@ public class DiceRollerTests
                     Conditions: []
                 );
 
-        diceRoller.EvaluateRoll("1d20 + 5").Returns(6);
+        diceRoller.EvaluateRoll("1d20 + 5").Returns(new DiceRoll(6, "1d20 + 5", "1d20(1) + 5 = 6"));
         int callCount = 1;
         diceRoller.RollD20().Returns((CallInfo callInfo) =>
         {
-            return callCount++;
+            return new DiceRoll(callCount, "1d20", $"1d20({callCount}) = {callCount++}");
         });
         var result = initiativeRoller.ComputeRolls(
             [incomingChar],
@@ -63,10 +63,10 @@ public class DiceRollerTests
         result.Should().Succeed();
         var existingCharAfterRoll = result.Value[existingChar.Id];
         existingCharAfterRoll.Should().NotBeNull();
-        existingCharAfterRoll!.Value.SequenceEqual([6, 1]).Should().BeTrue();
+        existingCharAfterRoll.Value.Select(x => x.Total).SequenceEqual([6, 1]).Should().BeTrue();
         var newCharAfterRoll = result.Value[incomingChar.Id];
         newCharAfterRoll.Should().NotBeNull();
-        newCharAfterRoll!.Value.SequenceEqual([6, 2]).Should().BeTrue();
+        newCharAfterRoll!.Value.Select(x => x.Total).SequenceEqual([6, 2]).Should().BeTrue();
     }
 
     [Fact]
@@ -88,7 +88,7 @@ public class DiceRollerTests
                     Id: Guid.NewGuid(),
                     PlayerId: playerId,
                     Name: "Char1",
-                    Initiative: new CharacterInitiative([6, 2]),
+                    Initiative: new CharacterInitiative([new(6, "", ""), new(2, "", "")]),
                     Health: new CharacterHealth.None(),
                     ArmourClass: null,
                     Hidden: false,
@@ -101,7 +101,7 @@ public class DiceRollerTests
                     Id: Guid.NewGuid(),
                     PlayerId: playerId,
                     Name: "Char2",
-                    Initiative: new CharacterInitiative([6, 5]),
+                    Initiative: new CharacterInitiative([new(6, "", ""), new(5, "", "")]),
                     Health: new CharacterHealth.None(),
                     ArmourClass: null,
                     Hidden: false,
@@ -110,11 +110,11 @@ public class DiceRollerTests
                     Conditions: []
                 );
 
-        diceRoller.EvaluateRoll("1d20 + 5").Returns(6);
+        diceRoller.EvaluateRoll("1d20 + 5").Returns(new DiceRoll(6, "", ""));
         int callCount = 1;
         diceRoller.RollD20().Returns((CallInfo callInfo) =>
         {
-            return callCount++;
+            return new DiceRoll(callCount, "1d20", $"1d20({callCount}) = {callCount++}");
         });
         var result = initiativeRoller.ComputeRolls(
             [incomingChar],
@@ -124,15 +124,15 @@ public class DiceRollerTests
 
         var existingChar1AfterRoll = result.Value[existingChar1.Id];
         existingChar1AfterRoll.Should().NotBeNull();
-        existingChar1AfterRoll!.Value.SequenceEqual([6, 2]).Should().BeTrue();
+        existingChar1AfterRoll!.Value.Select(x => x.Total).SequenceEqual([6, 2]).Should().BeTrue();
 
         var existingChar2AfterRoll = result.Value[existingChar2.Id];
         existingChar2AfterRoll.Should().NotBeNull();
-        existingChar2AfterRoll!.Value.SequenceEqual([6, 5]).Should().BeTrue();
+        existingChar2AfterRoll!.Value.Select(x => x.Total).SequenceEqual([6, 5]).Should().BeTrue();
 
         var newCharAfterRoll = result.Value[incomingChar.Id];
         newCharAfterRoll.Should().NotBeNull();
-        newCharAfterRoll!.Value.SequenceEqual([6, 1]).Should().BeTrue();
+        newCharAfterRoll!.Value.Select(x => x.Total).SequenceEqual([6, 1]).Should().BeTrue();
     }
 
     [Fact]
@@ -155,7 +155,7 @@ public class DiceRollerTests
                     Id: Guid.NewGuid(),
                     PlayerId: playerId,
                     Name: "Char1",
-                    Initiative: new CharacterInitiative([6, 2]),
+                    Initiative: new CharacterInitiative([new(6, "", ""), new(2, "", "")]),
                     Health: new CharacterHealth.None(),
                     ArmourClass: null,
                     Hidden: false,
@@ -168,7 +168,7 @@ public class DiceRollerTests
                     Id: Guid.NewGuid(),
                     PlayerId: playerId,
                     Name: "Char2",
-                    Initiative: new CharacterInitiative([6, 5]),
+                    Initiative: new CharacterInitiative([new(6, "", ""), new(5, "", "")]),
                     Health: new CharacterHealth.None(),
                     ArmourClass: null,
                     Hidden: false,
@@ -177,11 +177,11 @@ public class DiceRollerTests
                     Conditions: []
                 );
 
-        diceRoller.EvaluateRoll("1d20 + 3").Returns(6);
+        diceRoller.EvaluateRoll("1d20 + 3").Returns(new DiceRoll(6, "", ""));
         int callCount = 5;
         diceRoller.RollD20().Returns((CallInfo callInfo) =>
         {
-            return callCount++;
+            return new DiceRoll(callCount, "1d20", $"1d20({callCount}) = {callCount++}");
         });
         var result = initiativeRoller.ComputeRolls(
             [incomingChar],
@@ -191,14 +191,14 @@ public class DiceRollerTests
 
         var existingChar1AfterRoll = result.Value[existingChar1.Id];
         existingChar1AfterRoll.Should().NotBeNull();
-        existingChar1AfterRoll!.Value.SequenceEqual([6, 2]).Should().BeTrue();
+        existingChar1AfterRoll!.Value.Select(x => x.Total).SequenceEqual([6, 2]).Should().BeTrue();
 
         var existingChar2AfterRoll = result.Value[existingChar2.Id];
         existingChar2AfterRoll.Should().NotBeNull();
-        existingChar2AfterRoll!.Value.SequenceEqual([6, 5, 6]).Should().BeTrue();
+        existingChar2AfterRoll!.Value.Select(x => x.Total).SequenceEqual([6, 5, 6]).Should().BeTrue();
 
         var newCharAfterRoll = result.Value[incomingChar.Id];
         newCharAfterRoll.Should().NotBeNull();
-        newCharAfterRoll!.Value.SequenceEqual([6, 5, 7]).Should().BeTrue();
+        newCharAfterRoll!.Value.Select(x => x.Total).SequenceEqual([6, 5, 7]).Should().BeTrue();
     }
 }

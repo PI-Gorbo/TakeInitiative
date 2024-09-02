@@ -28,13 +28,17 @@
       Timestamp: DateTimeOffset_3,
       Events: [
         {
-          TYPE: CharactersAddedToInitiative,
+          TYPE: CombatInitiativeModified,
           NewInitiativeList: [
             {
               CharacterId: Guid_2,
               CharacterName: Another Enemy!,
               Roll: [
-                10
+                {
+                  Total: 10,
+                  Roll: 10,
+                  Evaluation: 10
+                }
               ],
               RolledHealth: null
             }
@@ -77,11 +81,16 @@
       Health: {
         TYPE: Fixed,
         CurrentHealth: 10,
-        MaxHealth: 20
+        MaxHealth: 20,
+        DiceRoll: null
       },
       Initiative: {
         Value: [
-          10
+          {
+            Total: 10,
+            Roll: 10,
+            Evaluation: 10
+          }
         ]
       },
       ArmourClass: null,
