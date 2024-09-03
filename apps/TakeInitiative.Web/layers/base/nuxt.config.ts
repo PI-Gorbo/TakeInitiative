@@ -5,10 +5,6 @@ import { fileURLToPath } from "url";
 // https://nuxt.com/docs/api/configuration/nuxt-config
 const executionDirectory = dirname(fileURLToPath(import.meta.url));
 export default defineNuxtConfig({
-    typescript: {
-        strict: true,
-        typeCheck: false,
-    },
     app: {
         head: {
             link: [

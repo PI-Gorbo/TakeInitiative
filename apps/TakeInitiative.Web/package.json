@@ -42,12 +42,12 @@
         "@tailwindcss/forms": "^0.5.7",
         "autoprefixer": "^10.4.17",
         "daisyui": "^4.10.5",
-        "nuxt": "^3.12.1",
+        "nuxt": "^3.12.3",
         "postcss": "^8.4.35",
         "prettier": "^3.2.5",
         "prettier-plugin-tailwindcss": "^0.5.11",
         "tailwindcss": "^3.4.1",
         "typescript": "^5.5.4",
-        "vue-tsc": "^1.8.27"
+        "vue-tsc": "^2.0.24"
     }
 }
