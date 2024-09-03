@@ -25,10 +25,10 @@ public record PlannedCombat
 
     public Result<PlannedCombat> AddStage(PlannedCombatStage stage)
     {
-        return Result.FailureIf(this.Stages.Any(x => x.Name == stage.Name), $"The combat already contains a stage with the name {stage.Name}.")
+        return Result.FailureIf(Stages.Any(x => x.Name == stage.Name), $"The combat already contains a stage with the name {stage.Name}.")
             .Map(() =>
             {
-                this.Stages.Add(stage);
+                Stages.Add(stage);
                 return this;
             });
     }
@@ -36,7 +36,7 @@ public record PlannedCombat
     public Result<PlannedCombat> RemoveStage(Guid stageId)
     {
         // Check the stage exists
-        if (!this.Stages.Any(x => x.Id == stageId))
+        if (!Stages.Any(x => x.Id == stageId))
         {
             return Result.Failure<PlannedCombat>($"There is no stage with the id {stageId}");
         }
@@ -46,9 +46,9 @@ public record PlannedCombat
         return this;
     }
 
-    public Result<PlannedCombat> AddNpcToStage(Guid stageId, PlannedCombatCharacter npc)
+    public Result<PlannedCombat> AddNpcToStage(Guid stageId, PlannedCharacter npc)
     {
-        var stage = this.Stages.SingleOrDefault(x => x.Id == stageId);
+        var stage = Stages.SingleOrDefault(x => x.Id == stageId);
         if (stage == null)
         {
             return Result.Failure<PlannedCombat>("Stage does not exist");

@@ -13,7 +13,7 @@ public record RollStagedCharacterIntoInitiativeCommand : ICommand<Result<Combat>
     public required Guid[] CharacterIds { get; set; }
 }
 
-public class RollStagedCharacterIntoInitiativeCommandHandler(IDocumentStore Store, IDiceRoller diceRoller) : CommandHandler<RollStagedCharacterIntoInitiativeCommand, Result<Combat>>
+public class RollStagedCharacterIntoInitiativeCommandHandler(IDocumentStore Store, IInitiativeRoller initiativeRoller, IHealthRoller healthRoller) : CommandHandler<RollStagedCharacterIntoInitiativeCommand, Result<Combat>>
 {
 
     public override async Task<Result<Combat>> ExecuteAsync(RollStagedCharacterIntoInitiativeCommand command, CancellationToken ct = default)
@@ -46,17 +46,29 @@ public class RollStagedCharacterIntoInitiativeCommandHandler(IDocumentStore Stor
                     ThrowError($"One or more of the specified character ids are not in the staged character list.");
                 }
 
-                var computedInitiativeRolls = diceRoller.ComputeRolls(combat.StagedList.Where(x => x.Id.In(command.CharacterIds)).ToList(), combat.InitiativeList);
+                var computedInitiativeRolls = initiativeRoller.ComputeRolls(combat.StagedList.Where(x => x.Id.In(command.CharacterIds)).ToList(), [.. combat.InitiativeList]);
                 if (computedInitiativeRolls.IsFailure)
                 {
                     ThrowError($"There was an error while trying to compute the dice rolls. {computedInitiativeRolls.Error}");
+                }
+
+                // compute health rolls
+                var healthRolls = healthRoller.ComputeRolls(combat.StagedList.Where(x => x.Id.In(command.CharacterIds)).ToList());
+                if (healthRolls.IsFailure)
+                {
+                    ThrowError($"There was an error while trying to compute the dice rolls. {healthRolls.Error}");
                 }
 
                 // Publish the event
                 StagedCharactersRolledIntoInitiativeEvent activateEvent = new()
                 {
                     UserId = command.UserId,
-                    InitiativeRolls = computedInitiativeRolls.Value,
+                    Rolls = computedInitiativeRolls.Value
+                        .ToDictionary(x => x.Key, x => new EvaluatedCharacterRolls(
+                            healthRolls.Value.SingleOrDefault(init => init.Key == x.Key).Value
+                                ?? combat.InitiativeList.Single(init => init.Id == x.Key).Health,
+                            x.Value
+                        )),
                 };
                 session.Events.Append(command.CombatId, activateEvent);
                 await session.SaveChangesAsync();

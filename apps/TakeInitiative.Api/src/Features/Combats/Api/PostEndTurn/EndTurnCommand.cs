@@ -25,9 +25,14 @@ public class EndTurnCommandHandler(IDocumentStore Store) : CommandHandler<EndTur
                     ThrowError(x => x.CombatId, "Combat does not exist.");
                 }
 
+                if (!combat.InitiativeIndex.HasValue || combat.State != CombatState.InitiativeRolled)
+                {
+                    ThrowError(x => x.CombatId, "Combat is not in the correct state.");
+                }
+
                 // Ensure that it is currently the user's turn, or the user is the dungeon master 
                 var canFinishTurn = combat.DungeonMaster == command.UserId ||
-                    combat.InitiativeList[combat.InitiativeIndex].PlayerId == command.UserId;
+                    combat.InitiativeList[combat.InitiativeIndex!.Value].PlayerId == command.UserId;
                 if (!canFinishTurn)
                 {
                     ThrowError("The turn can only be ended by either the dungeon master or the player currently taking their turn.");

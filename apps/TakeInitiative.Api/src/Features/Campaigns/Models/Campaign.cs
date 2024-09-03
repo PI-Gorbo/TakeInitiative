@@ -25,7 +25,7 @@ public record Campaign
 
     public Campaign AddCampaignMemberReference(CampaignMemberInfo campaignMemberInfo)
     {
-        this.CampaignMemberInfo.Add(campaignMemberInfo);
+        CampaignMemberInfo.Add(campaignMemberInfo);
         return this;
     }
 

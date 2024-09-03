@@ -3,7 +3,7 @@ using TakeInitiative.Utilities;
 
 namespace TakeInitiative.Api.Features.Combats;
 
-public class PlannedCombatCharacterValidator : CharacterValidator<PlannedCombatCharacter>
+public class PlannedCombatCharacterValidator : CharacterValidator<PlannedCharacter>
 {
     public PlannedCombatCharacterValidator(IDiceRoller roller) : base(roller)
     {

@@ -6,8 +6,8 @@
             Characters: () => showCharactersTab,
         }"
         :renameTabs="{
-            Custom: 'Add Custom',
-            Planned: 'Add Planned',
+            Custom: 'Custom',
+            Planned: 'Planned',
         }"
         class="py-2"
         backgroundColour="take-purple"
@@ -30,7 +30,7 @@
                 :onCreate="
                     (req) =>
                         combatStore
-                            .upsertStagedCharacter(req)
+                            .addStagedCharacter(req)
                             .then(props.characterAdded)
                 "
             />
@@ -51,9 +51,7 @@
         v-else
         :onCreate="
             (req) =>
-                combatStore
-                    .upsertStagedCharacter(req)
-                    .then(props.characterAdded)
+                combatStore.addStagedCharacter(req).then(props.characterAdded)
         "
     />
 </template>

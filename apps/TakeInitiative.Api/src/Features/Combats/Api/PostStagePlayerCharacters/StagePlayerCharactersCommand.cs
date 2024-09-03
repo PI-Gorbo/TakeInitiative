@@ -57,7 +57,8 @@ public class StagePlayerCharactersCommandHandler(IDocumentSession session) : Com
                 StagedPlayerCharacterEvent activateEvent = new()
                 {
                     UserId = command.UserId,
-                    Characters = characters
+                    Characters = characters,
+                    NewIdsToUse = Enumerable.Range(0, characters.Length).Select((c) => Guid.NewGuid()).ToArray()
                 };
                 session.Events.Append(command.CombatId, activateEvent);
                 await session.SaveChangesAsync();

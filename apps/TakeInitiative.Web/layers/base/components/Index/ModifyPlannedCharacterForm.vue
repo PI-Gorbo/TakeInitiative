@@ -20,27 +20,18 @@
             v-bind="quantityInputProps"
         />
 
-        <CharacterInitiative
-            v-model:initiativeStrategy="initiativeStrategy"
-            v-model:initiativeValue="initiativeValue"
-            :errorMessage="
-                initiativeStrategyInputProps.errorMessage ||
-                initiativeValueInputProps.errorMessage
-            "
+        <CharacterUnevaluatedInitiativeInput
+            ref="characterInitiativeInput"
+            :initiative="initiative"
+            :errorMessage="initiativeProps.errorMessage"
         />
 
         <CharacterHealthInput
-            v-model:hasHealth="hasHealth"
-            v-model:currentHealth="currentHealth"
-            v-model:maxHealth="maxHealth"
-            :error="
-                hasHealthInputProps.errorMessage ??
-                currentHealthInputProps.errorMessage ??
-                maxHealthInputProps.errorMessage
-            "
+            :health="{ value: health, isUnevaluated: true }"
+            ref="characterHealthInput"
         />
 
-        <CharacterArmourClass v-model:value="armourClass" />
+        <CharacterArmourClassInput v-model:value="armourClass" />
 
         <div class="flex w-full justify-center" v-if="!props.npc">
             <FormButton
@@ -74,22 +65,24 @@
 </template>
 
 <script setup lang="ts">
-import { Form } from "vee-validate";
-import { toTypedSchema } from "@vee-validate/yup";
 import { useForm } from "vee-validate";
-import * as yup from "yup";
 import {
-    InitiativeStrategy,
-    plannedCombatCharacterValidator,
     type PlannedCombatCharacter,
-    type PlannedCombatStage,
-    characterInitiativeValidator,
-    characterHealthValidator,
+    unevaluatedCharacterInitiativeValidator,
+    unevaluatedCharacterHealthValidator,
 } from "base/utils/types/models";
 import type { CreatePlannedCombatNpcRequest } from "base/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
 import type { UpdatePlannedCombatNpcRequest } from "base/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
 import type { DeletePlannedCombatNpcRequest } from "base/utils/api/plannedCombat/stages/npcs/deletePlannedCombatNpcRequest";
 import type { SubmittingState } from "../Form/Base.vue";
+import { toTypedSchema } from "@vee-validate/zod";
+import { z } from "zod";
+import HealthInput from "../Character/HealthInput.vue";
+import Initiative from "../Character/UnevaluatedInitiativeInput.vue";
+const characterHealthInput = ref<InstanceType<typeof HealthInput> | null>(null);
+const characterInitiativeInput = ref<InstanceType<typeof Initiative> | null>(
+    null,
+);
 
 const formState = reactive({
     error: null as ApiError<CreatePlannedCombatNpcRequest> | null,
@@ -109,16 +102,26 @@ const props = defineProps<{
 }>();
 
 // Form Definition
+
 const { values, errors, defineField, validate } = useForm({
     validationSchema: toTypedSchema(
-        yup.object({
-            name: yup.string().required("Please provide a name"),
-            initiative: characterInitiativeValidator,
-            quantity: yup.number().min(1, "Quantity must be 1 or more."),
-            armourClass: yup.number().nullable(),
-            health: characterHealthValidator.required(),
-        }),
+        z
+            .object({
+                name: z.string({ required_error: "Please provide a name" }),
+                initiative: unevaluatedCharacterInitiativeValidator,
+                quantity: z.number().min(1, "Quantity must be 1 or more."),
+                armourClass: z.number().nullable(),
+                health: unevaluatedCharacterHealthValidator,
+            })
+            .required({ name: true, health: true }),
     ),
+    initialValues: {
+        initiative: props.npc?.initiative,
+        quantity: props.npc?.quantity ?? 1,
+        name: props.npc?.name,
+        armourClass: props.npc?.armourClass ?? null,
+        health: props.npc?.health,
+    },
 });
 const [name, nameInputProps] = defineField("name", {
     props: (state) => ({
@@ -133,53 +136,17 @@ const [quantity, quantityInputProps] = defineField("quantity", {
     }),
 });
 
-const [initiativeStrategy, initiativeStrategyInputProps] = defineField(
-    "initiative.strategy",
-    {
-        props: (state) => ({
-            errorMessage:
-                formState.error?.getErrorFor("initiative.strategy") ??
-                state.errors[0],
-        }),
-    },
-);
-
-const [initiativeValue, initiativeValueInputProps] = defineField(
-    "initiative.value",
-    {
-        props: (state) => ({
-            errorMessage:
-                formState.error?.getErrorFor("initiative.Value") ??
-                state.errors[0],
-        }),
-    },
-);
-
-const [hasHealth, hasHealthInputProps] = defineField("health.hasHealth", {
+const [initiative, initiativeProps] = defineField("initiative", {
     props: (state) => ({
         errorMessage:
-            (formState.error?.getErrorFor("playerCharacter.Health.HasHealth") ||
-                formState.error?.getErrorFor("in")) ??
+            formState.error?.getErrorFor("playerCharacter.initiative") ??
             state.errors[0],
     }),
 });
-
-const [currentHealth, currentHealthInputProps] = defineField(
-    "health.currentHealth",
-    {
-        props: (state) => ({
-            errorMessage:
-                formState.error?.getErrorFor(
-                    "playerCharacter.Health.CurrentHealth",
-                ) ?? state.errors[0],
-        }),
-    },
-);
-
-const [maxHealth, maxHealthInputProps] = defineField("health.maxHealth", {
+const [health, healthProps] = defineField("health", {
     props: (state) => ({
         errorMessage:
-            formState.error?.getErrorFor("playerCharacter.Health.MaxHealth") ??
+            formState.error?.getErrorFor("playerCharacter.health") ??
             state.errors[0],
     }),
 });
@@ -193,22 +160,12 @@ const [armourClass, armourClassInputProps] = defineField("armourClass", {
 });
 
 onMounted(() => {
-    if (!props.npc) {
-        initiativeStrategy.value = InitiativeStrategy.Roll;
-        quantity.value = 1;
-        armourClass.value = null;
-        hasHealth.value = false;
-        currentHealth.value = 0;
-        maxHealth.value = 0;
-    } else {
-        initiativeStrategy.value = props.npc?.initiative.strategy;
-        initiativeValue.value = props.npc.initiative.value;
+    if (props.npc) {
+        initiative.value = props.npc.initiative;
         quantity.value = props.npc.quantity;
         name.value = props.npc.name;
         armourClass.value = props.npc.armourClass ?? null;
-        hasHealth.value = props.npc.health?.hasHealth ?? false;
-        currentHealth.value = props.npc.health?.currentHealth;
-        maxHealth.value = props.npc.health?.maxHealth;
+        health.value = props.npc.health;
     }
 });
 
@@ -228,17 +185,29 @@ async function onSubmit(formSubmittingState: SubmittingState) {
 
 async function onDelete() {
     if (!props.onDelete) return;
-    return await props
-        .onDelete({ npcId: props.npc?.id! })
-        .catch(async (err) => {
-            formState.error = await parseAsApiError(err);
-        });
+    return await props.onDelete({ npcId: props.npc?.id! }).catch((err) => {
+        formState.error = parseAsApiError(err);
+    });
 }
 
 async function onEdit() {
     if (!props.onEdit) return;
 
     formState.error = null;
+
+    // Fetch & Set the computed health values from the health component upon submission
+    const computedHealth = characterHealthInput.value?.getHealth();
+    if (computedHealth == false) {
+        return;
+    }
+    health.value = computedHealth;
+
+    const computedInitiative = characterInitiativeInput.value?.getInitiative();
+    if (computedInitiative == false) {
+        return;
+    }
+    initiative.value = computedInitiative;
+
     const validateResult = await validate();
     if (!validateResult.valid) {
         return;
@@ -246,22 +215,15 @@ async function onEdit() {
 
     return await props
         .onEdit({
-            health: {
-                hasHealth: hasHealth.value ?? false,
-                currentHealth: currentHealth.value,
-                maxHealth: maxHealth.value,
-            },
-            initiative: {
-                strategy: initiativeStrategy.value!,
-                value: initiativeValue.value!,
-            },
+            health: computedHealth!,
+            initiative: computedInitiative!,
             name: name.value!,
             quantity: quantity.value!,
             armourClass: armourClass.value ?? null,
             npcId: props.npc?.id!,
         })
-        .catch(async (error) => {
-            formState.error = await parseAsApiError(error);
+        .catch((error) => {
+            formState.error = parseAsApiError(error);
         });
 }
 
@@ -269,27 +231,33 @@ async function onCreate() {
     if (!props.onCreate) return;
 
     formState.error = null;
+    // Fetch & Set the computed health values from the health component upon submission
+    const computedHealth = characterHealthInput.value?.getHealth();
+    if (computedHealth == false) {
+        return;
+    }
+    health.value = computedHealth;
+
+    const computedInitiative = characterInitiativeInput.value?.getInitiative();
+    if (computedInitiative == false) {
+        return;
+    }
+    initiative.value = computedInitiative;
+
     const validateResult = await validate();
     if (!validateResult.valid) {
         return;
     }
     return await props
         .onCreate({
-            health: {
-                hasHealth: hasHealth.value ?? false,
-                currentHealth: currentHealth.value,
-                maxHealth: maxHealth.value,
-            },
-            initiative: {
-                strategy: initiativeStrategy.value!,
-                value: initiativeValue.value!,
-            },
+            health: computedHealth!,
+            initiative: computedInitiative!,
             name: name.value!,
             quantity: quantity.value!,
             armourClass: armourClass.value ?? null,
         })
-        .catch(async (error) => {
-            formState.error = await parseAsApiError(error);
+        .catch((error) => {
+            formState.error = parseAsApiError(error);
         });
 }
 </script>

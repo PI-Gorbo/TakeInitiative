@@ -1,5 +1,5 @@
 <template>
-    <main class="flex h-full flex-col gap-4">
+    <main class="flex h-full flex-col gap-4 p-2">
         <section class="flex flex-col gap-2">
             <label class="text-lg">Campaign Details</label>
             <FormInput

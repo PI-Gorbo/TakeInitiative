@@ -72,8 +72,6 @@
     </FormBase>
 </template>
 <script setup lang="ts">
-import { toTypedSchema } from "@vee-validate/yup";
-import { yup } from "base/utils/types/HelperTypes";
 import {
     ResourceVisibilityOptions,
     campaignMemberResourceValidator,
@@ -82,6 +80,7 @@ import {
 } from "base/utils/types/models";
 import { useForm } from "vee-validate";
 import type { SubmittingState } from "../Form/Base.vue";
+import { toTypedSchema } from "@vee-validate/zod";
 
 const props = defineProps<{
     addResource: (resource: CampaignMemberResource) => Promise<unknown>;
@@ -123,13 +122,13 @@ async function submit(submittingState: SubmittingState) {
         return await props.editResource({
             link: link.value!,
             name: name.value!,
-            visibility: visibility.value,
+            visibility: visibility.value!,
         });
     } else {
         return await props.addResource({
             link: link.value!,
             name: name.value!,
-            visibility: visibility.value,
+            visibility: visibility.value!,
         });
     }
 }

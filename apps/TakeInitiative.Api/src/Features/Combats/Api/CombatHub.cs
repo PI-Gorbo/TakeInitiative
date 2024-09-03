@@ -49,14 +49,7 @@ public class CombatHub : Hub
                 return Result.Failure("Cannot join a combat of a campaign you are not apart of.");
             }
 
-            // Create a join campaign event.
-            PlayerJoinedEvent @event = new PlayerJoinedEvent() { UserId = UserId };
-            var stream = session.Events.Append(CombatId, @event);
-            await session.SaveChangesAsync();
-
-            combat = await session.LoadAsync<Combat>(CombatId);
-            await Groups.AddToGroupAsync(Context.ConnectionId, combat.Id.ToString());
-            await this.NotifyCombatUpdated(combat);
+            await Groups.AddToGroupAsync(Context.ConnectionId, combat!.Id.ToString());
 
             return Result.Success(combat);
         });
@@ -80,22 +73,7 @@ public class CombatHub : Hub
                 return Result.Failure("Combat does not exist.");
             }
 
-            // Check if the user is already part of the combat.
-            if (!combat.CurrentPlayers.Any(x => x.UserId == UserId))
-            {
-                await Groups.RemoveFromGroupAsync(Context.ConnectionId, combat.Id.ToString());
-                return Result.Failure("User is not apart of the combat.");
-            }
-
-            // Create a join campaign event.
-            PlayerLeftEvent @event = new PlayerLeftEvent() { UserId = UserId };
-            var stream = session.Events.Append(CombatId, @event);
-            await session.SaveChangesAsync();
-
-            combat = await session.LoadAsync<Combat>(CombatId);
-
-            await NotifyCombatUpdated(combat);
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, combat.Id.ToString());
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, combat!.Id.ToString());
 
             return Result.Success(combat);
         });

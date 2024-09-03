@@ -25,27 +25,18 @@
             />
         </div>
 
-        <CharacterInitiative
-            v-model:initiativeStrategy="initiativeStrategy"
-            v-model:initiativeValue="initiativeValue"
-            :errorMessage="
-                initiativeStrategyInputProps.errorMessage ||
-                initiativeValueInputProps.errorMessage
-            "
+        <CharacterUnevaluatedInitiativeInput
+            ref="characterInitiativeInput"
+            :initiative="initiative"
+            :errorMessage="initiativeInputProps.errorMessage"
         />
 
         <CharacterHealthInput
-            v-model:hasHealth="hasHealth"
-            v-model:currentHealth="currentHealth"
-            v-model:maxHealth="maxHealth"
-            :error="
-                hasHealthInputProps.errorMessage ??
-                currentHealthInputProps.errorMessage ??
-                maxHealthInputProps.errorMessage
-            "
+            :health="{ value: health, isUnevaluated: true }"
+            ref="characterHealthInput"
         />
 
-        <CharacterArmourClass v-model:value="armourClass" />
+        <CharacterArmourClassInput v-model:value="armourClass" />
 
         <div class="flex w-full justify-end" v-if="!props.character">
             <FormButton
@@ -79,30 +70,32 @@
 </template>
 
 <script setup lang="ts">
-import { ErrorMessage, Form } from "vee-validate";
-import { toTypedSchema } from "@vee-validate/yup";
 import { useForm } from "vee-validate";
-import * as yup from "yup";
 import {
-    InitiativeStrategy,
-    plannedCombatCharacterValidator,
-    type PlannedCombatCharacter,
-    type PlannedCombatStage,
-    characterInitiativeValidator,
-    type CombatCharacter,
-    characterHealthValidator,
+    unevaluatedCharacterInitiativeValidator,
+    unevaluatedCharacterHealthValidator,
+    type StagedCharacter,
 } from "base/utils/types/models";
 import type { StagedCharacterDTO } from "base/utils/api/combat/putUpsertStagedCharacter";
 import type { SubmittingState } from "../Form/Base.vue";
 import type { DeleteStagedCharacterRequest } from "base/utils/api/combat/deleteStagedCharacterRequest";
+import { toTypedSchema } from "@vee-validate/zod";
+import { z } from "zod";
+import HealthInput from "../Character/HealthInput.vue";
+import type { StagedCharacterWithoutIdDTO } from "base/utils/api/combat/postAddStagedCharacter";
+import type Initiative from "../Character/UnevaluatedInitiativeInput.vue";
+const characterHealthInput = ref<InstanceType<typeof HealthInput> | null>(null);
+const characterInitiativeInput = ref<InstanceType<typeof Initiative> | null>(
+    null,
+);
 const { userIsDm } = storeToRefs(useCombatStore());
 const formState = reactive({
     error: null as ApiError<StagedCharacterDTO> | null,
 });
 
 const props = defineProps<{
-    character?: CombatCharacter;
-    onCreate?: (request: StagedCharacterDTO) => Promise<any>;
+    character?: StagedCharacter;
+    onCreate?: (request: StagedCharacterWithoutIdDTO) => Promise<any>;
     onEdit?: (request: StagedCharacterDTO) => Promise<any>;
     onDelete?: (
         request: Omit<DeleteStagedCharacterRequest, "combatId">,
@@ -112,15 +105,23 @@ const props = defineProps<{
 // Form Definition
 const { values, errors, defineField, validate } = useForm({
     validationSchema: toTypedSchema(
-        yup.object({
-            name: yup.string().required("Please provide a name"),
-            initiative: characterInitiativeValidator,
-            quantity: yup.number().min(1),
-            isHidden: yup.boolean(),
-            armourClass: yup.number().nullable(),
-            health: characterHealthValidator.required(),
-        }),
+        z
+            .object({
+                name: z.string({ required_error: "Please provide a name" }),
+                initiative: unevaluatedCharacterInitiativeValidator,
+                isHidden: z.boolean(),
+                armourClass: z.number().nullable(),
+                health: unevaluatedCharacterHealthValidator,
+            })
+            .required(),
     ),
+    initialValues: {
+        initiative: props.character?.initiative,
+        name: props.character?.name,
+        isHidden: props.character?.hidden ?? true,
+        armourClass: props.character?.armourClass ?? null,
+        health: props.character?.health,
+    },
 });
 const [name, nameInputProps] = defineField("name", {
     props: (state) => ({
@@ -128,27 +129,13 @@ const [name, nameInputProps] = defineField("name", {
     }),
 });
 
-const [initiativeStrategy, initiativeStrategyInputProps] = defineField(
-    "initiative.strategy",
-    {
-        props: (state) => ({
-            errorMessage:
-                formState.error?.getErrorFor("character.Initiative.Strategy") ??
-                state.errors[0],
-        }),
-    },
-);
-
-const [initiativeValue, initiativeValueInputProps] = defineField(
-    "initiative.value",
-    {
-        props: (state) => ({
-            errorMessage:
-                formState.error?.getErrorFor("character.Initiative.Value") ??
-                state.errors[0],
-        }),
-    },
-);
+const [initiative, initiativeInputProps] = defineField("initiative", {
+    props: (state) => ({
+        errorMessage:
+            formState.error?.getErrorFor("character.Initiative.Value") ??
+            state.errors[0],
+    }),
+});
 
 const [isHidden, isHiddenInputProps] = defineField("isHidden", {
     props: (state) => ({
@@ -157,31 +144,11 @@ const [isHidden, isHiddenInputProps] = defineField("isHidden", {
     }),
 });
 
-const [hasHealth, hasHealthInputProps] = defineField("health.hasHealth", {
+const [health, healthInputProps] = defineField("health", {
     props: (state) => ({
         errorMessage:
             (formState.error?.getErrorFor("playerCharacter.Health.HasHealth") ||
                 formState.error?.getErrorFor("in")) ??
-            state.errors[0],
-    }),
-});
-
-const [currentHealth, currentHealthInputProps] = defineField(
-    "health.currentHealth",
-    {
-        props: (state) => ({
-            errorMessage:
-                formState.error?.getErrorFor(
-                    "playerCharacter.Health.CurrentHealth",
-                ) ?? state.errors[0],
-        }),
-    },
-);
-
-const [maxHealth, maxHealthInputProps] = defineField("health.maxHealth", {
-    props: (state) => ({
-        errorMessage:
-            formState.error?.getErrorFor("playerCharacter.Health.MaxHealth") ??
             state.errors[0],
     }),
 });
@@ -197,35 +164,22 @@ const [armourClass, armourClassInputProps] = defineField("armourClass", {
 watch(
     () => props.character,
     () => {
-        initiativeStrategy.value = props.character?.initiative.strategy;
-        initiativeValue.value = props.character?.initiative.value;
+        initiative.value = props.character?.initiative;
         name.value = props.character?.name;
         isHidden.value = props.character?.hidden;
         armourClass.value = props.character?.armourClass ?? null;
-        hasHealth.value = props.character?.health?.hasHealth ?? false;
-        currentHealth.value = props.character?.health?.currentHealth;
-        maxHealth.value = props.character?.health?.maxHealth;
+        health.value = props.character?.health;
     },
     { deep: true },
 );
 
 onMounted(() => {
-    if (!props.character) {
-        initiativeStrategy.value = InitiativeStrategy.Roll;
-        isHidden.value = userIsDm.value;
-        armourClass.value = null;
-        hasHealth.value = false;
-        currentHealth.value = 0;
-        maxHealth.value = 0;
-    } else {
-        initiativeStrategy.value = props.character?.initiative.strategy;
-        initiativeValue.value = props.character.initiative.value;
-        name.value = props.character.name;
+    if (props.character) {
+        initiative.value = props.character?.initiative;
+        name.value = props.character?.name;
         isHidden.value = props.character?.hidden;
-        armourClass.value = props.character.armourClass ?? null;
-        hasHealth.value = props.character.health?.hasHealth ?? false;
-        currentHealth.value = props.character.health?.currentHealth;
-        maxHealth.value = props.character.health?.maxHealth;
+        armourClass.value = props.character?.armourClass ?? null;
+        health.value = props.character?.health;
     }
 });
 
@@ -247,8 +201,8 @@ async function onDelete() {
     if (!props.onDelete) return;
     return await props
         .onDelete({ characterId: props.character?.id! })
-        .catch(async (err) => {
-            formState.error = await parseAsApiError(err);
+        .catch((err) => {
+            formState.error = parseAsApiError(err);
         });
 }
 
@@ -256,6 +210,20 @@ async function onEdit() {
     if (!props.onEdit) return;
 
     formState.error = null;
+
+    // Fetch & Set the computed health values from the health component upon submission
+    const computedHealth = characterHealthInput.value?.getHealth();
+    if (computedHealth == false) {
+        return;
+    }
+    health.value = computedHealth;
+
+    const computedInitiative = characterInitiativeInput.value?.getInitiative();
+    if (computedInitiative == false) {
+        return;
+    }
+    initiative.value = computedInitiative;
+
     const validateResult = await validate();
     if (!validateResult.valid) {
         return;
@@ -263,23 +231,15 @@ async function onEdit() {
 
     return await props
         .onEdit({
-            initiative: {
-                strategy: initiativeStrategy.value!,
-                value: initiativeValue.value!,
-            },
+            initiative: computedInitiative!,
             name: name.value!,
-
             id: props.character?.id!,
             hidden: isHidden.value!,
-            health: {
-                hasHealth: hasHealth.value ?? false,
-                currentHealth: currentHealth.value,
-                maxHealth: maxHealth.value,
-            },
+            health: computedHealth!,
             armourClass: armourClass.value ?? null,
         })
-        .catch(async (error) => {
-            formState.error = await parseAsApiError(error);
+        .catch((error) => {
+            formState.error = parseAsApiError(error);
         });
 }
 
@@ -287,6 +247,20 @@ async function onCreate() {
     if (!props.onCreate) return;
 
     formState.error = null;
+    debugger;
+    // Fetch & Set the computed health values from the health component upon submission
+    const computedHealth = characterHealthInput.value?.getHealth();
+    if (computedHealth == false) {
+        return;
+    }
+    health.value = computedHealth;
+
+    const computedInitiative = characterInitiativeInput.value?.getInitiative();
+    if (computedInitiative == false) {
+        return;
+    }
+    initiative.value = computedInitiative;
+
     const validateResult = await validate();
     if (!validateResult.valid) {
         return;
@@ -294,23 +268,14 @@ async function onCreate() {
 
     return await props
         .onCreate({
-            initiative: {
-                strategy: initiativeStrategy.value!,
-                value: initiativeValue.value!,
-            },
+            initiative: computedInitiative!,
             name: name.value!,
-
-            id: props.character?.id! ?? crypto.randomUUID(),
             hidden: isHidden.value!,
-            health: {
-                hasHealth: hasHealth.value ?? false,
-                currentHealth: currentHealth.value,
-                maxHealth: maxHealth.value,
-            },
+            health: computedHealth!,
             armourClass: armourClass.value ?? null,
         })
-        .catch(async (error) => {
-            formState.error = await parseAsApiError(error);
+        .catch((error) => {
+            formState.error = parseAsApiError(error);
         });
 }
 </script>

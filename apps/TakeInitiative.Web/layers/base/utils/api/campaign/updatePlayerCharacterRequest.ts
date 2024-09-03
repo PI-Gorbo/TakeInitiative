@@ -1,11 +1,8 @@
+import { validateResponse } from "base/utils/apiErrorParser";
 import type { AxiosInstance } from "axios";
-import * as yup from "yup";
 import {
     campaignMemberValidator,
-    campaignValidator,
     type CampaignMember,
-    type CharacterHealth,
-    type CharacterInitiative,
 } from "../../types/models";
 import type { PlayerCharacterDto } from "./createPlayerCharacterRequest";
 
@@ -22,10 +19,7 @@ export function updatePlayerCharacterRequest(axios: AxiosInstance) {
         return await axios
             .put("/api/campaign/member/character", request)
             .then(async (response) => {
-                return validateWithSchema(
-                    response.data,
-                    campaignMemberValidator,
-                );
+                return validateResponse(response, campaignMemberValidator);
             });
     };
 }

@@ -21,7 +21,7 @@ public class GetCampaignMember(IDocumentStore Store) : Endpoint<GetCampaignMembe
         {
             // Check that the user is part of the campaign.
             var campaignMember = await session.LoadAsync<CampaignMember>(req.CampaignMemberId);
-            var userIsPartOfCampaign = await session.Query<CampaignMember>().Where(x => x.CampaignId == campaignMember.CampaignId && x.UserId == userId)
+            var userIsPartOfCampaign = await session.Query<CampaignMember>().Where(x => x.CampaignId == campaignMember!.CampaignId && x.UserId == userId)
                 .CountAsync() == 1;
 
             if (!userIsPartOfCampaign)

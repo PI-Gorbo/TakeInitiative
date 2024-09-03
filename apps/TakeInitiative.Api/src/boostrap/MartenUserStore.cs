@@ -177,7 +177,7 @@ public class MartenUserStore :
     {
         return Result.Try(async () =>
         {
-            return session.Query<ApplicationUser>().SingleOrDefaultAsync(x => x.NormalizedEmail == normalizedEmail, cancellationToken);
+            return await session.Query<ApplicationUser>().SingleOrDefaultAsync(x => x.NormalizedEmail == normalizedEmail, cancellationToken);
         }).Finally(x => x.IsSuccess ? x.Value : null);
     }
 

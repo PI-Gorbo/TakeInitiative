@@ -1,0 +1,110 @@
+﻿{
+  Id: CombatId,
+  CampaignId: Guid_1,
+  State: 3,
+  CombatName: My planned combat,
+  DungeonMaster: DmId,
+  History: [
+    {
+      Timestamp: DateTimeOffset_1,
+      Events: [
+        {
+          TYPE: CombatStarted
+        }
+      ],
+      Executor: DmId
+    },
+    {
+      Timestamp: DateTimeOffset_2,
+      Events: [
+        {
+          TYPE: CombatInitiativeRolled,
+          Rolls: []
+        }
+      ],
+      Executor: DmId
+    },
+    {
+      Timestamp: DateTimeOffset_3,
+      Events: [
+        {
+          TYPE: CombatInitiativeModified,
+          NewInitiativeList: [
+            {
+              CharacterId: Guid_2,
+              CharacterName: Another Enemy!,
+              Roll: [
+                {
+                  Total: 10,
+                  Roll: 10,
+                  Evaluation: 10
+                }
+              ],
+              RolledHealth: null
+            }
+          ]
+        },
+        {
+          TYPE: TurnStarted,
+          CharacterId: Guid_2
+        }
+      ],
+      Executor: DmId
+    },
+    {
+      Timestamp: DateTimeOffset_4,
+      Events: [
+        {
+          TYPE: CombatFinished
+        }
+      ],
+      Executor: DmId
+    }
+  ],
+  CurrentPlayers: [
+    {
+      UserId: DmId
+    }
+  ],
+  PlannedStages: [
+    {
+      Id: Guid_3,
+      Name: Stage One,
+      Npcs: []
+    }
+  ],
+  StagedList: [],
+  InitiativeList: [
+    {
+      Id: Guid_2,
+      Name: Another Enemy!,
+      Health: {
+        TYPE: Fixed,
+        CurrentHealth: 10,
+        MaxHealth: 20,
+        DiceRoll: null
+      },
+      Initiative: {
+        Value: [
+          {
+            Total: 10,
+            Roll: 10,
+            Evaluation: 10
+          }
+        ]
+      },
+      ArmourClass: null,
+      PlayerId: DmId,
+      CharacterOriginDetails: {
+        CharacterOrigin: 0,
+        Id: null
+      },
+      Hidden: false,
+      CopyNumber: null,
+      Conditions: []
+    }
+  ],
+  InitiativeIndex: 0,
+  RoundNumber: 1,
+  FinishedTimestamp: DateTimeOffset_4
+}

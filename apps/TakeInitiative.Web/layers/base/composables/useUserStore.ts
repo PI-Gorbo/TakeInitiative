@@ -69,17 +69,8 @@ export const useUserStore = defineStore("userStore", () => {
         });
     }
 
-    async function signUp(
-        signUpRequest: SignUpRequest,
-        redirectPath: string | null,
-    ): Promise<unknown> {
-        return await api.user.signUp(signUpRequest).then(async () => {
-            if (redirectPath != null) {
-                return await navigateTo(redirectPath);
-            } else {
-                return await navigateToFirstAvailableCampaign();
-            }
-        });
+    async function signUp(signUpRequest: SignUpRequest): Promise<unknown> {
+        return await api.user.signUp(signUpRequest).then(fetchUser);
     }
 
     async function confirmEmail(code: string): Promise<unknown> {
@@ -120,9 +111,7 @@ export const useUserStore = defineStore("userStore", () => {
             .delete(request)
             .then(fetchUser)
             .then(async () => {
-                console.log(campaignList.value);
                 if ((campaignList.value?.length ?? 0) == 0) {
-                    console.log("Navigating to create or join page");
                     return useNavigator().toCreateOrJoinCampaign();
                 }
 
@@ -151,7 +140,7 @@ export const useUserStore = defineStore("userStore", () => {
             });
     }
 
-    function navigateToFirstAvailableCampaign() {
+    function navigateToFirstAvailableCampaignOrFallbackToCreateOrJoin() {
         if (state.user == null) {
             return;
         }
@@ -184,6 +173,6 @@ export const useUserStore = defineStore("userStore", () => {
         username,
         campaignCount,
         campaignList,
-        navigateToFirstAvailableCampaign,
+        navigateToFirstAvailableCampaignOrFallbackToCreateOrJoin,
     };
 });

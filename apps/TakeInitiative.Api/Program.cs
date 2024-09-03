@@ -4,6 +4,8 @@ using JasperFx.Core;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+
+namespace TakeInitiative.Api;
 internal class Program
 {
     private static void Main(string[] args)
@@ -32,11 +34,10 @@ internal class Program
         builder.Services.AddMartenDB(builder.Configuration, builder.Environment.IsDevelopment());
         builder.Services.AddSerilog();
         builder.Services.AddIdentityAuthenticationAndAuthorization(builder.Configuration);
-        builder.Services.AddPython(builder.Configuration);
+        builder.Services.AddDiceRollers(builder.Configuration);
         builder.Services.AddSendGrid(builder.Configuration);
 
         // Cors
-
         builder.Services.AddCors(
             opts =>
             {
@@ -60,6 +61,8 @@ internal class Program
                                 .AllowAnyMethod()
                                 .AllowCredentials());
             });
+
+
 
         var app = builder.Build();
 
@@ -94,6 +97,8 @@ internal class Program
                         endpoint.Policies(TakePolicies.NotInMaintenanceMode, TakePolicies.UserExists);
                     }
                 };
+
+                // cfg.Serializer.Options.TypeInfoResolverChain.Add(new PolymorphicTypeResolver());
             })
             .UseAuthentication()
             .UseAuthorization();

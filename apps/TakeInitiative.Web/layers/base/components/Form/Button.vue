@@ -76,7 +76,7 @@ import type { SubmittingState } from "./Base.vue";
 import { TakeInitContrastColour } from "base/utils/types/HelperTypes";
 
 const buttonRef = ref<HTMLButtonElement | null>(null);
-export type LoadingDisplay = { showSpinner: true; loadingText?: string };
+export type LoadingDisplay = { showSpinner: boolean; loadingText?: string };
 export type FromButtonProps = {
     name?: string;
     label?: string;
@@ -96,10 +96,10 @@ export type FromButtonProps = {
 const props = withDefaults(defineProps<FromButtonProps>(), {
     name: undefined,
     label: undefined,
-    loadingDisplay: {
+    loadingDisplay: (p) => ({
         showSpinner: true,
         loadingText: "",
-    },
+    }),
     isLoading: false,
     buttonColour: "take-yellow-dark",
     hoverButtonColour: "take-yellow",

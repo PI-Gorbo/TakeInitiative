@@ -1,6 +1,7 @@
 import type { AxiosInstance } from "axios";
-import * as yup from "yup";
+import { z } from "zod";
 import { combatResponseValidator } from "./combatResponse";
+import { validateResponse } from "base/utils/apiErrorParser";
 
 // Create Campaign
 export type DeleteInitiativeCharacterRequest = {
@@ -8,7 +9,7 @@ export type DeleteInitiativeCharacterRequest = {
     characterId: string;
 };
 
-export type DeleteInitiativeCharacterResponse = yup.InferType<
+export type DeleteInitiativeCharacterResponse = z.infer<
     typeof combatResponseValidator
 >;
 
@@ -18,8 +19,8 @@ export function deleteInitiativeCharacterRequest(axios: AxiosInstance) {
     ): Promise<DeleteInitiativeCharacterResponse> {
         return await axios
             .delete("/api/combat/initiative/character", { data: request })
-            .then(async (response) =>
-                validateWithSchema(response.data, combatResponseValidator),
+            .then((response) =>
+                validateResponse(response, combatResponseValidator),
             );
     };
 }

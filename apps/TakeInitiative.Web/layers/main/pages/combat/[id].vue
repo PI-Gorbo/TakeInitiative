@@ -8,12 +8,13 @@
                 <div class="">
                     <FormButton
                         v-if="!combatIsFinished"
-                        :label="combatIsOpen ? 'Stage' : 'Stage'"
-                        :icon="combatIsOpen ? 'plus' : 'users'"
+                        class="w-max"
+                        label="Staged List"
+                        :icon="combatHasStarted ? 'plus' : 'users'"
                         @clicked="
                             () => {
                                 showModal(
-                                    combatIsOpen
+                                    combatHasStarted
                                         ? 'Combat Opened Stage Characters'
                                         : 'Combat Started Staged Character Menu',
                                 );
@@ -31,13 +32,13 @@
                     >
                     <label
                         class="flex items-center justify-center text-center font-NovaCut text-sm"
-                        v-if="combatIsStarted"
+                        v-if="combatInInitiative"
                         >Round {{ combat?.roundNumber }}</label
                     >
                 </div>
                 <div class="flex justify-end gap-1 px-1">
                     <FormButton
-                        v-if="userIsDm && combatIsOpen"
+                        v-if="userIsDm && combatHasStarted"
                         label="Start"
                         icon="shoe-prints"
                         :click="
@@ -52,7 +53,7 @@
                         }"
                     />
                     <FormButton
-                        v-else-if="userIsDm && combatIsStarted"
+                        v-else-if="userIsDm && combatInInitiative"
                         label="Finish"
                         icon="flag-checkered"
                         :click="
@@ -89,16 +90,16 @@
                 <div class="rounded-md bg-take-purple p-2 text-sm">
                     Phase:
                     {{
-                        combatIsOpen
-                            ? "Staging"
-                            : combatIsStarted
-                              ? "Started"
+                        combatHasStarted
+                            ? "Started"
+                            : combatInInitiative
+                              ? "Initiative Rolled"
                               : "Finished"
                     }}
                 </div>
                 <FormButton
                     v-if="
-                        combatIsStarted &&
+                        combatInInitiative &&
                         (combat?.initiativeList.length ?? 0) > 0
                     "
                     icon="forward-step"
@@ -118,7 +119,6 @@
                     label="Go Home"
                     buttonColour="take-purple"
                     hoverButtonColour="take-yellow-dark"
-                    :disabled="!isUsersTurn"
                     :loadingDisplay="{
                         showSpinner: true,
                         loadingText: 'End...',
@@ -147,7 +147,8 @@
             />
             <div v-if="modalState.modalType == 'Edit Initiative Character'">
                 <CombatEditInitiativeCharacterForm
-                    :character="lastClickedInitiativeCharacter!"
+                    v-if="lastClickedInitiativeCharacter"
+                    :character="lastClickedInitiativeCharacter"
                     :onEdit="
                         (character) =>
                             combatStore
@@ -166,22 +167,11 @@
     </div>
 </template>
 <script setup lang="ts">
-import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import type CollapsableHorizontalMenu from "base/components/CollapsableHorizontalMenu.vue";
-import ConfirmButton from "base/components/Form/ConfirmButton.vue";
 import Modal from "base/components/Modal.vue";
-import type { CampaignMemberDto } from "base/utils/api/campaign/getCampaignRequest";
 import type { DeleteStagedCharacterRequest } from "base/utils/api/combat/deleteStagedCharacterRequest";
 import type { PostStagePlannedCharactersRequest } from "base/utils/api/combat/postStagePlannedCharactersRequest";
-import type {
-    StagedCharacterDTO,
-    UpsertStagedCharacterRequest,
-} from "base/utils/api/combat/putUpsertStagedCharacter";
-import {
-    CombatState,
-    type Combat,
-    type CombatCharacter,
-} from "base/utils/types/models";
+import type { StagedCharacterDTO } from "base/utils/api/combat/putUpsertStagedCharacter";
+import { type InitiativeCharacter } from "base/utils/types/models";
 
 const campaignStore = useCampaignStore();
 const userStore = useUserStore();
@@ -224,8 +214,8 @@ const combatStore = useCombatStore();
 const {
     combat,
     userIsDm,
-    combatIsOpen,
-    combatIsStarted,
+    combatIsOpen: combatHasStarted,
+    combatIsStarted: combatInInitiative,
     combatIsFinished,
     anyPlannedCharacters,
 } = storeToRefs(combatStore);
@@ -250,7 +240,7 @@ type CombatPageModalType =
     | "Combat Started Staged Character Menu"
     | "Edit Staged Character"
     | "Edit Initiative Character";
-const combatPageModal = ref<typeof Modal | null>(null);
+const combatPageModal = ref<InstanceType<typeof Modal> | null>(null);
 const modalState = reactive<{
     open: boolean;
     modalType: CombatPageModalType | null;
@@ -272,15 +262,17 @@ function showModal(modalType: CombatPageModalType) {
             modalState.title = "Edit Staged Character";
             break;
         case "Combat Started Staged Character Menu":
-            modalState.title = "Stage Characters";
+            modalState.title = "Staged List";
             break;
         case "Edit Initiative Character":
             modalState.title = "Edit Character in Initiative";
             break;
     }
 }
-const lastClickedStagedCharacter = ref<CombatCharacter | undefined>(undefined);
-const lastClickedInitiativeCharacter = ref<CombatCharacter | undefined>(
+const lastClickedStagedCharacter = ref<InitiativeCharacter | undefined>(
+    undefined,
+);
+const lastClickedInitiativeCharacter = ref<InitiativeCharacter | undefined>(
     undefined,
 );
 async function closeModal() {
@@ -291,11 +283,11 @@ async function closeModal() {
     lastClickedInitiativeCharacter.value = undefined;
 }
 
-function onClickCharacter(character: CombatCharacter) {
-    if (combatIsOpen.value) {
+function onClickCharacter(character: InitiativeCharacter) {
+    if (combatHasStarted.value) {
         lastClickedStagedCharacter.value = character;
         showModal("Edit Staged Character");
-    } else if (combatIsStarted.value) {
+    } else if (combatInInitiative.value) {
         lastClickedInitiativeCharacter.value = character;
         showModal("Edit Initiative Character");
     }
@@ -312,7 +304,7 @@ async function onDeleteStagedCharacter(
 }
 
 async function onUpsertStagedCharacter(req: StagedCharacterDTO) {
-    return combatStore.upsertStagedCharacter(req).then(closeModal);
+    return combatStore.updateStagedCharacter(req).then(closeModal);
 }
 
 async function onStagePlannedCharacters(

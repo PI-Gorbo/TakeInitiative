@@ -4,8 +4,12 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using NSubstitute;
 using TakeInitiative.Api.Bootstrap;
+using TakeInitiative.Utilities;
 using Testcontainers.PostgreSql;
 namespace TakeInitiative.Api.Tests.Integration;
 
@@ -15,6 +19,7 @@ public class WebAppWithDatabaseFixture : IAsyncLifetime, IWebAppClient
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder()
         .WithImage("postgres:15-alpine")
         .Build();
+    public IDiceRoller DiceRollerSubstitute => Substitute.For<IDiceRoller>();
 
     public async Task InitializeAsync()
     {
@@ -30,6 +35,9 @@ public class WebAppWithDatabaseFixture : IAsyncLifetime, IWebAppClient
                 })
            .ConfigureServices((context, services) =>
                 {
+                    services.Replace(
+                       new ServiceDescriptor(typeof(IDiceRoller), DiceRollerSubstitute)
+                    );
                     services.AddMartenDB(context.Configuration, IsDevelopment: true);
                 })
         );

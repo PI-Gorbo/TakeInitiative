@@ -51,7 +51,7 @@ public class PutPlannedCombatStage(IDocumentStore Store) : Endpoint<PutPlannedCo
             {
                 ThrowError(x => x.StageId, "The stage does not exist.");
             }
-            stage.Name = req.Name;
+            stage.Name = req.Name!;
 
             session.Store(combat);
             await session.SaveChangesAsync();

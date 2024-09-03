@@ -1,18 +1,21 @@
 import type { AxiosInstance } from "axios";
-import * as yup from "yup";
+import { z } from "zod";
 import { plannedCombatValidator } from "../../../types/models";
+import { validateResponse } from "base/utils/apiErrorParser";
 
-export const deletePlannedCombatStageRequestValidator = yup.object({
-    combatId: yup.string().required(),
-    stageId: yup.string().required(),
-});
-export type DeletePlannedCombatStageRequest = yup.InferType<
+export const deletePlannedCombatStageRequestValidator = z
+    .object({
+        combatId: z.string(),
+        stageId: z.string(),
+    })
+    .required();
+export type DeletePlannedCombatStageRequest = z.infer<
     typeof deletePlannedCombatStageRequestValidator
 >;
 
 export const deletePlannedCombatStageResponseValidator = plannedCombatValidator;
 
-export type DeletePlannedCombatStageResponse = yup.InferType<
+export type DeletePlannedCombatStageResponse = z.infer<
     typeof deletePlannedCombatStageResponseValidator
 >;
 
@@ -22,12 +25,11 @@ export function deletePlannedCombatStageRequest(axios: AxiosInstance) {
     ): Promise<DeletePlannedCombatStageResponse> {
         return axios
             .delete("/api/campaign/planned-combat/stage", { data: request })
-            .then(async function (response) {
-                const result =
-                    await deletePlannedCombatStageResponseValidator.validate(
-                        response.data,
-                    );
-                return result;
-            });
+            .then((resp) =>
+                validateResponse(
+                    resp,
+                    deletePlannedCombatStageResponseValidator,
+                ),
+            );
     };
 }

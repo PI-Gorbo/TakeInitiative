@@ -1,8 +1,10 @@
+using System.Collections.Immutable;
 using CSharpFunctionalExtensions;
 
 namespace TakeInitiative.Utilities;
-
 public interface IDiceRoller
 {
-    public Result<int> EvaluateRoll(string roll);
+    public Result<DiceRoll> EvaluateRoll(string roll);
+
+    public DiceRoll RollD20();
 }

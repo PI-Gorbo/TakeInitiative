@@ -7,7 +7,6 @@ using Microsoft.Extensions.Options;
 namespace TakeInitiative.Api.Features.Users;
 
 public class PostSignUp(
-    IHostEnvironment environment,
     UserManager<ApplicationUser> UserManager,
     ConfirmEmailSender confirmEmailSender,
     ILogger<PostSignUp> logger

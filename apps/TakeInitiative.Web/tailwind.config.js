@@ -35,30 +35,32 @@ export default {
                     DEFAULT: "#D1D1D1",
                     dark: "#686868",
                 },
-                "take-creme": {
+                "take-cream": {
                     DEFAULT: "#FDF2C1",
+                    medium: "#F2CC8F",
                 },
             },
         },
         fontFamily: {
             NovaCut: ["NovaCut"],
+            Overpass: ["Overpass"],
         },
     },
     safelist: [
         {
             // Automatically imports all the colours since we want them for changing colours based on variables.
             pattern:
-                /bg-take-(navy|navy-light|navy-medium|navy-dark|red|yellow|yellow-light|yellow-dark|purple|purple-dark|purple-very-dark|purple-light)/,
+                /bg-take-(navy|navy-light|navy-medium|navy-dark|red|yellow|yellow-light|yellow-dark|purple|purple-dark|purple-very-dark|purple-light|cream)/,
             variants: ["hover", "group-hover"],
         },
         {
             pattern:
-                /text-take-(navy|navy-light|navy-medium|navy-dark|red|yellow|yellow-light|yellow-dark|purple|purple-dark|purple-very-dark|purple-light)/,
+                /text-take-(navy|navy-light|navy-medium|navy-dark|red|yellow|yellow-light|yellow-dark|purple|purple-dark|purple-very-dark|purple-light|cream)/,
             variants: ["hover", "group-hover"],
         },
         {
             pattern:
-                /border-take-(navy|navy-light|navy-medium|navy-dark|red|yellow|yellow-light|yellow-dark|purple|purple-dark|purple-very-dark|purple-light)/,
+                /border-take-(navy|navy-light|navy-medium|navy-dark|red|yellow|yellow-light|yellow-dark|purple|purple-dark|purple-very-dark|purple-light|cream)/,
             variants: ["hover", "group-hover"],
         },
     ],

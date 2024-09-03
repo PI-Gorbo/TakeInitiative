@@ -1,7 +1,7 @@
-import type { AxiosError } from "axios";
+import type { AxiosError, AxiosResponse } from "axios";
 import type { extendNuxtSchema } from "nuxt/kit";
-import type { Path, YupSchema } from "vee-validate";
-import * as yup from "yup";
+import type { Path } from "vee-validate";
+import { z } from "zod";
 
 export type ApiError<TRequest extends {}> = {
     statusCode: number;
@@ -12,36 +12,29 @@ export type ApiError<TRequest extends {}> = {
     ) => string | null;
     error: AxiosError<any>;
 };
-const apiErrorSchema = yup.object({
-    statusCode: yup.number().required(),
-    message: yup.string().required(),
-    errors: yup.object().required(),
-});
+const apiErrorSchema = z
+    .object({
+        statusCode: z.number(),
+        message: z.string(),
+        errors: z.record(z.string(), z.array(z.string())),
+    })
+    .required();
 
-export async function parseAsApiError<TRequest extends {}>(
+export function parseAsApiError<TRequest extends {}>(
     error: AxiosError<any>,
-): Promise<ApiError<TRequest>> {
+): ApiError<TRequest> {
     try {
-        const result = await apiErrorSchema.validate(error?.response?.data);
+        const result = apiErrorSchema.parse(error?.response?.data);
         return {
             statusCode: result.statusCode,
             message: result.message,
             errors: result.errors,
-            getErrorFor: (error) => {
-                if (error in result.errors) {
-                    return result.errors[error][0];
-                }
-
+            getErrorFor: (errorName) => {
                 try {
-                    const accessors = error.split(".");
-                    let errorValue = result.errors;
-                    for (let index = 0; index < accessors.length; index++) {
-                        errorValue = errorValue[accessors[index]];
-                    }
-                    if (errorValue == null || errorValue.length == 0) {
-                        return null;
-                    }
-                    return errorValue[0];
+                    const value = Object.entries(result.errors).find(
+                        ([errorKey, errors]) => errorKey.startsWith(errorName),
+                    )?.[1][0];
+                    return value ?? "";
                 } catch {
                     return null;
                 }
@@ -49,7 +42,6 @@ export async function parseAsApiError<TRequest extends {}>(
             error,
         };
     } catch (err) {
-        const validationError: yup.ValidationError = err as yup.ValidationError;
         return {
             statusCode: error.status ?? 500,
             message: "Something went wrong",
@@ -60,16 +52,17 @@ export async function parseAsApiError<TRequest extends {}>(
     }
 }
 
-export async function validateWithSchema<T extends {}>(
-    data: any,
+export function validateResponse<T extends {}>(
+    resp: AxiosResponse<T, any>,
     schema: {
-        validate: (data: any) => Promise<T>;
+        parse: (data: any) => T;
     },
-): Promise<T> {
-    return await schema
-        .validate(data)
-        .catch((validationError) => {
-            console.error("API VALIDATION ERROR: ", validationError);
-        })
-        .then((data) => data as unknown as T); // Typescript workaround.
+): T {
+    try {
+        const data = schema.parse(resp.data);
+        return data;
+    } catch (e) {
+        console.error(`Failed to validate response. ${e}`);
+        throw e;
+    }
 }

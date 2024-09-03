@@ -1,46 +1,45 @@
 import type { AxiosInstance } from "axios";
-import * as yup from "yup";
+import { z } from "zod";
 import {
-    characterHealthValidator,
-    characterInitiativeValidator,
+    unevaluatedCharacterHealthValidator,
+    unevaluatedCharacterInitiativeValidator,
     plannedCombatValidator,
 } from "../../../../types/models";
+import { validateResponse } from "base/utils/apiErrorParser";
 
 // Get User
-export const createPlannedCombatNpcRequestValidator = yup.object({
-    combatId: yup.string().required(),
-    stageId: yup.string().required(),
-    name: yup.string().required(),
-    health: characterHealthValidator.required(),
-    armourClass: yup.number().required().nullable(),
-    initiative: characterInitiativeValidator.required(),
-    quantity: yup.number().required().min(1),
-});
+export const createPlannedCombatNpcRequestValidator = z
+    .object({
+        combatId: z.string(),
+        stageId: z.string(),
+        name: z.string(),
+        health: unevaluatedCharacterHealthValidator,
+        armourClass: z.number().nullable(),
+        initiative: unevaluatedCharacterInitiativeValidator,
+        quantity: z.number().min(1),
+    })
+    .required();
 
-export type CreatePlannedCombatNpcRequest = yup.InferType<
+export type CreatePlannedCombatNpcRequest = z.infer<
     typeof createPlannedCombatNpcRequestValidator
 >;
 
 export const createPlannedCombatNpcResponseValidator = plannedCombatValidator;
 
-export type createPlannedCombatStageResponse = yup.InferType<
+export type CreatePlannedCombatStageResponse = z.infer<
     typeof createPlannedCombatNpcResponseValidator
 >;
 
 export function createPlannedCombatNpcRequest(axios: AxiosInstance) {
     return function getUser(
         request: CreatePlannedCombatNpcRequest,
-    ): Promise<createPlannedCombatStageResponse> {
+    ): Promise<CreatePlannedCombatStageResponse> {
         return axios
             .post("/api/campaign/planned-combat/stage/npc", {
                 ...request,
             } satisfies CreatePlannedCombatNpcRequest)
-            .then(async function (response) {
-                const result =
-                    await createPlannedCombatNpcResponseValidator.validate(
-                        response.data,
-                    );
-                return result;
-            });
+            .then((resp) =>
+                validateResponse(resp, createPlannedCombatNpcResponseValidator),
+            );
     };
 }

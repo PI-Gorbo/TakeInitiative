@@ -1,25 +1,23 @@
 import type { AxiosInstance } from "axios";
-import * as yup from "yup";
-import { combatValidator } from "../../types/models";
+import { z } from "zod";
 import { combatResponseValidator } from "./combatResponse";
+import { validateResponse } from "base/utils/apiErrorParser";
 
 // Create Campaign
 export type PostStartCombatRequest = {
     combatId: string;
 };
 
-export type PostStartCombatResponse = yup.InferType<
-    typeof combatResponseValidator
->;
+export type PostStartCombatResponse = z.infer<typeof combatResponseValidator>;
 
 export function postStartCombatRequest(axios: AxiosInstance) {
     return async function (
         request: PostStartCombatRequest,
     ): Promise<PostStartCombatResponse> {
         return await axios
-            .post("/api/combat/start", request)
+            .post("/api/combat/roll-initiative", request)
             .then(async (response) =>
-                validateWithSchema(response.data, combatResponseValidator),
+                validateResponse(response, combatResponseValidator),
             );
     };
 }

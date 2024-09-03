@@ -1,12 +1,11 @@
 <template>
     <FormBase :onSubmit="submit" v-slot="{ submitting }">
-        <main class="pb-2" v-if="props.character">
+        <main class="flex flex-col gap-2 pb-2" v-if="props.character">
             <div class="flex items-end justify-between gap-2">
                 <FormInput
                     class="flex-1"
                     :autoFocus="true"
                     textColour="white"
-                    label="Name"
                     v-model:value="name"
                     v-bind="nameInputProps"
                 />
@@ -26,17 +25,13 @@
             </div>
 
             <CharacterHealthInput
-                v-model:hasHealth="hasHealth"
-                v-model:currentHealth="currentHealth"
-                v-model:maxHealth="maxHealth"
-                :error="
-                    hasHealthInputProps.errorMessage ??
-                    currentHealthInputProps.errorMessage ??
-                    maxHealthInputProps.errorMessage
-                "
+                ref="characterHealthInput"
+                :health="{ value: health, isUnevaluated: false }"
             />
 
-            <CharacterArmourClass v-model:value="armourClass" />
+            <CharacterArmourClassInput v-model:value="armourClass" />
+
+            <CharacterConditionsInput v-model:conditions="conditions" />
         </main>
         <footer class="flex justify-between">
             <FormButton
@@ -60,20 +55,25 @@
 <script setup lang="ts">
 import { useForm } from "vee-validate";
 import type { SubmittingState } from "../Form/Base.vue";
-import { toTypedSchema } from "@vee-validate/yup";
-import { yup } from "base/utils/types/HelperTypes";
 import {
-    characterHealthValidator,
-    characterInitiativeValidator,
-    type CombatCharacter,
+    unevaluatedCharacterHealthValidator,
+    conditionValidator,
+    type InitiativeCharacter,
+    type CharacterInitiative,
+    type CharacterHealth,
 } from "base/utils/types/models";
 import type { CombatCharacterDto } from "base/utils/api/combat/putUpdateInitiativeCharacterRequest";
+import { toTypedSchema } from "@vee-validate/zod";
+import { z } from "zod";
+import HealthInput from "../Character/HealthInput.vue";
+
+const characterHealthInput = ref<InstanceType<typeof HealthInput> | null>(null);
 const userStore = useUserStore();
 const { userIsDm } = storeToRefs(useCombatStore());
 
 const props = withDefaults(
     defineProps<{
-        character: CombatCharacter;
+        character: InitiativeCharacter;
         onEdit: (character: CombatCharacterDto) => Promise<any>;
         onDelete: (characterId: string) => Promise<any>;
     }>(),
@@ -87,13 +87,23 @@ const formState = reactive({
 
 const { values, errors, defineField, validate } = useForm({
     validationSchema: toTypedSchema(
-        yup.object({
-            name: yup.string().required("Please provide a name"),
-            isHidden: yup.boolean(),
-            armourClass: yup.number().nullable(),
-            health: characterHealthValidator.required(),
-        }),
+        z
+            .object({
+                name: z.string({ required_error: "Please provide a name" }),
+                isHidden: z.boolean(),
+                armourClass: z.number().nullable(),
+                health: unevaluatedCharacterHealthValidator,
+                conditions: z.array(conditionValidator),
+            })
+            .required({ name: true, health: true }),
     ),
+    initialValues: {
+        name: props.character.name,
+        isHidden: props.character.hidden,
+        armourClass: props.character.armourClass ?? null,
+        health: props.character.health,
+        conditions: props.character.conditions,
+    },
 });
 
 const [name, nameInputProps] = defineField("name", {
@@ -102,48 +112,16 @@ const [name, nameInputProps] = defineField("name", {
     }),
 });
 
-const [isHidden, isHiddenInputProps] = defineField("isHidden", {
+const [isHidden, isHiddenInputProps] = defineField("isHidden");
+
+const [health, healthProps] = defineField("health", {
     props: (state) => ({
-        errorMessage: formState.error?.getErrorFor("hidden") ?? state.errors[0],
+        errorMessage: formState.error?.getErrorFor("character.Initiative"),
     }),
 });
+const [armourClass, armourClassInputProps] = defineField("armourClass");
 
-const [hasHealth, hasHealthInputProps] = defineField("health.hasHealth", {
-    props: (state) => ({
-        errorMessage:
-            (formState.error?.getErrorFor("playerCharacter.Health.HasHealth") ||
-                formState.error?.getErrorFor("in")) ??
-            state.errors[0],
-    }),
-});
-
-const [currentHealth, currentHealthInputProps] = defineField(
-    "health.currentHealth",
-    {
-        props: (state) => ({
-            errorMessage:
-                formState.error?.getErrorFor(
-                    "playerCharacter.Health.CurrentHealth",
-                ) ?? state.errors[0],
-        }),
-    },
-);
-
-const [maxHealth, maxHealthInputProps] = defineField("health.maxHealth", {
-    props: (state) => ({
-        errorMessage:
-            formState.error?.getErrorFor("playerCharacter.Health.MaxHealth") ??
-            state.errors[0],
-    }),
-});
-
-const [armourClass, armourClassInputProps] = defineField("armourClass", {
-    props: (state) => ({
-        errorMessage:
-            formState.error?.getErrorFor("playerCharacter.armourClass") ??
-            state.errors[0],
-    }),
-});
+const [conditions, conditionsInputProps] = defineField("conditions");
 
 function setValuesFromProps() {
     if (props.character == null) {
@@ -154,12 +132,11 @@ function setValuesFromProps() {
     name.value = props.character.name;
     isHidden.value = props.character.hidden;
     armourClass.value = props.character.armourClass ?? null;
-    hasHealth.value = props.character.health?.hasHealth ?? false;
-    currentHealth.value = props.character.health?.currentHealth ?? 0;
-    maxHealth.value = props.character.health?.maxHealth ?? 0;
+    health.value = props.character.health;
+    conditions.value = props.character.conditions;
 }
 onMounted(setValuesFromProps);
-watch(() => props.character, setValuesFromProps);
+watch(() => props.character.id, setValuesFromProps);
 
 async function submit(formSubmittingState: SubmittingState) {
     if (formSubmittingState.submitterName == "trash") {
@@ -172,28 +149,35 @@ async function submit(formSubmittingState: SubmittingState) {
 }
 
 async function onEdit() {
+    formState.error = null;
+
+    // Fetch & Set the computed health values from the health component upon submission
+    const computedHealth = characterHealthInput.value?.getHealth();
+    if (computedHealth == false) {
+        return;
+    }
+    health.value = computedHealth;
+
+    const validateResult = await validate();
+    if (!validateResult.valid) {
+        return;
+    }
+
     return await props
         .onEdit({
             id: props.character.id,
             name: name.value!,
             hidden: isHidden.value!,
-            initiativeValue: props.character.initiativeValue!,
-            health: {
-                hasHealth: hasHealth.value ?? false,
-                currentHealth: currentHealth.value ?? 0,
-                maxHealth: maxHealth.value ?? 0,
-            },
+            health: computedHealth! as CharacterHealth,
+            initiative: props.character.initiative,
             armourClass: armourClass.value ?? null,
+            conditions: conditions.value!,
         })
-        .catch(
-            async (error) => (formState.error = await parseAsApiError(error)),
-        );
+        .catch((error) => (formState.error = parseAsApiError(error)));
 }
 async function onDelete() {
     return await props
         .onDelete(props.character.id)
-        .catch(
-            async (error) => (formState.error = await parseAsApiError(error)),
-        );
+        .catch((error) => (formState.error = parseAsApiError(error)));
 }
 </script>

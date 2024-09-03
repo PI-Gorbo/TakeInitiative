@@ -74,7 +74,18 @@ public class StagePlannedCharactersCommandHandler(IDocumentStore Store) : Comman
                 StagedPlannedCharacterEvent @event = new()
                 {
                     CombatId = command.CombatId,
-                    PlannedCharactersToStage = command.PlannedCharactersToStage,
+                    PlannedCharactersToStage = command.PlannedCharactersToStage
+                        .ToDictionary(x => x.Key, x => x.Value
+                            .Select(characterWithoutId => new StagePlannedCharacterWithIdDto()
+                            {
+                                CharacterId = characterWithoutId.CharacterId,
+                                Quantity = characterWithoutId.Quantity,
+                                NewGuidsToUse = Enumerable.Range(0, (int)characterWithoutId.Quantity)
+                                    .Select(_ => Guid.NewGuid()) // Generate a number of guids equal to the quantity to use.
+                                    .ToArray()
+                            })
+                            .ToArray()
+                        ),
                     UserId = command.UserId
                 };
                 session.Events.Append(command.CombatId, @event);

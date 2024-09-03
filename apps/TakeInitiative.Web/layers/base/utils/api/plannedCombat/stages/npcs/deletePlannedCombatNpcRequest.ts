@@ -1,26 +1,27 @@
 import type { AxiosInstance } from "axios";
-import * as yup from "yup";
+import { z } from "zod";
 import {
-    characterHealthValidator,
-    characterInitiativeValidator,
+    unevaluatedCharacterHealthValidator,
+    unevaluatedCharacterInitiativeValidator,
     plannedCombatValidator,
 } from "../../../../types/models";
+import { validateResponse } from "base/utils/apiErrorParser";
 
 // Get User
-export const deletePlannedCombatNpcRequestValidator = yup.object({
-    combatId: yup.string().required(),
-    stageId: yup.string().required(),
-    npcId: yup.string().required(),
-});
+export const deletePlannedCombatNpcRequestValidator = z
+    .object({
+        combatId: z.string(),
+        stageId: z.string(),
+        npcId: z.string(),
+    })
+    .required();
 
-export type DeletePlannedCombatNpcRequest = yup.InferType<
+export type DeletePlannedCombatNpcRequest = z.infer<
     typeof deletePlannedCombatNpcRequestValidator
 >;
 
-export const deletePlannedCombatNpcResponseValidator = plannedCombatValidator;
-
-export type deletePlannedCombatStageResponse = yup.InferType<
-    typeof deletePlannedCombatNpcResponseValidator
+export type deletePlannedCombatStageResponse = z.infer<
+    typeof plannedCombatValidator
 >;
 
 export function deletePlannedCombatNpcRequest(axios: AxiosInstance) {
@@ -29,12 +30,6 @@ export function deletePlannedCombatNpcRequest(axios: AxiosInstance) {
     ): Promise<deletePlannedCombatStageResponse> {
         return axios
             .delete("/api/campaign/planned-combat/stage/npc", { data: request })
-            .then(async function (response) {
-                const result =
-                    await deletePlannedCombatNpcResponseValidator.validate(
-                        response.data,
-                    );
-                return result;
-            });
+            .then((resp) => validateResponse(resp, plannedCombatValidator));
     };
 }

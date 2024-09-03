@@ -1,0 +1,214 @@
+﻿{
+  Id: CombatId,
+  CampaignId: Guid_1,
+  State: 1,
+  CombatName: My planned combat,
+  DungeonMaster: DmId,
+  History: [
+    {
+      Timestamp: DateTimeOffset_1,
+      Events: [
+        {
+          TYPE: CombatStarted
+        }
+      ],
+      Executor: DmId
+    },
+    {
+      Timestamp: DateTimeOffset_2,
+      Events: [
+        {
+          TYPE: CombatInitiativeRolled,
+          Rolls: [
+            {
+              CharacterId: PlayerFirstCharacterId,
+              CharacterName: My Super Duper Character,
+              Roll: [
+                {
+                  Total: 20,
+                  Roll: 1d20 + 1,
+                  Evaluation: 1d20 (19) + 1 = 20
+                }
+              ],
+              RolledHealth: null
+            },
+            {
+              CharacterId: Guid_2,
+              CharacterName: Intro Enemy,
+              Roll: [
+                {
+                  Total: 15,
+                  Roll: 1d20 + 2,
+                  Evaluation: 1d20 (13) + 2 = 15
+                }
+              ],
+              RolledHealth: null
+            }
+          ]
+        },
+        {
+          TYPE: TurnStarted,
+          CharacterId: PlayerFirstCharacterId
+        }
+      ],
+      Executor: DmId
+    },
+    {
+      Timestamp: DateTimeOffset_3,
+      Events: [
+        {
+          TYPE: CharacterConditionAdded,
+          ConditionId: ConditionId,
+          CharacterId: PlayerFirstCharacterId,
+          Name: Paralyzed
+        }
+      ],
+      Executor: DmId
+    },
+    {
+      Timestamp: DateTimeOffset_4,
+      Events: [
+        {
+          TYPE: CharacterHealthChanged,
+          CharacterId: PlayerFirstCharacterId,
+          From: 10,
+          To: 5
+        }
+      ],
+      Executor: DmId
+    },
+    {
+      Timestamp: DateTimeOffset_5,
+      Events: [
+        {
+          TYPE: TurnEnded,
+          CharacterId: PlayerFirstCharacterId
+        },
+        {
+          TYPE: TurnStarted,
+          CharacterId: Guid_2
+        }
+      ],
+      Executor: PlayerId
+    }
+  ],
+  CurrentPlayers: [
+    {
+      UserId: PlayerId
+    },
+    {
+      UserId: DmId
+    }
+  ],
+  PlannedStages: [
+    {
+      Id: Guid_3,
+      Name: Boss Fight,
+      Npcs: [
+        {
+          StageId: Guid_3,
+          Quantity: 10,
+          Id: Guid_4,
+          Name: 10 goblins in a trench coat,
+          Health: {
+            TYPE: Roll,
+            RollString: 20d20 + 10
+          },
+          Initiative: {
+            Roll: 1d20 + 2
+          },
+          ArmourClass: 12
+        }
+      ]
+    }
+  ],
+  StagedList: [
+    {
+      PlayerId: DmId,
+      CharacterOriginDetails: {
+        CharacterOrigin: 0,
+        Id: null
+      },
+      Hidden: false,
+      CopyNumber: null,
+      Id: Guid_5,
+      Name: Another Enemy!,
+      Health: {
+        TYPE: Fixed,
+        CurrentHealth: 10,
+        MaxHealth: 20
+      },
+      Initiative: {
+        Roll: 10
+      },
+      ArmourClass: null
+    }
+  ],
+  InitiativeList: [
+    {
+      Id: PlayerFirstCharacterId,
+      Name: My Super Duper Character,
+      Health: {
+        TYPE: Fixed,
+        CurrentHealth: 5,
+        MaxHealth: 20,
+        DiceRoll: null
+      },
+      Initiative: {
+        Value: [
+          {
+            Total: 20,
+            Roll: 1d20 + 1,
+            Evaluation: 1d20 (19) + 1 = 20
+          }
+        ]
+      },
+      ArmourClass: 20,
+      PlayerId: PlayerId,
+      CharacterOriginDetails: {
+        CharacterOrigin: 0,
+        Id: null
+      },
+      Hidden: false,
+      CopyNumber: null,
+      Conditions: [
+        {
+          Id: ConditionId,
+          Name: Paralyzed,
+          Note: AHHHH
+        }
+      ]
+    },
+    {
+      Id: Guid_2,
+      Name: Intro Enemy,
+      Health: {
+        TYPE: Fixed,
+        CurrentHealth: 0,
+        MaxHealth: 0,
+        DiceRoll: null
+      },
+      Initiative: {
+        Value: [
+          {
+            Total: 15,
+            Roll: 1d20 + 2,
+            Evaluation: 1d20 (13) + 2 = 15
+          }
+        ]
+      },
+      ArmourClass: 12,
+      PlayerId: DmId,
+      CharacterOriginDetails: {
+        CharacterOrigin: 0,
+        Id: Guid_6
+      },
+      Hidden: true,
+      CopyNumber: null,
+      Conditions: []
+    }
+  ],
+  InitiativeIndex: 1,
+  RoundNumber: 1,
+  FinishedTimestamp: null
+}

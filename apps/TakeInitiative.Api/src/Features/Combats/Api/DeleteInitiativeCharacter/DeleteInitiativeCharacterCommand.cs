@@ -26,7 +26,7 @@ public class DeleteInitiativeCharacterCommandHandler(IDocumentStore store) : Com
             }
 
             // Ensure the combat is started.
-            if (combat.State != CombatState.Started)
+            if (combat.State != CombatState.InitiativeRolled)
             {
                 ThrowError(x => x.CombatId, "Combat's initiative list cannot be edited ");
             }

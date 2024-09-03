@@ -6,6 +6,8 @@ export default defineNuxtPlugin((nuxtApp) => {
         public: { axios: axiosConfig },
     } = useRuntimeConfig();
 
+    const routeInfo = useRoute();
+
     // Register axios
     const defaultAxios: CreateAxiosDefaults = { ...axiosConfig };
     const Axios: AxiosInstance = axios.create(defaultAxios);
@@ -26,7 +28,7 @@ export default defineNuxtPlugin((nuxtApp) => {
             return resp;
         },
         async (error) => {
-            if (error?.response?.status == 401) {
+            if (error?.response?.status == 401 && routeInfo.meta.requiresAuth) {
                 const axiosError: AxiosError = error as AxiosError;
                 await navigateTo("/login");
                 throw error;

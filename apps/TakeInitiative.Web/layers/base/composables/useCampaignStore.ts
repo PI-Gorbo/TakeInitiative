@@ -69,7 +69,6 @@ export const useCampaignStore = defineStore("campaignStore", () => {
     async function fetchCampaign(
         campaignId: string,
     ): Promise<GetCampaignResponse> {
-        console.log("refetching campaign info");
         return await api.campaign.get({ campaignId });
     }
 
@@ -87,7 +86,6 @@ export const useCampaignStore = defineStore("campaignStore", () => {
             connection.state == signalR.HubConnectionState.Connected &&
             state.campaign?.id != campaignDetails.campaign.id
         ) {
-            console.log("Left old group");
             await connection.send("Leave", state.campaign?.id);
         }
 
@@ -123,11 +121,10 @@ export const useCampaignStore = defineStore("campaignStore", () => {
         return [
             ...state.nonUserCampaignMembers,
             {
-                userId: state.userCampaignMember.userId,
-                isDungeonMaster: state.userCampaignMember.isDungeonMaster,
+                ...state.userCampaignMember,
                 username: userStore.state.user?.username!,
             },
-        ];
+        ] satisfies CampaignMemberDto[];
     });
 
     async function openCombat(plannedCombatId: string) {

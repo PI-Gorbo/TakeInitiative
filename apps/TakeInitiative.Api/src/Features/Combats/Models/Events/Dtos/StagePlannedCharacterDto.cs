@@ -1,10 +1,7 @@
 namespace TakeInitiative.Api.Features.Combats;
 
-public class StagePlannedCharacterDto
+public record StagePlannedCharacterDto
 {
-    public Guid CharacterId { get; set; }
-    public uint Quantity { get; set; }
+    public required Guid CharacterId { get; set; }
+    public required uint Quantity { get; set; }
 }
-
-
-

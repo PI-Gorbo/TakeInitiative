@@ -5,6 +5,10 @@ import { fileURLToPath } from "url";
 // https://nuxt.com/docs/api/configuration/nuxt-config
 const executionDirectory = dirname(fileURLToPath(import.meta.url));
 export default defineNuxtConfig({
+    typescript: {
+        strict: true,
+        typeCheck: true,
+    },
     app: {
         head: {
             link: [
@@ -18,9 +22,6 @@ export default defineNuxtConfig({
         },
         pageTransition: { name: "fade", mode: "out-in" },
     },
-    routeRules: {
-        "/combat/**": { ssr: false },
-    },
     devtools: { enabled: true },
     runtimeConfig: {
         public: {
@@ -33,6 +34,7 @@ export default defineNuxtConfig({
     },
     build: {
         transpile: [
+            "@fortawesome/free-brands-svg-icons",
             "@fortawesome/vue-fontawesome",
             "@fortawesome/fontawesome-svg-core",
             "vue-toastification",

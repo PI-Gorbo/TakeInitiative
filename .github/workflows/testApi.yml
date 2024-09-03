@@ -31,7 +31,7 @@ jobs:
               run: dotnet restore
             - name: Build
               run: |
-                  dotnet build --configuration Release --no-restore
+                  dotnet build --configuration Release --no-restore -p:TreatWarningsAsErrors=True
             - name: Test
               run: |
                   export PythonDLL=/opt/hostedtoolcache/Python/3.11.9/x64/lib/libpython3.11.so

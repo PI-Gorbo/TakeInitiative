@@ -1,40 +1,45 @@
 <template>
-    <div @click="() => editPlannedCharacterFormModal?.show()" class="p-2">
-        <div class="flex cursor-pointer justify-between gap-2 px-2">
-            <div class="ws-nowrap cursor-pointer select-none text-lg">
-                {{ npc.name }} ( x {{ npc.quantity }} )
-            </div>
-            <CharacterHealthDisplay :health="npc.health" />
-            <div
-                v-if="npc.armourClass"
-                class="flex select-none items-center gap-2"
-            >
-                <FontAwesomeIcon icon="shield-halved" />
-                <div class="ws-nowrap min-w-fit">{{ npc.armourClass }}</div>
-            </div>
-            <div class="flex select-none items-center gap-2">
-                <FontAwesomeIcon icon="shoe-prints" />
-                <div>{{ npc.initiative.value }}</div>
+    <div>
+        <div @click="() => editPlannedCharacterFormModal?.show()" class="p-2">
+            <div class="flex cursor-pointer justify-between gap-2 px-2">
+                <div class="ws-nowrap cursor-pointer select-none text-lg">
+                    {{ npc.name }} ( x {{ npc.quantity }} )
+                </div>
+                <CharacterHealthDisplay :health="npc.health" />
+                <div
+                    v-if="npc.armourClass"
+                    class="flex select-none items-center gap-2"
+                >
+                    <FontAwesomeIcon icon="shield-halved" />
+                    <div class="ws-nowrap min-w-fit">{{ npc.armourClass }}</div>
+                </div>
+                <div class="flex select-none items-center gap-2">
+                    <FontAwesomeIcon icon="shoe-prints" />
+                    <div>{{ npc.initiative.roll }}</div>
+                </div>
             </div>
         </div>
+        <Modal
+            ref="editPlannedCharacterFormModal"
+            title="Edit Planned Character"
+        >
+            <IndexModifyPlannedCharacterForm
+                :npc="props.npc"
+                :onEdit="
+                    (request) =>
+                        props
+                            .editNpc(request)
+                            .then(() => editPlannedCharacterFormModal?.hide())
+                "
+                :onDelete="
+                    (request) =>
+                        props
+                            .deleteNpc(request)
+                            .then(() => editPlannedCharacterFormModal?.hide())
+                "
+            />
+        </Modal>
     </div>
-    <Modal ref="editPlannedCharacterFormModal" title="Edit Planned Character">
-        <IndexModifyPlannedCharacterForm
-            :npc="props.npc"
-            :onEdit="
-                (request) =>
-                    props
-                        .editNpc(request)
-                        .then(() => editPlannedCharacterFormModal?.hide())
-            "
-            :onDelete="
-                (request) =>
-                    props
-                        .deleteNpc(request)
-                        .then(() => editPlannedCharacterFormModal?.hide())
-            "
-        />
-    </Modal>
 </template>
 
 <script setup lang="ts">

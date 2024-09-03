@@ -1,17 +1,18 @@
+import { validateResponse } from "base/utils/apiErrorParser";
 import type { AxiosInstance } from "axios";
-import * as yup from "yup";
+import { z } from "zod";
 import {
     campaignMemberValidator,
     campaignValidator,
     type CampaignMember,
-    type CharacterHealth,
-    type CharacterInitiative,
+    type UnevaluatedCharacterHealth,
+    type UnevaluatedCharacterInitiative,
 } from "../../types/models";
 
 export type PlayerCharacterDto = {
     name: string;
-    health: CharacterHealth | null;
-    initiative: CharacterInitiative | null;
+    health: UnevaluatedCharacterHealth;
+    initiative: UnevaluatedCharacterInitiative;
     armourClass: number | null;
 };
 export type CreatePlayerCharacterRequest = {
@@ -26,10 +27,7 @@ export function createPlayerCharacterRequest(axios: AxiosInstance) {
         return await axios
             .post("/api/campaign/member/character", request)
             .then(async (response) => {
-                return validateWithSchema(
-                    response.data,
-                    campaignMemberValidator,
-                );
+                return validateResponse(response, campaignMemberValidator);
             });
     };
 }

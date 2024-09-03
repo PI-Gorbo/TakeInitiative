@@ -1,6 +1,7 @@
 import type { AxiosInstance } from "axios";
-import * as yup from "yup";
+import { z } from "zod";
 import { combatResponseValidator } from "./combatResponse";
+import { validateResponse } from "base/utils/apiErrorParser";
 
 // Create Campaign
 export type PostRollStagedCharactersIntoInitiativeRequest = {
@@ -8,7 +9,7 @@ export type PostRollStagedCharactersIntoInitiativeRequest = {
     characterIds: string[];
 };
 
-export type PostRollStagedCharactersIntoInitiativeResponse = yup.InferType<
+export type PostRollStagedCharactersIntoInitiativeResponse = z.infer<
     typeof combatResponseValidator
 >;
 
@@ -21,7 +22,7 @@ export function postRollStagedCharactersIntoInitiativeRequest(
         return await axios
             .post("/api/combat/stage/roll", request)
             .then(async (response) =>
-                validateWithSchema(response.data, combatResponseValidator),
+                validateResponse(response, combatResponseValidator),
             );
     };
 }

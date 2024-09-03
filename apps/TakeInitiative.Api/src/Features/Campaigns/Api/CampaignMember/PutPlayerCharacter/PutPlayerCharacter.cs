@@ -8,7 +8,7 @@ using TakeInitiative.Utilities;
 using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Campaigns;
-    
+
 public class PutPlayerCharacter(IDocumentSession session) : Endpoint<PutPlayerCharacterRequest, CampaignMember>
 {
     public override void Configure()
@@ -36,11 +36,13 @@ public class PutPlayerCharacter(IDocumentSession session) : Endpoint<PutPlayerCh
                 }
 
                 // Edit the character
-                var character = campaignMember.Characters[index];
-                character.Name = req.PlayerCharacter.Name;
-                character.Health = req.PlayerCharacter.Health;
-                character.Initiative = req.PlayerCharacter.Initiative;
-                character.ArmourClass = req.PlayerCharacter.ArmourClass;
+                var character = campaignMember.Characters[index] = campaignMember.Characters[index] with
+                {
+                    Name = req.PlayerCharacter.Name,
+                    Health = req.PlayerCharacter.Health,
+                    Initiative = req.PlayerCharacter.Initiative,
+                    ArmourClass = req.PlayerCharacter.ArmourClass,
+                };
 
                 session.Store(campaignMember);
                 await session.SaveChangesAsync();

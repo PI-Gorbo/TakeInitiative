@@ -33,12 +33,6 @@ public class DeleteStagedCharacter(IDocumentStore Store, IHubContext<CombatHub> 
                 ThrowError($"Cannot stage character because the combat is {combat.State.ToString().ToLower()}.");
             }
 
-            // Check the user is part of the combat.
-            if (!combat.CurrentPlayers.Any(x => x.UserId == userId))
-            {
-                ThrowError("Must be a current player in order to delete staged characters");
-            }
-
             var character = combat.StagedList.SingleOrDefault(x => x.Id == req.CharacterId);
             if (character == null)
             {
@@ -62,11 +56,11 @@ public class DeleteStagedCharacter(IDocumentStore Store, IHubContext<CombatHub> 
             await session.SaveChangesAsync();
 
             combat = await session.LoadAsync<Combat>(req.CombatId);
-            await hubContext.NotifyCombatUpdated(combat);
+            await hubContext.NotifyCombatUpdated(combat!);
 
             return new CombatResponse()
             {
-                Combat = combat
+                Combat = combat!
             };
         });
 

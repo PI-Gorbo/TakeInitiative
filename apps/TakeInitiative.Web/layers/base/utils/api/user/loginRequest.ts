@@ -1,5 +1,4 @@
 import type { AxiosInstance, AxiosResponse } from "axios";
-import * as yup from "yup";
 
 export type LoginRequest = {
     email: string;
