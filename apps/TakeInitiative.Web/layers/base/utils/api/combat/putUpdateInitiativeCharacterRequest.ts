@@ -2,8 +2,10 @@ import type { AxiosInstance } from "axios";
 import { z } from "zod";
 import {
     combatValidator,
-    type CharacterHealth,
+    type UnevaluatedCharacterHealth,
     type Condition,
+    type CharacterHealth,
+    type CharacterInitiative,
 } from "../../types/models";
 import { combatResponseValidator } from "./combatResponse";
 import { validateResponse } from "base/utils/apiErrorParser";
@@ -14,7 +16,7 @@ export type CombatCharacterDto = {
     name: string;
     health?: CharacterHealth;
     hidden: boolean;
-    initiativeValue: number[];
+    initiative: CharacterInitiative;
     armourClass: number | null;
     conditions: Condition[];
 };

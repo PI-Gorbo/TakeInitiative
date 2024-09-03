@@ -19,7 +19,13 @@ public class PostPlannedCombatNpcRequestValidator : Validator<PostPlannedCombatN
 
         RuleFor(x => x.Initiative)
             .NotEmpty()
-            .SetValidator(new CharacterInitiativeValidator(roller));
+            .SetValidator(new UnevaluatedCharacterInitiativeValidator(roller));
+
+        RuleFor(x => x.Health)
+            .NotEmpty()
+            .SetValidator(new UnevaluatedCharacterHealthValidator(roller));
+
+
 
         RuleFor(x => x.Quantity)
             .Must(quantity => quantity >= 1)

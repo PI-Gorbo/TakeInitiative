@@ -1,8 +1,8 @@
 import type { AxiosInstance } from "axios";
 import { z } from "zod";
 import {
-    characterHealthValidator,
-    characterInitiativeValidator,
+    unevaluatedCharacterHealthValidator,
+    unevaluatedCharacterInitiativeValidator,
     plannedCombatValidator,
 } from "../../../../types/models";
 import { validateResponse } from "base/utils/apiErrorParser";
@@ -14,9 +14,9 @@ export const updatePlannedCombatNpcRequestValidator = z
         stageId: z.string(),
         npcId: z.string(),
         name: z.string(),
-        health: characterHealthValidator,
+        health: unevaluatedCharacterHealthValidator,
         armourClass: z.number().nullable(),
-        initiative: characterInitiativeValidator,
+        initiative: unevaluatedCharacterInitiativeValidator,
         quantity: z.number().min(1),
     })
     .required({

@@ -5,14 +5,14 @@ import {
     campaignMemberValidator,
     campaignValidator,
     type CampaignMember,
-    type CharacterHealth,
-    type CharacterInitiative,
+    type UnevaluatedCharacterHealth,
+    type UnevaluatedCharacterInitiative,
 } from "../../types/models";
 
 export type PlayerCharacterDto = {
     name: string;
-    health: CharacterHealth | null;
-    initiative: CharacterInitiative | null;
+    health: UnevaluatedCharacterHealth;
+    initiative: UnevaluatedCharacterInitiative;
     armourClass: number | null;
 };
 export type CreatePlayerCharacterRequest = {

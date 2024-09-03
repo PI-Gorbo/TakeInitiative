@@ -27,14 +27,11 @@
           Id: Guid_3,
           Name: Intro Enemy,
           Health: {
-            HasHealth: false,
-            MaxHealth: 0,
-            CurrentHealth: 0
+            TYPE: Fixed,
+            CurrentHealth: 0,
+            MaxHealth: 0
           },
           Initiative: {
-            Strategy: 1,
-            Value: 1d20 + 1,
-            Fixed: null,
             Roll: 1d20 + 1
           },
           ArmourClass: 12
@@ -51,14 +48,10 @@
           Id: Guid_5,
           Name: 10 goblins in a trench coat,
           Health: {
-            HasHealth: false,
-            MaxHealth: 0,
-            CurrentHealth: 0
+            TYPE: Roll,
+            RollString: 20d20 + 10
           },
           Initiative: {
-            Strategy: 1,
-            Value: 1d20 + 2,
-            Fixed: null,
             Roll: 1d20 + 2
           },
           ArmourClass: 12

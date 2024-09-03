@@ -3,9 +3,8 @@ export default defineNuxtConfig({
     routeRules: {
         "/combat/**": { ssr: false },
     },
-    devtools: {
-        timeline: {
-            enabled: true,
-        },
+    typescript: {
+        strict: true,
+        typeCheck: true,
     },
 });

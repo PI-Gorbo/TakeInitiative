@@ -41,7 +41,7 @@
                         <div
                             v-if="isInitiativeCharacter(charInfo.character)"
                             v-for="(value, index) in charInfo.character
-                                .initiativeValue"
+                                .initiative.value"
                             :class="[
                                 'flex items-center rounded-lg  p-1',
                                 {
@@ -51,7 +51,7 @@
                                 },
                             ]"
                         >
-                            {{ value }}
+                            {{ value.total }}
                         </div>
                     </section>
                     <section class="flex gap-2">
@@ -107,15 +107,21 @@
                         :armourClassDisplayMethod="
                             getArmourClassDisplayMethod(charInfo)
                         "
-                        class="rounded bg-take-purple p-1"
+                        class="flex items-center justify-center gap-1 rounded bg-take-purple p-1"
                     />
 
-                    <section v-if="combatIsOpen">
+                    <section
+                        v-if="
+                            combatIsOpen &&
+                            isStagedCharacter(charInfo.character)
+                        "
+                        class="flex items-center justify-center gap-1 rounded bg-take-purple p-1"
+                    >
                         <FontAwesomeIcon icon="shoe-prints" />
-                        {{ charInfo.character.initiative.value }}
+                        {{ charInfo.character.initiative.roll }}
                     </section>
 
-                    <li
+                    <CharacterConditionDisplay
                         v-if="isInitiativeCharacter(charInfo.character)"
                         v-for="(
                             condition, index
@@ -123,15 +129,8 @@
                             a.name > b.name ? 1 : -1,
                         )"
                         :key="index"
-                        :class="[
-                            `bg-${getConditionBackgroundColour(condition.name)} text-${TakeInitContrastColour[getConditionBackgroundColour(condition.name)]} flex items-center gap-1 rounded p-1`,
-                        ]"
-                    >
-                        <FontAwesomeIcon
-                            :icon="getConditionIcon(condition.name)"
-                        />
-                        {{ condition.name }}
-                    </li>
+                        :conditionName="condition.name"
+                    />
                 </aside>
             </main>
         </li>
@@ -268,7 +267,13 @@ function getArmourClassDisplayMethod(
 function isInitiativeCharacter(
     character: InitiativeCharacter | StagedCharacter,
 ): character is InitiativeCharacter {
-    return (character as InitiativeCharacter).initiativeValue !== undefined;
+    return (character as InitiativeCharacter).initiative.value !== undefined;
+}
+
+function isStagedCharacter(
+    character: InitiativeCharacter | StagedCharacter,
+): character is StagedCharacter {
+    return (character as StagedCharacter).initiative.roll !== undefined;
 }
 </script>
 

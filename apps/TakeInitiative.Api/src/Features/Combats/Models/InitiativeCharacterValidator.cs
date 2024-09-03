@@ -3,10 +3,18 @@ using TakeInitiative.Utilities;
 
 namespace TakeInitiative.Api.Features.Combats;
 
-public class InitiativeCharacterValidator : CharacterValidator<InitiativeCharacter>
+public class InitiativeCharacterValidator : AbstractValidator<InitiativeCharacter>
 {
-    public InitiativeCharacterValidator(IDiceRoller roller) : base(roller)
+    public InitiativeCharacterValidator()
     {
+        RuleFor(x => x.Id).NotEmpty();
+
+        RuleFor(x => x.Name)
+            .NotEmpty();
+
+        RuleFor(x => x.Health)
+            .NotNull();
+
         RuleFor(x => x.PlayerId)
             .NotEmpty();
     }

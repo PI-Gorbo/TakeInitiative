@@ -9,12 +9,14 @@ namespace TakeInitiative.Api.Tests.Integration;
 public class CombatVerifier
 {
     private VerifySettings settings;
+    private int Count = 0;
+    private string fileName;
 
-    public CombatVerifier()
+    public CombatVerifier(string fileName)
     {
-        // DiffTools.UseOrder(true, DiffTool.WinMerge);
         settings = new VerifySettings();
         settings.DontIgnoreEmptyCollections();
+        this.fileName = fileName;
     }
 
     public CombatVerifier RegisterKnownGuid(Guid guid, string name)
@@ -23,9 +25,9 @@ public class CombatVerifier
         return this;
     }
 
-    public Task Verify(Combat combat, string fileName)
+    public Task Verify(Combat combat, string? description)
     {
-        settings.UseFileName(fileName);
+        settings.UseFileName($"{fileName}.{this.Count++:D2}.{description}");
         var serializedValue = JsonSerializer.Serialize(combat);
         serializedValue = serializedValue.Replace("\"!\"", "\"TYPE\"");
         return VerifyJson(serializedValue, settings);

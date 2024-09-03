@@ -2,8 +2,8 @@ namespace TakeInitiative.Api.Features.Combats;
 
 public record StagedCombatCharacterWithoutIdDto(
     string Name,
-    CharacterHealth? Health,
-    CharacterInitiative Initiative,
+    UnevaluatedCharacterHealth Health,
+    UnevaluatedCharacterInitiative Initiative,
     int? ArmourClass,
     bool Hidden
 );

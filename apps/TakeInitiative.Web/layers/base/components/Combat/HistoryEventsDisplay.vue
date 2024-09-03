@@ -1,5 +1,5 @@
 <template>
-    <ul class="flex flex-col gap-2 p-2">
+    <ul class="flex flex-col gap-2 overflow-y-auto p-2">
         <li
             v-for="(entry, index) in enrichedEventStream"
             class="rounded bg-take-purple py-1"
@@ -26,7 +26,7 @@
                     >
                 </div>
                 <div
-                    class="bg-take-cream-medium max-w-fit rounded px-1 align-middle text-black shadow"
+                    class="max-w-fit rounded bg-take-cream-medium px-1 align-middle text-black shadow"
                 >
                     <span class="border-r border-r-take-navy pr-1">{{
                         index + 1
@@ -86,8 +86,16 @@ import InitiativeRolledEvent from "./InitiativeRolledEvent.vue";
 import TurnStartedEvent from "./TurnStartedEventDisplay.vue";
 import TurnEndedEventDisplay from "./TurnEndedEventDisplay.vue";
 import RoundEndedEventDisplay from "./RoundEndedEventDisplay.vue";
-import CharacterRemovedEventDisplay from "./CharacterRemovedEventDisplay.vue";
+
 import CharacterHealthChangedEventDisplay from "./CharacterHealthChangedEventDisplay.vue";
+import CharacterConditionAddedEvent from "./CharacterConditionAddedEvent.vue";
+import CharacterConditionRemovedEvent from "./CharacterConditionRemovedEvent.vue";
+
+export type HistoryEventComponentProps<TEvent extends HistoryEvent> = {
+    roundNumber: number;
+    event: TEvent;
+    nameMap: typeof characterNameMapping.value;
+};
 
 const campaignStore = useCampaignStore();
 
@@ -187,8 +195,9 @@ const eventBodyComponentMap: Record<
     TurnStarted: TurnStartedEvent,
     TurnEnded: TurnEndedEventDisplay,
     RoundEnded: RoundEndedEventDisplay,
-    PlayerCharacterJoined: "PlayerCharacterJoined",
-    PlannedCharactersAdded: "PlannedCharactersAdded",
-    CharacterRemoved: CharacterRemovedEventDisplay,
+    CharacterRemoved: CharacterConditionRemovedEvent,
+    CombatInitiativeModified: InitiativeRolledEvent,
+    CharacterConditionAdded: CharacterConditionAddedEvent,
+    CharacterConditionRemoved: CharacterConditionRemovedEvent,
 };
 </script>

@@ -11,7 +11,7 @@ public record RollCombatInitiativeCommand : ICommand<Result<Combat>>
     public required Guid UserId { get; set; }
 }
 
-public class RollCombatInitiativeCommandHandler(IDocumentStore Store, IInitiativeRoller roller) : CommandHandler<RollCombatInitiativeCommand, Result<Combat>>
+public class RollCombatInitiativeCommandHandler(IDocumentStore Store, IInitiativeRoller initiativeRoller, IHealthRoller healthRoller) : CommandHandler<RollCombatInitiativeCommand, Result<Combat>>
 {
 
     public override async Task<Result<Combat>> ExecuteAsync(RollCombatInitiativeCommand command, CancellationToken ct = default)
@@ -42,17 +42,28 @@ public class RollCombatInitiativeCommandHandler(IDocumentStore Store, IInitiativ
                     ThrowError("Must be the dungeon master in order to start the combat.");
                 }
 
-                var computedInitiativeRolls = roller.ComputeRolls(combat.StagedList);
+                var computedInitiativeRolls = initiativeRoller.ComputeRolls(combat.StagedList);
                 if (computedInitiativeRolls.IsFailure)
                 {
                     ThrowError($"There was an error while trying to compute the dice rolls. {computedInitiativeRolls.Error}");
+                }
+
+                // Compute health rolls.
+                var computedHealthRolls = healthRoller.ComputeRolls(combat.StagedList.ToList());
+                if (computedHealthRolls.IsFailure)
+                {
+                    ThrowError($"There was an error while trying to compute health. {computedHealthRolls.Error}");
                 }
 
                 // Publish the event
                 CombatInitiativeRolledEvent activateEvent = new()
                 {
                     UserId = command.UserId,
-                    InitiativeRolls = computedInitiativeRolls.Value,
+                    EvaluatedRolls = computedHealthRolls.Value
+                        .ToDictionary(x => x.Key, x => new EvaluatedCharacterRolls(
+                            x.Value,
+                            computedInitiativeRolls.Value.Single(init => init.Key == x.Key).Value
+                        )),
                 };
                 session.Events.Append(command.CombatId, activateEvent);
                 await session.SaveChangesAsync();

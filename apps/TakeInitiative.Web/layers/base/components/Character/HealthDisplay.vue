@@ -1,8 +1,5 @@
 <template>
-    <div
-        v-if="props.health?.hasHealth && shouldDisplay"
-        class="flex select-none items-center gap-2"
-    >
+    <div v-if="shouldDisplay" class="flex select-none items-center gap-2">
         <FontAwesomeIcon icon="droplet" />
         {{ textToDisplay }}
     </div>
@@ -11,13 +8,14 @@
 import {
     HealthDisplayOptionsEnum,
     HealthDisplayOptionValueKeyMap,
-    type CharacterHealth,
+    type UnevaluatedCharacterHealth,
     type HealthDisplayOptionValues,
+    type CharacterHealth,
 } from "base/utils/types/models";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 const props = withDefaults(
     defineProps<{
-        health: CharacterHealth | null | undefined;
+        health: UnevaluatedCharacterHealth | CharacterHealth;
         displayMethod?: HealthDisplayOptionValues;
     }>(),
     {
@@ -25,23 +23,36 @@ const props = withDefaults(
     },
 );
 const shouldDisplay = computed(
-    () => props.displayMethod != HealthDisplayOptionsEnum["Hidden"],
+    () =>
+        props.health["!"] != "None" &&
+        props.displayMethod != HealthDisplayOptionsEnum["Hidden"],
 );
 const textToDisplay = computed(() => {
-    if (props.displayMethod == HealthDisplayOptionsEnum["RealValue"]) {
-        return `${props.health?.currentHealth} / ${props.health?.maxHealth}`;
-    } else if (
-        props.displayMethod == HealthDisplayOptionsEnum["HealthyBloodied"]
-    ) {
-        const percentage =
-            ((props.health?.currentHealth ?? 0) * 1.0) /
-            ((props.health?.maxHealth ?? 1) * 1.0);
-        if (percentage > 0.5) {
-            return "Healthy";
-        } else if (percentage <= 0.5 && percentage > 0.0) {
-            return "Bloodied";
-        } else {
-            return "Dead";
+    if (props.health["!"] == "Roll") {
+        switch (props.displayMethod) {
+            case HealthDisplayOptionsEnum["RealValue"]:
+                return props.health.rollString;
+            default:
+                return null;
+        }
+    }
+
+    if (props.health["!"] == "Fixed") {
+        if (props.displayMethod == HealthDisplayOptionsEnum["RealValue"]) {
+            return `${props.health?.currentHealth} / ${props.health?.maxHealth}`;
+        } else if (
+            props.displayMethod == HealthDisplayOptionsEnum["HealthyBloodied"]
+        ) {
+            const percentage =
+                ((props.health?.currentHealth ?? 0) * 1.0) /
+                ((props.health?.maxHealth ?? 1) * 1.0);
+            if (percentage > 0.5) {
+                return "Healthy";
+            } else if (percentage <= 0.5 && percentage > 0.0) {
+                return "Bloodied";
+            } else {
+                return "Dead";
+            }
         }
     }
 });

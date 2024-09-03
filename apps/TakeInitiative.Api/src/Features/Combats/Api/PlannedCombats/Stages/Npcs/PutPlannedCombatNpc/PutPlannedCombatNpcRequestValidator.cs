@@ -19,7 +19,7 @@ public class PutPlannedCombatNpcRequestValidator : Validator<PutPlannedCombatNpc
 
         RuleFor(x => x.Initiative)
             .NotEmpty()
-            .SetValidator(new CharacterInitiativeValidator(roller));
+            .SetValidator(new UnevaluatedCharacterInitiativeValidator(roller));
 
         RuleFor(x => x.Quantity)
             .Must(quantity => quantity >= 1)

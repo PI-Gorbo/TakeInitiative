@@ -20,7 +20,7 @@
                     label="Add NPC"
                     buttonColour="take-purple-light"
                     textColour="white"
-                    @click="showCreatePlannedCharacterModal"
+                    @clicked="showCreatePlannedCharacterModal"
                 />
                 <FormButton
                     icon="trash"
@@ -112,6 +112,7 @@ const npcList = computed(() =>
 );
 
 const showCreatePlannedCharacterModal = () => {
+    console.log("show planned character modal");
     createPlannedCharacterFormModal.value?.show();
 };
 </script>

@@ -28,14 +28,19 @@
       Timestamp: DateTimeOffset_3,
       Events: [
         {
-          TYPE: CharactersAddedToInitiative,
+          TYPE: CombatInitiativeModified,
           NewInitiativeList: [
             {
               CharacterId: Guid_2,
               CharacterName: Another Enemy!,
               Roll: [
-                10
-              ]
+                {
+                  Total: 10,
+                  Roll: 10,
+                  Evaluation: 10
+                }
+              ],
+              RolledHealth: null
             }
           ]
         },
@@ -62,6 +67,24 @@
   StagedList: [],
   InitiativeList: [
     {
+      Id: Guid_2,
+      Name: Another Enemy!,
+      Health: {
+        TYPE: Fixed,
+        CurrentHealth: 10,
+        MaxHealth: 20,
+        DiceRoll: null
+      },
+      Initiative: {
+        Value: [
+          {
+            Total: 10,
+            Roll: 10,
+            Evaluation: 10
+          }
+        ]
+      },
+      ArmourClass: null,
       PlayerId: DmId,
       CharacterOriginDetails: {
         CharacterOrigin: 0,
@@ -69,24 +92,7 @@
       },
       Hidden: false,
       CopyNumber: null,
-      InitiativeValue: [
-        10
-      ],
-      Conditions: [],
-      Id: Guid_2,
-      Name: Another Enemy!,
-      Health: {
-        HasHealth: true,
-        MaxHealth: 20,
-        CurrentHealth: 10
-      },
-      Initiative: {
-        Strategy: 1,
-        Value: 10,
-        Fixed: null,
-        Roll: 10
-      },
-      ArmourClass: null
+      Conditions: []
     }
   ],
   InitiativeIndex: 0,

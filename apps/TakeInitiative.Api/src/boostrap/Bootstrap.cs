@@ -149,7 +149,7 @@ public static class Bootstrap
         return builder;
     }
 
-    public static IServiceCollection AddPython(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddDiceRollers(this IServiceCollection services, IConfiguration configuration)
     {
         // Add dice roller.
         services.AddTransient<IDiceRoller, DiceRoller>((_) =>
@@ -178,6 +178,7 @@ public static class Bootstrap
             return new DiceRoller();
         });
         services.AddTransient<IInitiativeRoller, InitiativeRoller>();
+        services.AddTransient<IHealthRoller, HealthRoller>();
         return services;
     }
 

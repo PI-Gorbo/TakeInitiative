@@ -15,6 +15,6 @@ public class StagedCombatCharacterWithoutIdDtoValidator : AbstractValidator<Stag
 
         RuleFor(x => x.Initiative)
             .NotEmpty()
-            .SetValidator(new CharacterInitiativeValidator(diceRoller));
+            .SetValidator(new UnevaluatedCharacterInitiativeValidator(diceRoller));
     }
 }

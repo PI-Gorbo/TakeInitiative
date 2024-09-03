@@ -22,15 +22,15 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
         List<HistoryEvent> historyEvents = [];
 
         // Check if the character's health has changed.
-        var hasHealth = (character.Health?.HasHealth ?? false) && (@event.Character.Health?.HasHealth ?? false);
-        var currentHealthChanged = character.Health?.CurrentHealth != @event.Character.Health?.CurrentHealth;
-        if (hasHealth && currentHealthChanged)
+        if (character.Health is CharacterHealth.Fixed previousValue
+            && @event.Character.Health is CharacterHealth.Fixed newHealthValue
+            && previousValue.CurrentHealth != newHealthValue.CurrentHealth)
         {
             historyEvents.Add(new CharacterHealthChanged
             {
                 CharacterId = character.Id,
-                From = character.Health?.CurrentHealth ?? -1,
-                To = @event.Character.Health?.CurrentHealth ?? -1
+                From = previousValue.CurrentHealth,
+                To = newHealthValue.CurrentHealth,
             });
         }
 
@@ -74,7 +74,7 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
             InitiativeList = Combat.InitiativeList.SetItem(index, character with
             {
                 Name = @event.Character.Name,
-                InitiativeValue = @event.Character.InitiativeValue,
+                Initiative = @event.Character.Initiative,
                 Health = @event.Character.Health,
                 Hidden = @event.Character.Hidden,
                 ArmourClass = @event.Character.ArmourClass,
