@@ -27,12 +27,15 @@
 
         <CharacterUnevaluatedInitiativeInput
             ref="characterInitiativeInput"
-            :initiative="initiative"
+            :initiative="initiative as UnevaluatedCharacterInitiative"
             :errorMessage="initiativeInputProps.errorMessage"
         />
 
         <CharacterHealthInput
-            :health="{ value: health, isUnevaluated: true }"
+            :health="{
+                value: health as UnevaluatedCharacterHealth,
+                isUnevaluated: true,
+            }"
             ref="characterHealthInput"
         />
 
@@ -75,6 +78,10 @@ import {
     unevaluatedCharacterInitiativeValidator,
     unevaluatedCharacterHealthValidator,
     type StagedCharacter,
+    type CharacterInitiative,
+    type CharacterHealth,
+    type UnevaluatedCharacterHealth,
+    type UnevaluatedCharacterInitiative,
 } from "base/utils/types/models";
 import type { StagedCharacterDTO } from "base/utils/api/combat/putUpsertStagedCharacter";
 import type { SubmittingState } from "../Form/Base.vue";

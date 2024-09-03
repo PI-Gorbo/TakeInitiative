@@ -18,10 +18,10 @@ export type SubmittingState = {
     submitterName: string;
 };
 
-async function submit(event: SubmitEvent) {
+async function submit(event: Event) {
     event.stopPropagation();
 
-    const submitter = event.submitter as HTMLButtonElement;
+    const submitter = (event as SubmitEvent).submitter as HTMLButtonElement;
     state.submitting = {
         submitterId: submitter.id,
         submitterName: submitter.name,

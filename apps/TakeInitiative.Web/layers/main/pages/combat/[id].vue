@@ -137,9 +137,9 @@
             />
             <CombatModifyStagedCharacterForm
                 v-if="modalState.modalType == 'Edit Staged Character'"
+                :character="lastClickedStagedCharacter!"
                 :onEdit="(req) => onUpsertStagedCharacter(req).then(closeModal)"
                 :onDelete="onDeleteStagedCharacter"
-                :character="lastClickedStagedCharacter!"
             />
             <CombatAddStagedCharacterTabs
                 v-if="modalState.modalType == 'Combat Opened Stage Characters'"
@@ -171,7 +171,10 @@ import Modal from "base/components/Modal.vue";
 import type { DeleteStagedCharacterRequest } from "base/utils/api/combat/deleteStagedCharacterRequest";
 import type { PostStagePlannedCharactersRequest } from "base/utils/api/combat/postStagePlannedCharactersRequest";
 import type { StagedCharacterDTO } from "base/utils/api/combat/putUpsertStagedCharacter";
-import { type InitiativeCharacter } from "base/utils/types/models";
+import {
+    type InitiativeCharacter,
+    type StagedCharacter,
+} from "base/utils/types/models";
 
 const campaignStore = useCampaignStore();
 const userStore = useUserStore();
@@ -269,9 +272,7 @@ function showModal(modalType: CombatPageModalType) {
             break;
     }
 }
-const lastClickedStagedCharacter = ref<InitiativeCharacter | undefined>(
-    undefined,
-);
+const lastClickedStagedCharacter = ref<StagedCharacter | undefined>(undefined);
 const lastClickedInitiativeCharacter = ref<InitiativeCharacter | undefined>(
     undefined,
 );
@@ -283,12 +284,12 @@ async function closeModal() {
     lastClickedInitiativeCharacter.value = undefined;
 }
 
-function onClickCharacter(character: InitiativeCharacter) {
+function onClickCharacter(character: StagedCharacter | InitiativeCharacter) {
     if (combatHasStarted.value) {
-        lastClickedStagedCharacter.value = character;
+        lastClickedStagedCharacter.value = character as StagedCharacter;
         showModal("Edit Staged Character");
     } else if (combatInInitiative.value) {
-        lastClickedInitiativeCharacter.value = character;
+        lastClickedInitiativeCharacter.value = character as InitiativeCharacter;
         showModal("Edit Initiative Character");
     }
 }

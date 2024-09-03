@@ -22,12 +22,15 @@
 
         <CharacterUnevaluatedInitiativeInput
             ref="characterInitiativeInput"
-            :initiative="initiative"
+            :initiative="initiative as UnevaluatedCharacterInitiative"
             :errorMessage="initiativeProps.errorMessage"
         />
 
         <CharacterHealthInput
-            :health="{ value: health, isUnevaluated: true }"
+            :health="{
+                value: health as UnevaluatedCharacterHealth,
+                isUnevaluated: true,
+            }"
             ref="characterHealthInput"
         />
 
@@ -70,6 +73,8 @@ import {
     type PlannedCombatCharacter,
     unevaluatedCharacterInitiativeValidator,
     unevaluatedCharacterHealthValidator,
+    type UnevaluatedCharacterInitiative,
+    type UnevaluatedCharacterHealth,
 } from "base/utils/types/models";
 import type { CreatePlannedCombatNpcRequest } from "base/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
 import type { UpdatePlannedCombatNpcRequest } from "base/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";

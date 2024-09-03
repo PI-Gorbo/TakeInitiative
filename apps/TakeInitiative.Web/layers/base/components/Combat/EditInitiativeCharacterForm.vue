@@ -26,7 +26,10 @@
 
             <CharacterHealthInput
                 ref="characterHealthInput"
-                :health="{ value: health, isUnevaluated: false }"
+                :health="{
+                    value: health as CharacterHealth,
+                    isUnevaluated: false,
+                }"
             />
 
             <CharacterArmourClassInput v-model:value="armourClass" />
