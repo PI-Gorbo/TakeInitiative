@@ -105,9 +105,7 @@ const { values, errors, defineField, validate } = useForm({
         name: props.npc?.name ?? "",
         armourClass: props.npc?.armourClass ?? null,
         health: props.npc?.health ?? {
-            "!": "Fixed",
-            currentHealth: undefined,
-            maxHealth: undefined,
+            "!": "None",
         },
     },
 });
