@@ -74,6 +74,16 @@ export const campaignValidator = z
     });
 export type Campaign = z.infer<typeof campaignValidator>;
 
+// Dice Roll
+export const diceRollValidator = z
+    .object({
+        total: z.number().int(),
+        roll: z.string(),
+        evaluation: z.string(),
+    })
+    .required();
+export type DiceRoll = z.infer<typeof diceRollValidator>;
+
 // Unevaluated Character Initiative
 export const unevaluatedCharacterInitiativeValidator = z
     .object({
@@ -88,7 +98,7 @@ export type UnevaluatedCharacterInitiative = z.infer<
 
 // Character Initiative
 export const characterInitiativeValidator = z.object({
-    value: z.array(z.number().int()),
+    value: z.array(diceRollValidator),
 });
 export type CharacterInitiative = z.infer<typeof characterInitiativeValidator>;
 
@@ -124,6 +134,7 @@ export const characterHealthValidator = z.discriminatedUnion("!", [
         "!": z.literal("Fixed"),
         currentHealth: z.number().int(),
         maxHealth: z.number().int(),
+        diceRoll: diceRollValidator.nullable(),
     }),
 ]);
 export type CharacterHealth = z.infer<typeof characterHealthValidator>;
@@ -279,9 +290,9 @@ export type StagedCharacter = z.infer<typeof stagedCharacterValidator>;
 export const InitiativeRollDto = z
     .object({
         characterId: z.string().uuid(),
-        roll: z.array(z.number().int()),
+        roll: z.array(diceRollValidator),
         characterName: z.string(),
-        rolledHealth: z.number().int().nullable(),
+        rolledHealth: diceRollValidator.nullable(),
     })
     .required();
 
@@ -334,7 +345,7 @@ export const CombatInitiativeModifiedHistoryEvent = z.object({
         z
             .object({
                 characterId: z.string().uuid(),
-                roll: z.array(z.number().int()),
+                roll: z.array(diceRollValidator),
                 characterName: z.string(),
             })
             .required(),
@@ -360,6 +371,9 @@ export const CharacterConditionRemovedHistoryEvent = z.object({
     characterId: z.string().uuid(),
     name: z.string(),
 });
+export type CharacterConditionRemovedHistoryEvent = z.infer<
+    typeof CharacterConditionRemovedHistoryEvent
+>;
 
 export const historyEventValidator = z.discriminatedUnion("!", [
     CombatStartedHistoryEvent,

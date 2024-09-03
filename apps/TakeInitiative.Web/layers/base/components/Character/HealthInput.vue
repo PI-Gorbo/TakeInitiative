@@ -279,6 +279,15 @@ function getHealth(): CharacterHealth | UnevaluatedCharacterHealth | false {
         return false;
     }
 
+    if (!props.health.isUnevaluated && props.health.value["!"] == "Fixed") {
+        return {
+            "!": "Fixed",
+            currentHealth: paredModel.data.currentHealth!,
+            maxHealth: paredModel.data.maxHealth!,
+            diceRoll: props.health.value.diceRoll,
+        } satisfies CharacterHealth;
+    }
+
     return {
         "!": "Fixed",
         currentHealth: paredModel.data.currentHealth!,

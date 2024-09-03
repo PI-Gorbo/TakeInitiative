@@ -11,7 +11,7 @@
                     <div
                         v-for="(value, index) in character.roll"
                         :class="[
-                            'flex w-min items-center rounded-lg  p-1',
+                            'flex items-center rounded-lg  p-1',
                             {
                                 'text-xs': index != 0,
                                 'bg-take-navy-light': index == 0,
@@ -19,7 +19,7 @@
                             },
                         ]"
                     >
-                        {{ value }}
+                        {{ value.evaluation.replaceAll("`", "'") }}
                     </div>
                 </div>
             </li>

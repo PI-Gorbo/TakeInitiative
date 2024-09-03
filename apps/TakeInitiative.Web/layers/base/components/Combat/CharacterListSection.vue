@@ -51,7 +51,7 @@
                                 },
                             ]"
                         >
-                            {{ value }}
+                            {{ value.total }}
                         </div>
                     </section>
                     <section class="flex gap-2">
@@ -131,23 +131,6 @@
                         :key="index"
                         :conditionName="condition.name"
                     />
-                    <li
-                        v-if="isInitiativeCharacter(charInfo.character)"
-                        v-for="(
-                            condition, index
-                        ) in charInfo.character.conditions.toSorted((a, b) =>
-                            a.name > b.name ? 1 : -1,
-                        )"
-                        :key="index"
-                        :class="[
-                            `bg-${getConditionBackgroundColour(condition.name)} text-${TakeInitContrastColour[getConditionBackgroundColour(condition.name)]} flex items-center gap-1 rounded p-1`,
-                        ]"
-                    >
-                        <FontAwesomeIcon
-                            :icon="getConditionIcon(condition.name)"
-                        />
-                        {{ condition.name }}
-                    </li>
                 </aside>
             </main>
         </li>

@@ -70,9 +70,6 @@
                                 :nameMap="characterNameMapping"
                             />
                         </div>
-                        <div v-else>
-                            No display settings for {{ event["!"] }}
-                        </div>
                     </li>
                 </ul>
             </main>
@@ -89,8 +86,16 @@ import InitiativeRolledEvent from "./InitiativeRolledEvent.vue";
 import TurnStartedEvent from "./TurnStartedEventDisplay.vue";
 import TurnEndedEventDisplay from "./TurnEndedEventDisplay.vue";
 import RoundEndedEventDisplay from "./RoundEndedEventDisplay.vue";
-import CharacterRemovedEventDisplay from "./CharacterRemovedEventDisplay.vue";
+
 import CharacterHealthChangedEventDisplay from "./CharacterHealthChangedEventDisplay.vue";
+import CharacterConditionAddedEvent from "./CharacterConditionAddedEvent.vue";
+import CharacterConditionRemovedEvent from "./CharacterConditionRemovedEvent.vue";
+
+export type HistoryEventComponentProps<TEvent extends HistoryEvent> = {
+    roundNumber: number;
+    event: TEvent;
+    nameMap: typeof characterNameMapping.value;
+};
 
 const campaignStore = useCampaignStore();
 
@@ -190,9 +195,9 @@ const eventBodyComponentMap: Record<
     TurnStarted: TurnStartedEvent,
     TurnEnded: TurnEndedEventDisplay,
     RoundEnded: RoundEndedEventDisplay,
-    CharacterRemoved: CharacterRemovedEventDisplay,
-    CombatInitiativeModified: "CombatInitiativeModified",
-    CharacterConditionAdded: "CharacterConditionAdded",
-    CharacterConditionRemoved: "CharacterConditionRemoved",
+    CharacterRemoved: CharacterConditionRemovedEvent,
+    CombatInitiativeModified: InitiativeRolledEvent,
+    CharacterConditionAdded: CharacterConditionAddedEvent,
+    CharacterConditionRemoved: CharacterConditionRemovedEvent,
 };
 </script>

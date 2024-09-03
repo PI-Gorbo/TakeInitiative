@@ -267,7 +267,11 @@ import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import Modal from "base/components/Modal.vue";
 import ConfirmModal from "base/components/ConfirmModal.vue";
 import type { CreatePlannedCombatRequest } from "base/utils/api/plannedCombat/createPlannedCombatRequest";
-import { getCombatsRequest } from "base/utils/api/combat/getCombatsRequest";
+import {
+    getCombatsRequest,
+    type GetCombatsResponse,
+} from "base/utils/api/combat/getCombatsRequest";
+import type { CombatDto } from "base/utils/api/campaign/getCampaignRequest";
 
 // Page info
 definePageMeta({
@@ -364,36 +368,43 @@ function selectCombatIfNoneSelected() {
         campaignCombatsStore.state.combats
     ) {
         campaignCombatsStore.selectCombat(
-            campaignCombatsStore.state.combats[0].combatId,
+            campaignCombatsStore.state.combats
+                .sort(sortByFinishedTimestamp)
+                .reverse()[0].combatId,
         );
     }
 }
 
+function sortByFinishedTimestamp(
+    a: GetCombatsResponse["combats"][number],
+    b: GetCombatsResponse["combats"][number],
+) {
+    if (a.finishedTimestamp == null && b.finishedTimestamp != null) {
+        return -1;
+    }
+
+    if (a.finishedTimestamp != null && b.finishedTimestamp == null) {
+        return 1;
+    }
+
+    if (a.finishedTimestamp == b.finishedTimestamp) {
+        return 0;
+    }
+
+    if (a.finishedTimestamp! < b.finishedTimestamp!) {
+        return -1;
+    }
+
+    if (a.finishedTimestamp! > b.finishedTimestamp!) {
+        return 1;
+    }
+
+    return 0;
+}
+
 const orderedFinishedCombats = computed(() =>
     (campaignCombatsStore.state?.combats ?? [])
-        .sort((a, b) => {
-            if (a.finishedTimestamp == null && b.finishedTimestamp != null) {
-                return -1;
-            }
-
-            if (a.finishedTimestamp != null && b.finishedTimestamp == null) {
-                return 1;
-            }
-
-            if (a.finishedTimestamp == b.finishedTimestamp) {
-                return 0;
-            }
-
-            if (a.finishedTimestamp! < b.finishedTimestamp!) {
-                return -1;
-            }
-
-            if (a.finishedTimestamp! > b.finishedTimestamp!) {
-                return 1;
-            }
-
-            return 0;
-        })
+        .sort(sortByFinishedTimestamp)
         .reverse(),
 );
 </script>

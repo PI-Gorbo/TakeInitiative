@@ -9,6 +9,7 @@
     </li>
 </template>
 <script lang="ts" setup>
+import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { TakeInitContrastColour } from "base/utils/types/HelperTypes";
 const props = defineProps<{
     conditionName: string;

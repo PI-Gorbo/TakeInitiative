@@ -117,7 +117,7 @@ const { values, errors, defineField, validate } = useForm({
     ),
     initialValues: {
         initiative: props.npc?.initiative,
-        quantity: props.npc?.quantity,
+        quantity: props.npc?.quantity ?? 1,
         name: props.npc?.name,
         armourClass: props.npc?.armourClass ?? null,
         health: props.npc?.health,

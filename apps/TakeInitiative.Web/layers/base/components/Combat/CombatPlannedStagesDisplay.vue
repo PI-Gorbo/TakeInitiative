@@ -51,27 +51,14 @@
                                         {{ npc.name }} ( x {{ npc.quantity }} )
                                     </div>
 
-                                    <div
-                                        v-if="npc.health"
-                                        class="flex select-none items-center gap-2"
-                                    >
-                                        <FontAwesomeIcon icon="droplet" />
-                                        {{ npc.health.currentHealth }}
-                                        {{
-                                            npc.health.maxHealth
-                                                ? `/ ${npc.health.maxHealth}`
-                                                : ""
-                                        }}
-                                    </div>
-                                    <div
-                                        v-if="npc.armourClass"
-                                        class="flex select-none items-center gap-2"
-                                    >
-                                        <FontAwesomeIcon icon="shield-halved" />
-                                        <div class="ws-nowrap min-w-fit">
-                                            {{ npc.armourClass }}
-                                        </div>
-                                    </div>
+                                    <CharacterHealthDisplay
+                                        :health="npc.health"
+                                    />
+
+                                    <CharacterArmourClassDisplay
+                                        :armourClass="npc.armourClass"
+                                    />
+
                                     <div
                                         class="flex select-none items-center gap-2"
                                     >
@@ -107,12 +94,21 @@
 </template>
 
 <script setup lang="ts">
-import type { PlannedCombatStage } from "base/utils/types/models";
+import {
+    HealthDisplayOptionsEnum,
+    type HealthDisplayOptionValues,
+    type PlannedCombatCharacter,
+    type PlannedCombatStage,
+} from "base/utils/types/models";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import type {
     PostStagePlannedCharactersRequest,
     StagePlannedCharacterDto,
 } from "base/utils/api/combat/postStagePlannedCharactersRequest";
+
+const combatStore = useCombatStore();
+const campaignStore = useCampaignStore();
+const { userIsDm } = storeToRefs(combatStore);
 
 const props = defineProps<{
     stages: PlannedCombatStage[];
