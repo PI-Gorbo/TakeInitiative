@@ -59,7 +59,7 @@ export const useCampaignStore = defineStore("campaignStore", () => {
     // State
     const state = reactive<Partial<GetCampaignResponse>>({
         campaign: undefined,
-        combatHistory: undefined,
+        combatHistoryInfo: undefined,
         currentCombatInfo: undefined,
         joinCode: undefined,
         nonUserCampaignMembers: undefined,
