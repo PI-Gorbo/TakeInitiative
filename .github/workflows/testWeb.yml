@@ -24,7 +24,8 @@ jobs:
               uses: actions/setup-node@v4
               with:
                   node-version: 18
-            - name: Restore dependencies
-              run: npm ci
             - name: Run Typecheck
-              run: npx nuxi typecheck
+              run: |
+                  cd ./apps/TakeInitiative.Web
+                  npm ci
+                  npx nuxi typecheck
