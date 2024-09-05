@@ -51,4 +51,8 @@ export default defineNuxtConfig({
     alias: {
         base: executionDirectory,
     },
+    typescript: {
+        strict: true,
+        typeCheck: true,
+    },
 });

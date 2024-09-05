@@ -16,7 +16,7 @@
                     <section class="navbar-start flex gap-2">
                         <label
                             class="flex cursor-pointer items-center gap-2"
-                            @click="() => useNavigator().toHomePage()"
+                            @click="toHomePage"
                         >
                             <img
                                 class="h-[3em] w-[3em]"
@@ -110,15 +110,7 @@
                         label="Return Home"
                         buttonColour="take-purple-light"
                         hoverButtonColour="take-yellow"
-                        @clicked="
-                            () => {
-                                useNavigator().toCampaignTab(
-                                    combatInfo?.campaignId!,
-                                    'summary',
-                                );
-                                toggleDrawer();
-                            }
-                        "
+                        @clicked="() => toCampaign(combatInfo?.campaignId!)"
                     />
                 </li>
                 <li class="flex-1 bg-take-purple-dark"></li>
@@ -129,7 +121,7 @@
                     <FormButton
                         label="Confirm Email"
                         icon="envelope"
-                        :click="async () => await useNavigator().confirmEmail()"
+                        :click="confirmEmail"
                         buttonColour="take-purple-light"
                         hoverButtonColour="take-navy-medium"
                         size="sm"
@@ -284,4 +276,11 @@ async function joinCampaign(req: JoinCampaignRequest) {
         })
         .then(createOrJoinCampaignModal.value?.hide);
 }
+
+const toHomePage = async () => await useNavigator().toHomePage();
+const toCampaign = async (id: string) => {
+    await useNavigator().toCampaignTab(id, "summary");
+    toggleDrawer();
+};
+const confirmEmail = async () => await useNavigator().confirmEmail();
 </script>

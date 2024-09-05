@@ -6,6 +6,10 @@ export const useNavigator = () => {
             id: string,
             tab: "summary" | "character" | "combats" | "settings",
         ) => navigateTo(`/campaign/${id}/${tab}`),
+        toCombatHistory: (campaignId: string, combatId: string) =>
+            navigateTo(
+                `/campaign/${campaignId}/summary/combatHistory/${combatId}`,
+            ),
         toCreateOrJoinCampaign: () => navigateTo("/createOrJoinCampaign"),
         confirmEmail: () => navigateTo("/confirm"),
         toLogin: () => navigateTo("/login"),
