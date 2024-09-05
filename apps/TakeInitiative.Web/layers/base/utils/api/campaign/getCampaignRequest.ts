@@ -52,10 +52,15 @@ const getCampaignResponseSchema = z
         nonUserCampaignMembers: z.array(campaignMemberDtoValidator),
         joinCode: z.string(),
         currentCombatInfo: combatDtoValidator.nullable(),
-        combatHistoryInfo: z.object({
-            lastCombatTimestamp: z.string().nullable(),
-            totalCombats: z.number(),
-        }),
+        combatHistory: z.array(
+            z
+                .object({
+                    combatId: z.string().uuid(),
+                    combatName: z.string(),
+                    finishedOn: z.string(),
+                })
+                .required(),
+        ),
     })
     .required();
 export type GetCampaignResponse = z.infer<typeof getCampaignResponseSchema>;

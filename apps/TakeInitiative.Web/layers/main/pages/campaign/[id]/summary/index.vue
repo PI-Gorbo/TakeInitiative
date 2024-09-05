@@ -63,10 +63,64 @@
             </div>
         </section>
 
-        <div class="w-full flex-1 rounded-md bg-take-purple-dark p-2">
+        <section class="w-full flex-1 rounded-md bg-take-purple-dark p-2">
             <label class="font-NovaCut text-lg">Resources</label>
             <IndexResourcesSection />
-        </div>
+        </section>
+
+        <section class="w-full flex-1 rounded-md bg-take-purple-dark p-2">
+            <label class="font-NovaCut text-lg">Combat History</label>
+            <ul class="flex flex-col gap-2 overflow-y-auto">
+                <li
+                    v-for="finishedCombat in campaignStore.state.combatHistory"
+                    :key="finishedCombat.combatName"
+                    :class="[
+                        'flex items-center justify-between  rounded-md border border-take-purple bg-take-purple p-1 transition-colors',
+                    ]"
+                >
+                    <span class="flex flex-col flex-wrap">
+                        <span>{{ finishedCombat.combatName }}</span>
+                        <span class="truncate text-wrap text-xs text-take-grey"
+                            >Finished on
+                            {{
+                                new Date(
+                                    finishedCombat.finishedOn,
+                                ).toLocaleDateString()
+                            }}
+                            at
+                            {{
+                                new Date(
+                                    finishedCombat.finishedOn,
+                                ).toLocaleTimeString(undefined, {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                })
+                            }}</span
+                        >
+                    </span>
+                    <div class="flex justify-end">
+                        <FormButton
+                            icon="eye"
+                            label="View"
+                            buttonColour="take-purple-light"
+                            @clicked="
+                                () =>
+                                    navigator.toCombatHistory(
+                                        campaignStore.state.campaign?.id!,
+                                        finishedCombat.combatId,
+                                    )
+                            "
+                        />
+                    </div>
+                </li>
+                <li
+                    v-if="campaignStore.state.combatHistory?.length == 0"
+                    class="px-2 text-sm"
+                >
+                    Complete your first combat to see a history here!
+                </li>
+            </ul>
+        </section>
     </main>
 </template>
 <script setup lang="ts">
@@ -81,7 +135,7 @@ definePageMeta({
     requiresAuth: true,
     layout: "campaign-tabs",
 });
-
+const navigator = useNavigator();
 const campaignStore = useCampaignStore();
 const campaign = computed(() => campaignStore.state.campaign);
 const formState = reactive({

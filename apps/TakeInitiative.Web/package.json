@@ -13,7 +13,8 @@
         "preview": "nuxt preview",
         "postinstall": "npm run postinstall:main && npm run postinstall:admin",
         "postinstall:main": "nuxt prepare ./layers/main",
-        "postinstall:admin": "nuxt prepare ./layers/admin"
+        "postinstall:admin": "nuxt prepare ./layers/admin",
+        "typecheck": "npx nuxi typecheck"
     },
     "dependencies": {
         "@fortawesome/free-brands-svg-icons": "^6.6.0",

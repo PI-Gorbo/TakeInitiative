@@ -76,16 +76,17 @@ public class GetCampaign(IDocumentStore Store) : Endpoint<GetCampaignRequest, Ge
                         })
                         .SingleOrDefaultAsync();
 
-                int totalCombats = await session.Query<Combat>()
-                    .Where(x => x.CampaignId == campaign.Id)
-                    .CountAsync();
-                DateTimeOffset? lastCombatTimestamp = totalCombats != 0
-                    ? await session.Query<Combat>()
-                        .Where(x => x.CampaignId == campaign.Id && x.FinishedTimestamp != null)
+                // Combat History
+                var combatHistoryData = await session.Query<Combat>()
+                        .Where(x => x.CampaignId == campaign.Id && x.FinishedTimestamp.HasValue)
                         .OrderByDescending(x => x.FinishedTimestamp)
-                        .Select(x => x.FinishedTimestamp)
-                        .FirstOrDefaultAsync()
-                    : null;
+                        .Select(x => new CombatHistoryDto()
+                        {
+                            CombatId = x.Id,
+                            CombatName = x.CombatName!,
+                            FinishedOn = x.FinishedTimestamp!.Value
+                        })
+                        .ToListAsync();
 
                 return new GetCampaignResponse()
                 {
@@ -101,11 +102,7 @@ public class GetCampaign(IDocumentStore Store) : Endpoint<GetCampaignRequest, Ge
                         Id = dto.Id,
                         State = dto.State
                     },
-                    CombatHistoryInfo = new CombatHistoryDto()
-                    {
-                        TotalCombats = totalCombats,
-                        LastCombatTimestamp = lastCombatTimestamp
-                    }
+                    CombatHistory = [.. combatHistoryData]
                 };
             });
 

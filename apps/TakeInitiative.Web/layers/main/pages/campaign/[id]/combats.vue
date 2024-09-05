@@ -203,7 +203,7 @@
                 />
 
                 <CombatHistorySection
-                    :combatInfo="campaignCombatsStore.selectedCombat"
+                    :combatId="campaignCombatsStore.selectedCombat.combatId"
                 />
             </main>
 

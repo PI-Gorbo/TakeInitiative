@@ -18,7 +18,7 @@ import type { GetCombatsResponse } from "base/utils/api/combat/getCombatsRequest
 
 const props = withDefaults(
     defineProps<{
-        combatInfo: GetCombatsResponse["combats"][number];
+        combatId: GetCombatsResponse["combats"][number]["combatId"];
     }>(),
     {},
 );
@@ -27,9 +27,9 @@ const { data, error, status } = useAsyncData(
     "combatHistory",
     () =>
         useApi().combat.history({
-            combatId: props.combatInfo.combatId,
+            combatId: props.combatId,
         }),
-    { watch: [() => props.combatInfo.combatId] },
+    { watch: [() => props.combatId] },
 );
 
 const state = reactive<{

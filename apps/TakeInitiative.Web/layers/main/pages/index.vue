@@ -19,10 +19,7 @@
                         class="text-xl text-white"
                     />
                 </a>
-                <FormButton
-                    label="Login"
-                    @clicked="() => useNavigator().toLogin()"
-                />
+                <FormButton label="Login" @clicked="toLogin" />
             </section>
         </header>
         <main class="hero flex-1 bg-take-purple-very-dark">
@@ -40,7 +37,7 @@
                     </p>
                     <button
                         class="btn bg-take-teal text-lg text-white transition-colors hover:bg-take-teal hover:brightness-90 md:text-xl"
-                        @click="() => useNavigator().toSignUp()"
+                        @click="toSignup"
                         :class="{}"
                     >
                         <span v-if="!userIsLoggedIn">Sign Up for Free</span>
@@ -49,43 +46,6 @@
                 </div>
             </div>
         </main>
-        <!-- <section class="flex justify-center p-4">
-            <ul class="grid grid-cols-5 gap-4 p-2">
-                <li class="bg-take-cream-medium rounded p-2 text-take-navy">
-                    <header class="text-xl">
-                        CREATE CAMPAIGNS FOR YOU AND YOUR PLAYERS
-                    </header>
-                    <p>Invite your friends | play</p>
-                </li>
-                <li class="bg-take-cream-medium rounded p-2 text-take-navy">
-                    <header class="text-xl">
-                        PLAN AND RUN COMBATS IN ONE PLACE
-                    </header>
-                    <p>
-                        Streamline your campaign's combats with a dedicated
-                        space to plan and execute epic battles. Whether it's a
-                        simple skirmish or a multi-stage showdown, prepare
-                        everything in advance and kick off the combat at the
-                        perfect moment! With your plans in place, you’re ready
-                        to pivot and improvise as the adventure unfolds.
-                    </p>
-                </li>
-                <li class="bg-take-cream-medium rounded p-2 text-take-navy">
-                    <header class="text-xl">
-                        COMBATS ARE LIVE ONLINE LOBBIES
-                    </header>
-                    <p>Invite your friends | play</p>
-                </li>
-                <li class="bg-take-cream-medium rounded p-2 text-take-navy">
-                    <header class="text-xl">SPEED UP YOUR COMBATS</header>
-                    <p>Invite your friends | play</p>
-                </li>
-                <li class="bg-take-cream-medium rounded p-2 text-take-navy">
-                    <header class="text-xl">MORE FEATURES COMING SOON</header>
-                    <p>Invite your friends | play</p>
-                </li>
-            </ul>
-        </section> -->
     </main>
 </template>
 
@@ -107,4 +67,6 @@ definePageMeta({
     layout: false,
     requiresAuth: false,
 });
+const toLogin = () => useNavigator().toLogin();
+const toSignup = () => useNavigator().toSignUp();
 </script>

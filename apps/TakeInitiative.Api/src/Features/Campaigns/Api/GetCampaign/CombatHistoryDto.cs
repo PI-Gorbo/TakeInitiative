@@ -2,6 +2,7 @@ namespace TakeInitiative.Api.Features.Campaigns;
 
 public record CombatHistoryDto
 {
-    public required DateTimeOffset? LastCombatTimestamp { get; set; }
-    public required int TotalCombats { get; set; }
+    public required Guid CombatId { get; set; }
+    public required string CombatName { get; set; }
+    public required DateTimeOffset FinishedOn { get; set; }
 }

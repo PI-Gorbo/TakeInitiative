@@ -8,9 +8,7 @@
                 : 'bg-take-red',
             isMobile ? 'flex-1' : 'w-full',
         ]"
-        @click="
-            async () => await navigateTo(`/combat/${currentCombatInfo?.id}`)
-        "
+        @click="navigateToCombat"
     >
         <div v-if="currentCombatInfo.state == CombatState.Open">
             {{ openCombatText }}
@@ -47,4 +45,8 @@ const combatStartedText = computed(() => {
 
     return `The combat '${combatDto?.combatName}' has started! Click to join.`;
 });
+
+function navigateToCombat() {
+    return useNavigator().toCombat(currentCombatInfo.value?.id!);
+}
 </script>

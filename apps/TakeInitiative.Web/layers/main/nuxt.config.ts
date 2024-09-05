@@ -5,10 +5,5 @@ export default defineNuxtConfig({
         "/combat/**": { ssr: false },
     },
 
-    //   typescript: {
-    //       strict: true,
-    //       typeCheck: true,
-    //   },
-
     compatibilityDate: "2024-09-03",
 });

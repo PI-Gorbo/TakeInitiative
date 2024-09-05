@@ -25,6 +25,7 @@
                 :selectedItem="ResourceVisibilityOptions[visibility ?? 0]"
                 colour="take-navy-light"
                 @update:selectedItem="
+                    //@ts-ignore
                     (item) => (visibility = ResourceVisibilityOptions[item])
                 "
             />
