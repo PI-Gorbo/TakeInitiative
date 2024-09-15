@@ -125,7 +125,7 @@ const { values, errors, defineField, validate } = useForm({
     initialValues: {
         initiative: props.character?.initiative,
         name: props.character?.name,
-        isHidden: props.character?.hidden ?? true,
+        isHidden: props.character?.hidden ?? false,
         armourClass: props.character?.armourClass ?? null,
         health: props.character?.health,
     },
