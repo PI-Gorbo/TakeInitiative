@@ -241,7 +241,7 @@ async function onEdit() {
             initiative: computedInitiative!,
             name: name.value!,
             id: props.character?.id!,
-            hidden: isHidden.value!,
+            hidden: !userIsDm.value ? false : isHidden.value!,
             health: computedHealth!,
             armourClass: armourClass.value ?? null,
         })
@@ -277,7 +277,7 @@ async function onCreate() {
         .onCreate({
             initiative: computedInitiative!,
             name: name.value!,
-            hidden: isHidden.value!,
+            hidden: !userIsDm.value ? false : isHidden.value!,
             health: computedHealth!,
             armourClass: armourClass.value ?? null,
         })
