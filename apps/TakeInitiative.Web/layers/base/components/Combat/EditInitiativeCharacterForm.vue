@@ -170,7 +170,7 @@ async function onEdit() {
         .onEdit({
             id: props.character.id,
             name: name.value!,
-            hidden: isHidden.value!,
+            hidden: !userIsDm.value ? false : isHidden.value!,
             health: computedHealth! as CharacterHealth,
             initiative: props.character.initiative,
             armourClass: armourClass.value ?? null,

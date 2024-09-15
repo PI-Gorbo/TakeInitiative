@@ -125,7 +125,7 @@ const { values, errors, defineField, validate } = useForm({
     initialValues: {
         initiative: props.character?.initiative,
         name: props.character?.name,
-        isHidden: props.character?.hidden ?? true,
+        isHidden: props.character?.hidden ?? false,
         armourClass: props.character?.armourClass ?? null,
         health: props.character?.health,
     },
@@ -241,7 +241,7 @@ async function onEdit() {
             initiative: computedInitiative!,
             name: name.value!,
             id: props.character?.id!,
-            hidden: isHidden.value!,
+            hidden: !userIsDm.value ? false : isHidden.value!,
             health: computedHealth!,
             armourClass: armourClass.value ?? null,
         })
@@ -277,7 +277,7 @@ async function onCreate() {
         .onCreate({
             initiative: computedInitiative!,
             name: name.value!,
-            hidden: isHidden.value!,
+            hidden: !userIsDm.value ? false : isHidden.value!,
             health: computedHealth!,
             armourClass: armourClass.value ?? null,
         })

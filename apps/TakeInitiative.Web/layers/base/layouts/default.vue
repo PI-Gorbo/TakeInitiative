@@ -16,7 +16,7 @@
                     <section class="navbar-start flex gap-2">
                         <label
                             class="flex cursor-pointer items-center gap-2"
-                            @click="toHomePage"
+                            @click="takeInitiativeIconClicked"
                         >
                             <img
                                 class="h-[3em] w-[3em]"
@@ -276,6 +276,19 @@ async function joinCampaign(req: JoinCampaignRequest) {
         })
         .then(createOrJoinCampaignModal.value?.hide);
 }
+
+const takeInitiativeIconClicked = async () => {
+    const campaignStore = useCampaignStore();
+    if (campaignStore.state.campaign != null) {
+        await useNavigator().toCampaignTab(
+            campaignStore.state.campaign.id,
+            "summary",
+        );
+        return;
+    }
+
+    await toHomePage();
+};
 
 const toHomePage = async () => await useNavigator().toHomePage();
 const toCampaign = async (id: string) => {
