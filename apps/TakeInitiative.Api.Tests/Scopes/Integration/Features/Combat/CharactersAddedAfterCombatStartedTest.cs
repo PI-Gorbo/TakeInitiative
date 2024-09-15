@@ -22,8 +22,9 @@ public class CharactersAddedAfterCombatStartedTest : IClassFixture<Authenticated
         verifier = new CombatVerifier(nameof(CharactersAddedAfterCombatStartedTest));
     }
 
-    [Fact]
-    public async Task Test()
+    [Theory]
+    [InlineData(0)]
+    public async Task Test(int stageCount)
     {
         fixture.LoginAsUser(Users.DM);
 
@@ -48,7 +49,7 @@ public class CharactersAddedAfterCombatStartedTest : IClassFixture<Authenticated
         await verifier
             .RegisterKnownGuid(combat.Id, "CombatId")
             .RegisterKnownGuid(combat.DungeonMaster, "DmId")
-            .Verify(combat, "OpenedCombat");
+            .Verify(combat, "OpenedCombat", stageCount);
 
         // Setup a mock for the initial initiative rolls.
         A.CallTo(() => fixture.InitiativeRoller.ComputeRolls(A<IEnumerable<StagedCharacter>>._))
@@ -61,7 +62,7 @@ public class CharactersAddedAfterCombatStartedTest : IClassFixture<Authenticated
         });
         startCombatResult.Should().Succeed();
         combat = startCombatResult.Value.Combat;
-        await verifier.Verify(combat, "CombatStarted");
+        await verifier.Verify(combat, "CombatStarted", stageCount);
 
         // The DM adds a character to the staged list.
         var addStagedCharacterResult = await fixture
@@ -78,7 +79,7 @@ public class CharactersAddedAfterCombatStartedTest : IClassFixture<Authenticated
             });
         addStagedCharacterResult.Should().Succeed();
         combat = addStagedCharacterResult.Value.Combat;
-        await verifier.Verify(combat, "DmStagesCharacterAfterCombatStarted");
+        await verifier.Verify(combat, "DmStagesCharacterAfterCombatStarted", stageCount);
 
         // The DM then rolls the character into initiative.
         var characterId = combat.StagedList.First().Id;
@@ -97,7 +98,7 @@ public class CharactersAddedAfterCombatStartedTest : IClassFixture<Authenticated
             });
         addStagedCharacterToInitiativeResult.Should().Succeed();
         combat = addStagedCharacterToInitiativeResult.Value.Combat;
-        await verifier.Verify(combat, "DmRolledStagedCharacterIntoInitiative");
+        await verifier.Verify(combat, "DmRolledStagedCharacterIntoInitiative", stageCount);
 
         // Finish the combat
         var finishCombatResult = await fixture
@@ -108,6 +109,6 @@ public class CharactersAddedAfterCombatStartedTest : IClassFixture<Authenticated
             });
         finishCombatResult.Should().Succeed();
         combat = finishCombatResult.Value.Combat;
-        await verifier.Verify(combat, "CombatFinished");
+        await verifier.Verify(combat, "CombatFinished", stageCount);
     }
 }

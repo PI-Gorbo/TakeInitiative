@@ -153,7 +153,7 @@
         CharacterOrigin: 0,
         Id: Guid_5
       },
-      Hidden: true,
+      Hidden: false,
       CopyNumber: null,
       Conditions: []
     }

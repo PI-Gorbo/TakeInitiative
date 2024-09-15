@@ -22,8 +22,20 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
         verifier = new CombatVerifier(nameof(FullCombatTest));
     }
 
-    [Fact]
-    public async Task Test()
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
+    [InlineData(5)]
+    [InlineData(6)]
+    [InlineData(7)]
+    [InlineData(8)]
+    [InlineData(9)]
+    [InlineData(10)]
+    [InlineData(11)]
+    public async Task Test(int snapshotStage)
     {
         fixture.LoginAsUser(Users.DM);
 
@@ -101,7 +113,7 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
         await verifier
             .RegisterKnownGuid(combat.Id, "CombatId")
             .RegisterKnownGuid(combat.DungeonMaster, "DmId")
-            .Verify(combat, "OpenedCombat");
+            .Verify(combat, "OpenedCombat", snapshotStage);
 
         // Player adds their character to the combat.
         var addStagedPlayerCharacterResult = await fixture
@@ -123,7 +135,7 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
         await verifier
             .RegisterKnownGuid(firstCharacterId, "PlayerFirstCharacterId")
             .RegisterKnownGuid(combat.CurrentPlayers[0].UserId, "PlayerId")
-            .Verify(combat, "PlayerStagedCharacter");
+            .Verify(combat, "PlayerStagedCharacter", snapshotStage);
 
         // DM stages their own characters
         var addPlannedCharactersResult = await fixture
@@ -143,7 +155,7 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
             });
         addPlannedCharactersResult.Should().Succeed();
         combat = addPlannedCharactersResult.Value.Combat;
-        await verifier.Verify(combat, "DmStagedPlannedCharacter");
+        await verifier.Verify(combat, "DmStagedPlannedCharacter", snapshotStage);
 
         // Setup a mock for the initial initiative rolls.
         combat.StagedList.Count.Should().Be(2);
@@ -161,7 +173,7 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
         });
         startCombatResult.Should().Succeed();
         combat = startCombatResult.Value.Combat;
-        await verifier.Verify(combat, "CombatStarted");
+        await verifier.Verify(combat, "CombatStarted", snapshotStage);
 
         // The DM will update the character to be not be hidden.
         InitiativeCharacter notVisibleDmCharacter = combat.InitiativeList[0];
@@ -186,7 +198,7 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
         combat = setDmCharacterToVisible.Value.Combat;
         await verifier
             .RegisterKnownGuid(conditionId, "ConditionId")
-            .Verify(combat, "DmSetsCharacterToVisible");
+            .Verify(combat, "DmSetsCharacterToVisible", snapshotStage);
 
         // It is the player's turn.
         // Imagine the player rolls and does some damage to the enemy.
@@ -218,7 +230,7 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
         });
         damageDmCharacter.Should().Succeed();
         combat = damageDmCharacter.Value.Combat;
-        await verifier.Verify(combat, "DamageDmCharacter");
+        await verifier.Verify(combat, "DamageDmCharacter", snapshotStage);
 
         // Player ends their turn.
         var endTurnResult = await fixture
@@ -229,7 +241,7 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
             });
         endTurnResult.Should().Succeed();
         combat = endTurnResult.Value.Combat;
-        await verifier.Verify(combat, "PlayerEndsTurn");
+        await verifier.Verify(combat, "PlayerEndsTurn", snapshotStage);
 
         // The DM adds a character to the staged list.
         var addStagedCharacterResult = await fixture
@@ -247,7 +259,7 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
             });
         addStagedCharacterResult.Should().Succeed();
         combat = addStagedCharacterResult.Value.Combat;
-        await verifier.Verify(combat, "DmStagesAnotherCharacter");
+        await verifier.Verify(combat, "DmStagesAnotherCharacter", snapshotStage);
 
         // The DM then rolls the character into initiative.
         var characterId = combat.StagedList.First().Id;
@@ -268,7 +280,7 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
             });
         addStagedCharacterToInitiativeResult.Should().Succeed();
         combat = addStagedCharacterToInitiativeResult.Value.Combat;
-        await verifier.Verify(combat, "DmRolledStagedCharacterIntoInitiative");
+        await verifier.Verify(combat, "DmRolledStagedCharacterIntoInitiative", snapshotStage);
 
         // Remove the paralyzed condition from the DM's character.
         InitiativeCharacter dmCharacterWithCondition = combat.InitiativeList[0];
@@ -296,7 +308,7 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
         });
         removedCondition.Should().Succeed();
         combat = removedCondition.Value.Combat;
-        await verifier.Verify(combat, "RemovedParalyzedCondition");
+        await verifier.Verify(combat, "RemovedParalyzedCondition", snapshotStage);
 
         // Remove the player's character from the combat.
         var deleteCharacterResponse = await fixture.DeleteInitiativeCharacter(
@@ -308,7 +320,7 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
         );
         deleteCharacterResponse.Should().Succeed();
         combat = deleteCharacterResponse.Value.Combat;
-        await verifier.Verify(combat, "CharacterRemoved");
+        await verifier.Verify(combat, "CharacterRemoved", snapshotStage);
 
         // Finish the combat
         var finishCombatResult = await fixture
@@ -319,6 +331,6 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
             });
         finishCombatResult.Should().Succeed();
         combat = finishCombatResult.Value.Combat;
-        await verifier.Verify(combat, "CombatFinished");
+        await verifier.Verify(combat, "CombatFinished", snapshotStage);
     }
 }

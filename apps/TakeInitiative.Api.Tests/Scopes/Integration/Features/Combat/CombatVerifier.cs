@@ -25,8 +25,13 @@ public class CombatVerifier
         return this;
     }
 
-    public Task Verify(Combat combat, string? description)
+    public Task Verify(Combat combat, string? description, int? onlyVerifyCount)
     {
+        if (onlyVerifyCount.HasValue && onlyVerifyCount != Count)
+        {
+            return Task.CompletedTask;
+        }
+
         settings.UseFileName($"{fileName}.{this.Count++:D2}.{description}");
         var serializedValue = JsonSerializer.Serialize(combat);
         serializedValue = serializedValue.Replace("\"!\"", "\"TYPE\"");
