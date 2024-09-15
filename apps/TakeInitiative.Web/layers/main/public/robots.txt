@@ -1,2 +1,5 @@
 User-agent: *
-Disallow:
+Disallow: /campaign/*
+Disallow: /combat/*
+Disallow: /join/*
+Disallow: /resetPassword/*
