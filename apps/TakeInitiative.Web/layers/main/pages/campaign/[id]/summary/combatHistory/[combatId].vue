@@ -6,13 +6,14 @@
                 size="sm"
                 label="back"
                 buttonColour="take-navy"
-                @click="
-                    () =>
-                        navigator.toCampaignTab(
+                :click="
+                    async () =>
+                        await navigator.toCampaignTab(
                             route.params.id as string,
                             'summary',
                         )
                 "
+                :loadingDisplay="null"
             />
             <label class="text-lg"> '{{ combatDetails }}' Combat History</label>
         </header>
