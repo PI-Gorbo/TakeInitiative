@@ -86,7 +86,8 @@ public class StagePlannedCharactersCommandHandler(IDocumentStore Store) : Comman
                             })
                             .ToArray()
                         ),
-                    UserId = command.UserId
+                    UserId = command.UserId,
+                    Hidden = false,
                 };
                 session.Events.Append(command.CombatId, @event);
                 await session.SaveChangesAsync();

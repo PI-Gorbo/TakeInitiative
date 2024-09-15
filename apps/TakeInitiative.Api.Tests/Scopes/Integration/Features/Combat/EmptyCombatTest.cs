@@ -21,8 +21,11 @@ public class EmptyCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixt
         verifier = new CombatVerifier(nameof(EmptyCombatTest));
     }
 
-    [Fact]
-    public async Task Test()
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(2)]
+    public async Task Test(int stageNumber)
     {
         fixture.LoginAsUser(Users.DM);
 
@@ -47,7 +50,7 @@ public class EmptyCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixt
         await verifier
             .RegisterKnownGuid(combat.Id, "CombatId")
             .RegisterKnownGuid(combat.DungeonMaster, "DmId")
-            .Verify(combat, "OpenedCombat");
+            .Verify(combat, "OpenedCombat", stageNumber);
 
         // Start the combat.
         // Prep the mock.
@@ -60,7 +63,7 @@ public class EmptyCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixt
         });
         startCombatResult.Should().Succeed();
         combat = startCombatResult.Value.Combat;
-        await verifier.Verify(combat, "CombatStarted");
+        await verifier.Verify(combat, "CombatStarted", stageNumber);
 
         // Dm finishes the combat.
         var finishCombatResult = await fixture.PostFinishCombat(new()
@@ -69,6 +72,6 @@ public class EmptyCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixt
         });
         finishCombatResult.Should().Succeed();
         combat = finishCombatResult.Value.Combat;
-        await verifier.Verify(combat, "CombatFinished");
+        await verifier.Verify(combat, "CombatFinished", stageNumber);
     }
 }

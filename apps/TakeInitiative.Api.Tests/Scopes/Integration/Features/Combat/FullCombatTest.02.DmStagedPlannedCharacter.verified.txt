@@ -69,7 +69,7 @@
         CharacterOrigin: 0,
         Id: Guid_4
       },
-      Hidden: true,
+      Hidden: false,
       CopyNumber: null,
       Id: Guid_5,
       Name: Intro Enemy,
