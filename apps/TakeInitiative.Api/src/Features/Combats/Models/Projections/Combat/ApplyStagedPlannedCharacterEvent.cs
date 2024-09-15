@@ -88,7 +88,7 @@ public partial class CombatProjection : SingleStreamProjection<Combat>
                                 PlayerId: @event.UserId,
                                 ArmourClass: npc.ArmourClass,
                                 Health: npc.Health,
-                                Hidden: true,
+                                Hidden: false,
                                 CopyNumber: null
                             )
                         ];
