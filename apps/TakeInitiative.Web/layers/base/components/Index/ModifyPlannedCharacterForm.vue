@@ -4,21 +4,25 @@
         :onSubmit="onSubmit"
         v-slot="{ submitting }"
     >
-        <FormInput
-            :autoFocus="true"
-            textColour="white"
-            label="Name"
-            v-model:value="name"
-            v-bind="nameInputProps"
-        />
-        <FormInput
-            label="Quantity"
-            textColour="white"
-            type="number"
-            :value="quantity"
-            @update:value="(val) => (quantity = Number(val) ?? 1)"
-            v-bind="quantityInputProps"
-        />
+        <div class="grid grid-cols-6 gap-2">
+            <FormInput
+                class="col-span-4"
+                :autoFocus="true"
+                textColour="white"
+                label="Name"
+                v-model:value="name"
+                v-bind="nameInputProps"
+            />
+            <FormInput
+                class="col-span-2"
+                label="Quantity"
+                textColour="white"
+                type="number"
+                :value="quantity"
+                @update:value="(val) => (quantity = Number(val) ?? 1)"
+                v-bind="quantityInputProps"
+            />
+        </div>
 
         <CharacterUnevaluatedInitiativeInput
             ref="characterInitiativeInput"

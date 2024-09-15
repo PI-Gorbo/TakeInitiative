@@ -36,11 +36,7 @@
                         :size="props.size"
                     />
                 </div>
-                <div
-                    v-if="props.label"
-                    class="cursor-pointer text-center"
-                    @click="onClick"
-                >
+                <div v-if="props.label" class="cursor-pointer text-center">
                     {{ props.label }}
                 </div>
             </div>
