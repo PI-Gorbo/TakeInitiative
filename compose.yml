@@ -45,15 +45,15 @@ services:
     #         - "NUXT_PUBLIC_AXIOS_BASE_URL=https://api.take-initiative.com"
     #         - "NUXT_PUBLIC_WEB_URL=https://take-initiative.com"
     #     restart: always
-    admin:
-        build:
-            context: ./apps/TakeInitiative.Web/
-            dockerfile: ./dockerfile.Admin
-        container_name: takeweb
-        ports:
-            - "7404:3000"
-        environment:
-            - "NUXT_PUBLIC_AXIOS_BASE_URL=https://api.take-initiative.com"
-            - "NUXT_PUBLIC_WEB_URL=https://take-initiative.com"
-            - "NUXT_PUBLIC_ADMIN_URL=http://warrani:7404"
-        restart: always
+    # admin:
+    #     build:
+    #         context: ./apps/TakeInitiative.Web/
+    #         dockerfile: ./dockerfile.Admin
+    #     container_name: takeweb
+    #     ports:
+    #         - "7404:3000"
+    #     environment:
+    #         - "NUXT_PUBLIC_AXIOS_BASE_URL=https://api.take-initiative.com"
+    #         - "NUXT_PUBLIC_WEB_URL=https://take-initiative.com"
+    #         - "NUXT_PUBLIC_ADMIN_URL=http://warrani:7404"
+    #     restart: always
