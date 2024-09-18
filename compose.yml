@@ -34,17 +34,17 @@ services:
         #     retries: 5
         #     start_period: 20s
         #     timeout: 10s
-    web:
-        build:
-            context: ./apps/TakeInitiative.Web/
-            dockerfile: ./dockerfile.Main
-        container_name: takeweb
-        ports:
-            - "7403:3000"
-        environment:
-            - "NUXT_PUBLIC_AXIOS_BASE_URL=https://api.take-initiative.com"
-            - "NUXT_PUBLIC_WEB_URL=https://take-initiative.com"
-        restart: always
+    # web:
+    #     build:
+    #         context: ./apps/TakeInitiative.Web/
+    #         dockerfile: ./dockerfile.Main
+    #     container_name: takeweb
+    #     ports:
+    #         - "7403:3000"
+    #     environment:
+    #         - "NUXT_PUBLIC_AXIOS_BASE_URL=https://api.take-initiative.com"
+    #         - "NUXT_PUBLIC_WEB_URL=https://take-initiative.com"
+    #     restart: always
     admin:
         build:
             context: ./apps/TakeInitiative.Web/
