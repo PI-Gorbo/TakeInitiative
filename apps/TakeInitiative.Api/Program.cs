@@ -77,7 +77,8 @@ internal class Program
         app.MapHub<CombatHub>("/combatHub");
         app.MapHub<CampaignHub>("/campaignHub");
 
-        app.UseCors("MainAppCors")
+        app
+            .UseCors("MainAppCors")
             .UseFastEndpoints(cfg =>
             {
                 cfg.Endpoints.Configurator = (endpoint) =>
