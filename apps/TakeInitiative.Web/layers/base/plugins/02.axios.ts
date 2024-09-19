@@ -30,7 +30,12 @@ export default defineNuxtPlugin((nuxtApp) => {
         async (error) => {
             if (error?.response?.status == 401 && routeInfo.meta.requiresAuth) {
                 const axiosError: AxiosError = error as AxiosError;
-                await navigateTo("/login");
+                await navigateTo({
+                    path: "/login",
+                    query: {
+                        redirectTo: useRoute().path,
+                    },
+                });
                 throw error;
             }
 

@@ -12,7 +12,8 @@ export const useNavigator = () => {
             ),
         toCreateOrJoinCampaign: () => navigateTo("/createOrJoinCampaign"),
         confirmEmail: () => navigateTo("/confirm"),
-        toLogin: () => navigateTo("/login"),
+        toLogin: (opts: NavigateToOptions | undefined = undefined) =>
+            navigateTo("/login", opts),
         toSignUp: () => navigateTo("/signup"),
         toCombat: (id: string) => navigateTo(`/combat/${id}`),
         toHomePage: () => navigateTo("/"),
