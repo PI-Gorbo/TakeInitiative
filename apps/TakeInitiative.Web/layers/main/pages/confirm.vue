@@ -42,5 +42,8 @@ const { pending, error } = await useAsyncData(
             )
             .then(() => true);
     },
+    {
+        server: false,
+    },
 );
 </script>
