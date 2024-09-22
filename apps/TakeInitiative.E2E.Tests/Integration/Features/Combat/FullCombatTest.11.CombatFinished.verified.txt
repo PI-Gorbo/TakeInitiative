@@ -1,0 +1,271 @@
+﻿{
+  Id: CombatId,
+  CampaignId: Guid_1,
+  State: 3,
+  CombatName: My planned combat,
+  DungeonMaster: DmId,
+  History: [
+    {
+      Timestamp: DateTimeOffset_1,
+      Events: [
+        {
+          TYPE: CombatStarted
+        }
+      ],
+      Executor: DmId
+    },
+    {
+      Timestamp: DateTimeOffset_2,
+      Events: [
+        {
+          TYPE: CombatInitiativeRolled,
+          Rolls: [
+            {
+              CharacterId: PlayerFirstCharacterId,
+              CharacterName: My Super Duper Character,
+              Roll: [
+                {
+                  Total: 20,
+                  Roll: 1d20 + 1,
+                  Evaluation: 1d20 (19) + 1 = 20
+                }
+              ],
+              RolledHealth: null
+            },
+            {
+              CharacterId: Guid_2,
+              CharacterName: Intro Enemy,
+              Roll: [
+                {
+                  Total: 15,
+                  Roll: 1d20 + 2,
+                  Evaluation: 1d20 (13) + 2 = 15
+                }
+              ],
+              RolledHealth: null
+            }
+          ]
+        },
+        {
+          TYPE: TurnStarted,
+          CharacterId: PlayerFirstCharacterId
+        }
+      ],
+      Executor: DmId
+    },
+    {
+      Timestamp: DateTimeOffset_3,
+      Events: [
+        {
+          TYPE: CharacterConditionAdded,
+          ConditionId: ConditionId,
+          CharacterId: PlayerFirstCharacterId,
+          Name: Paralyzed
+        }
+      ],
+      Executor: DmId
+    },
+    {
+      Timestamp: DateTimeOffset_4,
+      Events: [
+        {
+          TYPE: CharacterHealthChanged,
+          CharacterId: PlayerFirstCharacterId,
+          From: 10,
+          To: 5
+        }
+      ],
+      Executor: DmId
+    },
+    {
+      Timestamp: DateTimeOffset_5,
+      Events: [
+        {
+          TYPE: TurnEnded,
+          CharacterId: PlayerFirstCharacterId
+        },
+        {
+          TYPE: TurnStarted,
+          CharacterId: Guid_2
+        }
+      ],
+      Executor: PlayerId
+    },
+    {
+      Timestamp: DateTimeOffset_6,
+      Events: [
+        {
+          TYPE: CombatInitiativeModified,
+          NewInitiativeList: [
+            {
+              CharacterId: PlayerFirstCharacterId,
+              CharacterName: My Super Duper Character,
+              Roll: [
+                {
+                  Total: 20,
+                  Roll: 1d20 + 1,
+                  Evaluation: 1d20 (19) + 1 = 20
+                }
+              ],
+              RolledHealth: null
+            },
+            {
+              CharacterId: Guid_2,
+              CharacterName: Intro Enemy,
+              Roll: [
+                {
+                  Total: 15,
+                  Roll: 1d20 + 2,
+                  Evaluation: 1d20 (13) + 2 = 15
+                }
+              ],
+              RolledHealth: null
+            },
+            {
+              CharacterId: Guid_3,
+              CharacterName: Another Enemy!,
+              Roll: [
+                {
+                  Total: 10,
+                  Roll: 10,
+                  Evaluation: 10 = 10
+                }
+              ],
+              RolledHealth: null
+            }
+          ]
+        }
+      ],
+      Executor: DmId
+    },
+    {
+      Timestamp: DateTimeOffset_7,
+      Events: [
+        {
+          TYPE: CharacterHealthChanged,
+          CharacterId: PlayerFirstCharacterId,
+          From: 5,
+          To: 0
+        },
+        {
+          TYPE: CharacterConditionRemoved,
+          ConditionId: ConditionId,
+          CharacterId: PlayerFirstCharacterId,
+          Name: Paralyzed
+        }
+      ],
+      Executor: DmId
+    },
+    {
+      Timestamp: DateTimeOffset_8,
+      Events: [
+        {
+          TYPE: CharacterRemoved,
+          CharacterId: PlayerFirstCharacterId
+        }
+      ],
+      Executor: DmId
+    },
+    {
+      Timestamp: DateTimeOffset_9,
+      Events: [
+        {
+          TYPE: CombatFinished
+        }
+      ],
+      Executor: DmId
+    }
+  ],
+  CurrentPlayers: [
+    {
+      UserId: PlayerId
+    },
+    {
+      UserId: DmId
+    }
+  ],
+  PlannedStages: [
+    {
+      Id: Guid_4,
+      Name: Boss Fight,
+      Npcs: [
+        {
+          StageId: Guid_4,
+          Quantity: 10,
+          Id: Guid_5,
+          Name: 10 goblins in a trench coat,
+          Health: {
+            TYPE: Roll,
+            RollString: 20d20 + 10
+          },
+          Initiative: {
+            Roll: 1d20 + 2
+          },
+          ArmourClass: 12
+        }
+      ]
+    }
+  ],
+  StagedList: [],
+  InitiativeList: [
+    {
+      Id: Guid_2,
+      Name: Intro Enemy,
+      Health: {
+        TYPE: Fixed,
+        CurrentHealth: 0,
+        MaxHealth: 0,
+        DiceRoll: null
+      },
+      Initiative: {
+        Value: [
+          {
+            Total: 15,
+            Roll: 1d20 + 2,
+            Evaluation: 1d20 (13) + 2 = 15
+          }
+        ]
+      },
+      ArmourClass: 12,
+      PlayerId: DmId,
+      CharacterOriginDetails: {
+        CharacterOrigin: 0,
+        Id: Guid_6
+      },
+      Hidden: true,
+      CopyNumber: null,
+      Conditions: []
+    },
+    {
+      Id: Guid_3,
+      Name: Another Enemy!,
+      Health: {
+        TYPE: Fixed,
+        CurrentHealth: 10,
+        MaxHealth: 20,
+        DiceRoll: null
+      },
+      Initiative: {
+        Value: [
+          {
+            Total: 10,
+            Roll: 10,
+            Evaluation: 10 = 10
+          }
+        ]
+      },
+      ArmourClass: null,
+      PlayerId: DmId,
+      CharacterOriginDetails: {
+        CharacterOrigin: 0,
+        Id: null
+      },
+      Hidden: false,
+      CopyNumber: null,
+      Conditions: []
+    }
+  ],
+  InitiativeIndex: 0,
+  RoundNumber: 1,
+  FinishedTimestamp: DateTimeOffset_9
+}
