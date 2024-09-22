@@ -1,14 +1,14 @@
 
 ARG NODE_VERSION=18.14.0
-ARG PORT=3000
+
 
 # Fetch the node runtime  
-FROM node:${NODE_VERSION}-slim as base
+FROM node:${NODE_VERSION}-slim AS base
 
 WORKDIR /src
 
 # Build
-FROM base as build
+FROM base AS build
 
 COPY package*.json .
 RUN npm ci 
@@ -25,7 +25,7 @@ RUN npm prune
 # Run
 FROM base
 
-ENV PORT=$PORT
+ENV PORT=3000
 
 COPY --from=build /src/layers/main/.output /src/.output
 
