@@ -3,6 +3,7 @@ using System.Net;
 using Alba;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Configurations;
+using DotNet.Testcontainers.Containers;
 using DotNet.Testcontainers.Images;
 using FakeItEasy;
 using FluentAssertions;
@@ -13,13 +14,18 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
+using Microsoft.Playwright;
 using Serilog.Core;
 using TakeInitiative.Api.Bootstrap;
 using TakeInitiative.Api.Features.Users;
+using TakeInitiative.Api.Tests.Integration;
 using TakeInitiative.Utilities;
 using Testcontainers.PostgreSql;
+using Xunit.Abstractions;
+using Xunit.Sdk;
+using Cookie = System.Net.Cookie;
 
-namespace TakeInitiative.Api.Tests.Integration;
+namespace TakeInitiative.E2E.Tests;
 
 public record UserSeedData
 {
@@ -43,8 +49,9 @@ public record AuthenticatedWebAppWithDatabaseFixtureSeededData
     public required Guid CampaignId { get; set; }
 }
 
-public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppClient
+public class AuthenticatedWebAppWithDatabaseFixture() : IAsyncLifetime, IWebAppClient
 {
+
     public IAlbaHost AlbaHost { get; private set; } = null!;
 
     public PostgreSqlContainer PostgreSqlContainer { get; private set; } = new PostgreSqlBuilder()
@@ -54,6 +61,8 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
     public AuthenticatedWebAppWithDatabaseFixtureSeededData? SeedData { get; set; }
     public IInitiativeRoller InitiativeRoller { get; } = A.Fake<IInitiativeRoller>();
     public IDiceRoller DiceRoller { get; } = A.Fake<IDiceRoller>();
+    public IContainer WebContainer { get; private set; }
+    public IPlaywright PlaywrightInstance { get; private set; }
 
     public async Task InitializeAsync()
     {
@@ -80,21 +89,19 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
                 })
         );
 
-        using var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
-        var logger = loggerFactory.CreateLogger<AuthenticatedWebAppWithDatabaseFixture>();
-
         var directory = Path.Combine(CommonDirectoryPath.GetSolutionDirectory().DirectoryPath, "apps/TakeInitiative.Web");
         var frontendImage = new ImageFromDockerfileBuilder()
-            .WithDockerfileDirectory("C:\\samData\\TakeInitiative\\apps\\TakeInitiative.Web") //C:/samData/TakeInitiative/apps/TakeInitiative.Web
+            .WithDockerfileDirectory(directory) //C:/samData/TakeInitiative/apps/TakeInitiative.Web
             .WithDockerfile("dockerfile.Main")
             .WithDeleteIfExists(true)
-            .WithLogger(logger)
             .Build();
         await frontendImage.CreateAsync();
 
-        var container = new ContainerBuilder()
+        this.WebContainer = new ContainerBuilder()
             .WithImage(frontendImage)
+            .WithPortBinding("3000")
             .Build();
+        await this.WebContainer.StartAsync();
 
 
         // Seed database with tiny seed.

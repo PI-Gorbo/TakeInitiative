@@ -10,13 +10,13 @@ WORKDIR /src
 # Build
 FROM base AS build
 
-COPY package*.json .
+COPY package*.json ./
 RUN npm ci 
 
 # Set node enviornment. This should be done after npm install as tailwindcss will not be installed if its a dev depdendency
 ENV NODE_ENV=production 
 
-COPY . .
+COPY . ./
 
 RUN npm run postinstall
 RUN npm run build:main
@@ -27,6 +27,6 @@ FROM base
 
 ENV PORT=3000
 
-COPY --from=build /src/layers/main/.output /src/.output
+COPY --from=build /src/layers/main/.output /src/.output 
 
 CMD [ "node", ".output/server/index.mjs" ]
