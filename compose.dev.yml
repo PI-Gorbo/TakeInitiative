@@ -40,18 +40,18 @@ services:
         ports:
             - "7403:3000"
         environment:
-            - "NUXT_PUBLIC_AXIOS_BASE_URL=https://localhost:7402"
+            - "NUXT_PUBLIC_AXIOS_BASE_URL=http://localhost:7402"
             - "NUXT_PUBLIC_WEB_URL=http://localhost:7403"
         restart: always
-    admin:
-        build:
-            context: ./apps/TakeInitiative.Web/
-            dockerfile: ./dockerfile.Admin
-        container_name: takeadmin
-        ports:
-            - "7404:3000"
-        environment:
-            - "NUXT_PUBLIC_AXIOS_BASE_URL=https://localhost:7402"
-            - "NUXT_PUBLIC_WEB_URL=http://localhost:7403"
-            - "NUXT_PUBLIC_ADMIN_URL=http://localhost:7404"
-        restart: always
+    # admin:
+    #     build:
+    #         context: ./apps/TakeInitiative.Web/
+    #         dockerfile: ./dockerfile.Admin
+    #     container_name: takeadmin
+    #     ports:
+    #         - "7404:3000"
+    #     environment:
+    #         - "NUXT_PUBLIC_AXIOS_BASE_URL=https://localhost:7402"
+    #         - "NUXT_PUBLIC_WEB_URL=http://localhost:7403"
+    #         - "NUXT_PUBLIC_ADMIN_URL=http://localhost:7404"
+    #     restart: always
