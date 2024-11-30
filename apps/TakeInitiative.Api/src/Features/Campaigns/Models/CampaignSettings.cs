@@ -1,5 +1,3 @@
-using Xunit.Sdk;
-
 namespace TakeInitiative.Api.Features.Campaigns;
 public record CombatHealthDisplaySettings
 {

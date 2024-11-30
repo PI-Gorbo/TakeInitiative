@@ -1,6 +1,5 @@
 using System.Net;
 using FastEndpoints;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using TakeInitiative.Utilities.Extensions;
 using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.SignalR;

@@ -1,9 +1,6 @@
 using System.Net;
 using FastEndpoints;
 using FastEndpoints.Security;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Options;
 
 namespace TakeInitiative.Api.Features.Users;
 

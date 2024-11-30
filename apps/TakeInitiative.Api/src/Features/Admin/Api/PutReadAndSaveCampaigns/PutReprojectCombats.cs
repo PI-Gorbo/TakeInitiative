@@ -1,12 +1,6 @@
-using System.Net;
 using FastEndpoints;
 using Marten;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using TakeInitiative.Utilities.Extensions;
 using CSharpFunctionalExtensions;
-using Microsoft.AspNetCore.SignalR;
-using Marten.Events.Daemon.Coordination;
-using TakeInitiative.Utilities;
 
 namespace TakeInitiative.Api.Features.Combats;
 

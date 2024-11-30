@@ -1,5 +1,4 @@
 using FluentValidation;
-using TakeInitiative.Utilities;
 
 namespace TakeInitiative.Api.Features.Combats;
 

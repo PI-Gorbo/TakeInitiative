@@ -1,4 +1,3 @@
-using CSharpFunctionalExtensions;
 using Marten;
 using Microsoft.AspNetCore.Authorization;
 using TakeInitiative.Api.Features.Admin;

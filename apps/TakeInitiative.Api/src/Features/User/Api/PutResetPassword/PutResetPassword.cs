@@ -1,12 +1,8 @@
-using System.Net;
 using System.Text;
 using CSharpFunctionalExtensions;
 using FastEndpoints;
-using FastEndpoints.Security;
-using JasperFx.CodeGeneration.Model;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.Extensions.Options;
 using TakeInitiative.Utilities;
 using TakeInitiative.Utilities.Extensions;
 

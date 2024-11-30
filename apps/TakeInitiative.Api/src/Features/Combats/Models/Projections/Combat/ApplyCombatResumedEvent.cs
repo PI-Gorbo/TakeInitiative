@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using Marten;
 using Marten.Events;
 using Marten.Events.Aggregation;

@@ -1,9 +1,5 @@
-using System.Text.Json;
 using FastEndpoints;
-using JasperFx.Core;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
 
 namespace TakeInitiative.Api;
 internal class Program
@@ -73,10 +69,12 @@ internal class Program
             app.UseSwaggerUI();
         }
 
+
+
         // Map SignalR Hubs
         app.MapHub<CombatHub>("/combatHub");
         app.MapHub<CampaignHub>("/campaignHub");
-
+        
         app
             .UseCors("MainAppCors")
             .UseFastEndpoints(cfg =>

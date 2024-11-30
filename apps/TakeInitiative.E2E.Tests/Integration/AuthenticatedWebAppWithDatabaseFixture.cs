@@ -1,10 +1,6 @@
-
-using System.Net;
 using Alba;
 using DotNet.Testcontainers.Builders;
-using DotNet.Testcontainers.Configurations;
 using DotNet.Testcontainers.Containers;
-using DotNet.Testcontainers.Images;
 using FakeItEasy;
 using FluentAssertions;
 using Microsoft.AspNetCore.Hosting;
@@ -12,17 +8,13 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Playwright;
-using Serilog.Core;
 using TakeInitiative.Api.Bootstrap;
 using TakeInitiative.Api.Features.Users;
 using TakeInitiative.Api.Tests.Integration;
 using TakeInitiative.Utilities;
 using Testcontainers.PostgreSql;
-using Xunit.Abstractions;
-using Xunit.Sdk;
 using Cookie = System.Net.Cookie;
 
 namespace TakeInitiative.E2E.Tests;
