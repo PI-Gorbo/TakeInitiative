@@ -1,8 +1,6 @@
 using CSharpFunctionalExtensions;
 using FastEndpoints;
 using Marten;
-using TakeInitiative.Utilities;
-using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Combats;
 

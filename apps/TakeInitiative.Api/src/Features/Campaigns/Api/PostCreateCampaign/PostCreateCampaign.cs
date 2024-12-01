@@ -1,8 +1,6 @@
 using System.Net;
-using CSharpFunctionalExtensions;
 using FastEndpoints;
 using Marten;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Campaigns;

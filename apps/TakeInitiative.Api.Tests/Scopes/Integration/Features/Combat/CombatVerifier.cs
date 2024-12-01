@@ -1,5 +1,4 @@
 using System.Text.Json;
-using DiffEngine;
 using TakeInitiative.Api.Features.Combats;
 
 namespace TakeInitiative.Api.Tests.Integration;
@@ -25,7 +24,7 @@ public class CombatVerifier
         return this;
     }
 
-    public Task Verify(Combat combat, string? description, int? onlyVerifyCount)
+    public Task Verify(Combat combat, string? description, int? onlyVerifyCount = null)
     {
         if (onlyVerifyCount.HasValue && onlyVerifyCount != Count)
         {

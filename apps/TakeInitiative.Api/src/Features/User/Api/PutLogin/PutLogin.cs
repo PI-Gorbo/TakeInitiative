@@ -1,9 +1,7 @@
 using CSharpFunctionalExtensions;
 using FastEndpoints;
 using FastEndpoints.Security;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Options;
 using TakeInitiative.Utilities;
 using TakeInitiative.Utilities.Extensions;
 

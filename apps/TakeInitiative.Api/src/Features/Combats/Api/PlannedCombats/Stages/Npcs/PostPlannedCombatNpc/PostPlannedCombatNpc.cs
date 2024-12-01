@@ -1,7 +1,6 @@
 using System.Net;
 using FastEndpoints;
 using Marten;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using TakeInitiative.Utilities;
 using TakeInitiative.Utilities.Extensions;
 

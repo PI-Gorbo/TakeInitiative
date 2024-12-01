@@ -1,6 +1,5 @@
 using CSharpFunctionalExtensions;
 using FastEndpoints;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace TakeInitiative.Utilities.Extensions;
 

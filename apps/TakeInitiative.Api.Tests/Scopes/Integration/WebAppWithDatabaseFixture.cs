@@ -1,12 +1,8 @@
 
 using Alba;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Hosting;
 using NSubstitute;
 using TakeInitiative.Api.Bootstrap;
 using TakeInitiative.Utilities;

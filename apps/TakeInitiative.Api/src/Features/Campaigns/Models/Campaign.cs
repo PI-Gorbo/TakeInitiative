@@ -1,5 +1,3 @@
-using TakeInitiative.Utilities;
-
 namespace TakeInitiative.Api.Features.Campaigns;
 
 public record Campaign
