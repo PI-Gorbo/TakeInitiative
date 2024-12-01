@@ -1,12 +1,9 @@
 using System.Net;
 using System.Text;
-using CSharpFunctionalExtensions;
 using FastEndpoints;
-using FastEndpoints.Security;
 using Marten;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.Extensions.Options;
 using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Users;

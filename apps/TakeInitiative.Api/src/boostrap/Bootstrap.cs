@@ -1,4 +1,3 @@
-using System.Text.Json;
 using FastEndpoints.Security;
 using Marten;
 using Marten.Events.Daemon.Resiliency;

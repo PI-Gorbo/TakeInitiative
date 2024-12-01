@@ -1,12 +1,8 @@
-using System.Text.Json;
-using CSharpFunctionalExtensions;
 using FakeItEasy;
 using FluentAssertions;
-using Marten;
 using TakeInitiative.Api.Features;
 using TakeInitiative.Api.Features.Combats;
 using TakeInitiative.Utilities;
-using VerifyTests;
 
 namespace TakeInitiative.Api.Tests.Integration;
 
@@ -66,7 +62,7 @@ public class CharactersAddedAfterCombatStartedTest : IClassFixture<Authenticated
 
         // The DM adds a character to the staged list.
         var addStagedCharacterResult = await fixture
-            .PostAddStagedCharacter(new()
+            .PostStageCharacter(new()
             {
                 CombatId = combat.Id,
                 Character = new(

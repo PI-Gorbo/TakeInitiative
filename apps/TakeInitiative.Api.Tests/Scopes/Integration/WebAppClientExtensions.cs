@@ -87,7 +87,7 @@ public static class WebAppClientExtensions
         => client.Post<PostStagePlayerCharactersRequest, CombatResponse>(request, "/api/combat/stage/player-character");
     public static Task<Result<CombatResponse>> PostRollStagedCharactersIntoInitiative(this IWebAppClient client, PostRollStagedCharactersIntoInitiativeRequest request)
         => client.Post<PostRollStagedCharactersIntoInitiativeRequest, CombatResponse>(request, "/api/combat/stage/roll");
-    public static Task<Result<CombatResponse>> PostAddStagedCharacter(this IWebAppClient client, PostAddStagedCharacterRequest request)
+    public static Task<Result<CombatResponse>> PostStageCharacter(this IWebAppClient client, PostAddStagedCharacterRequest request)
     => client.Post<PostAddStagedCharacterRequest, CombatResponse>(request, "/api/combat/stage/character");
     public static Task<Result<PlannedCombat>> PutPlannedCombatNpc(this IWebAppClient client, PutPlannedCombatNpcRequest request)
         => client.Put<PutPlannedCombatNpcRequest, PlannedCombat>(request, "/api/campaign/planned-combat/stage/npc");

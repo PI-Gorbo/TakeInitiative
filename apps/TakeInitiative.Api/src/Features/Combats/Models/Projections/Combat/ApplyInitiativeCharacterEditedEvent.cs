@@ -1,10 +1,6 @@
-using System.Collections.Immutable;
-using JasperFx.Core;
 using Marten;
 using Marten.Events;
 using Marten.Events.Aggregation;
-using TakeInitiative.Utilities;
-using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Combats;
 public partial class CombatProjection : SingleStreamProjection<Combat>

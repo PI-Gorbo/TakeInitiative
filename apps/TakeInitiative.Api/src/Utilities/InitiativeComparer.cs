@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 
 namespace TakeInitiative.Utilities;
@@ -49,7 +50,7 @@ public class InitiativeComparer : IComparer<DiceRoll[]>, IEqualityComparer<DiceR
 
     public int GetHashCode([DisallowNull] DiceRoll[] obj)
     {
-        throw new NotImplementedException();
+        return ((IStructuralEquatable)obj.Select(x => x.Total).ToArray()).GetHashCode(EqualityComparer<int>.Default);
     }
 }
 

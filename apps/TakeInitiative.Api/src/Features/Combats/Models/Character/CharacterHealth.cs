@@ -1,5 +1,4 @@
 using System.Text.Json.Serialization;
-using FluentValidation;
 using TakeInitiative.Utilities;
 
 namespace TakeInitiative.Api.Features;

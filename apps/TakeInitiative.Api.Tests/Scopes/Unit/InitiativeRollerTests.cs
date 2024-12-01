@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using FluentAssertions;
 using NSubstitute;
 using NSubstitute.Core;

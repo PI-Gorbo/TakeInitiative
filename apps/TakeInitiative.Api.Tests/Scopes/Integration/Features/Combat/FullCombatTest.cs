@@ -1,12 +1,8 @@
-using System.Text.Json;
-using CSharpFunctionalExtensions;
 using FakeItEasy;
 using FluentAssertions;
-using Marten;
 using TakeInitiative.Api.Features;
 using TakeInitiative.Api.Features.Combats;
 using TakeInitiative.Utilities;
-using VerifyTests;
 
 namespace TakeInitiative.Api.Tests.Integration;
 
@@ -118,7 +114,7 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
         // Player adds their character to the combat.
         var addStagedPlayerCharacterResult = await fixture
             .LoginAsUser(Users.Player)
-            .PostAddStagedCharacter(new()
+            .PostStageCharacter(new()
             {
                 CombatId = openedCombat.Value.Combat.Id,
                 Character = new(
@@ -246,7 +242,7 @@ public class FullCombatTest : IClassFixture<AuthenticatedWebAppWithDatabaseFixtu
         // The DM adds a character to the staged list.
         var addStagedCharacterResult = await fixture
             .LoginAsUser(Users.DM)
-            .PostAddStagedCharacter(new()
+            .PostStageCharacter(new()
             {
                 CombatId = combat.Id,
                 Character = new(

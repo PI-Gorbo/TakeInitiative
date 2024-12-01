@@ -1,10 +1,6 @@
 using System.Net;
-using CSharpFunctionalExtensions;
 using FastEndpoints;
-using FastEndpoints.Security;
 using Marten;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Options;
 using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Users;
