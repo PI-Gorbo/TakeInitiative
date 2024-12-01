@@ -91,19 +91,19 @@ public class InitiativeRoller(IDiceRoller roller) : IInitiativeRoller
         // Consider that initiative is modeled as an array of values.
         // We can group by common prefix.
         int prefixLength = 1;
-        PrefixGrouping[] collisions = GroupRollsByPrefix(prefixLength, outgoingCharacterInitiative).ToArray();
+        PrefixGrouping[] collisions = GroupRollsByPrefix(prefixLength, outgoingCharacterInitiative);
         while (collisions.Length > 0)
         {
             // Loop through each group with two or more people in it.
             foreach (var group in collisions)
             {
                 // AN example of a group
-                // I : 0 1
-                //     6    
-                //     6 3 
-                //     6 2
+                // Index :  0 1
+                //          6    
+                //          6 3 
+                //          6 2
                 // Index = 0
-                // We want to roll initiative for everyone who's length is the same as the prefix length.
+                // We want to extend the initiative rolls of all characters who's initiative is the same as the prefix length.
                 foreach (var characterRoll in group.CharactersWithMatchingRollPrefix.Where(x =>
                              x.DiceRoll.Length == prefixLength))
                 {
@@ -113,78 +113,10 @@ public class InitiativeRoller(IDiceRoller roller) : IInitiativeRoller
                 }
             }
 
-            collisions = GroupRollsByPrefix(++prefixLength, outgoingCharacterInitiative).ToArray();
+            collisions = GroupRollsByPrefix(++prefixLength, outgoingCharacterInitiative);
         }
 
         return outgoingCharacterInitiative;
-        //
-        // int rollIndex = 0;
-        // List<IGrouping<int, KeyValuePair<Guid, CharacterInitiative>>> rollsGroupedByConflict =
-        //     outgoingCharacterInitiative
-        //         .Where(x => x.Value.Value.Length > rollIndex)
-        //         .GroupBy(x => x.Value.Value[rollIndex].Total)
-        //         .ToList();
-        //
-        // // Loop while there are any conflicts.
-        // while (rollsGroupedByConflict.Where(x => x.Count() > 1).Any())
-        // {
-        //     // Resolve all conflicts.
-        //     foreach (var conflictGroup in rollsGroupedByConflict.Where(x => x.Count() > 1))
-        //     {
-        //         // The list of all the ids of the elements that need to be extended.
-        //         Guid[] idsThatNeedToBeExtended = Array.Empty<Guid>();
-        //         if (conflictGroup.Select(x => x.Value.Value.Length).Distinct().Count() ==
-        //             1) // When all the conflicting elements in the list are the same length.
-        //         {
-        //             // One of two situations:
-        //             //// Situation 1, index = 0 -> here, we just need to increment index (ie: do nothing.)
-        //             // Incoming: 6 3
-        //             // Current:  6 2 
-        //             //           6 3
-        //             //// Situation 2, index = 0 -> Here, we need to extend both values in the group.
-        //             // Incoming: 6
-        //             // Current:  6
-        //
-        //             var firstRoll = conflictGroup.First();
-        //             // Situation 2.
-        //             if (rollIndex + 1 == firstRoll.Value.Value.Length)
-        //             {
-        //                 foreach (var characterRoll in conflictGroup)
-        //                 {
-        //                     var previousRoll = outgoingCharacterInitiative[characterRoll.Key];
-        //                     outgoingCharacterInitiative[characterRoll.Key] =
-        //                         new CharacterInitiative([.. previousRoll.Value, roller.RollD20()]);
-        //                 }
-        //             }
-        //         }
-        //         else // When all the rolls are not the same length.
-        //         {
-        //             // Otherwise, the other possible situation is this:
-        //             // Incoming: 6
-        //             // Current:  6 2
-        //             //           6 5
-        //             // We just need to extend the short roll(s).
-        //             var idsToExtend = conflictGroup.Where(x => rollIndex + 1 == x.Value.Value.Length)
-        //                 .Select(x => x.Key);
-        //             foreach (var id in idsToExtend)
-        //             {
-        //                 var previousRoll = outgoingCharacterInitiative[id];
-        //                 outgoingCharacterInitiative[id] =
-        //                     new CharacterInitiative([.. previousRoll.Value, roller.RollD20()]);
-        //             }
-        //         }
-        //
-        //         rollIndex++;
-        //     }
-        //
-        //     // Re-compute if there are any conflicts.
-        //     rollsGroupedByConflict = outgoingCharacterInitiative
-        //         .Where(x => x.Value.Value.Length > rollIndex)
-        //         .GroupBy(x => x.Value.Value[rollIndex].Total)
-        //         .ToList();
-        // }
-        //
-        // return outgoingCharacterInitiative;
     }
 
     internal Result<List<(Guid id, DiceRoll roll)>> ComputeOneRollForEachCharacter(
@@ -213,17 +145,14 @@ public class InitiativeRoller(IDiceRoller roller) : IInitiativeRoller
 
     internal record PrefixGrouping(DiceRoll[] RollPrefix, CharacterDiceRoll[] CharactersWithMatchingRollPrefix);
 
-    internal IEnumerable<PrefixGrouping> GroupRollsByPrefix(int prefixLength,
-        Dictionary<Guid, CharacterInitiative> characters)
+    internal PrefixGrouping[] GroupRollsByPrefix(int prefixLength, Dictionary<Guid, CharacterInitiative> characters)
     {
-        var items =  characters.Where(x => x.Value.Value.Length >= prefixLength)
+        return characters.Where(x => x.Value.Value.Length >= prefixLength)
             .GroupBy(x => x.Value.Value[0..prefixLength], new InitiativeComparer())
             .Where(x => x.Count() > 1) // Ensure we only return collisions.
             .Select(group =>
                 new PrefixGrouping(group.Key,
                     group.Select(x => new CharacterDiceRoll(x.Key, x.Value.Value)).ToArray()))
-            .ToList();
-
-        return items;
+            .ToArray();
     }
 }
