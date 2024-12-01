@@ -91,21 +91,32 @@ public class InitiativeRoller(IDiceRoller roller) : IInitiativeRoller
         // Consider that initiative is modeled as an array of values.
         // We can group by common prefix.
         int prefixLength = 1;
-        PrefixGrouping[] collisions = [];
-        do
+        PrefixGrouping[] collisions = GroupRollsByPrefix(prefixLength, outgoingCharacterInitiative).ToArray();
+        while (collisions.Length > 0)
         {
-            collisions = GroupRollsByPrefix(prefixLength++, outgoingCharacterInitiative).ToArray();
-            // What are the possible situations for each grouping?
-            // Situation 1:
-            // Group looks like: [(Char1, 6, 4), (Char2, 6, 2)], grouping index = 0
-            // Here, we can just continue.
-            if (collisions.SelectMany(x => x.CharactersWithMatchingRollPrefix).Select(x => x.DiceRoll)
-                .All(roll => roll.Length > prefixLength))
+            // Loop through each group with two or more people in it.
+            foreach (var group in collisions)
             {
+                // AN example of a group
+                // I : 0 1
+                //     6    
+                //     6 3 
+                //     6 2
+                // Index = 0
+                // We want to roll initiative for everyone who's length is the same as the prefix length.
+                foreach (var characterRoll in group.CharactersWithMatchingRollPrefix.Where(x =>
+                             x.DiceRoll.Length == prefixLength))
+                {
+                    var previousRoll = outgoingCharacterInitiative[characterRoll.CharacterId];
+                    outgoingCharacterInitiative[characterRoll.CharacterId] =
+                        new CharacterInitiative([.. previousRoll.Value, roller.RollD20()]);
+                }
             }
-        } while (collisions.Length > 0);
 
+            collisions = GroupRollsByPrefix(++prefixLength, outgoingCharacterInitiative).ToArray();
+        }
 
+        return outgoingCharacterInitiative;
         //
         // int rollIndex = 0;
         // List<IGrouping<int, KeyValuePair<Guid, CharacterInitiative>>> rollsGroupedByConflict =
@@ -205,11 +216,14 @@ public class InitiativeRoller(IDiceRoller roller) : IInitiativeRoller
     internal IEnumerable<PrefixGrouping> GroupRollsByPrefix(int prefixLength,
         Dictionary<Guid, CharacterInitiative> characters)
     {
-        return characters.Where(x => x.Value.Value.Length <= prefixLength)
+        var items =  characters.Where(x => x.Value.Value.Length >= prefixLength)
             .GroupBy(x => x.Value.Value[0..prefixLength], new InitiativeComparer())
             .Where(x => x.Count() > 1) // Ensure we only return collisions.
             .Select(group =>
                 new PrefixGrouping(group.Key,
-                    group.Select(x => new CharacterDiceRoll(x.Key, x.Value.Value)).ToArray()));
+                    group.Select(x => new CharacterDiceRoll(x.Key, x.Value.Value)).ToArray()))
+            .ToList();
+
+        return items;
     }
 }

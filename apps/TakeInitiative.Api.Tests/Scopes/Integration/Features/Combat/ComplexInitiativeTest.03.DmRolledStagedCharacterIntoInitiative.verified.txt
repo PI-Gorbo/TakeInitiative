@@ -154,10 +154,7 @@
       Id: Guid_4,
       Name: Another Enemy - 1!,
       Health: {
-        TYPE: Fixed,
-        CurrentHealth: 10,
-        MaxHealth: 20,
-        DiceRoll: null
+        TYPE: None
       },
       Initiative: {
         Value: [

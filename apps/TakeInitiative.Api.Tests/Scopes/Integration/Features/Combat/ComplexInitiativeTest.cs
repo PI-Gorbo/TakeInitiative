@@ -123,7 +123,7 @@ public class ComplexInitiativeTest : IClassFixture<AuthenticatedWebAppWithDataba
             {
                 CombatId = combat.Id,
                 Character = new(
-                    Health: new UnevaluatedCharacterHealth.Fixed(10, 20),
+                    Health: new UnevaluatedCharacterHealth.None(),
                     Initiative: new UnevaluatedCharacterInitiative("3"), 
                     Name: "Another Enemy - 1!",
                     ArmourClass: null,
@@ -148,7 +148,7 @@ public class ComplexInitiativeTest : IClassFixture<AuthenticatedWebAppWithDataba
             {
                 CombatId = combat.Id,
                 Character = new(
-                    Health: new UnevaluatedCharacterHealth.Fixed(10, 20),
+                    Health: new UnevaluatedCharacterHealth.None(),
                     Initiative: new UnevaluatedCharacterInitiative("5"), 
                     Name: "Another Enemy - 2!",
                     ArmourClass: null,

@@ -78,9 +78,7 @@
       Id: Guid_5,
       Name: Another Enemy - 1!,
       Health: {
-        TYPE: Fixed,
-        CurrentHealth: 10,
-        MaxHealth: 20
+        TYPE: None
       },
       Initiative: {
         Roll: 3
