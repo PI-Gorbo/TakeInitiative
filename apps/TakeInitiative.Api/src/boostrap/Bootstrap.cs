@@ -1,4 +1,7 @@
 using FastEndpoints.Security;
+
+using GP.MartenIdentity;
+
 using Marten;
 using Marten.Events.Daemon.Resiliency;
 using Marten.Events.Projections;
@@ -28,6 +31,7 @@ public static class Bootstrap
 
             opts.Schema.For<ApplicationUser>();
             opts.Schema.For<ApplicationUserRole>();
+            
             opts.Schema.For<Campaign>()
                 .Index(x => x.CampaignName);
 
@@ -75,8 +79,8 @@ public static class Bootstrap
                 };
             })
             .AddRoles<ApplicationUserRole>()
-            .AddUserStore<MartenUserStore>()
-            .AddRoleStore<MartenRoleStore>()
+            .AddUserStore<MartenUserStore<ApplicationUser, ApplicationUserRole>>()
+            .AddRoleStore<MartenRoleStore<ApplicationUserRole>>()
             .AddSignInManager() // Sign in manager allows users to sign in and out, and validates these operations.
             .AddDefaultTokenProviders(); // Default token providers for password changes and other temporary auth needs.
 

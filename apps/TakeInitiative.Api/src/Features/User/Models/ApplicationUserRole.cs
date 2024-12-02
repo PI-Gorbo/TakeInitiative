@@ -1,6 +1,9 @@
 using System.Security.Claims;
+
+using GP.MartenIdentity;
+
 namespace TakeInitiative.Api.Features.Users;
-public class ApplicationUserRole
+public class ApplicationUserRole : MartenIdentityRole
 {
     public Guid Id { get; set; }
 
