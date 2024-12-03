@@ -4,6 +4,7 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR ./app
 
 # Add Nuget Source.
+ARG personal_github_token
 RUN dotnet nuget add source --store-password-in-clear-text --name "GitHubPackages" --username "PI-Gorbo" --password "$personal_github_token" "https://nuget.pkg.github.com/PI-Gorbo/index.json"
 
 # Copy the project file and restore any dependencies (use .csproj for the project name)
