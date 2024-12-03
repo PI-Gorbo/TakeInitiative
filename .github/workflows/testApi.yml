@@ -15,6 +15,9 @@ on:
             - "**.cs"
             - "**.csproj"
 
+env:
+  personal_access_token: $GORBOPACKAGESGITHUBTOKEN
+
 jobs:
     test:
         runs-on: ubuntu-latest
