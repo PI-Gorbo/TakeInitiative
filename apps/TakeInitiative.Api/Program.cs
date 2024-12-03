@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 namespace TakeInitiative.Api;
 internal class Program
 {
+    
     private static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
