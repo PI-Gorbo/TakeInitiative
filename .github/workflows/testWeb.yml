@@ -4,30 +4,30 @@
 name: Test Web
 
 on:
-    push:
-        branches: ["dev"]
-        paths:
-            - ".github\workflows\testWeb.yml"
-            - "**.vue"
-            - "**.ts"
-    pull_request:
-        branches: ["dev"]
-        paths:
-            - ".github\workflows\testWeb.yml" 
-            - "**.vue"
-            - "**.ts"
+  push:
+    branches: [ "dev" ]
+    paths:
+      - ".github\workflows\testWeb.yml"
+      - "**.vue"
+      - "**.ts"
+  pull_request:
+    branches: [ "dev" ]
+    paths:
+      - ".github\workflows\testWeb.yml"
+      - "**.vue"
+      - "**.ts"
 
 jobs:
-    test:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v4
-            - name: Setup .NET
-              uses: actions/setup-node@v4
-              with:
-                  node-version: 18
-            - name: Run Typecheck
-              run: |
-                  cd ./apps/TakeInitiative.Web
-                  npm ci
-                  npx nuxi typecheck
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Run Typecheck
+        run: |
+          cd ./apps/TakeInitiative.Web
+          npm ci
+          npx nuxi typecheck
