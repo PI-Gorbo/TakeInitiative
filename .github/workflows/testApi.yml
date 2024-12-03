@@ -33,7 +33,7 @@ jobs:
         with:
           python-version: "3.11"
       - name: PrintEnv
-        run: run env
+        run: env
       - name: Restore dependencies
         run: dotnet restore
       - name: Build
