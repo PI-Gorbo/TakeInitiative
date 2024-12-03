@@ -7,16 +7,18 @@ on:
     push:
         branches: ["dev"]
         paths:
+            - ".github\workflows\testApi.yml" 
             - "**.cs"
             - "**.csproj"
     pull_request:
         branches: ["dev"]
         paths:
+            - ".github\workflows\testApi.yml"
             - "**.cs"
             - "**.csproj"
 
 env:
-  personal_access_token: $GORBOPACKAGESGITHUBTOKEN
+  personal_access_token: ${{ secrets.GORBOPACKAGESGITHUBTOKEN }}
 
 jobs:
     test:
