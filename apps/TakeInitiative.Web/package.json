@@ -37,18 +37,23 @@
         "zod": "^3.23.8"
     },
     "devDependencies": {
+        "@eslint/js": "^9.16.0",
         "@nuxt/devtools": "^1.0.8",
         "@nuxt/icon": "^1.4.10",
         "@nuxtjs/device": "^3.1.1",
         "@tailwindcss/forms": "^0.5.7",
         "autoprefixer": "^10.4.17",
         "daisyui": "^4.10.5",
+        "eslint": "^9.16.0",
+        "eslint-plugin-vue": "^9.32.0",
+        "globals": "^15.13.0",
         "nuxt": "^3.12.3",
         "postcss": "^8.4.35",
         "prettier": "^3.2.5",
         "prettier-plugin-tailwindcss": "^0.5.11",
         "tailwindcss": "^3.4.1",
         "typescript": "^5.5.4",
+        "typescript-eslint": "^8.17.0",
         "vue-tsc": "^2.0.29"
     }
 }

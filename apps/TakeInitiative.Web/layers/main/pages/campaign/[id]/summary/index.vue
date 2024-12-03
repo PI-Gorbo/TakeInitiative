@@ -6,9 +6,10 @@
                 {{ campaignStore.state.campaign?.campaignName }}!</label
             >
         </header>
+
         <IndexCombatBanner />
 
-        <section class="flex flex-col rounded-md bg-take-purple-dark p-2">
+        <section v-if="description != '' || campaignStore.isDm" class="flex flex-col rounded-md bg-take-purple-dark p-2">
             <FormBase
                 class="flex flex-1 flex-col"
                 :onSubmit="submitDetails"
@@ -47,13 +48,10 @@
                     "
                 />
             </FormBase>
-            <div class="select-none px-2">
-                {{ formattedCampaignStartDate }}
-            </div>
         </section>
 
         <section
-            class="flex max-h-[50%] flex-1 flex-col gap-4 overflow-y-auto rounded-md bg-take-purple-dark p-2"
+            class="flex max-h-[50%] flex-1 flex-col gap-2 overflow-y-auto rounded-md bg-take-purple-dark p-2"
         >
             <label class="block w-full font-NovaCut text-lg"> Players </label>
             <div class="overflow-y-auto">
@@ -115,16 +113,21 @@
                 </li>
                 <li
                     v-if="campaignStore.state.combatHistory?.length == 0"
-                    class="px-2 text-sm"
+                    class="px-2 text-sm text-take-grey"
                 >
                     Complete your first combat to see a history here!
                 </li>
             </ul>
         </section>
+
+      <section>
+        <div class="select-none px-2 text-sm text-take-grey">
+          {{ formattedCampaignStartDate }}
+        </div>
+      </section>
     </main>
 </template>
 <script setup lang="ts">
-import { CombatState } from "base/utils/types/models";
 import { useForm } from "vee-validate";
 import { parseISO, format } from "date-fns";
 import { toTypedSchema } from "@vee-validate/zod";
@@ -178,7 +181,7 @@ async function submitDetails(): Promise<unknown> {
 }
 const formattedCampaignStartDate = computed(
     () =>
-        "Created on " +
+        "Created " +
         (campaign.value?.createdTimestamp != null
             ? format(parseISO(campaign.value?.createdTimestamp!), "PPPP")
             : ""),

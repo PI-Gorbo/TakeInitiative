@@ -2,10 +2,9 @@
     <ul>
         <li v-if="userHasNoResources">
             <div class="flex items-center justify-between rounded-md p-2">
-                <label class="text-sm">
-                    Put your relevant links here.<br />
-                    You can configure them to be private (just for you), for you
-                    and the DM, or for everyone!
+                <label class="text-sm text-take-grey">
+                    Put your relevant links here.
+                    They can be private, between you and the DM, or for everyone!
                 </label>
                 <FormButton
                     label="Add"
