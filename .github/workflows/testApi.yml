@@ -30,7 +30,7 @@ jobs:
         with:
           python-version: "3.11"
       - name: Restore dependencies
-        run: dotnet nuget add source --name "GitHubPackages" --username "PI-Gorbo" --password "${{ secrets.GORBOPACKAGESGITHUBTOKEN }}" "https://nuget.pkg.github.com/PI-Gorbo/index.json"
+        run: dotnet nuget add source --name "GitHubPackages" --username "PI-Gorbo" --password "${{ vars.GORBO_PACKAGES_GITHUB_TOKEN }}" "https://nuget.pkg.github.com/PI-Gorbo/index.json"
       - name: Restore dependencies
         run: dotnet restore
       - name: Build
