@@ -23,6 +23,7 @@ public static class Bootstrap
     {
         var martenOpts = services.AddMarten(opts =>
         {
+            
             opts.Connection(config.GetConnectionString("TakeDB") ?? throw new OperationCanceledException("Required Configuration 'ConnectionStrings:Marten' is missing."));
 
             // Use system.text.json            
