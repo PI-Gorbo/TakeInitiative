@@ -17,9 +17,6 @@ on:
       - "**.cs"
       - "**.csproj"
 
-env:
-  personal_access_token: ${{ secrets.GORBOPACKAGESGITHUBTOKEN }}
-
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -32,8 +29,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: PrintEnv
-        run: env
+      - name: Restore dependencies
+        run: dotnet nuget add source --name "GitHubPackages" --source "https://nuget.pkg.github.com/PI-Gorbo/index.json" --username "PI-Gorbo" --password "${{ secrets.GORBOPACKAGESGITHUBTOKEN }}"
       - name: Restore dependencies
         run: dotnet restore
       - name: Build

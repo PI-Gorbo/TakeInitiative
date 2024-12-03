@@ -53,9 +53,27 @@ This will:
 4. Install the d20 package from python
 5. Run `make api` (Runs `dotnet run`)
 
+## Nuget
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+    <packageSources>
+        <add key="github" value="https://nuget.pkg.github.com/PI-Gorbo/index.json" />
+    </packageSources>
+    <packageSourceCredentials>
+        <github>
+            <add key="Username" value="PI-Gorbo" />
+            <add key="ClearTextPassword" value="%peronsal_github_token%" />
+        </github>
+    </packageSourceCredentials>
+</configuration>
+```
+
 ### Web
 
 1. Go to the folder `./apps/TakeInitiative.Web`
 2. Run `npm i` to install all relevant packages.
 3. Make a copy of the file `TEMPLATE.env`, and rename it `.env`. This file serves the same utility as the `appsettings.development.json` file on the API.
 4. Run `npm run dev` to launch the web.
+

@@ -484,3 +484,4 @@ $RECYCLE.BIN/
 *.swp
 
 apps/TakeInitiative.Api/appsettings.Development.json
+nuget.config
