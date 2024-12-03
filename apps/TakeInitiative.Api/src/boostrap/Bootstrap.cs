@@ -5,7 +5,6 @@ using GP.MartenIdentity;
 using Marten;
 using Marten.Events.Daemon.Resiliency;
 using Marten.Events.Projections;
-using Marten.Services.Json;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -27,7 +26,7 @@ public static class Bootstrap
             opts.Connection(config.GetConnectionString("TakeDB") ?? throw new OperationCanceledException("Required Configuration 'ConnectionStrings:Marten' is missing."));
 
             // Use system.text.json            
-            opts.UseDefaultSerialization(serializerType: SerializerType.SystemTextJson);
+            opts.UseSystemTextJsonForSerialization();
 
             opts.Schema.For<ApplicationUser>();
             opts.Schema.For<ApplicationUserRole>();
