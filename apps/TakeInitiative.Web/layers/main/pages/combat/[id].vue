@@ -67,6 +67,18 @@
                             loadingText: 'Finishing...',
                         }"
                     />
+                    <FormButton
+                        v-else-if="combatIsFinished"
+                        icon="house"
+                        label="Go Home"
+                        buttonColour="take-purple"
+                        hoverButtonColour="take-yellow-dark"
+                        :loadingDisplay="{
+                        showSpinner: true,
+                        loadingText: 'End...',
+                    }"
+                        :click="goHome"
+                    />
                 </div>
             </header>
             <main
@@ -112,18 +124,6 @@
                         loadingText: 'End...',
                     }"
                     :click="combatStore.endTurn"
-                />
-                <FormButton
-                    v-else-if="combatIsFinished"
-                    icon="house"
-                    label="Go Home"
-                    buttonColour="take-purple"
-                    hoverButtonColour="take-yellow-dark"
-                    :loadingDisplay="{
-                        showSpinner: true,
-                        loadingText: 'End...',
-                    }"
-                    :click="goHome"
                 />
             </footer>
         </div>

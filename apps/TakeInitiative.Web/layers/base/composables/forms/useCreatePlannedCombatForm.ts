@@ -18,7 +18,7 @@ export const useCreatePlannedCombatForm = () => {
                         required_error: "Please provide a name for the combat.",
                     }),
                 })
-                .required(),
+                .required()
         ),
     });
 
@@ -31,10 +31,10 @@ export const useCreatePlannedCombatForm = () => {
 
     // Form Submit
     const campaignStore = useCampaignStore();
-    function submit(): Promise<void | Omit<
-        CreatePlannedCombatRequest,
-        "campaignId"
-    >> {
+
+    function submit(
+        startCombatImmediately: boolean
+    ): Promise<void | Omit<CreatePlannedCombatRequest, "campaignId">> {
         formState.error = null;
         return validate()
             .then((result) => {
@@ -42,7 +42,10 @@ export const useCreatePlannedCombatForm = () => {
                     Promise.reject(result.errors);
                 }
             })
-            .then(() => ({ combatName: combatName.value! }));
+            .then(() => ({
+                combatName: combatName.value!,
+                startCombatImmediately: startCombatImmediately,
+            }));
     }
 
     return {

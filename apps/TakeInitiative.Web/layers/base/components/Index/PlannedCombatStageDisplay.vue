@@ -101,7 +101,7 @@ const props = defineProps<{
 }>();
 const stageName = ref<string>(props.stage.name);
 const npcList = computed(() =>
-    props.stage.npcs.toSorted((npc1, npc2) => {
+    props.stage.npcs.sort((npc1, npc2) => {
         // Sort Alphabetically, then by Id.
         if (npc1.name < npc2.name) return -1;
         if (npc1.name > npc2.name) return 1;

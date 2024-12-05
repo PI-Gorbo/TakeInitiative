@@ -53,19 +53,20 @@ public static class Bootstrap
 
         }).AddAsyncDaemon(DaemonMode.Solo);
 
-        if (IsDevelopment)
-        {
-            martenOpts.ApplyAllDatabaseChangesOnStartup();
-        }
+        // if (IsDevelopment)
+        // {
+        //     martenOpts.ApplyAllDatabaseChangesOnStartup();
+        // }
 
         martenOpts.UseLightweightSessions();
 
         return services;
     }
 
-    public static IServiceCollection AddIdentityAuthenticationAndAuthorization(this IServiceCollection services, IConfiguration config)
+    public static WebApplicationBuilder AddIdentityAuthenticationAndAuthorization(this WebApplicationBuilder builder)
     {
-        services
+
+        builder.Services
             .AddIdentityCore<ApplicationUser>(opts =>
             {
                 opts.SignIn.RequireConfirmedAccount = false;
@@ -84,7 +85,7 @@ public static class Bootstrap
             .AddSignInManager() // Sign in manager allows users to sign in and out, and validates these operations.
             .AddDefaultTokenProviders(); // Default token providers for password changes and other temporary auth needs.
 
-        services
+        builder.Services
             .AddTransient<IAuthorizationHandler, RequireUserToExistInDatabaseAuthorizationHandler>()
             .AddTransient<IAuthorizationHandler, RequireNotInMaintenanceModeAuthorizationHandler>()
             .AddCookieAuth(validFor: TimeSpan.FromHours(24), opts =>
@@ -102,7 +103,11 @@ public static class Bootstrap
                     ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
                     return Task.CompletedTask;
                 };
-                opts.Cookie.Domain = config.GetValue<string>("CookieDomain") ?? throw new InvalidOperationException("Attempted to find configuration for the value CookieDomain but there was none provided.");
+                opts.Cookie.Domain = builder.Configuration.GetValue<string>("CookieDomain") ?? throw new InvalidOperationException("Attempted to find configuration for the value CookieDomain but there was none provided.");
+
+                opts.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+                    ? CookieSecurePolicy.SameAsRequest
+                    : CookieSecurePolicy.Always;
             })
             .AddAuthorization(opts =>
             {
@@ -127,9 +132,9 @@ public static class Bootstrap
                 opts.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
             });
 
-        services.AddTransient<ConfirmEmailSender>();
-        services.AddTransient<ResetPasswordEmailSender>();
-        return services;
+        builder.Services.AddTransient<ConfirmEmailSender>();
+        builder.Services.AddTransient<ResetPasswordEmailSender>();
+        return builder;
     }
 
     public static IServiceCollection AddSerilog(this IServiceCollection services)

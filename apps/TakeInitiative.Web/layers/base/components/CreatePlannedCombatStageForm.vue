@@ -17,6 +17,16 @@
             colour="take-navy-light"
             :autoFocus="true"
         />
+
+        <div
+            v-if="
+                createPlannedCombatStageForm.hasError
+            "
+        >
+            <label class="text-take-red">
+                {{ createPlannedCombatStageForm.errors }}
+            </label>
+        </div>
         <div class="flex justify-center">
             <FormButton
                 :isLoading="submitting"

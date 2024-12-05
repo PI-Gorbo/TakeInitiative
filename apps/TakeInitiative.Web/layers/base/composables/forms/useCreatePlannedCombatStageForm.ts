@@ -44,6 +44,7 @@ export const useCreatePlannedCombatStageForm = () => {
     return {
         validate,
         errors,
+        hasError: computed(() => formState.error != null),
         name: {
             value: name,
             props: nameInputProps,

@@ -30,7 +30,7 @@ internal class Program
         builder.Services.AddOptionObjects(builder.Configuration);
         builder.Services.AddMartenDB(builder.Configuration, builder.Environment.IsDevelopment());
         builder.Services.AddSerilog();
-        builder.Services.AddIdentityAuthenticationAndAuthorization(builder.Configuration);
+        builder.AddIdentityAuthenticationAndAuthorization();
         builder.Services.AddDiceRollers(builder.Configuration);
         builder.Services.AddSendGrid(builder.Configuration);
 
