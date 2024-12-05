@@ -1,6 +1,6 @@
 <template>
     <TransitionGroup name="fade" class="h-full w-full p-2" tag="main">
-        <div key="loading" v-if="pending || campaignStore.state == undefined">
+        <div key="loading" v-if="status == 'pending' || campaignStore.state == undefined">
             Loading...
         </div>
 
@@ -275,7 +275,7 @@
     );
 
     // Page Setup
-    const { pending, error } = await useAsyncData(
+    const { status ,refresh } = await useAsyncData(
         "CampaignCombats",
         async (nuxtApp) => {
             const getData = getCombatsRequest(nuxtApp?.$axios!);
@@ -294,8 +294,10 @@
         },
         {
             watch: [() => route.params.id],
+
         }
     );
+
 
     // Modals
     const deleteCombatModal = ref<InstanceType<typeof ConfirmModal> | null>(
