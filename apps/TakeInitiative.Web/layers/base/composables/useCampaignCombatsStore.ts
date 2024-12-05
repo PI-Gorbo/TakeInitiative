@@ -76,7 +76,7 @@ export const useCampaignCombatsStore = defineStore(
 
         // Planned Combats
         async function createPlannedCombat(
-            request: Omit<CreatePlannedCombatRequest, "campaignId">,
+            request: Omit<CreatePlannedCombatRequest, "campaignId">
         ): Promise<PlannedCombat> {
             return await api.plannedCombat
                 .create({

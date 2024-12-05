@@ -24,7 +24,7 @@
         "@pinia/nuxt": "^0.5.1",
         "@types/node": "^20.11.24",
         "@vee-validate/zod": "^4.13.2",
-        "axios": "^1.6.7",
+        "axios": "^1.7.4",
         "date-fns": "^3.3.1",
         "expr-eval": "^2.0.2",
         "gsap": "^3.12.5",
@@ -39,6 +39,7 @@
     "devDependencies": {
         "@eslint/js": "^9.16.0",
         "@nuxt/devtools": "^1.0.8",
+        "@nuxt/eslint": "^0.7.2",
         "@nuxt/icon": "^1.4.10",
         "@nuxtjs/device": "^3.1.1",
         "@tailwindcss/forms": "^0.5.7",

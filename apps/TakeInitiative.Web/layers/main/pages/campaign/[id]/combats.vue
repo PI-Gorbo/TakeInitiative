@@ -19,8 +19,7 @@
                 campaignCombatsStore.hasAnyPlannedCombats ||
                 campaignCombatsStore.hasAnyCombats ||
                 hasActiveCombat
-            "
-        >
+            ">
             <aside
                 key="combatAside"
                 v-if="
@@ -34,8 +33,7 @@
                     {
                         'col-span-3': !isSmallScreen,
                     },
-                ]"
-            >
+                ]">
                 <div class="flex flex-col gap-2" v-if="hasActiveCombat">
                     <div class="flex items-center justify-between">
                         <div>
@@ -61,8 +59,7 @@
                             icon="plus"
                             size="sm"
                             buttonColour="take-navy"
-                            @clicked="showCreatePlannedCombatModal"
-                        />
+                            @clicked="showCreatePlannedCombatModal" />
                     </div>
                     <ul class="flex flex-col gap-2 overflow-y-auto">
                         <li
@@ -73,8 +70,7 @@
                                 'flex select-none items-center justify-between rounded-md border border-take-purple bg-take-purple p-1',
                                 campaignCombatsStore.state.selectedCombat?.id ==
                                     plannedCombat.id && 'border-take-yellow',
-                            ]"
-                        >
+                            ]">
                             <span class="px-1">{{
                                 plannedCombat.combatName
                             }}</span>
@@ -88,8 +84,7 @@
                                     :click="
                                         () => onOpenCombat(plannedCombat.id)
                                     "
-                                    size="sm"
-                                />
+                                    size="sm" />
 
                                 <FormButton
                                     icon="pen"
@@ -98,11 +93,10 @@
                                     @clicked="
                                         () => {
                                             campaignCombatsStore.selectPlannedCombat(
-                                                plannedCombat.id,
+                                                plannedCombat.id
                                             );
                                         }
-                                    "
-                                />
+                                    " />
                             </div>
                         </li>
                     </ul>
@@ -124,8 +118,7 @@
                                 finishedCombat.combatId ==
                                     campaignCombatsStore.selectedCombat
                                         ?.combatId && 'border-take-yellow',
-                            ]"
-                        >
+                            ]">
                             <span class="px-1">{{
                                 finishedCombat.combatName
                             }}</span>
@@ -136,11 +129,10 @@
                                 @clicked="
                                     () => {
                                         campaignCombatsStore.selectCombat(
-                                            finishedCombat.combatId,
+                                            finishedCombat.combatId
                                         );
                                     }
-                                "
-                            />
+                                " />
                         </li>
                     </ul>
                     <label
@@ -155,15 +147,13 @@
             <main
                 key="plannedCombat"
                 v-if="campaignCombatsStore.selectedPlannedCombat"
-                class="col-span-7 flex flex-col overflow-y-auto"
-            >
+                class="col-span-7 flex flex-col overflow-y-auto">
                 <header class="flex items-center justify-between gap-2 pb-2">
                     <FormButton
                         v-if="isSmallScreen"
                         icon="arrow-left"
                         buttonColour="take-navy"
-                        @click="() => campaignCombatsStore.unselectCombat()"
-                    />
+                        @click="() => campaignCombatsStore.unselectCombat()" />
                     <div :class="['px-2 text-center font-NovaCut']">
                         {{
                             campaignCombatsStore.selectedPlannedCombat
@@ -179,10 +169,9 @@
                             () =>
                                 campaignCombatsStore.deletePlannedCombat(
                                     campaignCombatsStore.selectedPlannedCombat
-                                        ?.id!,
+                                        ?.id!
                                 )
-                        "
-                    />
+                        " />
                 </header>
                 <div class="overflow-y-auto">
                     <IndexPlannedCombatSection />
@@ -192,19 +181,16 @@
             <main
                 key="combat"
                 v-else-if="campaignCombatsStore.selectedCombat"
-                class="col-span-7"
-            >
+                class="col-span-7">
                 <FormButton
                     v-if="isSmallScreen"
                     icon="arrow-left"
                     size="lg"
                     buttonColour="take-navy"
-                    @click="() => campaignCombatsStore.unselectCombat()"
-                />
+                    @click="() => campaignCombatsStore.unselectCombat()" />
 
                 <CombatHistorySection
-                    :combatId="campaignCombatsStore.selectedCombat.combatId"
-                />
+                    :combatId="campaignCombatsStore.selectedCombat.combatId" />
             </main>
 
             <main
@@ -214,12 +200,10 @@
                     !campaignCombatsStore.selectedCombat &&
                     !campaignCombatsStore.selectedPlannedCombat
                 "
-                class="col-span-7 p-2 px-4"
-            >
+                class="col-span-7 p-2 px-4">
                 <div
                     class="flex h-full w-full cursor-pointer items-center justify-center rounded border border-dashed border-take-purple-light"
-                    @click="showCreatePlannedCombatModal"
-                >
+                    @click="showCreatePlannedCombatModal">
                     Create a planned combat or finish the current combat to see
                     something here
                 </div>
@@ -229,11 +213,9 @@
         <section
             class="flex justify-center"
             v-else
-            key="createFirstPlannedCombat"
-        >
+            key="createFirstPlannedCombat">
             <div
-                class="flex w-full flex-col items-center rounded bg-take-purple-dark px-5 py-2 md:w-2/3"
-            >
+                class="flex w-full flex-col items-center rounded bg-take-purple-dark px-5 py-2 md:w-2/3">
                 <h2 class="w-full text-center text-lg">
                     Plan your first Combat
                 </h2>
@@ -243,9 +225,8 @@
                 <CreatePlannedCombatForm
                     class="w-full"
                     :onCreatePlannedCombat="
-                        (req) => onCreatePlannedCombat(req!)
-                    "
-                />
+                        (req, create) => onCreatePlannedCombat(req!, create)
+                    " />
             </div>
         </section>
 
@@ -253,158 +234,168 @@
             ref="createPlannedCombatModal"
             title="Create a planned combat"
             key="CreatePlannedCombatModal"
-            x
-        >
+            x>
             <CreatePlannedCombatForm
                 class="h-full w-full"
-                :onCreatePlannedCombat="(req) => onCreatePlannedCombat(req!)"
-            />
+                :onCreatePlannedCombat="
+                    (req, create) => onCreatePlannedCombat(req!, create)
+                " />
         </Modal>
     </TransitionGroup>
 </template>
 <script setup lang="ts">
-import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import Modal from "base/components/Modal.vue";
-import ConfirmModal from "base/components/ConfirmModal.vue";
-import type { CreatePlannedCombatRequest } from "base/utils/api/plannedCombat/createPlannedCombatRequest";
-import {
-    getCombatsRequest,
-    type GetCombatsResponse,
-} from "base/utils/api/combat/getCombatsRequest";
-import type { CombatDto } from "base/utils/api/campaign/getCampaignRequest";
+    import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+    import Modal from "base/components/Modal.vue";
+    import ConfirmModal from "base/components/ConfirmModal.vue";
+    import type { CreatePlannedCombatRequest } from "base/utils/api/plannedCombat/createPlannedCombatRequest";
+    import {
+        getCombatsRequest,
+        type GetCombatsResponse,
+    } from "base/utils/api/combat/getCombatsRequest";
+    import type { CombatDto } from "base/utils/api/campaign/getCampaignRequest";
 
-// Page info
-definePageMeta({
-    requiresAuth: true,
-    layout: "campaign-tabs",
-});
+    // Page info
+    definePageMeta({
+        requiresAuth: true,
+        layout: "campaign-tabs",
+    });
 
-// Screen Size
-const { isMobile } = useDevice();
-const isSmallScreen = computed(() => {
-    return isMobile || window?.matchMedia("(max-width: 640px)").matches;
-});
+    // Screen Size
+    const { isMobile } = useDevice();
+    const isSmallScreen = computed(() => {
+        return isMobile || window?.matchMedia("(max-width: 640px)").matches;
+    });
 
-// Stores
-const route = useRoute();
-const campaignCombatsStore = useCampaignCombatsStore();
-const campaignStore = useCampaignStore();
-const hasActiveCombat = computed(
-    () => campaignStore.state.currentCombatInfo != null,
-);
+    // Stores
+    const route = useRoute();
+    const campaignCombatsStore = useCampaignCombatsStore();
+    const campaignStore = useCampaignStore();
+    const hasActiveCombat = computed(
+        () => campaignStore.state.currentCombatInfo != null
+    );
 
-// Page Setup
-const { pending, error } = await useAsyncData(
-    "CampaignCombats",
-    async (nuxtApp) => {
-        const getData = getCombatsRequest(nuxtApp?.$axios!);
-        return await getData({
-            campaignId: route.params.id as string,
-        })
-            .then((resp) => {
-                campaignCombatsStore.state.campaignId = route.params
-                    .id as string;
-                Object.keys(resp).forEach((key) => {
-                    // @ts-ignore
-                    campaignCombatsStore.state[key] = resp[key];
-                });
+    // Page Setup
+    const { pending, error } = await useAsyncData(
+        "CampaignCombats",
+        async (nuxtApp) => {
+            const getData = getCombatsRequest(nuxtApp?.$axios!);
+            return await getData({
+                campaignId: route.params.id as string,
             })
-            .then(selectCombatIfNoneSelected);
-    },
-    {
-        watch: [() => route.params.id],
-    },
-);
+                .then((resp) => {
+                    campaignCombatsStore.state.campaignId = route.params
+                        .id as string;
+                    Object.keys(resp).forEach((key) => {
+                        // @ts-ignore
+                        campaignCombatsStore.state[key] = resp[key];
+                    });
+                })
+                .then(selectCombatIfNoneSelected);
+        },
+        {
+            watch: [() => route.params.id],
+        }
+    );
 
-// Modals
-const deleteCombatModal = ref<InstanceType<typeof ConfirmModal> | null>(null);
-const createPlannedCombatModal = ref<InstanceType<typeof Modal> | null>(null);
+    // Modals
+    const deleteCombatModal = ref<InstanceType<typeof ConfirmModal> | null>(
+        null
+    );
+    const createPlannedCombatModal = ref<InstanceType<typeof Modal> | null>(
+        null
+    );
 
-// Create planned combat
-async function showCreatePlannedCombatModal() {
-    createPlannedCombatModal.value?.show();
-}
-
-async function onCreatePlannedCombat(
-    input: Omit<CreatePlannedCombatRequest, "campaignId">,
-) {
-    return await campaignCombatsStore
-        .createPlannedCombat(input)
-        .then(() => createPlannedCombatModal.value?.hide());
-}
-
-async function onOpenCombat(plannedCombatId: string) {
-    return campaignStore
-        .openCombat(plannedCombatId)
-        .then((c) =>
-            Promise.resolve(
-                useNavigator().toCombat(
-                    campaignStore.state.currentCombatInfo?.id!,
-                ),
-            ),
-        );
-}
-
-function selectCombatIfNoneSelected() {
-    if (isSmallScreen.value) {
-        return;
-    }
-    if (
-        !campaignCombatsStore.hasAnyCombats &&
-        !campaignCombatsStore.hasAnyPlannedCombats
-    ) {
-        return;
+    // Create planned combat
+    async function showCreatePlannedCombatModal() {
+        createPlannedCombatModal.value?.show();
     }
 
-    if (
-        campaignCombatsStore.hasAnyPlannedCombats &&
-        campaignCombatsStore.state.plannedCombats
+    async function onCreatePlannedCombat(
+        input: Omit<CreatePlannedCombatRequest, "campaignId">,
+        startCombatImmediately: boolean = false
     ) {
-        campaignCombatsStore.selectPlannedCombat(
-            campaignCombatsStore.state.plannedCombats[0].id,
-        );
-    } else if (
-        campaignCombatsStore.hasAnyCombats &&
-        campaignCombatsStore.state.combats
-    ) {
-        campaignCombatsStore.selectCombat(
+        return await campaignCombatsStore
+            .createPlannedCombat(input)
+            .then(async (pc) => {
+                createPlannedCombatModal.value?.hide();
+                if (startCombatImmediately) {
+                    return await onOpenCombat(pc?.id);
+                }
+            });
+    }
+
+    async function onOpenCombat(plannedCombatId: string) {
+        return campaignStore
+            .openCombat(plannedCombatId)
+            .then((c) =>
+                Promise.resolve(
+                    useNavigator().toCombat(
+                        campaignStore.state.currentCombatInfo?.id!
+                    )
+                )
+            );
+    }
+
+    function selectCombatIfNoneSelected() {
+        if (isSmallScreen.value) {
+            return;
+        }
+        if (
+            !campaignCombatsStore.hasAnyCombats &&
+            !campaignCombatsStore.hasAnyPlannedCombats
+        ) {
+            return;
+        }
+
+        if (
+            campaignCombatsStore.hasAnyPlannedCombats &&
+            campaignCombatsStore.state.plannedCombats
+        ) {
+            campaignCombatsStore.selectPlannedCombat(
+                campaignCombatsStore.state.plannedCombats[0].id
+            );
+        } else if (
+            campaignCombatsStore.hasAnyCombats &&
             campaignCombatsStore.state.combats
-                .sort(sortByFinishedTimestamp)
-                .reverse()[0].combatId,
-        );
-    }
-}
-
-function sortByFinishedTimestamp(
-    a: GetCombatsResponse["combats"][number],
-    b: GetCombatsResponse["combats"][number],
-) {
-    if (a.finishedTimestamp == null && b.finishedTimestamp != null) {
-        return -1;
+        ) {
+            campaignCombatsStore.selectCombat(
+                campaignCombatsStore.state.combats
+                    .sort(sortByFinishedTimestamp)
+                    .reverse()[0].combatId
+            );
+        }
     }
 
-    if (a.finishedTimestamp != null && b.finishedTimestamp == null) {
-        return 1;
-    }
+    function sortByFinishedTimestamp(
+        a: GetCombatsResponse["combats"][number],
+        b: GetCombatsResponse["combats"][number]
+    ) {
+        if (a.finishedTimestamp == null && b.finishedTimestamp != null) {
+            return -1;
+        }
 
-    if (a.finishedTimestamp == b.finishedTimestamp) {
+        if (a.finishedTimestamp != null && b.finishedTimestamp == null) {
+            return 1;
+        }
+
+        if (a.finishedTimestamp == b.finishedTimestamp) {
+            return 0;
+        }
+
+        if (a.finishedTimestamp! < b.finishedTimestamp!) {
+            return -1;
+        }
+
+        if (a.finishedTimestamp! > b.finishedTimestamp!) {
+            return 1;
+        }
+
         return 0;
     }
 
-    if (a.finishedTimestamp! < b.finishedTimestamp!) {
-        return -1;
-    }
-
-    if (a.finishedTimestamp! > b.finishedTimestamp!) {
-        return 1;
-    }
-
-    return 0;
-}
-
-const orderedFinishedCombats = computed(() =>
-    (campaignCombatsStore.state?.combats ?? [])
-        .sort(sortByFinishedTimestamp)
-        .reverse(),
-);
+    const orderedFinishedCombats = computed(() =>
+        (campaignCombatsStore.state?.combats ?? [])
+            .sort(sortByFinishedTimestamp)
+            .reverse()
+    );
 </script>
