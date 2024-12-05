@@ -1,12 +1,9 @@
 using FastEndpoints;
-
-using Marten;
-
 using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Combats;
 
-public class PostPlannedCombat(IDocumentStore Store) : Endpoint<PostPlannedCombatRequest, PlannedCombat>
+public class PostPlannedCombat() : Endpoint<PostPlannedCombatRequest, PlannedCombat>
 {
     public override void Configure()
     {
