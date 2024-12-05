@@ -130,7 +130,10 @@ export const useCampaignStore = defineStore("campaignStore", () => {
     async function openCombat(plannedCombatId: string) {
         return api.combat
             .open({ plannedCombatId: plannedCombatId })
-            .then(() => setCampaignById(state.campaign?.id!));
+            .then(() => setCampaignById(state.campaign?.id!))
+            .then(() => {
+                    plannedCombatStore.unselectCombat()
+            })
     }
 
     // Player Character Management //
