@@ -181,6 +181,7 @@ export const useCampaignStore = defineStore("campaignStore", () => {
 
     return {
         state,
+        hasOpenCombat: computed(() => state.currentCombatInfo != null),
         refetchCampaign,
         setCampaign,
         setCampaignById,
@@ -193,7 +194,7 @@ export const useCampaignStore = defineStore("campaignStore", () => {
         joinCampaignHub,
         leaveCampaignHub,
         isDm: computed(
-            () => state.userCampaignMember?.isDungeonMaster ?? false,
+            () => state.userCampaignMember?.isDungeonMaster ?? false
         ),
         memberDtos,
         getMemberDetailsFor: (id: string): CampaignMemberDto | undefined =>
@@ -209,8 +210,8 @@ export const useCampaignStore = defineStore("campaignStore", () => {
                                 a,
                                 b,
                                 (ob) => ob.link,
-                                (ob) => ob.name,
-                            ),
+                                (ob) => ob.name
+                            )
                     ),
                     isDm: state.userCampaignMember?.isDungeonMaster,
                 },
@@ -222,8 +223,8 @@ export const useCampaignStore = defineStore("campaignStore", () => {
                             a,
                             b,
                             (ob) => ob.link,
-                            (ob) => ob.name,
-                        ),
+                            (ob) => ob.name
+                        )
                     ),
                     isDm: member.isDungeonMaster,
                 })),
