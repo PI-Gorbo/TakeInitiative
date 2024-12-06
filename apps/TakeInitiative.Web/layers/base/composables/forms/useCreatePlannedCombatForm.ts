@@ -29,9 +29,6 @@ export const useCreatePlannedCombatForm = () => {
         }),
     });
 
-    // Form Submit
-    const campaignStore = useCampaignStore();
-
     function submit(
         startCombatImmediately: boolean
     ): Promise<void | Omit<CreatePlannedCombatRequest, "campaignId">> {
