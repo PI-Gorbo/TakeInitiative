@@ -36,14 +36,6 @@
                                     selectedCampaignInfo?.campaign?.campaignName
                                 }}</label
                             >
-                            <FormButton
-                                icon="share-from-square"
-                                size="sm"
-                                textColour="take-grey"
-                                buttonColour="take-purple"
-                                hoverButtonColour="take-navy-medium"
-                                @clicked="() => shareCampaignModal?.show()"
-                            />
                         </template>
                         <label
                             for="drawer"
@@ -143,66 +135,6 @@
                 </li>
             </ul>
         </div>
-        <Modal ref="shareCampaignModal" title="Share">
-            <main class="flex flex-col gap-4 text-take-grey-light">
-                <div class="flex flex-col gap-2">
-                    <label class="font-NovaCut text-take-yellow"
-                        >Campaign Code</label
-                    >
-                    <div class="flex w-full items-center gap-2">
-                        <TimedTooltip tooltip="Copied!" class="peer">
-                            <FormButton
-                                icon="copy"
-                                buttonColour="take-purple-dark"
-                                hoverButtonColour="take-yellow"
-                                size="sm"
-                                :preventClickBubbling="false"
-                                @clicked="
-                                    () =>
-                                        copyText(
-                                            selectedCampaignInfo?.joinCode!,
-                                        )
-                                "
-                            />
-                        </TimedTooltip>
-                        <div
-                            class="pointer-events-none -order-1 flex w-full justify-start rounded-lg border border-take-navy-dark bg-take-navy-dark p-1 px-2 text-center transition-colors peer-hover:border-take-yellow"
-                        >
-                            {{ selectedCampaignInfo?.joinCode }}
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex flex-col gap-2">
-                    <label class="font-NovaCut text-take-yellow">URL</label>
-                    <div class="group group flex w-full items-center gap-2">
-                        <TimedTooltip tooltip="Copied!" class="peer">
-                            <FormButton
-                                icon="copy"
-                                size="sm"
-                                class="transition-colors"
-                                buttonColour="take-navy-dark"
-                                hoverButtonColour="take-yellow"
-                                :preventClickBubbling="false"
-                                @clicked="
-                                    () =>
-                                        copyText(
-                                            `${config.public.webUrl}/join/${selectedCampaignInfo?.joinCode}`,
-                                        )
-                                "
-                            />
-                        </TimedTooltip>
-                        <div
-                            class="-order-1 flex w-full justify-start truncate rounded-lg border border-take-navy bg-take-navy-dark p-1 px-2 text-center transition-colors peer-hover:border-take-yellow"
-                        >
-                            {{
-                                `${config.public.webUrl}/join/${selectedCampaignInfo?.joinCode}`
-                            }}
-                        </div>
-                    </div>
-                </div>
-            </main>
-        </Modal>
         <Modal ref="createOrJoinCampaignModal" title="Create or Join">
             <Tabs notSelectedTabColour="take-navy-medium">
                 <template #Create>
@@ -224,7 +156,6 @@ import type { JoinCampaignRequest } from "base/utils/api/campaign/joinCampaignRe
 const nav = useNavigator();
 const config = useRuntimeConfig();
 const userStore = useUserStore();
-const { isMobile } = useDevice();
 
 // Drawer
 const drawerToggle = ref<HTMLInputElement | null>(null);
@@ -236,7 +167,6 @@ function toggleDrawer() {
 
 // Modals
 const createOrJoinCampaignModal = ref<InstanceType<typeof Modal> | null>(null);
-const shareCampaignModal = ref<InstanceType<typeof Modal> | null>(null);
 
 // Route info
 const routeInfo = useRoute();
@@ -247,11 +177,6 @@ const selectedCampaignInfo = computed(() => useCampaignStore().state);
 
 const isCombatRoute = computed(() => routeInfo.name == "combat-id");
 const combatInfo = computed(() => useCombatStore().state?.combat);
-
-// Helper methods
-function copyText(value: string) {
-    navigator.clipboard.writeText(value);
-}
 
 // Events
 function onSetSelectedCampaign(campaignId: string) {

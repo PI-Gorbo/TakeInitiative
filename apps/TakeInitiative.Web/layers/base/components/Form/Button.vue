@@ -28,7 +28,7 @@
             >
                 <div
                     v-if="props.icon"
-                    class="flex items-center justify-center text-center"
+                    class="flex items-center justify-center"
                 >
                     <FontAwesomeIcon
                         v-if="props.icon"
@@ -36,9 +36,9 @@
                         :size="props.size"
                     />
                 </div>
-                <div v-if="props.label" class="cursor-pointer text-center">
+                <label>
                     {{ props.label }}
-                </div>
+                </label>
             </div>
             <div
                 v-else-if="props.loadingDisplay"

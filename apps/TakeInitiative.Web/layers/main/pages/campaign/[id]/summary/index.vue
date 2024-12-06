@@ -51,7 +51,12 @@
 
         <section
             class="flex max-h-[50%] flex-1 flex-col gap-2 overflow-y-auto rounded-md bg-take-purple-dark p-2">
-            <label class="block w-full font-NovaCut text-lg"> Players </label>
+            <header class="flex justify-between items-center">
+                <label class="block w-full font-NovaCut text-lg">
+                    Players
+                </label>
+               <IndexShareButton/>
+            </header>
             <div class="overflow-y-auto">
                 <IndexPlayersDisplay
                     :campaignMemberDtos="campaignStore.memberDtos" />
@@ -63,7 +68,8 @@
             <IndexResourcesSection />
         </section>
 
-        <section class="w-full flex-1 rounded-md bg-take-purple-dark p-2">
+        <section
+            class="flex w-full flex-1 flex-col gap-2 rounded-md bg-take-purple-dark p-2">
             <label class="font-NovaCut text-lg">Combat History</label>
             <ul class="flex flex-col gap-2 overflow-y-auto">
                 <li
