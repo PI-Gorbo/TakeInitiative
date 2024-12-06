@@ -51,7 +51,7 @@
 
         <section
             class="flex max-h-[50%] flex-1 flex-col gap-2 overflow-y-auto rounded-md bg-take-purple-dark p-2">
-            <label class="block w-full font-NovaCut text-lg"> Players </label>
+            <div class="flex justify-between"><label class="block w-full font-NovaCut text-lg"> Players </label><IndexCampaignShareButton/></div>
             <div class="overflow-y-auto">
                 <IndexPlayersDisplay
                     :campaignMemberDtos="campaignStore.memberDtos" />
