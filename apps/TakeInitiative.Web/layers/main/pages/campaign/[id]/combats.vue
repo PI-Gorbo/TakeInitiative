@@ -1,6 +1,8 @@
 <template>
     <TransitionGroup name="fade" class="h-full w-full p-2" tag="main">
-        <div key="loading" v-if="status == 'pending' || campaignStore.state == undefined">
+        <div
+            key="loading"
+            v-if="status == 'pending' || campaignStore.state == undefined">
             Loading...
         </div>
 
@@ -210,37 +212,37 @@
             </main>
         </TransitionGroup>
 
-        <section
-            class="flex justify-center"
-            v-else
-            key="createFirstPlannedCombat">
-            <div
-                class="flex w-full flex-col items-center rounded bg-take-purple-dark px-5 py-2 md:w-2/3">
-                <h2 class="w-full text-center text-lg">
-                    Plan your first Combat
-                </h2>
-                <p class="w-full text-center text-sm">
-                    Add NPCs now, and then start the combat when you are ready!
-                </p>
-                <CreatePlannedCombatForm
-                    class="w-full"
-                    :onCreatePlannedCombat="
-                        (req, create) => onCreatePlannedCombat(req!, create)
-                    " />
-            </div>
-        </section>
+                <section
+                    class="flex justify-center"
+                    v-else
+                    key="createFirstPlannedCombat">
+                    <div
+                        class="flex w-full flex-col items-center rounded bg-take-purple-dark px-5 py-2 md:w-2/3">
+                        <h2 class="w-full text-center text-lg">
+                            Plan your first Combat
+                        </h2>
+                        <p class="w-full text-center text-sm">
+                            Add NPCs now, and then start the combat when you are ready!
+                        </p>
+                        <CreatePlannedCombatForm
+                            class="w-full"
+                            :onCreatePlannedCombat="
+                                (req, create) => onCreatePlannedCombat(req!, create)
+                            " />
+                    </div>
+                </section>
 
-        <Modal
-            ref="createPlannedCombatModal"
-            title="Create a planned combat"
-            key="CreatePlannedCombatModal"
-            x>
-            <CreatePlannedCombatForm
-                class="h-full w-full"
-                :onCreatePlannedCombat="
-                    (req, create) => onCreatePlannedCombat(req!, create)
-                " />
-        </Modal>
+                <Modal
+                    ref="createPlannedCombatModal"
+                    title="Create a planned combat"
+                    key="CreatePlannedCombatModal"
+                    x>
+                    <CreatePlannedCombatForm
+                        class="h-full w-full"
+                        :onCreatePlannedCombat="
+                            (req, create) => onCreatePlannedCombat(req!, create)
+                        " />
+                </Modal>
     </TransitionGroup>
 </template>
 <script setup lang="ts">
@@ -252,7 +254,6 @@
         getCombatsRequest,
         type GetCombatsResponse,
     } from "base/utils/api/combat/getCombatsRequest";
-    import type { CombatDto } from "base/utils/api/campaign/getCampaignRequest";
 
     // Page info
     definePageMeta({
@@ -275,7 +276,7 @@
     );
 
     // Page Setup
-    const { status ,refresh } = await useAsyncData(
+    const { status, refresh } = await useAsyncData(
         "CampaignCombats",
         async (nuxtApp) => {
             const getData = getCombatsRequest(nuxtApp?.$axios!);
@@ -290,14 +291,13 @@
                         campaignCombatsStore.state[key] = resp[key];
                     });
                 })
-                .then(selectCombatIfNoneSelected);
+                .then(selectCombatIfNoneSelected)
+                .then(() => true);
         },
         {
             watch: [() => route.params.id],
-
         }
     );
-
 
     // Modals
     const deleteCombatModal = ref<InstanceType<typeof ConfirmModal> | null>(
