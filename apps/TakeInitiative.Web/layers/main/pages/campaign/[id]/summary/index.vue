@@ -37,7 +37,7 @@
                             campaignStore.isDm,
                     }"
                     @input="
-                        (e: InputEvent) =>
+                        (e) =>
                             (description = (e.target as HTMLTextAreaElement)
                                 .value)
                     "
