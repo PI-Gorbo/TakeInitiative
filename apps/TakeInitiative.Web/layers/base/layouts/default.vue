@@ -39,7 +39,7 @@
                         </template>
                         <label
                             for="drawer"
-                            class="aspect-square cursor-pointer rounded-md bg-take-purple p-2 hover:bg-take-navy-medium"
+                            class="aspect-square cursor-pointer rounded-md p-2 hover:bg-take-purple"
                         >
                             <FontAwesomeIcon icon="bars" />
                         </label>

@@ -1,40 +1,30 @@
 <template>
-    <main class="px-2 py-2">
-        <div
+    <main class="p-2">
+        <Card
             v-if="
                 campaignMember?.characters == null ||
                 campaignMember.characters.length == 0
             "
-            class="flex justify-center"
-        >
-            <section class="rounded bg-take-purple-dark px-5 py-2 md:w-2/3">
-                <h2 class="w-full text-center text-lg">
-                    Create your first character
-                </h2>
-                <p class="w-full text-center text-sm">
-                    Characters can be quickly added to combats later!
-                </p>
-                <IndexModifyPlayerCharacterForm
-                    :onCreate="
-                        (req: PlayerCharacterDto) =>
-                            campaignStore.createPlayerCharacter(req)
-                    "
-                />
-            </section>
-        </div>
+            header="Create your first character"
+            subtitle="Characters can be quickly added to combats later!">
+            <IndexModifyPlayerCharacterForm
+                :onCreate="
+                    (req: PlayerCharacterDto) =>
+                        campaignStore.createPlayerCharacter(req)
+                " />
+        </Card>
+
         <ul v-else class="flex flex-col gap-2">
             <li
                 v-for="character in campaignMember.characters"
                 class="flex cursor-pointer gap-2"
-                @click="() => showEditCharacterModal(character)"
-            >
+                @click="() => showEditCharacterModal(character)">
                 <IndexPlayerCharacterDisplay :character="character" />
             </li>
 
             <li
                 class="group flex w-full cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-take-navy-light transition-colors hover:border-take-yellow"
-                @click="showCreateCharacterModal"
-            >
+                @click="showCreateCharacterModal">
                 <FormButton
                     class="group-hover:text-take-yellow"
                     icon="plus"
@@ -43,8 +33,7 @@
                     hoverButtonColour="take-navy"
                     textColour="white"
                     hoverTextColour="take-yellow"
-                    @clicked="showCreateCharacterModal"
-                />
+                    @clicked="showCreateCharacterModal" />
             </li>
         </ul>
         <Modal ref="editCharacterModal" title="Edit Character">
@@ -56,7 +45,7 @@
                         campaignStore
                             .updatePlayerCharacter(
                                 lastClickedCharacter?.id!,
-                                req,
+                                req
                             )
                             .then(hideEditCharacterModal)
                 "
@@ -65,8 +54,7 @@
                         campaignStore
                             .deletePlayerCharacter(lastClickedCharacter?.id!)
                             .then(hideEditCharacterModal)
-                "
-            />
+                " />
         </Modal>
         <Modal ref="createCharacterModal" title="Create new Character">
             <IndexModifyPlayerCharacterForm
@@ -75,40 +63,41 @@
                         campaignStore
                             .createPlayerCharacter(req)
                             .then(hideCreateCharacterModal)
-                "
-            />
+                " />
         </Modal>
     </main>
 </template>
 <script setup lang="ts">
-import type { PlayerCharacterDto } from "base/utils/api/campaign/createPlayerCharacterRequest";
-import Modal from "base/components/Modal.vue";
-import type { PlayerCharacter } from "base/utils/types/models";
+    import type { PlayerCharacterDto } from "base/utils/api/campaign/createPlayerCharacterRequest";
+    import Modal from "base/components/Modal.vue";
+    import type { PlayerCharacter } from "base/utils/types/models";
 
-definePageMeta({
-    requiresAuth: true,
-    layout: "campaign-tabs",
-});
+    definePageMeta({
+        requiresAuth: true,
+        layout: "campaign-tabs",
+    });
 
-const campaignStore = useCampaignStore();
-const campaignMember = computed(() => campaignStore.state.userCampaignMember);
+    const campaignStore = useCampaignStore();
+    const campaignMember = computed(
+        () => campaignStore.state.userCampaignMember
+    );
 
-const editCharacterModal = ref<InstanceType<typeof Modal> | null>(null);
-const lastClickedCharacter = ref<PlayerCharacter | null>(null);
-function showEditCharacterModal(character: PlayerCharacter) {
-    lastClickedCharacter.value = character;
-    editCharacterModal.value?.show();
-}
-function hideEditCharacterModal() {
-    editCharacterModal.value?.hide();
-    lastClickedCharacter.value = null;
-}
+    const editCharacterModal = ref<InstanceType<typeof Modal> | null>(null);
+    const lastClickedCharacter = ref<PlayerCharacter | null>(null);
+    function showEditCharacterModal(character: PlayerCharacter) {
+        lastClickedCharacter.value = character;
+        editCharacterModal.value?.show();
+    }
+    function hideEditCharacterModal() {
+        editCharacterModal.value?.hide();
+        lastClickedCharacter.value = null;
+    }
 
-const createCharacterModal = ref<InstanceType<typeof Modal> | null>(null);
-function showCreateCharacterModal() {
-    createCharacterModal.value?.show();
-}
-function hideCreateCharacterModal() {
-    createCharacterModal.value?.hide();
-}
+    const createCharacterModal = ref<InstanceType<typeof Modal> | null>(null);
+    function showCreateCharacterModal() {
+        createCharacterModal.value?.show();
+    }
+    function hideCreateCharacterModal() {
+        createCharacterModal.value?.hide();
+    }
 </script>
