@@ -17,7 +17,6 @@
 import {
     ArmourClassDisplayOptionsEnum,
     type ArmourClassDisplayOptionValues,
-    type UnevaluatedCharacterInitiative,
 } from "base/utils/types/models";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 

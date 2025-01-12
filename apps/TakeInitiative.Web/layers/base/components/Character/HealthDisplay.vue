@@ -1,24 +1,23 @@
 <template>
     <div
         v-if="shouldDisplay"
-        class="flex select-none items-center gap-2 text-sm rounded p-1"
+        class="flex select-none items-center gap-2 rounded text-center text-sm"
         :class="[
             healthDisplayState.state == 'Bloodied'
                 ? `bg-orange-400 text-${TakeInitContrastColour['take-cream']}`
                 : '',
             {
                 'bg-take-teal': healthDisplayState.state == 'Healthy',
-                'bg-take-red' : healthDisplayState.state == 'Dead'
+                'bg-take-red': healthDisplayState.state == 'Dead',
             },
         ]">
         <FontAwesomeIcon icon="droplet" />
-        {{ healthDisplayState?.labelValue }}
+        <span>{{ healthDisplayState?.labelValue }}</span>
     </div>
 </template>
 <script setup lang="ts">
     import {
         HealthDisplayOptionsEnum,
-        HealthDisplayOptionValueKeyMap,
         type UnevaluatedCharacterHealth,
         type HealthDisplayOptionValues,
         type CharacterHealth,
