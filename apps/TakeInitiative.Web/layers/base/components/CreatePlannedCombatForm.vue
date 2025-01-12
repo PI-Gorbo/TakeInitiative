@@ -2,7 +2,7 @@
     <FormBase
         :onSubmit="submit"
         v-slot="{ submitting }"
-        class="flex w-1/2 flex-col gap-4">
+        class="flex w-1/2 flex-col gap-2 pb-2">
         <FormInput
             class="text-white"
             label="Combat Name"
@@ -20,7 +20,17 @@
             {{ createPlannedCombatForm.errors.value.combatName }}
         </div>
 
-        <div class="flex justify-between">
+        <div class="flex gap-2 justify-end">
+            <FormButton
+                :isLoading="
+                    submitting && submitting.submitterName == 'Create & Plan'
+                "
+                label="Create & Plan"
+                type="submit"
+                :loadingDisplay="{
+                    showSpinner: true,
+                    loadingText: 'Creating...',
+                }" />
             <FormButton
                 :isLoading="
                     submitting &&
@@ -34,16 +44,6 @@
                     loadingText: 'Creating...',
                 }"
                 :disabled="currentCampaign.hasOpenCombat" />
-            <FormButton
-                :isLoading="
-                    submitting && submitting.submitterName == 'Create & Plan'
-                "
-                label="Create & Plan"
-                type="submit"
-                :loadingDisplay="{
-                    showSpinner: true,
-                    loadingText: 'Creating...',
-                }" />
         </div>
     </FormBase>
 </template>
