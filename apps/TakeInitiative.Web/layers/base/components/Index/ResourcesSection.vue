@@ -1,7 +1,7 @@
 <template>
     <ul>
         <li v-if="userHasNoResources">
-            <div class="flex items-center justify-between rounded-md p-2">
+            <div class="flex items-center justify-between rounded-md">
                 <label class="text-sm text-take-grey">
                     Put your relevant links here.
                     They can be private, between you and the DM, or for everyone!
@@ -9,7 +9,7 @@
                 <FormButton
                     label="Add"
                     icon="plus"
-                    buttonColour="take-purple-light"
+                    buttonColour="take-purple"
                     @clicked="showAddResourceModal"
                 />
             </div>

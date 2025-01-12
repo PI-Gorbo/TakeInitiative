@@ -37,7 +37,7 @@
                             campaignStore.isDm,
                     }"
                     @input="
-                        (e) =>
+                        (e: InputEvent) =>
                             (description = (e.target as HTMLTextAreaElement)
                                 .value)
                     "
@@ -108,7 +108,7 @@
                 </li>
                 <li
                     v-if="campaignStore.state.combatHistory?.length == 0"
-                    class="px-2 text-sm text-take-grey">
+                    class="text-sm text-take-grey">
                     Complete your first combat to see a history here!
                 </li>
             </ul>

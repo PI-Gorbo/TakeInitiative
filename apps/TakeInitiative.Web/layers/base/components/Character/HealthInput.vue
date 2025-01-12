@@ -65,7 +65,7 @@
                 <FormIconButton
                     class="p-3"
                     icon="arrow-rotate-left"
-                    buttonColour="take-purple"
+                    buttonColour="take-purple-light"
                     @clicked="reset"
                 />
             </div>

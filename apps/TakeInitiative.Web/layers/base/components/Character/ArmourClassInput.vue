@@ -12,7 +12,7 @@
             <FormIconButton
                 class="p-3"
                 icon="arrow-rotate-left"
-                buttonColour="take-purple-dark"
+                buttonColour="take-purple-light"
                 @clicked="() => updateValue(undefined)"
             />
         </div>
