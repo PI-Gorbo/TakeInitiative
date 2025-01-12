@@ -1,7 +1,8 @@
+divdiv
 <template>
     <TransitionGroup
-        class="flex h-full flex-1 select-none flex-col gap-2 overflow-y-auto rounded-lg"
-        tag="ul"
+        class="flex select-none flex-col gap-2 overflow-y-auto rounded-lg"
+        tag="article"
         name="shuffleList">
         <!-- INITIATIVE LIST -->
         <li
@@ -10,19 +11,17 @@
                 .filter((x) => userIsDm || !x.char.character.hidden)"
             :key="charInfo.character.id"
             :class="[
-                'flex flex-col gap-2 rounded-xl border-2 border-take-purple-light p-2 transition-colors group',
+                'group flex h-fit flex-wrap items-center gap-4 rounded-xl border-2 p-2 transition-colors',
                 {
-                    'cursor-pointer':
+                    'cursor-pointer hover:border-take-yellow':
                         (combatIsOpen || combatIsStarted) &&
                         isEditableForUser(charInfo),
-                    ' hover:border-take-yellow':
-                        (combatIsOpen || combatIsStarted) &&
-                        isEditableForUser(charInfo),
-                    'border-take-cream':
-                        props.listToDisplay != 'Staging' &&
-                        combatIsStarted &&
-                        index == combat?.initiativeIndex,
                 },
+                props.listToDisplay != 'Staging' && combatIsStarted
+                    ? index == combat?.initiativeIndex
+                        ? 'border-take-cream'
+                        : 'border-take-purple-light'
+                    : '',
             ]"
             @click="
                 () =>
@@ -30,98 +29,97 @@
                         ? emit('OnClickCharacter', charInfo.character)
                         : null
             ">
-            <main
-                class="flex flex-wrap items-center justify-between gap-2 text-white">
-                <!-- Initiative value when combat initiative has been rolled -->
-                <aside class="flex items-center gap-2">
-                    <section v-if="!combatIsOpen" class="flex gap-2">
-                        <div
-                            v-if="isInitiativeCharacter(charInfo.character)"
-                            v-for="(value, index) in charInfo.character
-                                .initiative.value"
-                            :class="[
-                                'flex items-center rounded-lg  p-1',
-                                {
-                                    'text-xs': index != 0,
-                                    'bg-take-navy-light': index == 0,
-                                    'bg-take-navy-medium': index != 0,
-                                },
-                            ]">
-                            {{ value.total }}
-                        </div>
-                    </section>
-                    <section class="flex gap-2">
-                        <!-- Username -->
-                        <span
-                            :class="[
-                                'hidden group-hover:inline',
-                                {
-                                    'cursor-pointer':
-                                        isEditableForUser(charInfo) &&
-                                        (combatIsOpen ||
-                                            combatIsStarted ||
-                                            props.listToDisplay == 'Staging'),
-                                },
-                            ]">
-                            <FontAwesomeIcon
-                                class="text-take-yellow"
-                                :icon="combatStore.getIconForUser(charInfo)" />
-                            {{ charInfo.user?.username }}
-                        </span>
-                        <!-- Character Name -->
-                        <span>
-                            {{ charInfo.character.name }}
-                        </span>
-                    </section>
-                </aside>
+            <!-- Initiative value when combat initiative has been rolled -->
+            <section
+                v-if="
+                    !combatIsOpen && isInitiativeCharacter(charInfo.character)
+                "
+                class="flex gap-2">
+                <div
+                    v-for="(value, index) in charInfo.character.initiative
+                        .value"
+                    :key="index"
+                    :class="[
+                        'flex items-center rounded-lg p-1',
+                        {
+                            'bg-take-navy-light':
+                                index == 0 &&
+                                charInfo.user.userId !=
+                                    userStore.state.user?.userId,
+                            'bg-take-yellow-dark text-take-purple-very-dark':
+                                index == 0 &&
+                                charInfo.user.userId ==
+                                    userStore.state.user?.userId,
+                            'bg-take-navy-medium text-xs': index != 0,
+                        },
+                    ]">
+                    {{ value.total }}
+                </div>
+            </section>
 
-                <aside class="flex flex-wrap gap-2">
-                    <section
+            <section class="flex flex-1 flex-col ">
+                <!-- Character Name -->
+                <span>
+                    <FontAwesomeIcon
                         v-if="
                             userIsDm &&
                             charInfo.character.playerId ==
                                 userStore.state.user?.userId
                         "
-                        class="rounded bg-take-purple p-1">
-                        <FontAwesomeIcon
-                            :icon="
-                                charInfo.character.hidden ? 'eye-slash' : 'eye'
-                            " />
-                    </section>
+                        :icon="charInfo.character.hidden ? 'eye-slash' : 'eye'"
+                        size="sm" />
+                    {{ charInfo.character.name }}
+                </span>
+                <!-- Username -->
+                <span
+                    :class="[
+                        'text-xs',
+                        {
+                            'cursor-pointer':
+                                isEditableForUser(charInfo) &&
+                                (combatIsOpen ||
+                                    combatIsStarted ||
+                                    props.listToDisplay == 'Staging'),
+                        },
+                    ]">
+                    <FontAwesomeIcon
+                        class="text-take-yellow"
+                        :icon="combatStore.getIconForUser(charInfo)" />
+                    {{ charInfo.user?.username }}
+                </span>
+            </section>
 
-                    <CharacterHealthDisplay
-                        :health="charInfo.character.health"
-                        :displayMethod="getHealthDisplayMethod(charInfo)"
-                        class="min-w-max rounded p-1" />
+            <section
+                v-if="combatIsOpen && isStagedCharacter(charInfo.character)"
+                class="flex items-center justify-center gap-1 rounded bg-take-purple p-1 text-sm">
+                <FontAwesomeIcon icon="shoe-prints" />
+                {{ charInfo.character.initiative.roll }}
+            </section>
 
-                    <CharacterArmourClassDisplay
-                        :armourClass="charInfo.character.armourClass"
-                        :armourClassDisplayMethod="
-                            getArmourClassDisplayMethod(charInfo)
-                        "
-                        class="flex items-center justify-center gap-1 rounded bg-take-purple p-1" />
+            <div
+                v-if="isInitiativeCharacter(charInfo.character)"
+                class="flex flex-wrap gap-2 text-sm">
+                <CharacterConditionDisplay
+                    v-for="(
+                        condition, index
+                    ) in charInfo.character.conditions.toSorted((a, b) =>
+                        a.name > b.name ? 1 : -1
+                    )"
+                    :key="index"
+                    :conditionName="condition.name" />
+            </div>
 
-                    <section
-                        v-if="
-                            combatIsOpen &&
-                            isStagedCharacter(charInfo.character)
-                        "
-                        class="flex items-center justify-center gap-1 rounded bg-take-purple p-1">
-                        <FontAwesomeIcon icon="shoe-prints" />
-                        {{ charInfo.character.initiative.roll }}
-                    </section>
+            <CharacterArmourClassDisplay
+                :armourClass="charInfo.character.armourClass"
+                :armourClassDisplayMethod="
+                    getArmourClassDisplayMethod(charInfo)
+                "
+                class="bg-take-purple p-1 rounded text-sm" />
 
-                    <CharacterConditionDisplay
-                        v-if="isInitiativeCharacter(charInfo.character)"
-                        v-for="(
-                            condition, index
-                        ) in charInfo.character.conditions.toSorted((a, b) =>
-                            a.name > b.name ? 1 : -1
-                        )"
-                        :key="index"
-                        :conditionName="condition.name" />
-                </aside>
-            </main>
+            <CharacterHealthDisplay
+                :health="charInfo.character.health"
+                :displayMethod="getHealthDisplayMethod(charInfo)"
+                class="justify w-fit rounded p-1 text-sm" />
         </li>
 
         <!-- When there are no characters displayed on the user, show a message -->
@@ -134,8 +132,8 @@
                     .length == 0
             ">
             <label
-                class="flex justify-center text-take-grey"
-                v-if="characterList.find((x) => x.character.hidden)">
+                v-if="characterList.find((x) => x.character.hidden)"
+                class="flex justify-center text-take-grey">
                 The DM has one or more hidden characters that they are waiting
                 to reveal.
             </label>
@@ -144,8 +142,8 @@
             </label>
         </li>
         <li
-            key="footer"
             v-if="combatIsOpen"
+            key="footer"
             :class="[
                 'cursor-pointer rounded-xl border-2 border-dashed border-take-navy-light p-2 text-center transition-colors hover:border-take-yellow',
             ]"
@@ -161,12 +159,10 @@
         type HealthDisplayOptionValues,
         HealthDisplayOptionsEnum,
         type ArmourClassDisplayOptionValues,
-        ArmourClassDisplayOptionValueKeyMap,
         ArmourClassDisplayOptionsEnum,
         type StagedCharacter,
     } from "base/utils/types/models";
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-    import { TakeInitContrastColour } from "base/utils/types/HelperTypes";
 
     const userStore = useUserStore();
     const campaignStore = useCampaignStore();
@@ -177,7 +173,6 @@
     const {
         combatIsOpen,
         combatIsStarted,
-        combatIsFinished,
         orderedStagedCharacterListWithPlayerInfo,
         initiativeListWithPlayerInfo,
         userIsDm,
@@ -188,7 +183,9 @@
         defineProps<{
             listToDisplay?: "Staging" | "Initiative" | undefined;
         }>(),
-        {}
+        {
+            listToDisplay: undefined,
+        }
     );
 
     const emit = defineEmits<{
@@ -198,10 +195,6 @@
             character: InitiativeCharacter | StagedCharacter
         ): void;
     }>();
-
-    const combatHasHiddenCharacters = computed(
-        () => characterList.value.find((x) => x.character.hidden) != null
-    );
 
     const characterList: ComputedRef<
         (StagedPlayerDto | InitiativePlayerDto)[]
@@ -227,11 +220,11 @@
         }
 
         if (character.user.isDungeonMaster) {
-            return campaignStore.state.campaign?.campaignSettings
+            return campaignStore.state.campaign!.campaignSettings
                 .combatHealthDisplaySettings.dmCharacterDisplayMethod!;
         }
 
-        return campaignStore.state.campaign?.campaignSettings
+        return campaignStore.state.campaign!.campaignSettings
             .combatHealthDisplaySettings.otherPlayerCharacterDisplayMethod!;
     }
 
@@ -243,11 +236,11 @@
         }
 
         if (character.user.isDungeonMaster) {
-            return campaignStore.state.campaign?.campaignSettings
+            return campaignStore.state.campaign!.campaignSettings
                 .combatArmourClassDisplaySettings.dmCharacterDisplayMethod!;
         }
 
-        return campaignStore.state.campaign?.campaignSettings
+        return campaignStore.state.campaign!.campaignSettings
             .combatArmourClassDisplaySettings
             .otherPlayerCharacterDisplayMethod!;
     }

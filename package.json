@@ -1,0 +1,19 @@
+{
+    "name": "takeinitiative",
+    "module": "index.ts",
+    "type": "module",
+    "devDependencies": {
+        "@types/bun": "latest"
+    },
+    "peerDependencies": {
+        "typescript": "^5.0.0"
+    },
+    "scripts": {
+        "api": "dotnet watch run --project apps/TakeInitiative.Api",
+        "web": "cd apps/TakeInitiative.Web/ & & npm run dev",
+        "dev": "concurrently --names api,web \"bun run api\" \"bun run web\""
+    },
+    "dependencies": {
+        "concurrently": "^9.1.2"
+    }
+}

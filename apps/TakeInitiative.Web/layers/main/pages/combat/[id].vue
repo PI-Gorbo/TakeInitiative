@@ -11,6 +11,8 @@
                         class="w-max"
                         label="Staged List"
                         :icon="combatHasStarted ? 'plus' : 'users'"
+                        button-colour="take-purple-light"
+                        hover-button-colour="take-yellow"
                         @clicked="
                             () => {
                                 showModal(
@@ -21,8 +23,6 @@
                                 toggleDrawer();
                             }
                         "
-                        buttonColour="take-purple-light"
-                        hoverButtonColour="take-yellow"
                     />
                 </div>
                 <div>
@@ -31,8 +31,8 @@
                         >{{ combat?.combatName }}</label
                     >
                     <label
-                        class="flex items-center justify-center text-center font-NovaCut text-sm"
                         v-if="combatInInitiative"
+                        class="flex items-center justify-center text-center font-NovaCut text-sm"
                         >Round {{ combat?.roundNumber }}</label
                     >
                 </div>
@@ -89,10 +89,10 @@
                 <section class="flex flex-1 flex-col gap-2 overflow-y-auto">
                     <CombatCharacterListSection
                         class="p-2"
-                        @combatOpenedStageCharacters="
+                        @combat-opened-stage-characters="
                             () => showModal('Combat Opened Stage Characters')
                         "
-                        @OnClickCharacter="
+                        @on-click-character="
                             (character) => onClickCharacter(character!)
                         "
                     />
@@ -169,11 +169,10 @@
 <script setup lang="ts">
 import Modal from "base/components/Modal.vue";
 import type { DeleteStagedCharacterRequest } from "base/utils/api/combat/deleteStagedCharacterRequest";
-import type { PostStagePlannedCharactersRequest } from "base/utils/api/combat/postStagePlannedCharactersRequest";
 import type { StagedCharacterDTO } from "base/utils/api/combat/putUpsertStagedCharacter";
-import {
-    type InitiativeCharacter,
-    type StagedCharacter,
+import type {
+    InitiativeCharacter,
+    StagedCharacter,
 } from "base/utils/types/models";
 
 const campaignStore = useCampaignStore();
@@ -220,16 +219,15 @@ const {
     combatIsOpen: combatHasStarted,
     combatIsStarted: combatInInitiative,
     combatIsFinished,
-    anyPlannedCharacters,
 } = storeToRefs(combatStore);
 
 // Main fetch
-const { refresh, pending, error } = await useAsyncData("Combat", async () => {
+await useAsyncData("Combat", async () => {
     return await combatStore.setCombat(combatId as string).then(() => true);
 });
 
 // Ensures the user is joined whenever the page loads.
-const { refresh: rejoinCombat } = await useAsyncData(
+await useAsyncData(
     "JoinCombat",
     async () => {
         return await combatStore.joinCombat().then(() => true);
@@ -308,12 +306,6 @@ async function onUpsertStagedCharacter(req: StagedCharacterDTO) {
     return combatStore.updateStagedCharacter(req).then(closeModal);
 }
 
-async function onStagePlannedCharacters(
-    req: PostStagePlannedCharactersRequest["plannedCharactersToStage"],
-) {
-    return combatStore.stagePlannedCharacters(req).then(closeModal);
-}
-
 const isUsersTurn = computed(() => {
     if (campaignStore.isDm) {
         return true;
@@ -336,7 +328,7 @@ const isUsersTurn = computed(() => {
 // Navigation on finished combat
 const goHome = async () => {
     await useNavigator().toCampaignTab(
-        combatStore.state.combat?.campaignId!,
+        combatStore.state.combat!.campaignId!,
         "summary",
     );
 };
