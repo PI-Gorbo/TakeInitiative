@@ -1,7 +1,7 @@
 <template>
     <div
         v-if="shouldDisplay"
-        class="flex select-none items-center gap-2 text-sm"
+        class="flex select-none items-center gap-2 text-sm rounded p-1"
         :class="[
             healthDisplayState.state == 'Bloodied'
                 ? `bg-orange-400 text-${TakeInitContrastColour['take-cream']}`

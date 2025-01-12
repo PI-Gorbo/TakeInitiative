@@ -16,7 +16,8 @@
 
         <ul v-else class="flex flex-col gap-2">
             <li
-                v-for="character in campaignMember.characters"
+                v-for="(character, index) in campaignMember.characters"
+                :key="index"
                 class="flex cursor-pointer gap-2"
                 @click="() => showEditCharacterModal(character)">
                 <IndexPlayerCharacterDisplay :character="character" />
