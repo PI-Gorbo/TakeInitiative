@@ -10,8 +10,9 @@
     },
     "scripts": {
         "api": "dotnet watch run --project apps/TakeInitiative.Api",
-        "web": "cd apps/TakeInitiative.Web/ & & npm run dev",
-        "dev": "concurrently --names api,web \"bun run api\" \"bun run web\""
+        "web": "cd apps/TakeInitiative.Web/ && npm run dev",
+        "database" : "docker start takedb || docker run -p 5432:5432 --name takedb -e POSTGRES_PASSWORD=postgres -d postgres",
+        "dev": "bun run database && concurrently --names api,web \"bun run api\" \"bun run web\""
     },
     "dependencies": {
         "concurrently": "^9.1.2"
