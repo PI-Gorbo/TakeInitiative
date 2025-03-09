@@ -1,6 +1,6 @@
 
 <template>
-  <main class="w-full h-full">
+  <main class="flex flex-col w-full h-full">
     <header class="border-b border-b-gold bg-secondary border-double p-2 flex justify-between">
       <section class="flex gap-2">
         <label class="flex items-center gap-2">
@@ -13,7 +13,7 @@
       </section>
       <section class="flex items-center px-2">
         <a class="cursor-pointer" href="https://discord.gg/caDetpm6vk">
-          <FontAwesomeIcon :icon="faDiscord" class="text-xl text-white" size="4x"/>
+          <FontAwesomeIcon :icon="faDiscord" class="text-xl text-white" />
         </a>
         <!-- <FormButton label="Login" @clicked="toLogin" /> -->
       </section>
