@@ -73,7 +73,7 @@
     const [password, passwordInputProps] = defineField("password", {
         props: (state) => ({
             errorMessage:
-                formState.submitError?.getErrorFor("password") ??
+                formState.submitError?.getErrorObjectFor("password") ??
                 state.errors[0],
         }),
     });

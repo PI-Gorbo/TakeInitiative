@@ -22,6 +22,7 @@ export default defineNuxtConfig({
             title: "Take Initiative",
         },
         pageTransition: { name: "fade", mode: "out-in" },
+        layoutTransition: { name: "fade", mode: "out-in" },
     },
     runtimeConfig: {
         public: {

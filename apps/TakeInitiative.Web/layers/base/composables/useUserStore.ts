@@ -1,7 +1,6 @@
 import type { CreateCampaignRequest } from "../utils/api/campaign/createCampaignRequest";
 import type { DeleteCampaignRequest } from "../utils/api/campaign/deleteCampaignRequest";
 import type { JoinCampaignRequest } from "../utils/api/campaign/joinCampaignRequest";
-import type { UpdateCampaignDetailsRequest } from "../utils/api/campaign/updateCampaignDetailsRequest";
 import type { GetUserResponse } from "../utils/api/user/getUserRequest";
 import type { LoginRequest } from "../utils/api/user/loginRequest";
 import type { SignUpRequest } from "../utils/api/user/signUpRequest";

@@ -22,7 +22,7 @@ export const useCreatePlannedCombatStageForm = () => {
     const [name, nameInputProps] = defineField("name", {
         props: (state) => ({
             errorMessage:
-                formState.error?.getErrorFor("name") ?? state.errors[0],
+                formState.error?.getErrorObjectFor("name") ?? state.errors[0],
         }),
     });
 

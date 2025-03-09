@@ -2,6 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes scrollGrid {
+    0% {
+        background-position: 0 0;
+    }
+
+    100% {
+        background-position: 100px 100px;
+        /* Match grid size here */
+    }
+}
+
 #__nuxt {
     width: 100dvw;
     height: 100dvh;
@@ -9,6 +20,21 @@
     font-family: "Overpass";
     background-color: var(--background);
     color: var(--foreground);
+    background-image:
+        linear-gradient(
+            to bottom,
+            hsl(var(--primary) / 0.2) 0.15em,
+            transparent 1px
+        ),
+        linear-gradient(
+            to right,
+            hsl(var(--primary) / 0.2) 0.15em,
+            transparent 1px
+        );
+    background-size: 50px 50px;
+    /* Adjust grid size here */
+    animation: scrollGrid 6s linear infinite;
+    /* Adjust animation speed here */
 }
 
 @font-face {
@@ -64,7 +90,24 @@
     body {
         @apply bg-background text-foreground;
     }
+    .w-page {
+        @apply w-full max-w-[1080px] sm:w-4/5;
+    }
+    .w-page-slim {
+        @apply w-full max-w-2xl sm:w-4/5;
+    }
 }
+
+.shadow-square-sm:active.interactable {
+    transform: translateY(0.1rem);
+    box-shadow: 0 0.1rem hsl(var(--accent));
+}
+
+button.shadow-square-sm:active {
+    transform: translateY(0.1rem);
+    box-shadow: 0 0.1rem hsl(var(--accent));
+}
+
 
 .fade-enter-active,
 .fade-leave-active {

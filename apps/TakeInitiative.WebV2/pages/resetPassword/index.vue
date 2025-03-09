@@ -2,43 +2,28 @@
     <section class="w-full">
         <div class="flex w-full flex-col justify-center">
             <h1 class="text-center text-xl">Reset Your password</h1>
-            <NuxtLink
-                :to="{
+            <NuxtLink :to="{
                     path: '/login',
                     query: redirectToPath ? { redirectTo: redirectToPath } : {},
-                }"
-                class="text-center text-sm underline">
-                Back to login</NuxtLink
-            >
+                }" class="text-center text-sm underline">
+                Back to login</NuxtLink>
         </div>
 
-        <FormBase
-            class="flex flex-col gap-4"
-            v-slot="{ submitting }"
-            :onSubmit="onLogin"
-            v-if="!state.sentResetEmail">
-            <FormInput
-                v-model:value="email"
-                label="Email"
-                type="email"
-                placeholder="example@email.com"
+        <FormBase class="flex flex-col gap-4" v-slot="{ submitting }" :onSubmit="onLogin" v-if="!state.sentResetEmail">
+            <FormInput v-model:value="email" label="Email" type="email" placeholder="example@email.com"
                 v-bind="emailInputProps" />
 
             <div v-if="state.errorObject" class="text-take-red">
-                {{ state.errorObject.getErrorFor("generalErrors") }}
+                {{ state.errorObject.getErrorObjectFor("generalErrors") }}
             </div>
 
             <!-- {{ state.errorObject }} -->
 
             <div class="flex justify-center">
-                <FormButton
-                    label="Send Reset Email"
-                    type="submit"
-                    :loadingDisplay="{
+                <FormButton label="Send Reset Email" type="submit" :loadingDisplay="{
                         loadingText: 'Sending...',
                         showSpinner: true,
-                    }"
-                    :isLoading="submitting" />
+                    }" :isLoading="submitting" />
             </div>
         </FormBase>
 
@@ -74,7 +59,7 @@
     const [email, emailInputProps] = defineField("email", {
         props: (_state) => ({
             errorMessage:
-                state.errorObject?.getErrorFor("Email") ?? _state.errors[0],
+                state.errorObject?.getErrorObjectFor("Email") ?? _state.errors[0],
         }),
     });
 

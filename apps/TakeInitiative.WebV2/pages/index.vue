@@ -58,7 +58,7 @@
 
     definePageMeta({
         requiresAuth: false,
-        layout: "default",
+        layout: "logo",
     });
 </script>
 

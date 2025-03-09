@@ -1,27 +1,23 @@
 <template>
     <Card>
         <CardHeader class="flex flex-row justify-between">
-            <CardTitle><h2>Sign Up</h2></CardTitle>
+            <CardTitle>
+                <h2>Sign Up</h2>
+            </CardTitle>
             <CardDescription>
-                <NuxtLink
-                    :to="{
+                <NuxtLink :to="{
                         path: '/login',
                         query: redirectToPath
                             ? { redirectTo: redirectToPath }
                             : {},
-                    }"
-                    class="text-center text-sm underline">
+                    }" class="text-center text-sm underline">
                     Login instead
                 </NuxtLink>
             </CardDescription>
         </CardHeader>
 
         <CardContent>
-            <AutoForm
-                :schema="registerSchema"
-                :form="form"
-                :onSubmit="onSignUp"
-                :fieldConfig="{
+            <AutoForm :schema="registerSchema" :form="form" :onSubmit="onSignUp" :fieldConfig="{
                     password: {
                         inputProps: {
                             type: 'password',
@@ -32,37 +28,28 @@
                             type: 'password',
                         },
                     },
-                }"
-                v-slot="{ isSubmitting }">
+                }" v-slot="{ isSubmitting }">
                 <Transition name="fade" mode="out-in">
-                    <div
-                        v-if="!passwordEnteredCorrectly"
+                    <div v-if="!passwordEnteredCorrectly"
                         class="rounded-md border bg-accent p-2 text-accent-foreground">
-                        <label class="text-sm italic"
-                            >Password Requirements</label
-                        >
-                        <section
-                            class="grid grid-flow-row grid-cols-1 lg:grid-cols-2">
+                        <label class="text-sm italic">Password Requirements</label>
+                        <section class="grid grid-flow-row grid-cols-1 lg:grid-cols-2">
                             <div>
-                                <FontAwesomeIcon
-                                    :class="[
+                                <FontAwesomeIcon :class="[
                                         validPasswordLength
                                             ? 'text-gold'
                                             : 'text-destructive',
-                                    ]"
-                                    :icon="
+                                    ]" :icon="
                                         validPasswordLength ? faCheck : faXmark
                                     " />
                                 6 or more characters
                             </div>
                             <div>
-                                <FontAwesomeIcon
-                                    :class="[
+                                <FontAwesomeIcon :class="[
                                         validPasswordHasLower
                                             ? 'text-gold'
                                             : 'text-destructive',
-                                    ]"
-                                    :icon="
+                                    ]" :icon="
                                         validPasswordHasLower
                                             ? faCheck
                                             : faXmark
@@ -70,13 +57,11 @@
                                 At least one lowercase character
                             </div>
                             <div>
-                                <FontAwesomeIcon
-                                    :class="[
+                                <FontAwesomeIcon :class="[
                                         validPasswordHasUpper
                                             ? 'text-gold'
                                             : 'text-destructive',
-                                    ]"
-                                    :icon="
+                                    ]" :icon="
                                         validPasswordHasUpper
                                             ? faCheck
                                             : faXmark
@@ -84,13 +69,11 @@
                                 At least one uppercase character
                             </div>
                             <div>
-                                <FontAwesomeIcon
-                                    :class="[
+                                <FontAwesomeIcon :class="[
                                         validPasswordHasDigit
                                             ? 'text-gold'
                                             : 'text-destructive',
-                                    ]"
-                                    :icon="
+                                    ]" :icon="
                                         validPasswordHasDigit
                                             ? faCheck
                                             : faXmark
@@ -98,13 +81,11 @@
                                 At least one digit
                             </div>
                             <div>
-                                <FontAwesomeIcon
-                                    :class="[
+                                <FontAwesomeIcon :class="[
                                         validPasswordHasSpecial
                                             ? 'text-gold'
                                             : 'text-destructive',
-                                    ]"
-                                    :icon="
+                                    ]" :icon="
                                         validPasswordHasSpecial
                                             ? faCheck
                                             : faXmark
@@ -112,13 +93,11 @@
                                 At least one special character
                             </div>
                             <div>
-                                <FontAwesomeIcon
-                                    :class="[
+                                <FontAwesomeIcon :class="[
                                         passwordsMatch
                                             ? 'text-gold'
                                             : 'text-destructive',
-                                    ]"
-                                    :icon="
+                                    ]" :icon="
                                         passwordsMatch ? faCheck : faXmark
                                     " />
                                 Passwords match
@@ -126,22 +105,9 @@
                         </section>
                     </div>
                     <div v-else class="flex flex-col gap-2 pt-2">
-                        <div
-                            v-if="formState.submitError"
-                            class="rounded-md border-destructive bg-destructive/50 p-2 text-sm text-destructive-foreground">
-                            {{
-                                formState.submitError.getErrorFor(
-                                    "generalErrors"
-                                )
-                            }}
-                        </div>
                         <div class="flex justify-center">
-                            <AsyncButton
-                                type="submit"
-                                label="Sign Up"
-                                loadingLabel="Signing up..."
-                                :isLoading="isSubmitting"
-                                :icon="faArrowRight" />
+                            <AsyncButton type="submit" label="Sign Up" loadingLabel="Signing up..."
+                                :isLoading="isSubmitting" :icon="faArrowRight" />
                         </div>
                     </div>
                 </Transition>
@@ -149,14 +115,11 @@
         </CardContent>
 
         <CardFooter class="flex justify-end">
-            <NuxtLink
-                :to="{
+            <NuxtLink :to="{
                     path: '/resetPassword',
                     query: redirectToPath ? { redirectTo: redirectToPath } : {},
-                }"
-                class="text-center text-sm underline">
-                Forgot password</NuxtLink
-            >
+                }" class="text-center text-sm underline">
+                Forgot password</NuxtLink>
         </CardFooter>
     </Card>
 </template>
@@ -176,13 +139,12 @@
     const redirectToPath = useRoute().query.redirectTo as LocationQueryValue;
     definePageMeta({
         requiresAuth: false,
+        layout: "logo",
     });
 
     // Form Definition
     const formState = reactive({
         submitError: null as ApiError<SignUpRequest> | null,
-        success: false,
-        submitting: false as boolean,
     });
 
     const testPasswordLength = (password: string) => password.length >= 6;
@@ -246,18 +208,20 @@
             })
             .catch((error) => {
                 formState.submitError = parseAsApiError<SignUpRequest>(error);
+                form.setErrors({
+                    username: formState.submitError.errors?.username,
+                    email: formState.submitError.errors?.email,
+                    password: formState.submitError.errors?.password,
+                })
             })
             .then(async () => {
                 if (redirectToPath != null) {
                     return await navigateTo(redirectToPath);
                 } else {
-                    return await userStore.navigateToFirstAvailableCampaignOrFallbackToCreateOrJoin();
+                    return await useNavigator().toCampaignsList();
                 }
             })
-            .finally(() => {
-                formState.success = true;
-                formState.submitting = false;
-            });
+
     }
 
     // Computed Form Password display

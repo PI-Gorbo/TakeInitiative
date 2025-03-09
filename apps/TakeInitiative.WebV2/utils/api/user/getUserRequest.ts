@@ -7,6 +7,7 @@ const getUserCampaignDto = z
         campaignName: z.string(),
         campaignId: z.string(),
         joinCode: z.string(),
+        currentCombatName: z.string().nullable()
     })
     .required();
 

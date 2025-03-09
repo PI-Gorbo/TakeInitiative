@@ -6,10 +6,7 @@ import { z } from "zod";
 export type ApiError<TRequest extends {}> = {
     statusCode: number;
     message: string;
-    errors: { [key: string]: string[] };
-    getErrorFor: <TPath extends Path<TRequest>>(
-        key: string | "generalErrors" | TPath,
-    ) => string | null;
+    errors: Partial<Record<Path<TRequest> | 'generalErrors', string[]>> | null;
     error: AxiosError<any>;
 };
 const apiErrorSchema = z
@@ -29,24 +26,13 @@ export function parseAsApiError<TRequest extends {}>(
             statusCode: result.statusCode,
             message: result.message,
             errors: result.errors,
-            getErrorFor: (errorName) => {
-                try {
-                    const value = Object.entries(result.errors).find(
-                        ([errorKey, errors]) => errorKey.startsWith(errorName),
-                    )?.[1][0];
-                    return value ?? "";
-                } catch {
-                    return null;
-                }
-            },
             error,
         };
     } catch (err) {
         return {
             statusCode: error.status ?? 500,
             message: "Something went wrong",
-            errors: {},
-            getErrorFor: (err) => null,
+            errors: null,
             error,
         };
     }

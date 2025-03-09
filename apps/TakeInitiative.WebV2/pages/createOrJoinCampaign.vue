@@ -10,10 +10,10 @@
                     <TabsTrigger value="Join"> Join </TabsTrigger>
                 </TabsList>
                 <TabsContent value="Create">
-                    <CreateCampaignForm :submit="createCampaign" class="px-2" />
+                    <CampaignCreateForm :submit="createCampaign" class="px-2" />
                 </TabsContent>
                 <TabsContent value="Join">
-                    <JoinCampaignForm :submit="joinCampaign" class="px-2" />
+                    <CampaignJoinForm :submit="joinCampaign" class="px-2" />
                 </TabsContent>
             </Tabs>
         </CardContent>
@@ -21,26 +21,25 @@
 </template>
 
 <script setup lang="ts">
-    import CardTitle from "~/components/ui/card/CardTitle.vue";
-    import Tabs from "~/components/ui/tabs/Tabs.vue";
-    import type { CreateCampaignRequest } from "~/utils/api/campaign/createCampaignRequest";
-    import type { JoinCampaignRequest } from "~/utils/api/campaign/joinCampaignRequest";
 
-    definePageMeta({ requiresAuth: true });
-    const userStore = useUserStore();
-    async function createCampaign(req: CreateCampaignRequest) {
-        return await userStore
-            .createCampaign(req)
-            .then(
-                async (c) => await useNavigator().toCampaignTab(c.id, "summary")
-            );
-    }
+import type { CreateCampaignRequest } from "~/utils/api/campaign/createCampaignRequest";
+import type { JoinCampaignRequest } from "~/utils/api/campaign/joinCampaignRequest";
 
-    async function joinCampaign(req: JoinCampaignRequest) {
-        return await useUserStore()
-            .joinCampaign(req)
-            .then(
-                async (c) => await useNavigator().toCampaignTab(c.id, "summary")
-            );
-    }
+definePageMeta({ requiresAuth: true, layout: "logo", });
+const userStore = useUserStore();
+async function createCampaign(req: CreateCampaignRequest) {
+    return await userStore
+        .createCampaign(req)
+        .then(
+            async (c) => await useNavigator().toCampaignTab(c.id, "summary")
+        );
+}
+
+async function joinCampaign(req: JoinCampaignRequest) {
+    return await useUserStore()
+        .joinCampaign(req)
+        .then(
+            async (c) => await useNavigator().toCampaignTab(c.id, "summary")
+        );
+}
 </script>
