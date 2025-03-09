@@ -1,55 +1,43 @@
 <template>
-    <main class="flex h-full w-full flex-col items-center gap-5 px-2">
-        <div class="flex w-full max-w-2xl flex-col gap-10 sm:w-4/5">
-            <section class="flex w-full flex-col justify-center gap-6 pt-20">
-                <h1
-                    class="flex items-center justify-center gap-4 font-NovaCut text-4xl font-bold text-gold sm:text-6xl">
-                    <img
-                        class="h-[2em] w-[2em]"
-                        src="~/public/img/yellowDice.png" />
-                    Take Initiative
-                </h1>
-                <p class="w-full text-center">
-                    Focus on the Story, Not the Stats - Make Initiative Tracking
-                    a problem of the past
+    <main class="flex flex-col gap-4">
+        <section class="flex w-full flex-col justify-center gap-6">
+            <p class="w-full text-center">
+                Focus on the Story, Not the Stats - Make Initiative Tracking a
+                problem of the past
+            </p>
+            <div class="flex flex-col gap-2">
+                <template v-if="!userIsLoggedIn">
+                    <NuxtLink class="w-full" to="/signup">
+                        <Button class="w-full">
+                            <span>Sign up for free</span>
+                        </Button>
+                    </NuxtLink>
+                    <NuxtLink class="w-full" to="/login">
+                        <Button class="w-full" variant="outline">
+                            Got an account? Login
+                        </Button>
+                    </NuxtLink>
+                </template>
+                <template v-else>
+                    <NuxtLink class="w-full" to="/app/campaigns">
+                        <Button class="w-full"> Go to your Campaigns </Button>
+                    </NuxtLink>
+                </template>
+            </div>
+        </section>
+
+        <section class="rounded-md border bg-background p-2">
+            <a class="cursor-pointer" href="https://discord.gg/caDetpm6vk">
+                <header class="cursor-pointer font-NovaCut text-gold">
+                    <FontAwesomeIcon :icon="faDiscord" class="text-white" />
+
+                    Join us on discord!
+                </header>
+                <p class="cursor-pointer">
+                    Tell us about any bugs, or request new features on discord.
                 </p>
-                <div class="flex flex-col gap-2">
-                    <template v-if="!userIsLoggedIn">
-                        <NuxtLink class="w-full" to="/signup">
-                            <Button class="w-full">
-                                <span>Sign up for free</span>
-                            </Button>
-                        </NuxtLink>
-                        <NuxtLink class="w-full" to="/login">
-                            <Button class="w-full" variant="outline">
-                                Got an account? Login
-                            </Button>
-                        </NuxtLink>
-                    </template>
-                    <template v-else>
-                        <NuxtLink class="w-full" to="/app/campaigns">
-                            <Button class="w-full">
-                                Go to your Campaigns
-                            </Button>
-                        </NuxtLink>
-                    </template>
-                </div>
-            </section>
-
-            <section class="rounded-md border bg-background p-2">
-                <a class="cursor-pointer" href="https://discord.gg/caDetpm6vk">
-                    <header class="cursor-pointer font-NovaCut text-gold">
-                        <FontAwesomeIcon :icon="faDiscord" class="text-white" />
-
-                        Join us on discord!
-                    </header>
-                    <p class="cursor-pointer">
-                        Tell us about any bugs, or request new features on
-                        discord.
-                    </p>
-                </a>
-            </section>
-        </div>
+            </a>
+        </section>
     </main>
 </template>
 

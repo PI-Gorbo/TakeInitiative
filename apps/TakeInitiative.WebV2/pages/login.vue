@@ -1,83 +1,62 @@
 <template>
-    <div class="flex h-full w-full flex-col items-center pt-20">
-        <div class="w-full max-w-2xl sm:w-4/5">
-            <header>
-                <NuxtLink to="/">
-                    <h1
-                        class="flex items-center justify-center gap-4 font-NovaCut text-4xl font-bold text-gold sm:text-6xl">
-                        <img
-                            class="h-[2em] w-[2em]"
-                            src="~/public/img/yellowDice.png" />
-                        Take Initiative
-                    </h1>
-                </NuxtLink>
-            </header>
-            <Card>
-                <CardHeader class="flex flex-row justify-between">
-                    <CardTitle><h2>Log In</h2></CardTitle>
-                    <CardDescription>
-                        <NuxtLink
-                            :to="{
-                                path: '/signup',
-                                query: redirectToPath
-                                    ? { redirectTo: redirectToPath }
-                                    : {},
-                            }"
-                            class="text-center text-sm underline">
-                            Sign up instead</NuxtLink
-                        >
-                    </CardDescription>
-                </CardHeader>
+    <Card>
+        <CardHeader class="flex flex-row justify-between">
+            <CardTitle><h2>Log In</h2></CardTitle>
+            <CardDescription>
+                <NuxtLink
+                    :to="{
+                        path: '/signup',
+                        query: redirectToPath
+                            ? { redirectTo: redirectToPath }
+                            : {},
+                    }"
+                    class="text-center text-sm underline">
+                    Sign up instead</NuxtLink
+                >
+            </CardDescription>
+        </CardHeader>
 
-                <CardContent>
-                    <AutoForm
-                        :schema="loginFormValidator"
-                        :onSubmit="onLogin"
-                        :fieldConfig="{
-                            password: {
-                                inputProps: {
-                                    type: 'password',
-                                },
-                            },
-                        }"
-                        v-slot="{ isSubmitting }">
-                        <div class="flex flex-col gap-2 pt-2">
-                            <div
-                                v-if="state.errorObject"
-                                class="rounded-md border-destructive bg-destructive/50 p-2 text-sm text-destructive-foreground">
-                                {{
-                                    state.errorObject.getErrorFor(
-                                        "generalErrors"
-                                    )
-                                }}
-                            </div>
-                            <div class="flex justify-center">
-                                <AsyncButton
-                                    type="submit"
-                                    label="Login"
-                                    loadingLabel="Logging in..."
-                                    :isLoading="isSubmitting"
-                                    :icon="faArrowRight" />
-                            </div>
-                        </div>
-                    </AutoForm>
-                </CardContent>
+        <CardContent>
+            <AutoForm
+                :schema="loginFormValidator"
+                :onSubmit="onLogin"
+                :fieldConfig="{
+                    password: {
+                        inputProps: {
+                            type: 'password',
+                        },
+                    },
+                }"
+                v-slot="{ isSubmitting }">
+                <div class="flex flex-col gap-2 pt-2">
+                    <div
+                        v-if="state.errorObject"
+                        class="rounded-md border-destructive bg-destructive/50 p-2 text-sm text-destructive-foreground">
+                        {{ state.errorObject.getErrorFor("generalErrors") }}
+                    </div>
+                    <div class="flex justify-center">
+                        <AsyncButton
+                            type="submit"
+                            label="Login"
+                            loadingLabel="Logging in..."
+                            :isLoading="isSubmitting"
+                            :icon="faArrowRight" />
+                    </div>
+                </div>
+            </AutoForm>
+        </CardContent>
 
-                <CardFooter class="flex justify-end">
-                    <NuxtLink
-                        :to="{
-                            path: '/resetPassword',
-                            query: redirectToPath
-                                ? { redirectTo: redirectToPath }
-                                : {},
-                        }"
-                        class="text-center text-sm underline">
-                        Forgot password</NuxtLink
-                    >
-                </CardFooter>
-            </Card>
-        </div>
-    </div>
+        <CardFooter class="flex justify-end">
+            <NuxtLink
+                :to="{
+                    path: '/resetPassword',
+                    query: redirectToPath ? { redirectTo: redirectToPath } : {},
+                }"
+                class="text-center text-sm underline">
+                Forgot password</NuxtLink
+            >
+        </CardFooter>
+    </Card>
 </template>
 
 <script setup lang="ts">

@@ -1,6 +1,21 @@
 <template>
     <main class="bg-grid flex h-full w-full flex-col bg-background">
-        <slot />
+        <div class="flex h-full w-full flex-col items-center pt-20">
+            <div class="w-full max-w-2xl sm:w-4/5">
+                <header>
+                    <NuxtLink to="/">
+                        <h1
+                            class="flex items-center justify-center gap-4 font-NovaCut text-4xl font-bold text-gold sm:text-6xl">
+                            <img
+                                class="h-[2em] w-[2em]"
+                                src="~/public/img/yellowDice.png" />
+                            Take Initiative
+                        </h1>
+                    </NuxtLink>
+                </header>
+                <slot />
+            </div>
+        </div>
     </main>
 </template>
 
