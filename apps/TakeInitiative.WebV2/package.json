@@ -16,16 +16,22 @@
         "@fortawesome/free-solid-svg-icons": "^6.7.2",
         "@fortawesome/vue-fontawesome": "^3.0.8",
         "@nuxtjs/tailwindcss": "6.13.1",
+        "@pinia/nuxt": "^0.10.1",
+        "@vee-validate/zod": "^4.15.0",
+        "axios": "^1.8.2",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "lucide-vue-next": "^0.479.0",
         "nuxt": "^3.16.0",
+        "nuxt-typed-router": "^3.7.3",
         "reka-ui": "^2.0.2",
         "shadcn-nuxt": "1.0.2",
         "tailwind-merge": "^3.0.2",
         "tailwindcss-animate": "^1.0.7",
+        "vee-validate": "^4.15.0",
         "vue": "^3.5.13",
-        "vue-router": "^4.5.0"
+        "vue-router": "^4.5.0",
+        "zod": "^3.24.2"
     },
     "devDependencies": {
         "prettier": "^3.5.3",

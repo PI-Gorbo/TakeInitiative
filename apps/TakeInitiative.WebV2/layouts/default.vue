@@ -1,27 +1,38 @@
-
 <template>
-    <main class="flex flex-col w-full h-full">
-        <header class="border-b border-b-gold bg-primary/5 border-double p-2 flex justify-between">
-            <section class="flex gap-2">
-                <label class="flex items-center gap-2">
-                    <img class="h-[3em] w-[3em]" src="~/assets/yellowDice.png" />
-                    <label class="select-none font-NovaCut text-xl text-gold md:text-3xl lg:text-2xl">Take
-                        Initiative</label>
-                </label>
-            </section>
-            <section class="flex items-center px-2">
-                <a class="cursor-pointer" href="https://discord.gg/caDetpm6vk">
-                    <FontAwesomeIcon :icon="faDiscord" class="text-xl text-white" />
-                </a>
-                <!-- <FormButton label="Login" @clicked="toLogin" /> -->
-            </section>
-        </header>
-
-        <NuxtPage />
+    <main class="bg-grid flex h-full w-full flex-col bg-background">
+        <slot />
     </main>
 </template>
-<script setup lang="ts">
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { faDiscord } from '@fortawesome/free-brands-svg-icons';
 
-</script>
+<style scoped>
+    @keyframes scrollGrid {
+        0% {
+            background-position: 0 0;
+        }
+
+        100% {
+            background-position: 100px 100px;
+            /* Match grid size here */
+        }
+    }
+
+    .bg-grid {
+        background-image:
+            linear-gradient(
+                to bottom,
+                hsl(var(--primary) / 0.2) 1px,
+                transparent 1px
+            ),
+            linear-gradient(
+                to right,
+                hsl(var(--primary) / 0.2) 1px,
+                transparent 1px
+            );
+        background-size: 50px 50px;
+        /* Adjust grid size here */
+        animation: scrollGrid 6s linear infinite;
+        /* Adjust animation speed here */
+        background-color: #121212;
+        /* Or your desired background color */
+    }
+</style>
