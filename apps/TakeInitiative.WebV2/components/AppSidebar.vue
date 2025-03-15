@@ -3,7 +3,7 @@
         <SidebarContent class="bg-background">
             <SidebarContent>
                 <SidebarGroup>
-                    <!-- <SidebarMenuItem>
+                    <SidebarMenuItem>
                         <SidebarMenuButton
                             class="cursor-pointer select-none hover:bg-secondary">
                             <NuxtLink
@@ -12,7 +12,7 @@
                                 >All Campaigns</NuxtLink
                             ></SidebarMenuButton
                         >
-                    </SidebarMenuItem> -->
+                    </SidebarMenuItem>
                     <SidebarMenuItem>
                         <SidebarMenuButton
                             class="cursor-pointer select-none truncate hover:bg-secondary"

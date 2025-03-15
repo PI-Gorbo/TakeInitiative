@@ -84,13 +84,17 @@
     useAsyncData(
         "campaign-layout-campaign-fetch",
         async () => {
-            return await campaign
-                .setCampaignById(route.params.id)
-                .then(() => true)
-                .catch((error: AxiosError) => {
-                    router.push({ name: "app-campaigns" });
-                    return false;
-                });
+            if (route.params.id) { 
+                return await campaign
+                    .setCampaignById(route.params.id)
+                    .then(() => true)
+                    .catch((error: AxiosError) => {
+                        console.log(JSON.stringify(error))
+                        router.push({ name: "app-campaigns" });
+                        return false;
+                    });
+            }
+            return false;
         },
         {
             watch: [() => route.params.id],

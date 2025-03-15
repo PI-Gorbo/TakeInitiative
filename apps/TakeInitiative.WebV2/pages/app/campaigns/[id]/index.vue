@@ -1,9 +1,6 @@
 <template>
-    <main class="flex w-full flex-col gap-4">
-        <Card class="border-2 border-dashed p-4">
-            <CampaignEditIntroductionForm />
-        </Card>
-        <Card class="p-4">
+    <main class="grid w-full grid-cols-3 flex-col gap-4">
+        <Card class="col-span-1 p-4">
             <header><FontAwesomeIcon :icon="faUsers" /> Players</header>
             <Accordion
                 type="single"
@@ -23,9 +20,13 @@
                                         : 'text-primary'
                                 "
                                 :icon="
-                                    !item.isDungeonMaster ? faUserLarge : faCrown
+                                    !item.isDungeonMaster
+                                        ? faUserLarge
+                                        : faCrown
                                 " />
-                            <label class="select-none">{{ item.username }}</label>
+                            <label class="select-none">{{
+                                item.username
+                            }}</label>
                         </div>
                     </AccordionTrigger>
                     <AccordionContent>
@@ -34,10 +35,19 @@
                 </AccordionItem>
             </Accordion>
         </Card>
+        <div class="col-span-2 col-start-2">
+            <Card class=" border-2 border-dashed p-4">
+                <CampaignEditIntroductionForm />
+            </Card>
+        </div>
     </main>
 </template>
 <script setup lang="ts">
-    import { faCrown, faUserLarge, faUsers } from "@fortawesome/free-solid-svg-icons";
+    import {
+        faCrown,
+        faUserLarge,
+        faUsers,
+    } from "@fortawesome/free-solid-svg-icons";
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 
     const userStore = useUserStore();

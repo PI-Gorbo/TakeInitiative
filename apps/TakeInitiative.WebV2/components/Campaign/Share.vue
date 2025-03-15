@@ -13,7 +13,10 @@
                         selectedCampaignInfo?.joinCode ?? ''
                     ">
                     <template #Trigger="{ copyText }">
-                        <Button size="icon" @click="copyText">
+                        <Button
+                            size="icon"
+                            @click="copyText"
+                            class="bg-secondary hover:bg-primary">
                             <FontAwesomeIcon :icon="faCopy" />
                         </Button>
                     </template>
@@ -33,7 +36,10 @@
                 <CopiedTooltip
                     :textToCopyToClipboard="`${config.public.webUrl}/join/${selectedCampaignInfo?.joinCode}`">
                     <template #Trigger="{ copyText }">
-                        <Button size="icon" @click="copyText">
+                        <Button
+                            size="icon"
+                            @click="copyText"
+                            class="bg-secondary hover:bg-primary">
                             <FontAwesomeIcon :icon="faCopy" />
                         </Button>
                     </template>

@@ -51,14 +51,19 @@
 
 <style scoped lang="css">
     .dice-icon {
-        transition: transform 0.4s ease-in;
+        /* Initial setup for the icon */
+        display: inline-block;
+        transform-origin: center;
+        animation: spin 60s infinite linear; /* Start slow, speed up */
     }
 
-    .dice-icon[data-open="false"] {
-        transform: rotate(0deg);
-    }
-
-    .dice-icon[data-open="true"] {
-        transform: rotate(360deg);
+    /* Keyframes for spinning */
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+        }
     }
 </style>
