@@ -16,7 +16,7 @@ export default defineNuxtConfig({
                 {
                     rel: "icon",
                     type: "image/png",
-                    href: "img/yellowDice.png",
+                    href: "/yellowDice.png",
                 },
             ],
             title: "Take Initiative",
@@ -46,6 +46,7 @@ export default defineNuxtConfig({
         "@nuxtjs/tailwindcss",
         "@pinia/nuxt",
         "nuxt-typed-router",
+        "v-wave/nuxt"
     ],
 
     shadcn: {

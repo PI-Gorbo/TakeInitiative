@@ -8,19 +8,17 @@
                 </header>
                 <ul class="flex flex-col gap-4">
                     <li v-for="campaign in userStore.campaignList">
-                        <NuxtLink
-                            :to="`/app/campaigns/${campaign.campaignId}`">
+                        <NuxtLink :to="`/app/campaigns/${campaign.campaignId}`">
                             <Card
+                                v-wave
                                 :class="[
                                     'interactable group shadow-solid-sm transition-colors hover:border-primary',
                                     {
                                         'border-destructive':
                                             campaign.currentCombatName != null,
                                     },
-                                ]"
-                              >
+                                ]">
                                 <CardHeader>
-                                    
                                     <CardTitle
                                         class="flex items-center justify-between gap-2 px-4">
                                         <div class="space-x-4">
@@ -49,8 +47,7 @@
                 </header>
                 <ul>
                     <li v-for="campaign in userStore.campaignList">
-                        <NuxtLink
-                            :to="`/app/campaigns/${campaign.campaignId}`">
+                        <NuxtLink :to="`/app/campaigns/${campaign.campaignId}`">
                             <Card
                                 :class="[
                                     'interactable group shadow-solid-sm transition-colors hover:border-primary',
@@ -91,10 +88,12 @@
         faPerson,
     } from "@fortawesome/free-solid-svg-icons";
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+    import { helpers } from "@typed-router";
 
     const userStore = useUserStore();
     definePageMeta({
-        layout: "logged-in",
+        layout: "main-app",
         requiresAuth: true,
+       
     });
 </script>

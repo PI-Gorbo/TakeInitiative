@@ -47,15 +47,11 @@
 
     const route = useRoute();
     const userStore = useUserStore();
-
-    const shouldShowAllCampaigns = computed(() =>
-        route.name.startsWith("app-campaigns-id")
-    );
 </script>
 
 <style scoped lang="css">
     .dice-icon {
-        transition: transform 0.4s;
+        transition: transform 0.4s ease-in;
     }
 
     .dice-icon[data-open="false"] {
