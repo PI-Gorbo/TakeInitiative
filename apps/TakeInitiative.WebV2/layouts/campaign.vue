@@ -1,6 +1,6 @@
 <template>
     <div class="h-full w-full">
-        <NuxtLayout name="app">
+        <NuxtLayout name="logged-in">
             <div class="flex h-full w-full justify-center">
                 <div class="w-page">
                     <header class="flex flex-col gap-4">

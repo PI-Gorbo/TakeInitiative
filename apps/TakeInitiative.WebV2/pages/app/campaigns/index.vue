@@ -6,7 +6,7 @@
                 <header class="font-NovaCut text-xl text-gold sm:text-2xl">
                     My Campaigns
                 </header>
-                <ul>
+                <ul class="flex flex-col gap-4">
                     <li v-for="campaign in userStore.campaignList">
                         <NuxtLink
                             :to="`/app/campaigns/${campaign.campaignId}`">
@@ -94,7 +94,7 @@
 
     const userStore = useUserStore();
     definePageMeta({
-        layout: "app",
+        layout: "logged-in",
         requiresAuth: true,
     });
 </script>

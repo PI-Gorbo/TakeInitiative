@@ -1,5 +1,5 @@
 <template>
-    <main class="flex flex-col gap-4 pt-10">
+    <main class="flex flex-col gap-4 pt-10 w-full">
         <Card class="border-2 border-dashed p-4">
             <CampaignEditIntroductionForm />
         </Card>

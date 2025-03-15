@@ -5,7 +5,7 @@
         >
             <section class="navbar-start flex gap-2">
                 <label class="flex items-center gap-2">
-                    <img class="h-[3em] w-[3em]" src="/img/yellowDice.png" />
+                    <img class="h-[3em] w-[3em]" src="~/public/img/yellowDice.png" />
                     <label
                         class="select-none font-NovaCut text-xl text-take-yellow md:text-3xl lg:text-2xl"
                         >Take Initiative</label
