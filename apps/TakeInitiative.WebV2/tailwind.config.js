@@ -1,4 +1,8 @@
 /** @type {import('tailwindcss').Config} */
+
+const plugin = require("tailwindcss/plugin");
+const colors = require("tailwindcss/colors");
+
 export default {
     darkMode: ["class"],
     content: ["./{components,pages}/**/*.{js,vue,ts}"],
@@ -82,8 +86,8 @@ export default {
                 "accordion-up": "accordion-up 0.2s ease-out",
             },
             boxShadow: {
-                "solid-sm": `0 0.2rem hsl(var(--accent))`,
-                "solid-xs": `0 0.1rem hsl(var(--accent))`,
+                "solid-sm": "0 0.2rem var(hsl(--accent))",
+                "solid-xs": "0 0.1rem var(hsl(--accent))",
             },
         },
     },

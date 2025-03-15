@@ -31,7 +31,7 @@ async function createCampaign(req: CreateCampaignRequest) {
     return await userStore
         .createCampaign(req)
         .then(
-            async (c) => await useNavigator().toCampaignTab(c.id, "summary")
+            async (c) => await useNavigator().toCampaign(c.id)
         );
 }
 
@@ -39,7 +39,7 @@ async function joinCampaign(req: JoinCampaignRequest) {
     return await useUserStore()
         .joinCampaign(req)
         .then(
-            async (c) => await useNavigator().toCampaignTab(c.id, "summary")
+            async (c) => await useNavigator().toCampaign(c.id)
         );
 }
 </script>

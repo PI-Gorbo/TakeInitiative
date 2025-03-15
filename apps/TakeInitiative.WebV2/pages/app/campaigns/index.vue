@@ -9,7 +9,7 @@
                 <ul>
                     <li v-for="campaign in userStore.campaignList">
                         <NuxtLink
-                            :to="`/app/campaigns/${campaign.campaignId}/summary`">
+                            :to="`/app/campaigns/${campaign.campaignId}`">
                             <Card
                                 :class="[
                                     'interactable group shadow-solid-sm transition-colors hover:border-primary',
@@ -17,7 +17,8 @@
                                         'border-destructive':
                                             campaign.currentCombatName != null,
                                     },
-                                ]">
+                                ]"
+                              >
                                 <CardHeader>
                                     
                                     <CardTitle
@@ -49,7 +50,7 @@
                 <ul>
                     <li v-for="campaign in userStore.campaignList">
                         <NuxtLink
-                            :to="`/app/campaigns/${campaign.campaignId}/summary`">
+                            :to="`/app/campaigns/${campaign.campaignId}`">
                             <Card
                                 :class="[
                                     'interactable group shadow-solid-sm transition-colors hover:border-primary',

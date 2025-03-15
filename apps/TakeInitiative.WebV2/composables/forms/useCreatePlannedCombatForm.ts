@@ -25,7 +25,7 @@ export const useCreatePlannedCombatForm = () => {
     const [combatName, combatNameInputProps] = defineField("combatName", {
         props: (state) => ({
             errorMessage:
-                formState.error?.getErrorObjectFor("combatName") ?? state.errors[0],
+                formState.error?.errors?.combatName ?? state.errors[0],
         }),
     });
 

@@ -43,7 +43,7 @@ export const useUserStore = defineStore("userStore", () => {
 
     // Mutations
     async function init(): Promise<void> {
-        return await isLoggedIn().then(() => {});
+        return await isLoggedIn().then(() => { });
     }
 
     async function fetchUser(): Promise<User> {
@@ -126,15 +126,18 @@ export const useUserStore = defineStore("userStore", () => {
 
                 // Check if the campaign the user is viewing is the
                 // campaign that is being deleted
-                const id = route.params.id as string;
-                if (id != request.campaignId) {
-                    return;
+                if ('id' in route.params) {
+                    const id = route.params.id as string;
+                    // If it is not the campaign that is being deleted, then we are done and can exit.
+                    if (id != request.campaignId) {
+                        return;
+                    }
                 }
 
+                // Otherwise, we need to navigate to a new campaign, since this one does not exist anymore.
                 if ((campaignList.value?.length ?? 0) > 0) {
-                    return useNavigator().toCampaignTab(
-                        campaignList.value![0].campaignId,
-                        "summary"
+                    return useNavigator().toCampaign(
+                        campaignList.value![0].campaignId
                     );
                 }
             });
@@ -154,7 +157,7 @@ export const useUserStore = defineStore("userStore", () => {
             return useNavigator().toCreateOrJoinCampaign();
         }
 
-        return useNavigator().toCampaignTab(campaign.campaignId, "summary");
+        return useNavigator().toCampaign(campaign.campaignId);
     }
 
     // Helper functions

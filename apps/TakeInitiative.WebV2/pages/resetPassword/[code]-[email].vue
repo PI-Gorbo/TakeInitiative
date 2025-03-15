@@ -73,7 +73,7 @@
     const [password, passwordInputProps] = defineField("password", {
         props: (state) => ({
             errorMessage:
-                formState.submitError?.getErrorObjectFor("password") ??
+                formState.submitError?.errors?.password ??
                 state.errors[0],
         }),
     });
@@ -95,13 +95,15 @@
             return;
         }
 
-        await useApi()
-            .user.resetPasswordWithToken({
-                email: route.params.email as string,
-                password: password.value!,
-                token: route.params.code as string,
-            })
-            .then(async () => await useNavigator().toLogin())
-            .catch((e) => (formState.submitError = parseAsApiError(e)));
+        if (route.name == 'resetPassword-code-email') {
+            await useApi()
+                .user.resetPasswordWithToken({
+                    email: route.params.email,
+                    password: password.value!,
+                    token: route.params.code,
+                })
+                .then(async () => await useNavigator().toLogin())
+                .catch((e) => (formState.submitError = parseAsApiError(e)));
+        }
     }
 </script>

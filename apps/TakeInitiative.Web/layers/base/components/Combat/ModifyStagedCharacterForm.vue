@@ -254,7 +254,6 @@ async function onCreate() {
     if (!props.onCreate) return;
 
     formState.error = null;
-    debugger;
     // Fetch & Set the computed health values from the health component upon submission
     const computedHealth = characterHealthInput.value?.getHealth();
     if (computedHealth == false) {

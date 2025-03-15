@@ -31,6 +31,7 @@ export const useCampaignStore = defineStore("campaignStore", () => {
         .withAutomaticReconnect()
         .configureLogging(signalR.LogLevel.Debug)
         .build();
+
     connection.on("campaignStateUpdated", async () => {
         await refetchCampaign();
         return;

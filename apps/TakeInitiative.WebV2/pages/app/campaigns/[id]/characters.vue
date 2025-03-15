@@ -1,8 +1,8 @@
 <template></template>
 <script setup lang="ts">
-    const campignId: string = useRoute().params?.id;
+
     definePageMeta({
-        layout: "app",
+        layout: "campaign",
         requiresAuth: true,
     });
 </script>

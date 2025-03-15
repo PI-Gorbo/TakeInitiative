@@ -2,7 +2,7 @@
     <div class="w-full h-full">
         <NuxtLayout name="default">
             <div class="flex h-full w-full flex-col items-center pt-20">
-                <div class="w-page-slim">
+                <div class="w-page-slim flex flex-col">
                     <header>
                         <NuxtLink to="/">
                             <h1
@@ -12,7 +12,9 @@
                             </h1>
                         </NuxtLink>
                     </header>
-                    <slot />
+                    <div class="flex-1 px-4">
+                        <slot />
+                    </div>
                 </div>
             </div>
         </NuxtLayout>

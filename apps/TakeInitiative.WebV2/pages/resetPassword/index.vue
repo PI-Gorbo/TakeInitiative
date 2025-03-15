@@ -14,7 +14,7 @@
                 v-bind="emailInputProps" />
 
             <div v-if="state.errorObject" class="text-take-red">
-                {{ state.errorObject.getErrorObjectFor("generalErrors") }}
+                {{ state.errorObject.errors?.generalErrors }}
             </div>
 
             <!-- {{ state.errorObject }} -->
@@ -59,7 +59,7 @@
     const [email, emailInputProps] = defineField("email", {
         props: (_state) => ({
             errorMessage:
-                state.errorObject?.getErrorObjectFor("Email") ?? _state.errors[0],
+                state.errorObject?.errors?.email ?? _state.errors[0],
         }),
     });
 
