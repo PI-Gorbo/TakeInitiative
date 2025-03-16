@@ -37,9 +37,14 @@
                                     Change your password here.
                                 </TabsContent>
                             </Tabs>
-                            <Button variant="outline" @click="() => { 
-                                shareModalOpen = true
-                            }">
+                            <Button
+                                variant="outline"
+                                class="interactable shadow-accent shadow-solid-sm"
+                                @click="
+                                    () => {
+                                        shareModalOpen = true;
+                                    }
+                                ">
                                 <FontAwesomeIcon :icon="faPlus" />
                                 Add Players
                             </Button>
@@ -79,17 +84,17 @@
     const router = useRouter();
     const route = useRoute("app-campaigns-id");
 
-    const shareModalOpen = ref(false)
+    const shareModalOpen = ref(false);
 
     useAsyncData(
         "campaign-layout-campaign-fetch",
         async () => {
-            if (route.params.id) { 
+            if (route.params.id) {
                 return await campaign
                     .setCampaignById(route.params.id)
                     .then(() => true)
                     .catch((error: AxiosError) => {
-                        console.log(JSON.stringify(error))
+                        console.log(JSON.stringify(error));
                         router.push({ name: "app-campaigns" });
                         return false;
                     });

@@ -1,17 +1,16 @@
 <template>
-    <main class="text-take-grey-light flex flex-col gap-4">
+    <main class="text-take-grey-light flex flex-col gap-4 pt-4">
         <div class="flex flex-col gap-2">
-            <label class="text-take-yellow font-NovaCut">Campaign Code</label>
+            <label class="text-take-yellow text-sm">Join link</label>
             <div class="group flex w-full items-center gap-2">
                 <div
                     class="flex w-full justify-start rounded-lg border p-1 px-2 text-center transition-colors group-hover:border-primary">
-                    {{ selectedCampaignInfo?.joinCode }}
+                    {{
+                        `${config.public.webUrl}/join/${selectedCampaignInfo?.joinCode}`
+                    }}
                 </div>
-
                 <CopiedTooltip
-                    :textToCopyToClipboard="
-                        selectedCampaignInfo?.joinCode ?? ''
-                    ">
+                    :textToCopyToClipboard="`${config.public.webUrl}/join/${selectedCampaignInfo?.joinCode}`">
                     <template #Trigger="{ copyText }">
                         <Button
                             size="icon"
@@ -23,18 +22,18 @@
                 </CopiedTooltip>
             </div>
         </div>
-
-        <div class="flex flex-col gap-2">
-            <label class="text-take-yellow font-NovaCut">URL</label>
+        <div class="flex flex-col gap-1">
+            <label class="text-take-yellow text-sm">Campaign Code</label>
             <div class="group flex w-full items-center gap-2">
                 <div
                     class="flex w-full justify-start rounded-lg border p-1 px-2 text-center transition-colors group-hover:border-primary">
-                    {{
-                        `${config.public.webUrl}/join/${selectedCampaignInfo?.joinCode}`
-                    }}
+                    {{ selectedCampaignInfo?.joinCode }}
                 </div>
+
                 <CopiedTooltip
-                    :textToCopyToClipboard="`${config.public.webUrl}/join/${selectedCampaignInfo?.joinCode}`">
+                    :textToCopyToClipboard="
+                        selectedCampaignInfo?.joinCode ?? ''
+                    ">
                     <template #Trigger="{ copyText }">
                         <Button
                             size="icon"

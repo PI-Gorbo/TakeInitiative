@@ -24,6 +24,18 @@ export default defineNuxtConfig({
         pageTransition: { name: "fade", mode: "out-in" },
         layoutTransition: { name: "fade", mode: "out-in" },
     },
+
+    routeRules
+        : {
+
+        // everything in the main app only on client-side
+        '/app/**': {
+            ssr
+                : false
+        },
+
+    },
+
     runtimeConfig: {
         public: {
             // https://medium.com/@hackcharms/how-to-use-axios-in-nuxt3-same-as	-nuxt2-with-typescript-3f4daf524cdd

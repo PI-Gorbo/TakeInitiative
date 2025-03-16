@@ -12,11 +12,7 @@
                             <Card
                                 v-wave
                                 :class="[
-                                    'interactable group shadow-solid-sm transition-colors hover:border-primary',
-                                    {
-                                        'border-destructive':
-                                            campaign.currentCombatName != null,
-                                    },
+                                    'interactable group shadow-solid-sm transition-colors hover:border-primary hover:shadow-primary',
                                 ]">
                                 <CardHeader>
                                     <CardTitle
@@ -27,6 +23,14 @@
                                                 class="text-gold" /><span>{{
                                                 campaign.campaignName
                                             }}</span>
+                                        </div>
+                                        <div
+                                            v-if="campaign.currentCombatName"
+                                            class="rounded-md border border-destructive p-2">
+                                            <FontAwesomeIcon
+                                                :icon="faHandFist"
+                                                class="text-destructive" />
+                                            {{ campaign.currentCombatName }}
                                         </div>
                                         <div
                                             class="transition-colors group-hover:text-primary">
@@ -51,10 +55,6 @@
                             <Card
                                 :class="[
                                     'interactable group shadow-solid-sm transition-colors hover:border-primary',
-                                    {
-                                        'border-destructive':
-                                            campaign.currentCombatName != null,
-                                    },
                                 ]">
                                 <CardHeader>
                                     <CardTitle
@@ -65,6 +65,11 @@
                                                 class="text-gold" /><span>{{
                                                 campaign.campaignName
                                             }}</span>
+                                        </div>
+                                        <div v-if="campaign.currentCombatName">
+                                            <FontAwesomeIcon
+                                                :icon="faHandFist" />
+                                            {{ campaign.currentCombatName }}
                                         </div>
                                         <div
                                             class="transition-colors group-hover:text-primary">
@@ -85,6 +90,7 @@
     import {
         faChevronCircleRight,
         faCrown,
+        faHandFist,
         faPerson,
     } from "@fortawesome/free-solid-svg-icons";
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
@@ -94,6 +100,5 @@
     definePageMeta({
         layout: "main-app",
         requiresAuth: true,
-       
     });
 </script>

@@ -1,6 +1,11 @@
 <template>
-    <main class="grid w-full grid-cols-3 flex-col gap-4">
-        <Card class="col-span-1 p-4">
+    <main class="sm:grid w-full flex flex-col gap-4 sm:grid-cols-3">
+        <div class="sm:col-span-2 sm:col-start-2">
+            <Card class="border-2 border-dashed p-4 border-primary/50">
+                <CampaignEditIntroductionForm />
+            </Card>
+        </div>
+        <Card class="p-4 sm:col-span-1 sm:col-start-1 sm:row-start-1 border-primary/50">
             <header><FontAwesomeIcon :icon="faUsers" /> Players</header>
             <Accordion
                 type="single"
@@ -35,11 +40,6 @@
                 </AccordionItem>
             </Accordion>
         </Card>
-        <div class="col-span-2 col-start-2">
-            <Card class=" border-2 border-dashed p-4">
-                <CampaignEditIntroductionForm />
-            </Card>
-        </div>
     </main>
 </template>
 <script setup lang="ts">

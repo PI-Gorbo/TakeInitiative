@@ -4,26 +4,29 @@
             <SidebarProvider :defaultOpen="false" class="h-full w-full">
                 <AppSidebar />
                 <div class="flex h-full w-full flex-col gap-4">
-                    <header class="flex justify-between p-1 px-4 sm:p-2">
-                        <div class="flex items-center gap-1">
-                            <CustomSidebarTrigger
-                                v-slot="{ open }"
-                                class="flex items-center gap-4">
-                                <FontAwesomeIcon :icon="faBars" />
+                    <div class="flex justify-center">
+                        <header class="w-page flex justify-between p-2">
+                            <div class="flex items-center gap-1">
+                                <CustomSidebarTrigger
+                                    v-if="showSidebar"
+                                    v-slot="{ open }"
+                                    class="flex items-center gap-4">
+                                    <FontAwesomeIcon :icon="faBars" />
+                                </CustomSidebarTrigger>
                                 <h1
                                     class="flex items-center gap-4 font-NovaCut text-2xl font-bold text-gold sm:text-3xl">
                                     <img
                                         class="dice-icon h-[2em] w-[2em]"
-                                        src="~/public/img/yellowDice.png"
-                                        :data-open="open" />
+                                        src="~/public/img/yellowDice.png" />
                                     <div class="hidden sm:inline">
                                         Take Initiative
                                     </div>
                                 </h1>
-                            </CustomSidebarTrigger>
-                        </div>
-                    </header>
-                    <div v-if="userStore.state.user" class="flex-1 px-2">
+                            </div>
+                            <AppNavigationBar v-if="!showSidebar" />
+                        </header>
+                    </div>
+                    <div v-if="user.state.user" class="flex-1 px-2">
                         <slot />
                     </div>
                     <div v-else class="flex items-center justify-center">
@@ -43,10 +46,18 @@
         faUserCircle,
     } from "@fortawesome/free-solid-svg-icons";
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-    import { useSidebar } from "~/components/ui/sidebar";
+    import { useMediaQuery } from "@vueuse/core";
+
+    const isDesktopSized = useMediaQuery("(min-width: 640px)", {
+        ssrWidth: 640,
+    });
+
+    const showSidebar = computed(() => {
+        return !isDesktopSized.value;
+    });
 
     const route = useRoute();
-    const userStore = useUserStore();
+    const user = useUserStore();
 </script>
 
 <style scoped lang="css">

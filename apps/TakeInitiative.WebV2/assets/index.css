@@ -96,18 +96,13 @@
     .w-page-slim {
         @apply w-full max-w-2xl sm:w-4/5;
     }
+
 }
 
-.shadow-square-sm:active.interactable {
+.interactable:active {
     transform: translateY(0.1rem);
     box-shadow: 0 0.1rem hsl(var(--accent));
 }
-
-button.shadow-square-sm:active {
-    transform: translateY(0.1rem);
-    box-shadow: 0 0.1rem hsl(var(--accent));
-}
-
 
 .fade-enter-active,
 .fade-leave-active {
