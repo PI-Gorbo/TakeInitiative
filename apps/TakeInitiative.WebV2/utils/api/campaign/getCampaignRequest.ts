@@ -22,6 +22,7 @@ const campaignMemberDtoValidator = z
         username: z.string(),
         isDungeonMaster: z.boolean(),
         resources: z.array(campaignMemberResourceValidator),
+        characters: z.array(playerCharacterValidator)
     })
     .required();
 
@@ -49,7 +50,7 @@ const getCampaignResponseSchema = z
     .object({
         campaign: campaignValidator,
         userCampaignMember: campaignMemberValidator,
-        nonUserCampaignMembers: z.array(campaignMemberDtoValidator),
+        campaignMembers: z.array(campaignMemberDtoValidator),
         joinCode: z.string(),
         currentCombatInfo: combatDtoValidator.nullable(),
         combatHistory: z.array(

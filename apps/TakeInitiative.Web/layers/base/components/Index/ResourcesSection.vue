@@ -11,7 +11,7 @@
                     icon="plus"
                     buttonColour="take-purple"
                     @clicked="showAddResourceModal"
-                />
+                />  
             </div>
         </li>
         <li v-for="memberResources in displayableMemberResources">

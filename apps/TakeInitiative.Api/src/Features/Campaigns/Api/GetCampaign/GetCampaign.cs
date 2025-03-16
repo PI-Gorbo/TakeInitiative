@@ -90,7 +90,7 @@ public class GetCampaign(IDocumentStore Store) : Endpoint<GetCampaignRequest, Ge
                 {
                     Campaign = campaign,
                     JoinCode = CampaignIdShortener.ToShortId(campaign.Id),
-                    NonUserCampaignMembers = nonUserCampaignMemberDtos.ToArray(),
+                    CampaignMembers = nonUserCampaignMemberDtos.ToArray(),
                     UserCampaignMember = userCampaignMember,
                     CurrentCombatInfo = dto == null ? null : new CurrentCombatDto()
                     {

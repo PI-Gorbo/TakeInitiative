@@ -26,7 +26,7 @@
                                         </div>
                                         <div
                                             v-if="campaign.currentCombatName"
-                                            class="rounded-md border border-destructive p-2">
+                                            class="rounded-md border-2 border-destructive p-2">
                                             <FontAwesomeIcon
                                                 :icon="faHandFist"
                                                 class="text-destructive" />

@@ -63,7 +63,7 @@ export const useCampaignStore = defineStore("campaignStore", () => {
         combatHistory: undefined,
         currentCombatInfo: undefined,
         joinCode: undefined,
-        nonUserCampaignMembers: undefined,
+        campaignMembers: undefined,
         userCampaignMember: undefined,
     });
 
@@ -113,14 +113,14 @@ export const useCampaignStore = defineStore("campaignStore", () => {
     // Member Details
     const memberDtos: ComputedRef<CampaignMemberDto[]> = computed(() => {
         if (
-            state.nonUserCampaignMembers == undefined ||
+            state.campaignMembers == undefined ||
             state.userCampaignMember == undefined
         ) {
             return [];
         }
 
         return [
-            ...state.nonUserCampaignMembers,
+            ...state.campaignMembers,
             {
                 ...state.userCampaignMember,
                 username: userStore.state.user?.username!,
@@ -216,7 +216,7 @@ export const useCampaignStore = defineStore("campaignStore", () => {
                     ),
                     isDm: state.userCampaignMember?.isDungeonMaster,
                 },
-                ...(state.nonUserCampaignMembers ?? []).map((member) => ({
+                ...(state.campaignMembers ?? []).map((member) => ({
                     userId: member.userId,
                     username: member.username!,
                     resources: member.resources?.sort((a, b) =>

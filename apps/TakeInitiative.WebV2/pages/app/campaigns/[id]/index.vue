@@ -5,7 +5,8 @@
                 <CampaignEditIntroductionForm />
             </Card>
         </div>
-        <Card class="p-4 sm:col-span-1 sm:col-start-1 sm:row-start-1 border-primary/50">
+        <Card
+            class="p-4 sm:col-span-1 sm:col-start-1 sm:row-start-1 border-primary/50">
             <header><FontAwesomeIcon :icon="faUsers" /> Players</header>
             <Accordion
                 type="single"
@@ -17,7 +18,7 @@
                     :key="item.userId"
                     :value="item.userId">
                     <AccordionTrigger>
-                        <div>
+                        <div class="flex gap-2">
                             <FontAwesomeIcon
                                 :class="
                                     item.isDungeonMaster
@@ -29,13 +30,16 @@
                                         ? faUserLarge
                                         : faCrown
                                 " />
-                            <label class="select-none">{{
-                                item.username
-                            }}</label>
+                            <label class="select-none">
+                                {{ item.username }}
+                            </label>
                         </div>
                     </AccordionTrigger>
                     <AccordionContent>
-                        {{ item.resources }}
+                        <CampaignPlayerResourcesSection
+                            :userId="item.userId"
+                            :characters="item.characters"
+                            :resources="item.resources" />
                     </AccordionContent>
                 </AccordionItem>
             </Accordion>

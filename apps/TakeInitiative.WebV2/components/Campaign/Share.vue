@@ -1,5 +1,5 @@
 <template>
-    <main class="text-take-grey-light flex flex-col gap-4 pt-4">
+    <main class="text-take-grey-light flex flex-col text-start gap-4 pt-4">
         <div class="flex flex-col gap-2">
             <label class="text-take-yellow text-sm">Join link</label>
             <div class="group flex w-full items-center gap-2">
