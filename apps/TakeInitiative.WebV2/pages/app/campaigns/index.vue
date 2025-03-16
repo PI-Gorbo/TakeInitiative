@@ -54,7 +54,7 @@
                         <NuxtLink :to="`/app/campaigns/${campaign.campaignId}`">
                             <Card
                                 :class="[
-                                    'interactable group shadow-solid-sm transition-colors hover:border-primary',
+                                    'group interactable shadow-solid-sm hover:shadow-primary transition-colors hover:border-primary',
                                 ]">
                                 <CardHeader>
                                     <CardTitle
