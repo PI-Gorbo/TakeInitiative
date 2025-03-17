@@ -106,7 +106,7 @@
                     </div>
                     <div
                         v-else-if="dialogState.dialogType === 'edit-character'">
-                        Here
+                        <CampaignEditPlayerCharacterForm :character="dialogState.characterClicked!"/>
                     </div>
                 </Transition>
             </DialogContent>
