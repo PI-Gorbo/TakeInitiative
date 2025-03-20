@@ -7,7 +7,9 @@
                         <NuxtLink to="/">
                             <h1
                                 class="flex items-center justify-center gap-4 font-NovaCut text-4xl font-bold text-gold sm:text-6xl">
-                                <img class="h-[2em] w-[2em]" src="~/public/img/yellowDice.png" />
+                                <img
+                                    class="h-[2em] w-[2em]"
+                                    src="~/public/img/yellowDice.png" />
                                 Take Initiative
                             </h1>
                         </NuxtLink>
@@ -17,6 +19,7 @@
                     </div>
                 </div>
             </div>
+            
         </NuxtLayout>
     </div>
 </template>

@@ -16,6 +16,7 @@ import type { UpdateCampaignDetailsRequest } from "../utils/api/campaign/updateC
 import type { CreatePlannedCombatRequest } from "../utils/api/plannedCombat/createPlannedCombatRequest";
 import type { PlayerCharacterDto } from "../utils/api/campaign/createPlayerCharacterRequest";
 import * as signalR from "@microsoft/signalr";
+import { toast } from "vue-sonner";
 
 export const useCampaignStore = defineStore("campaignStore", () => {
     const api = useApi();
@@ -144,7 +145,8 @@ export const useCampaignStore = defineStore("campaignStore", () => {
                 campaignMemberId: state.userCampaignMember?.id!,
                 playerCharacter: dto,
             })
-            .then((member) => (state.userCampaignMember = member));
+            .then((member) => (state.userCampaignMember = member))
+            .then(() => toast.success("Created!"));
     }
 
     async function updatePlayerCharacter(
@@ -157,7 +159,10 @@ export const useCampaignStore = defineStore("campaignStore", () => {
                 playerCharacterId: characterId,
                 playerCharacter: dto,
             })
-            .then((member) => (state.userCampaignMember = member));
+            .then((member) => (state.userCampaignMember = member))
+            .then(() => {
+                toast.success('Saved!')
+            });
     }
 
     async function deletePlayerCharacter(characterId: string) {
@@ -166,7 +171,8 @@ export const useCampaignStore = defineStore("campaignStore", () => {
                 memberId: state.userCampaignMember?.id!,
                 playerCharacterId: characterId,
             })
-            .then((member) => (state.userCampaignMember = member));
+            .then((member) => (state.userCampaignMember = member))
+            .then(() => toast.success("Deleted!"));
     }
 
     async function setCampaignMemberResources(

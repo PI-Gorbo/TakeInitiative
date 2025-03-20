@@ -48,6 +48,11 @@ export default {
                     DEFAULT: "hsl(var(--gold))",
                     foreground: "hsl(var(--gold-foreground))",
                 },
+                success: {
+                    tint: "hsl(var(--success-tint))",
+                    DEFAULT: "hsl(var(--success))",
+                    foreground: "hsl(var(--success-foreground))",
+                },
                 border: "hsl(var(--border))",
                 input: "hsl(var(--input))",
                 ring: "hsl(var(--ring))",

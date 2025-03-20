@@ -35,11 +35,12 @@
                                     isViewingCurrentUsersCharacters,
                             }"
                             :disabled="!isViewingCurrentUsersCharacters"
-                            @click="() => {
-                                dialogState.characterClicked = character;
-                                openDialog('edit-character')
-                            }"
-                            >
+                            @click="
+                                () => {
+                                    dialogState.characterClicked = character;
+                                    openDialog('edit-character');
+                                }
+                            ">
                             <FontAwesomeIcon :icon="faPerson" />
                             {{ character.name }}
                         </Button>
@@ -82,7 +83,15 @@
                 </div>
             </template>
         </section>
-        <Dialog v-model:open="dialogState.dialogOpen">
+        <Dialog
+            :open="dialogState.dialogOpen"
+            @update:open="
+                (dialogValue) => {
+                    if (dialogValue == false) {
+                        trySubmitThenClose();
+                    }
+                }
+            ">
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>
@@ -106,7 +115,10 @@
                     </div>
                     <div
                         v-else-if="dialogState.dialogType === 'edit-character'">
-                        <CampaignEditPlayerCharacterForm :character="dialogState.characterClicked!"/>
+                        <CampaignEditPlayerCharacterForm
+                            ref="editCharacterForm"
+                            :character="dialogState.characterClicked!"
+                            :onEdit="editCharacter" />
                     </div>
                 </Transition>
             </DialogContent>
@@ -116,6 +128,7 @@
 <script setup lang="ts">
     import { faPerson, faPlusCircle } from "@fortawesome/free-solid-svg-icons";
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+    import type { PlayerCharacterDto } from "~/utils/api/campaign/createPlayerCharacterRequest";
 
     import type {
         CampaignMemberResource,
@@ -157,7 +170,7 @@
     const dialogState = reactive<{
         dialogOpen: boolean;
         dialogType: DialogType;
-        characterClicked: PlayerCharacter | undefined
+        characterClicked: PlayerCharacter | undefined;
     }>({
         dialogOpen: false,
         dialogType: "create-character",
@@ -167,5 +180,19 @@
     function openDialog(dialogType: DialogType) {
         dialogState.dialogType = dialogType;
         dialogState.dialogOpen = true;
+    }
+
+    async function editCharacter(playerCharacter: PlayerCharacterDto) {
+        return campaignStore
+            .updatePlayerCharacter(
+                dialogState.characterClicked?.id!,
+                playerCharacter
+            )
+            .then(() => (dialogState.dialogOpen = false));
+    }
+
+    const editCharacterForm = useTemplateRef("editCharacterForm");
+    function trySubmitThenClose() {
+        editCharacterForm.value?.onSubmit();
     }
 </script>

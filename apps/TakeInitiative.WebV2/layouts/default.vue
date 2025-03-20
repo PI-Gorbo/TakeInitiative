@@ -1,6 +1,10 @@
 <template>
     <div class="flex h-full w-full flex-col">
         <slot />
+        <!-- Nuxt  -->
+        <ClientOnly>
+            <Toaster />
+        </ClientOnly>
     </div>
 </template>
 
