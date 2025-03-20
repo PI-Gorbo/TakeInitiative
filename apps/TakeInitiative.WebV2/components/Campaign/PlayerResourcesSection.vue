@@ -118,7 +118,8 @@
                         <CampaignEditPlayerCharacterForm
                             ref="editCharacterForm"
                             :character="dialogState.characterClicked!"
-                            :onEdit="editCharacter" />
+                            :onEdit="editCharacter"
+                            :onDelete="() => deleteCharacter(dialogState.characterClicked?.id!)" />
                     </div>
                 </Transition>
             </DialogContent>
@@ -188,6 +189,12 @@
                 dialogState.characterClicked?.id!,
                 playerCharacter
             )
+            .then(() => (dialogState.dialogOpen = false));
+    }
+
+    async function deleteCharacter(characterId: string) {
+        return campaignStore
+            .deletePlayerCharacter(characterId)
             .then(() => (dialogState.dialogOpen = false));
     }
 

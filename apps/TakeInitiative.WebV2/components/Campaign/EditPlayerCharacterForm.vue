@@ -35,21 +35,37 @@
             </div>
         </FormFieldWrapper>
 
-        <div class="flex justify-between">
-            <div class="flex items-center">
+        <div class="flex gap-1 justify-end">
+            <div class="flex flex-1 items-center text-sm">
                 <div
                     v-if="form.meta.value.valid && form.meta.value.dirty"
                     class="border-success border px-2 rounded-md text-success-tint text-opacity-20 w-fit flex items-center gap-2">
                     <FontAwesomeIcon :icon="faCheckCircle" />
-                    Closing the form will save changes.
+                    Closing will save.
                 </div>
             </div>
             <Button
                 type="button"
                 :disabled="!form.meta.value.dirty"
-                variant="secondary">
+                variant="secondary"
+                @click="() => form.resetForm()">
                 <FontAwesomeIcon :icon="faArrowRotateRight" />
                 Reset Changes
+            </Button>
+            <Button
+                type="button"
+                size="icon"
+                variant="destructive"
+                @click="() => refresh()">
+                <FontAwesomeIcon
+                    :icon="
+                        status === 'success' || status === 'idle'
+                            ? faTrashCan
+                            : faSpinner
+                    "
+                    :class="{
+                        'fa-spin': status === 'pending' || status === 'error',
+                    }" />
             </Button>
         </div>
 
@@ -125,6 +141,8 @@
         faArrowRotateRight,
         faCheckCircle,
         faQuestionCircle,
+        faSpinner,
+        faTrashCan,
     } from "@fortawesome/free-solid-svg-icons";
 
     const formState = reactive({
@@ -193,6 +211,14 @@
                 formState.error = parseAsApiError(error);
             });
     });
+
+    const { refresh, status } = useAsyncData(
+        "delete-player-character",
+        props.onDelete,
+        {
+            immediate: false,
+        }
+    );
 
     defineExpose({
         onSubmit,
