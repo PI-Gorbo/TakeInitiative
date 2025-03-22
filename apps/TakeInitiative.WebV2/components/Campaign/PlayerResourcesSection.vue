@@ -31,7 +31,7 @@
                             :key="character.id"
                             variant="outline"
                             :class="{
-                                'interactable shadow-solid-sm':
+                                'interactable shadow-solid-sm ':
                                     isViewingCurrentUsersCharacters,
                             }"
                             :disabled="!isViewingCurrentUsersCharacters"
@@ -48,8 +48,7 @@
                             class="flex justify-end"
                             v-if="isViewingCurrentUsersCharacters">
                             <Button
-                                variant="outline"
-                                class="interactable shadow-solid-sm"
+                                variant="link"
                                 @click="() => openDialog('create-character')">
                                 <FontAwesomeIcon :icon="faPlusCircle" />
                                 New
@@ -69,8 +68,7 @@
                         >You've not got any resources yet.</span
                     >
                     <Button
-                        variant="outline"
-                        class="interactable shadow-solid-sm"
+                        variant="link"
                         @click="() => openDialog('create-resource')">
                         <FontAwesomeIcon :icon="faPlusCircle" />
                         New
@@ -83,15 +81,7 @@
                 </div>
             </template>
         </section>
-        <Dialog
-            :open="dialogState.dialogOpen"
-            @update:open="
-                (dialogValue) => {
-                    if (dialogValue == false) {
-                        trySubmitThenClose();
-                    }
-                }
-            ">
+        <Dialog v-model:open="dialogState.dialogOpen">
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>
@@ -119,7 +109,12 @@
                             ref="editCharacterForm"
                             :character="dialogState.characterClicked!"
                             :onEdit="editCharacter"
-                            :onDelete="() => deleteCharacter(dialogState.characterClicked?.id!)" />
+                            :onDelete="
+                                () =>
+                                    deleteCharacter(
+                                        dialogState.characterClicked?.id!
+                                    )
+                            " />
                     </div>
                 </Transition>
             </DialogContent>

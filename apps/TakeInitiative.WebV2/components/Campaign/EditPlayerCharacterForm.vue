@@ -1,7 +1,7 @@
 <template>
     <form @submit.prevent="onSubmit" class="flex flex-col gap-2">
         <FormFieldWrapper label="Name" :error="form.errors.value.name">
-            <Input autoFocus v-model="name" />
+            <Input autofocus v-model="name" />
         </FormFieldWrapper>
 
         <FormFieldWrapper
@@ -35,23 +35,19 @@
             </div>
         </FormFieldWrapper>
 
+        {{ formState.error }}
+
         <div class="flex gap-1 justify-end">
             <div class="flex flex-1 items-center text-sm">
-                <div
-                    v-if="form.meta.value.valid && form.meta.value.dirty"
-                    class="border-success border px-2 rounded-md text-success-tint text-opacity-20 w-fit flex items-center gap-2">
-                    <FontAwesomeIcon :icon="faCheckCircle" />
-                    Closing will save.
-                </div>
+                <Button
+                    :disabled="
+                        !form.meta.value.valid || !form.meta.value.dirty
+                    ">
+                    <FontAwesomeIcon :icon="faSave" />
+                    {{ form.isSubmitting.value ? "Saving..." : "Save" }}
+                </Button>
             </div>
-            <Button
-                type="button"
-                :disabled="!form.meta.value.dirty"
-                variant="secondary"
-                @click="() => form.resetForm()">
-                <FontAwesomeIcon :icon="faArrowRotateRight" />
-                Reset Changes
-            </Button>
+
             <Button
                 type="button"
                 size="icon"
@@ -141,9 +137,11 @@
         faArrowRotateRight,
         faCheckCircle,
         faQuestionCircle,
+        faSave,
         faSpinner,
         faTrashCan,
     } from "@fortawesome/free-solid-svg-icons";
+    import type { UpdatePlayerCharacterRequest } from "~/utils/api/campaign/updatePlayerCharacterRequest";
 
     const formState = reactive({
         error: null as ApiError<CreatePlannedCombatNpcRequest> | null,
@@ -208,7 +206,10 @@
                 armourClass: formValue.armourClass ?? null,
             })
             .catch((error) => {
-                formState.error = parseAsApiError(error);
+                console.log("TESTING!")
+                formState.error =
+                    parseAsApiError<UpdatePlayerCharacterRequest>(error);
+                console.log(formState.error.errors?.["playerCharacter.Initiative.Roll" ].at(0));
             });
     });
 
