@@ -12,7 +12,7 @@
                             <Card
                                 v-wave
                                 :class="[
-                                    'interactable group shadow-solid-sm transition-colors hover:border-primary hover:shadow-primary',
+                                    'interactable group shadow-solid-sm transition-all hover:border-primary hover:shadow-primary',
                                 ]">
                                 <CardHeader>
                                     <CardTitle
@@ -100,5 +100,13 @@
     definePageMeta({
         layout: "main-app",
         requiresAuth: true,
+        middleware: [
+            () => { 
+                const userStore = useUserStore();
+                if (userStore.state.user?.dmCampaigns.length === 0 && userStore.state.user?.memberCampaigns.length === 0) {
+                    return navigateTo(helpers.path('/createOrJoinCampaign'))
+                }
+            }
+        ]
     });
 </script>
