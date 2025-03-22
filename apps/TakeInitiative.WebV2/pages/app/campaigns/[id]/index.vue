@@ -12,7 +12,7 @@
                     type="single"
                     class="w-full"
                     collapsible
-                    :defaultValue="userStore.state.user?.userId">
+                    v-model:modelValue="openAccordionValue">
                     <AccordionItem
                         v-for="item in membersToDisplay"
                         :key="item.userId"
@@ -54,9 +54,15 @@
         faUsers,
     } from "@fortawesome/free-solid-svg-icons";
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+    import { useLocalStorage } from "@vueuse/core";
 
     const userStore = useUserStore();
     const campaignStore = useCampaignStore();
+    const route = useRoute("app-campaigns-id");
+    const openAccordionValue = useLocalStorage(
+        `campaigns-${route.params.id}-accordion-current-user`,
+        userStore.state.user?.userId
+    );
 
     definePageMeta({
         layout: "campaign",
