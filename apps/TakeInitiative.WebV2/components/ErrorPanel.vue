@@ -1,5 +1,5 @@
 <template>
-    <div class="rounded-md border-destructive bg-destructive/50 p-2 text-sm text-destructive-foreground">
+    <div class="rounded-md border-destructive bg-destructive/50 px-2 py-1 text-sm text-destructive-foreground">
         <slot />
     </div>
 </template>

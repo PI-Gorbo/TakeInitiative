@@ -35,7 +35,11 @@
             </div>
         </FormFieldWrapper>
 
-        {{ formState.error }}
+        <CampaignCharacterUnevaludatedHealthInput v-model:health="health" />
+
+        <ErrorPanel v-if="formState.error?.errors?.generalErrors">
+            {{ formState.error?.errors?.generalErrors.at(0) }}
+        </ErrorPanel>
 
         <div class="flex gap-1 justify-end">
             <div class="flex flex-1 items-center text-sm">
@@ -142,6 +146,7 @@
         faTrashCan,
     } from "@fortawesome/free-solid-svg-icons";
     import type { UpdatePlayerCharacterRequest } from "~/utils/api/campaign/updatePlayerCharacterRequest";
+import { mappedHealthInputValidator } from "~/utils/forms/healthFormValidator";
 
     const formState = reactive({
         error: null as ApiError<CreatePlannedCombatNpcRequest> | null,
@@ -161,7 +166,7 @@
                 .min(1, "Please provide a name"),
             initiative: unevaluatedCharacterInitiativeValidator,
             armourClass: z.number().optional().nullable(),
-            health: unevaluatedCharacterHealthValidator,
+            health: mappedHealthInputValidator,
         })
         .required({ name: true, health: true });
 
@@ -177,7 +182,8 @@
     });
     const [name] = form.defineField("name");
     const [initiative] = form.defineField("initiative.roll");
-
+    const [health] = form.defineField("health");
+    
     const onSubmit = form.handleSubmit(async (formValue, ctx) => {
         // Fetch & Set the computed health values from the health component upon submission
         // const computedHealth = characterHealthInput.value?.getHealth();
@@ -206,10 +212,18 @@
                 armourClass: formValue.armourClass ?? null,
             })
             .catch((error) => {
-                console.log("TESTING!")
-                formState.error =
-                    parseAsApiError<UpdatePlayerCharacterRequest>(error);
-                console.log(formState.error.errors?.["playerCharacter.Initiative.Roll" ].at(0));
+                console.log("TESTING!");
+                formState.error = parseAsApiError<{
+                    playerCharacter: UpdatePlayerCharacterRequest["playerCharacter"];
+                }>(error);
+
+                form.setFieldError(
+                    "initiative.roll",
+                    //@ts-ignore
+                    formState.error.errors?.[
+                        "playerCharacter.Initiative.Roll"
+                    ].at(0)
+                );
             });
     });
 

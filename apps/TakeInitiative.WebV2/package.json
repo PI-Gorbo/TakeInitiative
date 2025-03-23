@@ -24,6 +24,7 @@
         "axios": "^1.8.2",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
+        "expr-eval": "^2.0.2",
         "lucide-vue-next": "^0.479.0",
         "nuxt": "^3.16.0",
         "nuxt-typed-router": "^3.7.3",
