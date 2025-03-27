@@ -25,32 +25,46 @@
                 </template>
                 <template v-else>
                     <ul class="flex flex-col gap-2">
-                        <Button
+                        <template
                             v-for="(character, index) in props.characters"
-                            :key="character.id"
-                            variant="outline"
-                            :class="[
-                                'flex justify-between gap-1 flex-wrap h-auto',
-                                {
-                                    'interactable shadow-solid-sm':
-                                        isViewingCurrentUsersCharacters,
-                                },
-                            ]"
-                            :disabled="!isViewingCurrentUsersCharacters"
-                            @click="
-                                () => {
-                                    dialogState.characterClicked = character;
-                                    openDialog('edit-character');
-                                }
-                            ">
-                            {{ character.name }}
-                            <div class="flex gap-2">
-                                <CampaignCharacterHealthDisplay
-                                    :health="character.health" />
-                                <CampaignCharacterArmourClassDisplay
-                                    :armourClass="character.armourClass" />
+                            :key="character.id">
+                            <div class="flex items-center">
+                                <Button
+                                    variant="outline"
+                                    :class="[
+                                        {
+                                            'interactable shadow-solid-sm h-fit flex justify-between w-full items-center':
+                                                isViewingCurrentUsersCharacters,
+                                        },
+                                    ]"
+                                    :disabled="!isViewingCurrentUsersCharacters"
+                                    @click="
+                                        () => {
+                                            dialogState.characterClicked =
+                                                character;
+                                            openDialog('edit-character');
+                                        }
+                                    ">
+                                    <div class="flex flex-wrap gap-1">
+                                        {{ character.name }}
+                                        <div class="flex flex-wrap gap-1">
+                                            <CampaignCharacterHealthDisplay
+                                                :health="character.health"
+                                                unstyled />
+                                            <CampaignCharacterArmourClassDisplay
+                                                :armourClass="
+                                                    character.armourClass
+                                                " />
+                                            <CampaignCharacterInitiativeDisplay
+                                                :initiative="
+                                                    character.initiative.roll
+                                                " />
+                                        </div>
+                                    </div>
+                                    <FontAwesomeIcon :icon="faPen" />
+                                </Button>
                             </div>
-                        </Button>
+                        </template>
                         <div
                             class="flex justify-end"
                             v-if="isViewingCurrentUsersCharacters">
@@ -167,6 +181,7 @@
 <script setup lang="ts">
     import {
         faNewspaper,
+        faPen,
         faPerson,
         faPlusCircle,
     } from "@fortawesome/free-solid-svg-icons";

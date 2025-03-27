@@ -3,16 +3,17 @@
         v-if="shouldDisplay"
         variant="outline"
         :class="[
-            'flex gap-1',
-            {
-                [`bg-orange-400 hover:bg-orange-400  text-${TakeInitContrastColour['take-cream']}`]:
-                    healthDisplayState.state == 'Bloodied',
-                'bg-take-teal hover:bg-take-teal':
-                    healthDisplayState.state == 'Healthy',
-                'bg-take-red hover:bg-take-red':
-                    healthDisplayState.state == 'Dead',
-            },
-        ]">
+            'flex gap-1 border-2',
+            props.unstyled
+                ? {}
+                : {
+                      [`border-orange-400 text-${TakeInitContrastColour['take-cream']}`]:
+                          healthDisplayState.state == 'Bloodied',
+                      'border-success': healthDisplayState.state == 'Healthy',
+                      'border-destructive': healthDisplayState.state == 'Dead',
+                  },
+        ]"
+        class="">
         <FontAwesomeIcon :icon="faDroplet" />
         <span>{{ healthDisplayState?.labelValue }}</span>
     </Badge>
@@ -32,9 +33,11 @@
         defineProps<{
             health: UnevaluatedCharacterHealth | CharacterHealth;
             displayMethod?: HealthDisplayOptionValues;
+            unstyled?: boolean;
         }>(),
         {
             displayMethod: HealthDisplayOptionsEnum["RealValue"],
+            unstyled: false
         }
     );
     const shouldDisplay = computed(

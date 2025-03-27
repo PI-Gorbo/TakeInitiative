@@ -6,7 +6,7 @@
                 ArmourClassDisplayOptionsEnum.RealValue
         "
         variant="outline"
-        class="flex gap-1">
+        class="flex gap-1 border-2">
         <FontAwesomeIcon :icon="faShieldHalved" />
         <div class="ws-nowrap min-w-fit">
             {{ props.armourClass }}
