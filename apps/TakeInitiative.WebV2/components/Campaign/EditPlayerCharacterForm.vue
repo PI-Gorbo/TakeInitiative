@@ -5,7 +5,7 @@
         </FormFieldWrapper>
 
         <CampaignCharacterInitiativeRollInput
-            :initiative="initiative"
+            v-model:initiative="initiative"
             :error="form.errors.value['initiative.roll']" />
 
         <!-- @vue-ignore -->

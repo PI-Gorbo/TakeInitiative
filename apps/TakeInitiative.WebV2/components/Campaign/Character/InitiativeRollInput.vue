@@ -25,7 +25,7 @@
     import { faQuestionCircle } from "@fortawesome/free-solid-svg-icons";
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 
-    const initiative = defineModel<string | number | undefined>();
+    const initiative = defineModel<string | number | undefined>('initiative');
     const props = defineProps<{
         error: string | undefined;
     }>();

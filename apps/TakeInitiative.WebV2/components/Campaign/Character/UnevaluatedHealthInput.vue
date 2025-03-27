@@ -1,109 +1,111 @@
 <template>
-    <fieldset class="border rounded-md p-2 flex flex-col gap-2">
-        <legend class="mx-2 p-2 flex items-center gap-2">
-            <label class=" text-white">Health</label>
-            <TooltipWrapper>
-                <template #Trigger
-                    ><FontAwesomeIcon :icon="faCircleQuestion"
-                /></template>
-                <template #Content>
-                    Health is Optional and you can click the arrow to clear it.
-                    <br />
-                    The health fields support basic arithmetic including
-                    grouping with brackets (), add (+), subtract (-), multiply
-                    (*) and divide (/). 
-                </template>
-            </TooltipWrapper>
+    <div>
+        <TooltipWrapper>
+            <template #Trigger>
+                <label class="text-white pr-2">Health</label>
+                <FontAwesomeIcon :icon="faCircleQuestion" />
+            </template>
+            <template #Content>
+                Health is Optional and you can click the arrow to clear it.
+                <br />
+                The health fields support basic arithmetic including grouping
+                with brackets (), add (+), subtract (-), multiply (*) and divide
+                (/).
+            </template>
+        </TooltipWrapper>
 
-            <Select
-                :key="props.health['!']"
-                :modelValue="props.health['!']"
-                @update:modelValue="
-                    (type) => onChangeType(type as FormHealthInput['!'])
-                ">
-                <SelectTrigger>
-                    <SelectValue placeholder="Select a mode..." />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectGroup>
-                        <SelectLabel>Mode</SelectLabel>
-                        <SelectItem value="None"> None </SelectItem>
-                        <SelectItem value="Fixed"> Fixed </SelectItem>
-                        <SelectItem value="Roll"> Roll </SelectItem>
-                    </SelectGroup>
-                </SelectContent>
-            </Select>
-        </legend>
-        <div :class="['flex w-full justify-center items-center gap-2']">
-            <section
-                v-if="props.health['!'] != 'Roll'"
-                class="flex flex-1 items-center gap-2 rounded-md bg-take-navy-light justify-center border"
-                :class="{
-                    'brightness-75': props.health['!'] === 'None',
-                }">
-                <div class="flex-1">
+        <fieldset class="border rounded-md flex flex-col gap-2 p-2">
+            <legend class="mx-2 p-2 flex items-center gap-2">
+                <Select
+                    :key="props.health['!']"
+                    :modelValue="props.health['!']"
+                    @update:modelValue="
+                        (type) => onChangeType(type as FormHealthInput['!'])
+                    ">
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select a mode..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectGroup>
+                            <SelectLabel>Mode</SelectLabel>
+                            <SelectItem value="None"> None </SelectItem>
+                            <SelectItem value="Fixed"> Fixed </SelectItem>
+                            <SelectItem value="Roll"> Roll </SelectItem>
+                        </SelectGroup>
+                    </SelectContent>
+                </Select>
+            </legend>
+            <div :class="['flex w-full justify-center items-center gap-2']">
+                <section
+                    v-if="props.health['!'] != 'Roll'"
+                    class="flex flex-1 items-center gap-2 rounded-md bg-take-navy-light justify-center border"
+                    :class="{
+                        'brightness-75': props.health['!'] === 'None',
+                    }">
+                    <div class="flex-1">
+                        <Input
+                            placeholder="Current"
+                            :modelValue="
+                                props.health['!'] === 'Fixed' &&
+                                props.health.currentHealth != null
+                                    ? props.health.currentHealth
+                                    : undefined
+                            "
+                            @update:modelValue="onSetCurrentHealth"
+                            class="border-none"
+                            @blur="
+                                (e: Event) => {
+                                    onSetCurrentHealth(
+                                        (e.target as HTMLInputElement).value
+                                    );
+                                    emit('evaluateExpression');
+                                }
+                            " />
+                    </div>
+                    <span class="cursor-default">/</span>
+                    <div class="flex-1">
+                        <Input
+                            class="border-none"
+                            placeholder="Max"
+                            :modelValue="
+                                props.health['!'] === 'Fixed' &&
+                                props.health.maxHealth != null
+                                    ? props.health.maxHealth
+                                    : undefined
+                            "
+                            @update:modelValue="onSetMaxHealth"
+                            @blur="
+                                (e: Event) => {
+                                    onSetMaxHealth(
+                                        (e.target as HTMLInputElement).value
+                                    );
+                                    emit('evaluateExpression');
+                                }
+                            " />
+                    </div>
+                </section>
+                <section class="flex w-full items-center" v-else>
                     <Input
-                        placeholder="Current"
-                        :modelValue="
-                            props.health['!'] === 'Fixed' &&
-                            props.health.currentHealth != null
-                                ? props.health.currentHealth
-                                : undefined
-                        "
-                        @update:modelValue="onSetCurrentHealth"
-                        class="border-none"
-                        @blur="
-                            (e: Event) => {
-                                onSetCurrentHealth(
-                                    (e.target as HTMLInputElement).value
-                                );
-                                emit('evaluateExpression');
-                            }
-                        " />
+                        class="flex-1"
+                        :modelValue="props.health.rollString"
+                        @update:modelValue="onSetRoll"
+                        placeholder="10d20 + 4" />
+                </section>
+                <div>
+                    <Button
+                        size="icon"
+                        type="button"
+                        variant="outline"
+                        @click="reset">
+                        <FontAwesomeIcon :icon="faArrowRotateLeft" />
+                    </Button>
                 </div>
-                <span class="cursor-default">/</span>
-                <div class="flex-1">
-                    <Input
-                        class="border-none"
-                        placeholder="Max"
-                        :modelValue="
-                            props.health['!'] === 'Fixed' &&
-                            props.health.maxHealth != null
-                                ? props.health.maxHealth
-                                : undefined
-                        "
-                        @update:modelValue="onSetMaxHealth"
-                        @blur="
-                            (e: Event) => {
-                                onSetMaxHealth(
-                                    (e.target as HTMLInputElement).value
-                                );
-                                emit('evaluateExpression');
-                            }
-                        " />
-                </div>
-            </section>
-            <section class="flex w-full items-center" v-else>
-                <Input
-                    class="flex-1"
-                    :modelValue="props.health.rollString"
-                    @update:modelValue="onSetRoll"
-                    placeholder="10d20 + 4" />
-            </section>
-            <div>
-                <Button
-                    size="icon"
-                    type="button"
-                    variant="outline"
-                    @click="reset">
-                    <FontAwesomeIcon :icon="faArrowRotateLeft" />
-                </Button>
             </div>
-        </div>
-        <ErrorPanel v-if="props.error">
-            {{ props.error }}
-        </ErrorPanel>
-    </fieldset>
+            <ErrorPanel v-if="props.error">
+                {{ props.error }}
+            </ErrorPanel>
+        </fieldset>
+    </div>
 </template>
 <script setup lang="ts">
     import {
