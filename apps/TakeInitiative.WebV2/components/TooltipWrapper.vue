@@ -3,7 +3,7 @@
         <Tooltip>
             <TooltipTrigger><slot name="Trigger" /></TooltipTrigger>
             <TooltipContent>
-                <div class="text-wrap">
+                <div class="w-[200px] text-wrap">
                     <slot name="Content" />
                 </div>
             </TooltipContent>

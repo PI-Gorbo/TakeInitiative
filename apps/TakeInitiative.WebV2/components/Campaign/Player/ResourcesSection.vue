@@ -7,12 +7,9 @@
                     <div
                         v-if="isViewingCurrentUsersCharacters"
                         class="flex flex-1 gap-1 items-center justify-between">
-                        <span class="text-gray-500">
-                            You've not got any characters yet.
-                        </span>
+                        <span class="text-gray-500"> None yet... </span>
                         <Button
-                            variant="outline"
-                            class="interactable shadow-solid-sm"
+                            variant="link"
                             @click="() => openDialog('create-character')">
                             <FontAwesomeIcon :icon="faPlusCircle" />
                             New
@@ -64,9 +61,7 @@
                 <div
                     v-if="isViewingCurrentUsersCharacters"
                     class="flex flex-1 gap-1 items-center justify-between px-2">
-                    <span class="text-gray-500"
-                        >You've not got any resources yet.</span
-                    >
+                    <span class="text-gray-500">None yet...</span>
                     <Button
                         variant="link"
                         @click="() => openDialog('create-resource')">
@@ -93,15 +88,7 @@
                         :key="'create-character'"
                         v-if="dialogState.dialogType == 'create-character'">
                         <CampaignCreatePlayerCharacterForm
-                            :onSubmit="
-                                (req) =>
-                                    campaignStore
-                                        .createPlayerCharacter(req)
-                                        .then(
-                                            () =>
-                                                (dialogState.dialogOpen = false)
-                                        )
-                            " />
+                            :onSubmit="createPlayerCharacter" />
                     </div>
                     <div
                         v-else-if="dialogState.dialogType === 'edit-character'">
@@ -116,6 +103,10 @@
                                     )
                             " />
                     </div>
+                    <div
+                        v-else-if="
+                            dialogState.dialogType === 'create-resource'
+                        "></div>
                 </Transition>
             </DialogContent>
         </Dialog>
@@ -178,6 +169,30 @@
         dialogState.dialogOpen = true;
     }
 
+    async function createPlayerCharacter(playerCharacter: PlayerCharacterDto) {
+        // Take a snapshot of the player's character list beforehand.
+        const playerCharacterIds =
+            campaignStore.state.userCampaignMember?.characters.map(
+                (x) => x.id
+            ) ?? [];
+
+        await campaignStore.createPlayerCharacter(playerCharacter);
+
+        // Find the new character via id.
+        const newIds =
+            campaignStore.state.userCampaignMember?.characters.map(
+                (x) => x.id
+            ) ?? [];
+        const newId = newIds.filter((x) => !playerCharacterIds.includes(x));
+
+        // Swap the dialog to edit mode.
+        dialogState.characterClicked =
+            campaignStore.state.userCampaignMember?.characters.find(
+                (x) => x.id == newId[0]
+            );
+        dialogState.dialogType = "edit-character";
+    }
+
     async function editCharacter(playerCharacter: PlayerCharacterDto) {
         return campaignStore
             .updatePlayerCharacter(
@@ -191,10 +206,5 @@
         return campaignStore
             .deletePlayerCharacter(characterId)
             .then(() => (dialogState.dialogOpen = false));
-    }
-
-    const editCharacterForm = useTemplateRef("editCharacterForm");
-    function trySubmitThenClose() {
-        editCharacterForm.value?.onSubmit();
     }
 </script>

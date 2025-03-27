@@ -39,7 +39,7 @@
                             </Tabs>
                             <Button
                                 variant="outline"
-                                class="interactable shadow-accent shadow-solid-sm"
+                                class="interactable shadow-accent shadow-solid-sm hover:shadow-primary"
                                 @click="
                                     () => {
                                         shareModalOpen = true;
@@ -62,7 +62,6 @@
                         Players can join by visting the join link below, or
                         entering the join code when prompted.
                     </DialogDescription>
-
                     <CampaignShare />
                 </DialogHeader>
             </DialogContent>

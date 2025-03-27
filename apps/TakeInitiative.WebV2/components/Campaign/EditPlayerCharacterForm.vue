@@ -4,38 +4,43 @@
             <Input autofocus v-model="name" />
         </FormFieldWrapper>
 
+        <CampaignCharacterInitiativeRollInput
+            :initiative="initiative"
+            :error="form.errors.value['initiative.roll']" />
+
+        <!-- @vue-ignore -->
+        <CampaignCharacterUnevaluatedHealthInput
+            v-model:health="health"
+            @evaluateExpression="evaluteFromHealth"
+            :error="form.errors.value.health" />
+
         <FormFieldWrapper
-            label="Initiative"
-            :error="form.errors.value['initiative.roll']">
+            label="Armor Class"
+            :error="form.errors.value.armourClass">
             <div class="flex gap-2">
-                <Input v-model="initiative" />
-                <TooltipWrapper>
-                    <template #Trigger>
-                        <FontAwesomeIcon :icon="faQuestionCircle" />
-                    </template>
-                    <template #Content>
-                        <div class="flex flex-col">
-                            <span
-                                >Initiative is rolled when the character enters
-                                combat.
-                            </span>
-                            <span
-                                >The higher a character's initiative, the
-                                earlier they act in a round of combat. Supports
-                                fixed number, or a dice roll.</span
-                            >
-                            <span
-                                >An example of a roll is '1d20 + 2d4 + 3' which
-                                sums one 20 sided dice, two 4 sided die and adds
-                                3.</span
-                            >
-                        </div>
-                    </template>
-                </TooltipWrapper>
+                <Input
+                    type="number"
+                    placeholder="Optional"
+                    :modelValue="ac ?? undefined"
+                    @update:modelValue="
+                        (v) => {
+                            if (v === '') {
+                                ac = null;
+                            } else {
+                                //@ts-ignore
+                                ac = v;
+                            }
+                        }
+                    " />
+                <Button
+                    size="icon"
+                    type="button"
+                    variant="outline"
+                    @click="() => form.setFieldValue('armourClass', null)">
+                    <FontAwesomeIcon :icon="faArrowRotateLeft" />
+                </Button>
             </div>
         </FormFieldWrapper>
-
-        <CampaignCharacterUnevaludatedHealthInput v-model:health="health" />
 
         <ErrorPanel v-if="formState.error?.errors?.generalErrors">
             {{ formState.error?.errors?.generalErrors.at(0) }}
@@ -68,67 +73,14 @@
                     }" />
             </Button>
         </div>
-
-        <!-- <div>
-        <FormBase
-            class="flex flex-col gap-2"
-            :onSubmit="onSubmit"
-            v-slot="{ submitting }">
-            <CampaignCharacterUnevaluatedInitiativeInput
-                ref="characterInitiativeInput"
-                :initiative="initiative as UnevaluatedCharacterInitiative"
-                :errorMessage="initiativeProps.errorMessage" />
-            <CampaignCharacterHealthInput
-                ref="characterHealthInput"
-                :health="{
-                    value: health as UnevaluatedCharacterHealth,
-                    isUnevaluated: true,
-                }" />
-            <CampaignCharacterArmourClassInput v-model:value="armourClass" />
-            <div class="flex w-full justify-end" v-if="!props.npc">
-                <FormButton
-                    label="Create"
-                    :loadingDisplay="{
-                        showSpinner: true,
-                        loadingText: 'Creating...',
-                    }"
-                    :isLoading="
-                        submitting && submitting.submitterName == 'Create'
-                    "
-                    buttonColour="take-yellow-dark" />
-            </div>
-            <div v-else class="flex justify-between gap-2">
-                <FormButton
-                    label="Save"
-                    :loadingDisplay="{
-                        showSpinner: true,
-                        loadingText: 'Saving...',
-                    }"
-                    :isLoading="
-                        submitting && submitting.submitterName == 'Save'
-                    "
-                    buttonColour="take-yellow-dark" />
-                <FormButton
-                    icon="trash"
-                    :isLoading="
-                        submitting && submitting.submitterName == 'trash'
-                    "
-                    buttonColour="take-navy-light"
-                    hoverButtonColour="take-red" />
-            </div>
-        </FormBase>
-    </div> -->
     </form>
 </template>
 
 <script setup lang="ts">
-    import { useForm } from "vee-validate";
+    import { useForm, useFormValues } from "vee-validate";
     import {
         unevaluatedCharacterInitiativeValidator,
         type PlayerCharacter,
-        unevaluatedCharacterHealthValidator,
-        type UnevaluatedCharacterInitiative,
-        type UnevaluatedCharacterHealth,
     } from "~/utils/types/models";
     import type { CreatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
     import type { PlayerCharacterDto } from "~/utils/api/campaign/createPlayerCharacterRequest";
@@ -137,16 +89,18 @@
     import { z } from "zod";
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
     import {
-        faArrowCircleRight,
-        faArrowRotateRight,
-        faCheckCircle,
+        faArrowRotateLeft,
         faQuestionCircle,
         faSave,
         faSpinner,
         faTrashCan,
     } from "@fortawesome/free-solid-svg-icons";
     import type { UpdatePlayerCharacterRequest } from "~/utils/api/campaign/updatePlayerCharacterRequest";
-import { mappedHealthInputValidator } from "~/utils/forms/healthFormValidator";
+    import {
+        evaluateHealthInput,
+        mappedHealthInputValidator,
+    } from "~/utils/forms/healthFormValidator";
+    import { armorClassFormValidator } from "~/utils/forms/armorClassFormValidator";
 
     const formState = reactive({
         error: null as ApiError<CreatePlannedCombatNpcRequest> | null,
@@ -165,7 +119,7 @@ import { mappedHealthInputValidator } from "~/utils/forms/healthFormValidator";
                 .string({ required_error: "Please provide a name" })
                 .min(1, "Please provide a name"),
             initiative: unevaluatedCharacterInitiativeValidator,
-            armourClass: z.number().optional().nullable(),
+            armourClass: armorClassFormValidator,
             health: mappedHealthInputValidator,
         })
         .required({ name: true, health: true });
@@ -180,36 +134,29 @@ import { mappedHealthInputValidator } from "~/utils/forms/healthFormValidator";
         },
         keepValuesOnUnmount: true,
     });
+
     const [name] = form.defineField("name");
     const [initiative] = form.defineField("initiative.roll");
     const [health] = form.defineField("health");
-    
+    const [ac] = form.defineField("armourClass");
+
+    function evaluteFromHealth() {
+        //@ts-ignore
+        const evalutedHealth = evaluateHealthInput(form.values.health);
+        form.setValues({
+            health: evalutedHealth,
+        });
+    }
+
     const onSubmit = form.handleSubmit(async (formValue, ctx) => {
-        // Fetch & Set the computed health values from the health component upon submission
-        // const computedHealth = characterHealthInput.value?.getHealth();
-        // if (computedHealth == false) {
-        //     return;
-        // }
-        // health.value = computedHealth;
-
-        // const computedInitiative =
-        //     characterInitiativeInput.value?.getInitiative();
-        // if (computedInitiative == false) {
-        //     return;
-        // }
-        // initiative.value = computedInitiative;
-
-        // const validateResult = await validate();
-        // if (!validateResult.valid) {
-        //     return;
-        // }
+        form.setValues({ health: formValue.health });
 
         return await props
             .onEdit({
                 health: formValue.health,
                 initiative: formValue.initiative,
                 name: formValue.name,
-                armourClass: formValue.armourClass ?? null,
+                armourClass: formValue.armourClass,
             })
             .catch((error) => {
                 console.log("TESTING!");
@@ -234,10 +181,6 @@ import { mappedHealthInputValidator } from "~/utils/forms/healthFormValidator";
             immediate: false,
         }
     );
-
-    defineExpose({
-        onSubmit,
-    });
 
     // async function onDelete() {
     //     if (!props.onDelete) return;

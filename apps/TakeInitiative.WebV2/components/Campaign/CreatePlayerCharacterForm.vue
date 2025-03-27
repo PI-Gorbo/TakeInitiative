@@ -3,10 +3,12 @@
         <ErrorPanel v-if="state.errorObject?.errors?.generalErrors">
             {{ state.errorObject?.errors?.generalErrors.at(0) }}
         </ErrorPanel>
-        <Button type="submit" class="w-fit interactable shadow-solid-sm">
-            <FontAwesomeIcon :icon="faPlusCircle" />
-            {{ isSubmitting ? "Creating..." : "Create" }}
-        </Button>
+        <div class="flex justify-end">
+            <Button type="submit" class="interactable shadow-solid-sm">
+                <FontAwesomeIcon :icon="faPlusCircle" />
+                {{ isSubmitting ? "Creating..." : "Create" }}
+            </Button>
+        </div>
     </AutoForm>
 </template>
 <script setup lang="ts">

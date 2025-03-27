@@ -76,7 +76,7 @@ function tryParseToNumberIfString(value: string | number | null): Result {
 }
 
 
-export type HealthInputValidator = z.infer<typeof healthInputValidator>
+export type FormHealthInput = z.infer<typeof healthInputValidator>
 export const healthInputValidator =
     z.discriminatedUnion("!", [
         z
@@ -92,11 +92,35 @@ export const healthInputValidator =
             .required(),
         z.object({
             "!": z.literal("Fixed"),
-            currentHealth: z.union([z.string(), z.number()]).nullable(),
-            maxHealth: z.union([z.string(), z.number()]).nullable(),
+            currentHealth: z.union([z.string(), z.number()]),
+            maxHealth: z.union([z.string(), z.number()]),
         })
     ]);
 
+export function evaluateHealthInput(healthInput: FormHealthInput): FormHealthInput {
+    if (healthInput["!"] === 'None' || healthInput['!'] === 'Roll') {
+        return healthInput
+    }
+
+    const parsedCurrentHealth = tryParseToNumberIfString(
+        healthInput.currentHealth
+    );
+
+    if (!parsedCurrentHealth.success) {
+        return healthInput;
+    }
+
+    const parsedMaxHealth = tryParseToNumberIfString(healthInput.maxHealth);
+    if (!parsedMaxHealth.success) {
+        return healthInput;
+    }
+
+    return {
+        "!": 'Fixed',
+        currentHealth: parsedCurrentHealth.value ?? 0,
+        maxHealth: parsedMaxHealth.value ?? 0,
+    };
+}
 
 
 export const mappedHealthInputValidator = healthInputValidator.transform((healthValues, ctx) => {
@@ -127,7 +151,7 @@ export const mappedHealthInputValidator = healthInputValidator.transform((health
 
     return {
         "!": 'Fixed',
-        currentHealth: parsedCurrentHealth.value,
-        maxHealth: parsedMaxHealth.value,
-    };
-});
+        currentHealth: parsedCurrentHealth.value ?? 0,
+        maxHealth: parsedMaxHealth.value ?? 0,
+    } satisfies FormHealthInput;
+})
