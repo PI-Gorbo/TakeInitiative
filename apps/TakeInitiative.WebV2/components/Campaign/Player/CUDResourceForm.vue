@@ -32,21 +32,34 @@
             </Select>
         </FormFieldWrapper>
 
-        <div v-if="'addResource' in props">
-            <Button type="submit">
+        <div v-if="props.type === 'Add'">
+            <Button
+                type="submit"
+                :disabled="!(form.meta.value.valid && form.meta.value.touched)">
                 <FontAwesomeIcon :icon="faPlusCircle" />
                 {{ form.isSubmitting.value ? "Adding..." : "Add Resource" }}
             </Button>
         </div>
-        <div v-else>
-            <Button type="button" size="icon" variant="destructive">
+        <div v-else class="flex justify-between">
+            <Button
+                type="button"
+                size="icon"
+                variant="destructive"
+                @click="props.deleteResource">
                 <FontAwesomeIcon :icon="faTrashCan" />
             </Button>
             <Button type="submit">
-                <FontAwesomeIcon :icon="faPen" />
-                {{
-                    form.isSubmitting.value ? "Updating..." : "Update Resource"
-                }}
+                <FontAwesomeIcon
+                    :icon="faPen"
+                    :disabled="
+                        !(form.meta.value.valid && form.meta.value.touched)
+                    ">
+                    {{
+                        form.isSubmitting.value
+                            ? "Updating..."
+                            : "Update Resource"
+                    }}
+                </FontAwesomeIcon>
             </Button>
         </div>
     </form>
@@ -69,11 +82,13 @@
 
     const props = defineProps<
         | {
+              type: "Add";
               addResource: (
                   resource: CampaignMemberResource
               ) => Promise<unknown>;
           }
         | {
+              type: "Edit";
               resource: CampaignMemberResource | null;
               deleteResource: () => Promise<unknown>;
               editResource: (
@@ -86,19 +101,24 @@
     const form = useForm({
         validationSchema: toTypedSchema(campaignMemberResourceValidator),
         initialValues:
-            "addResource" in props
+            props.type === "Add"
                 ? {
                       name: "",
                       link: "",
                       visibility: ResourceVisibilityOptions.DMsOnly,
                   }
-                : { ...props.resource },
+                : {
+                      name: props.resource?.name,
+                      link: props.resource?.link,
+                      visibility: props.resource?.visibility,
+                  },
     });
     const [name] = form.defineField("name");
     const [link] = form.defineField("link");
     const [visibility] = form.defineField("visibility");
     const submit = form.handleSubmit(async (newResource) => {
-        if ("addResource" in props) {
+        console.log("here");
+        if (props.type === "Add") {
             return await props.addResource(newResource);
         }
 

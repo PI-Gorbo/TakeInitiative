@@ -88,7 +88,7 @@
                 <div
                     v-if="isViewingCurrentUsersCharacters"
                     class="flex flex-1 gap-1 items-center justify-between px-2">
-                    {{ props.resources }}
+                    <span class="text-gray-500"> None yet... </span>
                     <Button
                         variant="link"
                         @click="() => openDialog('create-resource')">
@@ -107,7 +107,7 @@
             <template v-else>
                 <ul class="flex flex-col gap-2">
                     <Button
-                        v-for="resource in props.resources"
+                        v-for="(resource, index) in props.resources"
                         variant="outline"
                         :class="{
                             'interactable shadow-solid-sm':
@@ -117,7 +117,10 @@
                         :disabled="!isViewingCurrentUsersCharacters"
                         @click="
                             () => {
-                                dialogState.resourceClicked = resource;
+                                dialogState.resourceClicked = {
+                                    resource,
+                                    index,
+                                };
                                 openDialog('edit-resource');
                             }
                         ">
@@ -171,7 +174,16 @@
                         v-else-if="
                             dialogState.dialogType === 'create-resource'
                         ">
-                        <CUDResourceForm :addResource="addResource" />
+                        <CUDResourceForm
+                            type="Add"
+                            :addResource="addResource" />
+                    </div>
+                    <div v-else-if="dialogState.dialogType === 'edit-resource'">
+                        <CUDResourceForm
+                            type="Edit"
+                            :resource="dialogState.resourceClicked?.resource!"
+                            :deleteResource="deleteResource"
+                            :editResource="editResource" />
                     </div>
                 </Transition>
             </DialogContent>
@@ -232,7 +244,12 @@
         dialogOpen: boolean;
         dialogType: DialogType;
         characterClicked: PlayerCharacter | undefined;
-        resourceClicked: CampaignMemberResource | undefined;
+        resourceClicked:
+            | {
+                  resource: CampaignMemberResource;
+                  index: number;
+              }
+            | undefined;
     }>({
         dialogOpen: false,
         dialogType: "create-character",
@@ -247,27 +264,33 @@
 
     async function createPlayerCharacter(playerCharacter: PlayerCharacterDto) {
         // Take a snapshot of the player's character list beforehand.
-        const playerCharacterIds =
-            campaignStore.state.userCampaignMember?.characters.map(
-                (x) => x.id
-            ) ?? [];
+        try {
+            const playerCharacterIds =
+                campaignStore.state.userCampaignMember?.characters.map(
+                    (x) => x.id
+                ) ?? [];
 
-        await campaignStore.createPlayerCharacter(playerCharacter);
-        toast.success("Created!");
+            await campaignStore.createPlayerCharacter(playerCharacter);
+            toast.success("Created!");
 
-        // Find the new character via id.
-        const newIds =
-            campaignStore.state.userCampaignMember?.characters.map(
-                (x) => x.id
-            ) ?? [];
-        const newId = newIds.filter((x) => !playerCharacterIds.includes(x));
+            // Find the new character via id.
+            const newIds =
+                campaignStore.state.userCampaignMember?.characters.map(
+                    (x) => x.id
+                ) ?? [];
+            const newId = newIds.filter((x) => !playerCharacterIds.includes(x));
 
-        // Swap the dialog to edit mode.
-        dialogState.characterClicked =
-            campaignStore.state.userCampaignMember?.characters.find(
-                (x) => x.id == newId[0]
+            // Swap the dialog to edit mode.
+            dialogState.characterClicked =
+                campaignStore.state.userCampaignMember?.characters.find(
+                    (x) => x.id == newId[0]
+                );
+            dialogState.dialogType = "edit-character";
+        } catch {
+            toast.error(
+                "Something went wrong while trying to create your new character"
             );
-        dialogState.dialogType = "edit-character";
+        }
     }
 
     async function editCharacter(playerCharacter: PlayerCharacterDto) {
@@ -277,16 +300,24 @@
                 playerCharacter
             )
             .then(() => (dialogState.dialogOpen = false))
-            .then(() => {
-                toast.success("Saved!");
-            });
+            .then(() => toast.success("Saved!"))
+            .then(() =>
+                toast.error(
+                    "Something went wrong while trying to edit your character"
+                )
+            );
     }
 
     async function deleteCharacter(characterId: string) {
         return campaignStore
             .deletePlayerCharacter(characterId)
+            .then(() => (dialogState.dialogOpen = false))
             .then(() => toast.success("Deleted!"))
-            .then(() => (dialogState.dialogOpen = false));
+            .catch(() =>
+                toast.error(
+                    "Something went wrong while trying to delete your character."
+                )
+            );
     }
 
     async function addResource(resource: CampaignMemberResource) {
@@ -295,24 +326,42 @@
                 ...(campaignStore.state.userCampaignMember?.resources ?? []),
                 resource,
             ])
-            .then(() => toast("Added Resource"))
-            .then(() => (dialogState.dialogOpen = false));
+            .then(() => (dialogState.dialogOpen = false))
+            .then(() => toast.success("Added Resource"))
+            .catch(() =>
+                toast.error(
+                    "Something went wrong while trying to add resource."
+                )
+            );
     }
 
-    // async function deleteResource() {
-    //     return await campaignStore
-    //         .setCampaignMemberResources([
-    //             ...(
-    //                 campaignStore.state.userCampaignMember?.resources ?? []
-    //             ).toSpliced(lastClickedResource.index, 1),
-    //         ])
-    //         .then(() => ModifyResourceModal.value?.hide());
-    // }
-    // async function editResource(resource: CampaignMemberResource) {
-    //     const array = campaignStore.state.userCampaignMember?.resources ?? [];
-    //     array[lastClickedResource.index] = resource;
-    //     return await campaignStore
-    //         .setCampaignMemberResources(array)
-    //         .then(() => ModifyResourceModal.value?.hide());
-    // }
+    async function deleteResource() {
+        return await campaignStore
+            .setCampaignMemberResources([
+                ...(
+                    campaignStore.state.userCampaignMember?.resources ?? []
+                ).toSpliced(dialogState.resourceClicked?.index!, 1),
+            ])
+            .then(() => (dialogState.dialogOpen = false))
+            .then(() => toast.success("Deleted Resource"))
+            .catch(() =>
+                toast.error(
+                    "Something went wrong while trying to delete resource."
+                )
+            );
+    }
+
+    async function editResource(resource: CampaignMemberResource) {
+        const array = campaignStore.state.userCampaignMember?.resources ?? [];
+        array[dialogState.resourceClicked?.index!] = resource;
+        return await campaignStore
+            .setCampaignMemberResources(array)
+            .then(() => (dialogState.dialogOpen = false))
+            .then(() => toast.success("Updated Resource"))
+            .catch(() =>
+                toast.error(
+                    "Something went wrong while trying to update resource."
+                )
+            );
+    }
 </script>

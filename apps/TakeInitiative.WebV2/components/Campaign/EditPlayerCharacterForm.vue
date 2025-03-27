@@ -46,17 +46,7 @@
             {{ formState.error?.errors?.generalErrors.at(0) }}
         </ErrorPanel>
 
-        <div class="flex gap-1 justify-end">
-            <div class="flex flex-1 items-center text-sm">
-                <Button
-                    :disabled="
-                        !form.meta.value.valid || !form.meta.value.dirty
-                    ">
-                    <FontAwesomeIcon :icon="faSave" />
-                    {{ form.isSubmitting.value ? "Saving..." : "Save" }}
-                </Button>
-            </div>
-
+        <div class="flex gap-1 justify-between">
             <Button
                 type="button"
                 size="icon"
@@ -71,6 +61,12 @@
                     :class="{
                         'fa-spin': status === 'pending' || status === 'error',
                     }" />
+            </Button>
+
+            <Button
+                :disabled="!form.meta.value.valid || !form.meta.value.dirty">
+                <FontAwesomeIcon :icon="faSave" />
+                {{ form.isSubmitting.value ? "Saving..." : "Save" }}
             </Button>
         </div>
     </form>
