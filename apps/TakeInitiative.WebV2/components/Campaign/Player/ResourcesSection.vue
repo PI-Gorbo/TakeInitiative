@@ -1,7 +1,9 @@
 <template>
     <div class="flex flex-col gap-4">
         <section>
-            <header>Characters</header>
+            <header class="flex gap-2">
+                <FontAwesomeIcon :icon="faPerson" />Characters
+            </header>
             <div class="px-2">
                 <template v-if="(props.characters ?? []).length === 0">
                     <div
@@ -27,10 +29,13 @@
                             v-for="(character, index) in props.characters"
                             :key="character.id"
                             variant="outline"
-                            :class="{
-                                'interactable shadow-solid-sm ':
-                                    isViewingCurrentUsersCharacters,
-                            }"
+                            :class="[
+                                'flex justify-between gap-1 flex-wrap h-auto',
+                                {
+                                    'interactable shadow-solid-sm':
+                                        isViewingCurrentUsersCharacters,
+                                },
+                            ]"
                             :disabled="!isViewingCurrentUsersCharacters"
                             @click="
                                 () => {
@@ -38,8 +43,13 @@
                                     openDialog('edit-character');
                                 }
                             ">
-                            <FontAwesomeIcon :icon="faPerson" />
                             {{ character.name }}
+                            <div class="flex gap-2">
+                                <CampaignCharacterHealthDisplay
+                                    :health="character.health" />
+                                <CampaignCharacterArmourClassDisplay
+                                    :armourClass="character.armourClass" />
+                            </div>
                         </Button>
                         <div
                             class="flex justify-end"
@@ -56,12 +66,15 @@
             </div>
         </section>
         <section>
-            <header>Resources</header>
+            <header class="flex gap-2">
+                <FontAwesomeIcon :icon="faNewspaper" />Resources
+            </header>
+            <!--When there are no resources for this player-->
             <template v-if="(props.resources ?? []).length == 0">
                 <div
                     v-if="isViewingCurrentUsersCharacters"
                     class="flex flex-1 gap-1 items-center justify-between px-2">
-                    <span class="text-gray-500">None yet...</span>
+                    {{ props.resources }}
                     <Button
                         variant="link"
                         @click="() => openDialog('create-resource')">
@@ -73,6 +86,43 @@
                     v-else
                     class="flex flex-1 items-center justify-between px-2">
                     <span class="text-gray-500"> No resources yet. </span>
+                </div>
+            </template>
+
+            <!--Display all resources-->
+            <template v-else>
+                <ul class="flex flex-col gap-2">
+                    <Button
+                        v-for="resource in props.resources"
+                        variant="outline"
+                        :class="{
+                            'interactable shadow-solid-sm':
+                                isViewingCurrentUsersCharacters,
+                        }"
+                        class="flex justify-start"
+                        :disabled="!isViewingCurrentUsersCharacters"
+                        @click="
+                            () => {
+                                dialogState.resourceClicked = resource;
+                                openDialog('edit-resource');
+                            }
+                        ">
+                        {{ resource.name }}
+                        <span>{{
+                            ResourceVisibilityOptions[resource.visibility]
+                        }}</span>
+                    </Button>
+                </ul>
+
+                <div
+                    class="flex justify-end"
+                    v-if="isViewingCurrentUsersCharacters">
+                    <Button
+                        variant="link"
+                        @click="() => openDialog('create-resource')">
+                        <FontAwesomeIcon :icon="faPlusCircle" />
+                        New
+                    </Button>
                 </div>
             </template>
         </section>
@@ -106,21 +156,30 @@
                     <div
                         v-else-if="
                             dialogState.dialogType === 'create-resource'
-                        "></div>
+                        ">
+                        <CUDResourceForm :addResource="addResource" />
+                    </div>
                 </Transition>
             </DialogContent>
         </Dialog>
     </div>
 </template>
 <script setup lang="ts">
-    import { faPerson, faPlusCircle } from "@fortawesome/free-solid-svg-icons";
+    import {
+        faNewspaper,
+        faPerson,
+        faPlusCircle,
+    } from "@fortawesome/free-solid-svg-icons";
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
     import type { PlayerCharacterDto } from "~/utils/api/campaign/createPlayerCharacterRequest";
 
-    import type {
-        CampaignMemberResource,
-        PlayerCharacter,
+    import {
+        ResourceVisibilityOptions,
+        type CampaignMemberResource,
+        type PlayerCharacter,
     } from "~/utils/types/models";
+    import CUDResourceForm from "./CUDResourceForm.vue";
+    import { toast } from "vue-sonner";
     const campaignStore = useCampaignStore();
     const user = useUserStore();
     const isViewingCurrentUsersCharacters = computed(
@@ -158,10 +217,12 @@
         dialogOpen: boolean;
         dialogType: DialogType;
         characterClicked: PlayerCharacter | undefined;
+        resourceClicked: CampaignMemberResource | undefined;
     }>({
         dialogOpen: false,
         dialogType: "create-character",
         characterClicked: undefined,
+        resourceClicked: undefined,
     });
 
     function openDialog(dialogType: DialogType) {
@@ -177,6 +238,7 @@
             ) ?? [];
 
         await campaignStore.createPlayerCharacter(playerCharacter);
+        toast.success("Created!");
 
         // Find the new character via id.
         const newIds =
@@ -199,12 +261,43 @@
                 dialogState.characterClicked?.id!,
                 playerCharacter
             )
-            .then(() => (dialogState.dialogOpen = false));
+            .then(() => (dialogState.dialogOpen = false))
+            .then(() => {
+                toast.success("Saved!");
+            });
     }
 
     async function deleteCharacter(characterId: string) {
         return campaignStore
             .deletePlayerCharacter(characterId)
+            .then(() => toast.success("Deleted!"))
             .then(() => (dialogState.dialogOpen = false));
     }
+
+    async function addResource(resource: CampaignMemberResource) {
+        return await campaignStore
+            .setCampaignMemberResources([
+                ...(campaignStore.state.userCampaignMember?.resources ?? []),
+                resource,
+            ])
+            .then(() => toast("Added Resource"))
+            .then(() => (dialogState.dialogOpen = false));
+    }
+
+    // async function deleteResource() {
+    //     return await campaignStore
+    //         .setCampaignMemberResources([
+    //             ...(
+    //                 campaignStore.state.userCampaignMember?.resources ?? []
+    //             ).toSpliced(lastClickedResource.index, 1),
+    //         ])
+    //         .then(() => ModifyResourceModal.value?.hide());
+    // }
+    // async function editResource(resource: CampaignMemberResource) {
+    //     const array = campaignStore.state.userCampaignMember?.resources ?? [];
+    //     array[lastClickedResource.index] = resource;
+    //     return await campaignStore
+    //         .setCampaignMemberResources(array)
+    //         .then(() => ModifyResourceModal.value?.hide());
+    // }
 </script>

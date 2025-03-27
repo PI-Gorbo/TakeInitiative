@@ -1,11 +1,11 @@
 <template>
-    <main class="md:grid w-full flex flex-col gap-4 md:grid-cols-3">
-        <div class="md:col-span-2 md:col-start-2">
+    <main class="lg:grid w-full flex flex-col gap-4 lg:grid-cols-3">
+        <div class="lg:col-span-2 lg:col-start-2">
             <Card class="border-2 border-dashed p-4 border-primary/50">
                 <CampaignEditIntroductionForm />
             </Card>
         </div>
-        <div class="md:col-span-1 md:col-start-1 md:row-start-1">
+        <div class="lg:col-span-1 lg:col-start-1 lg:row-start-1">
             <Card class="p-4 border-primary/50">
                 <header><FontAwesomeIcon :icon="faUsers" /> Players</header>
                 <Accordion

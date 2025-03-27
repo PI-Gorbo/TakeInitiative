@@ -134,7 +134,7 @@ export const useCampaignStore = defineStore("campaignStore", () => {
             .open({ plannedCombatId: plannedCombatId })
             .then(() => setCampaignById(state.campaign?.id!))
             .then(() => {
-                    plannedCombatStore.unselectCombat()
+                plannedCombatStore.unselectCombat()
             })
     }
 
@@ -146,7 +146,7 @@ export const useCampaignStore = defineStore("campaignStore", () => {
                 playerCharacter: dto,
             })
             .then((member) => (state.userCampaignMember = member))
-            .then(() => toast.success("Created!"));
+
     }
 
     async function updatePlayerCharacter(
@@ -160,9 +160,7 @@ export const useCampaignStore = defineStore("campaignStore", () => {
                 playerCharacter: dto,
             })
             .then((member) => (state.userCampaignMember = member))
-            .then(() => {
-                toast.success('Saved!')
-            });
+
     }
 
     async function deletePlayerCharacter(characterId: string) {
@@ -172,7 +170,7 @@ export const useCampaignStore = defineStore("campaignStore", () => {
                 playerCharacterId: characterId,
             })
             .then((member) => (state.userCampaignMember = member))
-            .then(() => toast.success("Deleted!"));
+
     }
 
     async function setCampaignMemberResources(
