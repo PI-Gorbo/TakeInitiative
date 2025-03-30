@@ -1,39 +1,43 @@
 <template>
     <div>
-        <TooltipWrapper>
-            <template #Trigger>
-                <label class="text-white pr-2">Health</label>
-                <FontAwesomeIcon :icon="faCircleQuestion" />
-            </template>
-            <template #Content>
-                Health is Optional and you can click the arrow to clear it.
-                <br />
-                The health fields support basic arithmetic including grouping
-                with brackets (), add (+), subtract (-), multiply (*) and divide
-                (/).
-            </template>
-        </TooltipWrapper>
-
         <fieldset class="border rounded-md flex flex-col gap-2 p-2">
-            <legend class="mx-2 p-2 flex items-center gap-2">
-                <Select
-                    :key="props.health['!']"
-                    :modelValue="props.health['!']"
-                    @update:modelValue="
-                        (type) => onChangeType(type as FormHealthInput['!'])
-                    ">
-                    <SelectTrigger>
-                        <SelectValue placeholder="Select a mode..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectGroup>
-                            <SelectLabel>Mode</SelectLabel>
-                            <SelectItem value="None"> None </SelectItem>
-                            <SelectItem value="Fixed"> Fixed </SelectItem>
-                            <SelectItem value="Roll"> Roll </SelectItem>
-                        </SelectGroup>
-                    </SelectContent>
-                </Select>
+            <legend class="p-2 flex items-center justify-between gap-2">
+                <TooltipWrapper>
+                    <template #Trigger>
+                        <div class="flex gap-2 items-center">
+                            <label class="text-white pr-2">Health</label>
+                            <FontAwesomeIcon :icon="faCircleQuestion" />
+                        </div>
+                    </template>
+                    <template #Content>
+                        Health is Optional and you can click the arrow to clear
+                        it.
+                        <br />
+                        The health fields support basic arithmetic including
+                        grouping with brackets (), add (+), subtract (-),
+                        multiply (*) and divide (/).
+                    </template>
+                </TooltipWrapper>
+                <div>
+                    <Select
+                        :key="props.health['!']"
+                        :modelValue="props.health['!']"
+                        @update:modelValue="
+                            (type) => onChangeType(type as FormHealthInput['!'])
+                        ">
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a mode..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectGroup>
+                                <SelectLabel>Mode</SelectLabel>
+                                <SelectItem value="None"> None </SelectItem>
+                                <SelectItem value="Fixed"> Fixed </SelectItem>
+                                <SelectItem value="Roll"> Roll </SelectItem>
+                            </SelectGroup>
+                        </SelectContent>
+                    </Select>
+                </div>
             </legend>
             <div :class="['flex w-full justify-center items-center gap-2']">
                 <section

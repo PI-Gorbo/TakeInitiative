@@ -1,5 +1,5 @@
 <template>
-    <main class="flex flex-col gap-4">
+    <main class="flex flex-col gap-4 ">
         <section class="flex w-full flex-col justify-center gap-6">
             <p class="w-full text-center">
                 Focus on the Story, Not the Stats - Make Initiative Tracking a

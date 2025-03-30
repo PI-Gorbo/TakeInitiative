@@ -1,13 +1,14 @@
 <template>
     <div class="flex flex-col gap-4">
+        <!--Characters-->
         <section>
             <header class="flex gap-2">
                 <FontAwesomeIcon :icon="faPerson" />Characters
             </header>
-            <div class="px-2">
+            <div>
                 <template v-if="(props.characters ?? []).length === 0">
                     <div
-                        v-if="isViewingCurrentUsersCharacters"
+                        v-if="isViewingCurrentUsersData"
                         class="flex flex-1 gap-1 items-center justify-between">
                         <span class="text-gray-500"> None yet... </span>
                         <Button
@@ -31,13 +32,14 @@
                             <div class="flex items-center">
                                 <Button
                                     variant="outline"
+                                    class="h-fit flex justify-between w-full items-center disabled:opacity-100"
                                     :class="[
                                         {
-                                            'interactable shadow-solid-sm h-fit flex justify-between w-full items-center':
-                                                isViewingCurrentUsersCharacters,
+                                            'interactable shadow-solid-sm':
+                                                isViewingCurrentUsersData,
                                         },
                                     ]"
-                                    :disabled="!isViewingCurrentUsersCharacters"
+                                    :disabled="!isViewingCurrentUsersData"
                                     @click="
                                         () => {
                                             dialogState.characterClicked =
@@ -45,7 +47,8 @@
                                             openDialog('edit-character');
                                         }
                                     ">
-                                    <div class="flex flex-wrap gap-1">
+                                    <div
+                                        class="flex justify-between flex-wrap gap-2">
                                         {{ character.name }}
                                         <div class="flex flex-wrap gap-1">
                                             <CampaignCharacterHealthDisplay
@@ -61,13 +64,12 @@
                                                 " />
                                         </div>
                                     </div>
-                                    <FontAwesomeIcon :icon="faPen" />
                                 </Button>
                             </div>
                         </template>
                         <div
                             class="flex justify-end"
-                            v-if="isViewingCurrentUsersCharacters">
+                            v-if="isViewingCurrentUsersData">
                             <Button
                                 variant="link"
                                 @click="() => openDialog('create-character')">
@@ -79,6 +81,8 @@
                 </template>
             </div>
         </section>
+
+        <!--Resources-->
         <section>
             <header class="flex gap-2">
                 <FontAwesomeIcon :icon="faNewspaper" />Resources
@@ -86,8 +90,8 @@
             <!--When there are no resources for this player-->
             <template v-if="(props.resources ?? []).length == 0">
                 <div
-                    v-if="isViewingCurrentUsersCharacters"
-                    class="flex flex-1 gap-1 items-center justify-between px-2">
+                    v-if="isViewingCurrentUsersData"
+                    class="flex flex-1 gap-1 items-center justify-between">
                     <span class="text-gray-500"> None yet... </span>
                     <Button
                         variant="link"
@@ -109,31 +113,30 @@
                     <Button
                         v-for="(resource, index) in props.resources"
                         variant="outline"
-                        :class="{
-                            'interactable shadow-solid-sm':
-                                isViewingCurrentUsersCharacters,
-                        }"
-                        class="flex justify-start"
-                        :disabled="!isViewingCurrentUsersCharacters"
+                        class="interactable shadow-solid-sm  disabled:opacity-100"
                         @click="
                             () => {
-                                dialogState.resourceClicked = {
-                                    resource,
-                                    index,
-                                };
-                                openDialog('edit-resource');
+                                if (isViewingCurrentUsersData) {
+                                    dialogState.resourceClicked = {
+                                        resource,
+                                        index,
+                                    };
+                                    openDialog('edit-resource');
+                                }
                             }
                         ">
-                        {{ resource.name }}
-                        <span>{{
-                            ResourceVisibilityOptions[resource.visibility]
-                        }}</span>
+                        <ResourceDisplay
+                        :resource="resource"
+                            :resourceVisibilityOptionNameMap="
+                                resourceVisibilityOptionNameMap
+                            "
+                            :isViewingCurrentUsersData="
+                                isViewingCurrentUsersData
+                            " />
                     </Button>
                 </ul>
 
-                <div
-                    class="flex justify-end"
-                    v-if="isViewingCurrentUsersCharacters">
+                <div class="flex justify-end" v-if="isViewingCurrentUsersData">
                     <Button
                         variant="link"
                         @click="() => openDialog('create-resource')">
@@ -192,6 +195,7 @@
 </template>
 <script setup lang="ts">
     import {
+        faLink,
         faNewspaper,
         faPen,
         faPerson,
@@ -201,15 +205,17 @@
     import type { PlayerCharacterDto } from "~/utils/api/campaign/createPlayerCharacterRequest";
 
     import {
+        resourceVisibilityOptionNameMap,
         ResourceVisibilityOptions,
         type CampaignMemberResource,
         type PlayerCharacter,
     } from "~/utils/types/models";
     import CUDResourceForm from "./CUDResourceForm.vue";
     import { toast } from "vue-sonner";
+    import ResourceDisplay from "./ResourceDisplay.vue";
     const campaignStore = useCampaignStore();
     const user = useUserStore();
-    const isViewingCurrentUsersCharacters = computed(
+    const isViewingCurrentUsersData = computed(
         () => user.state.user?.userId == props.userId
     );
 

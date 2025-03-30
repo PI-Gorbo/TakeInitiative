@@ -161,6 +161,11 @@ export enum ResourceVisibilityOptions {
     DMsOnly = 1,
     Public = 2,
 }
+export const resourceVisibilityOptionNameMap: Record<ResourceVisibilityOptions, string> = {
+    [ResourceVisibilityOptions.DMsOnly]: 'You and DM',
+    [ResourceVisibilityOptions.Public]: 'Everyone',
+    [ResourceVisibilityOptions.Private]: 'Private'
+} as const;
 export const resourceVisibilityKeys = ["Private", "DMsOnly", "Public"] as const;
 export const campaignMemberResourceValidator = z
     .object({

@@ -19,13 +19,25 @@
                     <SelectGroup>
                         <SelectLabel>Visibility</SelectLabel>
                         <SelectItem :value="ResourceVisibilityOptions.DMsOnly">
-                            You and DM
+                            {{
+                                resourceVisibilityOptionNameMap[
+                                    ResourceVisibilityOptions.DMsOnly
+                                ]
+                            }}
                         </SelectItem>
                         <SelectItem :value="ResourceVisibilityOptions.Public">
-                            Everyone
+                            {{
+                                resourceVisibilityOptionNameMap[
+                                    ResourceVisibilityOptions.Public
+                                ]
+                            }}
                         </SelectItem>
                         <SelectItem :value="ResourceVisibilityOptions.Private">
-                            Private
+                            {{
+                                resourceVisibilityOptionNameMap[
+                                    ResourceVisibilityOptions.Private
+                                ]
+                            }}
                         </SelectItem>
                     </SelectGroup>
                 </SelectContent>
@@ -35,7 +47,7 @@
         <div v-if="props.type === 'Add'">
             <Button
                 type="submit"
-                :disabled="!(form.meta.value.valid && form.meta.value.touched)">
+                :disabled="!form.meta.value.valid || !form.meta.value.dirty">
                 <FontAwesomeIcon :icon="faPlusCircle" />
                 {{ form.isSubmitting.value ? "Adding..." : "Add Resource" }}
             </Button>
@@ -52,7 +64,7 @@
                 <FontAwesomeIcon
                     :icon="faPen"
                     :disabled="
-                        !(form.meta.value.valid && form.meta.value.touched)
+                        !form.meta.value.valid || !form.meta.value.dirty
                     ">
                     {{
                         form.isSubmitting.value
@@ -76,6 +88,7 @@
     import { useForm } from "vee-validate";
     import {
         campaignMemberResourceValidator,
+        resourceVisibilityOptionNameMap,
         ResourceVisibilityOptions,
         type CampaignMemberResource,
     } from "~/utils/types/models";
@@ -117,7 +130,7 @@
     const [link] = form.defineField("link");
     const [visibility] = form.defineField("visibility");
     const submit = form.handleSubmit(async (newResource) => {
-        console.log("here");
+        console.log("here", newResource);
         if (props.type === "Add") {
             return await props.addResource(newResource);
         }
