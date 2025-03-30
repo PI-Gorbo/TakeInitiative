@@ -65,7 +65,7 @@
         /* Initial setup for the icon */
         display: inline-block;
         transform-origin: center;
-        animation: spin 60s infinite linear; /* Start slow, speed up */
+        animation: spin 45s infinite linear; /* Start slow, speed up */
     }
 
     /* Keyframes for spinning */

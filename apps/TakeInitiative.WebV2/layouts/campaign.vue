@@ -39,18 +39,22 @@
                             </Tabs>
                             <Button
                                 variant="outline"
-                                class="interactable shadow-accent shadow-solid-sm hover:shadow-primary"
-                                @click="
-                                    () => {
-                                        shareModalOpen = true;
-                                    }
-                                ">
+                                class="interactable"
+                                @click="clickAddButton">
                                 <FontAwesomeIcon :icon="faPlus" />
-                                Add Players
+                                <span v-if="route.name == 'app-campaigns-id'"
+                                    >Add Players</span
+                                >
+                                <span
+                                    v-if="
+                                        useRoute().name ===
+                                        'app-campaigns-id-combats'
+                                    "></span>
                             </Button>
                         </div>
                     </header>
-                    <NuxtPage />
+
+                    <slot />
                 </div>
             </div>
         </NuxtLayout>
@@ -76,7 +80,11 @@
         type IconDefinition,
     } from "@fortawesome/free-solid-svg-icons";
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-    import { helpers, type RoutesNamesList } from "@typed-router";
+    import {
+        helpers,
+        type RoutesNamesList,
+        type RoutesParamsRecord,
+    } from "@typed-router";
     import { Axios, AxiosError } from "axios";
 
     const campaign = useCampaignStore();
@@ -88,16 +96,14 @@
     useAsyncData(
         "campaign-layout-campaign-fetch",
         async () => {
-            if (route.params.id) {
-                return await campaign
-                    .setCampaignById(route.params.id)
-                    .then(() => true)
-                    .catch((error: AxiosError) => {
-                        console.log(JSON.stringify(error));
-                        router.push({ name: "app-campaigns" });
-                        return false;
-                    });
-            }
+            return await campaign
+                .setCampaignById(route.params.id as string)
+                .then(() => true)
+                .catch((error: AxiosError) => {
+                    router.push({ name: "app-campaigns" });
+                    return false;
+                });
+
             return false;
         },
         {
@@ -138,4 +144,8 @@
             return "app-campaigns-id-settings";
         }
     });
+
+    function clickAddButton() {
+        shareModalOpen.value = true;
+    }
 </script>

@@ -75,6 +75,10 @@ export const useCampaignStore = defineStore("campaignStore", () => {
     }
 
     const setCampaignById = async (campaignId: string): Promise<void> => {
+        if (campaignId == state.campaign?.id) {
+            return;
+        }
+
         return fetchCampaign(campaignId).then(setCampaign);
     };
 
