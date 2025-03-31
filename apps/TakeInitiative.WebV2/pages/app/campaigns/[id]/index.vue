@@ -4,7 +4,15 @@
         :isLoading="campaignStore.state.campaign == null">
         <div class="lg:grid w-full flex flex-col gap-4 lg:grid-cols-3 pb-2">
             <div class="lg:col-span-2 lg:col-start-2">
-                <Card class="border-2 border-dashed p-4 border-primary/50">
+                <Card
+                    class="p-4 border-primary/50"
+                    :class="{
+                        'border-2 border-dashed':
+                            campaignStore.state.campaign?.campaignDescription ==
+                                null ||
+                            campaignStore.state.campaign?.campaignDescription ==
+                                ''
+                    }">
                     <CampaignEditIntroductionForm />
                 </Card>
             </div>
