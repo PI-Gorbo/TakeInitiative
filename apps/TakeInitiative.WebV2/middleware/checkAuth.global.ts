@@ -1,8 +1,12 @@
+import { navigateToFirstAvailableCampaignOrFallbackToCreateOrJoin } from "~/utils/navigation/navigationHelpers";
+
 export default defineNuxtRouteMiddleware(async (to) => {
-    const userStore = useUserStore();
-    const isLoggedIn = await userStore.isLoggedIn();
+
+    if (!to.meta.requiresAuth) return
+
+    const userQuery = await useUserProfileQuery().suspense()
     // If the user is not logged in, return them to the 'does not require auth zone'
-    if (!isLoggedIn && to.meta.requiresAuth) {
+    if (userQuery.isError) {
         return navigateTo({
             path: "/login",
             query: {
@@ -11,9 +15,5 @@ export default defineNuxtRouteMiddleware(async (to) => {
         });
     }
 
-    if ((to.name == "login" || to.name == "signup") && isLoggedIn) {
-        return userStore.navigateToFirstAvailableCampaignOrFallbackToCreateOrJoin();
-    }
-
-    return;
+    await navigateToFirstAvailableCampaignOrFallbackToCreateOrJoin(userQuery.data!);
 });

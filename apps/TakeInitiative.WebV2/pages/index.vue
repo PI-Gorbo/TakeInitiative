@@ -1,12 +1,12 @@
 <template>
-    <main class="flex flex-col gap-4 ">
+    <main class="flex flex-col gap-4">
         <section class="flex w-full flex-col justify-center gap-6">
             <p class="w-full text-center">
                 Focus on the Story, Not the Stats - Make Initiative Tracking a
                 problem of the past
             </p>
             <div class="flex flex-col gap-2">
-                <template v-if="!userIsLoggedIn">
+                <template v-if="!userProfileQuery.isSuccess.value">
                     <NuxtLink class="w-full" to="/signup">
                         <Button class="w-full">
                             <span>Sign up for free</span>
@@ -30,7 +30,6 @@
             <a class="cursor-pointer" href="https://discord.gg/caDetpm6vk">
                 <header class="cursor-pointer font-NovaCut text-gold">
                     <FontAwesomeIcon :icon="faDiscord" class="text-white" />
-
                     Join us on discord!
                 </header>
                 <p class="cursor-pointer">
@@ -44,13 +43,11 @@
 <script setup lang="ts">
     import { faDiscord } from "@fortawesome/free-brands-svg-icons";
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+    import { useQuery } from "@tanstack/vue-query";
     import Button from "~/components/ui/button/Button.vue";
+    import { useUserProfileQuery } from "~/composables/queries/useUserProfileQuery";
 
-    const userStore = useUserStore();
-    const { data: userIsLoggedIn } = useAsyncData(
-        "homePage-CheckUserIsLoggedIn",
-        userStore.isLoggedIn
-    );
+    const userProfileQuery = useUserProfileQuery();
 
     useHead({
         title: "Take Initiative",

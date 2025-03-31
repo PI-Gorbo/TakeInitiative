@@ -5,30 +5,41 @@
                 <h2>Log In</h2>
             </CardTitle>
             <CardDescription>
-                <NuxtLink :to="{
-                    path: '/signup',
-                    query: redirectToPath
-                        ? { redirectTo: redirectToPath }
-                        : {},
-                }" class="text-center text-sm underline">
-                    Sign up instead</NuxtLink>
+                <NuxtLink
+                    :to="{
+                        path: '/signup',
+                        query: redirectToPath
+                            ? { redirectTo: redirectToPath }
+                            : {},
+                    }"
+                    class="text-center text-sm underline">
+                    Sign up instead</NuxtLink
+                >
             </CardDescription>
         </CardHeader>
 
         <CardContent>
-            <AutoForm :schema="loginFormValidator" :onSubmit="onLogin" :fieldConfig="{
-                password: {
-                    inputProps: {
-                        type: 'password',
+            <AutoForm
+                :schema="loginFormValidator"
+                :onSubmit="onLogin"
+                :fieldConfig="{
+                    password: {
+                        inputProps: {
+                            type: 'password',
+                        },
                     },
-                },
-            }" v-slot="{ isSubmitting }">
+                }"
+                v-slot="{ isSubmitting }">
                 <div class="flex flex-col gap-2 pt-2">
                     <ErrorPanel v-if="state.errorObject?.errors?.generalErrors">
                         {{ state.errorObject?.errors?.generalErrors.at(0) }}
                     </ErrorPanel>
                     <div class="flex justify-center">
-                        <AsyncButton type="submit" label="Login" loadingLabel="Logging in..." :isLoading="isSubmitting"
+                        <AsyncButton
+                            type="submit"
+                            label="Login"
+                            loadingLabel="Logging in..."
+                            :isLoading="isSubmitting"
                             :icon="faArrowRight" />
                     </div>
                 </div>
@@ -36,11 +47,14 @@
         </CardContent>
 
         <CardFooter class="flex justify-end">
-            <NuxtLink :to="{
-                path: '/resetPassword',
-                query: redirectToPath ? { redirectTo: redirectToPath } : {},
-            }" class="text-center text-sm underline">
-                Forgot password</NuxtLink>
+            <NuxtLink
+                :to="{
+                    path: '/resetPassword',
+                    query: redirectToPath ? { redirectTo: redirectToPath } : {},
+                }"
+                class="text-center text-sm underline">
+                Forgot password</NuxtLink
+            >
         </CardFooter>
     </Card>
 </template>
@@ -51,6 +65,8 @@
     import { z } from "zod";
     import AsyncButton from "~/components/AsyncButton.vue";
     import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
+    import { useMutation, useQueryClient } from "@tanstack/vue-query";
+    import { isAxiosError } from "axios";
     const redirectToPath = useRoute().query.redirectTo as LocationQueryValue;
 
     const state = reactive({
@@ -70,22 +86,36 @@
         })
         .required();
 
-    // Form Submit
-    const userStore = useUserStore();
-    async function onLogin(request: z.infer<typeof loginFormValidator>) {
-        state.errorObject = null;
+    const client = useQueryClient();
+    const api = useApi();
 
-        const result = await userStore
-            .login(request)
-            .then(async () => {
-                if (redirectToPath != null) {
-                    return await navigateTo(redirectToPath);
-                } else {
-                    return await useNavigator().toCampaignsList();
-                }
-            })
-            .catch((error) => {
-                state.errorObject = parseAsApiError(error);
+    // Form Submit
+    const login = useMutation({
+        mutationFn: api.user.login,
+        async onSuccess() {
+            client.invalidateQueries({
+                queryKey: ["user-profile"],
             });
+
+            console.log("here");
+
+            if (redirectToPath != null) {
+                return await navigateTo(redirectToPath);
+            } else {
+                return await useNavigator().toCampaignsList();
+            }
+        },
+        onError(error) {
+            if (isAxiosError(error)) {
+                state.errorObject = parseAsApiError(error);
+            }
+        },
+        onMutate() {
+            state.errorObject = null;
+        },
+    });
+
+    async function onLogin(request: z.infer<typeof loginFormValidator>) {
+        await login.mutateAsync(request);
     }
 </script>

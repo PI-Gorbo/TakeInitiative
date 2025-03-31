@@ -59,7 +59,7 @@
                             Settings
                         </NuxtLink>
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem asChild>
                         <NavigationMenuLink
                             @click="user.logout"
                             class="hover:bg-secondary">
@@ -87,5 +87,8 @@
         faUserCircle,
     } from "@fortawesome/free-solid-svg-icons";
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-    const user = useUserStore();
+
+    const user = useUserStore()
+    
+    
 </script>
