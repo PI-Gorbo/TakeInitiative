@@ -1,5 +1,7 @@
 <template>
-    <div>WHOAH I am here</div>
+    <div>
+        {{ campaignCombatStore.selectedPlannedCombat }}
+    </div>
 </template>
 <script setup lang="ts">
     definePageMeta({
@@ -7,4 +9,7 @@
         requiresAuth: true,
         layoutTransition: false,
     });
+
+
+    const campaignCombatStore = useCampaignCombatsStore()
 </script>

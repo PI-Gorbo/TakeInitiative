@@ -7,120 +7,142 @@
                 <section
                     class="lg:grid w-full flex flex-col gap-4 lg:grid-cols-3 pb-2">
                     <div class="lg:col-span-1 lg:col-start-1 lg:row-start-1">
-                        <Card class="p-4 border-primary/50">
-                            <div class="flex flex-col gap-2">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <FontAwesomeIcon
-                                            :icon="faPenToSquare" />
-                                        <span
-                                            class="font-NovaCut text-lg text-take-yellow">
-                                            Planned Combats
-                                        </span>
-                                    </div>
-                                    <!-- <Button @click="showCreatePlannedCombatModal">
+                        <Card 
+                            class="p-4 border-primary/50 flex flex-col gap-4 lg:block"
+                            :class="{
+                                'hidden' :  campaignCombatsStore.state.selectedCombat != null
+                            }"
+                        >
+                            <section>
+                                <header>
+                                    <FontAwesomeIcon :icon="faPenToSquare" />
+                                    <span> Planned Combats </span>
+                                </header>
+
+                                <template
+                                    v-if="
+                                        (
+                                            campaignCombatsStore.state
+                                                ?.plannedCombats ?? []
+                                        ).length !== 0
+                                    ">
+                                    <ul class="flex flex-col gap-2">
+                                        <Button
+                                            variant="outline"
+                                            class="h-fit flex justify-between w-full items-center disabled:border-gold disabled:opacity-100"
+                                            :disabled="
+                                                campaignCombatsStore
+                                                    .selectedPlannedCombat
+                                                    ?.id === plannedCombat.id
+                                            "
+                                            :class="[
+                                                {
+                                                    interactable:
+                                                        campaignCombatsStore.selectedPlannedCombat ===
+                                                            undefined ||
+                                                        campaignCombatsStore
+                                                            .selectedPlannedCombat
+                                                            .id !==
+                                                            plannedCombat.id,
+                                                },
+                                            ]"
+                                            v-for="plannedCombat in campaignCombatsStore
+                                                .state?.plannedCombats ?? []"
+                                            :key="plannedCombat.id"
+                                            @click="
+                                                () =>
+                                                    campaignCombatsStore.selectPlannedCombat(
+                                                        plannedCombat.id
+                                                    )
+                                            ">
+                                            {{ plannedCombat.combatName }}
+                                        </Button>
+                                    </ul>
+                                </template>
+                                <div
+                                    :class="[
+                                        'flex flex-1 gap-1 items-center',
+                                        (
+                                            campaignCombatsStore.state
+                                                ?.plannedCombats ?? []
+                                        ).length === 0
+                                            ? 'justify-between'
+                                            : 'justify-end',
+                                    ]">
+                                    <span
+                                        v-if="
+                                            (
+                                                campaignCombatsStore.state
+                                                    ?.plannedCombats ?? []
+                                            ).length === 0
+                                        "
+                                        class="text-gray-500">
+                                        None yet...
+                                    </span>
+                                    <Button
+                                        variant="link"
+                                        @click="showCreatePlannedCombatModal">
                                         <FontAwesomeIcon :icon="faPlusCircle" />
                                         New
-                                    </Button> -->
+                                    </Button>
                                 </div>
-                                <ul class="flex flex-col gap-2 overflow-y-auto">
-                                    <li
-                                        v-for="plannedCombat in campaignCombatsStore
-                                            .state?.plannedCombats ?? []"
-                                        :key="plannedCombat.id"
-                                        :class="[
-                                            'flex select-none items-center justify-between rounded-md border border-take-purple bg-take-purple p-1',
-                                            campaignCombatsStore.state
-                                                .selectedCombat?.id ==
-                                                plannedCombat.id &&
-                                                'border-take-yellow',
-                                        ]">
-                                        <span class="px-1">{{
-                                            plannedCombat.combatName
-                                        }}</span>
-                                        <div class="flex gap-1">
-                                            <!-- <FormButton
-                                                v-if="hasActiveCombat == false"
-                                                icon="circle-play"
-                                                label="Start"
-                                                buttonColour="take-purple-light"
-                                                :loadingDisplay="{ showSpinner: true }"
-                                                :click="
-                                                    () => onOpenCombat(plannedCombat.id)
-                                                "
-                                                size="sm" />
-                                            <FormButton
-                                                icon="pen"
-                                                label="Edit"
-                                                buttonColour="take-purple-light"
-                                                @clicked="
-                                                    () => {
-                                                        campaignCombatsStore.selectPlannedCombat(
-                                                            plannedCombat.id
-                                                        );
-                                                    }
-                                                " /> -->
-                                        </div>
-                                    </li>
-                                </ul>
-                            </div>
-                            <div class="flex flex-col gap-2">
-                                <div>
+                            </section>
+
+                            <section>
+                                <header>
                                     <FontAwesomeIcon :icon="faFlagCheckered" />
+                                    <span> Combat History </span>
+                                </header>
+
+                                <template
+                                    v-if="orderedFinishedCombats.length !== 0">
+                                    <ul>
+                                        <Button
+                                            variant="outline"
+                                            class="h-fit flex justify-between w-full items-center interactable"
+                                            v-for="historicalCombat in orderedFinishedCombats"
+                                            :key="historicalCombat.combatId">
+                                            {{ historicalCombat.combatName }}
+                                        </Button>
+                                    </ul>
+                                </template>
+                                <div
+                                    :class="['flex flex-1 gap-1 items-center']">
                                     <span
-                                        class="font-NovaCut text-lg text-take-yellow">
-                                        Combat History
+                                        v-if="
+                                            orderedFinishedCombats.length === 0
+                                        "
+                                        class="text-gray-500">
+                                        None yet...
                                     </span>
                                 </div>
-                                <ul class="flex flex-col gap-2 overflow-y-auto">
-                                    <li
-                                        v-for="finishedCombat in orderedFinishedCombats"
-                                        :key="finishedCombat.combatName"
-                                        :class="[
-                                            'flex select-none items-center justify-between rounded-md border border-take-purple bg-take-purple p-1 transition-colors',
-                                            finishedCombat.combatId ==
-                                                campaignCombatsStore
-                                                    .selectedCombat?.combatId &&
-                                                'border-take-yellow',
-                                        ]">
-                                        <span class="px-1">{{
-                                            finishedCombat.combatName
-                                        }}</span>
-                                        <!-- <FormButton
-                                            icon="eye"
-                                            label="View"
-                                            buttonColour="take-purple-light"
-                                            @clicked="
-                                                () => {
-                                                    campaignCombatsStore.selectCombat(
-                                                        finishedCombat.combatId
-                                                    );
-                                                }
-                                            " /> -->
-                                    </li>
-                                </ul>
-                                <label
-                                    v-if="
-                                        campaignCombatsStore.state?.combats
-                                            ?.length == 0
-                                    "
-                                    class="text-sm italic"
-                                    >Plan, Start and Finish your first combat
-                                    start a History!</label
-                                >
-                            </div>
+                            </section>
                         </Card>
                     </div>
-                    <div class="lg:col-span-2 lg:col-start-2">
-                        <Card
-                            class="border-2 border-dashed p-4 border-primary/50">
-                            Testing
+                    <div
+                        class="lg:block lg:col-span-2 lg:col-start-2"
+                        :class="[
+                            {
+                                hidden:
+                                    campaignCombatsStore.state
+                                        .selectedCombat === undefined,
+                            },
+                        ]">
+                        <Card class="border-2 p-4 border-primary/50">
                             <NuxtPage />
                         </Card>
                     </div>
                 </section>
             </LoadingFallback>
         </NuxtLayout>
+        <Dialog v-model:open="modalState.modalOpen">
+            <DialogContent class="flex flex-col gap-2">
+                <DialogHeader> Create a planned combat. </DialogHeader>
+
+                <CampaignCombatCreatePlannedCombatForm
+                    :onCreatePlannedCombat="onCreatePlannedCombat" />
+            </DialogContent>
+        </Dialog>
     </div>
 </template>
 <script setup lang="ts">
@@ -131,7 +153,9 @@
     import {
         faFlagCheckered,
         faPenToSquare,
+        faPlusCircle,
     } from "@fortawesome/free-solid-svg-icons";
+    import type { CreatePlannedCombatRequest } from "~/utils/api/plannedCombat/createPlannedCombatRequest";
 
     // Stores
     const isLargeScreen = useMediaQuery("(min-width: 1024px)");
@@ -159,40 +183,47 @@
     // const deleteCombatModal = ref<InstanceType<typeof ConfirmModal> | null>(
     //     null
     // );
-    // const createPlannedCombatModal = ref<InstanceType<typeof Modal> | null>(
-    //     null
-    // );
+    const modalState = reactive<{
+        modalType: "Create-Planned-Combat";
+        modalOpen: boolean;
+    }>({
+        modalType: "Create-Planned-Combat",
+        modalOpen: false,
+    });
 
-    // // Create planned combat
-    // async function showCreatePlannedCombatModal() {
-    //     createPlannedCombatModal.value?.show();
-    // }
+    // Create planned combat
+    async function showCreatePlannedCombatModal() {
+        modalState.modalType = "Create-Planned-Combat";
+        modalState.modalOpen = true;
+    }
 
-    // async function onCreatePlannedCombat(
-    //     input: Omit<CreatePlannedCombatRequest, "campaignId">,
-    //     startCombatImmediately: boolean = false
-    // ) {
-    //     return await campaignCombatsStore
-    //         .createPlannedCombat(input)
-    //         .then(async (pc) => {
-    //             createPlannedCombatModal.value?.hide();
-    //             if (startCombatImmediately) {
-    //                 return await onOpenCombat(pc?.id);
-    //             }
-    //         });
-    // }
+    async function onCreatePlannedCombat(
+        input: Omit<CreatePlannedCombatRequest, "campaignId">,
+        startCombatImmediately: boolean = false
+    ) {
+        debugger;
+        return await campaignCombatsStore
+            .createPlannedCombat(input)
+            .then(async (pc) => {
+                if (startCombatImmediately) {
+                    await onOpenCombat(pc?.id);
+                }
+            })
+            .then(() => (modalState.modalOpen = false));
+    }
 
-    // async function onOpenCombat(plannedCombatId: string) {
-    //     return campaignStore
-    //         .openCombat(plannedCombatId)
-    //         .then((c) =>
-    //             Promise.resolve(
-    //                 useNavigator().toCombat(
-    //                     campaignStore.state.currentCombatInfo?.id!
-    //                 )
-    //             )
-    //         );
-    // }
+    async function onOpenCombat(plannedCombatId: string) {
+        return campaignStore
+            .openCombat(plannedCombatId)
+            .then((c) =>
+                Promise.resolve(
+                    useNavigator().toCombat(
+                        campaignStore.state.campaign?.id!,
+                        campaignStore.state.currentCombatInfo?.id!
+                    )
+                )
+            );
+    }
 
     function selectCombatIfNoneSelected() {
         if (!isLargeScreen.value) {

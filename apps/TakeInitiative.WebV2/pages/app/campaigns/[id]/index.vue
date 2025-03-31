@@ -11,7 +11,7 @@
                             campaignStore.state.campaign?.campaignDescription ==
                                 null ||
                             campaignStore.state.campaign?.campaignDescription ==
-                                ''
+                                '',
                     }">
                     <CampaignEditIntroductionForm />
                 </Card>

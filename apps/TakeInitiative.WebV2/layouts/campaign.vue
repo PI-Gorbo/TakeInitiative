@@ -40,16 +40,10 @@
                             <Button
                                 variant="outline"
                                 class="interactable"
-                                @click="clickAddButton">
+                                @click="clickAddButton"
+                                v-if="route.name === 'app-campaigns-id'">
                                 <FontAwesomeIcon :icon="faPlus" />
-                                <span v-if="route.name == 'app-campaigns-id'"
-                                    >Add Players</span
-                                >
-                                <span
-                                    v-if="
-                                        useRoute().name ===
-                                        'app-campaigns-id-combats'
-                                    "></span>
+                                <span>Add Players</span>
                             </Button>
                         </div>
                     </header>

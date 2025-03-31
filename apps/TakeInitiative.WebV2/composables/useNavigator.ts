@@ -19,7 +19,13 @@ export const useNavigator = () => {
         toLogin: (opts: NavigateToOptions | undefined = undefined) =>
             navigateTo("/login", opts),
         toSignUp: () => navigateTo("/signup"),
-        // toCombat: (id: string) => navigateTo(`/combat/${id}`),
+        toCombat: (campaignId: string, combatId: string) => navigateTo({
+            name: 'app-campaigns-id-combats-combatId',
+            params: {
+                id: campaignId,
+                combatId: combatId
+            }
+        }),
         toHomePage: () => navigateTo("/"),
     };
 };
