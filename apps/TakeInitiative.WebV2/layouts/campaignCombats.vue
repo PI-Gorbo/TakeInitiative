@@ -7,12 +7,13 @@
                 <section
                     class="lg:grid w-full flex flex-col gap-4 lg:grid-cols-3 pb-2">
                     <div class="lg:col-span-1 lg:col-start-1 lg:row-start-1">
-                        <Card 
+                        <Card
                             class="p-4 border-primary/50 flex flex-col gap-4 lg:block"
                             :class="{
-                                'hidden' :  campaignCombatsStore.state.selectedCombat != null
-                            }"
-                        >
+                                hidden:
+                                    campaignCombatsStore.state.selectedCombat !=
+                                    null,
+                            }">
                             <section>
                                 <header>
                                     <FontAwesomeIcon :icon="faPenToSquare" />
@@ -201,7 +202,6 @@
         input: Omit<CreatePlannedCombatRequest, "campaignId">,
         startCombatImmediately: boolean = false
     ) {
-        debugger;
         return await campaignCombatsStore
             .createPlannedCombat(input)
             .then(async (pc) => {

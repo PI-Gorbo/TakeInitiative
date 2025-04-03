@@ -3,6 +3,11 @@
         :schema="validator"
         :onSubmit="() => submit()"
         :form="form"
+        :fieldConfig="{
+            immidatelyOpen: {
+                label: 'Open to players',
+            },
+        }"
         class="flex flex-col gap-2">
         <div class="flex gap-2 justify-end">
             <Button type="submit">
