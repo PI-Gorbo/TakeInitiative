@@ -6,7 +6,12 @@
                 :isLoading="combatsQuery.isLoading.value">
                 <section
                     class="lg:grid w-full flex flex-col gap-4 lg:grid-cols-3 pb-2">
-                    <div class="lg:col-span-1 lg:col-start-1 lg:row-start-1">
+                    <div
+                        v-if="
+                            isLargeScreen ||
+                            route.name === 'app-campaigns-id-combats'
+                        "
+                        class="lg:col-span-1 lg:col-start-1 lg:row-start-1">
                         <Card
                             class="p-4 border-primary/50 flex flex-col gap-4 lg:block"
                             :class="{
@@ -117,7 +122,10 @@
                                     :class="['flex flex-1 gap-1 items-center']">
                                     <span
                                         v-if="
-                                              (combatsQuery.data.value?.combats ?? []).length === 0
+                                            (
+                                                combatsQuery.data.value
+                                                    ?.combats ?? []
+                                            ).length === 0
                                         "
                                         class="text-gray-500">
                                         None yet...
@@ -127,14 +135,8 @@
                         </Card>
                     </div>
                     <div
-                        class="lg:block lg:col-span-2 lg:col-start-2"
-                        :class="[
-                            {
-                                hidden:
-                                    campaignCombatsStore.state
-                                        .selectedCombat === undefined,
-                            },
-                        ]">
+                        v-if="isLargeScreen || !hasAnyCombats"
+                        class="lg:block lg:col-span-2 lg:col-start-2">
                         <Card class="border-2 p-4 border-primary/50">
                             <NuxtPage />
                         </Card>
@@ -195,40 +197,69 @@
     //         watch: [() => route.params.id],
     //     }
     // );
-    const combatsQuery = useQuery({
-        ...combatQueries.getAllCombatsQuery(() => route.params.id),
-        select: (data) => {
-            data.combats.sort(sortByFinishedTimestamp);
-            return data;
-        },
-    });
+    const combatsQuery = useQuery(
+        combatQueries.getAllCombatsQuery(() => route.params.id)
+    );
 
-    function sortByFinishedTimestamp(
-        a: GetCombatsResponse["combats"][number],
-        b: GetCombatsResponse["combats"][number]
-    ) {
-        if (a.finishedTimestamp == null && b.finishedTimestamp != null) {
-            return -1;
-        }
+    const hasAnyCombats = computed(
+        () =>
+            (combatsQuery.data.value?.combats.length ?? 0) > 0 ||
+            (combatsQuery.data.value?.plannedCombats.length ?? 0) > 0
+    );
 
-        if (a.finishedTimestamp != null && b.finishedTimestamp == null) {
-            return 1;
-        }
+    // function sortByFinishedTimestamp(
+    //     a: GetCombatsResponse["combats"][number],
+    //     b: GetCombatsResponse["combats"][number]
+    // ) {
+    //     if (a.finishedTimestamp == null && b.finishedTimestamp != null) {
+    //         return -1;
+    //     }
 
-        if (a.finishedTimestamp == b.finishedTimestamp) {
-            return 0;
-        }
+    //     if (a.finishedTimestamp != null && b.finishedTimestamp == null) {
+    //         return 1;
+    //     }
 
-        if (a.finishedTimestamp! < b.finishedTimestamp!) {
-            return -1;
-        }
+    //     if (a.finishedTimestamp == b.finishedTimestamp) {
+    //         return 0;
+    //     }
 
-        if (a.finishedTimestamp! > b.finishedTimestamp!) {
-            return 1;
-        }
+    //     if (a.finishedTimestamp! < b.finishedTimestamp!) {
+    //         return -1;
+    //     }
 
-        return 0;
-    }
+    //     if (a.finishedTimestamp! > b.finishedTimestamp!) {
+    //         return 1;
+    //     }
+
+    //     return 0;
+    // }
+
+    // // Watch the retruned data, and navigate to the first combat if there is one.
+    // watch([route, () => combatsQuery.data], ([route, data]) => {
+    //     if (
+    //         isLargeScreen.value &&
+    //         route.name === "app-campaigns-id-combats" &&
+    //         hasAnyCombats.value
+    //     ) {
+    //         if (data.value?.plannedCombats.length) {
+    //             router.push({
+    //                 name: "app-campaigns-id-combats-drafts-draftCombatId",
+    //                 params: {
+    //                     id: route.params.id,
+    //                     draftCombatId: data.value.plannedCombats[0].id,
+    //                 },
+    //             });
+    //         } else if (data.value?.combats.length) {
+    //             router.push({
+    //                 name: "app-campaigns-id-combats-history-combatId",
+    //                 params: {
+    //                     id: route.params.id,
+    //                     combatId: data.value.combats[0].combatId,
+    //                 },
+    //             });
+    //         }
+    //     }
+    // });
 
     // Modals
     // const deleteCombatModal = ref<InstanceType<typeof ConfirmModal> | null>(

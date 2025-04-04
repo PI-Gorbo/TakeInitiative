@@ -12,12 +12,45 @@
     </main>
 </template>
 <script setup lang="ts">
+    import { useQuery } from "@tanstack/vue-query";
+    import { useMediaQuery } from "@vueuse/core";
     import type { CreatePlannedCombatRequest } from "~/utils/api/plannedCombat/createPlannedCombatRequest";
-
+    import { combatQueries } from "~/utils/queries/combats";
+    const isLargeScreen = useMediaQuery("(min-width: 1024px)");
     definePageMeta({
         layout: "campaign-combats",
         requiresAuth: true,
         layoutTransition: false,
+        middleware: [
+            async (to) => {
+                if (!isLargeScreen.value) return;
+
+                const queryResult = await useQuery(
+                    combatQueries.getAllCombatsQuery(
+                        () => to.params.id as string
+                    )
+                ).suspense();
+
+                if (queryResult.data?.plannedCombats.length) {
+                    return navigateTo({
+                        name: 'app-campaigns-id-combats-drafts-draftCombatId',
+                        params: {
+                            id: to.params.id as string,
+                            draftCombatId: queryResult.data.plannedCombats[0].id,
+                        },
+                    })
+                    
+                } else if (queryResult.data?.combats.length) {
+                    return navigateTo({
+                        name: "app-campaigns-id-combats-history-combatId",
+                        params: {
+                            id: to.params.id as string,
+                            combatId: queryResult.data.combats[0].combatId,
+                        },
+                    });
+                }
+            },
+        ],
     });
 
     const campaignStore = useCampaignStore();
