@@ -53,18 +53,20 @@ export const useCampaignCombatsStore = defineStore(
             state.selectedCombat = undefined;
         }
 
-        function selectCombat(combatId: string) {
+        async function selectCombat(combatId: string) {
             state.selectedCombat = {
                 id: combatId,
                 type: "Normal",
             };
         }
 
-        function selectPlannedCombat(combatId: string) {
+        async function selectPlannedCombat(combatId: string) {
             state.selectedCombat = {
                 id: combatId,
                 type: "Planned",
             };
+
+
         }
 
         function updatePlannedCombat(combat: PlannedCombat) {

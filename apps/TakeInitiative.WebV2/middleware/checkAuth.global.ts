@@ -1,4 +1,10 @@
+import { helpers } from "@typed-router";
+
 export default defineNuxtRouteMiddleware(async (to) => {
+
+    if (to.path === '/') {
+        return;
+    }
     const userStore = useUserStore();
     const isLoggedIn = await userStore.isLoggedIn();
     // If the user is not logged in, return them to the 'does not require auth zone'
