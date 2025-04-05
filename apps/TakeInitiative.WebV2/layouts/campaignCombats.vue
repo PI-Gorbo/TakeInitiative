@@ -134,9 +134,7 @@
                             </section>
                         </Card>
                     </div>
-                    <div
-                        v-if="isLargeScreen || !hasAnyCombats"
-                        class="lg:block lg:col-span-2 lg:col-start-2">
+                    <div v-show="route.name !== 'app-campaigns-id-combats' || !hasAnyCombats" class="lg:block lg:col-span-2 lg:col-start-2">
                         <Card class="border-2 p-4 border-primary/50">
                             <NuxtPage />
                         </Card>
@@ -156,15 +154,11 @@
 </template>
 <script setup lang="ts">
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-
-    import { type GetCombatsResponse } from "~/utils/api/combat/getCombatsRequest";
     import { useMediaQuery } from "@vueuse/core";
     import {
         faFlagCheckered,
         faPenToSquare,
-        faPlusCircle,
     } from "@fortawesome/free-solid-svg-icons";
-    import type { CreatePlannedCombatRequest } from "~/utils/api/plannedCombat/createPlannedCombatRequest";
     import { combatQueries } from "~/utils/queries/combats";
     import { useQuery } from "@tanstack/vue-query";
 

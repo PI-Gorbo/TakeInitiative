@@ -126,15 +126,15 @@
 
     const currentTab = computed(() => {
         const currentRoute = useRoute();
-        if (currentRoute.name === "app-campaigns-id") {
+        if (currentRoute?.name === "app-campaigns-id") {
             return currentRoute.name;
         }
 
-        if (currentRoute.name.startsWith("app-campaigns-id-combats")) {
+        if (currentRoute?.name.startsWith("app-campaigns-id-combats")) {
             return "app-campaigns-id-combats";
         }
 
-        if (currentRoute.name.startsWith("app-campaigns-id-settings")) {
+        if (currentRoute?.name.startsWith("app-campaigns-id-settings")) {
             return "app-campaigns-id-settings";
         }
     });

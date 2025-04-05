@@ -16,7 +16,12 @@
     import { useMediaQuery } from "@vueuse/core";
     import type { CreatePlannedCombatRequest } from "~/utils/api/plannedCombat/createPlannedCombatRequest";
     import { combatQueries } from "~/utils/queries/combats";
+    const route = useRoute("app-campaigns-id-combats");
     const isLargeScreen = useMediaQuery("(min-width: 1024px)");
+    const queryResult = useQuery(
+        combatQueries.getAllCombatsQuery(() => route.params.id as string)
+    );
+
     definePageMeta({
         layout: "campaign-combats",
         requiresAuth: true,
@@ -33,13 +38,13 @@
 
                 if (queryResult.data?.plannedCombats.length) {
                     return navigateTo({
-                        name: 'app-campaigns-id-combats-drafts-draftCombatId',
+                        name: "app-campaigns-id-combats-drafts-draftCombatId",
                         params: {
                             id: to.params.id as string,
-                            draftCombatId: queryResult.data.plannedCombats[0].id,
+                            draftCombatId:
+                                queryResult.data.plannedCombats[0].id,
                         },
-                    })
-                    
+                    });
                 } else if (queryResult.data?.combats.length) {
                     return navigateTo({
                         name: "app-campaigns-id-combats-history-combatId",
