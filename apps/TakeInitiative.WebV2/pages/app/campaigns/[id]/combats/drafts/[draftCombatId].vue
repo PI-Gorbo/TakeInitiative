@@ -5,15 +5,25 @@
         <Card
             v-for="stage in draftCombatQuery.data.value!.stages"
             :key="stage.id"
-            class="border-2 p-4 border-primary/50">
-            {{ stage }}
-            <!-- <PlannedCombatStageDisplay
+            class="border-2 p-2 border-primary/50">
+            <CampaignCombatDraftStageDisplay
+                :allStages="draftCombatQuery.data.value!.stages"
                 :stage="stage"
-                :updateStage="(req) => updateStage(stage, req)"
-                :deleteStage="() => deleteStage(stage)"
-                :createNpc="(request) => addNpc(stage, request)"
-                :updateNpc="(request) => updateNpc(stage, request)"
-                :deleteNpc="(request) => deleteNpc(stage, request)" /> -->
+                :updateStage="(req) => updateStage.mutateAsync({ stage, req })"
+                :deleteStage="() => deleteStage.mutateAsync(stage)"
+                :createNpc="
+                    (request) =>
+                        addNpc.mutateAsync({
+                            stage,
+                            nonPlayerCharacter: request,
+                        })
+                "
+                :updateNpc="
+                    (request) => updateNpc.mutateAsync({ stage, npc: request })
+                "
+                :deleteNpc="
+                    (request) => deleteNpc.mutateAsync({ stage, npc: request })
+                " />
         </Card>
         <Button
             variant="outline"
@@ -40,8 +50,12 @@
     import type { CreatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
     import type { DeletePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/deletePlannedCombatNpcRequest";
     import type { UpdatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
+    import type { UpdatePlannedCombatStageRequest } from "~/utils/api/plannedCombat/stages/updatePlannedCombatStageRequest";
     import { combatQueries } from "~/utils/queries/combats";
-    import type { PlannedCombatStage } from "~/utils/types/models";
+    import {
+        stagedCharacterValidator,
+        type PlannedCombatStage,
+    } from "~/utils/types/models";
     const queryClient = useQueryClient();
     const api = useApi();
     const route = useRoute("app-campaigns-id-combats-drafts-draftCombatId");
@@ -160,13 +174,15 @@
         },
     });
 
-    // const updateStage = useMutation(
-    //     stage: PlannedCombatStage,
-    //     req: Omit<UpdatePlannedCombatStageRequest, "combatId" | "stageId">
-    // ) {
-    //     return await campaignCombatStore.updateStage({
-    //         stageId: stage.id,
-    //         ...req,
-    //     });
-    // }
+    const updateStage = useMutation({
+        mutationFn: async (req: {
+            stage: PlannedCombatStage;
+            req: Omit<UpdatePlannedCombatStageRequest, "combatId" | "stageId">;
+        }) =>
+            await api.draftCombat.stage.update({
+                combatId: route.params.draftCombatId,
+                stageId: req.stage.id,
+                ...req.stage,
+            }),
+    });
 </script>

@@ -1,8 +1,13 @@
 <template>
     <div class="flex flex-col gap-1">
-        <label v-if="props.label" :class="{ 'text-destructive': props.error }">
-            {{ props.label }}</label
-        >
+        <header class="flex justify-between gap-2 text-sm">
+            <label
+                v-if="props.label"
+                :class="{ 'text-destructive': props.error }">
+                {{ props.label }}
+            </label>
+            <slot name="Header" />
+        </header>
         <div>
             <slot />
         </div>

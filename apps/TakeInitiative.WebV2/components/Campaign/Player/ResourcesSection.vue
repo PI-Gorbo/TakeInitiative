@@ -51,17 +51,7 @@
                                         class="flex justify-between flex-wrap gap-2">
                                         {{ character.name }}
                                         <div class="flex flex-wrap gap-1">
-                                            <CampaignCharacterHealthDisplay
-                                                :health="character.health"
-                                                unstyled />
-                                            <CampaignCharacterArmourClassDisplay
-                                                :armourClass="
-                                                    character.armourClass
-                                                " />
-                                            <CampaignCharacterInitiativeDisplay
-                                                :initiative="
-                                                    character.initiative.roll
-                                                " />
+                                            <CharacterStatsDisplay />
                                         </div>
                                     </div>
                                 </Button>
@@ -213,6 +203,7 @@
     import CUDResourceForm from "./CUDResourceForm.vue";
     import { toast } from "vue-sonner";
     import ResourceDisplay from "./ResourceDisplay.vue";
+import CharacterStatsDisplay from '../Combat/CharacterStatsDisplay.vue'
     const campaignStore = useCampaignStore();
     const user = useUserStore();
     const isViewingCurrentUsersData = computed(
