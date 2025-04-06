@@ -9,7 +9,10 @@ export type GetCombatsRequest = {
 };
 
 export const getCombatsResponseValidator = z.object({
-    plannedCombats: z.array(plannedCombatValidator),
+    plannedCombats: z.array(z.object({
+        id: z.string().uuid(),
+        name: z.string()
+    })),
     combats: z.array(
         z
             .object({

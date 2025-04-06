@@ -73,6 +73,7 @@ export const useCampaignCombatsStore = defineStore(
             const index = state.plannedCombats?.findIndex(
                 (x) => x.id == combat.id,
             );
+            //@ts-expect-error
             state.plannedCombats![index!] = combat;
         }
 
@@ -80,12 +81,13 @@ export const useCampaignCombatsStore = defineStore(
         async function createPlannedCombat(
             request: Omit<CreatePlannedCombatRequest, "campaignId">
         ): Promise<PlannedCombat> {
-            return await api.plannedCombat
+            return await api.draftCombat
                 .create({
                     ...request,
                     campaignId: state.campaignId!,
                 })
                 .then((pc) => {
+                    //@ts-expect-error
                     state.plannedCombats?.push(pc);
                     selectPlannedCombat(pc.id);
                     return pc;
@@ -93,7 +95,7 @@ export const useCampaignCombatsStore = defineStore(
         }
 
         async function deletePlannedCombat(plannedCombatId: string) {
-            return await api.plannedCombat
+            return await api.draftCombat
                 .delete({
                     campaignId: state.campaignId!,
                     combatId: plannedCombatId,
@@ -112,7 +114,7 @@ export const useCampaignCombatsStore = defineStore(
         async function addStage(
             request: Omit<CreatePlannedCombatStageRequest, "combatId">,
         ) {
-            return await api.plannedCombat.stage
+            return await api.draftCombat.stage
                 .create({
                     ...request,
                     combatId: state.selectedCombat?.id!,
@@ -121,7 +123,7 @@ export const useCampaignCombatsStore = defineStore(
         }
 
         async function removeStage(stageId: string) {
-            return await api.plannedCombat.stage
+            return await api.draftCombat.stage
                 .delete({
                     combatId: state.selectedCombat?.id!,
                     stageId: stageId,
@@ -133,7 +135,7 @@ export const useCampaignCombatsStore = defineStore(
             stage: PlannedCombatStage,
             npc: Omit<CreatePlannedCombatNpcRequest, "combatId" | "stageId">,
         ) {
-            return await api.plannedCombat.stage.npc
+            return await api.draftCombat.stage.npc
                 .create({
                     combatId: state.selectedCombat?.id!,
                     stageId: stage.id,
@@ -143,7 +145,7 @@ export const useCampaignCombatsStore = defineStore(
         }
 
         async function removeNpc(stage: PlannedCombatStage, npcId: string) {
-            return await api.plannedCombat.stage.npc
+            return await api.draftCombat.stage.npc
                 .delete({
                     combatId: state.selectedCombat?.id!,
                     stageId: stage.id,
@@ -156,7 +158,7 @@ export const useCampaignCombatsStore = defineStore(
             stage: PlannedCombatStage,
             npc: Omit<UpdatePlannedCombatNpcRequest, "combatId" | "stageId">,
         ) {
-            return await api.plannedCombat.stage.npc
+            return await api.draftCombat.stage.npc
                 .update({
                     ...npc,
                     armourClass: npc.armourClass,
@@ -174,7 +176,7 @@ export const useCampaignCombatsStore = defineStore(
                 stageId: req.stageId,
                 name: req.name,
             };
-            return api.plannedCombat.stage
+            return api.draftCombat.stage
                 .update(request)
                 .then(updatePlannedCombat);
         }

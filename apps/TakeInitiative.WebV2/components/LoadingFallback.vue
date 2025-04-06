@@ -20,11 +20,12 @@
         faDiceD20,
     } from "@fortawesome/free-solid-svg-icons";
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+    import type { Component } from "vue";
 
     const props = withDefaults(
         defineProps<{
             isLoading: boolean;
-            container: string | Comment;
+            container?: string | Component;
         }>(),
         {
             container: "div",

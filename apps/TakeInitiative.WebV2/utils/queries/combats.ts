@@ -12,6 +12,13 @@ export const combatQueries = {
             data.combats.sort(sortByFinishedTimestamp);
             return data;
         },
+        staleTime: 1000 * 60 * 5, // 5 minutes
+    }),
+    getDraftCombatQuery: (campaignId: RefOrGetter<string>, plannedCombatId: RefOrGetter<string>) => queryOptions({
+        queryKey: [campaignId, 'combats', 'planned', plannedCombatId],
+        queryFn: () => useApi().draftCombat.get({ campaignId: toValue(campaignId), combatId: toValue(plannedCombatId) }),
+        enabled: () => !!toValue(campaignId) && !!toValue(plannedCombatId),
+        staleTime: 1000 * 60 * 5, // 5 minutes
     })
 }
 
@@ -41,3 +48,4 @@ function sortByFinishedTimestamp(
 
     return 0;
 }
+
