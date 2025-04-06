@@ -50,9 +50,12 @@
                                     <div
                                         class="flex justify-between flex-wrap gap-2">
                                         {{ character.name }}
-                                        <div class="flex flex-wrap gap-1">
-                                            <CharacterStatsDisplay />
-                                        </div>
+                                        <CampaignCombatCharacterStatsDisplay
+                                            :armourClass="character.armourClass"
+                                            :health="character.health"
+                                            :initiative="
+                                                character.initiative.roll
+                                            " />
                                     </div>
                                 </Button>
                             </div>
@@ -103,7 +106,7 @@
                     <Button
                         v-for="(resource, index) in props.resources"
                         variant="outline"
-                        class="interactable shadow-solid-sm  disabled:opacity-100"
+                        class="interactable shadow-solid-sm disabled:opacity-100"
                         @click="
                             () => {
                                 if (isViewingCurrentUsersData) {
@@ -116,7 +119,7 @@
                             }
                         ">
                         <ResourceDisplay
-                        :resource="resource"
+                            :resource="resource"
                             :resourceVisibilityOptionNameMap="
                                 resourceVisibilityOptionNameMap
                             "
@@ -203,7 +206,6 @@
     import CUDResourceForm from "./CUDResourceForm.vue";
     import { toast } from "vue-sonner";
     import ResourceDisplay from "./ResourceDisplay.vue";
-import CharacterStatsDisplay from '../Combat/CharacterStatsDisplay.vue'
     const campaignStore = useCampaignStore();
     const user = useUserStore();
     const isViewingCurrentUsersData = computed(

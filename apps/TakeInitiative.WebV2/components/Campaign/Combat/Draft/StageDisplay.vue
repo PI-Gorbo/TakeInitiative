@@ -1,25 +1,23 @@
 <template>
-    <Collapsible :defaultOpen="true" class="w-full">
+    <Collapsible :defaultOpen="true" class="w-full" v-slot="{ open }">
         <CollapsibleTrigger
             class="flex items-center justify-between gap-2 w-full">
-            <CampaignCombatDraftStageNameForm
-                :initalStageName="props.stage.name"
-                :allStageNames="props.allStages.map((x) => x.name)"
-                :updateStageName="(name) => props.updateStage({ name })" />
-            <!-- <div class="flex flex-row gap-2">
-                <FormButton
-                    icon="plus"
-                    label="Add NPC"
-                    buttonColour="take-purple-light"
-                    textColour="white"
-                    @clicked="showCreatePlannedCharacterModal" />
-                </div> -->
-            <Button
-                size="icon"
-                variant="destructive"
-                @clicked="() => props.deleteStage()">
-                <FontAwesomeIcon :icon="faTrash" />
-            </Button>
+            <div class="flex items-center gap-2">
+                <CampaignCombatDraftStageNameForm
+                    :initalStageName="props.stage.name"
+                    :allStageNames="props.allStages.map((x) => x.name)"
+                    :updateStageName="(name) => props.updateStage({ name })" />
+                <Button
+                    size="icon"
+                    variant="link"
+                    class="text-destructive"
+                    @click.prevent="() => props.deleteStage()">
+                    <FontAwesomeIcon :icon="faTrash" />
+                </Button>
+            </div>
+            <ChevronDownIcon
+                class="transition-transform duration-200"
+                :class="open ? 'rotate-180' : ''" />
         </CollapsibleTrigger>
         <CollapsibleContent>
             <section class="flex flex-1 flex-col gap-2 pb-4">
@@ -30,18 +28,6 @@
                         :editNpc="(request) => props.updateNpc(request)"
                         :deleteNpc="(request) => props.deleteNpc(request)" />
                 </section>
-                <!-- <TransitionGroup
-                    class="flex flex-1 flex-col gap-2"
-                    tag="section"
-                    name="fade">
-                   
-                </TransitionGroup>
-                <Modal
-                    ref="createPlannedCharacterFormModal"
-                    title="Create Character">
-                    <CampaignCombatDraftModifyNpcForm
-                        :onCreate="(request) => props.createNpc(request)" />
-                </Modal> -->
             </section>
         </CollapsibleContent>
     </Collapsible>
@@ -50,6 +36,7 @@
 <script setup lang="ts">
     import { faTrash } from "@fortawesome/free-solid-svg-icons";
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+    import { ChevronDownIcon } from "lucide-vue-next";
     import type { CreatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
     import type { DeletePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/deletePlannedCombatNpcRequest";
     import type { UpdatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";

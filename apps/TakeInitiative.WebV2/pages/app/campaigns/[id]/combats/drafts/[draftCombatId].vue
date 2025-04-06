@@ -9,7 +9,12 @@
             <CampaignCombatDraftStageDisplay
                 :allStages="draftCombatQuery.data.value!.stages"
                 :stage="stage"
-                :updateStage="(req) => updateStage.mutateAsync({ stage, req })"
+                :updateStage="
+                    (req) => {
+                        debugger;
+                        return updateStage.mutateAsync({ stage, req });
+                    }
+                "
                 :deleteStage="() => deleteStage.mutateAsync(stage)"
                 :createNpc="
                     (request) =>
@@ -19,7 +24,9 @@
                         })
                 "
                 :updateNpc="
-                    (request) => updateNpc.mutateAsync({ stage, npc: request })
+                    (request) => {
+                        return updateNpc.mutateAsync({ stage, npc: request });
+                    }
                 "
                 :deleteNpc="
                     (request) => deleteNpc.mutateAsync({ stage, npc: request })
@@ -28,11 +35,7 @@
         <Button
             variant="outline"
             class="interactable border-dashed w-full text-muted"
-            @click="
-                addStage.mutate({
-                    name: `Stage ${draftCombatQuery.data.value!.stages.length + 1}`,
-                })
-            ">
+            @click="onAddStage">
             <FontAwesomeIcon :icon="faPlusCircle" />
             {{
                 addStage.isIdle.value || addStage.isSuccess.value
@@ -90,6 +93,34 @@
             );
         },
     });
+    function onAddStage() {
+        const stages = draftCombatQuery.data.value!.stages;
+        const filteredStages = stages
+            .map((stage) => stage.name)
+            .filter((name) => name.startsWith("Stage "));
+
+        if (filteredStages.length === 0) {
+            return addStage.mutateAsync({
+                name: "Stage 1",
+            });
+        }
+
+        const availableNumbers = filteredStages
+            .map((name) => parseInt(name.split(" ")[1]))
+            .filter((number) => !Number.isNaN(number));
+
+        if (availableNumbers.length === 0) {
+            return addStage.mutateAsync({
+                name: "Stage 1",
+            });
+        }
+
+        const biggestNumber = availableNumbers.sort((a, b) => -(a - b))[0];
+
+        return addStage.mutateAsync({
+            name: `Stage ${biggestNumber + 1}`,
+        });
+    }
 
     const addNpc = useMutation({
         mutationFn: async (req: {
@@ -178,11 +209,22 @@
         mutationFn: async (req: {
             stage: PlannedCombatStage;
             req: Omit<UpdatePlannedCombatStageRequest, "combatId" | "stageId">;
-        }) =>
-            await api.draftCombat.stage.update({
+        }) => {
+            debugger;
+            return await api.draftCombat.stage.update({
                 combatId: route.params.draftCombatId,
                 stageId: req.stage.id,
-                ...req.stage,
-            }),
+                name: req.stage.name,
+            });
+        },
+        onSuccess(resp) {
+            queryClient.setQueryData(
+                combatQueries.getDraftCombat.key(
+                    route.params.id,
+                    route.params.draftCombatId
+                ),
+                resp
+            );
+        },
     });
 </script>
