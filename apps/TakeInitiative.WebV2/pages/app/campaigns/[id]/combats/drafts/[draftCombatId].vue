@@ -9,11 +9,7 @@
             <CampaignCombatDraftStageDisplay
                 :allStages="draftCombatQuery.data.value!.stages"
                 :stage="stage"
-                :updateStage="
-                    (req) => {
-                        return updateStage.mutateAsync({ stage, req });
-                    }
-                "
+                :updateStage="(req) => updateStage.mutateAsync({ stage, req })"
                 :deleteStage="() => deleteStage.mutateAsync(stage)"
                 :createNpc="
                     (request) =>
@@ -23,9 +19,7 @@
                         })
                 "
                 :updateNpc="
-                    (request) => {
-                        return updateNpc.mutateAsync({ stage, npc: request });
-                    }
+                    (request) => updateNpc.mutateAsync({ stage, npc: request })
                 "
                 :deleteNpc="
                     (request) => deleteNpc.mutateAsync({ stage, npc: request })

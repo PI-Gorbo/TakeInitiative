@@ -4,6 +4,7 @@
             class="flex items-center justify-between gap-2 w-full">
             <div class="flex items-center gap-2">
                 <CampaignCombatDraftStageNameForm
+                    @click.prevent="(e) => e.stopPropagation()"
                     :initalStageName="props.stage.name"
                     :allStageNames="props.allStages.map((x) => x.name)"
                     :updateStageName="(name) => props.updateStage({ name })" />
@@ -20,21 +21,26 @@
                 :class="open ? 'rotate-180' : ''" />
         </CollapsibleTrigger>
         <CollapsibleContent>
-            <section class="flex flex-1 flex-col gap-2 pb-4">
+            <section class="flex flex-1 flex-col gap-2 py-2">
                 <section v-for="npc in npcList" :key="npc.id">
                     <CampaignCombatDraftNpcDisplay
-                        class="p-2"
                         :npc="npc"
                         :editNpc="(request) => props.updateNpc(request)"
                         :deleteNpc="(request) => props.deleteNpc(request)" />
                 </section>
+                <div class="flex justify-end">
+                    <Button variant="link" @click="addNpc">
+                        <FontAwesomeIcon :icon="faPlusCircle" />
+                        {{ !isAdding ? "Add Npc" : "Adding Npc..." }}
+                    </Button>
+                </div>
             </section>
         </CollapsibleContent>
     </Collapsible>
 </template>
 
 <script setup lang="ts">
-    import { faTrash } from "@fortawesome/free-solid-svg-icons";
+    import { faPlusCircle, faTrash } from "@fortawesome/free-solid-svg-icons";
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
     import { ChevronDownIcon } from "lucide-vue-next";
     import type { CreatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
@@ -61,7 +67,6 @@
         ) => Promise<any>;
     }>();
 
-    const stageName = ref<string>(props.stage.name);
     const npcList = computed(() =>
         props.stage.npcs.sort((npc1, npc2) => {
             // Sort Alphabetically, then by Id.
@@ -76,4 +81,18 @@
     const showCreatePlannedCharacterModal = () => {
         console.log("show planned character modal");
     };
+
+    const isAdding = ref(false);
+    async function addNpc() {
+        isAdding.value = true;
+        return await props
+            .createNpc({
+                name: "New NPC",
+                armourClass: null,
+                health: { "!": "None" },
+                initiative: { roll: "1d20 + 2" },
+                quantity: 1,
+            })
+            .finally(() => (isAdding.value = false));
+    }
 </script>

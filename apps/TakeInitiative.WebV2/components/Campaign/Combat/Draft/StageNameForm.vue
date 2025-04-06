@@ -1,10 +1,10 @@
 <template>
-    <form @submit.prevent="submit" class="text-left">
+    <form @submit.prevent="submit" class="text-left" >
         <FormFieldWrapper :error="form.errors.value.name">
             <template #default>
                 <div class="flex items-center gap-2">
                     <Input v-model:modelValue="name" @input="submit" />
-                    <AutoSaveSpinner :isLoading="debounceSubmitting" />
+                    <AutoSaveSpinner :isLoading="debounceSubmitting" :isSuccess="!form.errors.value.name" />
                 </div>
             </template>
         </FormFieldWrapper>
