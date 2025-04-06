@@ -11,7 +11,6 @@
                 :stage="stage"
                 :updateStage="
                     (req) => {
-                        debugger;
                         return updateStage.mutateAsync({ stage, req });
                     }
                 "
@@ -210,11 +209,10 @@
             stage: PlannedCombatStage;
             req: Omit<UpdatePlannedCombatStageRequest, "combatId" | "stageId">;
         }) => {
-            debugger;
             return await api.draftCombat.stage.update({
                 combatId: route.params.draftCombatId,
                 stageId: req.stage.id,
-                name: req.stage.name,
+                name: req.req.name,
             });
         },
         onSuccess(resp) {
