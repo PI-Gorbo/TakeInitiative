@@ -1,23 +1,49 @@
 <template>
-    <LoadingFallback :isLoading="draftCombatQuery.isLoading.value">
-        <div
-            class="flex w-full flex-1 justify-center pb-1"
+    <LoadingFallback
+        :isLoading="draftCombatQuery.isLoading.value"
+        class="flex flex-col gap-4">
+        <Card
             v-for="stage in draftCombatQuery.data.value!.stages"
-            :key="stage.id">
-            <PlannedCombatStageDisplay
+            :key="stage.id"
+            class="border-2 p-4 border-primary/50">
+            {{ stage }}
+            <!-- <PlannedCombatStageDisplay
                 :stage="stage"
                 :updateStage="(req) => updateStage(stage, req)"
                 :deleteStage="() => deleteStage(stage)"
                 :createNpc="(request) => addNpc(stage, request)"
                 :updateNpc="(request) => updateNpc(stage, request)"
-                :deleteNpc="(request) => deleteNpc(stage, request)" />
-        </div>
+                :deleteNpc="(request) => deleteNpc(stage, request)" /> -->
+        </Card>
+        <Button
+            variant="outline"
+            class="interactable border-dashed w-full text-muted"
+            @click="
+                addStage.mutate({
+                    name: `Stage ${draftCombatQuery.data.value!.stages.length + 1}`,
+                })
+            ">
+            <FontAwesomeIcon :icon="faPlusCircle" />
+            {{
+                addStage.isIdle.value || addStage.isSuccess.value
+                    ? "Add Stage"
+                    : "Adding Stage..."
+            }}
+        </Button>
     </LoadingFallback>
 </template>
 <script setup lang="ts">
-    import { useQuery } from "@tanstack/vue-query";
+    import { faPlusCircle } from "@fortawesome/free-solid-svg-icons";
+    import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+    import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
+    import type { CreatePlannedCombatStageRequest } from "~/utils/api/plannedCombat/stages/createPlannedCombatStageRequest";
+    import type { CreatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
+    import type { DeletePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/deletePlannedCombatNpcRequest";
+    import type { UpdatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
     import { combatQueries } from "~/utils/queries/combats";
-
+    import type { PlannedCombatStage } from "~/utils/types/models";
+    const queryClient = useQueryClient();
+    const api = useApi();
     const route = useRoute("app-campaigns-id-combats-drafts-draftCombatId");
     definePageMeta({
         layout: "campaign-combats",
@@ -25,9 +51,122 @@
     });
 
     const draftCombatQuery = useQuery(
-        combatQueries.getDraftCombatQuery(
+        combatQueries.getDraftCombat.query(
             () => route.params.id,
             () => route.params.draftCombatId
         )
     );
+
+    const addStage = useMutation({
+        mutationFn: async (
+            req: Omit<CreatePlannedCombatStageRequest, "combatId">
+        ) =>
+            await api.draftCombat.stage.create({
+                ...req,
+                combatId: route.params.draftCombatId,
+            }),
+
+        onSuccess(resp) {
+            queryClient.setQueryData(
+                combatQueries.getDraftCombat.key(
+                    route.params.id,
+                    route.params.draftCombatId
+                ),
+                resp
+            );
+        },
+    });
+
+    const addNpc = useMutation({
+        mutationFn: async (req: {
+            stage: PlannedCombatStage;
+            nonPlayerCharacter: Omit<
+                CreatePlannedCombatNpcRequest,
+                "combatId" | "stageId"
+            >;
+        }) =>
+            await api.draftCombat.stage.npc.create({
+                combatId: route.params.draftCombatId,
+                stageId: req.stage.id,
+                ...req.nonPlayerCharacter,
+            }),
+        onSuccess(resp) {
+            queryClient.setQueryData(
+                combatQueries.getDraftCombat.key(
+                    route.params.id,
+                    route.params.draftCombatId
+                ),
+                resp
+            );
+        },
+    });
+
+    const updateNpc = useMutation({
+        mutationFn: async (req: {
+            stage: PlannedCombatStage;
+            npc: Omit<UpdatePlannedCombatNpcRequest, "combatId" | "stageId">;
+        }) =>
+            await api.draftCombat.stage.npc.update({
+                combatId: route.params.draftCombatId,
+                stageId: req.stage.id,
+                ...req.npc,
+            }),
+        onSuccess(resp) {
+            queryClient.setQueryData(
+                combatQueries.getDraftCombat.key(
+                    route.params.id,
+                    route.params.draftCombatId
+                ),
+                resp
+            );
+        },
+    });
+
+    const deleteNpc = useMutation({
+        mutationFn: async (req: {
+            stage: PlannedCombatStage;
+            npc: Omit<DeletePlannedCombatNpcRequest, "combatId" | "stageId">;
+        }) =>
+            await api.draftCombat.stage.npc.delete({
+                combatId: route.params.draftCombatId,
+                stageId: req.stage.id,
+                ...req.npc,
+            }),
+        onSuccess(resp) {
+            queryClient.setQueryData(
+                combatQueries.getDraftCombat.key(
+                    route.params.id,
+                    route.params.draftCombatId
+                ),
+                resp
+            );
+        },
+    });
+
+    const deleteStage = useMutation({
+        mutationFn: async (stage: PlannedCombatStage) =>
+            await api.draftCombat.stage.delete({
+                combatId: route.params.draftCombatId,
+                stageId: stage.id,
+            }),
+        onSuccess(resp) {
+            queryClient.setQueryData(
+                combatQueries.getDraftCombat.key(
+                    route.params.id,
+                    route.params.draftCombatId
+                ),
+                resp
+            );
+        },
+    });
+
+    // const updateStage = useMutation(
+    //     stage: PlannedCombatStage,
+    //     req: Omit<UpdatePlannedCombatStageRequest, "combatId" | "stageId">
+    // ) {
+    //     return await campaignCombatStore.updateStage({
+    //         stageId: stage.id,
+    //         ...req,
+    //     });
+    // }
 </script>

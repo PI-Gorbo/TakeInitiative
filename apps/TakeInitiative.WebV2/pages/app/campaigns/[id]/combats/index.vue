@@ -1,14 +1,16 @@
 <template>
     <main>
-        <div v-if="campaignStore.isDm" class="flex flex-col gap-4">
-            <div>Start by making your first draft combat</div>
-            <CampaignCombatCreatePlannedCombatForm
-                :onCreatePlannedCombat="onCreatePlannedCombat" />
-        </div>
-        <template v-else>
-            Nothing here yet! When you complete a combat, you will see a history
-            here.
-        </template>
+        <Card class="border-2 p-4 border-primary/50">
+            <div v-if="campaignStore.isDm" class="flex flex-col gap-4">
+                <div>Start by making your first draft combat</div>
+                <CampaignCombatCreatePlannedCombatForm
+                    :onCreatePlannedCombat="onCreatePlannedCombat" />
+            </div>
+            <template v-else>
+                Nothing here yet! When you complete a combat, you will see a
+                history here.
+            </template>
+        </Card>
     </main>
 </template>
 <script setup lang="ts">

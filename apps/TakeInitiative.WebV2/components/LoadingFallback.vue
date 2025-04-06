@@ -7,7 +7,7 @@
                 <FontAwesomeIcon :icon="faDiceD20" class="fa-spin" size="5x" />
                 <div>loading...</div>
             </div>
-            <div v-else>
+            <div v-else :class="$attrs.class">
                 <slot />
             </div>
         </Transition>
