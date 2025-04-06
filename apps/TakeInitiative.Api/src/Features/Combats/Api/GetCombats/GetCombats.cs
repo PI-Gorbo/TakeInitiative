@@ -1,6 +1,9 @@
 using System.Net;
+
 using FastEndpoints;
+
 using Marten;
+
 using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Combats;
@@ -26,28 +29,23 @@ public class GetCombats(IDocumentStore Store) : EndpointWithoutRequest<GetCombat
             }
 
             // Check that the user is a dungeon master
-            var isDungeonMaster = campaign.CampaignMemberInfo.SingleOrDefault(x => x.UserId == userId)?.IsDungeonMaster ?? false;
-            if (!isDungeonMaster)
-            {
-                ThrowError($"Only dungeon masters can access planned combats", (int)HttpStatusCode.BadRequest);
-            }
+            var isDungeonMaster =
+                campaign.CampaignMemberInfo.SingleOrDefault(x => x.UserId == userId)?.IsDungeonMaster ?? false;
 
-            var plannedCombats = await session.LoadManyAsync<PlannedCombat>(campaign.PlannedCombatIds);
-            if (plannedCombats == null)
+            var plannedCombats = isDungeonMaster switch
             {
-                ThrowError($"Failed to retrieve planned combats for the campaign {campaignId}", (int)HttpStatusCode.NotFound);
-            }
+                true => await session.Query<PlannedCombat>().Where(x => x.Id.IsOneOf(campaign.PlannedCombatIds)).Select(
+                    x => new PlannedCombatDto() { Id = x.Id, Name = x.CombatName }).ToListAsync(ct),
+                false => [],
+            };
 
             var combats = await session.Query<Combat>()
                 .Where(x => x.CampaignId == campaignId && x.State == CombatState.Finished)
                 .Select(x => new
                 {
-                    x.Id,
-                    x.CombatName,
-                    x.State,
-                    x.FinishedTimestamp,
+                    x.Id, x.CombatName, x.State, x.FinishedTimestamp,
                 })
-                .ToListAsync();
+                .ToListAsync(ct);
 
             return new GetCombatsResponse()
             {
