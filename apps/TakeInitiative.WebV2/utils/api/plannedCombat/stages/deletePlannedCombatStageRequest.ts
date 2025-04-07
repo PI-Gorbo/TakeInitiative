@@ -1,6 +1,6 @@
 import type { AxiosInstance } from "axios";
 import { z } from "zod";
-import { plannedCombatValidator } from "../../../types/models";
+import { draftCombatValidator } from "../../../types/models";
 import { validateResponse } from "~/utils/apiErrorParser";
 
 export const deletePlannedCombatStageRequestValidator = z
@@ -13,7 +13,7 @@ export type DeletePlannedCombatStageRequest = z.infer<
     typeof deletePlannedCombatStageRequestValidator
 >;
 
-export const deletePlannedCombatStageResponseValidator = plannedCombatValidator;
+export const deletePlannedCombatStageResponseValidator = draftCombatValidator;
 
 export type DeletePlannedCombatStageResponse = z.infer<
     typeof deletePlannedCombatStageResponseValidator

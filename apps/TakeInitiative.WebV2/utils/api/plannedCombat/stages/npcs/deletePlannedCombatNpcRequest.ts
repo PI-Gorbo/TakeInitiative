@@ -3,7 +3,7 @@ import { z } from "zod";
 import {
     unevaluatedCharacterHealthValidator,
     unevaluatedCharacterInitiativeValidator,
-    plannedCombatValidator,
+    draftCombatValidator,
 } from "../../../../types/models";
 import { validateResponse } from "~/utils/apiErrorParser";
 
@@ -21,7 +21,7 @@ export type DeletePlannedCombatNpcRequest = z.infer<
 >;
 
 export type deletePlannedCombatStageResponse = z.infer<
-    typeof plannedCombatValidator
+    typeof draftCombatValidator
 >;
 
 export function deletePlannedCombatNpcRequest(axios: AxiosInstance) {
@@ -30,6 +30,6 @@ export function deletePlannedCombatNpcRequest(axios: AxiosInstance) {
     ): Promise<deletePlannedCombatStageResponse> {
         return axios
             .delete("/api/campaign/planned-combat/stage/npc", { data: request })
-            .then((resp) => validateResponse(resp, plannedCombatValidator));
+            .then((resp) => validateResponse(resp, draftCombatValidator));
     };
 }

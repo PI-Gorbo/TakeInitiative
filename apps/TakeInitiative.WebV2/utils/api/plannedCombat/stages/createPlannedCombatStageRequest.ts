@@ -1,6 +1,6 @@
 import type { AxiosInstance } from "axios";
 import { z } from "zod";
-import { plannedCombatValidator } from "../../../types/models";
+import { draftCombatValidator } from "../../../types/models";
 import { validateResponse } from "~/utils/apiErrorParser";
 
 // Get User
@@ -14,7 +14,7 @@ export type CreatePlannedCombatStageRequest = z.infer<
     typeof createPlannedCombatStageRequestValidator
 >;
 
-export const createPlannedCombatStageResponseValidator = plannedCombatValidator;
+export const createPlannedCombatStageResponseValidator = draftCombatValidator;
 
 export type createPlannedCombatStageResponse = z.infer<
     typeof createPlannedCombatStageResponseValidator

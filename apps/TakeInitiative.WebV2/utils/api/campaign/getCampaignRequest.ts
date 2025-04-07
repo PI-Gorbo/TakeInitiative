@@ -6,7 +6,7 @@ import {
     campaignMemberResourceValidator,
     campaignMemberValidator,
     campaignValidator,
-    plannedCombatValidator,
+    draftCombatValidator,
     playerCharacterValidator,
     playerDtoValidator,
 } from "../../types/models";

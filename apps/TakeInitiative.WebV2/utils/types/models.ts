@@ -195,7 +195,7 @@ export const campaignMemberValidator = z
 export type CampaignMember = z.infer<typeof campaignMemberValidator>;
 
 // Planned Combat NPC
-export const plannedCombatCharacterValidator = z
+export const draftCombatCharacterValidator = z
     .object({
         id: z.string(),
         name: z.string({ message: "Please provide a name" }),
@@ -205,30 +205,30 @@ export const plannedCombatCharacterValidator = z
         quantity: z.number(),
     })
     .required();
-export type PlannedCombatCharacter = z.infer<
-    typeof plannedCombatCharacterValidator
+export type DraftCombatCharacter = z.infer<
+    typeof draftCombatCharacterValidator
 >;
 
-// Planned Combat Stage
-export const plannedCombatStageValidator = z
+// Draft Combat Stage
+export const draftCombatStageValidator = z
     .object({
         id: z.string().uuid(),
         name: z.string(),
-        npcs: z.array(plannedCombatCharacterValidator),
+        npcs: z.array(draftCombatCharacterValidator),
     })
     .required();
-export type PlannedCombatStage = z.infer<typeof plannedCombatStageValidator>;
+export type DraftCombatStage = z.infer<typeof draftCombatStageValidator>;
 
-// Planned Combat
-export const plannedCombatValidator = z
+// Draft Combat
+export const draftCombatValidator = z
     .object({
         id: z.string().uuid(),
         campaignId: z.string().uuid(),
         combatName: z.string(),
-        stages: z.array(plannedCombatStageValidator),
+        stages: z.array(draftCombatStageValidator),
     })
     .required({ id: true, campaignId: true, combatName: true });
-export type PlannedCombat = z.infer<typeof plannedCombatValidator>;
+export type PlannedCombat = z.infer<typeof draftCombatValidator>;
 
 // Combat
 export enum CombatState {
@@ -414,7 +414,7 @@ export const combatValidator = z
         dungeonMaster: z.string(),
         history: z.array(historyEntryValidator),
         currentPlayers: z.array(playerDtoValidator),
-        plannedStages: z.array(plannedCombatStageValidator),
+        plannedStages: z.array(draftCombatStageValidator),
         initiativeList: z.array(initiativeCharacterValidator),
         stagedList: z.array(stagedCharacterValidator),
         initiativeIndex: z.number().nullable(),

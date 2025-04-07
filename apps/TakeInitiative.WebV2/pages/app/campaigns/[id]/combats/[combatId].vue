@@ -4,5 +4,6 @@
     definePageMeta({
         layout: "campaign-combats",
         requiresAuth: true,
+        layoutTransition: false,
     });
 </script>

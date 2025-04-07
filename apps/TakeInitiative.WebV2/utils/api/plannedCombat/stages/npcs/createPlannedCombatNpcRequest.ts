@@ -3,7 +3,7 @@ import { z } from "zod";
 import {
     unevaluatedCharacterHealthValidator,
     unevaluatedCharacterInitiativeValidator,
-    plannedCombatValidator,
+    draftCombatValidator,
 } from "../../../../types/models";
 import { validateResponse } from "~/utils/apiErrorParser";
 
@@ -24,7 +24,7 @@ export type CreatePlannedCombatNpcRequest = z.infer<
     typeof createPlannedCombatNpcRequestValidator
 >;
 
-export const createPlannedCombatNpcResponseValidator = plannedCombatValidator;
+export const createPlannedCombatNpcResponseValidator = draftCombatValidator;
 
 export type CreatePlannedCombatStageResponse = z.infer<
     typeof createPlannedCombatNpcResponseValidator

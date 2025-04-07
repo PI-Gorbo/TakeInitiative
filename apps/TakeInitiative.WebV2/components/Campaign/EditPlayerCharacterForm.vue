@@ -155,7 +155,6 @@
                 armourClass: formValue.armourClass,
             })
             .catch((error) => {
-                console.log("TESTING!");
                 formState.error = parseAsApiError<{
                     playerCharacter: UpdatePlayerCharacterRequest["playerCharacter"];
                 }>(error);

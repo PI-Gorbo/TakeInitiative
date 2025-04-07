@@ -1,6 +1,6 @@
 import type { AxiosInstance } from "axios";
 import { z } from "zod";
-import { plannedCombatValidator } from "../../types/models";
+import { draftCombatValidator } from "../../types/models";
 import { validateResponse } from "~/utils/apiErrorParser";
 
 // Get User
@@ -13,7 +13,7 @@ export type GetPlannedCombatRequest = z.infer<
 >;
 
 export type GetPlannedCombatResponse = z.infer<
-    typeof plannedCombatValidator
+    typeof draftCombatValidator
 >;
 
 export function getPlannedCombatRequest(axios: AxiosInstance) {
@@ -23,7 +23,7 @@ export function getPlannedCombatRequest(axios: AxiosInstance) {
         return axios
             .get("/api/combat/planned", { params: request })
             .then((resp) =>
-                validateResponse(resp, plannedCombatValidator)
+                validateResponse(resp, draftCombatValidator)
             );
     };
 }

@@ -47,11 +47,11 @@
     import type { DeletePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/deletePlannedCombatNpcRequest";
     import type { UpdatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
     import type { UpdatePlannedCombatStageRequest } from "~/utils/api/plannedCombat/stages/updatePlannedCombatStageRequest";
-    import type { PlannedCombatStage } from "~/utils/types/models";
+    import type { DraftCombatStage } from "~/utils/types/models";
 
     const props = defineProps<{
-        allStages: PlannedCombatStage[];
-        stage: PlannedCombatStage;
+        allStages: DraftCombatStage[];
+        stage: DraftCombatStage;
         updateStage: (
             req: Omit<UpdatePlannedCombatStageRequest, "combatId" | "stageId">
         ) => Promise<any>;

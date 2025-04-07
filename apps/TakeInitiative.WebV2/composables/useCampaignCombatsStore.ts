@@ -1,8 +1,8 @@
 import type { CreatePlannedCombatStageRequest } from "../utils/api/plannedCombat/stages/createPlannedCombatStageRequest";
 import type {
     PlannedCombat,
-    PlannedCombatCharacter,
-    PlannedCombatStage,
+    DraftCombatCharacter,
+    DraftCombatStage,
 } from "../utils/types/models";
 import type { CreatePlannedCombatNpcRequest } from "../utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
 import type { UpdatePlannedCombatNpcRequest } from "../utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
@@ -132,7 +132,7 @@ export const useCampaignCombatsStore = defineStore(
         }
 
         async function addNpc(
-            stage: PlannedCombatStage,
+            stage: DraftCombatStage,
             npc: Omit<CreatePlannedCombatNpcRequest, "combatId" | "stageId">,
         ) {
             return await api.draftCombat.stage.npc
@@ -144,7 +144,7 @@ export const useCampaignCombatsStore = defineStore(
                 .then(updatePlannedCombat);
         }
 
-        async function removeNpc(stage: PlannedCombatStage, npcId: string) {
+        async function removeNpc(stage: DraftCombatStage, npcId: string) {
             return await api.draftCombat.stage.npc
                 .delete({
                     combatId: state.selectedCombat?.id!,
@@ -155,7 +155,7 @@ export const useCampaignCombatsStore = defineStore(
         }
 
         async function updateNpc(
-            stage: PlannedCombatStage,
+            stage: DraftCombatStage,
             npc: Omit<UpdatePlannedCombatNpcRequest, "combatId" | "stageId">,
         ) {
             return await api.draftCombat.stage.npc

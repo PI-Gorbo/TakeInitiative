@@ -1,6 +1,6 @@
 import type { AxiosInstance } from "axios";
 import { z } from "zod";
-import { plannedCombatValidator } from "../../../types/models";
+import { draftCombatValidator } from "../../../types/models";
 import { validateResponse } from "~/utils/apiErrorParser";
 
 export const updatePlannedCombatStageRequestValidator = z
@@ -15,7 +15,7 @@ export type UpdatePlannedCombatStageRequest = z.infer<
 >;
 
 export type UpdatePlannedCombatStageResponse = z.infer<
-    typeof plannedCombatValidator
+    typeof draftCombatValidator
 >;
 
 export function updatePlannedCombatStageRequest(axios: AxiosInstance) {
@@ -24,6 +24,6 @@ export function updatePlannedCombatStageRequest(axios: AxiosInstance) {
     ): Promise<UpdatePlannedCombatStageResponse> {
         return axios
             .put("/api/campaign/planned-combat/stage", request)
-            .then((resp) => validateResponse(resp, plannedCombatValidator));
+            .then((resp) => validateResponse(resp, draftCombatValidator));
     };
 }

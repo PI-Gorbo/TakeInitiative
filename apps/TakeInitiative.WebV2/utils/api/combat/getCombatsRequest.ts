@@ -1,6 +1,6 @@
 import type { AxiosInstance } from "axios";
 import { z } from "zod";
-import { CombatState, plannedCombatValidator } from "../../types/models";
+import { CombatState, draftCombatValidator } from "../../types/models";
 import { validateResponse } from "~/utils/apiErrorParser";
 
 // Get User

@@ -50,7 +50,7 @@
     import { combatQueries } from "~/utils/queries/combats";
     import {
         stagedCharacterValidator,
-        type PlannedCombatStage,
+        type DraftCombatStage,
     } from "~/utils/types/models";
     const queryClient = useQueryClient();
     const api = useApi();
@@ -58,6 +58,7 @@
     definePageMeta({
         layout: "campaign-combats",
         requiresAuth: true,
+                layoutTransition: false,
     });
 
     const draftCombatQuery = useQuery(
@@ -117,7 +118,7 @@
 
     const addNpc = useMutation({
         mutationFn: async (req: {
-            stage: PlannedCombatStage;
+            stage: DraftCombatStage;
             nonPlayerCharacter: Omit<
                 CreatePlannedCombatNpcRequest,
                 "combatId" | "stageId"
@@ -141,7 +142,7 @@
 
     const updateNpc = useMutation({
         mutationFn: async (req: {
-            stage: PlannedCombatStage;
+            stage: DraftCombatStage;
             npc: Omit<UpdatePlannedCombatNpcRequest, "combatId" | "stageId">;
         }) =>
             await api.draftCombat.stage.npc.update({
@@ -162,7 +163,7 @@
 
     const deleteNpc = useMutation({
         mutationFn: async (req: {
-            stage: PlannedCombatStage;
+            stage: DraftCombatStage;
             npc: Omit<DeletePlannedCombatNpcRequest, "combatId" | "stageId">;
         }) =>
             await api.draftCombat.stage.npc.delete({
@@ -182,7 +183,7 @@
     });
 
     const deleteStage = useMutation({
-        mutationFn: async (stage: PlannedCombatStage) =>
+        mutationFn: async (stage: DraftCombatStage) =>
             await api.draftCombat.stage.delete({
                 combatId: route.params.draftCombatId,
                 stageId: stage.id,
@@ -200,7 +201,7 @@
 
     const updateStage = useMutation({
         mutationFn: async (req: {
-            stage: PlannedCombatStage;
+            stage: DraftCombatStage;
             req: Omit<UpdatePlannedCombatStageRequest, "combatId" | "stageId">;
         }) => {
             return await api.draftCombat.stage.update({

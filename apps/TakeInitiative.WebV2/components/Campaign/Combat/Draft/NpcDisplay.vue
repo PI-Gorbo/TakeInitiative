@@ -1,53 +1,47 @@
 <template>
-    <div>
-        <div
-            @click="() => editPlannedCharacterFormModal?.show()"
-            class="p-2 flex justify-between">
-            <span>{{ props.npc.name }}</span>
-            <CampaignCombatCharacterStatsDisplay
+    <Sheet v-bind:open="open">
+        <SheetTrigger asChild>
+            <Button
+                variant="outline"
+                @click="() => (open = true)"
+                class="p-2 flex justify-between interactable w-full">
+                <span>{{ props.npc.name }}</span>
+                <CampaignCombatCharacterStatsDisplay
+                    v-bind="{
+                        initiative: npc.initiative.roll,
+                        armourClass: npc.armourClass,
+                        health: npc.health,
+                    }" />
+            </Button>
+        </SheetTrigger>
+        <SheetContent>
+            <SheetHeader>
+                <SheetTitle>Edit Npc</SheetTitle>
+            </SheetHeader>
+            <CampaignCombatDraftModifyNpcForm
                 v-bind="{
-                    initiative: npc.initiative.roll,
-                    armourClass: npc.armourClass,
-                    health: npc.health,
+                    npc: props.npc,
+                    onEdit: async (request) => {
+                        await props.editNpc(request);
+                        open = false;
+                    },
+                    onDelete: async (request) => {
+                        await props.deleteNpc(request);
+                        open = false;
+                    },
                 }" />
-        </div>
-        <Dialog>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>
-                        
-                    </DialogTitle>
-                </DialogHeader>
-                        <IndexModifyPlannedCharacterForm
-                            :npc="props.npc"
-                            :onEdit="
-                                (request) =>
-                                    props
-                                        .editNpc(request)
-                                        .then(() => editPlannedCharacterFormModal?.hide())
-                            "
-                            :onDelete="
-                                (request) =>
-                                    props
-                                        .deleteNpc(request)
-                                        .then(() => editPlannedCharacterFormModal?.hide())
-                            " />
-                
-            </DialogContent>
-        </Dialog>
-    </div>
+        </SheetContent>
+    </Sheet>
 </template>
 
 <script setup lang="ts">
-    import type { CreatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
     import type { UpdatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
-    import type { PlannedCombatCharacter } from "~/utils/types/models";
+    import type { DraftCombatCharacter } from "~/utils/types/models";
     import type { DeletePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/deletePlannedCombatNpcRequest";
-    import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 
-const modalOpen = ref(false);
+    const open = ref(false);
     const props = defineProps<{
-        npc: PlannedCombatCharacter;
+        npc: DraftCombatCharacter;
         editNpc: (
             request: Omit<UpdatePlannedCombatNpcRequest, "combatId" | "stageId">
         ) => Promise<any>;

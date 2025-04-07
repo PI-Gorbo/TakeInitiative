@@ -48,8 +48,8 @@
                                         }
                                     ">
                                     <div
-                                        class="flex justify-between flex-wrap gap-2">
-                                        {{ character.name }}
+                                        class="flex justify-between flex-wrap gap-2 w-full">
+                                        <span>{{ character.name }}</span>
                                         <CampaignCombatCharacterStatsDisplay
                                             :armourClass="character.armourClass"
                                             :health="character.health"
@@ -139,13 +139,13 @@
                 </div>
             </template>
         </section>
-        <Dialog v-model:open="dialogState.dialogOpen">
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>
+        <Sheet v-model:open="dialogState.dialogOpen">
+            <SheetContent>
+                <SheetHeader>
+                    <SheetTitle>
                         {{ dialogInfoMap[dialogState.dialogType].title }}
-                    </DialogTitle>
-                </DialogHeader>
+                    </SheetTitle>
+                </SheetHeader>
                 <Transition name="fade" mode="out-in">
                     <div
                         :key="'create-character'"
@@ -182,8 +182,8 @@
                             :editResource="editResource" />
                     </div>
                 </Transition>
-            </DialogContent>
-        </Dialog>
+            </SheetContent>
+        </Sheet>
     </div>
 </template>
 <script setup lang="ts">
