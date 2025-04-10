@@ -172,7 +172,6 @@
 
     const combatsQuery = useQuery(
         combatQueries.getAllCombatsQuery(() => {
-            console.log("here");
             return route.params.id;
         })
     );

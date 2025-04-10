@@ -1,10 +1,10 @@
 <template>
-    <form @submit.prevent="submit" class="text-left" >
+    <form @submit.prevent="submit" class="text-left">
         <FormFieldWrapper :error="form.errors.value.name">
             <template #default>
                 <div class="flex items-center gap-2">
                     <Input v-model:modelValue="name" @input="submit" />
-                    <AutoSaveSpinner :isLoading="debounceSubmitting" :isSuccess="!form.errors.value.name" />
+                    <AsyncSuccessIcon :state="debounce.state.value"/>
                 </div>
             </template>
         </FormFieldWrapper>
@@ -14,6 +14,7 @@
     import { toTypedSchema } from "@vee-validate/zod";
     import { useDebounceFn } from "@vueuse/core";
     import { useForm } from "vee-validate";
+import { toast } from "vue-sonner";
     import { z } from "zod";
     const props = defineProps<{
         initalStageName: string;
@@ -45,16 +46,11 @@
 
     const [name] = form.defineField("name");
 
-    const debounceSubmitting = ref(false);
-
-    const debouncedSubmit = useDebounceFn(async (values) => {
-        const result = await props.updateStageName(values.name);
-        debounceSubmitting.value = false;
-        return result;
-    }, 500);
+    const debounce = useDebouncedAsyncFn(
+        async (values: z.infer<typeof schema>) => await props.updateStageName(values.name).then(() => toast.success("Updated stage name"))
+    );
 
     const submit = form.handleSubmit(async (values) => {
-        debounceSubmitting.value = true;
-        return await debouncedSubmit(values);
+        return await debounce.debouncedSubmit(values);
     });
 </script>

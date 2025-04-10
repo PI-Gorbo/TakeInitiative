@@ -1,27 +1,36 @@
 <template>
-    <main>
-        <Card class="border-2 p-4 border-primary/50">
-            <div v-if="campaignStore.isDm" class="flex flex-col gap-4">
-                <div>Start by making your first draft combat</div>
-                <CampaignCombatCreatePlannedCombatForm
-                    :onCreatePlannedCombat="onCreatePlannedCombat" />
-            </div>
-            <template v-else>
-                Nothing here yet! When you complete a combat, you will see a
-                history here.
-            </template>
-        </Card>
-    </main>
+    <div>
+        
+        <LoadingFallback :isLoading="queryResult.isLoading.value">
+            <Card
+                v-if="
+                    !(
+                        queryResult.data.value!.plannedCombats.length ||
+                        queryResult.data.value!.combats.length
+                    )
+                "
+                class="border-2 p-4 border-primary/50">
+                <div v-if="campaignStore.isDm" class="flex flex-col gap-4">
+                    <div>Start by making your first draft combat</div>
+                    <CampaignCombatDraftCreateForm
+                        :onCreateDraftCombat="onCreatePlannedCombat" />
+                </div>
+                <template v-else>
+                    Nothing here yet! When you complete a combat, you will see a
+                    history here.
+                </template>
+            </Card>
+        </LoadingFallback>
+    </div>
 </template>
 <script setup lang="ts">
     import { useQuery } from "@tanstack/vue-query";
-    import { useMediaQuery } from "@vueuse/core";
     import type { CreatePlannedCombatRequest } from "~/utils/api/plannedCombat/createPlannedCombatRequest";
     import { combatQueries } from "~/utils/queries/combats";
     const route = useRoute("app-campaigns-id-combats");
-    const isLargeScreen = useMediaQuery("(min-width: 1024px)");
+    const srceenSize = useScreenSize();
     const queryResult = useQuery(
-        combatQueries.getAllCombatsQuery(() => route.params.id as string)
+        combatQueries.getAllCombatsQuery(() => route.params.id)
     );
 
     definePageMeta({
@@ -30,7 +39,10 @@
         layoutTransition: false,
         middleware: [
             async (to) => {
-                if (!isLargeScreen.value) return;
+                // This middleware is used to redirect the user to the first combat in the list if they are not on a large screen.
+                // This is because the campaignCombats layout will show a sidebar list with all the combats on large screens.
+                if (import.meta.server) return;
+                if (!srceenSize.isLargeScreen.value) return;
 
                 const queryResult = await useQuery(
                     combatQueries.getAllCombatsQuery(

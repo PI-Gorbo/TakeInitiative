@@ -2,7 +2,42 @@
     <LoadingFallback
         :isLoading="draftCombatQuery.isLoading.value"
         class="flex flex-col gap-4">
-        <FontAwesomeIcon :icon="faArrowLeft"/>
+        <div class="flex gap-2">
+            <NuxtLink
+                v-if="!screenSize.isLargeScreen.value"
+                :to="{
+                    name: 'app-campaigns-id-combats',
+                    params: { id: route.params.id },
+                }">
+                <Button size="icon" variant="outline">
+                    <FontAwesomeIcon :icon="faArrowLeft" />
+                </Button>
+            </NuxtLink>
+            <form>
+                <FormFieldWrapper
+                    label="Combat Name"
+                    :error="form.errors.value.name">
+                    <template #Header>
+                        <AsyncSuccessIcon
+                            :state="updateCombatName.state.value" />
+                    </template>
+                    <template #default>
+                        <Input
+                            v-model="combatName"
+                            class="bg-background"
+                            @input="submitUpdateCombatName" />
+                    </template>
+                </FormFieldWrapper>
+            </form>
+            <div class="flex-1 flex justify-end items-center">
+                <Button
+                    size="icon"
+                    variant="destructive"
+                    @click.prevent="() => deleteCombatMutation.mutateAsync()">
+                    <FontAwesomeIcon :icon="faTrash" />
+                </Button>
+            </div>
+        </div>
         <Card
             v-for="stage in draftCombatQuery.data.value!.stages"
             :key="stage.id"
@@ -10,7 +45,13 @@
             <CampaignCombatDraftStageDisplay
                 :allStages="draftCombatQuery.data.value!.stages"
                 :stage="stage"
-                :updateStage="(req) => updateStage.mutateAsync({ stage, req })"
+                :updateStage="
+                    (req) =>
+                        updateStage.mutateAsync({
+                            stageId: stage.id,
+                            name: req.name,
+                        })
+                "
                 :deleteStage="() => deleteStage.mutateAsync(stage)"
                 :createNpc="
                     (request) =>
@@ -40,9 +81,18 @@
     </LoadingFallback>
 </template>
 <script setup lang="ts">
-    import { faPlusCircle } from "@fortawesome/free-solid-svg-icons";
+    import {
+        faArrowLeft,
+        faPlusCircle,
+        faTrash,
+    } from "@fortawesome/free-solid-svg-icons";
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
     import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
+    import { toTypedSchema } from "@vee-validate/zod";
+    import { watchOnce } from "@vueuse/core";
+    import { useForm } from "vee-validate";
+    import { toast } from "vue-sonner";
+    import { z } from "zod";
     import type { CreatePlannedCombatStageRequest } from "~/utils/api/plannedCombat/stages/createPlannedCombatStageRequest";
     import type { CreatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
     import type { DeletePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/deletePlannedCombatNpcRequest";
@@ -53,13 +103,22 @@
         stagedCharacterValidator,
         type DraftCombatStage,
     } from "~/utils/types/models";
+
+    const screenSize = useScreenSize();
     const queryClient = useQueryClient();
     const api = useApi();
     const route = useRoute("app-campaigns-id-combats-drafts-draftCombatId");
+
     definePageMeta({
         layout: "campaign-combats",
         requiresAuth: true,
-                layoutTransition: false,
+        layoutTransition: false,
+        middleware: [
+            async (to) => {
+                if (import.meta.server) return;
+                
+            },
+        ],
     });
 
     const draftCombatQuery = useQuery(
@@ -201,14 +260,11 @@
     });
 
     const updateStage = useMutation({
-        mutationFn: async (req: {
-            stage: DraftCombatStage;
-            req: Omit<UpdatePlannedCombatStageRequest, "combatId" | "stageId">;
-        }) => {
+        mutationFn: async (req: { stageId: string; name: string }) => {
             return await api.draftCombat.stage.update({
                 combatId: route.params.draftCombatId,
-                stageId: req.stage.id,
-                name: req.req.name,
+                stageId: req.stageId,
+                name: req.name,
             });
         },
         onSuccess(resp) {
@@ -219,6 +275,73 @@
                 ),
                 resp
             );
+        },
+    });
+
+    const updateDraftCombatName = useMutation({
+        mutationFn: async (name: string) => {
+            return await api.draftCombat.update({
+                plannedCombatId: route.params.draftCombatId,
+                combatName: name,
+            });
+        },
+        onSuccess(resp) {
+            queryClient.setQueryData(
+                combatQueries.getDraftCombat.key(
+                    route.params.id,
+                    route.params.draftCombatId
+                ),
+                resp
+            );
+            queryClient.invalidateQueries({
+                queryKey: [route.params.id, "combats", "all"],
+            });
+        },
+    });
+    
+    const updateCombatName = useDebouncedAsyncFn(async (name: string) => {
+        return await updateDraftCombatName
+            .mutateAsync(name)
+            .then(() => toast.success("Updated combat name"))
+            .catch(() => toast.error("Failed to update combat name"));
+    });
+    const form = useForm({
+        validationSchema: toTypedSchema(
+            z.object({ name: z.string().nonempty() })
+        ),
+    });
+    const submitUpdateCombatName = form.handleSubmit(async (formValue) => {
+        await updateCombatName.debouncedSubmit(formValue.name);
+    });
+
+    const [combatName] = form.defineField("name");
+
+    watch(draftCombatQuery.data, () => {
+        if (draftCombatQuery.data.value) {
+            console.log(draftCombatQuery.data.value?.combatName);
+            form.resetForm({
+                values: {
+                    name: draftCombatQuery.data.value?.combatName ?? "",
+                },
+            });
+        }
+    });
+
+    const deleteCombatMutation = useMutation({
+        mutationFn: async () => {
+            return await api.draftCombat.delete({
+                campaignId: route.params.id,
+                combatId: route.params.draftCombatId,
+            });
+        },
+        async onSuccess() {
+            queryClient.invalidateQueries({
+                queryKey: [route.params.id, "combats", "all"],
+            });
+            await navigateTo({
+                name: "app-campaigns-id-combats",
+                params: { id: route.params.id },
+            });
         },
     });
 </script>

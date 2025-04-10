@@ -43,7 +43,7 @@
     });
 
     const props = defineProps<{
-        onCreatePlannedCombat: (
+        onCreateDraftCombat: (
             input: Omit<CreatePlannedCombatRequest, "campaignId">,
             startCombatImmediately: boolean
         ) => Promise<any>;
@@ -51,7 +51,7 @@
 
     const submit = form.handleSubmit((req) => {
         return props
-            .onCreatePlannedCombat(
+            .onCreateDraftCombat(
                 { combatName: req.combatName },
                 req.immidatelyOpen
             )

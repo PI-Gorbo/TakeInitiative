@@ -11,6 +11,9 @@
         <div>
             <slot />
         </div>
+        <p v-if="props.description" class="text-sm text-muted-foreground">
+            {{ props.description }}
+        </p>
         <label v-if="props.error" class="text-destructive">{{
             props.error
         }}</label>
@@ -20,5 +23,6 @@
     const props = defineProps<{
         label?: string;
         error?: string;
+        description?: string;
     }>();
 </script>

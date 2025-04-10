@@ -90,6 +90,10 @@
     useAsyncData(
         "campaign-layout-campaign-fetch",
         async () => {
+            if (!route.params.id) { 
+                return false;
+            }
+
             return await campaign
                 .setCampaignById(route.params.id as string)
                 .then(() => true)
@@ -97,8 +101,6 @@
                     router.push({ name: "app-campaigns" });
                     return false;
                 });
-
-            return false;
         },
         {
             watch: [() => route.params.id],

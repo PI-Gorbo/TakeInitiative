@@ -41,6 +41,7 @@ import { putCampaignMemberResourcesRequest } from "~/utils/api/campaign/putCampa
 import { getCombatHistory } from "~/utils/api/combat/getCombatHistoryRequest";
 import { postAddStagedCharacter } from "~/utils/api/combat/postAddStagedCharacter";
 import { getPlannedCombatRequest } from "~/utils/api/plannedCombat/getPlannedCombatRequest";
+import { updatePlannedCombatRequest } from "~/utils/api/plannedCombat/updatePlannedCombatRequest";
 
 export const useApi = () => {
     const { $axios } = useNuxtApp();
@@ -74,6 +75,7 @@ export const useApi = () => {
             create: createPlannedCombatRequest($axios),
             delete: deletePlannedCombatRequest($axios),
             get: getPlannedCombatRequest($axios),
+            update: updatePlannedCombatRequest($axios),
             stage: {
                 create: createPlannedCombatStageRequest($axios),
                 delete: deletePlannedCombatStageRequest($axios),
