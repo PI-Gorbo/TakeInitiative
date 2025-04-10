@@ -1,11 +1,11 @@
 <template>
-    <Sheet v-bind:open="open">
+    <Sheet v-model:open="open">
         <SheetTrigger asChild>
             <Button
                 variant="outline"
                 @click="() => (open = true)"
                 class="p-2 flex justify-between interactable w-full">
-                <span>{{ props.npc.name }}</span>
+                <span>{{ props.npc.name }} (*{{ props.npc.quantity }})</span>
                 <CampaignCombatCharacterStatsDisplay
                     v-bind="{
                         initiative: npc.initiative.roll,

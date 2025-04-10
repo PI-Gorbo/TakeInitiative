@@ -2,6 +2,7 @@
     <LoadingFallback
         :isLoading="draftCombatQuery.isLoading.value"
         class="flex flex-col gap-4">
+        <FontAwesomeIcon :icon="faArrowLeft"/>
         <Card
             v-for="stage in draftCombatQuery.data.value!.stages"
             :key="stage.id"

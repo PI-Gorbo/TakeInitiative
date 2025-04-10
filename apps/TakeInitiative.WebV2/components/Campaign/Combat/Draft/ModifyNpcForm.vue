@@ -1,8 +1,15 @@
 <template>
     <form @submit.prevent="onSubmit" class="flex flex-col gap-2">
-        <FormFieldWrapper label="Name" :error="form.errors.value.name">
-            <Input autofocus v-model="name" />
-        </FormFieldWrapper>
+        <div class="flex gap-2">
+            <FormFieldWrapper label="Name" :error="form.errors.value.name">
+                <Input autofocus v-model="name" />
+            </FormFieldWrapper>
+            <FormFieldWrapper
+                label="Quantity"
+                :error="form.errors.value.quantity">
+                <Input v-model="quantity" type="number" pattern="[0-9]*" />
+            </FormFieldWrapper>
+        </div>
 
         <CampaignCharacterInitiativeRollInput
             v-model:initiative="initiativeRoll"
@@ -182,4 +189,5 @@
             immediate: false,
         }
     );
-</script>initiativeRoll
+</script>
+initiativeRoll

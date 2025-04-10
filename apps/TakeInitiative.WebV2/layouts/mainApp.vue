@@ -22,6 +22,13 @@
                                         Take Initiative
                                     </div>
                                 </h1>
+                                <span
+                                    class="font-NovaCut text-xl text-gold"
+                                    v-if="
+                                        !isDesktopSized && campaignNameToShow
+                                    ">
+                                    {{ campaignNameToShow }}
+                                </span>
                             </div>
                             <AppNavigationBar v-if="!showSidebar" />
                         </header>
@@ -58,6 +65,15 @@
 
     const route = useRoute();
     const user = useUserStore();
+
+    const campaignStore = useCampaignStore();
+    const campaignNameToShow = computed(() => {
+        if (route.name.startsWith("app-campaigns-id")) {
+            return campaignStore.state.campaign?.campaignName;
+        }
+
+        return null;
+    });
 </script>
 
 <style scoped lang="css">

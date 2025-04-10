@@ -12,8 +12,7 @@
                             route.name === 'app-campaigns-id-combats'
                         "
                         class="lg:col-span-1 lg:col-start-1 lg:row-start-1">
-                        <Card
-                            class="p-4 border-primary/50 flex flex-col gap-4 lg:block">
+                        <Card class="p-4 border-primary/50 flex flex-col gap-4">
                             <section>
                                 <header>
                                     <FontAwesomeIcon :icon="faPenToSquare" />

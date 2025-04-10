@@ -4,7 +4,7 @@
             <div class="flex h-full w-full justify-center">
                 <div class="w-page flex flex-col gap-4">
                     <header class="flex flex-col gap-4">
-                        <header class="font-NovaCut text-xl text-gold">
+                        <header class="font-NovaCut text-xl text-gold hidden sm:block">
                             {{ campaign.state.campaign?.campaignName }}
                         </header>
                         <div class="flex justify-between">
