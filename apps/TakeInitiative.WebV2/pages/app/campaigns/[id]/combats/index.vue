@@ -1,6 +1,5 @@
 <template>
     <div>
-        
         <LoadingFallback :isLoading="queryResult.isLoading.value">
             <Card
                 v-if="
@@ -27,6 +26,8 @@
     import { useQuery } from "@tanstack/vue-query";
     import type { CreatePlannedCombatRequest } from "~/utils/api/plannedCombat/createPlannedCombatRequest";
     import { combatQueries } from "~/utils/queries/combats";
+import type { PlannedCombat } from "~/utils/types/models";
+    const api = useApi();
     const route = useRoute("app-campaigns-id-combats");
     const srceenSize = useScreenSize();
     const queryResult = useQuery(
@@ -75,12 +76,19 @@
     const campaignStore = useCampaignStore();
     const campaignCombatStore = useCampaignCombatsStore();
 
-    async function onCreatePlannedCombat(
-        input: Omit<CreatePlannedCombatRequest, "campaignId">,
-        startCombatImmediately: boolean = false
+    async function createPlannedCombat(
+        request: Omit<CreatePlannedCombatRequest, "campaignId">
     ) {
-        return await campaignCombatStore
-            .createPlannedCombat(input)
+        return await api.draftCombat
+            .create({
+                ...request,
+                campaignId: route.params.id,
+            })
+            .then((pc) => {
+                state.plannedCombats?.push(pc);
+                selectPlannedCombat(pc.id);
+                return pc;
+            })
             .then(async (pc) => {
                 if (startCombatImmediately) {
                     await onOpenCombat(pc?.id);
