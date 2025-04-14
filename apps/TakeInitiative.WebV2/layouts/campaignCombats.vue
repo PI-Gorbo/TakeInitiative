@@ -9,7 +9,7 @@
                     <div
                         v-if="
                             isLargeScreen ||
-                            route.name === 'app-campaigns-id-combats'
+                            route.name === 'app-campaigns-campaignId-combats'
                         "
                         class="lg:col-span-1 lg:col-start-1 lg:row-start-1">
                         <Card class="p-4 border-primary/50 flex flex-col gap-4">
@@ -49,9 +49,11 @@
                                             @click="
                                                 () =>
                                                     router.push({
-                                                        name: 'app-campaigns-id-combats-drafts-draftCombatId',
+                                                        name: 'app-campaigns-campaignId-combats-drafts-draftCombatId',
                                                         params: {
-                                                            id: route.params.id,
+                                                            campaignId:
+                                                                route.params
+                                                                    .campaignId,
                                                             draftCombatId:
                                                                 plannedCombat.id,
                                                         },
@@ -130,7 +132,7 @@
                     </div>
                     <div
                         v-show="
-                            route.name !== 'app-campaigns-id-combats' ||
+                            route.name !== 'app-campaigns-campaignId-combats' ||
                             !hasAnyCombats
                         "
                         class="lg:block lg:col-span-2 lg:col-start-2">
@@ -162,9 +164,9 @@
     // Stores
     const router = useRouter();
     const isLargeScreen = useMediaQuery("(min-width: 1024px)");
-    const route = useRoute("app-campaigns-id-combats");
+    const route = useRoute("app-campaigns-campaignId-combats");
     const draftCombatRoute = useRoute(
-        "app-campaigns-id-combats-drafts-draftCombatId"
+        "app-campaigns-campaignId-combats-drafts-draftCombatId"
     );
     const currentDraftCombat: ComputedRef<string | null> = computed(
         () => draftCombatRoute.params.draftCombatId
@@ -172,7 +174,7 @@
 
     const combatsQuery = useQuery(
         combatQueries.getAllCombatsQuery(() => {
-            return route.params.id;
+            return route.params.campaignId;
         })
     );
 

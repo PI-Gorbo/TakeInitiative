@@ -20,9 +20,9 @@ export const useNavigator = () => {
             navigateTo("/login", opts),
         toSignUp: () => navigateTo("/signup"),
         toCombat: (campaignId: string, combatId: string) => navigateTo({
-            name: 'app-campaigns-id-combats-combatId',
+            name: 'app-campaigns-campaignId-combats-combatId',
             params: {
-                id: campaignId,
+                campaignId: campaignId,
                 combatId: combatId
             }
         }),

@@ -6,8 +6,8 @@
             <NuxtLink
                 v-if="!screenSize.isLargeScreen.value"
                 :to="{
-                    name: 'app-campaigns-id-combats',
-                    params: { id: route.params.id },
+                    name: 'app-campaigns-campaignId-combats',
+                    params: { campaignId: route.params.campaignId },
                 }">
                 <Button size="icon" variant="outline">
                     <FontAwesomeIcon :icon="faArrowLeft" />
@@ -107,7 +107,9 @@
     const screenSize = useScreenSize();
     const queryClient = useQueryClient();
     const api = useApi();
-    const route = useRoute("app-campaigns-id-combats-drafts-draftCombatId");
+    const route = useRoute(
+        "app-campaigns-campaignId-combats-drafts-draftCombatId"
+    );
 
     definePageMeta({
         layout: "campaign-combats",
@@ -116,14 +118,13 @@
         middleware: [
             async (to) => {
                 if (import.meta.server) return;
-                
             },
         ],
     });
 
     const draftCombatQuery = useQuery(
         combatQueries.getDraftCombat.query(
-            () => route.params.id,
+            () => route.params.campaignId,
             () => route.params.draftCombatId
         )
     );
@@ -140,7 +141,7 @@
         onSuccess(resp) {
             queryClient.setQueryData(
                 combatQueries.getDraftCombat.key(
-                    route.params.id,
+                    route.params.campaignId,
                     route.params.draftCombatId
                 ),
                 resp
@@ -192,7 +193,7 @@
         onSuccess(resp) {
             queryClient.setQueryData(
                 combatQueries.getDraftCombat.key(
-                    route.params.id,
+                    route.params.campaignId,
                     route.params.draftCombatId
                 ),
                 resp
@@ -213,7 +214,7 @@
         onSuccess(resp) {
             queryClient.setQueryData(
                 combatQueries.getDraftCombat.key(
-                    route.params.id,
+                    route.params.campaignId,
                     route.params.draftCombatId
                 ),
                 resp
@@ -234,7 +235,7 @@
         onSuccess(resp) {
             queryClient.setQueryData(
                 combatQueries.getDraftCombat.key(
-                    route.params.id,
+                    route.params.campaignId,
                     route.params.draftCombatId
                 ),
                 resp
@@ -251,7 +252,7 @@
         onSuccess(resp) {
             queryClient.setQueryData(
                 combatQueries.getDraftCombat.key(
-                    route.params.id,
+                    route.params.campaignId,
                     route.params.draftCombatId
                 ),
                 resp
@@ -270,7 +271,7 @@
         onSuccess(resp) {
             queryClient.setQueryData(
                 combatQueries.getDraftCombat.key(
-                    route.params.id,
+                    route.params.campaignId,
                     route.params.draftCombatId
                 ),
                 resp
@@ -288,17 +289,17 @@
         onSuccess(resp) {
             queryClient.setQueryData(
                 combatQueries.getDraftCombat.key(
-                    route.params.id,
+                    route.params.campaignId,
                     route.params.draftCombatId
                 ),
                 resp
             );
             queryClient.invalidateQueries({
-                queryKey: [route.params.id, "combats", "all"],
+                queryKey: [route.params.campaignId, "combats", "all"],
             });
         },
     });
-    
+
     const updateCombatName = useDebouncedAsyncFn(async (name: string) => {
         return await updateDraftCombatName
             .mutateAsync(name)
@@ -330,17 +331,17 @@
     const deleteCombatMutation = useMutation({
         mutationFn: async () => {
             return await api.draftCombat.delete({
-                campaignId: route.params.id,
+                campaignId: route.params.campaignId,
                 combatId: route.params.draftCombatId,
             });
         },
         async onSuccess() {
             queryClient.invalidateQueries({
-                queryKey: [route.params.id, "combats", "all"],
+                queryKey: [route.params.campaignId, "combats", "all"],
             });
             await navigateTo({
-                name: "app-campaigns-id-combats",
-                params: { id: route.params.id },
+                name: "app-campaigns-campaignId-combats",
+                params: { campaignId: route.params.campaignId },
             });
         },
     });

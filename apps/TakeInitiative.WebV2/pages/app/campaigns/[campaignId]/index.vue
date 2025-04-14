@@ -70,9 +70,9 @@
 
     const userStore = useUserStore();
     const campaignStore = useCampaignStore();
-    const route = useRoute("app-campaigns-id");
+    const route = useRoute("app-campaigns-campaignId");
     const openAccordionValue = useLocalStorage(
-        `campaigns-${route.params.id}-accordion-current-user`,
+        `campaigns-${route.params.campaignId}-accordion-current-user`,
         userStore.state.user?.userId
     );
 

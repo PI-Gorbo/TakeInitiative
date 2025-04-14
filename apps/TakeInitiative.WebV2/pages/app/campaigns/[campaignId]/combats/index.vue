@@ -1,11 +1,11 @@
 <template>
     <div>
-        <LoadingFallback :isLoading="queryResult.isLoading.value">
+        <LoadingFallback :isLoading="test.isLoading.value">
             <Card
                 v-if="
                     !(
-                        queryResult.data.value!.plannedCombats.length ||
-                        queryResult.data.value!.combats.length
+                        test.data.value!.plannedCombats.length ||
+                        test.data.value!.combats.length
                     )
                 "
                 class="border-2 p-4 border-primary/50">
@@ -26,12 +26,12 @@
     import { useQuery } from "@tanstack/vue-query";
     import type { CreatePlannedCombatRequest } from "~/utils/api/plannedCombat/createPlannedCombatRequest";
     import { combatQueries } from "~/utils/queries/combats";
-import type { PlannedCombat } from "~/utils/types/models";
+    import type { PlannedCombat } from "~/utils/types/models";
     const api = useApi();
-    const route = useRoute("app-campaigns-id-combats");
+    const route = useRoute("app-campaigns-campaignId-combats");
     const srceenSize = useScreenSize();
-    const queryResult = useQuery(
-        combatQueries.getAllCombatsQuery(() => route.params.id)
+    const test = useQuery(
+        combatQueries.getAllCombatsQuery(() => route.params.campaignId)
     );
 
     definePageMeta({
@@ -47,24 +47,24 @@ import type { PlannedCombat } from "~/utils/types/models";
 
                 const queryResult = await useQuery(
                     combatQueries.getAllCombatsQuery(
-                        () => to.params.id as string
+                        () => to.params.campaignId as string
                     )
                 ).suspense();
 
                 if (queryResult.data?.plannedCombats.length) {
                     return navigateTo({
-                        name: "app-campaigns-id-combats-drafts-draftCombatId",
+                        name: "app-campaigns-campaignId-combats-drafts-draftCombatId",
                         params: {
-                            id: to.params.id as string,
+                            campaignId: to.params.campaignId as string,
                             draftCombatId:
                                 queryResult.data.plannedCombats[0].id,
                         },
                     });
                 } else if (queryResult.data?.combats.length) {
                     return navigateTo({
-                        name: "app-campaigns-id-combats-history-combatId",
+                        name: "app-campaigns-campaignId-combats-history-combatId",
                         params: {
-                            id: to.params.id as string,
+                            campaignId: to.params.campaignId as string,
                             combatId: queryResult.data.combats[0].combatId,
                         },
                     });
@@ -76,25 +76,25 @@ import type { PlannedCombat } from "~/utils/types/models";
     const campaignStore = useCampaignStore();
     const campaignCombatStore = useCampaignCombatsStore();
 
-    async function createPlannedCombat(
-        request: Omit<CreatePlannedCombatRequest, "campaignId">
-    ) {
-        return await api.draftCombat
-            .create({
-                ...request,
-                campaignId: route.params.id,
-            })
-            .then((pc) => {
-                state.plannedCombats?.push(pc);
-                selectPlannedCombat(pc.id);
-                return pc;
-            })
-            .then(async (pc) => {
-                if (startCombatImmediately) {
-                    await onOpenCombat(pc?.id);
-                }
-            });
-    }
+    // async function createPlannedCombat(
+    //     request: Omit<CreatePlannedCombatRequest, "campaignId">
+    // ) {
+    //     return await api.draftCombat
+    //         .create({
+    //             ...request,
+    //             campaignId: route.params.campaignId,
+    //         })
+    //         .then((pc) => {
+    //             state.plannedCombats?.push(pc);
+    //             selectPlannedCombat(pc.id);
+    //             return pc;
+    //         })
+    //         .then(async (pc) => {
+    //             if (startCombatImmediately) {
+    //                 await onOpenCombat(pc?.id);
+    //             }
+    //         });
+    // }
 
     async function onOpenCombat(plannedCombatId: string) {
         return campaignStore

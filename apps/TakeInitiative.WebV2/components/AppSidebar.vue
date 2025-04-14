@@ -26,8 +26,8 @@
                                     class="cursor-pointer select-none hover:bg-secondary">
                                     <NuxtLink
                                         :to="{
-                                            name: 'app-campaigns-id',
-                                            params: { id: campaign.campaignId },
+                                            name: 'app-campaigns-campaignId',
+                                            params: { campaignId: campaign.campaignId },
                                         }"
                                         class="flex w-full items-center justify-between gap-2 truncate"
                                         @click.native="

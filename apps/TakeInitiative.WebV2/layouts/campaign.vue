@@ -30,18 +30,12 @@
                                         }}</span>
                                     </TabsTrigger>
                                 </TabsList>
-                                <TabsContent value="characters">
-                                    Make changes to your account here.
-                                </TabsContent>
-                                <TabsContent value="password">
-                                    Change your password here.
-                                </TabsContent>
                             </Tabs>
                             <Button
                                 variant="outline"
                                 class="interactable"
                                 @click="clickAddButton"
-                                v-if="route.name === 'app-campaigns-id'">
+                                v-if="route.name === 'app-campaigns-campaignId'">
                                 <FontAwesomeIcon :icon="faPlus" />
                                 <span>Add Players</span>
                             </Button>
@@ -83,19 +77,19 @@
 
     const campaign = useCampaignStore();
     const router = useRouter();
-    const route = useRoute("app-campaigns-id");
+    const route = useRoute("app-campaigns-campaignId");
 
     const shareModalOpen = ref(false);
 
     useAsyncData(
         "campaign-layout-campaign-fetch",
         async () => {
-            if (!route.params.id) { 
+            if (!route.params.campaignId) { 
                 return false;
             }
 
             return await campaign
-                .setCampaignById(route.params.id as string)
+                .setCampaignById(route.params.campaignId as string)
                 .then(() => true)
                 .catch((error: AxiosError) => {
                     router.push({ name: "app-campaigns" });
@@ -103,7 +97,7 @@
                 });
         },
         {
-            watch: [() => route.params.id],
+            watch: [() => route.params.campaignId],
         }
     );
 
@@ -114,30 +108,30 @@
     }[] = [
         {
             icon: faHome,
-            routeName: "app-campaigns-id",
+            routeName: "app-campaigns-campaignId",
         },
         {
             label: "Combats",
-            routeName: "app-campaigns-id-combats",
+            routeName: "app-campaigns-campaignId-combats",
         },
         {
             label: "Settings",
-            routeName: "app-campaigns-id-settings",
+            routeName: "app-campaigns-campaignId-settings",
         },
-    ];
+    ] as const;
 
     const currentTab = computed(() => {
         const currentRoute = useRoute();
-        if (currentRoute?.name === "app-campaigns-id") {
+        if (currentRoute?.name === tabValues[0].routeName) {
             return currentRoute.name;
         }
 
-        if (currentRoute?.name.startsWith("app-campaigns-id-combats")) {
-            return "app-campaigns-id-combats";
+        if (currentRoute?.name.startsWith(tabValues[1].routeName)) {
+            return tabValues[1].routeName;
         }
 
-        if (currentRoute?.name.startsWith("app-campaigns-id-settings")) {
-            return "app-campaigns-id-settings";
+        if (currentRoute?.name.startsWith(tabValues[2].routeName)) {
+            return tabValues[2].routeName;
         }
     });
 

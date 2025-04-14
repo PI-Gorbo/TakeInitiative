@@ -26,9 +26,9 @@
                             v-slot="{ isActive, href, navigate }"
                             class="w-full"
                             :to="{
-                                name: 'app-campaigns-id',
+                                name: 'app-campaigns-campaignId',
                                 params: {
-                                    id: campaign.campaignId,
+                                    campaignId: campaign.campaignId,
                                 },
                             }">
                             <NavigationMenuLink
