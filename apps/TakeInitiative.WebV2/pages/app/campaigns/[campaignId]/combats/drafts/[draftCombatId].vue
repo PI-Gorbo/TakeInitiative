@@ -2,7 +2,7 @@
     <LoadingFallback
         :isLoading="draftCombatQuery.isLoading.value"
         class="flex flex-col gap-4">
-        <div class="flex gap-2">
+        <div class="flex gap-2 items-center">
             <NuxtLink
                 v-if="!screenSize.isLargeScreen.value"
                 :to="{
@@ -34,7 +34,9 @@
                     size="icon"
                     variant="destructive"
                     @click.prevent="() => deleteCombatMutation.mutateAsync()">
-                    <FontAwesomeIcon :icon="faTrash" />
+                    <AsyncFontAwesomeIcon
+                        :isLoading="deleteCombatMutation.isPending.value"
+                        :icon="faTrash" />
                 </Button>
             </div>
         </div>
@@ -98,7 +100,10 @@
     import type { DeletePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/deletePlannedCombatNpcRequest";
     import type { UpdatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
     import type { UpdatePlannedCombatStageRequest } from "~/utils/api/plannedCombat/stages/updatePlannedCombatStageRequest";
-    import { combatQueries } from "~/utils/queries/combats";
+    import {
+        getDraftCombatQuery,
+        getDraftCombatQueryKey,
+    } from "~/utils/queries/combats";
     import {
         stagedCharacterValidator,
         type DraftCombatStage,
@@ -123,7 +128,7 @@
     });
 
     const draftCombatQuery = useQuery(
-        combatQueries.getDraftCombat.query(
+        getDraftCombatQuery(
             () => route.params.campaignId,
             () => route.params.draftCombatId
         )
@@ -140,7 +145,7 @@
 
         onSuccess(resp) {
             queryClient.setQueryData(
-                combatQueries.getDraftCombat.key(
+                getDraftCombatQueryKey(
                     route.params.campaignId,
                     route.params.draftCombatId
                 ),
@@ -148,6 +153,7 @@
             );
         },
     });
+
     function onAddStage() {
         const stages = draftCombatQuery.data.value!.stages;
         const filteredStages = stages
@@ -192,7 +198,7 @@
             }),
         onSuccess(resp) {
             queryClient.setQueryData(
-                combatQueries.getDraftCombat.key(
+                getDraftCombatQueryKey(
                     route.params.campaignId,
                     route.params.draftCombatId
                 ),
@@ -213,7 +219,7 @@
             }),
         onSuccess(resp) {
             queryClient.setQueryData(
-                combatQueries.getDraftCombat.key(
+                getDraftCombatQueryKey(
                     route.params.campaignId,
                     route.params.draftCombatId
                 ),
@@ -234,7 +240,7 @@
             }),
         onSuccess(resp) {
             queryClient.setQueryData(
-                combatQueries.getDraftCombat.key(
+                getDraftCombatQueryKey(
                     route.params.campaignId,
                     route.params.draftCombatId
                 ),
@@ -251,7 +257,7 @@
             }),
         onSuccess(resp) {
             queryClient.setQueryData(
-                combatQueries.getDraftCombat.key(
+                getDraftCombatQueryKey(
                     route.params.campaignId,
                     route.params.draftCombatId
                 ),
@@ -270,7 +276,7 @@
         },
         onSuccess(resp) {
             queryClient.setQueryData(
-                combatQueries.getDraftCombat.key(
+                getDraftCombatQueryKey(
                     route.params.campaignId,
                     route.params.draftCombatId
                 ),
@@ -288,7 +294,7 @@
         },
         onSuccess(resp) {
             queryClient.setQueryData(
-                combatQueries.getDraftCombat.key(
+                getDraftCombatQueryKey(
                     route.params.campaignId,
                     route.params.draftCombatId
                 ),
@@ -311,22 +317,28 @@
             z.object({ name: z.string().nonempty() })
         ),
     });
+
     const submitUpdateCombatName = form.handleSubmit(async (formValue) => {
         await updateCombatName.debouncedSubmit(formValue.name);
     });
 
     const [combatName] = form.defineField("name");
 
-    watch(draftCombatQuery.data, () => {
-        if (draftCombatQuery.data.value) {
-            console.log(draftCombatQuery.data.value?.combatName);
-            form.resetForm({
-                values: {
-                    name: draftCombatQuery.data.value?.combatName ?? "",
-                },
-            });
+    watch(
+        draftCombatQuery.data,
+        () => {
+            if (draftCombatQuery.data.value) {
+                form.resetForm({
+                    values: {
+                        name: draftCombatQuery.data.value?.combatName ?? "",
+                    },
+                });
+            }
+        },
+        {
+            immediate: true,
         }
-    });
+    );
 
     const deleteCombatMutation = useMutation({
         mutationFn: async () => {

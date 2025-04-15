@@ -13,7 +13,7 @@
                         "
                         class="lg:col-span-1 lg:col-start-1 lg:row-start-1">
                         <Card class="p-4 border-primary/50 flex flex-col gap-4">
-                            <section>
+                            <section class="flex flex-col gap-2">
                                 <header>
                                     <FontAwesomeIcon :icon="faPenToSquare" />
                                     <span> Draft Combats </span>
@@ -27,40 +27,62 @@
                                         ).length > 0
                                     ">
                                     <ul class="flex flex-col gap-2">
-                                        <Button
+                                        <li
                                             v-for="plannedCombat in combatsQuery
                                                 .data.value!.plannedCombats"
                                             :key="plannedCombat.id"
-                                            variant="outline"
-                                            class="h-fit flex justify-between w-full items-center disabled:border-gold disabled:opacity-100"
-                                            :disabled="
-                                                currentDraftCombat ===
-                                                plannedCombat.id
-                                            "
-                                            :class="[
-                                                {
-                                                    interactable:
-                                                        currentDraftCombat ===
-                                                            undefined ||
-                                                        currentDraftCombat !==
-                                                            plannedCombat.id,
-                                                },
-                                            ]"
-                                            @click="
-                                                () =>
-                                                    router.push({
-                                                        name: 'app-campaigns-campaignId-combats-drafts-draftCombatId',
-                                                        params: {
-                                                            campaignId:
-                                                                route.params
-                                                                    .campaignId,
-                                                            draftCombatId:
+                                            class="flex gap-1">
+                                            <Button
+                                                variant="outline"
+                                                class="h-fit flex justify-between w-full items-center disabled:border-gold disabled:opacity-100"
+                                                :disabled="
+                                                    currentDraftCombat ===
+                                                    plannedCombat.id
+                                                "
+                                                :class="[
+                                                    {
+                                                        interactable:
+                                                            currentDraftCombat ===
+                                                                undefined ||
+                                                            currentDraftCombat !==
                                                                 plannedCombat.id,
-                                                        },
-                                                    })
-                                            ">
-                                            {{ plannedCombat.name }}
-                                        </Button>
+                                                    },
+                                                ]"
+                                                @click="
+                                                    () =>
+                                                        router.push({
+                                                            name: 'app-campaigns-campaignId-combats-drafts-draftCombatId',
+                                                            params: {
+                                                                campaignId:
+                                                                    route.params
+                                                                        .campaignId,
+                                                                draftCombatId:
+                                                                    plannedCombat.id,
+                                                            },
+                                                        })
+                                                ">
+                                                {{ plannedCombat.name }}
+                                            </Button>
+                                            <ConfirmationButton
+                                                :triggerButtonProps="{
+                                                    variant: 'outline',
+                                                    class: 'interactable',
+                                                    disabled: hasALiveCombat,
+                                                }"
+                                                
+                                                >
+                                                <template #TriggerButton>
+                                                    <FontAwesomeIcon
+                                                        :icon="faRocket" />
+                                                </template>
+                                                <template #CancelButton>
+                                                    Cancel
+                                                </template>
+                                                <template #ConfirmButton>
+                                                    Open combat to players
+                                                </template>
+                                            </ConfirmationButton>
+                                        </li>
                                     </ul>
                                 </template>
                                 <div
@@ -83,12 +105,14 @@
                                         class="text-gray-500">
                                         None yet...
                                     </span>
-                                    <!-- <Button
+                                    <Button
                                         variant="link"
-                                        @click="showCreatePlannedCombatModal">
+                                        @click="
+                                            () => (modalState.modalOpen = true)
+                                        ">
                                         <FontAwesomeIcon :icon="faPlusCircle" />
                                         New
-                                    </Button> -->
+                                    </Button>
                                 </div>
                             </section>
 
@@ -141,14 +165,14 @@
                 </section>
             </LoadingFallback>
         </NuxtLayout>
-        <!-- <Dialog v-model:open="modalState.modalOpen">
+        <Dialog v-model:open="modalState.modalOpen">
             <DialogContent class="flex flex-col gap-2">
                 <DialogHeader> Create a planned combat. </DialogHeader>
 
-                <CampaignCombatCreatePlannedCombatForm
-                    :onCreatePlannedCombat="onCreatePlannedCombat" />
+                <CampaignCombatDraftCreateForm
+                    :onCreateDraftCombat="createPlannedCombat" />
             </DialogContent>
-        </Dialog> -->
+        </Dialog>
     </div>
 </template>
 <script setup lang="ts">
@@ -157,9 +181,16 @@
     import {
         faFlagCheckered,
         faPenToSquare,
+        faPlusCircle,
+        faRocket,
     } from "@fortawesome/free-solid-svg-icons";
-    import { combatQueries } from "~/utils/queries/combats";
+    import {
+        createDraftCombatMutation,
+        getAllCombatsQuery,
+    } from "~/utils/queries/combats";
     import { useQuery } from "@tanstack/vue-query";
+    import type { CreatePlannedCombatRequest } from "~/utils/api/plannedCombat/createPlannedCombatRequest";
+    import { CombatState } from "~/utils/types/models";
 
     // Stores
     const router = useRouter();
@@ -173,9 +204,15 @@
     );
 
     const combatsQuery = useQuery(
-        combatQueries.getAllCombatsQuery(() => {
+        getAllCombatsQuery(() => {
             return route.params.campaignId;
         })
+    );
+
+    const hasALiveCombat = computed(() =>
+        combatsQuery.data.value?.combats.some(
+            (x) => x.state !== CombatState.Finished
+        )
     );
 
     const hasAnyCombats = computed(
@@ -183,4 +220,26 @@
             (combatsQuery.data.value?.combats.length ?? 0) > 0 ||
             (combatsQuery.data.value?.plannedCombats.length ?? 0) > 0
     );
+
+    const modalState = reactive({
+        modalOpen: false,
+    });
+
+    const draftCombatHelper = useDraftCombatHelper();
+    async function createPlannedCombat(
+        request: Omit<CreatePlannedCombatRequest, "campaignId">,
+        startImmidately: boolean
+    ) {
+        return await draftCombatHelper
+            .createDraftCombat(
+                {
+                    ...request,
+                    campaignId: route.params.campaignId,
+                },
+                startImmidately
+            )
+            .then(() => {
+                modalState.modalOpen = false;
+            });
+    }
 </script>

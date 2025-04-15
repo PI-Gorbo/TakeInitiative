@@ -12,7 +12,7 @@
                 <div v-if="campaignStore.isDm" class="flex flex-col gap-4">
                     <div>Start by making your first draft combat</div>
                     <CampaignCombatDraftCreateForm
-                        :onCreateDraftCombat="onCreatePlannedCombat" />
+                        :onCreateDraftCombat="createPlannedCombat" />
                 </div>
                 <template v-else>
                     Nothing here yet! When you complete a combat, you will see a
@@ -25,14 +25,14 @@
 <script setup lang="ts">
     import { useQuery } from "@tanstack/vue-query";
     import type { CreatePlannedCombatRequest } from "~/utils/api/plannedCombat/createPlannedCombatRequest";
-    import { combatQueries } from "~/utils/queries/combats";
-    import type { PlannedCombat } from "~/utils/types/models";
+    import {
+        createDraftCombatMutation,
+        getAllCombatsQuery,
+    } from "~/utils/queries/combats";
     const api = useApi();
     const route = useRoute("app-campaigns-campaignId-combats");
     const srceenSize = useScreenSize();
-    const test = useQuery(
-        combatQueries.getAllCombatsQuery(() => route.params.campaignId)
-    );
+    const test = useQuery(getAllCombatsQuery(() => route.params.campaignId));
 
     definePageMeta({
         layout: "campaign-combats",
@@ -46,9 +46,7 @@
                 if (!srceenSize.isLargeScreen.value) return;
 
                 const queryResult = await useQuery(
-                    combatQueries.getAllCombatsQuery(
-                        () => to.params.campaignId as string
-                    )
+                    getAllCombatsQuery(() => to.params.campaignId as string)
                 ).suspense();
 
                 if (queryResult.data?.plannedCombats.length) {
@@ -74,27 +72,17 @@
     });
 
     const campaignStore = useCampaignStore();
-    const campaignCombatStore = useCampaignCombatsStore();
 
-    // async function createPlannedCombat(
-    //     request: Omit<CreatePlannedCombatRequest, "campaignId">
-    // ) {
-    //     return await api.draftCombat
-    //         .create({
-    //             ...request,
-    //             campaignId: route.params.campaignId,
-    //         })
-    //         .then((pc) => {
-    //             state.plannedCombats?.push(pc);
-    //             selectPlannedCombat(pc.id);
-    //             return pc;
-    //         })
-    //         .then(async (pc) => {
-    //             if (startCombatImmediately) {
-    //                 await onOpenCombat(pc?.id);
-    //             }
-    //         });
-    // }
+    const draftCombatHelper = useDraftCombatHelper();
+    async function createPlannedCombat(
+        request: Omit<CreatePlannedCombatRequest, "campaignId">,
+        startImmidately: boolean
+    ) {
+        return await draftCombatHelper.createDraftCombat(
+            { ...request, campaignId: route.params.campaignId },
+            startImmidately
+        );
+    }
 
     async function onOpenCombat(plannedCombatId: string) {
         return campaignStore

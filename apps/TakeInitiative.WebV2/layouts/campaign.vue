@@ -120,10 +120,10 @@
         },
     ] as const;
 
+    const currentRoute = useRoute();
     const currentTab = computed(() => {
-        const currentRoute = useRoute();
         if (currentRoute?.name === tabValues[0].routeName) {
-            return currentRoute.name;
+            return currentRoute?.name;
         }
 
         if (currentRoute?.name.startsWith(tabValues[1].routeName)) {
