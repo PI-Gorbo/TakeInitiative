@@ -17,6 +17,8 @@ import type { CreatePlannedCombatRequest } from "../utils/api/plannedCombat/crea
 import type { PlayerCharacterDto } from "../utils/api/campaign/createPlayerCharacterRequest";
 import * as signalR from "@microsoft/signalr";
 import { toast } from "vue-sonner";
+import { useQuery } from "@tanstack/vue-query";
+import { getCampaignQuery } from "~/utils/queries/campaign";
 
 export const useCampaignStore = defineStore("campaignStore", () => {
     const api = useApi();
@@ -71,7 +73,7 @@ export const useCampaignStore = defineStore("campaignStore", () => {
     async function fetchCampaign(
         campaignId: string,
     ): Promise<GetCampaignResponse> {
-        return await api.campaign.get({ campaignId });
+        return await useQuery(getCampaignQuery(() => campaignId)).suspense().then(resp => resp.data!)
     }
 
     const setCampaignById = async (campaignId: string): Promise<void> => {

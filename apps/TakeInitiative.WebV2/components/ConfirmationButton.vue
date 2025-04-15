@@ -5,12 +5,10 @@
         </Button>
         <DialogContent>
             <DialogHeader>
-                <DialogTitle
-                    class="text-center text-2xl font-bold text-destructive">
+                <DialogTitle>
                     <slot name="Title" />
                 </DialogTitle>
-                <DialogDescription
-                    class="text-center text-sm text-muted-foreground">
+                <DialogDescription>
                     <slot name="Description" />
                 </DialogDescription>
             </DialogHeader>

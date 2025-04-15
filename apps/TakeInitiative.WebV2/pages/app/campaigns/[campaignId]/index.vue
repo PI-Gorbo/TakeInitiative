@@ -3,7 +3,13 @@
         container="main"
         :isLoading="campaignStore.state.campaign == null">
         <div class="lg:grid w-full flex flex-col gap-4 lg:grid-cols-3 pb-2">
-            <div class="lg:col-span-2 lg:col-start-2">
+            <div class="lg:col-span-2 lg:col-start-2 flex flex-col gap-4">
+                <CampaignCombatJoinBanner
+                    class="block lg:hidden"
+                    :campaignId="route.params.campaignId"
+                    :combatInfo="
+                        campaignStore.state.currentCombatInfo ?? null
+                    " />
                 <Card
                     class="p-4 border-primary/50"
                     :class="{
@@ -16,7 +22,14 @@
                     <CampaignEditIntroductionForm />
                 </Card>
             </div>
-            <div class="lg:col-span-1 lg:col-start-1 lg:row-start-1">
+            <div
+                class="lg:col-span-1 lg:col-start-1 lg:row-start-1 flex flex-col gap-4">
+                <CampaignCombatJoinBanner
+                    class="hidden lg:block"
+                    :campaignId="route.params.campaignId"
+                    :combatInfo="
+                        campaignStore.state.currentCombatInfo ?? null
+                    " />
                 <Card class="p-4 border-primary/50">
                     <header><FontAwesomeIcon :icon="faUsers" /> Players</header>
                     <Accordion

@@ -12,6 +12,7 @@
                 <div v-if="campaignStore.isDm" class="flex flex-col gap-4">
                     <div>Start by making your first draft combat</div>
                     <CampaignCombatDraftCreateForm
+                        :campaignId="route.params.campaignId"
                         :onCreateDraftCombat="createPlannedCombat" />
                 </div>
                 <template v-else>

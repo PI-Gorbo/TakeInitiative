@@ -103,7 +103,6 @@
     button.interactable {
         @apply shadow-accent shadow-solid-sm hover:shadow-primary hover:border-primary
     }
-
 }
 
 .interactable:active {

@@ -1,5 +1,5 @@
 import type { CreatePlannedCombatRequest } from "~/utils/api/plannedCombat/createPlannedCombatRequest";
-import { createDraftCombatMutation } from "~/utils/queries/combats";
+import { createDraftCombatMutation, openCombatToPlayersMutation } from "~/utils/queries/combats";
 
 export const useDraftCombatHelper = () => {
     const _createDraftCombatMutation = createDraftCombatMutation();
@@ -21,26 +21,29 @@ export const useDraftCombatHelper = () => {
             })
             .then(async (pc) => {
                 if (startImmidately) {
-                    await openDraftCombat(pc?.id);
+                    await openDraftCombat(request.campaignId, pc?.id);
                 }
             });
     }
 
-    async function openDraftCombat(plannedCombatId: string) {
-        // return campaignStore
-        //     .openCombat(plannedCombatId)
-        //     .then((c) =>
-        //         Promise.resolve(
-        //             useNavigator().toCombat(
-        //                 campaignStore.state.campaign?.id!,
-        //                 campaignStore.state.currentCombatInfo?.id!
-        //             )
-        //         )
-        //     );
+    const _openDraftCombatMutation = openCombatToPlayersMutation()
+    async function openDraftCombat(campaignId: string, plannedCombatId: string) {
+        return await _openDraftCombatMutation
+            .mutateAsync({ plannedCombatId })
+            .then(async (combat) => {
+                await navigateTo({
+                    name: 'app-campaigns-campaignId-combats-combatId',
+                    params: {
+                        campaignId: campaignId,
+                        combatId: combat.combat.id
+                    }
+                })
+            })
     }
 
     return {
-        mutation: _createDraftCombatMutation,
+        createDraftMutation: _createDraftCombatMutation,
+        openDraftMutation: _openDraftCombatMutation,
         createDraftCombat,
         openDraftCombat
     }
