@@ -31,12 +31,12 @@
 <script setup lang="ts">
     import type { ButtonProps as ShadButtonProps } from "./ui/button/Button.vue";
 
-    type ButtonProps = ShadButtonProps & HTMLButtonElement;
+    type ButtonProps = ShadButtonProps & Partial<HTMLButtonElement>;
 
     const open = ref(false);
     const props = defineProps<{
-        triggerButtonProps: ShadButtonProps;
-        cancelButtonProps: ShadButtonProps;
-        confirmButtonProps: ShadButtonProps;
+        triggerButtonProps: ButtonProps;
+        cancelButtonProps: ButtonProps;
+        confirmButtonProps: ButtonProps;
     }>();
 </script>

@@ -67,7 +67,7 @@
                                                 :triggerButtonProps="{
                                                     variant: 'outline',
                                                     class: 'interactable',
-                                                    disabled: hasALiveCombat,
+                                                    disabled: !!hasALiveCombat,
                                                 }"
                                                 
                                                 >
