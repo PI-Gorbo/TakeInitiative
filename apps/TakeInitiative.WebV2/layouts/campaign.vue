@@ -4,7 +4,8 @@
             <div class="flex h-full w-full justify-center">
                 <div class="w-page flex flex-col gap-4">
                     <header class="flex flex-col gap-4">
-                        <header class="font-NovaCut text-xl text-gold hidden sm:block">
+                        <header
+                            class="font-NovaCut text-xl text-gold hidden sm:block">
                             {{ campaign.state.campaign?.campaignName }}
                         </header>
                         <div class="flex justify-between">
@@ -13,7 +14,7 @@
                                 :modelValue="currentTab"
                                 @update:modelValue="
                                     (currentTab) => {
-                                        router.push({
+                                        navigateTo({
                                             name: currentTab as RoutesNamesList,
                                         });
                                     }
@@ -31,11 +32,15 @@
                                     </TabsTrigger>
                                 </TabsList>
                             </Tabs>
+
                             <Button
                                 variant="outline"
                                 class="interactable"
                                 @click="clickAddButton"
-                                v-if="route.name === 'app-campaigns-campaignId'">
+                                v-if="
+                                    baseLayoutRoute.name ===
+                                    'app-campaigns-campaignId'
+                                ">
                                 <FontAwesomeIcon :icon="faPlus" />
                                 <span>Add Players</span>
                             </Button>
@@ -77,27 +82,24 @@
 
     const campaign = useCampaignStore();
     const router = useRouter();
-    const route = useRoute("app-campaigns-campaignId");
+    const route = useRoute();
+    const baseLayoutRoute = useRoute("app-campaigns-campaignId");
 
     const shareModalOpen = ref(false);
 
     useAsyncData(
         "campaign-layout-campaign-fetch",
         async () => {
-            if (!route.params.campaignId) { 
+            if (!baseLayoutRoute.params.campaignId) {
                 return false;
             }
 
             return await campaign
-                .setCampaignById(route.params.campaignId as string)
-                .then(() => true)
-                .catch((error: AxiosError) => {
-                    router.push({ name: "app-campaigns" });
-                    return false;
-                });
+                .setCampaignById(baseLayoutRoute.params.campaignId as string)
+                .then(() => true);
         },
         {
-            watch: [() => route.params.campaignId],
+            watch: [() => baseLayoutRoute.params.campaignId],
         }
     );
 
@@ -120,17 +122,16 @@
         },
     ] as const;
 
-    const currentRoute = useRoute();
     const currentTab = computed(() => {
-        if (currentRoute?.name === tabValues[0].routeName) {
-            return currentRoute?.name;
+        if (route?.name === tabValues[0].routeName) {
+            return route?.name;
         }
 
-        if (currentRoute?.name.startsWith(tabValues[1].routeName)) {
+        if (route?.name.startsWith(tabValues[1].routeName)) {
             return tabValues[1].routeName;
         }
 
-        if (currentRoute?.name.startsWith(tabValues[2].routeName)) {
+        if (route?.name.startsWith(tabValues[2].routeName)) {
             return tabValues[2].routeName;
         }
     });
