@@ -117,23 +117,6 @@ export const useCampaignStore = defineStore("campaignStore", () => {
             .then(userStore.refetchUser);
     }
 
-    // Member Details
-    const memberDtos: ComputedRef<CampaignMemberDto[]> = computed(() => {
-        if (
-            state.campaignMembers == undefined ||
-            state.userCampaignMember == undefined
-        ) {
-            return [];
-        }
-
-        return [
-            ...state.campaignMembers,
-            {
-                ...state.userCampaignMember,
-                username: userStore.state.user?.username!,
-            },
-        ] satisfies CampaignMemberDto[];
-    });
 
     async function openCombat(plannedCombatId: string) {
         return api.combat

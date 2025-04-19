@@ -1,12 +1,16 @@
 <template>
     <div class="h-full w-full">
         <NuxtLayout name="main-app">
-            <div class="flex h-full w-full justify-center">
+            <LoadingFallback
+                :isLoading="campaignQuery.isLoading.value"
+                class="flex w-full justify-center">
                 <div class="w-page flex flex-col gap-4">
                     <header class="flex flex-col gap-4">
                         <header
                             class="font-NovaCut text-xl text-gold hidden sm:block">
-                            {{ campaign.state.campaign?.campaignName }}
+                            {{
+                                campaignQuery.data.value?.campaign?.campaignName
+                            }}
                         </header>
                         <div class="flex justify-between">
                             <Tabs
@@ -49,7 +53,7 @@
 
                     <slot />
                 </div>
-            </div>
+            </LoadingFallback>
         </NuxtLayout>
         <Dialog v-model:open="shareModalOpen">
             <DialogContent>
@@ -73,36 +77,22 @@
         type IconDefinition,
     } from "@fortawesome/free-solid-svg-icons";
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+    import { useQuery } from "@tanstack/vue-query";
     import {
         helpers,
         type RoutesNamesList,
         type RoutesParamsRecord,
     } from "@typed-router";
     import { Axios, AxiosError } from "axios";
+    import { getCampaignQuery } from "~/utils/queries/campaign";
 
-    const campaign = useCampaignStore();
-    const router = useRouter();
     const route = useRoute();
     const baseLayoutRoute = useRoute("app-campaigns-campaignId");
-
-    const shareModalOpen = ref(false);
-
-    useAsyncData(
-        "campaign-layout-campaign-fetch",
-        async () => {
-            if (!baseLayoutRoute.params.campaignId) {
-                return false;
-            }
-
-            return await campaign
-                .setCampaignById(baseLayoutRoute.params.campaignId as string)
-                .then(() => true);
-        },
-        {
-            watch: [() => baseLayoutRoute.params.campaignId],
-        }
+    const campaignQuery = useQuery(
+        getCampaignQuery(() => baseLayoutRoute.params.campaignId as string)
     );
 
+    const shareModalOpen = ref(false);
     const tabValues: {
         label?: string;
         icon?: IconDefinition;

@@ -1,23 +1,23 @@
 <template>
     <LoadingFallback
         container="main"
-        :isLoading="campaignStore.state.campaign == null">
+        :isLoading="campaignQuery.isLoading.value">
         <div class="lg:grid w-full flex flex-col gap-4 lg:grid-cols-3 pb-2">
             <div class="lg:col-span-2 lg:col-start-2 flex flex-col gap-4">
                 <CampaignCombatJoinBanner
                     class="block lg:hidden"
                     :campaignId="route.params.campaignId"
                     :combatInfo="
-                        campaignStore.state.currentCombatInfo ?? null
+                        campaignQuery.data.value?.currentCombatInfo ?? null
                     " />
                 <Card
                     class="p-4 border-primary/50"
                     :class="{
                         'border-2 border-dashed':
-                            campaignStore.state.campaign?.campaignDescription ==
-                                null ||
-                            campaignStore.state.campaign?.campaignDescription ==
-                                '',
+                            campaignQuery.data.value?.campaign
+                                ?.campaignDescription == null ||
+                            campaignQuery.data.value?.campaign
+                                ?.campaignDescription == '',
                     }">
                     <CampaignEditIntroductionForm />
                 </Card>
@@ -28,7 +28,7 @@
                     class="hidden lg:block"
                     :campaignId="route.params.campaignId"
                     :combatInfo="
-                        campaignStore.state.currentCombatInfo ?? null
+                        campaignQuery.data.value?.currentCombatInfo ?? null
                     " />
                 <Card class="p-4 border-primary/50">
                     <header><FontAwesomeIcon :icon="faUsers" /> Players</header>
@@ -79,11 +79,16 @@
         faUsers,
     } from "@fortawesome/free-solid-svg-icons";
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+    import { useQuery } from "@tanstack/vue-query";
     import { useLocalStorage } from "@vueuse/core";
+    import type { CampaignMemberDto } from "~/utils/api/campaign/getCampaignRequest";
+    import { getCampaignQuery } from "~/utils/queries/campaign";
 
-    const userStore = useUserStore();
-    const campaignStore = useCampaignStore();
     const route = useRoute("app-campaigns-campaignId");
+    const userStore = useUserStore();
+    const campaignQuery = useQuery(
+        getCampaignQuery(() => route.params.campaignId as string)
+    );
     const openAccordionValue = useLocalStorage(
         `campaigns-${route.params.campaignId}-accordion-current-user`,
         userStore.state.user?.userId
@@ -94,8 +99,23 @@
         requiresAuth: true,
     });
 
+    // Member Details
+    const memberDtos: ComputedRef<CampaignMemberDto[]> = computed(() => {
+        if (!campaignQuery.isSuccess.value) {
+            return [];
+        }
+
+        return [
+            ...campaignQuery.data.value!.campaignMembers,
+            {
+                ...campaignQuery.data.value!.userCampaignMember,
+                username: userStore.state.user?.username!,
+            },
+        ] satisfies CampaignMemberDto[];
+    });
+
     const membersToDisplay = computed(() =>
-        campaignStore.memberDtos.sort((a, b) => {
+        memberDtos.value.sort((a, b) => {
             // Player should be first
             if (a.userId === userStore.state.user?.userId) {
                 return -1;
