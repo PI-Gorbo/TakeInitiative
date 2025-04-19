@@ -17,7 +17,8 @@
                                 <CardHeader>
                                     <CardTitle
                                         class="flex items-center justify-between gap-2 px-4">
-                                        <div class="flex flex-1 flex-wrap justify-between items-center gap-4">
+                                        <div
+                                            class="flex flex-1 flex-wrap justify-between items-center gap-4">
                                             <div class="space-x-4">
                                                 <FontAwesomeIcon
                                                     :icon="faCrown"
@@ -26,7 +27,9 @@
                                                 }}</span>
                                             </div>
                                             <div
-                                                v-if="campaign.currentCombatName"
+                                                v-if="
+                                                    campaign.currentCombatName
+                                                "
                                                 class="rounded-md border-2 border-destructive p-2">
                                                 <FontAwesomeIcon
                                                     :icon="faHandFist"
@@ -103,12 +106,15 @@
         layout: "main-app",
         requiresAuth: true,
         middleware: [
-            () => { 
+            () => {
                 const userStore = useUserStore();
-                if (userStore.state.user?.dmCampaigns.length === 0 && userStore.state.user?.memberCampaigns.length === 0) {
-                    return navigateTo(helpers.path('/createOrJoinCampaign'))
+                if (
+                    userStore.state.user?.dmCampaigns.length === 0 &&
+                    userStore.state.user?.memberCampaigns.length === 0
+                ) {
+                    return navigateTo(helpers.path("/createOrJoinCampaign"));
                 }
-            }
-        ]
+            },
+        ],
     });
 </script>
