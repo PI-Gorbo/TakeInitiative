@@ -158,7 +158,7 @@
                         <CampaignEditPlayerCharacterForm
                             ref="editCharacterForm"
                             :character="dialogState.characterClicked!"
-                            :onEdit="editCharacter"
+                            :onEdit="(req) =>editCharacter(dialogState.characterClicked?.id!, req)"
                             :onDelete="
                                 () =>
                                     deleteCharacter(
