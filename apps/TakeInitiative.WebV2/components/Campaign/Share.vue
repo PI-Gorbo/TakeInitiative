@@ -6,11 +6,11 @@
                 <div
                     class="flex w-full justify-start rounded-lg border p-1 px-2 text-center transition-colors group-hover:border-primary">
                     {{
-                        `${config.public.webUrl}/join/${selectedCampaignInfo?.joinCode}`
+                        `${config.public.webUrl}/join/${campaignQuery.data.value?.joinCode}`
                     }}
                 </div>
                 <CopiedTooltip
-                    :textToCopyToClipboard="`${config.public.webUrl}/join/${selectedCampaignInfo?.joinCode}`">
+                    :textToCopyToClipboard="`${config.public.webUrl}/join/${campaignQuery.data.value?.joinCode}`">
                     <template #Trigger="{ copyText }">
                         <Button
                             size="icon"
@@ -27,12 +27,12 @@
             <div class="group flex w-full items-center gap-2">
                 <div
                     class="flex w-full justify-start rounded-lg border p-1 px-2 text-center transition-colors group-hover:border-primary">
-                    {{ selectedCampaignInfo?.joinCode }}
+                    {{ campaignQuery.data.value?.joinCode }}
                 </div>
 
                 <CopiedTooltip
                     :textToCopyToClipboard="
-                        selectedCampaignInfo?.joinCode ?? ''
+                        campaignQuery.data.value?.joinCode ?? ''
                     ">
                     <template #Trigger="{ copyText }">
                         <Button
@@ -50,7 +50,12 @@
 <script setup lang="ts">
     import { faCopy } from "@fortawesome/free-solid-svg-icons";
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+    import { useQuery } from "@tanstack/vue-query";
+    import { getCampaignQuery } from "~/utils/queries/campaign";
 
     const config = useRuntimeConfig();
-    const selectedCampaignInfo = computed(() => useCampaignStore().state);
+    const route = useRoute("app-campaigns-campaignId");
+    const campaignQuery = useQuery(
+        { ...getCampaignQuery(() => route.params.campaignId) }
+    );
 </script>

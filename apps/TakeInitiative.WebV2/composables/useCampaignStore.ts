@@ -190,9 +190,6 @@ export const useCampaignStore = defineStore("campaignStore", () => {
         isDm: computed(
             () => state.userCampaignMember?.isDungeonMaster ?? false
         ),
-        memberDtos,
-        getMemberDetailsFor: (id: string): CampaignMemberDto | undefined =>
-            memberDtos.value.find((x) => x.userId == id),
         memberResources: computed(() => {
             return [
                 {

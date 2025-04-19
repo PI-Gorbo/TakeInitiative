@@ -1,15 +1,15 @@
 <template>
     <div>
-        <LoadingFallback :isLoading="test.isLoading.value">
+        <LoadingFallback :isLoading="campaignQuery.isLoading.value || allCombatsQuery.isLoading.value">
             <Card
                 v-if="
                     !(
-                        test.data.value!.plannedCombats.length ||
-                        test.data.value!.combats.length
+                        allCombatsQuery.data.value!.plannedCombats.length ||
+                        allCombatsQuery.data.value!.combats.length
                     )
                 "
                 class="border-2 p-4 border-primary/50">
-                <div v-if="campaignStore.isDm" class="flex flex-col gap-4">
+                <div v-if="campaignQuery.data.value?.userCampaignMember.isDungeonMaster" class="flex flex-col gap-4">
                     <div>Start by making your first draft combat</div>
                     <CampaignCombatDraftCreateForm
                         :campaignId="route.params.campaignId"
@@ -26,14 +26,14 @@
 <script setup lang="ts">
     import { useQuery } from "@tanstack/vue-query";
     import type { CreatePlannedCombatRequest } from "~/utils/api/plannedCombat/createPlannedCombatRequest";
+    import { getCampaignQuery } from "~/utils/queries/campaign";
     import {
-        createDraftCombatMutation,
         getAllCombatsQuery,
     } from "~/utils/queries/combats";
-    const api = useApi();
     const route = useRoute("app-campaigns-campaignId-combats");
     const srceenSize = useScreenSize();
-    const test = useQuery(getAllCombatsQuery(() => route.params.campaignId));
+    const campaignQuery = useQuery(getCampaignQuery(() => route.params.campaignId));
+    const allCombatsQuery = useQuery(getAllCombatsQuery(() => route.params.campaignId));
 
     definePageMeta({
         layout: "campaign-combats",
@@ -72,8 +72,6 @@
         ],
     });
 
-    const campaignStore = useCampaignStore();
-
     const draftCombatHelper = useDraftCombatHelper();
     async function createPlannedCombat(
         request: Omit<CreatePlannedCombatRequest, "campaignId">,
@@ -83,18 +81,5 @@
             { ...request, campaignId: route.params.campaignId },
             startImmidately
         );
-    }
-
-    async function onOpenCombat(plannedCombatId: string) {
-        return campaignStore
-            .openCombat(plannedCombatId)
-            .then((c) =>
-                Promise.resolve(
-                    useNavigator().toCombat(
-                        campaignStore.state.campaign?.id!,
-                        campaignStore.state.currentCombatInfo?.id!
-                    )
-                )
-            );
     }
 </script>

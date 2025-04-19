@@ -19,7 +19,6 @@
         CreatePlayerCharacterRequest,
         PlayerCharacterDto,
     } from "~/utils/api/campaign/createPlayerCharacterRequest";
-    const campaign = useCampaignStore();
 
     const schema = z.object({
         name: z.string().nonempty(),

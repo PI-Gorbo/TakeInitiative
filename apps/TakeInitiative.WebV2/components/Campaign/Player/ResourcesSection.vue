@@ -206,8 +206,19 @@
     import CUDResourceForm from "./CUDResourceForm.vue";
     import { toast } from "vue-sonner";
     import ResourceDisplay from "./ResourceDisplay.vue";
-    const campaignStore = useCampaignStore();
+    import {
+        createCharacterMutation,
+        deleteCharacterMutation,
+        editCharacterMutation,
+        getCampaignQuery,
+        setResourceMutation,
+    } from "~/utils/queries/campaign";
+    import { useQuery } from "@tanstack/vue-query";
     const user = useUserStore();
+    const route = useRoute("app-campaigns-campaignId");
+    const campaignQuery = useQuery(
+        getCampaignQuery(() => route.params.campaignId)
+    );
     const isViewingCurrentUsersData = computed(
         () => user.state.user?.userId == props.userId
     );
@@ -261,27 +272,32 @@
         dialogState.dialogOpen = true;
     }
 
+    const createCharacter = createCharacterMutation();
     async function createPlayerCharacter(playerCharacter: PlayerCharacterDto) {
         // Take a snapshot of the player's character list beforehand.
         try {
             const playerCharacterIds =
-                campaignStore.state.userCampaignMember?.characters.map(
+                campaignQuery.data.value!.userCampaignMember?.characters.map(
                     (x) => x.id
                 ) ?? [];
 
-            await campaignStore.createPlayerCharacter(playerCharacter);
+            await createCharacter.mutateAsync({
+                campaignMemberId:
+                    campaignQuery.data.value?.userCampaignMember.id!,
+                playerCharacter,
+            });
             toast.success("Created!");
 
             // Find the new character via id.
             const newIds =
-                campaignStore.state.userCampaignMember?.characters.map(
+                campaignQuery.data.value!.userCampaignMember?.characters.map(
                     (x) => x.id
                 ) ?? [];
             const newId = newIds.filter((x) => !playerCharacterIds.includes(x));
 
             // Swap the dialog to edit mode.
             dialogState.characterClicked =
-                campaignStore.state.userCampaignMember?.characters.find(
+                campaignQuery.data.value!.userCampaignMember?.characters.find(
                     (x) => x.id == newId[0]
                 );
             dialogState.dialogType = "edit-character";
@@ -292,12 +308,18 @@
         }
     }
 
-    async function editCharacter(playerCharacter: PlayerCharacterDto) {
-        return campaignStore
-            .updatePlayerCharacter(
-                dialogState.characterClicked?.id!,
-                playerCharacter
-            )
+    const editCharacterM = editCharacterMutation();
+    async function editCharacter(
+        playerCharacterId: string,
+        playerCharacter: PlayerCharacterDto
+    ) {
+        return editCharacterM
+            .mutateAsync({
+                campaignMemberId:
+                    campaignQuery.data.value?.userCampaignMember.id!,
+                playerCharacterId: playerCharacterId,
+                playerCharacter,
+            })
             .then(() => (dialogState.dialogOpen = false))
             .then(() => toast.success("Saved!"))
             .then(() =>
@@ -307,9 +329,13 @@
             );
     }
 
+    const deleteCharacterM = deleteCharacterMutation();
     async function deleteCharacter(characterId: string) {
-        return campaignStore
-            .deletePlayerCharacter(characterId)
+        return deleteCharacterM
+            .mutateAsync({
+                memberId: campaignQuery.data.value?.userCampaignMember.id!,
+                playerCharacterId: characterId,
+            })
             .then(() => (dialogState.dialogOpen = false))
             .then(() => toast.success("Deleted!"))
             .catch(() =>
@@ -319,12 +345,17 @@
             );
     }
 
+    const setResourcesMutation = setResourceMutation();
     async function addResource(resource: CampaignMemberResource) {
-        return await campaignStore
-            .setCampaignMemberResources([
-                ...(campaignStore.state.userCampaignMember?.resources ?? []),
-                resource,
-            ])
+        return await setResourcesMutation
+            .mutateAsync({
+                memberId: campaignQuery.data.value?.userCampaignMember.id!,
+                resources: [
+                    ...(campaignQuery.data.value?.userCampaignMember
+                        ?.resources ?? []),
+                    resource,
+                ],
+            })
             .then(() => (dialogState.dialogOpen = false))
             .then(() => toast.success("Added Resource"))
             .catch(() =>
@@ -335,12 +366,16 @@
     }
 
     async function deleteResource() {
-        return await campaignStore
-            .setCampaignMemberResources([
-                ...(
-                    campaignStore.state.userCampaignMember?.resources ?? []
-                ).toSpliced(dialogState.resourceClicked?.index!, 1),
-            ])
+        return await setResourcesMutation
+            .mutateAsync({
+                memberId: campaignQuery.data.value?.userCampaignMember.id!,
+                resources: [
+                    ...(
+                        campaignQuery.data.value?.userCampaignMember
+                            ?.resources ?? []
+                    ).toSpliced(dialogState.resourceClicked?.index!, 1),
+                ],
+            })
             .then(() => (dialogState.dialogOpen = false))
             .then(() => toast.success("Deleted Resource"))
             .catch(() =>
@@ -351,10 +386,14 @@
     }
 
     async function editResource(resource: CampaignMemberResource) {
-        const array = campaignStore.state.userCampaignMember?.resources ?? [];
+        const array =
+            campaignQuery.data.value?.userCampaignMember?.resources ?? [];
         array[dialogState.resourceClicked?.index!] = resource;
-        return await campaignStore
-            .setCampaignMemberResources(array)
+        return await setResourcesMutation
+            .mutateAsync({
+                memberId: campaignQuery.data.value?.userCampaignMember.id!,
+                resources: array,
+            })
             .then(() => (dialogState.dialogOpen = false))
             .then(() => toast.success("Updated Resource"))
             .catch(() =>

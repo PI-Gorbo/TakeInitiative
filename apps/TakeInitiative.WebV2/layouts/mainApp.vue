@@ -25,9 +25,9 @@
                                 <span
                                     class="font-NovaCut text-xl text-gold"
                                     v-if="
-                                        !isDesktopSized && campaignNameToShow
+                                        !isDesktopSized && campaignNameQuery.isSuccess.value
                                     ">
-                                    {{ campaignNameToShow }}
+                                    {{ campaignNameQuery.data.value }}
                                 </span>
                             </div>
                             <AppNavigationBar v-if="!showSidebar" />
@@ -54,6 +54,8 @@
     } from "@fortawesome/free-solid-svg-icons";
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
     import { useMediaQuery } from "@vueuse/core";
+    import { useQuery } from "@tanstack/vue-query";
+    import { getCampaignQuery } from "~/utils/queries/campaign";
 
     const isDesktopSized = useMediaQuery("(min-width: 640px)", {
         ssrWidth: 640,
@@ -63,16 +65,14 @@
         return !isDesktopSized.value;
     });
 
-    const route = useRoute();
+    const route = useRoute("app-campaigns-campaignId");
     const user = useUserStore();
 
-    const campaignStore = useCampaignStore();
-    const campaignNameToShow = computed(() => {
-        if (route.name.startsWith("app-campaigns-id")) {
-            return campaignStore.state.campaign?.campaignName;
-        }
-
-        return null;
+    const getCamapignQuery = getCampaignQuery(() => route.params?.campaignId);
+    const campaignNameQuery = useQuery({
+        ...getCamapignQuery,
+        enabled: route.params.campaignId !== undefined,
+        select: (data) => data.campaign.campaignName,
     });
 </script>
 

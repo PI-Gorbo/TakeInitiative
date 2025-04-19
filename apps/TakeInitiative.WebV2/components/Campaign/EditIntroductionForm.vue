@@ -12,13 +12,21 @@
 <script setup lang="ts">
     import { faCheck, faCircleNotch } from "@fortawesome/free-solid-svg-icons";
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+    import { useQuery } from "@tanstack/vue-query";
     import { toTypedSchema } from "@vee-validate/zod";
     import { useDebounceFn } from "@vueuse/core";
     import { useForm } from "vee-validate";
     import { toast } from "vue-sonner";
     import { z } from "zod";
+    import {
+        getCampaignQuery,
+        updateCampaignDetailsMutation,
+    } from "~/utils/queries/campaign";
 
-    const campaignStore = useCampaignStore();
+    const route = useRoute("app-campaigns-campaignId");
+    const campaignQuery = useQuery(
+        getCampaignQuery(() => route.params.campaignId)
+    );
 
     const schema = z.object({
         description: z.string().max(512).min(0),
@@ -27,16 +35,18 @@
         validationSchema: toTypedSchema(schema),
         initialValues: {
             description:
-                campaignStore.state.campaign?.campaignDescription ?? "",
+                campaignQuery.data.value?.campaign?.campaignDescription ?? "",
         },
     });
     const [description] = form.defineField("description");
 
+    const updateCampaignDetails = updateCampaignDetailsMutation();
     async function submitDetails(
         req: z.infer<typeof schema>
     ): Promise<unknown> {
-        return await campaignStore
-            .updateCampaignDetails({
+        return await updateCampaignDetails
+            .mutateAsync({
+                campaignId: route.params.campaignId,
                 campaignDescription: req.description,
             })
             .then(() => {
