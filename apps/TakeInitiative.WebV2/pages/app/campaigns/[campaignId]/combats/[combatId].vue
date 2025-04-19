@@ -4,7 +4,7 @@
             campaignQuery.isLoading.value || combatQuery.isLoading.value
         "
         class="h-full w-full flex justify-center">
-        <div class="lg:grid lg:grid-cols-3 w-page">
+        <div class="lg:grid lg:grid-cols-3 w-page lg:gap-4">
             <div class="hidden lg:block lg:col-span-1 lg:col-start-1">
                 <Card>
                     <CardHeader>

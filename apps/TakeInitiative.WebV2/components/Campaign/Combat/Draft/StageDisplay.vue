@@ -31,7 +31,7 @@
                 <div class="flex justify-end">
                     <Button variant="link" @click="addNpc">
                         <FontAwesomeIcon :icon="faPlusCircle" />
-                        {{ !isAdding ? "Add Npc" : "Adding Npc..." }}
+                        {{ !isAdding ? "Add NPC" : "Adding NPC..." }}
                     </Button>
                 </div>
             </section>

@@ -17,30 +17,19 @@
                                 <CardHeader>
                                     <CardTitle
                                         class="flex items-center justify-between gap-2 px-4">
-                                        <div
-                                            class="flex flex-1 flex-wrap justify-between items-center gap-4">
-                                            <div class="space-x-4">
-                                                <FontAwesomeIcon
-                                                    :icon="faCrown"
-                                                    class="text-gold" /><span>{{
-                                                    campaign.campaignName
-                                                }}</span>
-                                            </div>
-                                            <div
-                                                v-if="
-                                                    campaign.currentCombatName
-                                                "
-                                                class="rounded-md border-2 border-destructive p-2">
-                                                <FontAwesomeIcon
-                                                    :icon="faHandFist"
-                                                    class="text-destructive" />
-                                                {{ campaign.currentCombatName }}
-                                            </div>
+                                        <div class="space-x-4">
+                                            <FontAwesomeIcon
+                                                :icon="faCrown"
+                                                class="text-gold" /><span>{{
+                                                campaign.campaignName
+                                            }}</span>
                                         </div>
                                         <div
-                                            class="transition-colors group-hover:text-primary">
+                                            v-if="campaign.currentCombatName"
+                                            class="rounded-md bg-gold text-gold-foreground p-2">
                                             <FontAwesomeIcon
-                                                :icon="faChevronCircleRight" />
+                                                :icon="faHandFist" />
+                                            {{ campaign.currentCombatName }}
                                         </div>
                                     </CardTitle>
                                 </CardHeader>

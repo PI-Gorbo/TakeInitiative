@@ -19,7 +19,8 @@
                             <CampaignCombatJoinBanner
                                 :campaignId="route.params.campaignId"
                                 :combatInfo="
-                                    campaignQuery.data.value?.currentCombatInfo ?? null
+                                    campaignQuery.data.value
+                                        ?.currentCombatInfo ?? null
                                 " />
                             <Card
                                 class="p-4 border-primary/50 flex flex-col gap-4">
@@ -43,8 +44,8 @@
                                                 :key="plannedCombat.id"
                                                 class="flex gap-1">
                                                 <Button
+                                                    class="shadow-solid-sm h-fit flex justify-between w-full items-center disabled:border-primary disabled:opacity-100"
                                                     variant="outline"
-                                                    class="h-fit flex justify-between w-full items-center disabled:border-gold disabled:opacity-100"
                                                     :disabled="
                                                         currentDraftCombat ===
                                                         plannedCombat.id
@@ -52,10 +53,13 @@
                                                     :class="[
                                                         {
                                                             interactable:
-                                                                currentDraftCombat ===
-                                                                    undefined ||
                                                                 currentDraftCombat !==
-                                                                    plannedCombat.id,
+                                                                    plannedCombat.id &&
+                                                                (isLargeScreen ||
+                                                                    currentDraftCombat ===
+                                                                        undefined ||
+                                                                    currentDraftCombat !==
+                                                                        plannedCombat.id),
                                                         },
                                                     ]"
                                                     @click="

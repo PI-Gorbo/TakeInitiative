@@ -9,9 +9,9 @@
             },
         }">
         <Button
-            class="interactable flex justify-between h-fit w-full"
+            class="interactable flex justify-between h-fit w-full bg-gold text-gold-foreground hover:bg-gold/90 hover:border-destructive"
             variant="outline">
-            <header class="text-gold font-semibold">Join the combat!</header>
+            <header class="font-semibold">Join the combat!</header>
             <div class="flex gap-1">
                 <FontAwesomeIcon :icon="faFistRaised" />
                 <p>

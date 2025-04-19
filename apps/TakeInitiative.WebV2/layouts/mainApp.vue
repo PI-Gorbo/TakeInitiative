@@ -68,10 +68,8 @@
     const route = useRoute("app-campaigns-campaignId");
     const user = useUserStore();
 
-    const getCamapignQuery = getCampaignQuery(() => route.params?.campaignId);
     const campaignNameQuery = useQuery({
-        ...getCamapignQuery,
-        enabled: route.params.campaignId !== undefined,
+        ...getCampaignQuery(() => route.params?.campaignId),
         select: (data) => data.campaign.campaignName,
     });
 </script>

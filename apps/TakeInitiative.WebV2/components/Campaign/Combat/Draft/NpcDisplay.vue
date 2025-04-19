@@ -16,7 +16,7 @@
         </SheetTrigger>
         <SheetContent>
             <SheetHeader>
-                <SheetTitle>Edit Npc</SheetTitle>
+                <SheetTitle>Edit NPC</SheetTitle>
             </SheetHeader>
             <CampaignCombatDraftModifyNpcForm
                 v-bind="{
