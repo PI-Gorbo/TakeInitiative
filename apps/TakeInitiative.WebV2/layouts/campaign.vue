@@ -37,17 +37,29 @@
                                 </TabsList>
                             </Tabs>
 
-                            <Button
-                                variant="outline"
-                                class="interactable"
-                                @click="clickAddButton"
-                                v-if="
-                                    baseLayoutRoute.name ===
-                                    'app-campaigns-campaignId'
-                                ">
-                                <FontAwesomeIcon :icon="faPlus" />
-                                <span>Add Players</span>
-                            </Button>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        class="interactable"
+                                        v-if="
+                                            baseLayoutRoute.name ===
+                                            'app-campaigns-campaignId'
+                                        ">
+                                        <FontAwesomeIcon :icon="faPlus" />
+                                        <span>Add Players</span>
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent>
+                                    <header class="font-semibold">Add Players</header>
+                                    <p class="text-muted-foreground">
+                                        Players can join by visting the join
+                                        link below, or entering the join code
+                                        when prompted.
+                                    </p>
+                                    <CampaignShare />
+                                </PopoverContent>
+                            </Popover>
                         </div>
                     </header>
 

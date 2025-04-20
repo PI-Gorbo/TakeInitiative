@@ -2,7 +2,11 @@
     <FormFieldWrapper
         label="Intro"
         :error="form.errors.value.description"
-        description="This introduction won't be visible to players until you've filled it out">
+        :description="
+            !!form.errors.value.description
+                ? ''
+                : 'This introduction won\'t be visible to players until you\'ve filled it out'
+        ">
         <template #Header>
             <AsyncSuccessIcon :state="debouncedFunc.state.value" />
         </template>

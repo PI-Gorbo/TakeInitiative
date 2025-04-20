@@ -1,7 +1,7 @@
 <template>
     <div class="flex flex-col gap-4">
         <!--Characters-->
-        <section>
+        <section class="space-y-2">
             <header class="flex gap-2">
                 <FontAwesomeIcon :icon="faPerson" />Characters
             </header>
@@ -76,7 +76,7 @@
         </section>
 
         <!--Resources-->
-        <section>
+        <section class="space-y-2">
             <header class="flex gap-2">
                 <FontAwesomeIcon :icon="faNewspaper" />Resources
             </header>
@@ -158,7 +158,13 @@
                         <CampaignEditPlayerCharacterForm
                             ref="editCharacterForm"
                             :character="dialogState.characterClicked!"
-                            :onEdit="(req) =>editCharacter(dialogState.characterClicked?.id!, req)"
+                            :onEdit="
+                                (req) =>
+                                    editCharacter(
+                                        dialogState.characterClicked?.id!,
+                                        req
+                                    )
+                            "
                             :onDelete="
                                 () =>
                                     deleteCharacter(

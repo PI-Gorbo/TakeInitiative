@@ -59,7 +59,7 @@
                                     </label>
                                 </div>
                             </AccordionTrigger>
-                            <AccordionContent>
+                            <AccordionContent class="pl-4">
                                 <CampaignPlayerResourcesSection
                                     :userId="item.userId"
                                     :characters="item.characters"
