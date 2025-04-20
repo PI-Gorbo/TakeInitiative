@@ -1,6 +1,5 @@
 <template>
-    <component
-        :is="props.isViewingCurrentUsersData ? 'div' : 'a'"
+    <a
         :href="resource.link"
         target="_blank"
         class="h-fit flex justify-between w-full items-center">
@@ -22,24 +21,26 @@
                 @click="
                     (e: Event) => {
                         e.stopPropagation();
+                        emits('edit')
                     }
-                "
-                asChild>
-                <a target="_blank" :href="resource.link">
-                    <FontAwesomeIcon :icon="faLink" />
-                </a>
+                ">
+                <FontAwesomeIcon :icon="faPen" />
             </Button>
         </div>
-    </component>
+    </a>
 </template>
 
 <script setup lang="ts">
-    import { faLink } from "@fortawesome/free-solid-svg-icons";
+    import { faLink, faPen } from "@fortawesome/free-solid-svg-icons";
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
     import {
         resourceVisibilityOptionNameMap,
         ResourceVisibilityOptions,
     } from "~/utils/types/models";
+
+    const emits = defineEmits<{
+        edit: [];
+    }>();
 
     const props = defineProps<{
         isViewingCurrentUsersData: boolean;

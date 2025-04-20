@@ -106,18 +106,7 @@
                     <Button
                         v-for="(resource, index) in props.resources"
                         variant="outline"
-                        class="interactable shadow-solid-sm disabled:opacity-100"
-                        @click="
-                            () => {
-                                if (isViewingCurrentUsersData) {
-                                    dialogState.resourceClicked = {
-                                        resource,
-                                        index,
-                                    };
-                                    openDialog('edit-resource');
-                                }
-                            }
-                        ">
+                        class="interactable shadow-solid-sm disabled:opacity-100">
                         <ResourceDisplay
                             :resource="resource"
                             :resourceVisibilityOptionNameMap="
@@ -125,6 +114,17 @@
                             "
                             :isViewingCurrentUsersData="
                                 isViewingCurrentUsersData
+                            "
+                            @edit="
+                                () => {
+                                    () => {
+                                        dialogState.resourceClicked = {
+                                            resource,
+                                            index,
+                                        };
+                                        openDialog('edit-resource');
+                                    };
+                                }
                             " />
                     </Button>
                 </ul>
