@@ -11,7 +11,63 @@
                         <CardTitle class="font-NovaCut text-gold">{{
                             combatQuery.data.value?.combat.combatName
                         }}</CardTitle>
+                        <CardDescription>
+                            <template
+                                v-if="
+                                    combatQuery.data.value?.combat.state ===
+                                    CombatState.Open
+                                ">
+                                Combat has not started yet. Players can add
+                                their characters to the combat.
+                            </template>
+                            <template
+                                v-else-if="
+                                    combatQuery.data.value?.combat.state ===
+                                    CombatState.Started
+                                ">
+                                Round
+                                {{
+                                    combatQuery.data.value?.combat?.roundNumber
+                                }}
+                            </template>
+                            <template else> This combat has ended. </template>
+                        </CardDescription>
                     </CardHeader>
+
+                    <CardContent>
+                        <Transition name="fade" mode="out-in">
+                            <section
+                                v-if="
+                                    combatQuery.data.value?.combat.state ===
+                                    CombatState.Started
+                                ">
+                                <header>
+                                    <div>
+                                        <FontAwesomeIcon
+                                            :icon="faPersonMilitaryPointing" />
+                                        Reinformcements
+                                    </div>
+                                    <CardDescription>
+                                        Characters that can be added to the
+                                        combat by the DM.
+                                    </CardDescription>
+                                </header>
+                                <div class="flex justify-end">
+                                    <Sheet>
+                                        <SheetTrigger asChild>
+                                            <Button variant="link">
+                                                <FontAwesomeIcon
+                                                    :icon="
+                                                        faPlusCircle
+                                                    " />Add</Button
+                                            >
+                                        </SheetTrigger>
+                                        <SheetContent> </SheetContent>
+                                    </Sheet>
+                                </div>
+                            </section>
+                        </Transition>
+                    </CardContent>
                 </Card>
             </div>
             <div class="lg:col-span-2 lg:col-start-2 flex flex-col">
@@ -23,9 +79,24 @@
     </LoadingFallback>
 </template>
 <script setup lang="ts">
+    import {
+        faPersonMilitaryPointing,
+        faPlus,
+        faPlusCircle,
+    } from "@fortawesome/free-solid-svg-icons";
+    import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
     import { useQuery } from "@tanstack/vue-query";
+    import CardContent from "~/components/ui/card/CardContent.vue";
+    import CardDescription from "~/components/ui/card/CardDescription.vue";
+    import Sheet from "~/components/ui/sheet/Sheet.vue";
+    import SheetContent from "~/components/ui/sheet/SheetContent.vue";
+    import SheetTrigger from "~/components/ui/sheet/SheetTrigger.vue";
+    import Sidebar from "~/components/ui/sidebar/Sidebar.vue";
+    import SidebarContent from "~/components/ui/sidebar/SidebarContent.vue";
+    import SidebarTrigger from "~/components/ui/sidebar/SidebarTrigger.vue";
     import { getCampaignQuery } from "~/utils/queries/campaign";
     import { getCombatQuery } from "~/utils/queries/combats";
+    import { CombatState } from "~/utils/types/models";
 
     const route = useRoute("app-campaigns-campaignId-combats-combatId");
 
