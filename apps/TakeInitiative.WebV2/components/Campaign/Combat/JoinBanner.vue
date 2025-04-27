@@ -9,7 +9,7 @@
             },
         }">
         <Button
-            class="interactable flex justify-between h-fit w-full bg-gold text-gold-foreground hover:bg-gold/90 hover:border-destructive"
+            class="interactable flex justify-between h-fit w-full bg-gold text-gold-foreground  hover:border-destructive"
             variant="outline">
             <header class="font-semibold">Join the combat!</header>
             <div class="flex gap-1">
