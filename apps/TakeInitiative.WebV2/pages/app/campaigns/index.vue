@@ -17,7 +17,7 @@
                                 <CardHeader>
                                     <CardTitle
                                         class="flex items-center justify-between gap-2 px-4">
-                                        <div class="space-x-4">
+                                        <div class="space-x-4 py-1">
                                             <FontAwesomeIcon
                                                 :icon="faCrown"
                                                 class="text-gold" /><span>{{
@@ -26,7 +26,7 @@
                                         </div>
                                         <div
                                             v-if="campaign.currentCombatName"
-                                            class="rounded-md bg-gold text-gold-foreground p-2">
+                                            class="rounded-md bg-gold text-gold-foreground px-2 py-1">
                                             <FontAwesomeIcon
                                                 :icon="faHandFist" />
                                             {{ campaign.currentCombatName }}
