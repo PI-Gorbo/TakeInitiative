@@ -4,6 +4,8 @@ import type { GetCombatsResponse } from "../api/combat/getCombatsRequest";
 import type { RefOrGetter } from "./utils";
 import type { CreatePlannedCombatRequest } from "../api/plannedCombat/createPlannedCombatRequest";
 import type { OpenCombatRequest } from "../api/combat/openCombatRequest";
+import type { PostStagePlayerCharactersRequest, PostStagePlayerCharactersResponse } from "../api/combat/postStagePlayerCharactersRequest";
+
 
 export const getDraftCombatQueryKey = (campaignId: MaybeRefOrGetter<string>, draftCombatId: MaybeRefOrGetter<string>) => [campaignId, 'combats', 'draft', draftCombatId]
 export const getDraftCombatQuery = (campaignId: RefOrGetter<string>, draftComabtId: RefOrGetter<string>) => queryOptions({
@@ -88,4 +90,19 @@ function sortByFinishedTimestamp(
 
     return 0;
 }
+
+
+// Mutations for when a comabt is started / starting.
+export const useStagePlayerCharacterMutation = () => {
+    const client = useQueryClient()
+    const api = useApi()
+    return useMutation({
+        mutationFn: (req: PostStagePlayerCharactersRequest) => api.combat.stage.playerCharacters(req),
+        onSuccess: (data, request) => {
+            client.setQueryData(getCombatQueryKey(data.combat.campaignId, data.combat.id), data);
+        },
+
+    })
+}
+
 

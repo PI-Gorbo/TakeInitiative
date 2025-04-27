@@ -3,19 +3,19 @@ import { z } from "zod";
 import { combatResponseValidator } from "./combatResponse";
 import { validateResponse } from "~/utils/apiErrorParser";
 
-export type PostStagePlannedCharactersRequest = {
+export type PostStagePlayerCharactersRequest = {
     combatId: string;
     characterIds: string[];
 };
 
-export type PostStagePlannedCharactersResponse = z.infer<
+export type PostStagePlayerCharactersResponse = z.infer<
     typeof combatResponseValidator
 >;
 
 export function postStagePlayerCharactersRequest(axios: AxiosInstance) {
     return async function (
-        request: PostStagePlannedCharactersRequest
-    ): Promise<PostStagePlannedCharactersResponse> {
+        request: PostStagePlayerCharactersRequest
+    ): Promise<PostStagePlayerCharactersResponse> {
         return await axios
             .post("/api/combat/stage/player-character", request)
             .then((response) =>
