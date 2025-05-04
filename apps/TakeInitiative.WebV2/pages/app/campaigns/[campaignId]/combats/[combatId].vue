@@ -35,14 +35,14 @@
                         </CardDescription>
                     </CardHeader>
 
-                    <CardContent class="flex-1">
+                    <CardContent class="flex-1 ">
                         <Transition name="fade" mode="out-in">
                             <section
                                 v-if="
                                     store.combatQuery.data?.combat.state ===
                                     CombatState.Started
                                 "
-                                class="flex flex-col gap-2 h-full max-h-full overflow-y-auto">
+                                class="flex flex-col gap-2 h-full max-h-full overflow-hidden">
                                 <header>
                                     <div>
                                         <FontAwesomeIcon
@@ -54,7 +54,7 @@
                                         combat by the DM.
                                     </CardDescription>
                                 </header>
-                                <div class="flex-grow">
+                                <div class="flex-grow overflow-auto">
                                     <CampaignCombatReinforcementList
                                         :campaignId="route.params.campaignId"
                                         :combatId="route.params.combatId" />
