@@ -25,7 +25,8 @@
                                 <span
                                     class="font-NovaCut text-xl text-gold"
                                     v-if="
-                                        !isDesktopSized && campaignNameQuery.isSuccess.value
+                                        !isDesktopSized &&
+                                        campaignNameQuery.isSuccess.value
                                     ">
                                     {{ campaignNameQuery.data.value }}
                                 </span>
@@ -33,7 +34,7 @@
                             <AppNavigationBar v-if="!showSidebar" />
                         </header>
                     </div>
-                    <div v-if="user.state.user" class="flex-1 px-2">
+                    <div v-if="user.state.user" class="flex-grow px-2 overflow-auto">
                         <slot />
                     </div>
                     <div v-else class="flex items-center justify-center">

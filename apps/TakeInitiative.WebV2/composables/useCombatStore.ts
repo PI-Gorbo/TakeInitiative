@@ -1,8 +1,12 @@
 import {
+    CombatState,
     type InitiativeCharacter,
     type StagedCharacter,
 } from "~/utils/types/models";
 import type { CampaignMemberDto } from "~/utils/api/campaign/getCampaignRequest";
+import { getCombatQuery } from "~/utils/queries/combats";
+import { useQuery } from "@tanstack/vue-query";
+import { getCampaignQuery } from "~/utils/queries/campaign";
 export type InitiativePlayerDto = {
     user: CampaignMemberDto;
     character: InitiativeCharacter;
@@ -13,9 +17,53 @@ export type StagedPlayerDto = {
 };
 
 export const useCombatStore = defineStore("combatStore", () => {
-    // const userStore = useUserStore();
-    // const campaignStore = useCampaignStore();
-    // const api = useApi();
+
+    const userStore = useUserStore()
+
+    // Setup Campaign & Combat Query
+    const campaignId = ref<string | null>(null)
+    const combatId = ref<string | null>(null)
+
+    function init(newCampaignId: string | null, newCombatId: string | null) {
+        campaignId.value = newCampaignId;
+        combatId.value = newCombatId;
+    }
+    const campaignQuery = useQuery(getCampaignQuery(campaignId));
+    const combatQuery = useQuery(getCombatQuery(campaignId, combatId))
+
+    // Query Details
+    const isLoading = computed(
+        () => campaignQuery.isLoading.value || combatQuery.isLoading.value
+    );
+
+    // User Details
+    const userIsDm = computed(() => {
+        return (
+            userStore.state.user?.userId ===
+            combatQuery.data.value?.combat.dungeonMaster
+        );
+    });
+
+    // Aggregations.
+    const memberDtos: ComputedRef<CampaignMemberDto[]> = computed(() => {
+        if (isLoading.value) {
+            return [];
+        }
+
+        const list: CampaignMemberDto[] = [
+            ...campaignQuery.data.value?.campaignMembers!,
+            {
+                ...campaignQuery.data.value!.userCampaignMember,
+                username: userStore.state.user?.username!,
+            },
+        ];
+
+        return list;
+    });
+
+    const getMemberDetailsFor = (id: string): CampaignMemberDto | undefined =>
+        memberDtos.value.find((x) => x.userId == id);
+
 
     // // Start the connection.
     // const connection = new signalR.HubConnectionBuilder()
@@ -40,43 +88,10 @@ export const useCombatStore = defineStore("combatStore", () => {
     //     return;
     // });
 
-    // const state = reactive<{
-    //     combat: Combat | null;
-    //     signalRError: string | null;
-    // }>({
-    //     combat: null,
-    //     signalRError: null,
-    // });
 
-    // async function setCombat(combatId: string): Promise<void> {
-    //     return await api.combat.get({ combatId }).then(async (resp) => {
-    //         state.combat = resp.combat;
-    //         await campaignStore.setCampaignById(resp.combat.campaignId);
-    //     });
-    // }
 
-    // async function joinCombat(): Promise<void> {
-    //     await startConnection();
 
-    //     const userId = userStore.state.user?.userId;
 
-    //     return await connection
-    //         .send("joinCombat", userId, state.combat?.id)
-    //         .catch((error) => (state.signalRError = error));
-    // }
-
-    // async function leaveCombat(): Promise<void> {
-    //     if (connection.state != signalR.HubConnectionState.Connected) return;
-
-    //     const userId = userStore.state.user?.userId;
-    //     if (state.combat?.currentPlayers.find((x) => x.userId) == null) {
-    //         return Promise.resolve();
-    //     }
-
-    //     return await connection
-    //         .send("leaveCombat", userId, state.combat?.id)
-    //         .then(() => connection.stop());
-    // }
 
     // async function startConnection() {
     //     if (
@@ -166,142 +181,159 @@ export const useCombatStore = defineStore("combatStore", () => {
     //     });
     // }
 
-    // const orderedStagedCharacterListWithPlayerInfo: ComputedRef<
-    //     StagedPlayerDto[]
-    // > = computed(() => {
-    //     const compareStrings = (a: string, b: string) => {
-    //         let fa = a.toLowerCase(),
-    //             fb = b.toLowerCase();
+    const orderedStagedCharacterListWithPlayerInfo: ComputedRef<
+        StagedPlayerDto[]
+    > = computed(() => {
+        const compareStrings = (a: string, b: string) => {
+            let fa = a.toLowerCase(),
+                fb = b.toLowerCase();
 
-    //         if (fa < fb) {
-    //             return -1;
-    //         }
-    //         if (fa > fb) {
-    //             return 1;
-    //         }
-    //         return 0;
-    //     };
+            if (fa < fb) {
+                return -1;
+            }
+            if (fa > fb) {
+                return 1;
+            }
+            return 0;
+        };
 
-    //     const openCombatCharacterSortFunc = (
-    //         a: StagedPlayerDto,
-    //         b: StagedPlayerDto
-    //     ): number => {
-    //         const aIsDungeonMaster = a.user?.isDungeonMaster;
-    //         const bIsDungeonMaster = b.user?.isDungeonMaster;
-    //         if (aIsDungeonMaster && !bIsDungeonMaster) {
-    //             return -1;
-    //         } else if (!aIsDungeonMaster && bIsDungeonMaster) {
-    //             return 1;
-    //         }
+        const openCombatCharacterSortFunc = (
+            a: StagedPlayerDto,
+            b: StagedPlayerDto
+        ): number => {
+            const aIsDungeonMaster = a.user?.isDungeonMaster;
+            const bIsDungeonMaster = b.user?.isDungeonMaster;
+            if (aIsDungeonMaster && !bIsDungeonMaster) {
+                return -1;
+            } else if (!aIsDungeonMaster && bIsDungeonMaster) {
+                return 1;
+            }
 
-    //         // First sort by user,
-    //         let result = compareStrings(a.user?.username!, b.user?.username!);
-    //         if (result != 0) {
-    //             return result;
-    //         }
+            // First sort by user,
+            let result = compareStrings(a.user?.username!, b.user?.username!);
+            if (result != 0) {
+                return result;
+            }
 
-    //         // Then sort by character name
-    //         result = compareStrings(a.character.name, b.character.name);
-    //         if (result != 0) {
-    //             return result;
-    //         }
+            // Then sort by character name
+            result = compareStrings(a.character.name, b.character.name);
+            if (result != 0) {
+                return result;
+            }
 
-    //         // Sort by copy number
-    //         result =
-    //             (a.character.copyNumber ?? 0) < (b.character.copyNumber ?? 0)
-    //                 ? -1
-    //                 : 1;
+            // Sort by copy number
+            result =
+                (a.character.copyNumber ?? 0) < (b.character.copyNumber ?? 0)
+                    ? -1
+                    : 1;
 
-    //         return result;
-    //     };
+            return result;
+        };
 
+        return (
+            combatQuery.data.value?.combat.stagedList
+                .map(
+                    (x) =>
+                        ({
+                            user: getMemberDetailsFor(
+                                x.playerId
+                            )!,
+                            character: x,
+                        }) satisfies StagedPlayerDto
+                )
+                .sort(openCombatCharacterSortFunc) ?? []
+        );
+    });
+
+    return {
+        init,
+        isLoading,
+        campaignQuery,
+        combatQuery,
+        userIsDm,
+        memberDtos,
+        orderedStagedCharacterListWithPlayerInfo,
+        getMemberDetailsFor,
+        combatIsOpen: computed(
+            () => combatQuery.data.value?.combat.state == CombatState.Open
+        ),
+        combatIsStarted: computed(
+            () => combatQuery.data.value?.combat.state == CombatState.Started
+        ),
+        combatIsFinished: computed(
+            () => combatQuery.data.value?.combat.state == CombatState.Finished
+        )
+    // connection,
+    // state,
+    // deleteInitiativeCharacter,
+    // updateInitiativeCharacter,
+    // updateStagedCharacter,
+    // addStagedCharacter,
+    // deleteStagedCharacter,
+    // stagePlannedCharacters,
+    // stagePlayerCharacters,
+    // setCombat,
+    // joinCombat,
+    // leaveCombat,
+    // startCombat,
+    // finishCombat,
+    // endTurn,
+    // rollIntoInitiative,
+    // combatIsOpen: computed(() => state.combat?.state == CombatState.Open),
+    // combatIsStarted: computed(
+    //     () => state.combat?.state == CombatState.Started
+    // ),
+    // combatIsFinished: computed(
+    //     () => state.combat?.state == CombatState.Finished
+    // ),
+    // userIsDm: computed(
+    //     () => userStore.state.user?.userId == state.combat!.dungeonMaster
+    // ),
+    // combat: computed(() => {
+    //     return state.combat;
+    // }),
+    // anyPlannedCharacters: computed(
+    //     () =>
+    //         (state.combat?.plannedStages.flatMap((x) => x.npcs).length ??
+    //             0) > 0
+    // ),
+    // orderedStagedCharacterListWithPlayerInfo,
+    // initiativeListWithPlayerInfo: computed(
+    //     () =>
+    //         state.combat?.initiativeList.map(
+    //             (x) =>
+    //                 ({
+    //                     user: campaignStore.getMemberDetailsFor(
+    //                         x.playerId
+    //                     )!,
+    //                     character: x,
+    //                 }) satisfies InitiativePlayerDto
+    //         ) ?? []
+    // ),
+    // isEditableForUser: (charInfo: {
+    //     user: CampaignMemberDto;
+    //     character: InitiativeCharacter | StagedCharacter;
+    // }) => {
     //     return (
-    //         state.combat?.stagedList
-    //             .map(
-    //                 (x) =>
-    //                     ({
-    //                         user: campaignStore.getMemberDetailsFor(
-    //                             x.playerId
-    //                         )!,
-    //                         character: x,
-    //                     }) satisfies StagedPlayerDto
-    //             )
-    //             .sort(openCombatCharacterSortFunc) ?? []
+        //         userStore.state.user?.userId == state.combat?.dungeonMaster ||
+        //         charInfo.user?.userId == userStore.state.user?.userId
     //     );
-    // });
+        // },
+        // getIconForUser: (charInfo: {
+        //     user: CampaignMemberDto;
+        //     character: InitiativeCharacter | StagedCharacter;
+        // }) => {
+        //     const currentUserId = userStore.state.user?.userId;
 
-    // return {
-    //     connection,
-    //     state,
-    //     deleteInitiativeCharacter,
-    //     updateInitiativeCharacter,
-    //     updateStagedCharacter,
-    //     addStagedCharacter,
-    //     deleteStagedCharacter,
-    //     stagePlannedCharacters,
-    //     stagePlayerCharacters,
-    //     setCombat,
-    //     joinCombat,
-    //     leaveCombat,
-    //     startCombat,
-    //     finishCombat,
-    //     endTurn,
-    //     rollIntoInitiative,
-    //     combatIsOpen: computed(() => state.combat?.state == CombatState.Open),
-    //     combatIsStarted: computed(
-    //         () => state.combat?.state == CombatState.Started
-    //     ),
-    //     combatIsFinished: computed(
-    //         () => state.combat?.state == CombatState.Finished
-    //     ),
-    //     userIsDm: computed(
-    //         () => userStore.state.user?.userId == state.combat!.dungeonMaster
-    //     ),
-    //     combat: computed(() => {
-    //         return state.combat;
-    //     }),
-    //     anyPlannedCharacters: computed(
-    //         () =>
-    //             (state.combat?.plannedStages.flatMap((x) => x.npcs).length ??
-    //                 0) > 0
-    //     ),
-    //     orderedStagedCharacterListWithPlayerInfo,
-    //     initiativeListWithPlayerInfo: computed(
-    //         () =>
-    //             state.combat?.initiativeList.map(
-    //                 (x) =>
-    //                     ({
-    //                         user: campaignStore.getMemberDetailsFor(
-    //                             x.playerId
-    //                         )!,
-    //                         character: x,
-    //                     }) satisfies InitiativePlayerDto
-    //             ) ?? []
-    //     ),
-    //     isEditableForUser: (charInfo: {
-    //         user: CampaignMemberDto;
-    //         character: InitiativeCharacter | StagedCharacter;
-    //     }) => {
-    //         return (
-    //             userStore.state.user?.userId == state.combat?.dungeonMaster ||
-    //             charInfo.user?.userId == userStore.state.user?.userId
-    //         );
-    //     },
-    //     getIconForUser: (charInfo: {
-    //         user: CampaignMemberDto;
-    //         character: InitiativeCharacter | StagedCharacter;
-    //     }) => {
-    //         const currentUserId = userStore.state.user?.userId;
+        //     if (charInfo.user?.userId == state.combat?.dungeonMaster) {
+        //         return "crown";
+        //     }
 
-    //         if (charInfo.user?.userId == state.combat?.dungeonMaster) {
-    //             return "crown";
-    //         }
+        //     if (charInfo.user?.userId == currentUserId) {
+        //         return "circle-user";
+        //     }
 
-    //         if (charInfo.user?.userId == currentUserId) {
-    //             return "circle-user";
-    //         }
-
-    //         return "user-large";
-    //     },
-    // };
+        //     return "user-large";
+        // },
+    };
 });

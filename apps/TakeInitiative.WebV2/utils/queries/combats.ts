@@ -27,10 +27,10 @@ export const getAllCombatsQuery = (campaignId: RefOrGetter<string>) => queryOpti
     staleTime: 1000 * 60 * 5, // 5 minutes
 })
 
-export const getCombatQueryKey = (campaignId: MaybeRefOrGetter<string>, combatId: MaybeRefOrGetter<string>) => [campaignId, 'combats', combatId]
-export const getCombatQuery = (campaignId: RefOrGetter<string>, combatId: RefOrGetter<string>) => queryOptions({
+export const getCombatQueryKey = (campaignId: MaybeRefOrGetter<string | null>, combatId: MaybeRefOrGetter<string | null>) => [campaignId, 'combats', combatId]
+export const getCombatQuery = (campaignId: RefOrGetter<string | null>, combatId: RefOrGetter<string | null>) => queryOptions({
     queryKey: getCombatQueryKey(campaignId, combatId),
-    queryFn: () => useApi().combat.get({ combatId: toValue(combatId) }),
+    queryFn: () => useApi().combat.get({ combatId: toValue(combatId)! }),
     enabled: () => !!toValue(campaignId) && !!toValue(combatId),
     staleTime: 1000 * 60 * 5,
 })

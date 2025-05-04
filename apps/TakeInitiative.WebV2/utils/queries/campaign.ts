@@ -3,11 +3,11 @@ import type { RefOrGetter } from "./utils";
 import type { CampaignMemberResource } from "../types/models";
 import type { GetCampaignResponse } from "../api/campaign/getCampaignRequest";
 
-export const getCampaignQueryKey = (campaignId: MaybeRefOrGetter<string>) => ["campaign", campaignId];
-export const getCampaignQuery = (campaign: RefOrGetter<string>) => queryOptions({
+export const getCampaignQueryKey = (campaignId: MaybeRefOrGetter<string | null>) => ["campaign", campaignId];
+export const getCampaignQuery = (campaign: RefOrGetter<string | null>) => queryOptions({
     queryKey: getCampaignQueryKey(campaign),
-    queryFn: () => useApi().campaign.get({ campaignId: toValue(campaign) }),
-    enabled: () => toValue(campaign) !== undefined,
+    queryFn: () => useApi().campaign.get({ campaignId: toValue(campaign)! }),
+    enabled: () => !!toValue(campaign),
     staleTime: 1000 * 60 * 5, // 5 minutes
 })
 

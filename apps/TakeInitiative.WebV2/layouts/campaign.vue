@@ -1,5 +1,5 @@
 <template>
-    <div class="h-full w-full">
+    <div class="h-full w-full max-h-full ">
         <NuxtLayout name="main-app">
             <LoadingFallback
                 :isLoading="campaignQuery.isLoading.value"
