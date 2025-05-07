@@ -1,5 +1,5 @@
 <template>
-    <ul class="flex flex-col gap-2 w-full overflow-y-auto max-h-full ">
+    <ul class="flex flex-col gap-2 w-full overflow-y-auto max-h-full">
         <li
             v-for="{
                 character,
@@ -8,7 +8,8 @@
             :key="character.id">
             <Button
                 variant="outline"
-                class="interactable w-full flex justify-between h-fit">
+                class="interactable w-full flex justify-between h-fit"
+                @click="() => addStagedCharacter(character.id)">
                 <div class="flex flex-col items-start">
                     <label>{{ character.name }}</label>
                     <label class="text-muted-foreground">{{
@@ -42,9 +43,22 @@
 
 <script setup lang="ts">
     import { useQuery } from "@tanstack/vue-query";
+    import { toast } from "vue-sonner";
     import { getCampaignQuery } from "~/utils/queries/campaign";
-    import { getCombatQuery } from "~/utils/queries/combats";
+    import {
+        getCombatQuery,
+        useAddStagedCharactersToCombatMutation,
+    } from "~/utils/queries/combats";
     import { CombatStartedHistoryEvent } from "~/utils/types/models";
 
     const combatStore = useCombatStore();
+    const addStagedCharacterMutation = useAddStagedCharactersToCombatMutation();
+    const addStagedCharacter = async (characterId: string) => {
+        addStagedCharacterMutation
+            .mutateAsync({
+                combatId: combatStore.combatQuery.data?.combat.id!,
+                characterIds: [characterId],
+            })
+            .then(() => toast.success("Added successfully!"));
+    };
 </script>

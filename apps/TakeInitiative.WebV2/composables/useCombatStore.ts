@@ -263,61 +263,48 @@ export const useCombatStore = defineStore("combatStore", () => {
         combatIsFinished: computed(
             () => combatQuery.data.value?.combat.state == CombatState.Finished
         )
-    // connection,
-    // state,
-    // deleteInitiativeCharacter,
-    // updateInitiativeCharacter,
-    // updateStagedCharacter,
-    // addStagedCharacter,
-    // deleteStagedCharacter,
-    // stagePlannedCharacters,
-    // stagePlayerCharacters,
-    // setCombat,
-    // joinCombat,
-    // leaveCombat,
-    // startCombat,
-    // finishCombat,
-    // endTurn,
-    // rollIntoInitiative,
-    // combatIsOpen: computed(() => state.combat?.state == CombatState.Open),
-    // combatIsStarted: computed(
-    //     () => state.combat?.state == CombatState.Started
-    // ),
-    // combatIsFinished: computed(
-    //     () => state.combat?.state == CombatState.Finished
-    // ),
-    // userIsDm: computed(
-    //     () => userStore.state.user?.userId == state.combat!.dungeonMaster
-    // ),
-    // combat: computed(() => {
-    //     return state.combat;
-    // }),
-    // anyPlannedCharacters: computed(
-    //     () =>
-    //         (state.combat?.plannedStages.flatMap((x) => x.npcs).length ??
-    //             0) > 0
-    // ),
-    // orderedStagedCharacterListWithPlayerInfo,
-    // initiativeListWithPlayerInfo: computed(
-    //     () =>
-    //         state.combat?.initiativeList.map(
-    //             (x) =>
-    //                 ({
-    //                     user: campaignStore.getMemberDetailsFor(
-    //                         x.playerId
-    //                     )!,
-    //                     character: x,
-    //                 }) satisfies InitiativePlayerDto
-    //         ) ?? []
-    // ),
-    // isEditableForUser: (charInfo: {
-    //     user: CampaignMemberDto;
-    //     character: InitiativeCharacter | StagedCharacter;
-    // }) => {
-    //     return (
+        // connection,
+        // state,
+        // deleteInitiativeCharacter,
+        // updateInitiativeCharacter,
+        // updateStagedCharacter,
+        // addStagedCharacter,
+        // deleteStagedCharacter,
+        // stagePlannedCharacters,
+        // stagePlayerCharacters,
+        // setCombat,
+        // joinCombat,
+        // leaveCombat,
+        // startCombat,
+        // finishCombat,
+        // endTurn,
+        // rollIntoInitiative,
+        // anyPlannedCharacters: computed(
+        //     () =>
+        //         (state.combat?.plannedStages.flatMap((x) => x.npcs).length ??
+        //             0) > 0
+        // ),
+        // orderedStagedCharacterListWithPlayerInfo,
+        // initiativeListWithPlayerInfo: computed(
+        //     () =>
+        //         state.combat?.initiativeList.map(
+        //             (x) =>
+        //                 ({
+        //                     user: campaignStore.getMemberDetailsFor(
+        //                         x.playerId
+        //                     )!,
+        //                     character: x,
+        //                 }) satisfies InitiativePlayerDto
+        //         ) ?? []
+        // ),
+        // isEditableForUser: (charInfo: {
+        //     user: CampaignMemberDto;
+        //     character: InitiativeCharacter | StagedCharacter;
+        // }) => {
+        //     return (
         //         userStore.state.user?.userId == state.combat?.dungeonMaster ||
         //         charInfo.user?.userId == userStore.state.user?.userId
-    //     );
+        //     );
         // },
         // getIconForUser: (charInfo: {
         //     user: CampaignMemberDto;

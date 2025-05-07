@@ -105,4 +105,15 @@ export const useStagePlayerCharacterMutation = () => {
     })
 }
 
+export const useAddStagedCharactersToCombatMutation = () => {
+    const client = useQueryClient()
+    const api = useApi()
+    return useMutation({
+        mutationFn: api.combat.stage.rollIntoInitiative,
+        onSuccess: (data, request) => {
+            client.setQueryData(getCombatQueryKey(data.combat.campaignId, data.combat.id), data);
+        },
+    })
+}
+
 
