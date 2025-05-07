@@ -1,5 +1,5 @@
 <template>
-    <ul class="flex flex-col gap-2 w-full overflow-y-auto max-h-full">
+    <ul class="flex flex-col gap-2 w-full overflow-y-auto max-h-full ">
         <li
             v-for="{
                 character,
