@@ -4,10 +4,10 @@
             store.campaignQuery.isLoading || store.combatQuery.isLoading
         "
         class="h-full w-full max-h-full flex justify-center">
-        <div class="lg:grid lg:grid-cols-3 w-page lg:gap-4 max-h-full">
+        <div class="lg:grid lg:grid-cols-3 w-page lg:gap-4 max-h-full pb-4">
             <div
-                class="hidden lg:block lg:col-span-1 lg:col-start-1 max-h-full">
-                <Card class="max-h-full w-full flex flex-col">
+                class="hidden lg:block lg:col-span-1 lg:col-start-1 overflow-auto">
+                <Card class="h-full w-full max-h-full flex flex-col">
                     <CardHeader>
                         <CardTitle class="font-NovaCut text-gold">{{
                             store.combatQuery.data?.combat.combatName
@@ -34,15 +34,14 @@
                             <template else> This combat has ended. </template>
                         </CardDescription>
                     </CardHeader>
-
-                    <CardContent class="flex-1 ">
+                    <CardContent class="flex-1 h-full max-h-full overflow-auto">
                         <Transition name="fade" mode="out-in">
                             <section
                                 v-if="
                                     store.combatQuery.data?.combat.state ===
                                     CombatState.Started
                                 "
-                                class="flex flex-col gap-2 h-full max-h-full overflow-hidden">
+                                class="flex flex-col gap-2 flex-1 overlfow-auto h-full max-h-full">
                                 <header>
                                     <div>
                                         <FontAwesomeIcon
@@ -54,8 +53,9 @@
                                         combat by the DM.
                                     </CardDescription>
                                 </header>
-                                <div class="flex-grow overflow-auto">
+                                <div class="flex-1 overflow-y-auto">
                                     <CampaignCombatReinforcementList
+                                        class="overflow-auto"
                                         :campaignId="route.params.campaignId"
                                         :combatId="route.params.combatId" />
                                 </div>
@@ -97,7 +97,8 @@
                     </CardContent>
                 </Card>
             </div>
-            <div class="lg:col-span-2 lg:col-start-2 flex flex-col">
+            <div
+                class="lg:col-span-2 lg:col-start-2 flex flex-col overflow-auto">
                 <CampaignCombatInitiativeList />
             </div>
         </div>
@@ -136,6 +137,7 @@
 
     definePageMeta({
         layout: "main-app",
+        pageType: "fixed",
         requiresAuth: true,
         layoutTransition: false,
     });
