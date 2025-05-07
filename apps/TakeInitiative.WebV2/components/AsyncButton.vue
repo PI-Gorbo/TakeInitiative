@@ -1,5 +1,5 @@
 <template>
-    <Button>
+    <Button @click="onClick">
         <slot :isLoading="computedIsLoading">
             <div class="space-x-1">
                 <template v-if="computedIsLoading">
@@ -34,4 +34,15 @@
     const computedIsLoading = computed(
         () => _isLoading.value || props.isLoading
     );
+
+    function onClick() {
+        if (_isLoading.value) {
+            return;
+        }
+
+        _isLoading.value = true;
+        props.click?.().finally(() => {
+            _isLoading.value = false;
+        });
+    }
 </script>

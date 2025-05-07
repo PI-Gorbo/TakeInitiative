@@ -98,8 +98,18 @@
                 </Card>
             </div>
             <div
-                class="lg:col-span-2 lg:col-start-2 flex flex-col overflow-auto">
-                <CampaignCombatInitiativeList />
+                class="lg:col-span-2 lg:col-start-2 flex flex-col overflow-auto gap-4">
+                <div class="flex-1 overflow-auto">
+                    <CampaignCombatInitiativeList />
+                </div>
+                <div class="flex justify-end">
+                    <AsyncButton
+                        variant="destructive"
+                        label="End Turn"
+                        loadingLabel="Ending..."
+                        :click="endTurn" />
+                    <!-- <Button variant="destructive"><FontAwesomeIcon/> End Turn</Button> -->
+                </div>
             </div>
         </div>
     </LoadingFallback>
@@ -110,7 +120,7 @@
         faPlusCircle,
     } from "@fortawesome/free-solid-svg-icons";
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-    import { useQuery } from "@tanstack/vue-query";
+    import { toast } from "vue-sonner";
     import StageCharactersForm from "~/components/Campaign/Combat/StageCharactersForm.vue";
     import CardContent from "~/components/ui/card/CardContent.vue";
     import CardDescription from "~/components/ui/card/CardDescription.vue";
@@ -119,8 +129,7 @@
     import SheetHeader from "~/components/ui/sheet/SheetHeader.vue";
     import SheetTitle from "~/components/ui/sheet/SheetTitle.vue";
     import SheetTrigger from "~/components/ui/sheet/SheetTrigger.vue";
-    import { getCampaignQuery } from "~/utils/queries/campaign";
-    import { getCombatQuery } from "~/utils/queries/combats";
+    import { useEndTurnMutation } from "~/utils/queries/combats";
     import { CombatState } from "~/utils/types/models";
 
     const route = useRoute("app-campaigns-campaignId-combats-combatId");
@@ -141,4 +150,14 @@
         requiresAuth: true,
         layoutTransition: false,
     });
+
+    const endTurnMutation = useEndTurnMutation();
+    const endTurn = async () => {
+        await endTurnMutation
+            .mutateAsync({
+                combatId: route.params.combatId,
+            })
+            .then(() => toast.success("Ended Turn!"))
+            .catch(() => toast.error("Failed to end turn!"));
+    };
 </script>

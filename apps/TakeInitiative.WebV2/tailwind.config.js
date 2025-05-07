@@ -103,7 +103,7 @@ export default {
                 "accordion-up": "accordion-up 0.2s ease-out",
             },
             boxShadow: {
-                "solid-sm": "0 0.2rem hsl(var(--accent))",
+                "solid-sm": "0 0.2rem",
                 "solid-xs": "0 0.1rem hsl(var(--accent))",
             },
         },

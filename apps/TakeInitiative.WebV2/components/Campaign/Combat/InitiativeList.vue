@@ -9,9 +9,13 @@
             <Card
                 class="group flex p-2 items-center gap-2"
                 :class="{
-                    'shadow-solid-sm interactable':
+                    [`${styles.interactable} shadow-accent active:shadow-accent`]:
                         combatStore.userIsDm ||
                         user.userId === userStore.state.user?.userId,
+
+                    'shadow-gold border-gold':
+                        index ===
+                        combatStore.combatQuery.data?.combat.initiativeIndex,
                 }">
                 <section
                     v-if="

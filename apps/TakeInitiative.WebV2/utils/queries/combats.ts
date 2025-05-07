@@ -1,7 +1,7 @@
 import { queryOptions, useMutation, useQueryClient } from "@tanstack/vue-query";
 import type { ShallowRef } from "vue";
 import type { GetCombatsResponse } from "../api/combat/getCombatsRequest";
-import type { RefOrGetter } from "./utils";
+import { seconds, type RefOrGetter } from "./utils";
 import type { CreatePlannedCombatRequest } from "../api/plannedCombat/createPlannedCombatRequest";
 import type { OpenCombatRequest } from "../api/combat/openCombatRequest";
 import type { PostStagePlayerCharactersRequest, PostStagePlayerCharactersResponse } from "../api/combat/postStagePlayerCharactersRequest";
@@ -24,7 +24,7 @@ export const getAllCombatsQuery = (campaignId: RefOrGetter<string>) => queryOpti
         data.combats.sort(sortByFinishedTimestamp);
         return data;
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: seconds(30),
 })
 
 export const getCombatQueryKey = (campaignId: MaybeRefOrGetter<string | null>, combatId: MaybeRefOrGetter<string | null>) => [campaignId, 'combats', combatId]
@@ -32,7 +32,7 @@ export const getCombatQuery = (campaignId: RefOrGetter<string | null>, combatId:
     queryKey: getCombatQueryKey(campaignId, combatId),
     queryFn: () => useApi().combat.get({ combatId: toValue(combatId)! }),
     enabled: () => !!toValue(campaignId) && !!toValue(combatId),
-    staleTime: 1000 * 60 * 5,
+    staleTime: seconds(30), // 30 Seconds
 })
 
 export const createDraftCombatMutation = () => {
@@ -110,6 +110,17 @@ export const useAddStagedCharactersToCombatMutation = () => {
     const api = useApi()
     return useMutation({
         mutationFn: api.combat.stage.rollIntoInitiative,
+        onSuccess: (data, request) => {
+            client.setQueryData(getCombatQueryKey(data.combat.campaignId, data.combat.id), data);
+        },
+    })
+}
+
+export const useEndTurnMutation = () => {
+    const client = useQueryClient()
+    const api = useApi()
+    return useMutation({
+        mutationFn: api.combat.endTurn,
         onSuccess: (data, request) => {
             client.setQueryData(getCombatQueryKey(data.combat.campaignId, data.combat.id), data);
         },
