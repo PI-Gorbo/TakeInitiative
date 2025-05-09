@@ -1,12 +1,11 @@
-using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 
 namespace TakeInitiative.Utilities;
 
-public class InitiativeComparer : IComparer<DiceRoll[]>, IEqualityComparer<DiceRoll[]>
+public class InitiativeComparer : IComparer<int[]>, IEqualityComparer<int[]>, IComparer<DiceRoll[]>,
+    IEqualityComparer<DiceRoll[]>
 {
-
-    public int Compare(DiceRoll[]? x, DiceRoll[]? y)
+    public int Compare(int[]? x, int[]? y)
     {
         if (x == null && y == null)
         {
@@ -30,10 +29,10 @@ public class InitiativeComparer : IComparer<DiceRoll[]>, IEqualityComparer<DiceR
             currentIndex++;
         }
 
-        return x[currentIndex].Total > y[currentIndex].Total ? 1 : -1;
+        return x[currentIndex] > y[currentIndex] ? 1 : -1;
     }
 
-    public bool Equals(DiceRoll[]? x, DiceRoll[]? y)
+    public bool Equals(int[]? x, int[]? y)
     {
         if (x == y) // Reference equals or null.
         {
@@ -45,15 +44,18 @@ public class InitiativeComparer : IComparer<DiceRoll[]>, IEqualityComparer<DiceR
             return false;
         }
 
-        return x!.Select(x => x.Total).SequenceEqual(y!.Select(x => x.Total));
+        return x.SequenceEqual(y);
     }
 
-    public int GetHashCode([DisallowNull] DiceRoll[] obj)
+    public int GetHashCode([DisallowNull] int[] obj)
     {
-        return ((IStructuralEquatable)obj.Select(x => x.Total).ToArray()).GetHashCode(EqualityComparer<int>.Default);
+        return obj.GetHashCode();
     }
+
+    public int Compare(DiceRoll[]? x, DiceRoll[]? y) =>
+        this.Compare(x?.Select(x => x.Total).ToArray(), y?.Select(x => x.Total).ToArray());
+
+    public bool Equals(DiceRoll[]? x, DiceRoll[]? y) =>
+        this.Equals(x?.Select(x => x.Total).ToArray(), y?.Select(x => x.Total).ToArray());
+    public int GetHashCode(DiceRoll[] obj) => this.GetHashCode(obj?.Select(x => x.Total).ToArray());
 }
-
-
-
-
