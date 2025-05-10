@@ -116,7 +116,6 @@ async function updateStage(
     stage: PlannedCombatStage,
     req: Omit<UpdatePlannedCombatStageRequest, "combatId" | "stageId">,
 ) {
-    debugger
     return await campaignCombatStore.updateStage({ stageId: stage.id, ...req });
 }
 </script>

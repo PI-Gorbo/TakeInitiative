@@ -1,30 +1,36 @@
-import {useDebounceFn, useTimeoutFn} from "@vueuse/core";
-
+import { useDebounceFn, useTimeoutFn } from "@vueuse/core";
 
 export type useDebouncedAsyncFnOptions<TReturnType> = {
-    debounceDuration?: number
-    outcomeStateDuration?: number
-    isSuccess?: (r: TReturnType) => boolean
-}
-export const useDebouncedAsyncFn = <Args extends unknown[], Return>(func: (...args: Args) => Promise<Return>, options?: useDebouncedAsyncFnOptions<Return>) => {
-
-    const state = ref<'Idle' | 'TriggeredAndWaiting' | 'Success' | 'Failure'>('Idle');
-    const resetBackToIdleTimeout = useTimeoutFn(() => state.value = "Idle", options?.outcomeStateDuration ?? 4000)
+    debounceDuration?: number;
+    outcomeStateDuration?: number;
+    isSuccess?: (r: TReturnType) => boolean;
+};
+export const useDebouncedAsyncFn = <Args extends unknown[], Return>(
+    func: (...args: Args) => Promise<Return>,
+    options?: useDebouncedAsyncFnOptions<Return>
+) => {
+    const state = ref<"Idle" | "TriggeredAndWaiting" | "Success" | "Failure">(
+        "Idle"
+    );
+    const resetBackToIdleTimeout = useTimeoutFn(
+        () => (state.value = "Idle"),
+        options?.outcomeStateDuration ?? 4000
+    );
     const _debouncedSubmit = useDebounceFn(
-        (...args: Args) => func(...args).then(res => {
-            if (options?.isSuccess == undefined) {
-                state.value = 'Success';
-            } else {
-                if (options?.isSuccess(res)) {
-                    state.value = 'Success'
+        (...args: Args) =>
+            func(...args).then((res) => {
+                if (options?.isSuccess == undefined) {
+                    state.value = "Success";
                 } else {
-                    state.value = 'Failure'
+                    if (options?.isSuccess(res)) {
+                        state.value = "Success";
+                    } else {
+                        state.value = "Failure";
+                    }
                 }
-            }
-            resetBackToIdleTimeout.start();
-            debugger;
-            return res;
-        }),
+                resetBackToIdleTimeout.start();
+                return res;
+            }),
         options?.debounceDuration ?? 1000
     );
 
@@ -32,14 +38,14 @@ export const useDebouncedAsyncFn = <Args extends unknown[], Return>(func: (...ar
         state,
         debouncedSubmit: async (...args: Args) => {
             resetBackToIdleTimeout.stop();
-            state.value = 'TriggeredAndWaiting';
+            state.value = "TriggeredAndWaiting";
             try {
-                return await _debouncedSubmit(...args)
+                return await _debouncedSubmit(...args);
             } catch {
-                state.value = 'Failure'
+                state.value = "Failure";
                 resetBackToIdleTimeout.start();
                 return null;
             }
-        }
-    }
-}
+        },
+    };
+};
