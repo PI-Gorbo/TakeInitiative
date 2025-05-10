@@ -43,31 +43,31 @@
                                                     variant="outline"
                                                     :disabled="currentDraftCombat ===plannedCombat.id"
                                                     :class="[
-                                    {
-                                        interactable:
-                                            currentDraftCombat !==
-                                                plannedCombat.id &&
-                                            (isLargeScreen ||
-                                                currentDraftCombat ===
-                                                    undefined ||
-                                                currentDraftCombat !==
-                                                    plannedCombat.id),
-                                    },
-                            ]"
+                                                                {
+                                                                    interactable:
+                                                                        currentDraftCombat !==
+                                                                            plannedCombat.id &&
+                                                                        (isLargeScreen ||
+                                                                            currentDraftCombat ===
+                                                                                undefined ||
+                                                                            currentDraftCombat !==
+                                                                                plannedCombat.id),
+                                                                },
+                                                            ]"
                                                     @click="
-                                () =>
-                                    router.push({
-                                        name: 'app-campaigns-campaignId-combats-drafts-draftCombatId',
-                                        params: {
-                                            campaignId:
-                                                route
-                                                    .params
-                                                    .campaignId,
-                                            draftCombatId:
-                                                plannedCombat.id,
-                                        },
-                                    })
-                            ">
+                                                () =>
+                                                    router.push({
+                                                        name: 'app-campaigns-campaignId-combats-drafts-draftCombatId',
+                                                        params: {
+                                                            campaignId:
+                                                                route
+                                                                    .params
+                                                                    .campaignId,
+                                                            draftCombatId:
+                                                                plannedCombat.id,
+                                                        },
+                                                    })
+                                            ">
                                                     {{ plannedCombat.name }}
                                                 </Button>
                                                 <ConfirmationButton
@@ -75,7 +75,7 @@
                                                         campaignQuery.isSuccess
                                                             .value &&
                                                         campaignQuery.data.value
-                                                            ?.currentCombatInfo ===
+                                                            ?.currentCombatInfo ==
                                                             undefined
                                                     "
                                                     :triggerButtonProps="{
