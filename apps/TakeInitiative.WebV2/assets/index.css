@@ -20,17 +20,16 @@
     font-family: "Overpass";
     background-color: var(--background);
     color: var(--foreground);
-    background-image:
-        linear-gradient(
+    background-image: linear-gradient(
             to bottom,
             hsl(var(--primary) / 0.2) 0.15em,
             transparent 1px
-        ),
-        linear-gradient(
+    ),
+    linear-gradient(
             to right,
             hsl(var(--primary) / 0.2) 0.15em,
             transparent 1px
-        );
+    );
     background-size: 50px 50px;
     /* Adjust grid size here */
     animation: scrollGrid 6s linear infinite;
@@ -70,10 +69,14 @@
         --accent: 215 27.9% 16.9%;
         --accent-foreground: 210 20% 98%;
 
+        --destructive-tint: 0 62.8% 35%;
         --destructive: 0 62.8% 30.6%;
+        --destructive-shade: 0 62.8% 20%;
         --destructive-foreground: 210 20% 98%;
 
+        --gold-tint: 40 96% 65%;
         --gold: 40 96% 57%;
+        --gold-shade: 40 96% 40%;
         --gold-foreground: 224 71.4% 4.1%;
 
         --success-tint: 120, 33%, 50%;
@@ -91,26 +94,23 @@
     * {
         @apply border-border;
     }
+
     body {
         @apply bg-background text-foreground;
     }
+
     .w-page {
         @apply w-full max-w-[1080px] sm:w-4/5;
     }
+
     .w-page-slim {
         @apply w-full max-w-2xl sm:w-4/5;
     }
-    button.interactable {
-        @apply shadow-accent shadow-solid-sm hover:shadow-primary hover:border-primary;
-    }
-    .interactable {
-        @apply shadow-accent shadow-solid-sm hover:shadow-primary hover:border-primary;
-    }
+
 }
 
-.interactable:active {
-    transform: translateY(0.1rem);
-    box-shadow: 0 0.1rem hsl(var(--accent));
+.interactable {
+    @apply shadow-[0_0.2rem] active:shadow-[0_0.1rem] active:translate-y-[0.1rem] cursor-pointer shadow-accent active:shadow-accent hover:shadow-primary hover:border-primary;
 }
 
 .fade-enter-active,

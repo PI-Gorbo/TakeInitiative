@@ -121,7 +121,7 @@
         requiresAuth: true,
         layoutTransition: false,
         middleware: [
-            async (to) => {
+            async () => {
                 if (import.meta.server) return;
             },
         ],

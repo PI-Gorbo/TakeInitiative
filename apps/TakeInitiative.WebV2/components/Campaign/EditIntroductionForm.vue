@@ -59,9 +59,7 @@
     }
 
     const debouncedFunc = useDebouncedAsyncFn(
-        async (req: z.infer<typeof schema>) => await submitDetails(req),
-        1000,
-        4000
+        async (req: z.infer<typeof schema>) => await submitDetails(req)
     );
 
     watch(

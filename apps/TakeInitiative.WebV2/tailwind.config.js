@@ -41,11 +41,15 @@ export default {
                     foreground: "hsl(var(--accent-foreground))",
                 },
                 destructive: {
+                    tint: "hsl(var(--destructive-tint))",
                     DEFAULT: "hsl(var(--destructive))",
+                    shade: "hsl(var(--destructive-shade))",
                     foreground: "hsl(var(--destructive-foreground))",
                 },
                 gold: {
+                    tint: "hsl(var(--gold-tint))",
                     DEFAULT: "hsl(var(--gold))",
+                    shade: "hsl(var(--gold-shade))",
                     foreground: "hsl(var(--gold-foreground))",
                 },
                 success: {

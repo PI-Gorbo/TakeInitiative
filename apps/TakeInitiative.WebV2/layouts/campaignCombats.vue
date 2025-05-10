@@ -21,22 +21,17 @@
                                 :combatInfo="
                                     campaignQuery.data.value
                                         ?.currentCombatInfo ?? null
-                                " />
+                                "/>
                             <Card
                                 class="p-4 border-primary/50 flex flex-col gap-4">
                                 <section class="flex flex-col gap-2">
                                     <header>
                                         <FontAwesomeIcon
-                                            :icon="faPenToSquare" />
+                                            :icon="faPenToSquare"/>
                                         <span> Draft Combats </span>
                                     </header>
                                     <template
-                                        v-if="
-                                            (
-                                                combatsQuery.data.value
-                                                    ?.plannedCombats ?? []
-                                            ).length > 0
-                                        ">
+                                        v-if="(combatsQuery.data.value?.plannedCombats ?? []).length > 0">
                                         <ul class="flex flex-col gap-2">
                                             <li
                                                 v-for="plannedCombat in combatsQuery
@@ -44,38 +39,35 @@
                                                 :key="plannedCombat.id"
                                                 class="flex gap-1">
                                                 <Button
-                                                    class="shadow-solid-sm h-fit flex justify-between w-full items-center disabled:border-primary disabled:opacity-100"
+                                                    class="h-fit flex justify-between w-full items-center disabled:border-primary disabled:opacity-100"
                                                     variant="outline"
-                                                    :disabled="
-                                                        currentDraftCombat ===
-                                                        plannedCombat.id
-                                                    "
+                                                    :disabled="currentDraftCombat ===plannedCombat.id"
                                                     :class="[
-                                                        {
-                                                            interactable:
-                                                                currentDraftCombat !==
-                                                                    plannedCombat.id &&
-                                                                (isLargeScreen ||
-                                                                    currentDraftCombat ===
-                                                                        undefined ||
-                                                                    currentDraftCombat !==
-                                                                        plannedCombat.id),
-                                                        },
-                                                    ]"
+                                    {
+                                        interactable:
+                                            currentDraftCombat !==
+                                                plannedCombat.id &&
+                                            (isLargeScreen ||
+                                                currentDraftCombat ===
+                                                    undefined ||
+                                                currentDraftCombat !==
+                                                    plannedCombat.id),
+                                    },
+                            ]"
                                                     @click="
-                                                        () =>
-                                                            router.push({
-                                                                name: 'app-campaigns-campaignId-combats-drafts-draftCombatId',
-                                                                params: {
-                                                                    campaignId:
-                                                                        route
-                                                                            .params
-                                                                            .campaignId,
-                                                                    draftCombatId:
-                                                                        plannedCombat.id,
-                                                                },
-                                                            })
-                                                    ">
+                                () =>
+                                    router.push({
+                                        name: 'app-campaigns-campaignId-combats-drafts-draftCombatId',
+                                        params: {
+                                            campaignId:
+                                                route
+                                                    .params
+                                                    .campaignId,
+                                            draftCombatId:
+                                                plannedCombat.id,
+                                        },
+                                    })
+                            ">
                                                     {{ plannedCombat.name }}
                                                 </Button>
                                                 <ConfirmationButton
@@ -105,8 +97,9 @@
                                                         },
                                                     }">
                                                     <template #Title
-                                                        >Open combat to
-                                                        players</template
+                                                    >Open combat to
+                                                        players
+                                                    </template
                                                     >
                                                     <template #Description>
                                                         By opening the combat to
@@ -118,7 +111,7 @@
                                                     </template>
                                                     <template #TriggerButton>
                                                         <FontAwesomeIcon
-                                                            :icon="faRocket" />
+                                                            :icon="faRocket"/>
                                                     </template>
                                                     <template #CancelButton>
                                                         Cancel
@@ -163,7 +156,7 @@
                                                     (modalState.modalOpen = true)
                                             ">
                                             <FontAwesomeIcon
-                                                :icon="faPlusCircle" />
+                                                :icon="faPlusCircle"/>
                                             New
                                         </Button>
                                     </div>
@@ -171,7 +164,7 @@
                                 <section>
                                     <header>
                                         <FontAwesomeIcon
-                                            :icon="faFlagCheckered" />
+                                            :icon="faFlagCheckered"/>
                                         <span> Combat History </span>
                                     </header>
                                     <template
@@ -221,106 +214,108 @@
                             !hasAnyCombats
                         "
                         class="lg:block lg:col-span-2 lg:col-start-2">
-                        <NuxtPage />
+                        <NuxtPage/>
                     </div>
                 </section>
             </LoadingFallback>
         </NuxtLayout>
         <Dialog v-model:open="modalState.modalOpen">
             <DialogContent class="flex flex-col gap-2">
-                <DialogHeader> Create a planned combat. </DialogHeader>
+                <DialogHeader> Create a planned combat.</DialogHeader>
 
                 <CampaignCombatDraftCreateForm
                     :campaignId="route.params.campaignId"
-                    :onCreateDraftCombat="createPlannedCombat" />
+                    :onCreateDraftCombat="createPlannedCombat"/>
             </DialogContent>
         </Dialog>
     </div>
 </template>
 <script setup lang="ts">
-    import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-    import { reactiveComputed, useMediaQuery } from "@vueuse/core";
-    import {
-        faFistRaised,
-        faFlagCheckered,
-        faPenToSquare,
-        faPlusCircle,
-        faRocket,
-    } from "@fortawesome/free-solid-svg-icons";
-    import {
-        createDraftCombatMutation,
-        getAllCombatsQuery,
-    } from "~/utils/queries/combats";
-    import { useQuery } from "@tanstack/vue-query";
-    import type { CreatePlannedCombatRequest } from "~/utils/api/plannedCombat/createPlannedCombatRequest";
-    import { CombatState } from "~/utils/types/models";
-    import type { OpenCombatRequest } from "~/utils/api/combat/openCombatRequest";
-    import { toast } from "vue-sonner";
-    import { getCampaignQuery } from "~/utils/queries/campaign";
+import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
+import {reactiveComputed, useMediaQuery} from "@vueuse/core";
+import {
+    faFistRaised,
+    faFlagCheckered,
+    faPenToSquare,
+    faPlusCircle,
+    faRocket,
+} from "@fortawesome/free-solid-svg-icons";
+import {
+    createDraftCombatMutation,
+    getAllCombatsQuery,
+} from "~/utils/queries/combats";
+import {useQuery} from "@tanstack/vue-query";
+import type {CreatePlannedCombatRequest} from "~/utils/api/plannedCombat/createPlannedCombatRequest";
+import {CombatState} from "~/utils/types/models";
+import type {OpenCombatRequest} from "~/utils/api/combat/openCombatRequest";
+import {toast} from "vue-sonner";
+import {getCampaignQuery} from "~/utils/queries/campaign";
 
-    // Stores
-    const router = useRouter();
-    const isLargeScreen = useMediaQuery("(min-width: 1024px)");
-    const route = useRoute("app-campaigns-campaignId-combats");
-    const draftCombatRoute = useRoute(
-        "app-campaigns-campaignId-combats-drafts-draftCombatId"
-    );
-    const currentDraftCombat: ComputedRef<string | null> = computed(
-        () => draftCombatRoute.params.draftCombatId
-    );
+// Stores
+const router = useRouter();
+const isLargeScreen = useMediaQuery("(min-width: 1024px)");
+const route = useRoute("app-campaigns-campaignId-combats");
+const draftCombatRoute = useRoute(
+    "app-campaigns-campaignId-combats-drafts-draftCombatId"
+);
+const currentDraftCombat: ComputedRef<string | null> = computed(
+    () => draftCombatRoute.params.draftCombatId
+);
 
-    const campaignQuery = useQuery(
-        getCampaignQuery(() => route.params.campaignId)
-    );
-    const combatsQuery = useQuery(
-        getAllCombatsQuery(() => {
-            return route.params.campaignId;
-        })
-    );
+const campaignQuery = useQuery(
+    getCampaignQuery(() => route.params.campaignId)
+);
+const combatsQuery = useQuery(
+    getAllCombatsQuery(() => {
+        return route.params.campaignId;
+    })
+);
 
-    const hasALiveCombat = computed(() =>
-        combatsQuery.data.value?.combats.some(
-            (x) => x.state !== CombatState.Finished
+const hasALiveCombat = computed(() =>
+    combatsQuery.data.value?.combats.some(
+        (x) => x.state !== CombatState.Finished
+    )
+);
+
+const hasAnyCombats = computed(
+    () =>
+        (combatsQuery.data.value?.combats.length ?? 0) > 0 ||
+        (combatsQuery.data.value?.plannedCombats.length ?? 0) > 0
+);
+
+const modalState = reactive({
+    modalOpen: false,
+});
+
+const draftCombatHelper = useDraftCombatHelper();
+
+async function createPlannedCombat(
+    request: Omit<CreatePlannedCombatRequest, "campaignId">,
+    startImmidately: boolean
+) {
+    return await draftCombatHelper
+        .createDraftCombat(
+            {
+                ...request,
+                campaignId: route.params.campaignId,
+            },
+            startImmidately
         )
-    );
+        .then(() => {
+            modalState.modalOpen = false;
+            toast.success("Created combat");
+        });
+}
 
-    const hasAnyCombats = computed(
-        () =>
-            (combatsQuery.data.value?.combats.length ?? 0) > 0 ||
-            (combatsQuery.data.value?.plannedCombats.length ?? 0) > 0
-    );
-
-    const modalState = reactive({
-        modalOpen: false,
-    });
-
-    const draftCombatHelper = useDraftCombatHelper();
-    async function createPlannedCombat(
-        request: Omit<CreatePlannedCombatRequest, "campaignId">,
-        startImmidately: boolean
-    ) {
-        return await draftCombatHelper
-            .createDraftCombat(
-                {
-                    ...request,
-                    campaignId: route.params.campaignId,
-                },
-                startImmidately
-            )
-            .then(() => {
-                modalState.modalOpen = false;
-                toast.success("Created combat");
-            });
-    }
-    async function openDraftCombat(
-        request: Omit<OpenCombatRequest, "campaignId">
-    ) {
-        debugger;
-        return await draftCombatHelper
-            .openDraftCombat(route.params.campaignId, request.plannedCombatId)
-            .then(() => {
-                modalState.modalOpen = false;
-                toast.success("Combat has been opened to players!");
-            });
-    }
+async function openDraftCombat(
+    request: Omit<OpenCombatRequest, "campaignId">
+) {
+    debugger;
+    return await draftCombatHelper
+        .openDraftCombat(route.params.campaignId, request.plannedCombatId)
+        .then(() => {
+            modalState.modalOpen = false;
+            toast.success("Combat has been opened to players!");
+        });
+}
 </script>
