@@ -44,6 +44,7 @@
                 {{ character.name }}
             </Card>
         </a>
+
         <Sheet v-model:open="addStagedCharacterSheet">
             <SheetTrigger asChild>
                 <Button variant="link">
