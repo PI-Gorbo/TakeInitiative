@@ -44,9 +44,27 @@
                 {{ character.name }}
             </Card>
         </a>
+        <Sheet v-model:open="addStagedCharacterSheet">
+            <SheetTrigger asChild>
+                <Button variant="link">
+                    <FontAwesomeIcon :icon="faPlusCircle" />
+                    Add
+                </Button>
+            </SheetTrigger>
+            <SheetContent>
+                <SheetHeader>
+                    <SheetTitle> Add Reinforcements </SheetTitle>
+                </SheetHeader>
+                <StageCharactersForm
+                    @submitted="() => (addStagedCharacterSheet = false)"
+                    :campaignId="route.params?.campaignId"
+                    :combatId="route.params?.combatId" />
+            </SheetContent>
+        </Sheet>
     </TransitionGroup>
 </template>
 <script setup lang="ts">
+    import { faPlusCircle } from "@fortawesome/free-solid-svg-icons";
     import { useQuery } from "@tanstack/vue-query";
     import type { CampaignMemberDto } from "~/utils/api/campaign/getCampaignRequest";
     import { getCampaignQuery } from "~/utils/queries/campaign";
@@ -63,6 +81,7 @@
 
     const userStore = useUserStore();
     const combatStore = useCombatStore();
+    const route = useRoute();
 
     const orderedInitiativeList = computed(() =>
         combatStore.isLoading
@@ -136,6 +155,9 @@
     ): character is StagedCharacter {
         return (character as StagedCharacter).initiative.roll !== undefined;
     }
+
+    // Add Staged Character form
+    const addStagedCharacterSheet = ref(false);
 </script>
 
 <style>

@@ -9,11 +9,11 @@
     "typescript": "^5.0.0"
   },
   "scripts": {
-    "setup": "npm i && cd ./apps/TakeInitiative.Web && npm i",
+    "setup": "bun i && cd ./apps/TakeInitiative.WebV2 && bun i",
     "api": "dotnet watch run --project apps/TakeInitiative.Api",
     "web": "cd apps/TakeInitiative.WebV2/ && bun run dev",
     "database": "docker start takedb || docker run -p 5432:5432 --name takedb -e POSTGRES_PASSWORD=postgres -d postgres",
-    "dev": "npm run database && concurrently --names api,web \"npm run api\" \"npm run web\""
+    "dev": "bun run database && concurrently --names api,web \"bun run api\" \"bun run web\""
   },
   "dependencies": {
     "concurrently": "^9.1.2"
