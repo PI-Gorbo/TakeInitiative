@@ -9,6 +9,7 @@ import type {
     PostStagePlayerCharactersResponse
 } from "../api/combat/postStagePlayerCharactersRequest";
 import type {GetCombatResponse} from "~/utils/api/combat/getCombatRequest";
+import {getCampaignQueryKey} from "~/utils/queries/campaign";
 
 
 export const getDraftCombatQueryKey = (campaignId: MaybeRefOrGetter<string>, draftCombatId: MaybeRefOrGetter<string>) => [campaignId, 'combats', 'draft', draftCombatId]
@@ -134,13 +135,16 @@ export const useEndTurnMutation = () => {
     })
 }
 
-export const finishCombatMutation = () => {
+export const useFinishCombatMutation = () => {
     const client = useQueryClient()
     const api = useApi()
     return useMutation({
         mutationFn: api.combat.finish,
         onSuccess: (data, request) => {
             setCombatQueryData(data.combat.campaignId, data.combat.id, data, client)
+            client.invalidateQueries({
+                queryKey: getCampaignQueryKey(data.combat.campaignId)
+            })
         },
     })
 }

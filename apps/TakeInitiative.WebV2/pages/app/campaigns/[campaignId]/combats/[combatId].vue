@@ -15,10 +15,16 @@
                                 }}
                             </CardTitle>
                             <template v-if="store.userIsDm">
-                                <Button v-if="store.combatIsStarted" variant="outline" class="interactable">
-                                    <FontAwesomeIcon :icon="faFlag"/>
-                                    <label>End Combat</label>
-                                </Button>
+
+                                <AsyncButton
+                                    v-if="store.combatIsStarted"
+                                    label="End Combat"
+                                    loadingLabel="Ending..."
+                                    :icon="faFlag"
+                                    variant="outline"
+                                    class="interactable"
+                                    :click="finishCombat"
+                                />
                             </template>
                         </span>
 
@@ -116,11 +122,11 @@
                 </div>
                 <div class="flex justify-end">
                     <AsyncButton
+                        v-if="store.combatIsStarted"
                         variant="destructive"
                         label="End Turn"
                         loadingLabel="Ending..."
                         :click="endTurn"/>
-                    <!-- <Button variant="destructive"><FontAwesomeIcon/> End Turn</Button> -->
                 </div>
             </div>
         </div>
@@ -142,7 +148,7 @@ import SheetContent from "~/components/ui/sheet/SheetContent.vue";
 import SheetHeader from "~/components/ui/sheet/SheetHeader.vue";
 import SheetTitle from "~/components/ui/sheet/SheetTitle.vue";
 import SheetTrigger from "~/components/ui/sheet/SheetTrigger.vue";
-import {useEndTurnMutation} from "~/utils/queries/combats";
+import {useEndTurnMutation, useFinishCombatMutation} from "~/utils/queries/combats";
 import {CombatState} from "~/utils/types/models";
 
 const route = useRoute("app-campaigns-campaignId-combats-combatId");
@@ -174,7 +180,13 @@ const endTurn = async () => {
         .catch(() => toast.error("Failed to end turn!"));
 };
 
+const finishCombatMutation = useFinishCombatMutation()
 const finishCombat = async () => {
-
+    await finishCombatMutation
+        .mutateAsync({
+            combatId: route.params.combatId
+        })
+        .then(() => toast.success("Combat Finished!"))
+        .catch(() => toast.error("Something went wrong while trying to finish the combat"));
 }
 </script>
