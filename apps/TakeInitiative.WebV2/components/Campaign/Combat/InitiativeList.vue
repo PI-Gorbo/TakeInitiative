@@ -47,19 +47,19 @@
 
         <Sheet v-model:open="addStagedCharacterSheet">
             <SheetTrigger asChild>
-                <Button variant="link">
+                <Button variant="outline" class="interactable border-dashed">
                     <FontAwesomeIcon :icon="faPlusCircle"/>
-                    Add
+                    Add Characters
                 </Button>
             </SheetTrigger>
             <SheetContent>
                 <SheetHeader>
-                    <SheetTitle> Add Reinforcements</SheetTitle>
+                    <SheetTitle> Add Characters</SheetTitle>
                 </SheetHeader>
-                <StageCharactersForm
+                <CampaignCombatStageCharactersForm
                     @submitted="() => (addStagedCharacterSheet = false)"
-                    :campaignId="route.params?.campaignId"
-                    :combatId="route.params?.combatId"/>
+                    :campaignId="props.campaignId"
+                    :combatId="props.combatId"/>
             </SheetContent>
         </Sheet>
     </TransitionGroup>
@@ -68,7 +68,6 @@
 import {faPlusCircle} from "@fortawesome/free-solid-svg-icons";
 import {useQuery} from "@tanstack/vue-query";
 import type {CampaignMemberDto} from "~/utils/api/campaign/getCampaignRequest";
-import {getCampaignQuery} from "~/utils/queries/campaign";
 import {getCombatQuery} from "~/utils/queries/combats";
 import {
     ArmourClassDisplayOptionsEnum,
@@ -79,10 +78,15 @@ import {
     type InitiativeCharacter,
     type StagedCharacter,
 } from "~/utils/types/models";
+import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 
 const userStore = useUserStore();
 const combatStore = useCombatStore();
-const route = useRoute();
+
+const props = defineProps<{
+    campaignId: string
+    combatId: string
+}>()
 
 const orderedInitiativeList = computed(() =>
     combatStore.isLoading

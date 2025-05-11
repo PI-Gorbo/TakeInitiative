@@ -103,7 +103,7 @@
                                                 "
                                                 :combatId="
                                                     route.params.combatId
-                                                " />
+                                                "/>
                                         </SheetContent>
                                     </Sheet>
                                 </div>
@@ -115,7 +115,8 @@
             <div
                 class="lg:col-span-2 lg:col-start-2 flex flex-col overflow-auto gap-4 h-full max-h-full">
                 <div class="flex-1 overflow-auto">
-                    <CampaignCombatInitiativeList />
+                    <CampaignCombatInitiativeList :campaignId="route.params.campaignId"
+                                                  :combatId="route.params.combatId"/>
                 </div>
                 <div class="flex justify-end">
                     <AsyncButton
@@ -123,7 +124,7 @@
                         variant="destructive"
                         label="End Turn"
                         loadingLabel="Ending..."
-                        :click="endTurn" />
+                        :click="endTurn"/>
                 </div>
             </div>
         </div>
@@ -148,34 +149,34 @@ import SheetTrigger from "~/components/ui/sheet/SheetTrigger.vue";
 import {useEndTurnMutation, useFinishCombatMutation} from "~/utils/queries/combats";
 import {CombatState} from "~/utils/types/models";
 
-    const route = useRoute("app-campaigns-campaignId-combats-combatId");
+const route = useRoute("app-campaigns-campaignId-combats-combatId");
 
-    const store = useCombatStore();
-    watchEffect(() => {
-        store.init(route.params.campaignId, route.params.combatId);
-    });
+const store = useCombatStore();
+watchEffect(() => {
+    store.init(route.params.campaignId, route.params.combatId);
+});
 
-    // state
-    const sheetStates = reactive({
-        addReinforcementsSheetOpen: false,
-    });
+// state
+const sheetStates = reactive({
+    addReinforcementsSheetOpen: false,
+});
 
-    definePageMeta({
-        layout: "main-app",
-        pageType: "fixed",
-        requiresAuth: true,
-        layoutTransition: false,
-    });
+definePageMeta({
+    layout: "main-app",
+    pageType: "fixed",
+    requiresAuth: true,
+    layoutTransition: false,
+});
 
-    const endTurnMutation = useEndTurnMutation();
-    const endTurn = async () => {
-        await endTurnMutation
-            .mutateAsync({
-                combatId: route.params.combatId,
-            })
-            .then(() => toast.success("Ended Turn!"))
-            .catch(() => toast.error("Failed to end turn!"));
-    };
+const endTurnMutation = useEndTurnMutation();
+const endTurn = async () => {
+    await endTurnMutation
+        .mutateAsync({
+            combatId: route.params.combatId,
+        })
+        .then(() => toast.success("Ended Turn!"))
+        .catch(() => toast.error("Failed to end turn!"));
+};
 
 const finishCombatMutation = useFinishCombatMutation()
 const finishCombat = async () => {
