@@ -68,6 +68,7 @@
                     :campaignId="props.campaignId"
                     :combatId="props.combatId"
                     :userIsDm="combatStore.userIsDm"
+                    :plannedStages="combatStore.combatQuery.data?.combat.plannedStages ?? []"
                 />
             </SheetContent>
         </Sheet>

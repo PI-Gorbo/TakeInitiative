@@ -118,6 +118,7 @@
                                                     route.params.combatId
                                                 "
                                                 :userIsDm="store.userIsDm"
+                                                :plannedStages="store.combatQuery.data.combat.plannedStages"
                                             />
                                         </SheetContent>
                                     </Sheet>

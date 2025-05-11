@@ -11,7 +11,9 @@
                 :combatId="props.combatId"
                 @submitted="() => emit('submitted')"/>
         </TabsContent>
-        <TabsContent value="Draft Stages">B</TabsContent>
+        <TabsContent value="Draft Stages">
+            <CampaignCombatStagePlannedCharactersForm :plannedStages="plannedStages ?? []"/>
+        </TabsContent>
         <TabsContent value="New Character">C</TabsContent>
     </Tabs>
 </template>
@@ -20,11 +22,13 @@ import Tabs from "~/components/ui/tabs/Tabs.vue";
 import TabsContent from "~/components/ui/tabs/TabsContent.vue";
 import TabsList from "~/components/ui/tabs/TabsList.vue";
 import StageMyCharactersForm from "./StageMyCharactersForm.vue";
+import type {GetCombatResponse} from "~/utils/api/combat/getCombatRequest";
 
 const props = defineProps<{
     campaignId: string;
     combatId: string;
     userIsDm: boolean
+    plannedStages: GetCombatResponse['combat']['plannedStages']
 }>();
 
 const emit = defineEmits<{

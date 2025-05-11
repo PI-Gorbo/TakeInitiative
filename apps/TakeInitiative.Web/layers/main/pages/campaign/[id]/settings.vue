@@ -19,7 +19,7 @@
                         :class="{
                             'flex-1': !isMobile,
                         }"
-                        >How should players see the health of the DM's
+                    >How should players see the health of the DM's
                         characters?</label
                     >
                     <Dropdown
@@ -46,7 +46,7 @@
                     />
                 </div>
                 <footer class="flex flex-row items-center gap-2">
-                    <FontAwesomeIcon icon="circle-info" />
+                    <FontAwesomeIcon icon="circle-info"/>
                     <span class="text-sm text-gray-300">
                         {{
                             dmCharacterHealthDisplayMethodInfoMessage(
@@ -64,7 +64,7 @@
                         :class="{
                             'flex-1': !isMobile,
                         }"
-                        >How should players see the health of Others?</label
+                    >How should players see the health of Others?</label
                     >
                     <Dropdown
                         class="flex-1"
@@ -90,7 +90,7 @@
                     />
                 </div>
                 <footer class="flex flex-row items-center gap-2">
-                    <FontAwesomeIcon icon="circle-info" />
+                    <FontAwesomeIcon icon="circle-info"/>
                     <span class="text-sm text-gray-300">
                         {{
                             otherPlayerCharacterHealthDisplayMethodInfoMessage(
@@ -111,7 +111,7 @@
                         :class="{
                             'flex-1': !isMobile,
                         }"
-                        >How should players see the armour class of the DM's
+                    >How should players see the armour class of the DM's
                         characters?</label
                     >
                     <Dropdown
@@ -138,7 +138,7 @@
                     />
                 </div>
                 <footer class="flex flex-row items-center gap-2">
-                    <FontAwesomeIcon icon="circle-info" />
+                    <FontAwesomeIcon icon="circle-info"/>
                     <span class="text-sm text-gray-300">
                         {{
                             dmCharacterArmourClassDisplayMethodInfoMessage(
@@ -156,7 +156,7 @@
                         :class="{
                             'flex-1': !isMobile,
                         }"
-                        >How should players see the armour class of
+                    >How should players see the armour class of
                         Others?</label
                     >
                     <Dropdown
@@ -183,7 +183,7 @@
                     />
                 </div>
                 <footer class="flex flex-row items-center gap-2">
-                    <FontAwesomeIcon icon="circle-info" />
+                    <FontAwesomeIcon icon="circle-info"/>
                     <span class="text-sm text-gray-300">
                         {{
                             otherPlayerCharacterArmourClassDisplayMethodInfoMessage(
@@ -230,8 +230,8 @@
     </main>
 </template>
 <script setup lang="ts">
-import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import type { UpdateCampaignDetailsRequest } from "base/utils/api/campaign/updateCampaignDetailsRequest";
+import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
+import type {UpdateCampaignDetailsRequest} from "base/utils/api/campaign/updateCampaignDetailsRequest";
 import {
     HealthDisplayOptionsEnum,
     HealthDisplayOptionValueKeyMap,
@@ -242,7 +242,8 @@ import {
     type ArmourClassDisplayOptionKeys,
     ArmourClassDisplayOptionsEnum,
 } from "base/utils/types/models";
-const { isMobile } = useDevice();
+
+const {isMobile} = useDevice();
 definePageMeta({
     requiresAuth: true,
     layout: "campaign-tabs",
@@ -319,6 +320,7 @@ const anyChangesToSave = computed(() => {
         otherCharacterArmourClassDisplayMethodChanged.value
     );
 });
+
 async function saveChanges() {
     const dto: Omit<UpdateCampaignDetailsRequest, "campaignId"> = {};
     if (campaignNameChanged.value) {
