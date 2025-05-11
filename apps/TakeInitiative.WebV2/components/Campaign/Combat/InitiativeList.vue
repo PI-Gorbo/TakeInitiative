@@ -3,49 +3,56 @@
         class="flex select-none flex-col gap-2"
         tag="section"
         name="shuffleList">
-        <a
-            v-for="({ character, user }, index) in characterList"
-            :key="character.id">
-            <Card
-                class="group flex p-2 items-center gap-2"
-                :class="{
-                    [`${styles.interactable} shadow-accent active:shadow-accent`]:
-                        combatStore.userIsDm ||
-                        user.userId === userStore.state.user?.userId,
 
-                    'shadow-gold border-gold':
-                        index ===
-                        combatStore.combatQuery.data?.combat.initiativeIndex,
-                }">
-                <section
-                    v-if="
-                        !combatStore.combatIsOpen &&
-                        isInitiativeCharacter(character)
-                    "
-                    class="flex gap-2">
-                    <div
-                        v-for="(value, index) in character.initiative.value"
-                        :key="index"
-                        :class="[
-                            'flex items-center rounded-lg p-1',
-                            {
-                                'bg-secondary text-secondary-foreground':
-                                    index == 0 &&
-                                    user.userId != userStore.state.user?.userId,
-                                'bg-gold text-gold-foreground':
-                                    index == 0 &&
-                                    user.userId == userStore.state.user?.userId,
-                                'bg-take-navy-medium text-xs': index != 0,
-                            },
-                        ]">
-                        {{ value.total }}
-                    </div>
-                </section>
-                {{ character.name }}
-            </Card>
-        </a>
+        <template v-if="characterList.length">
+            <a
+                v-for="({ character, user }, index) in characterList"
+                :key="character.id">
+                <Card
+                    class="group flex p-2 items-center gap-2"
+                    :class="{
+                           [`${styles.interactable} shadow-accent active:shadow-accent`]:
+                               combatStore.userIsDm ||
+                               user.userId === userStore.state.user?.userId,
 
-        <Sheet v-model:open="addStagedCharacterSheet">
+                           'shadow-gold border-gold':
+                               index ===
+                               combatStore.combatQuery.data?.combat.initiativeIndex,
+                       }">
+                    <section
+                        v-if="
+                               !combatStore.combatIsOpen &&
+                               isInitiativeCharacter(character)
+                           "
+                        class="flex gap-2">
+                        <div
+                            v-for="(value, index) in character.initiative.value"
+                            :key="index"
+                            :class="[
+                                   'flex items-center rounded-lg p-1',
+                                   {
+                                       'bg-secondary text-secondary-foreground':
+                                           index == 0 &&
+                                           user.userId != userStore.state.user?.userId,
+                                       'bg-gold text-gold-foreground':
+                                           index == 0 &&
+                                           user.userId == userStore.state.user?.userId,
+                                       'bg-take-navy-medium text-xs': index != 0,
+                                   },
+                               ]">
+                            {{ value.total }}
+                        </div>
+                    </section>
+                    {{ character.name }}
+                </Card>
+            </a>
+        </template>
+        <template v-else>
+            <span id="no-characters-in-combat"
+                  class="text-muted-foreground">There are no characters in this combat.</span>
+        </template>
+
+        <Sheet v-model:open="addStagedCharacterSheet" v-if="combatStore.combatIsOpen">
             <SheetTrigger asChild>
                 <Button variant="outline" class="interactable border-dashed">
                     <FontAwesomeIcon :icon="faPlusCircle"/>
@@ -59,7 +66,9 @@
                 <CampaignCombatStageCharactersForm
                     @submitted="() => (addStagedCharacterSheet = false)"
                     :campaignId="props.campaignId"
-                    :combatId="props.combatId"/>
+                    :combatId="props.combatId"
+                    :userIsDm="combatStore.userIsDm"
+                />
             </SheetContent>
         </Sheet>
     </TransitionGroup>

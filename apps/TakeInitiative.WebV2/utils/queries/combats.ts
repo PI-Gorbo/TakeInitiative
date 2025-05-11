@@ -135,6 +135,17 @@ export const useEndTurnMutation = () => {
     })
 }
 
+export const useStartCombatMutation = () => {
+    const client = useQueryClient()
+    const api = useApi()
+    return useMutation({
+        mutationFn: api.combat.start,
+        onSuccess: (data, request) => {
+            setCombatQueryData(data.combat.campaignId, data.combat.id, data, client)
+        },
+    })
+}
+
 export const useFinishCombatMutation = () => {
     const client = useQueryClient()
     const api = useApi()

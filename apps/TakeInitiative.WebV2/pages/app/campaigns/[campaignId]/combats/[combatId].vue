@@ -15,9 +15,17 @@
                                 }}
                             </CardTitle>
                             <template v-if="store.userIsDm">
-
                                 <AsyncButton
-                                    v-if="store.combatIsStarted"
+                                    v-if="store.combatIsOpen"
+                                    label="Start Combat"
+                                    loadingLabel="Starting..."
+                                    :icon="faFlag"
+                                    variant="outline"
+                                    class="interactable"
+                                    :click="startCombat"
+                                />
+                                <AsyncButton
+                                    v-else-if="store.combatIsStarted"
                                     label="End Combat"
                                     loadingLabel="Ending..."
                                     :icon="faFlag"
@@ -26,6 +34,11 @@
                                     :click="finishCombat"
                                 />
                             </template>
+                            <NuxtLink
+                                v-if="store.combatIsFinished"
+                                :to="{ name: 'app-campaigns-campaignId', params: {campaignId: route.params.campaignId} }">
+                                <Button variant="link"> Go Home</Button>
+                            </NuxtLink>
                         </span>
 
                         <CardDescription>
@@ -47,7 +60,7 @@
                                     store.combatQuery.data?.combat?.roundNumber
                                 }}
                             </template>
-                            <template else> This combat has ended.</template>
+                            <template v-else> This combat has ended.</template>
                         </CardDescription>
                     </CardHeader>
                     <CardContent class="flex-1 h-full max-h-full overflow-auto">
@@ -103,7 +116,9 @@
                                                 "
                                                 :combatId="
                                                     route.params.combatId
-                                                "/>
+                                                "
+                                                :userIsDm="store.userIsDm"
+                                            />
                                         </SheetContent>
                                     </Sheet>
                                 </div>
@@ -146,7 +161,7 @@ import SheetContent from "~/components/ui/sheet/SheetContent.vue";
 import SheetHeader from "~/components/ui/sheet/SheetHeader.vue";
 import SheetTitle from "~/components/ui/sheet/SheetTitle.vue";
 import SheetTrigger from "~/components/ui/sheet/SheetTrigger.vue";
-import {useEndTurnMutation, useFinishCombatMutation} from "~/utils/queries/combats";
+import {useEndTurnMutation, useFinishCombatMutation, useStartCombatMutation} from "~/utils/queries/combats";
 import {CombatState} from "~/utils/types/models";
 
 const route = useRoute("app-campaigns-campaignId-combats-combatId");
@@ -154,6 +169,7 @@ const route = useRoute("app-campaigns-campaignId-combats-combatId");
 const store = useCombatStore();
 watchEffect(() => {
     store.init(route.params.campaignId, route.params.combatId);
+    console.log("triggered here")
 });
 
 // state
@@ -178,6 +194,7 @@ const endTurn = async () => {
         .catch(() => toast.error("Failed to end turn!"));
 };
 
+
 const finishCombatMutation = useFinishCombatMutation()
 const finishCombat = async () => {
     await finishCombatMutation
@@ -187,4 +204,16 @@ const finishCombat = async () => {
         .then(() => toast.success("Combat Finished!"))
         .catch(() => toast.error("Something went wrong while trying to finish the combat"));
 }
+
+
+const startCombatMutation = useStartCombatMutation()
+const startCombat = async () => {
+    await startCombatMutation
+        .mutateAsync({
+            combatId: route.params.combatId
+        })
+        .then(() => toast.success("Combat Started!"))
+        .catch(() => toast.error("Something went wrong while trying to start the combat"));
+}
+
 </script>
