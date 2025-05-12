@@ -1,21 +1,22 @@
-import {type QueryClient, queryOptions, useMutation, useQueryClient} from "@tanstack/vue-query";
-import type {ShallowRef} from "vue";
-import type {GetCombatsResponse} from "../api/combat/getCombatsRequest";
-import {seconds, type RefOrGetter} from "./utils";
-import type {CreatePlannedCombatRequest} from "../api/plannedCombat/createPlannedCombatRequest";
-import type {OpenCombatRequest} from "../api/combat/openCombatRequest";
+import { type QueryClient, queryOptions, useMutation, useQueryClient } from "@tanstack/vue-query";
+import type { ShallowRef } from "vue";
+import type { GetCombatsResponse } from "../api/combat/getCombatsRequest";
+import { seconds, type RefOrGetter } from "./utils";
+import type { CreatePlannedCombatRequest } from "../api/plannedCombat/createPlannedCombatRequest";
+import type { OpenCombatRequest } from "../api/combat/openCombatRequest";
 import type {
     PostStagePlayerCharactersRequest,
     PostStagePlayerCharactersResponse
 } from "../api/combat/postStagePlayerCharactersRequest";
-import type {GetCombatResponse} from "~/utils/api/combat/getCombatRequest";
-import {getCampaignQueryKey} from "~/utils/queries/campaign";
+import type { GetCombatResponse } from "~/utils/api/combat/getCombatRequest";
+import { getCampaignQueryKey } from "~/utils/queries/campaign";
+import { AppleIcon } from "lucide-vue-next";
 
 
 export const getDraftCombatQueryKey = (campaignId: MaybeRefOrGetter<string>, draftCombatId: MaybeRefOrGetter<string>) => [campaignId, 'combats', 'draft', draftCombatId]
 export const getDraftCombatQuery = (campaignId: RefOrGetter<string>, draftComabtId: RefOrGetter<string>) => queryOptions({
     queryKey: getDraftCombatQueryKey(campaignId, draftComabtId),
-    queryFn: () => useApi().draftCombat.get({campaignId: toValue(campaignId), combatId: toValue(draftComabtId)}),
+    queryFn: () => useApi().draftCombat.get({ campaignId: toValue(campaignId), combatId: toValue(draftComabtId) }),
     enabled: () => !!toValue(campaignId) && !!toValue(draftComabtId),
     staleTime: 1000 * 60 * 5, // 5 minutes
 })
@@ -23,7 +24,7 @@ export const getDraftCombatQuery = (campaignId: RefOrGetter<string>, draftComabt
 export const getAllCombatsQueryKey = (campaignId: MaybeRefOrGetter<string>) => [campaignId, 'combats', 'all']
 export const getAllCombatsQuery = (campaignId: RefOrGetter<string>) => queryOptions({
     queryKey: [campaignId, 'combats', 'all'],
-    queryFn: () => useApi().combat.getAll({campaignId: toValue(campaignId)}),
+    queryFn: () => useApi().combat.getAll({ campaignId: toValue(campaignId) }),
     enabled: () => !!toValue(campaignId),
     select: (data) => {
         data.combats.sort(sortByFinishedTimestamp);
@@ -35,7 +36,7 @@ export const getAllCombatsQuery = (campaignId: RefOrGetter<string>) => queryOpti
 export const getCombatQueryKey = (campaignId: MaybeRefOrGetter<string | null>, combatId: MaybeRefOrGetter<string | null>) => [campaignId, 'combats', combatId]
 export const getCombatQuery = (campaignId: RefOrGetter<string | null>, combatId: RefOrGetter<string | null>) => queryOptions({
     queryKey: getCombatQueryKey(campaignId, combatId),
-    queryFn: () => useApi().combat.get({combatId: toValue(combatId)!}),
+    queryFn: () => useApi().combat.get({ combatId: toValue(combatId)! }),
     enabled: () => !!toValue(campaignId) && !!toValue(combatId),
     staleTime: seconds(30), // 30 Seconds
 })
@@ -157,6 +158,20 @@ export const useFinishCombatMutation = () => {
                 queryKey: getCampaignQueryKey(data.combat.campaignId)
             })
         },
+    })
+}
+
+export const useAddPlannedCharacterToCombatMutation = () => {
+    const client = useQueryClient()
+    const api = useApi()
+    return useMutation({
+        mutationFn: api.combat.stage.planned,
+        onSuccess: (data, request) => {
+            setCombatQueryData(data.combat.campaignId, data.combat.id, data, client)
+            client.invalidateQueries({
+                queryKey: getCampaignQueryKey(data.combat.campaignId)
+            })
+        }
     })
 }
 
