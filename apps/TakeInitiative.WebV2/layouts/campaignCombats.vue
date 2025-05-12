@@ -166,7 +166,7 @@
                                         </Button>
                                     </div>
                                 </section>
-                                <section>
+                                <section class="flex flex-col gap-2">
                                     <header>
                                         <FontAwesomeIcon
                                             :icon="faFlagCheckered" />
@@ -179,14 +179,41 @@
                                                     ?.combats ?? []
                                             ).length !== 0
                                         ">
-                                        <ul>
+                                        <ul class="flex flex-col gap-2">
                                             <Button
                                                 variant="outline"
-                                                class="h-fit flex justify-between w-full items-center interactable"
+                                                class="h-fit flex justify-between w-full items-center disabled:border-primary disabled:opacity-100"
                                                 v-for="historicalCombat in combatsQuery
                                                     .data.value?.combats ?? []"
-                                                :key="
+                                                :key="historicalCombat.combatId"
+                                                :disabled="
+                                                    currentCombatId ===
                                                     historicalCombat.combatId
+                                                "
+                                                :class="[
+                                                    {
+                                                        interactable:
+                                                            currentCombatId !==
+                                                                historicalCombat.combatId &&
+                                                            (isLargeScreen ||
+                                                                currentDraftCombat ===
+                                                                    undefined ||
+                                                                currentDraftCombat !==
+                                                                    historicalCombat.combatId),
+                                                    },
+                                                ]"
+                                                @click="
+                                                    () =>
+                                                        router.push({
+                                                            name: 'app-campaigns-campaignId-combats-history-combatId',
+                                                            params: {
+                                                                campaignId:
+                                                                    route.params
+                                                                        .campaignId,
+                                                                combatId:
+                                                                    historicalCombat.combatId,
+                                                            },
+                                                        })
                                                 ">
                                                 {{
                                                     historicalCombat.combatName
@@ -263,8 +290,14 @@
     const draftCombatRoute = useRoute(
         "app-campaigns-campaignId-combats-drafts-draftCombatId"
     );
+    const combatHistoryRoute = useRoute(
+        "app-campaigns-campaignId-combats-history-combatId"
+    );
     const currentDraftCombat: ComputedRef<string | null> = computed(
         () => draftCombatRoute.params.draftCombatId
+    );
+    const currentCombatId = computed<string | null>(
+        () => combatHistoryRoute.params.combatId
     );
 
     const campaignQuery = useQuery(

@@ -17,7 +17,7 @@
     "titleBar.activeForeground": "#15202b",
     "titleBar.inactiveBackground": "#92a56599",
     "titleBar.inactiveForeground": "#15202b99"
-  },
+},
   "peacock.color": "#92a565",
   "cSpell.words": ["nessisarily"],
   "vue3snippets.enable-compile-vue-file-on-did-save-code": false

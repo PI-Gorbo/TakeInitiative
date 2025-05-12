@@ -8,34 +8,33 @@
             ) ?? []"
             class="text-white"
         >
-            <div
+            <fieldset
                 @click="(e) => onClickStage(e, stage.id)"
                 :class="[
-                    'flex w-full cursor-pointer flex-col rounded-xl border-2 border-take-navy-light p-2 transition-colors',
+                    'flex w-full cursor-pointer flex-col rounded-xl border-2 border-take-navy-light p-2 transition-colors interactable',
                     stagesToHighlight.includes(stage.id)
-                        ? 'border-take-yellow'
-                        : 'hover:border-take-grey',
+                        ? 'border-gold'
+                        : 'hover:border-primary',
                 ]"
             >
-                <div class="mb-2 flex w-full flex-row gap-2">
-                    <div class="flex-1 text-take-yellow">
-                        {{ stage.name }}
-                    </div>
-                </div>
+                <legend class="flex gap-2 px-2">
+                    {{ stage.name }}
+                </legend>
                 <section class="flex flex-1 flex-col gap-2 pb-4">
                     <div
                         class="flex flex-1 flex-col gap-2 overflow-y-auto"
                         tag="section"
                         name="fade"
                     >
-                        <section
+                        <button
                             v-for="npc in stage.npcs"
+                            variant="outline"
                             :key="npc.id"
                             :class="[
-                                'min-h-fit min-w-fit cursor-pointer rounded-xl border border-take-navy-light transition-colors ',
+                                'min-h-fit min-w-fit cursor-pointer rounded-xl border border-take-navy-light transition-colors interactable',
                                 charactersToHighlight.includes(npc.id!)
-                                    ? 'border-take-yellow'
-                                    : 'hover:border-take-grey',
+                                    ? 'border-gold'
+                                    : 'hover:border-primary',
                             ]"
                             @click="
                                 (e) => onClickCharacter(e, stage.id, npc.id!)
@@ -69,10 +68,10 @@
                                     </div>
                                 </div>
                             </div>
-                        </section>
+                        </button>
                     </div>
                 </section>
-            </div>
+            </fieldset>
         </section>
         <Transition name="fade">
             <div class="flex w-full justify-end" v-if="canSubmit">
