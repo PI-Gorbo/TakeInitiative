@@ -4,34 +4,36 @@
         :onSubmit="onSubmit"
         v-slot="{ submitting }">
         <div class="flex items-end justify-between gap-2">
-            <FormInput
+            <FormFieldWrapper
                 class="flex-1"
-                :autoFocus="true"
-                textColour="white"
                 label="Name"
-                v-model:value="name"
-                v-bind="nameInputProps" />
+                :error="nameInputProps.errorMessage">
+                <Input
+                    :autoFocus="true"
+                    textColour="white"
+                    label="Name"
+                    v-model:value="name"
+                    v-bind="nameInputProps" />
+            </FormFieldWrapper>
 
-            <FormButton
+            <Button
                 v-if="userIsDm"
-                :icon="isHidden ? 'eye-slash' : 'eye'"
-                size="lg"
-                :label="isHidden ? 'Hidden' : 'Visible'"
-                @clicked="() => (isHidden = !isHidden)"
-                buttonColour="take-navy-light"
-                type="button" />
+                @click="() => (isHidden = !isHidden)"
+                type="button"
+                variant="outline"
+                class="interactable">
+                <FontAwesomeIcon :icon="isHidden ? faEyeSlash : faEye" />
+                {{ isHidden ? "Hidden" : "Visible" }}
+            </Button>
         </div>
 
-        <CharacterUnevaluatedInitiativeInput
-            ref="characterInitiativeInput"
-            :initiative="initiative as UnevaluatedCharacterInitiative"
-            :errorMessage="initiativeInputProps.errorMessage" />
+        <CampaignCharacterInitiativeRollInput
+            v-model:initiative="initiative!.roll"
+            :error="initiativeInputProps.errorMessage" />
 
-        <CharacterHealthInput
-            :health="{
-                value: health as UnevaluatedCharacterHealth,
-                isUnevaluated: true,
-            }"
+        <CampaignCharacterUnevaluatedHealthInput
+            :health="health!"
+            @update:health="(h) => (health = h)"
             ref="characterHealthInput" />
 
         <CharacterArmourClassInput v-model:value="armourClass" />
@@ -74,15 +76,15 @@
         type CharacterHealth,
         type UnevaluatedCharacterHealth,
         type UnevaluatedCharacterInitiative,
-    } from "base/utils/types/models";
-    import type { StagedCharacterDTO } from "base/utils/api/combat/putUpsertStagedCharacter";
-    import type { SubmittingState } from "../Form/Base.vue";
-    import type { DeleteStagedCharacterRequest } from "base/utils/api/combat/deleteStagedCharacterRequest";
+    } from "~/utils/types/models";
+    import type { StagedCharacterDTO } from "~/utils/api/combat/putUpsertStagedCharacter";
+    import type { DeleteStagedCharacterRequest } from "~/utils/api/combat/deleteStagedCharacterRequest";
     import { toTypedSchema } from "@vee-validate/zod";
     import { z } from "zod";
-    import HealthInput from "../Character/HealthInput.vue";
-    import type { StagedCharacterWithoutIdDTO } from "base/utils/api/combat/postAddStagedCharacter";
-    import type Initiative from "../Character/UnevaluatedInitiativeInput.vue";
+    import type { StagedCharacterWithoutIdDTO } from "~/utils/api/combat/postAddStagedCharacter";
+    import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
+    import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+
     const characterHealthInput = ref<InstanceType<typeof HealthInput> | null>(
         null
     );
@@ -94,13 +96,9 @@
         error: null as ApiError<StagedCharacterDTO> | null,
     });
 
-    const props = defineProps<{
-        character?: StagedCharacter;
-        onCreate?: (request: StagedCharacterWithoutIdDTO) => Promise<any>;
-        onEdit?: (request: StagedCharacterDTO) => Promise<any>;
-        onDelete?: (
-            request: Omit<DeleteStagedCharacterRequest, "combatId">
-        ) => Promise<any>;
+    const props = defineProps<{ character?: StagedCharacter }>();
+    const emits = defineEmits<{
+        submit: [];
     }>();
 
     // Form Definition
@@ -127,14 +125,14 @@
     const [name, nameInputProps] = defineField("name", {
         props: (state) => ({
             errorMessage:
-                formState.error?.getErrorFor("name") ?? state.errors[0],
+                formState.error?.errors?.name?.at(0) ?? state.errors[0],
         }),
     });
 
     const [initiative, initiativeInputProps] = defineField("initiative", {
         props: (state) => ({
             errorMessage:
-                formState.error?.getErrorFor("character.Initiative.Value") ??
+                formState.error?.errors["character.Initiative.Value"]?.at(0) ??
                 state.errors[0],
         }),
     });
@@ -142,7 +140,7 @@
     const [isHidden, isHiddenInputProps] = defineField("isHidden", {
         props: (state) => ({
             errorMessage:
-                formState.error?.getErrorFor("character.Hidden") ??
+                formState.error?.errors["character.Hidden"]?.at(0) ??
                 state.errors[0],
         }),
     });
@@ -150,10 +148,8 @@
     const [health, healthInputProps] = defineField("health", {
         props: (state) => ({
             errorMessage:
-                (formState.error?.getErrorFor(
-                    "playerCharacter.Health.HasHealth"
-                ) ||
-                    formState.error?.getErrorFor("in")) ??
+                formState.error["playerCharacter.Health.HasHealth"]?.at(0) ??
+                formState.error["in"]?.at(0) ??
                 state.errors[0],
         }),
     });
@@ -161,7 +157,7 @@
     const [armourClass, armourClassInputProps] = defineField("armourClass", {
         props: (state) => ({
             errorMessage:
-                formState.error?.getErrorFor("playerCharacter.armourClass") ??
+                formState.error["playerCharacter.armourClass"]?.at(0) ??
                 state.errors[0],
         }),
     });

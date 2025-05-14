@@ -1,5 +1,5 @@
 <template>
-    <div class="flex flex-col gap-2 pt-2">
+    <Form @submit.prevent="onSubmit" class="flex flex-col gap-2 pt-2">
         <section
             v-if="hasAnyValidStages"
             :key="index"
@@ -70,15 +70,15 @@
                 loadingLabel="Staging..."
                 :icon="faPlusCircle"
                 label="Add Characters"
-                :click="onSubmit"
-                :disabled="!canSubmit" />
+                :disabled="!canSubmit"
+                :isLoading="stagedPlannedCharaterMutation.isPending.value" />
         </div>
 
         <div v-if="!hasAnyValidStages" class="text-white">
             Looks like all the stages for this combat are empty, or there are no
             stages left!
         </div>
-    </div>
+    </Form>
 </template>
 
 <script setup lang="ts">
@@ -86,7 +86,7 @@
     import type { StagePlannedCharacterDto } from "~/utils/api/combat/postStagePlannedCharactersRequest";
     import type { GetCombatResponse } from "~/utils/api/combat/getCombatRequest";
     import { useAddPlannedCharacterToCombatMutation } from "~/utils/queries/combats";
-import { faPlusCircle } from "@fortawesome/free-solid-svg-icons";
+    import { faPlusCircle } from "@fortawesome/free-solid-svg-icons";
 
     const emits = defineEmits<{
         submit: [];
@@ -197,7 +197,7 @@ import { faPlusCircle } from "@fortawesome/free-solid-svg-icons";
             combatId: props.combatId,
         });
 
-        emits('submit')
+        emits("submit");
     }
 
     const canSubmit = computed(

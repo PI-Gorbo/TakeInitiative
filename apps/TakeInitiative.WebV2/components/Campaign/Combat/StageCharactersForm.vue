@@ -19,7 +19,9 @@
                 :combatId="props.combatId"
                 @submitted="() => emit('submitted')" />
         </TabsContent>
-        <TabsContent value="New Character">C</TabsContent>
+        <TabsContent value="New Character">
+            <CampaignCombatStageOrModifyCharacterForm  />
+        </TabsContent>
     </Tabs>
 </template>
 <script setup lang="ts">
@@ -28,6 +30,7 @@
     import TabsList from "~/components/ui/tabs/TabsList.vue";
     import StageMyCharactersForm from "./StageMyCharactersForm.vue";
     import type { GetCombatResponse } from "~/utils/api/combat/getCombatRequest";
+    
 
     const props = defineProps<{
         campaignId: string;
