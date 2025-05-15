@@ -34,9 +34,11 @@
         <CampaignCharacterUnevaluatedHealthInput
             :health="health!"
             @update:health="(h) => (health = h)"
-            ref="characterHealthInput" />
+            :error="healthInputProps.errorMessage" />
 
-        <CharacterArmourClassInput v-model:value="armourClass" />
+        <CampaignCharacterArmourClassInput
+            v-model:ac="armourClass"
+            :error="armourClassInputProps.errorMessage" />
 
         <div class="flex w-full justify-end" v-if="!props.character">
             <FormButton
@@ -115,11 +117,11 @@
                 .required()
         ),
         initialValues: {
-            initiative: props.character?.initiative,
-            name: props.character?.name,
+            initiative: props.character?.initiative ?? { roll: undefined },
+            name: props.character?.name ?? "",
             isHidden: props.character?.hidden ?? false,
             armourClass: props.character?.armourClass ?? null,
-            health: props.character?.health,
+            health: props.character?.health ?? { "!": "None" },
         },
     });
     const [name, nameInputProps] = defineField("name", {
@@ -148,8 +150,8 @@
     const [health, healthInputProps] = defineField("health", {
         props: (state) => ({
             errorMessage:
-                formState.error["playerCharacter.Health.HasHealth"]?.at(0) ??
-                formState.error["in"]?.at(0) ??
+                formState.error?.errors["playerCharacter.Health.HasHealth"]?.at(0) ??
+                formState.error?.errors["in"]?.at(0) ??
                 state.errors[0],
         }),
     });
@@ -157,7 +159,7 @@
     const [armourClass, armourClassInputProps] = defineField("armourClass", {
         props: (state) => ({
             errorMessage:
-                formState.error["playerCharacter.armourClass"]?.at(0) ??
+                formState.error?.errors["playerCharacter.armourClass"]?.at(0) ??
                 state.errors[0],
         }),
     });

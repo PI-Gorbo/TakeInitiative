@@ -45,11 +45,11 @@
             </div>
         </div>
         <Card
-            v-for="stage in draftCombatQuery.data.value!.plannedStages"
+            v-for="stage in draftCombatQuery.data.value!.stages"
             :key="stage.id"
             class="border-2 p-2 border-primary/50">
             <CampaignCombatDraftStageDisplay
-                :allStages="draftCombatQuery.data.value!.plannedStages"
+                :allStages="draftCombatQuery.data.value!.stages"
                 :stage="stage"
                 :updateStage="
                     (req) =>
@@ -154,7 +154,7 @@
     });
 
     function onAddStage() {
-        const stages = draftCombatQuery.data.value!.plannedStages;
+        const stages = draftCombatQuery.data.value!.stages ;
         const filteredStages = stages
             .map((stage) => stage.name)
             .filter((name) => name.startsWith("Stage "));

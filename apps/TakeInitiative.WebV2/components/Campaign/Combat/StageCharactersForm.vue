@@ -20,7 +20,7 @@
                 @submitted="() => emit('submitted')" />
         </TabsContent>
         <TabsContent value="New Character">
-            <CampaignCombatStageOrModifyCharacterForm  />
+            <CampaignCombatStageOrModifyCharacterForm   />
         </TabsContent>
     </Tabs>
 </template>

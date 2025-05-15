@@ -21,33 +21,9 @@
             @evaluateExpression="evaluteFromHealth"
             :error="form.errors.value.health" />
 
-        <FormFieldWrapper
-            label="Armor Class"
-            :error="form.errors.value.armourClass">
-            <div class="flex gap-2">
-                <Input
-                    type="number"
-                    placeholder="Optional"
-                    :modelValue="ac ?? undefined"
-                    @update:modelValue="
-                        (v) => {
-                            if (v === '') {
-                                ac = null;
-                            } else {
-                                //@ts-ignore
-                                ac = v;
-                            }
-                        }
-                    " />
-                <Button
-                    size="icon"
-                    type="button"
-                    variant="outline"
-                    @click="() => form.setFieldValue('armourClass', null)">
-                    <FontAwesomeIcon :icon="faArrowRotateLeft" />
-                </Button>
-            </div>
-        </FormFieldWrapper>
+        <CampaignCharacterArmorClassInput
+            v-model:ac="ac"
+            :error="form.errors.value.armourClass" />
 
         <ErrorPanel v-if="formState.error?.errors?.generalErrors">
             {{ formState.error?.errors?.generalErrors.at(0) }}
@@ -108,6 +84,7 @@
     import { armorClassFormValidator } from "~/utils/forms/armorClassFormValidator";
     import type { UpdatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
     import type { DeletePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/deletePlannedCombatNpcRequest";
+    import ArmorClassInput from "../../Character/ArmourClassInput.vue";
 
     const formState = reactive({
         error: null as ApiError<CreatePlannedCombatNpcRequest> | null,
