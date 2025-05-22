@@ -1,9 +1,14 @@
 <template>
     <div class="flex flex-wrap gap-1">
-        <CampaignCharacterHealthDisplay :health="props.health" unstyled />
         <CampaignCharacterArmourClassDisplay
+            v-if="props.armourClass != 'NO VALUE'"
             :armourClass="props.armourClass" />
+        <CampaignCharacterHealthDisplay
+            v-if="props.health"
+            :health="props.health"
+            unstyled />
         <CampaignCharacterInitiativeDisplay
+            v-if="props.initiative"
             :initiative="props.initiative" />
     </div>
 </template>
@@ -13,9 +18,14 @@
         UnevaluatedCharacterHealth,
     } from "~/utils/types/models";
 
-    const props = defineProps<{
-        health: UnevaluatedCharacterHealth | CharacterHealth;
-        armourClass: number | null | undefined;
-        initiative: string
-    }>();
+    const props = withDefaults(
+        defineProps<{
+            health?: UnevaluatedCharacterHealth | CharacterHealth;
+            armourClass?: number | null | undefined | "NO VALUE";
+            initiative?: string;
+        }>(),
+        {
+            armourClass: "NO VALUE",
+        }
+    );
 </script>

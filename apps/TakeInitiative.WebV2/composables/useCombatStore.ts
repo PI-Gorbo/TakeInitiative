@@ -7,6 +7,7 @@ import type { CampaignMemberDto } from "~/utils/api/campaign/getCampaignRequest"
 import { getCombatQuery } from "~/utils/queries/combats";
 import { useQuery } from "@tanstack/vue-query";
 import { getCampaignQuery } from "~/utils/queries/campaign";
+import { faCircleUser, faCrown, faUserLarge } from "@fortawesome/free-solid-svg-icons";
 export type InitiativePlayerDto = {
     user: CampaignMemberDto;
     character: InitiativeCharacter;
@@ -262,7 +263,7 @@ export const useCombatStore = defineStore("combatStore", () => {
         ),
         combatIsFinished: computed(
             () => combatQuery.data.value?.combat.state == CombatState.Finished
-        )
+        ),
         // connection,
         // state,
         // deleteInitiativeCharacter,
@@ -297,30 +298,30 @@ export const useCombatStore = defineStore("combatStore", () => {
         //                 }) satisfies InitiativePlayerDto
         //         ) ?? []
         // ),
-        // isEditableForUser: (charInfo: {
-        //     user: CampaignMemberDto;
-        //     character: InitiativeCharacter | StagedCharacter;
-        // }) => {
-        //     return (
-        //         userStore.state.user?.userId == state.combat?.dungeonMaster ||
-        //         charInfo.user?.userId == userStore.state.user?.userId
-        //     );
-        // },
-        // getIconForUser: (charInfo: {
-        //     user: CampaignMemberDto;
-        //     character: InitiativeCharacter | StagedCharacter;
-        // }) => {
-        //     const currentUserId = userStore.state.user?.userId;
+        isEditableForUser: (charInfo: {
+            user: CampaignMemberDto;
+            character: InitiativeCharacter | StagedCharacter;
+        }) => {
+            return (
+                userStore.state.user?.userId == combatQuery.data.value?.combat.dungeonMaster ||
+                charInfo.user?.userId == userStore.state.user?.userId
+            );
+        },
+        getIconForUser: (charInfo: {
+            user: CampaignMemberDto;
+            character: InitiativeCharacter | StagedCharacter;
+        }) => {
+            const currentUserId = userStore.state.user?.userId;
 
-        //     if (charInfo.user?.userId == state.combat?.dungeonMaster) {
-        //         return "crown";
-        //     }
+            if (charInfo.user?.userId == combatQuery.data.value?.combat.dungeonMaster) {
+                return faCrown;
+            }
 
-        //     if (charInfo.user?.userId == currentUserId) {
-        //         return "circle-user";
-        //     }
+            if (charInfo.user?.userId == currentUserId) {
+                return faCircleUser;
+            }
 
-        //     return "user-large";
-        // },
+            return faUserLarge;
+        },
     };
 });

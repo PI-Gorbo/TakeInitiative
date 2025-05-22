@@ -3,59 +3,146 @@
         class="flex select-none flex-col gap-2"
         tag="section"
         name="shuffleList">
-
         <template v-if="characterList.length">
             <a
                 v-for="({ character, user }, index) in characterList"
                 :key="character.id">
-                <Card
-                    class="group flex p-2 items-center gap-2"
-                    :class="{
-                           [`${styles.interactable} shadow-accent active:shadow-accent`]:
-                               combatStore.userIsDm ||
-                               user.userId === userStore.state.user?.userId,
-
-                           'shadow-gold border-gold':
-                               index ===
-                               combatStore.combatQuery.data?.combat.initiativeIndex,
-                       }">
-                    <section
-                        v-if="
-                               !combatStore.combatIsOpen &&
-                               isInitiativeCharacter(character)
-                           "
-                        class="flex gap-2">
-                        <div
-                            v-for="(value, index) in character.initiative.value"
-                            :key="index"
-                            :class="[
-                                   'flex items-center rounded-lg p-1',
-                                   {
-                                       'bg-secondary text-secondary-foreground':
-                                           index == 0 &&
-                                           user.userId != userStore.state.user?.userId,
-                                       'bg-gold text-gold-foreground':
-                                           index == 0 &&
-                                           user.userId == userStore.state.user?.userId,
-                                       'bg-take-navy-medium text-xs': index != 0,
-                                   },
-                               ]">
-                            {{ value.total }}
-                        </div>
-                    </section>
-                    {{ character.name }}
-                </Card>
+                <Sheet >
+                    <SheetTrigger asChild>
+                        <Button
+                            variant="outline"
+                            class="group flex p-2 gap-2 w-full h-fit justify-start text-start"
+                            :class="{
+                                [`interactable ${styles.interactable} shadow-accent active:shadow-accent`]:
+                                    combatStore.userIsDm ||
+                                    user.userId ===
+                                        userStore.state.user?.userId,
+                                'shadow-gold border-gold':
+                                    index ===
+                                    combatStore.combatQuery.data?.combat
+                                        .initiativeIndex,
+                            }">
+                            <section
+                                v-if="
+                                    !combatStore.combatIsOpen &&
+                                    isInitiativeCharacter(character)
+                                "
+                                class="flex gap-2">
+                                <div
+                                    v-for="(value, index) in character
+                                        .initiative.value"
+                                    :key="index"
+                                    :class="[
+                                        'flex items-center rounded-lg p-1',
+                                        {
+                                            'bg-secondary text-secondary-foreground':
+                                                index == 0 &&
+                                                user.userId !=
+                                                    userStore.state.user
+                                                        ?.userId,
+                                            'bg-gold text-gold-foreground':
+                                                index == 0 &&
+                                                user.userId ==
+                                                    userStore.state.user
+                                                        ?.userId,
+                                            'bg-take-navy-medium text-xs':
+                                                index != 0,
+                                        },
+                                    ]">
+                                    {{ value.total }}
+                                </div>
+                            </section>
+                            <section
+                                class="flex flex-col"
+                                :class="{
+                                    'text-muted-foreground': character.hidden,
+                                }">
+                                <!-- Character Name -->
+                                <span>
+                                    <FontAwesomeIcon
+                                        v-if="
+                                            combatStore.userIsDm &&
+                                            character.playerId ==
+                                                userStore.state.user?.userId
+                                        "
+                                        :icon="
+                                            character.hidden
+                                                ? faEyeSlash
+                                                : faEye
+                                        "
+                                        size="sm" />
+                                    {{ character.name }}
+                                </span>
+                                <!-- Username -->
+                                <span
+                                    :class="[
+                                        'text-xs',
+                                        {
+                                            'cursor-pointer':
+                                                combatStore.isEditableForUser({
+                                                    character,
+                                                    user,
+                                                }) &&
+                                                (combatStore.combatIsOpen ||
+                                                    combatStore.combatIsStarted),
+                                        },
+                                    ]">
+                                    <FontAwesomeIcon
+                                        class="text-gold"
+                                        :icon="
+                                            combatStore.getIconForUser({
+                                                character,
+                                                user,
+                                            })
+                                        " />
+                                    {{ user?.username }}
+                                </span>
+                            </section>
+                            <section
+                                class="flex-1 flex justify-end"
+                                :class="{
+                                    'text-muted-foreground': character.hidden,
+                                }">
+                                <CampaignCombatCharacterStatsDisplay
+                                    :health="character.health"
+                                    :armourClass="character.armourClass"
+                                    :initiative="
+                                        isStagedCharacter(character)
+                                            ? character.initiative.roll
+                                            : undefined
+                                    " />
+                            </section>
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent >
+                        <CampaignCombatStageOrModifyCharacterForm
+                            v-if="isStagedCharacter(character)"
+                            :combatId="props.combatId"
+                            :character="character" />
+                        <CampaignCombatModifyInitiativeCharacterForm
+                            v-else
+                            :character="character"
+                            :combatId="props.combatId" />
+                    </SheetContent>
+                </Sheet>
             </a>
         </template>
         <template v-else>
-            <span id="no-characters-in-combat"
-                  class="text-muted-foreground">There are no characters in this combat.</span>
+            <span
+                id="no-characters-in-combat"
+                class="text-muted-foreground"
+                >There are no characters in this combat.</span
+            >
         </template>
 
-        <Sheet v-model:open="addStagedCharacterSheet" v-if="combatStore.combatIsOpen">
+        <Sheet
+            v-model:open="addStagedCharacterSheet"
+            v-if="combatStore.combatIsOpen">
             <SheetTrigger asChild>
-                <Button variant="outline" class="interactable border-dashed">
-                    <FontAwesomeIcon :icon="faPlusCircle"/>
+                <Button
+                    variant="outline"
+                    class="interactable border-dashed">
+                    <FontAwesomeIcon :icon="faPlusCircle" />
                     Add Characters
                 </Button>
             </SheetTrigger>
@@ -68,128 +155,133 @@
                     :campaignId="props.campaignId"
                     :combatId="props.combatId"
                     :userIsDm="combatStore.userIsDm"
-                    :plannedStages="combatStore.combatQuery.data?.combat.plannedStages ?? []"
-                />
+                    :plannedStages="
+                        combatStore.combatQuery.data?.combat.plannedStages ?? []
+                    " />
             </SheetContent>
         </Sheet>
     </TransitionGroup>
 </template>
 <script setup lang="ts">
-import {faPlusCircle} from "@fortawesome/free-solid-svg-icons";
-import {useQuery} from "@tanstack/vue-query";
-import type {CampaignMemberDto} from "~/utils/api/campaign/getCampaignRequest";
-import {getCombatQuery} from "~/utils/queries/combats";
-import {
-    ArmourClassDisplayOptionsEnum,
-    CombatState,
-    HealthDisplayOptionsEnum,
-    type ArmourClassDisplayOptionValues,
-    type HealthDisplayOptionValues,
-    type InitiativeCharacter,
-    type StagedCharacter,
-} from "~/utils/types/models";
-import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
+    import {
+        faEye,
+        faEyeSlash,
+        faPlusCircle,
+    } from "@fortawesome/free-solid-svg-icons";
+    import { useQuery } from "@tanstack/vue-query";
+    import type { CampaignMemberDto } from "~/utils/api/campaign/getCampaignRequest";
+    import { getCombatQuery } from "~/utils/queries/combats";
+    import {
+        ArmourClassDisplayOptionsEnum,
+        CombatState,
+        HealthDisplayOptionsEnum,
+        type ArmourClassDisplayOptionValues,
+        type HealthDisplayOptionValues,
+        type InitiativeCharacter,
+        type StagedCharacter,
+    } from "~/utils/types/models";
+    import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 
-const userStore = useUserStore();
-const combatStore = useCombatStore();
+    const userStore = useUserStore();
+    const combatStore = useCombatStore();
 
-const props = defineProps<{
-    campaignId: string
-    combatId: string
-}>()
+    const props = defineProps<{
+        campaignId: string;
+        combatId: string;
+    }>();
 
-const orderedInitiativeList = computed(() =>
-    combatStore.isLoading
-        ? []
-        : (combatStore.combatQuery.data?.combat?.initiativeList.map(
-            (x) =>
-                ({
-                    user: combatStore.getMemberDetailsFor(x.playerId)!,
-                    character: x,
-                }) satisfies InitiativePlayerDto
-        ) ?? [])
-);
-
-const characterList: ComputedRef<
-    (StagedPlayerDto | InitiativePlayerDto)[]
-> = computed(() => {
-    if (combatStore.isLoading) {
-        return [];
-    }
-
-    if (combatStore.combatIsOpen) {
-        return combatStore.orderedStagedCharacterListWithPlayerInfo;
-    }
-
-    return orderedInitiativeList.value ?? [];
-});
-
-// function getHealthDisplayMethod(
-//     character: StagedPlayerDto | InitiativePlayerDto
-// ): HealthDisplayOptionValues {
-//     if (userIsDm.value) {
-//         return HealthDisplayOptionsEnum["RealValue"];
-//     }
-
-//     if (character.user.isDungeonMaster) {
-//         return campaignQuery.data.value!.campaign!.campaignSettings
-//             .combatHealthDisplaySettings.dmCharacterDisplayMethod!;
-//     }
-
-//     return campaignQuery.data.value!.campaign!.campaignSettings
-//         .combatHealthDisplaySettings.otherPlayerCharacterDisplayMethod!;
-// }
-
-// function getArmourClassDisplayMethod(
-//     character: StagedPlayerDto | InitiativePlayerDto
-// ): ArmourClassDisplayOptionValues {
-//     if (userIsDm.value) {
-//         return ArmourClassDisplayOptionsEnum.RealValue;
-//     }
-
-//     if (character.user.isDungeonMaster) {
-//         return campaignQuery.data.value!.campaign!.campaignSettings
-//             .combatArmourClassDisplaySettings.dmCharacterDisplayMethod!;
-//     }
-
-//     return campaignQuery.data.value!.campaign!.campaignSettings
-//         .combatArmourClassDisplaySettings
-//         .otherPlayerCharacterDisplayMethod!;
-// }
-
-function isInitiativeCharacter(
-    character: InitiativeCharacter | StagedCharacter
-): character is InitiativeCharacter {
-    return (
-        (character as InitiativeCharacter).initiative.value !== undefined
+    const orderedInitiativeList = computed(() =>
+        combatStore.isLoading
+            ? []
+            : (combatStore.combatQuery.data?.combat?.initiativeList.map(
+                  (x) =>
+                      ({
+                          user: combatStore.getMemberDetailsFor(x.playerId)!,
+                          character: x,
+                      }) satisfies InitiativePlayerDto
+              ) ?? [])
     );
-}
 
-function isStagedCharacter(
-    character: InitiativeCharacter | StagedCharacter
-): character is StagedCharacter {
-    return (character as StagedCharacter).initiative.roll !== undefined;
-}
+    const characterList: ComputedRef<
+        (StagedPlayerDto | InitiativePlayerDto)[]
+    > = computed(() => {
+        if (combatStore.isLoading) {
+            return [];
+        }
 
-// Add Staged Character form
-const addStagedCharacterSheet = ref(false);
+        if (combatStore.combatIsOpen) {
+            return combatStore.orderedStagedCharacterListWithPlayerInfo;
+        }
+
+        return orderedInitiativeList.value ?? [];
+    });
+
+    // function getHealthDisplayMethod(
+    //     character: StagedPlayerDto | InitiativePlayerDto
+    // ): HealthDisplayOptionValues {
+    //     if (userIsDm.value) {
+    //         return HealthDisplayOptionsEnum["RealValue"];
+    //     }
+
+    //     if (character.user.isDungeonMaster) {
+    //         return campaignQuery.data.value!.campaign!.campaignSettings
+    //             .combatHealthDisplaySettings.dmCharacterDisplayMethod!;
+    //     }
+
+    //     return campaignQuery.data.value!.campaign!.campaignSettings
+    //         .combatHealthDisplaySettings.otherPlayerCharacterDisplayMethod!;
+    // }
+
+    // function getArmourClassDisplayMethod(
+    //     character: StagedPlayerDto | InitiativePlayerDto
+    // ): ArmourClassDisplayOptionValues {
+    //     if (userIsDm.value) {
+    //         return ArmourClassDisplayOptionsEnum.RealValue;
+    //     }
+
+    //     if (character.user.isDungeonMaster) {
+    //         return campaignQuery.data.value!.campaign!.campaignSettings
+    //             .combatArmourClassDisplaySettings.dmCharacterDisplayMethod!;
+    //     }
+
+    //     return campaignQuery.data.value!.campaign!.campaignSettings
+    //         .combatArmourClassDisplaySettings
+    //         .otherPlayerCharacterDisplayMethod!;
+    // }
+
+    function isInitiativeCharacter(
+        character: InitiativeCharacter | StagedCharacter
+    ): character is InitiativeCharacter {
+        return (
+            (character as InitiativeCharacter).initiative.value !== undefined
+        );
+    }
+
+    function isStagedCharacter(
+        character: InitiativeCharacter | StagedCharacter
+    ): character is StagedCharacter {
+        return (character as StagedCharacter).initiative.roll !== undefined;
+    }
+
+    // Add Staged Character form
+    const addStagedCharacterSheet = ref(false);
 </script>
 
 <style>
-.shuffleList-move, /* apply transition to moving elements */
+    .shuffleList-move, /* apply transition to moving elements */
 .shuffleList-enter-active,
 .shuffleList-leave-active {
-    transition: all 1s ease-in-out;
-}
+        transition: all 1s ease-in-out;
+    }
 
-.shuffleList-enter-from,
-.shuffleList-leave-to {
-    opacity: 0;
-}
+    .shuffleList-enter-from,
+    .shuffleList-leave-to {
+        opacity: 0;
+    }
 
-/* ensure leaving items are taken out of layout flow so that moving
+    /* ensure leaving items are taken out of layout flow so that moving
 animations can be calculated correctly. */
-.shuffleList-leave-active {
-    position: absolute;
-}
+    .shuffleList-leave-active {
+        position: absolute;
+    }
 </style>
