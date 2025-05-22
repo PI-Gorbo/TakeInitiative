@@ -2,7 +2,9 @@
     <Tabs>
         <TabsList>
             <TabsTrigger value="My Characters">My Characters</TabsTrigger>
-            <TabsTrigger v-if="props.userIsDm" value="Draft Stages"
+            <TabsTrigger
+                v-if="props.userIsDm"
+                value="Draft Stages"
                 >Draft Stages</TabsTrigger
             >
             <TabsTrigger value="New Character">New Character</TabsTrigger>
@@ -20,7 +22,9 @@
                 @submitted="() => emit('submitted')" />
         </TabsContent>
         <TabsContent value="New Character">
-            <CampaignCombatStageOrModifyCharacterForm   />
+            <CampaignCombatStageOrModifyCharacterForm
+                :combatId="props.combatId"
+                @submitted="() => emit('submitted')" />
         </TabsContent>
     </Tabs>
 </template>
@@ -30,7 +34,6 @@
     import TabsList from "~/components/ui/tabs/TabsList.vue";
     import StageMyCharactersForm from "./StageMyCharactersForm.vue";
     import type { GetCombatResponse } from "~/utils/api/combat/getCombatRequest";
-    
 
     const props = defineProps<{
         campaignId: string;

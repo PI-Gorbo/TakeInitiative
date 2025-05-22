@@ -4,11 +4,11 @@
             <div class="space-x-1">
                 <template v-if="computedIsLoading">
                     <FontAwesomeIcon :icon="faSpinner" class="fa-spin" />
-                    <span class="h-fit">{{ props.loadingLabel }}</span>
+                    <span class="h-fit" v-if="props.loadingLabel">{{ props.loadingLabel }}</span>
                 </template>
                 <template v-else>
                     <FontAwesomeIcon v-if="props.icon" :icon="props.icon" />
-                    <span class="h-fit">{{ props.label }}</span>
+                    <span class="h-fit" v-if="props.label">{{ props.label }}</span>
                 </template>
             </div>
         </slot>
@@ -23,8 +23,8 @@
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 
     const props = defineProps<{
-        label: string;
-        loadingLabel: string;
+        label?: string;
+        loadingLabel?: string;
         click?: () => Promise<unknown>;
         isLoading?: boolean;
         icon?: IconDefinition;
@@ -35,13 +35,13 @@
         () => _isLoading.value || props.isLoading
     );
 
-    function onClick() {
+    async function onClick() {
         if (_isLoading.value) {
             return;
         }
 
         _isLoading.value = true;
-        props.click?.().finally(() => {
+        await Promise.resolve(props.click?.()).finally(() => {
             _isLoading.value = false;
         });
     }

@@ -122,7 +122,7 @@ export function evaluateHealthInput(healthInput: FormHealthInput): FormHealthInp
     };
 }
 
-
+export type MappedCharacterHealth = z.infer<typeof mappedHealthInputValidator>
 export const mappedHealthInputValidator = healthInputValidator.transform((healthValues, ctx) => {
 
     if (healthValues["!"] === 'None' || healthValues['!'] === 'Roll') {

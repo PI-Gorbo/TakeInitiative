@@ -12,8 +12,7 @@
                     :autoFocus="true"
                     textColour="white"
                     label="Name"
-                    v-model:value="name"
-                    v-bind="nameInputProps" />
+                    v-model="name" />
             </FormFieldWrapper>
 
             <Button
@@ -31,39 +30,46 @@
             v-model:initiative="initiative!.roll"
             :error="initiativeInputProps.errorMessage" />
 
-        <CampaignCharacterUnevaluatedHealthInput
+        <CampaignCharacterHealthInput
             :health="health!"
             @update:health="(h) => (health = h)"
-            :error="healthInputProps.errorMessage" />
+            :error="healthInputProps.errorMessage"
+            :allowRoll="true" />
 
         <CampaignCharacterArmourClassInput
             v-model:ac="armourClass"
             :error="armourClassInputProps.errorMessage" />
 
-        <div class="flex w-full justify-end" v-if="!props.character">
-            <FormButton
+        <div
+            class="flex w-full justify-end"
+            v-if="!props.character">
+            <AsyncButton
+                name="Create"
                 label="Create"
-                :loadingDisplay="{
-                    showSpinner: true,
-                    loadingText: 'Creating...',
-                }"
-                :isLoading="submitting && submitting.submitterName == 'Create'"
-                buttonColour="take-yellow-dark" />
+                :loadingLabel="'Creating...'"
+                :isLoading="
+                    (submitting && submitting.submitterName == 'Create') ??
+                    false
+                " />
         </div>
-        <div v-else class="flex justify-between gap-2">
-            <FormButton
+        <div
+            v-else
+            class="flex justify-between gap-2">
+            <AsyncButton
+                name="Update"
                 label="Save"
-                :loadingDisplay="{
-                    showSpinner: true,
-                    loadingText: 'Saving...',
-                }"
-                :isLoading="submitting && submitting.submitterName == 'Save'"
-                buttonColour="take-yellow-dark" />
-            <FormButton
-                icon="trash"
-                :isLoading="submitting && submitting.submitterName == 'trash'"
-                buttonColour="take-navy-light"
-                hoverButtonColour="take-red" />
+                loadingLabel="Saving..."
+                :isLoading="
+                    (submitting && submitting.submitterName == 'Update') ??
+                    false
+                " />
+            <AsyncButton
+                name="Delete"
+                :icon="faTrash"
+                :isLoading="
+                    (submitting && submitting.submitterName == 'Delete') ??
+                    false
+                " />
         </div>
     </FormBase>
 </template>
@@ -84,23 +90,34 @@
     import { toTypedSchema } from "@vee-validate/zod";
     import { z } from "zod";
     import type { StagedCharacterWithoutIdDTO } from "~/utils/api/combat/postAddStagedCharacter";
-    import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
+    import {
+        faEye,
+        faEyeSlash,
+        faTrash,
+    } from "@fortawesome/free-solid-svg-icons";
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+    import { deleteCampaignRequest } from "~/utils/api/campaign/deleteCampaignRequest";
+    import type { SubmittingState } from "~/components/Form/Base.vue";
+    import {
+        useAddStagedCharacterMutation,
+        useDeleteStagedCharacterMutation,
+        useEditStagedCharacterMutation,
+    } from "~/utils/queries/combats";
+    import { toast } from "vue-sonner";
+import { mappedHealthInputValidator } from "~/utils/forms/healthFormValidator";
 
-    const characterHealthInput = ref<InstanceType<typeof HealthInput> | null>(
-        null
-    );
-    const characterInitiativeInput = ref<InstanceType<
-        typeof Initiative
-    > | null>(null);
     const { userIsDm } = storeToRefs(useCombatStore());
     const formState = reactive({
         error: null as ApiError<StagedCharacterDTO> | null,
     });
 
-    const props = defineProps<{ character?: StagedCharacter }>();
+    const props = defineProps<{
+        combatId: string;
+        character?: StagedCharacter;
+    }>();
+
     const emits = defineEmits<{
-        submit: [];
+        submitted: [];
     }>();
 
     // Form Definition
@@ -112,7 +129,7 @@
                     initiative: unevaluatedCharacterInitiativeValidator,
                     isHidden: z.boolean(),
                     armourClass: z.number().nullable(),
-                    health: unevaluatedCharacterHealthValidator,
+                    health: mappedHealthInputValidator,
                 })
                 .required()
         ),
@@ -150,7 +167,9 @@
     const [health, healthInputProps] = defineField("health", {
         props: (state) => ({
             errorMessage:
-                formState.error?.errors["playerCharacter.Health.HasHealth"]?.at(0) ??
+                formState.error?.errors["playerCharacter.Health.HasHealth"]?.at(
+                    0
+                ) ??
                 formState.error?.errors["in"]?.at(0) ??
                 state.errors[0],
         }),
@@ -167,6 +186,7 @@
     watch(
         () => props.character,
         () => {
+            console.log("updated character");
             initiative.value = props.character?.initiative;
             name.value = props.character?.name;
             isHidden.value = props.character?.hidden;
@@ -191,95 +211,91 @@
             await onCreate();
         }
 
-        if (formSubmittingState.submitterName == "trash") {
+        if (formSubmittingState.submitterName == "Delete") {
             await onDelete();
         }
 
-        if (formSubmittingState.submitterName == "Save") {
+        if (formSubmittingState.submitterName == "Update") {
             await onEdit();
         }
     }
-
+    const deleteMutation = useDeleteStagedCharacterMutation();
     async function onDelete() {
-        if (!props.onDelete) return;
-        return await props
-            .onDelete({ characterId: props.character?.id! })
+        if (!props.character) return;
+        return await deleteMutation
+            .mutateAsync({
+                characterId: props.character?.id!,
+                combatId: props.combatId,
+            })
             .catch((err) => {
                 formState.error = parseAsApiError(err);
+            })
+            .then(() => {
+                toast.success("Character deleted.");
+                emits("submitted");
             });
     }
 
+    const editMutation = useEditStagedCharacterMutation();
     async function onEdit() {
-        if (!props.onEdit) return;
+        if (!props.character) return;
 
         formState.error = null;
-
-        // Fetch & Set the computed health values from the health component upon submission
-        const computedHealth = characterHealthInput.value?.getHealth();
-        if (computedHealth == false) {
-            return;
-        }
-        health.value = computedHealth;
-
-        const computedInitiative =
-            characterInitiativeInput.value?.getInitiative();
-        if (computedInitiative == false) {
-            return;
-        }
-        initiative.value = computedInitiative;
 
         const validateResult = await validate();
         if (!validateResult.valid) {
             return;
         }
 
-        return await props
-            .onEdit({
-                initiative: computedInitiative!,
-                name: name.value!,
-                id: props.character?.id!,
-                hidden: !userIsDm.value ? false : isHidden.value!,
-                health: computedHealth!,
-                armourClass: armourClass.value ?? null,
+        return await editMutation
+            .mutateAsync({
+                character: {
+                    id: props.character?.id!,
+                    initiative: validateResult.values?.initiative!,
+                    name: validateResult.values?.name!,
+                    hidden: !userIsDm.value
+                        ? false
+                        : validateResult.values?.isHidden!,
+                    health: validateResult.values?.health!,
+                    armourClass: validateResult.values?.armourClass ?? null,
+                },
+                combatId: props.combatId,
             })
             .catch((error) => {
                 formState.error = parseAsApiError(error);
+            })
+            .then(() => {
+                toast.success("Character updated.");
+                emits("submitted");
             });
     }
-
+    const addMutation = useAddStagedCharacterMutation();
     async function onCreate() {
-        if (!props.onCreate) return;
-
         formState.error = null;
-        // Fetch & Set the computed health values from the health component upon submission
-        const computedHealth = characterHealthInput.value?.getHealth();
-        if (computedHealth == false) {
-            return;
-        }
-        health.value = computedHealth;
-
-        const computedInitiative =
-            characterInitiativeInput.value?.getInitiative();
-        if (computedInitiative == false) {
-            return;
-        }
-        initiative.value = computedInitiative;
-
         const validateResult = await validate();
         if (!validateResult.valid) {
             return;
         }
 
-        return await props
-            .onCreate({
-                initiative: computedInitiative!,
-                name: name.value!,
-                hidden: !userIsDm.value ? false : isHidden.value!,
-                health: computedHealth!,
-                armourClass: armourClass.value ?? null,
+        return await addMutation
+            .mutateAsync({
+                character: {
+                    initiative: validateResult.values?.initiative!,
+                    name: validateResult.values?.name!,
+                    hidden: !userIsDm.value
+                        ? false
+                        : validateResult.values?.isHidden!,
+                    health: validateResult.values?.health!,
+                    armourClass: validateResult.values?.armourClass ?? null,
+                },
+                combatId: props.combatId,
             })
             .catch((error) => {
                 formState.error = parseAsApiError(error);
+            })
+            .then(() => {
+                toast.success("Character added.");
+                emits("submitted");
             });
     }
 </script>

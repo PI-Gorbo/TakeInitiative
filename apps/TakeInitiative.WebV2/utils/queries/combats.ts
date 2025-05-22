@@ -168,11 +168,42 @@ export const useAddPlannedCharacterToCombatMutation = () => {
         mutationFn: api.combat.stage.planned,
         onSuccess: (data, request) => {
             setCombatQueryData(data.combat.campaignId, data.combat.id, data, client)
-            client.invalidateQueries({
-                queryKey: getCampaignQueryKey(data.combat.campaignId)
-            })
         }
     })
 }
+
+export const useDeleteStagedCharacterMutation = () => {
+    const client = useQueryClient()
+    const api = useApi()
+    return useMutation({
+        mutationFn: api.combat.stage.character.delete,
+        onSuccess: (data, request) => {
+            setCombatQueryData(data.combat.campaignId, data.combat.id, data, client)
+        }
+    })
+}
+
+export const useEditStagedCharacterMutation = () => {
+    const client = useQueryClient()
+    const api = useApi()
+    return useMutation({
+        mutationFn: api.combat.stage.character.update,
+        onSuccess: (data, request) => {
+            setCombatQueryData(data.combat.campaignId, data.combat.id, data, client)
+        }
+    })
+}
+
+export const useAddStagedCharacterMutation = () => {
+    const client = useQueryClient()
+    const api = useApi()
+    return useMutation({
+        mutationFn: api.combat.stage.character.add,
+        onSuccess: (data, request) => {
+            setCombatQueryData(data.combat.campaignId, data.combat.id, data, client)
+        }
+    })
+}
+
 
 

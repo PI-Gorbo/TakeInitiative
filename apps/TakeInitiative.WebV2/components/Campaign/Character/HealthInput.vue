@@ -11,7 +11,8 @@
                     </template>
                     <template #Content>
                         Health is Optional and you can click the arrow to clear
-                        it.
+                        it. (Tip: In fixed mode, set the max health first to set
+                        both values at once.)
                         <br />
                         The health fields support basic arithmetic including
                         grouping with brackets (), add (+), subtract (-),
@@ -33,7 +34,11 @@
                                 <SelectLabel>Mode</SelectLabel>
                                 <SelectItem value="None"> None </SelectItem>
                                 <SelectItem value="Fixed"> Fixed </SelectItem>
-                                <SelectItem value="Roll"> Roll </SelectItem>
+                                <SelectItem
+                                    v-if="props.allowRoll"
+                                    value="Roll">
+                                    Roll
+                                </SelectItem>
                             </SelectGroup>
                         </SelectContent>
                     </Select>
@@ -88,7 +93,9 @@
                             " />
                     </div>
                 </section>
-                <section class="flex w-full items-center" v-else>
+                <section
+                    class="flex w-full items-center"
+                    v-else>
                     <Input
                         class="flex-1"
                         :modelValue="props.health.rollString"
@@ -124,6 +131,7 @@
     const props = defineProps<{
         health: FormHealthInput;
         error: string | undefined;
+        allowRoll: boolean;
     }>();
 
     const emit = defineEmits<{
@@ -156,6 +164,12 @@
     }
 
     function onSetCurrentHealth(value: string | number) {
+        if (value === "" && props.health["!"] === "None") {
+            // Here, the user would have just clicked on the input, without actually submitting anything.
+            // It felt better for UX to wait for the user to actually input a number before we set the max health to 0.
+            return;
+        }
+
         const newHealthValue: FormHealthInput = {
             "!": "Fixed",
             currentHealth:
@@ -171,6 +185,12 @@
     }
 
     function onSetMaxHealth(value: string | number) {
+        if (value === "" && props.health["!"] === "None") {
+            // Here, the user would have just clicked on the input, without actually submitting anything.
+            // It felt better for UX to wait for the user to actually input a number before we set the max health to 0.
+            return;
+        }
+
         const newHealthValue: FormHealthInput = {
             "!": "Fixed",
             currentHealth:
