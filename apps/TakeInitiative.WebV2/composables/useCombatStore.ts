@@ -28,6 +28,8 @@ export const useCombatStore = defineStore("combatStore", () => {
     function init(newCampaignId: string | null, newCombatId: string | null) {
         campaignId.value = newCampaignId;
         combatId.value = newCombatId;
+        campaignQuery.refetch();
+        combatQuery.refetch();
     }
     const campaignQuery = useQuery(getCampaignQuery(campaignId));
     const combatQuery = useQuery(getCombatQuery(campaignId, combatId))
@@ -41,7 +43,7 @@ export const useCombatStore = defineStore("combatStore", () => {
     const userIsDm = computed(() => {
         return (
             userStore.state.user?.userId ===
-            combatQuery.data.value?.combat.dungeonMaster
+            combatQuery.data.value?.combat?.dungeonMaster
         );
     });
 
@@ -232,7 +234,7 @@ export const useCombatStore = defineStore("combatStore", () => {
         };
 
         return (
-            combatQuery.data.value?.combat.stagedList
+            combatQuery.data.value?.combat?.stagedList
                 .map(
                     (x) =>
                         ({
@@ -247,6 +249,8 @@ export const useCombatStore = defineStore("combatStore", () => {
     });
 
     return {
+        campaignId,
+        combatId,
         init,
         isLoading,
         campaignQuery,
@@ -256,13 +260,13 @@ export const useCombatStore = defineStore("combatStore", () => {
         orderedStagedCharacterListWithPlayerInfo,
         getMemberDetailsFor,
         combatIsOpen: computed(
-            () => combatQuery.data.value?.combat.state == CombatState.Open
+            () => combatQuery.data.value?.combat?.state == CombatState.Open
         ),
         combatIsStarted: computed(
-            () => combatQuery.data.value?.combat.state == CombatState.Started
+            () => combatQuery.data.value?.combat?.state == CombatState.Started
         ),
         combatIsFinished: computed(
-            () => combatQuery.data.value?.combat.state == CombatState.Finished
+            () => combatQuery.data.value?.combat?.state == CombatState.Finished
         ),
         // connection,
         // state,

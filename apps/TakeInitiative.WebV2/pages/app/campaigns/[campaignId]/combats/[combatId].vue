@@ -1,7 +1,8 @@
 <template>
     <LoadingFallback
+        :key="store.combatId ?? ''"
         :isLoading="
-            store.campaignQuery.isLoading || store.combatQuery.isLoading
+            store.campaignQuery.isPending || store.combatQuery.isPending
         "
         class="h-full w-full max-h-full flex justify-center">
         <div class="lg:grid lg:grid-cols-3 w-page lg:gap-4 max-h-full pb-4">
@@ -12,7 +13,9 @@
                         <span
                             class="flex justify-between flex-wrap items-center">
                             <CardTitle class="font-NovaCut text-gold"
-                                >{{ store.combatQuery.data?.combat.combatName }}
+                                >{{
+                                    store.combatQuery.data?.combat?.combatName
+                                }}
                             </CardTitle>
                             <template v-if="store.userIsDm">
                                 <AsyncButton
@@ -47,7 +50,7 @@
                         <CardDescription>
                             <template
                                 v-if="
-                                    store.combatQuery.data?.combat.state ===
+                                    store.combatQuery.data?.combat?.state ===
                                     CombatState.Open
                                 ">
                                 Combat has not started yet. Players can add
@@ -55,7 +58,7 @@
                             </template>
                             <template
                                 v-else-if="
-                                    store.combatQuery.data?.combat.state ===
+                                    store.combatQuery.data?.combat?.state ===
                                     CombatState.Started
                                 ">
                                 Round
@@ -71,8 +74,8 @@
                             name="fade"
                             mode="out-in">
                             <section
-                                v-if="
-                                    store.combatQuery.data?.combat.state ===
+                                v-show="
+                                    store.combatQuery.data?.combat?.state ===
                                     CombatState.Started
                                 "
                                 class="flex flex-col gap-2 flex-1 overlfow-auto h-full max-h-full">
@@ -125,7 +128,7 @@
                                                 :userIsDm="store.userIsDm"
                                                 :plannedStages="
                                                     store.combatQuery.data
-                                                        .combat.plannedStages
+                                                        ?.combat?.plannedStages!
                                                 " />
                                         </SheetContent>
                                     </Sheet>
@@ -161,6 +164,7 @@
         faPlusCircle,
     } from "@fortawesome/free-solid-svg-icons";
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+    import { useQuery } from "@tanstack/vue-query";
     import { toast } from "vue-sonner";
     import StageCharactersForm from "~/components/Campaign/Combat/StageCharactersForm.vue";
     import CardContent from "~/components/ui/card/CardContent.vue";
@@ -171,6 +175,7 @@
     import SheetTitle from "~/components/ui/sheet/SheetTitle.vue";
     import SheetTrigger from "~/components/ui/sheet/SheetTrigger.vue";
     import {
+        getCombatQuery,
         useEndTurnMutation,
         useFinishCombatMutation,
         useStartCombatMutation,
@@ -178,11 +183,12 @@
     import { CombatState } from "~/utils/types/models";
 
     const route = useRoute("app-campaigns-campaignId-combats-combatId");
+    const combatId = computed(() => route.params.combatId);
 
     const store = useCombatStore();
     watchEffect(() => {
-        store.init(route.params.campaignId, route.params.combatId);
         console.log("triggered here");
+        store.init(route.params.campaignId, combatId.value);
     });
 
     // state
@@ -201,7 +207,7 @@
     const endTurn = async () => {
         await endTurnMutation
             .mutateAsync({
-                combatId: route.params.combatId,
+                combatId: combatId.value,
             })
             .then(() => toast.success("Ended Turn!"))
             .catch(() => toast.error("Failed to end turn!"));
@@ -211,7 +217,7 @@
     const finishCombat = async () => {
         await finishCombatMutation
             .mutateAsync({
-                combatId: route.params.combatId,
+                combatId: combatId.value,
             })
             .then(() => toast.success("Combat Finished!"))
             .catch(() =>
@@ -225,7 +231,7 @@
     const startCombat = async () => {
         await startCombatMutation
             .mutateAsync({
-                combatId: route.params.combatId,
+                combatId: combatId.value,
             })
             .then(() => toast.success("Combat Started!"))
             .catch(() =>

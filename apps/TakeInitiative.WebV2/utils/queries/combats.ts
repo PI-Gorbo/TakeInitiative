@@ -108,6 +108,9 @@ export const openCombatToPlayersMutation = () => {
             client.invalidateQueries({
                 queryKey: getAllCombatsQueryKey(data.combat.campaignId),
             });
+            client.invalidateQueries({
+                queryKey: getCampaignQueryKey(data.combat.campaignId),
+            });
             client.setQueryData(
                 getCombatQueryKey(data.combat.campaignId, data.combat.id),
                 data.combat
