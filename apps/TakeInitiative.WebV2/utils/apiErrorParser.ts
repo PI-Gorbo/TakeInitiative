@@ -8,6 +8,7 @@ export type ApiError<TRequest extends {}> = {
     message: string;
     errors: Partial<Record<Path<TRequest> | 'generalErrors', string[]>> | null;
     error: AxiosError<any>;
+    getUntypedError: (name: string) => string[] | null
 };
 const apiErrorSchema = z
     .object({
@@ -27,6 +28,7 @@ export function parseAsApiError<TRequest extends {}>(
             message: result.message,
             errors: result.errors,
             error,
+            getUntypedError: (name) => result.errors[name]
         };
     } catch (err) {
         return {
@@ -34,6 +36,7 @@ export function parseAsApiError<TRequest extends {}>(
             message: "Something went wrong",
             errors: null,
             error,
+            getUntypedError: (name) => null
         };
     }
 }

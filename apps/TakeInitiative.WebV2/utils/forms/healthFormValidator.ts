@@ -94,7 +94,7 @@ export const healthInputValidator =
             "!": z.literal("Fixed"),
             currentHealth: z.union([z.string(), z.number()]),
             maxHealth: z.union([z.string(), z.number()]),
-        })
+        }).required()
     ]);
 
 export function evaluateHealthInput(healthInput: FormHealthInput): FormHealthInput {

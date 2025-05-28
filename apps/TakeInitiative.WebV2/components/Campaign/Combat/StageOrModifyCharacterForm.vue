@@ -31,10 +31,10 @@
             :error="initiativeInputProps.errorMessage" />
 
         <CampaignCharacterHealthInput
-            :health="health!"
             @update:health="(h) => (health = h)"
             :error="healthInputProps.errorMessage"
-            :allowRoll="true" />
+            :allowRoll="true"
+            :health="health! as FormHealthInput" />
 
         <CampaignCharacterArmourClassInput
             v-model:ac="armourClass"
@@ -107,7 +107,10 @@
         useEditStagedCharacterMutation,
     } from "~/utils/queries/combats";
     import { toast } from "vue-sonner";
-    import { mappedHealthInputValidator } from "~/utils/forms/healthFormValidator";
+    import {
+        mappedHealthInputValidator,
+        type FormHealthInput,
+    } from "~/utils/forms/healthFormValidator";
 
     const { userIsDm } = storeToRefs(useCombatStore());
     const formState = reactive({
@@ -154,15 +157,16 @@
     const [initiative, initiativeInputProps] = defineField("initiative", {
         props: (state) => ({
             errorMessage:
-                formState.error?.errors["character.Initiative.Value"]?.at(0) ??
-                state.errors[0],
+                formState.error
+                    ?.getUntypedError("character.Initiative.Value")
+                    ?.at(0) ?? state.errors[0],
         }),
     });
 
     const [isHidden, isHiddenInputProps] = defineField("isHidden", {
         props: (state) => ({
             errorMessage:
-                formState.error?.errors["character.Hidden"]?.at(0) ??
+                formState.error?.getUntypedError("character.Hidden")?.at(0) ??
                 state.errors[0],
         }),
     });
@@ -170,10 +174,10 @@
     const [health, healthInputProps] = defineField("health", {
         props: (state) => ({
             errorMessage:
-                formState.error?.errors["playerCharacter.Health.HasHealth"]?.at(
-                    0
-                ) ??
-                formState.error?.errors["in"]?.at(0) ??
+                formState.error
+                    ?.getUntypedError("playerCharacter.Health.HasHealth")
+                    ?.at(0) ??
+                formState.error?.getUntypedError("in")?.at(0) ??
                 state.errors[0],
         }),
     });
@@ -181,7 +185,7 @@
     const [armourClass, armourClassInputProps] = defineField("armourClass", {
         props: (state) => ({
             errorMessage:
-                formState.error?.errors["playerCharacter.armourClass"]?.at(0) ??
+                formState.error?.getUntypedError("playerCharacter.armourClass")?.at(0) ??
                 state.errors[0],
         }),
     });

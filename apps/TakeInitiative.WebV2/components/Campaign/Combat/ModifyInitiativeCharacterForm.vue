@@ -29,10 +29,10 @@
             </div>
 
             <CampaignCharacterHealthInput
-                :health="health!"
                 @update:health="(v) => (health = v)"
                 :error="healthInputProps.errorMessage"
-                :allowRoll="false" />
+                :allowRoll="false"
+                :health="health! as FormHealthInput" />
 
             <CampaignCharacterArmourClassInput
                 v-model:ac="armourClass"
@@ -78,7 +78,10 @@
     } from "@fortawesome/free-solid-svg-icons";
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
     import type { SubmittingState } from "~/components/Form/Base.vue";
-    import { mappedHealthInputValidator } from "~/utils/forms/healthFormValidator";
+    import {
+        mappedHealthInputValidator,
+        type FormHealthInput,
+    } from "~/utils/forms/healthFormValidator";
     import { useUpdateInitiativeCharacterMutation } from "~/utils/queries/combats";
     import { useDeleteStagedCharacterMutation } from "~/utils/queries/combats";
     import { toast } from "vue-sonner";
@@ -125,7 +128,7 @@
     const [name, nameInputProps] = defineField("name", {
         props: (state) => ({
             errorMessage:
-                formState.error?.getErrorFor("name") ?? state.errors[0],
+                formState.error?.errors?.name?.at(0) ?? state.errors[0],
         }),
     });
 
@@ -133,7 +136,9 @@
 
     const [health, healthInputProps] = defineField("health", {
         props: (state) => ({
-            errorMessage: formState.error?.getErrorFor("character.Initiative"),
+            errorMessage: formState.error
+                ?.getUntypedError("character.Initiative")
+                ?.at(0),
         }),
     });
     const [armourClass, armourClassInputProps] = defineField("armourClass");
@@ -187,10 +192,10 @@
                     hidden: !userIsDm.value
                         ? false
                         : validateResult.values.isHidden!,
-                    health: validateResult.values.health!,
                     initiative: props.character.initiative,
                     armourClass: validateResult.values.armourClass!,
                     conditions: validateResult.values.conditions!,
+                    health: validateResult.values.health! as CharacterHealth,
                 },
                 combatId: props.combatId,
             })
