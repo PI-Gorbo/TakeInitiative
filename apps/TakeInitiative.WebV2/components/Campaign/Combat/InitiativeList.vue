@@ -5,126 +5,12 @@
         name="shuffleList">
         <template v-if="characterList.length">
             <a
-                v-for="({ character, user }, index) in characterList"
-                :key="character.id">
-                <Sheet >
-                    <SheetTrigger asChild>
-                        <Button
-                            variant="outline"
-                            class="group flex p-2 gap-2 w-full h-fit justify-start text-start"
-                            :class="{
-                                [`interactable ${styles.interactable} shadow-accent active:shadow-accent`]:
-                                    combatStore.userIsDm ||
-                                    user.userId ===
-                                        userStore.state.user?.userId,
-                                'shadow-gold border-gold':
-                                    index ===
-                                    combatStore.combatQuery.data?.combat
-                                        .initiativeIndex,
-                            }">
-                            <section
-                                v-if="
-                                    !combatStore.combatIsOpen &&
-                                    isInitiativeCharacter(character)
-                                "
-                                class="flex gap-2">
-                                <div
-                                    v-for="(value, index) in character
-                                        .initiative.value"
-                                    :key="index"
-                                    :class="[
-                                        'flex items-center rounded-lg p-1',
-                                        {
-                                            'bg-secondary text-secondary-foreground':
-                                                index == 0 &&
-                                                user.userId !=
-                                                    userStore.state.user
-                                                        ?.userId,
-                                            'bg-gold text-gold-foreground':
-                                                index == 0 &&
-                                                user.userId ==
-                                                    userStore.state.user
-                                                        ?.userId,
-                                            'bg-take-navy-medium text-xs':
-                                                index != 0,
-                                        },
-                                    ]">
-                                    {{ value.total }}
-                                </div>
-                            </section>
-                            <section
-                                class="flex flex-col"
-                                :class="{
-                                    'text-muted-foreground': character.hidden,
-                                }">
-                                <!-- Character Name -->
-                                <span>
-                                    <FontAwesomeIcon
-                                        v-if="
-                                            combatStore.userIsDm &&
-                                            character.playerId ==
-                                                userStore.state.user?.userId
-                                        "
-                                        :icon="
-                                            character.hidden
-                                                ? faEyeSlash
-                                                : faEye
-                                        "
-                                        size="sm" />
-                                    {{ character.name }}
-                                </span>
-                                <!-- Username -->
-                                <span
-                                    :class="[
-                                        'text-xs',
-                                        {
-                                            'cursor-pointer':
-                                                combatStore.isEditableForUser({
-                                                    character,
-                                                    user,
-                                                }) &&
-                                                (combatStore.combatIsOpen ||
-                                                    combatStore.combatIsStarted),
-                                        },
-                                    ]">
-                                    <FontAwesomeIcon
-                                        class="text-gold"
-                                        :icon="
-                                            combatStore.getIconForUser({
-                                                character,
-                                                user,
-                                            })
-                                        " />
-                                    {{ user?.username }}
-                                </span>
-                            </section>
-                            <section
-                                class="flex-1 flex justify-end"
-                                :class="{
-                                    'text-muted-foreground': character.hidden,
-                                }">
-                                <CampaignCombatCharacterStatsDisplay
-                                    :health="character.health"
-                                    :armourClass="character.armourClass"
-                                    :initiative="
-                                        isStagedCharacter(character)
-                                            ? character.initiative.roll
-                                            : undefined
-                                    " />
-                            </section>
-                        </Button>
-                    </SheetTrigger>
-                    <SheetContent >
-                        <CampaignCombatStageOrModifyCharacterForm
-                            v-if="isStagedCharacter(character)"
-                            :combatId="props.combatId"
-                            :character="character" />
-                        <CampaignCombatModifyInitiativeCharacterForm
-                            v-else
-                            :character="character"
-                            :combatId="props.combatId" />
-                    </SheetContent>
-                </Sheet>
+                v-for="(characterDto, index) in characterList"
+                :key="characterDto.character.id">
+                <CampaignCombatInitiativeListCharacter
+                    :character="characterDto"
+                    :index="index"
+                    :combatId="props.combatId" />
             </a>
         </template>
         <template v-else>
@@ -163,24 +49,9 @@
     </TransitionGroup>
 </template>
 <script setup lang="ts">
-    import {
-        faEye,
-        faEyeSlash,
-        faPlusCircle,
-    } from "@fortawesome/free-solid-svg-icons";
-    import { useQuery } from "@tanstack/vue-query";
-    import type { CampaignMemberDto } from "~/utils/api/campaign/getCampaignRequest";
-    import { getCombatQuery } from "~/utils/queries/combats";
-    import {
-        ArmourClassDisplayOptionsEnum,
-        CombatState,
-        HealthDisplayOptionsEnum,
-        type ArmourClassDisplayOptionValues,
-        type HealthDisplayOptionValues,
-        type InitiativeCharacter,
-        type StagedCharacter,
-    } from "~/utils/types/models";
+    import { faPlusCircle } from "@fortawesome/free-solid-svg-icons";
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+    import type { CharacterDto } from "./combatHelpers";
 
     const userStore = useUserStore();
     const combatStore = useCombatStore();
@@ -202,9 +73,7 @@
               ) ?? [])
     );
 
-    const characterList: ComputedRef<
-        (StagedPlayerDto | InitiativePlayerDto)[]
-    > = computed(() => {
+    const characterList: ComputedRef<CharacterDto[]> = computed(() => {
         if (combatStore.isLoading) {
             return [];
         }
@@ -248,20 +117,6 @@
     //         .combatArmourClassDisplaySettings
     //         .otherPlayerCharacterDisplayMethod!;
     // }
-
-    function isInitiativeCharacter(
-        character: InitiativeCharacter | StagedCharacter
-    ): character is InitiativeCharacter {
-        return (
-            (character as InitiativeCharacter).initiative.value !== undefined
-        );
-    }
-
-    function isStagedCharacter(
-        character: InitiativeCharacter | StagedCharacter
-    ): character is StagedCharacter {
-        return (character as StagedCharacter).initiative.roll !== undefined;
-    }
 
     // Add Staged Character form
     const addStagedCharacterSheet = ref(false);

@@ -20,7 +20,7 @@
                 @click="() => (isHidden = !isHidden)"
                 type="button"
                 variant="outline"
-                class="interactable">
+                class="interactable bg-[#1e293b]">
                 <FontAwesomeIcon :icon="isHidden ? faEyeSlash : faEye" />
                 {{ isHidden ? "Hidden" : "Visible" }}
             </Button>
@@ -50,12 +50,14 @@
                 :isLoading="
                     (submitting && submitting.submitterName == 'Create') ??
                     false
-                " />
+                "
+                type="submit" />
         </div>
         <div
             v-else
             class="flex justify-between gap-2">
             <AsyncButton
+                type="submit"
                 name="Update"
                 label="Save"
                 loadingLabel="Saving..."
@@ -64,6 +66,7 @@
                     false
                 " />
             <AsyncButton
+                type="button"
                 name="Delete"
                 :icon="faTrash"
                 :isLoading="
@@ -104,7 +107,7 @@
         useEditStagedCharacterMutation,
     } from "~/utils/queries/combats";
     import { toast } from "vue-sonner";
-import { mappedHealthInputValidator } from "~/utils/forms/healthFormValidator";
+    import { mappedHealthInputValidator } from "~/utils/forms/healthFormValidator";
 
     const { userIsDm } = storeToRefs(useCombatStore());
     const formState = reactive({
@@ -207,7 +210,10 @@ import { mappedHealthInputValidator } from "~/utils/forms/healthFormValidator";
     });
 
     async function onSubmit(formSubmittingState: SubmittingState) {
-        if (formSubmittingState.submitterName == "Create") {
+        if (
+            formSubmittingState.submitterName == "Create" ||
+            (!props.character && !formSubmittingState.submitterName)
+        ) {
             await onCreate();
         }
 
@@ -215,10 +221,14 @@ import { mappedHealthInputValidator } from "~/utils/forms/healthFormValidator";
             await onDelete();
         }
 
-        if (formSubmittingState.submitterName == "Update") {
+        if (
+            formSubmittingState.submitterName == "Update" ||
+            (props.character && !formSubmittingState.submitterName)
+        ) {
             await onEdit();
         }
     }
+
     const deleteMutation = useDeleteStagedCharacterMutation();
     async function onDelete() {
         if (!props.character) return;

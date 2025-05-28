@@ -1,6 +1,9 @@
 <template>
     <div>
-        <LoadingFallback :isLoading="campaignQuery.isLoading.value || allCombatsQuery.isLoading.value">
+        <LoadingFallback
+            :isLoading="
+                campaignQuery.isLoading.value || allCombatsQuery.isLoading.value
+            ">
             <Card
                 v-if="
                     !(
@@ -9,7 +12,12 @@
                     )
                 "
                 class="border-2 p-4 border-primary/50">
-                <div v-if="campaignQuery.data.value?.userCampaignMember.isDungeonMaster" class="flex flex-col gap-4">
+                <div
+                    v-if="
+                        campaignQuery.data.value?.userCampaignMember
+                            .isDungeonMaster
+                    "
+                    class="flex flex-col gap-4">
                     <div>Start by making your first draft combat</div>
                     <CampaignCombatDraftCreateForm
                         :campaignId="route.params.campaignId"
@@ -27,13 +35,15 @@
     import { useQuery } from "@tanstack/vue-query";
     import type { CreatePlannedCombatRequest } from "~/utils/api/plannedCombat/createPlannedCombatRequest";
     import { getCampaignQuery } from "~/utils/queries/campaign";
-    import {
-        getAllCombatsQuery,
-    } from "~/utils/queries/combats";
+    import { getAllCombatsQuery } from "~/utils/queries/combats";
     const route = useRoute("app-campaigns-campaignId-combats");
     const srceenSize = useScreenSize();
-    const campaignQuery = useQuery(getCampaignQuery(() => route.params.campaignId));
-    const allCombatsQuery = useQuery(getAllCombatsQuery(() => route.params.campaignId));
+    const campaignQuery = useQuery(
+        getCampaignQuery(() => route.params.campaignId)
+    );
+    const allCombatsQuery = useQuery(
+        getAllCombatsQuery(() => route.params.campaignId)
+    );
 
     definePageMeta({
         layout: "campaign-combats",

@@ -79,15 +79,18 @@
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
     import type { SubmittingState } from "~/components/Form/Base.vue";
     import { mappedHealthInputValidator } from "~/utils/forms/healthFormValidator";
+    import { useUpdateInitiativeCharacterMutation } from "~/utils/queries/combats";
+    import { useDeleteStagedCharacterMutation } from "~/utils/queries/combats";
+    import { toast } from "vue-sonner";
 
-    const characterHealthInput = ref<InstanceType<typeof HealthInput> | null>(
-        null
-    );
-    const userStore = useUserStore();
+    const emits = defineEmits<{
+        submitted: [];
+    }>();
     const { userIsDm } = storeToRefs(useCombatStore());
 
     const props = withDefaults(
         defineProps<{
+            combatId: string;
             character: InitiativeCharacter;
         }>(),
         {}
@@ -157,41 +160,59 @@
             await onDelete();
         }
 
-        if (formSubmittingState.submitterName == "Save") {
+        if (
+            formSubmittingState.submitterName == "Save" ||
+            formSubmittingState.submitterName == ""
+        ) {
             await onEdit();
         }
     }
 
+    const editInitiativeCharacterMutation =
+        useUpdateInitiativeCharacterMutation();
     async function onEdit() {
         formState.error = null;
 
         // Fetch & Set the computed health values from the health component upon submission
-        const computedHealth = characterHealthInput.value?.getHealth();
-        if (computedHealth == false) {
-            return;
-        }
-        health.value = computedHealth;
-
         const validateResult = await validate();
-        if (!validateResult.valid) {
+        if (!validateResult.valid || validateResult.values == null) {
             return;
         }
 
-        return await props
-            .onEdit({
-                id: props.character.id,
-                name: name.value!,
-                hidden: !userIsDm.value ? false : isHidden.value!,
-                health: computedHealth! as CharacterHealth,
-                initiative: props.character.initiative,
-                armourClass: armourClass.value ?? null,
-                conditions: conditions.value!,
+        return await editInitiativeCharacterMutation
+            .mutateAsync({
+                character: {
+                    id: props.character.id,
+                    name: validateResult.values.name!,
+                    hidden: !userIsDm.value
+                        ? false
+                        : validateResult.values.isHidden!,
+                    health: validateResult.values.health!,
+                    initiative: props.character.initiative,
+                    armourClass: validateResult.values.armourClass!,
+                    conditions: validateResult.values.conditions!,
+                },
+                combatId: props.combatId,
             })
-            .catch((error) => (formState.error = parseAsApiError(error)));
+            .catch((error) => (formState.error = parseAsApiError(error)))
+            .then(() => {
+                toast.success("Updated character");
+                return emits("submitted");
+            });
     }
+
+    const deleteInitiativeCharacterMutation =
+        useDeleteStagedCharacterMutation();
     async function onDelete() {
-        return await props
-            .onDelete(props.character.id)
-            .catch((error) => (formState.error = parseAsApiError(error)));
+        return await deleteInitiativeCharacterMutation
+            .mutateAsync({
+                characterId: props.character.id,
+                combatId: props.combatId,
+            })
+            .catch((error) => (formState.error = parseAsApiError(error)))
+            .then(() => {
+                toast.success("Deleted character");
+                emits("submitted");
+            });
     }
 </script>

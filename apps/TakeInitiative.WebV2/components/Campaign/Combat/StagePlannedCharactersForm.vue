@@ -1,5 +1,7 @@
 <template>
-    <Form @submit.prevent="onSubmit" class="flex flex-col gap-2 pt-2">
+    <Form
+        @submit="onSubmit"
+        class="flex flex-col gap-2 pt-2">
         <section
             v-if="hasAnyValidStages"
             :key="index"
@@ -65,16 +67,21 @@
             </fieldset>
         </section>
 
-        <div class="flex w-full justify-end" v-if="hasAnyValidStages">
+        <div
+            class="flex w-full justify-end"
+            v-if="hasAnyValidStages">
             <AsyncButton
                 loadingLabel="Staging..."
                 :icon="faPlusCircle"
                 label="Add Characters"
                 :disabled="!canSubmit"
-                :isLoading="stagedPlannedCharaterMutation.isPending.value" />
+                :isLoading="stagedPlannedCharaterMutation.isPending.value"
+                type="Submit" />
         </div>
 
-        <div v-if="!hasAnyValidStages" class="text-white">
+        <div
+            v-if="!hasAnyValidStages"
+            class="text-white">
             Looks like all the stages for this combat are empty, or there are no
             stages left!
         </div>
@@ -185,6 +192,7 @@
     const stagedPlannedCharaterMutation =
         useAddPlannedCharacterToCombatMutation();
     async function onSubmit() {
+        debugger;
         const outputRecord: Record<string, StagePlannedCharacterDto[]> = {};
         for (const key in state.selectedStages) {
             if (state.selectedStages[key] != null) {
