@@ -4,7 +4,7 @@ import type { RefOrGetter } from "~/utils/queries/utils";
 
 export const useCombatControls = (combatId: RefOrGetter<string>) => {
 
-    const getToastPosition = () => useDevice().isMobile ? 'top-right' : 'bottom-right'
+    const getToastPosition = () => useDevice().isMobile ? 'top-right' : 'top-right'
 
 
     const endTurnMutation = useEndTurnMutation();
@@ -14,7 +14,7 @@ export const useCombatControls = (combatId: RefOrGetter<string>) => {
                 combatId: toValue(combatId),
             })
             .then(() => toast.success("Ended Turn!", {
-                position: getToastPosition()
+                position: 'top-right'
             }))
             .catch(() => toast.error("Failed to end turn!"));
     };

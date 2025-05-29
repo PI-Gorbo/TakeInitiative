@@ -18,7 +18,7 @@
                         :class="[
                             styles.interactable,
                             {
-                                'border-primary shadow-primary active:shadow-primary':
+                                'border-primary shadow-primary':
                                     selectedCharacters.includes(character.id),
                             },
                         ]"

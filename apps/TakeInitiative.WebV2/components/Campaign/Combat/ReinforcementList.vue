@@ -39,12 +39,16 @@
 </template>
 
 <script setup lang="ts">
-    import { faPlusCircle } from "@fortawesome/free-solid-svg-icons";
+    import { faPencil, faPlusCircle } from "@fortawesome/free-solid-svg-icons";
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+    import { useQuery } from "@tanstack/vue-query";
     import { toast } from "vue-sonner";
+    import { getCampaignQuery } from "~/utils/queries/campaign";
     import {
+        getCombatQuery,
         useAddStagedCharactersToCombatMutation,
     } from "~/utils/queries/combats";
+    import { CombatStartedHistoryEvent } from "~/utils/types/models";
     import ReinforcementListCharacter from "./ReinforcementListCharacter.vue";
 
     const props = defineProps<{

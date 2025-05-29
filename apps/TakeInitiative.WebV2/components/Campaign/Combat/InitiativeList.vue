@@ -1,27 +1,27 @@
 <template>
-    <TransitionGroup
-        class="flex select-none flex-col gap-2"
-        tag="section"
-        name="shuffleList">
-        <template v-if="characterList.length">
-            <div
-                v-for="(characterDto, index) in characterList"
-                :key="characterDto.character.id"
+    <div>
+        <TransitionGroup
+            class="flex select-none flex-col gap-2 overflow-y-auto max-h-full"
+            tag="section"
+            name="shuffleList">
+            <template v-if="characterList.length">
+                <div
+                    v-for="(characterDto, index) in characterList"
+                    :key="characterDto.character.id">
+                    <CampaignCombatInitiativeListCharacter
+                        :character="characterDto"
+                        :index="index"
+                        :combatId="props.combatId" />
+                </div>
+            </template>
+            <template v-else>
+                <span
+                    id="no-characters-in-combat"
+                    class="text-muted-foreground"
+                    >There are no characters in this combat.</span
                 >
-                <CampaignCombatInitiativeListCharacter
-                    :character="characterDto"
-                    :index="index"
-                    :combatId="props.combatId" />
-            </div>
-        </template>
-        <template v-else>
-            <span
-                id="no-characters-in-combat"
-                class="text-muted-foreground"
-                >There are no characters in this combat.</span
-            >
-        </template>
-
+            </template>
+        </TransitionGroup>
         <Sheet
             v-model:open="addStagedCharacterSheet"
             v-if="combatStore.combatIsOpen">
@@ -47,7 +47,7 @@
                     " />
             </SheetContent>
         </Sheet>
-    </TransitionGroup>
+    </div>
 </template>
 <script setup lang="ts">
     import { faPlusCircle } from "@fortawesome/free-solid-svg-icons";
