@@ -3,16 +3,14 @@
         <SheetTrigger asChild>
             <Button
                 variant="outline"
-                class="group flex p-2 gap-2 w-full h-fit justify-start text-start"
+                class="group flex p-2 gap-2 w-full h-fit justify-start text-start disabled:opacity-100"
                 :class="{
-                    [`interactable ${styles.interactable} shadow-accent active:shadow-accent`]:
-                        combatStore.userIsDm ||
-                        characterDto.user.userId ===
-                            userStore.state.user?.userId,
-                    'shadow-gold border-gold':
+                    [`${styles.interactable}`]: userIsDmOrCharacterOwner(),
+                    'shadow-gold border-gold hover:shadow-gold hover:border-gold':
                         index ===
                         combatStore.combatQuery.data?.combat.initiativeIndex,
-                }">
+                }"
+                :disabled="!userIsDmOrCharacterOwner()">
                 <section
                     v-if="
                         !combatStore.combatIsOpen &&
@@ -128,4 +126,11 @@
         character: StagedPlayerDto | InitiativePlayerDto;
         index: number;
     }>();
+
+    function userIsDmOrCharacterOwner() {
+        return (
+            combatStore.userIsDm ||
+            characterDto.user.userId === userStore.state.user?.userId
+        );
+    }
 </script>

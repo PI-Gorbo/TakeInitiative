@@ -58,7 +58,8 @@ export default defineNuxtConfig({
         "@nuxtjs/tailwindcss",
         "@pinia/nuxt",
         "nuxt-typed-router",
-        "v-wave/nuxt"
+        "v-wave/nuxt",
+        "@nuxtjs/device"
     ],
 
     shadcn: {

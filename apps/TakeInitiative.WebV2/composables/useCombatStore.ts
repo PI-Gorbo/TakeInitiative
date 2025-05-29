@@ -254,6 +254,8 @@ export const useCombatStore = defineStore("combatStore", () => {
         init,
         isLoading,
         campaignQuery,
+        campaign: computed(() => campaignQuery.data.value?.campaign ?? null),
+        combat: computed(() => combatQuery.data.value?.combat ?? null),
         combatQuery,
         userIsDm,
         memberDtos,

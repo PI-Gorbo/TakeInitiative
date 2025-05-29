@@ -4,14 +4,15 @@
         tag="section"
         name="shuffleList">
         <template v-if="characterList.length">
-            <a
+            <div
                 v-for="(characterDto, index) in characterList"
-                :key="characterDto.character.id">
+                :key="characterDto.character.id"
+                >
                 <CampaignCombatInitiativeListCharacter
                     :character="characterDto"
                     :index="index"
                     :combatId="props.combatId" />
-            </a>
+            </div>
         </template>
         <template v-else>
             <span

@@ -1,6 +1,6 @@
 <template>
     <Tabs>
-        <TabsList>
+        <TabsList class="flex flex-wrap w-fit">
             <TabsTrigger value="My Characters">My Characters</TabsTrigger>
             <TabsTrigger
                 v-if="props.userIsDm"

@@ -3,7 +3,7 @@
         <NuxtLayout name="default">
             <SidebarProvider :defaultOpen="false" class="h-full w-full">
                 <AppSidebar />
-                <div class="flex h-full w-full flex-col gap-4">
+                <div class="flex h-full w-full flex-col lg:gap-4 gap-2">
                     <div class="flex justify-center">
                         <header class="w-page flex justify-between p-2">
                             <div class="flex items-center gap-1">
