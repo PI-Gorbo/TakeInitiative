@@ -24,23 +24,25 @@
                             :campaignId="route.params.campaignId"
                             :combatId="route.params.combatId" />
                         <div class="flex justify-between pb-1">
-                            <div>
-                                <AsyncButton
-                                    v-if="store.combatIsOpen"
-                                    label="Start"
-                                    loadingLabel="Starting..."
-                                    :icon="faFlag"
-                                    variant="outline"
-                                    class="interactable lg:hidden"
-                                    :click="combatControls.startCombat" />
-                                <AsyncButton
-                                    v-else-if="store.combatIsStarted"
-                                    label="End Combat"
-                                    loadingLabel="Ending..."
-                                    :icon="faFlag"
-                                    variant="outline"
-                                    class="interactable lg:hidden"
-                                    :click="combatControls.finishCombat" />
+                            <div >
+                                <template v-if="store.userIsDm">
+                                    <AsyncButton
+                                        v-if="store.combatIsOpen"
+                                        label="Start"
+                                        loadingLabel="Starting..."
+                                        :icon="faFlag"
+                                        variant="outline"
+                                        class="interactable lg:hidden"
+                                        :click="combatControls.startCombat" />
+                                    <AsyncButton
+                                        v-else-if="store.combatIsStarted"
+                                        label="End Combat"
+                                        loadingLabel="Ending..."
+                                        :icon="faFlag"
+                                        variant="outline"
+                                        class="interactable lg:hidden"
+                                        :click="combatControls.finishCombat" />
+                                </template>
                             </div>
                             <AsyncButton
                                 v-if="store.combatIsStarted"
@@ -57,7 +59,17 @@
     </LoadingFallback>
 </template>
 <script setup lang="ts">
+    import { CampaignCombatMobileCombatDetailsTabs } from "#components";
     import { faFlag } from "@fortawesome/free-solid-svg-icons";
+    import * as signalR from "@microsoft/signalr";
+    import { useQueryClient } from "@tanstack/vue-query";
+    import type { GetCombatResponse } from "~/utils/api/combat/getCombatRequest";
+    import {
+        getCampaignQuery,
+        getCampaignQueryKey,
+    } from "~/utils/queries/campaign";
+    import { getCombatQueryKey } from "~/utils/queries/combats";
+    import type { Combat } from "~/utils/types/models";
 
     const route = useRoute("app-campaigns-campaignId-combats-combatId");
     const combatId = computed(() => route.params.combatId);
@@ -95,4 +107,105 @@
         }
         return false;
     });
+
+    const queryClient = useQueryClient();
+    const joinedCombatDetails = ref<{
+        combatId: string;
+        campaignId: string;
+    } | null>(null);
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl(`${useRuntimeConfig().public.axios.baseURL}/combatHub`, {
+            accessTokenFactory: () => useCookie(".AspNetCore.Cookies").value!,
+        })
+        .withAutomaticReconnect()
+        .build();
+
+    connection.onreconnected(async () => {
+        if (!joinedCombatDetails.value) return;
+
+        queryClient.invalidateQueries({
+            queryKey: getCombatQueryKey(
+                joinedCombatDetails.value.campaignId,
+                joinedCombatDetails.value.combatId
+            ),
+        });
+        await connection.send(
+            // Rejoin, as users are kicked from all groups on disconnect
+            "joinCombat",
+            userStore.state.user?.userId,
+            joinedCombatDetails.value.combatId
+        );
+    });
+
+    connection.on("combatUpdated", (combat: Combat) => {
+        if (store.combat?.state != combat.state) {
+            queryClient.invalidateQueries({
+                queryKey: getCampaignQueryKey(
+                    joinedCombatDetails.value?.campaignId!
+                ),
+            });
+        }
+        queryClient.setQueryData(
+            getCombatQueryKey(
+                joinedCombatDetails.value?.campaignId!,
+                joinedCombatDetails.value?.combatId!
+            ),
+            {
+                combat,
+            } satisfies GetCombatResponse
+        );
+        return;
+    });
+
+    watch(
+        combatId,
+        async (newCombatId) => {
+            if (!newCombatId) return;
+
+            if (joinedCombatDetails.value) {
+                await leaveCombat();
+            }
+
+            await joinCombat(newCombatId);
+        },
+        {
+            immediate: true,
+        }
+    );
+
+    onUnmounted(async () => {
+        await leaveCombat();
+        await connection.stop();
+    });
+
+    async function joinCombat(id: string) {
+        if (connection.state !== signalR.HubConnectionState.Connected) {
+            await connection.start();
+        }
+
+        return await connection
+            .send(
+                // Rejoin, as users are kicked from all groups on disconnect
+                "joinCombat",
+                userStore.state.user?.userId,
+                id
+            )
+            .then(
+                () =>
+                    (joinedCombatDetails.value = {
+                        campaignId: route.params.campaignId as string,
+                        combatId: id,
+                    })
+            );
+    }
+
+    async function leaveCombat() {
+        return await connection
+            .send(
+                "leaveCombat",
+                userStore.state.user?.userId,
+                joinedCombatDetails.value?.combatId
+            )
+            .then(() => (joinedCombatDetails.value = null));
+    }
 </script>

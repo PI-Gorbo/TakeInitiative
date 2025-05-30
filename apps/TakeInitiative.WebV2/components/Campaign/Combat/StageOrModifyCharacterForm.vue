@@ -16,7 +16,7 @@
             </FormFieldWrapper>
 
             <Button
-                v-if="userIsDm"
+                v-if="userIsDm && props.character?.playerId == userStore.state.user?.userId"
                 @click="() => (isHidden = !isHidden)"
                 type="button"
                 variant="outline"
@@ -111,7 +111,7 @@
         mappedHealthInputValidator,
         type FormHealthInput,
     } from "~/utils/forms/healthFormValidator";
-
+    const userStore = useUserStore();
     const { userIsDm } = storeToRefs(useCombatStore());
     const formState = reactive({
         error: null as ApiError<StagedCharacterDTO> | null,
@@ -185,8 +185,9 @@
     const [armourClass, armourClassInputProps] = defineField("armourClass", {
         props: (state) => ({
             errorMessage:
-                formState.error?.getUntypedError("playerCharacter.armourClass")?.at(0) ??
-                state.errors[0],
+                formState.error
+                    ?.getUntypedError("playerCharacter.armourClass")
+                    ?.at(0) ?? state.errors[0],
         }),
     });
 
@@ -196,7 +197,7 @@
             console.log("updated character");
             initiative.value = props.character?.initiative;
             name.value = props.character?.name;
-            isHidden.value = props.character?.hidden;
+            isHidden.value = props.character?.hidden ?? true;
             armourClass.value = props.character?.armourClass ?? null;
             health.value = props.character?.health;
         },
@@ -207,7 +208,7 @@
         if (props.character) {
             initiative.value = props.character?.initiative;
             name.value = props.character?.name;
-            isHidden.value = props.character?.hidden;
+            isHidden.value = props.character?.hidden ?? true;
             armourClass.value = props.character?.armourClass ?? null;
             health.value = props.character?.health;
         }

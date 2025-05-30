@@ -1,7 +1,7 @@
 <template>
-    <div>
+    <div class="flex flex-col">
         <TransitionGroup
-            class="flex select-none flex-col gap-2 overflow-y-auto max-h-full"
+            class="flex select-none flex-col gap-2 overflow-y-auto h-full pb-2"
             tag="section"
             name="shuffleList">
             <template v-if="characterList.length">
@@ -9,6 +9,10 @@
                     v-for="(characterDto, index) in characterList"
                     :key="characterDto.character.id">
                     <CampaignCombatInitiativeListCharacter
+                        v-if="
+                            combatStore.userIsDm ||
+                            !characterDto.character.hidden
+                        "
                         :character="characterDto"
                         :index="index"
                         :combatId="props.combatId" />
@@ -28,7 +32,7 @@
             <SheetTrigger asChild>
                 <Button
                     variant="outline"
-                    class="interactable border-dashed">
+                    class="interactable border-dashed w-full">
                     <FontAwesomeIcon :icon="faPlusCircle" />
                     Add Characters
                 </Button>
@@ -75,15 +79,21 @@
     );
 
     const characterList: ComputedRef<CharacterDto[]> = computed(() => {
-        if (combatStore.isLoading) {
-            return [];
+        function getList() {
+            if (combatStore.isLoading) {
+                return [];
+            }
+
+            if (combatStore.combatIsOpen) {
+                return combatStore.orderedStagedCharacterListWithPlayerInfo;
+            }
+
+            return orderedInitiativeList.value ?? [];
         }
 
-        if (combatStore.combatIsOpen) {
-            return combatStore.orderedStagedCharacterListWithPlayerInfo;
-        }
+        const list = getList()
 
-        return orderedInitiativeList.value ?? [];
+        return list;
     });
 
     // function getHealthDisplayMethod(

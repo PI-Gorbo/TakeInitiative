@@ -1,7 +1,9 @@
 <template>
     <div class="h-full w-full">
         <NuxtLayout name="default">
-            <SidebarProvider :defaultOpen="false" class="h-full w-full">
+            <SidebarProvider
+                :defaultOpen="false"
+                class="h-full w-full">
                 <AppSidebar />
                 <div class="flex h-full w-full flex-col lg:gap-4 gap-2">
                     <div class="flex justify-center">
@@ -13,32 +15,43 @@
                                     class="flex items-center gap-4">
                                     <FontAwesomeIcon :icon="faBars" />
                                 </CustomSidebarTrigger>
-                                <h1
+
+                                <component
+                                    :is="headerLink ? NuxtLink : 'h1'"
+                                    :to="headerLink"
                                     class="flex items-center gap-4 font-NovaCut text-2xl font-bold text-gold sm:text-3xl">
                                     <img
                                         class="dice-icon h-[2em] w-[2em]"
                                         src="~/public/img/yellowDice.png" />
-                                    <div class="hidden sm:inline">
-                                        Take Initiative
+                                    <div class="flex flex-col">
+                                        <span class="hidden lg:block">
+                                            Take Initiative
+                                        </span>
+                                        <span
+                                            class="font-NovaCut text-xl text-gold lg:text-lg lg:text-gray-300"
+                                            v-if="
+                                                campaignNameQuery.isSuccess
+                                                    .value
+                                            ">
+                                            {{ campaignNameQuery.data.value }}
+                                        </span>
                                     </div>
-                                </h1>
-                                <span
-                                    class="font-NovaCut text-xl text-gold"
-                                    v-if="
-                                        !isDesktopSized &&
-                                        campaignNameQuery.isSuccess.value
-                                    ">
-                                    {{ campaignNameQuery.data.value }}
-                                </span>
+                                </component>
                             </div>
                             <AppNavigationBar v-if="!showSidebar" />
                         </header>
                     </div>
-                    <div v-if="user.state.user" class="flex-grow px-2 overflow-auto">
+                    <div
+                        v-if="user.state.user"
+                        class="flex-grow px-2 overflow-auto">
                         <slot />
                     </div>
-                    <div v-else class="flex items-center justify-center">
-                        <FontAwesomeIcon :icon="faSpinner" class="fa-spin" />
+                    <div
+                        v-else
+                        class="flex items-center justify-center">
+                        <FontAwesomeIcon
+                            :icon="faSpinner"
+                            class="fa-spin" />
                     </div>
                 </div>
             </SidebarProvider>
@@ -57,6 +70,8 @@
     import { useMediaQuery } from "@vueuse/core";
     import { useQuery } from "@tanstack/vue-query";
     import { getCampaignQuery } from "~/utils/queries/campaign";
+    import { helpers } from "@typed-router";
+    import { NuxtLink } from "#components";
 
     const isDesktopSized = useMediaQuery("(min-width: 640px)", {
         ssrWidth: 640,
@@ -72,6 +87,15 @@
     const campaignNameQuery = useQuery({
         ...getCampaignQuery(() => route.params?.campaignId),
         select: (data) => data.campaign.campaignName,
+    });
+
+    const headerLink = computed(() => {
+        if (route.params?.campaignId) {
+            return helpers.route({
+                name: "app-campaigns-campaignId",
+                params: { campaignId: route.params.campaignId },
+            });
+        }
     });
 </script>
 

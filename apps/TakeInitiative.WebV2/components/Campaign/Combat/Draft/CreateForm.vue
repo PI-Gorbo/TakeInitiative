@@ -9,7 +9,7 @@
                     label: 'Open to players',
                     inputProps: {
                         disabled:
-                            campaignQuery.data?.value?.currentCombatInfo !==
+                            campaignQuery.data?.value?.currentCombatInfo !=
                             undefined,
         },
                     description: campaignQuery.data?.value?.currentCombatInfo !==

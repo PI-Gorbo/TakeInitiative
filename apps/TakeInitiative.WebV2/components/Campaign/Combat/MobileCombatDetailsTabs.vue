@@ -24,7 +24,7 @@
                                 store.combatQuery.data?.combat?.state ===
                                 CombatState.Open
                             ">
-                            - Combat is open to players, but has not started.
+                            - Open to players.
                         </template>
                         <template
                             v-else-if="
@@ -39,7 +39,7 @@
                 </header>
                 <section class="overflow-auto flex-1">
                     <slot />
-                </section>
+            </section>
             </TabsContent>
             <TabsContent
                 value="Reinforcements"

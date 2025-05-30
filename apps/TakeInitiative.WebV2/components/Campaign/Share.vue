@@ -4,7 +4,7 @@
             <label class="text-take-yellow text-sm">Join link</label>
             <div class="group flex w-full items-center gap-2">
                 <div
-                    class="flex w-full justify-start rounded-lg border p-1 px-2 text-center transition-colors group-hover:border-primary">
+                    class="flex rounded-lg border p-1 px-2 text-center transition-colors group-hover:border-primary truncate">
                     {{
                         `${config.public.webUrl}/join/${campaignQuery.data.value?.joinCode}`
                     }}
@@ -26,7 +26,7 @@
             <label class="text-take-yellow text-sm">Campaign Code</label>
             <div class="group flex w-full items-center gap-2">
                 <div
-                    class="flex w-full justify-start rounded-lg border p-1 px-2 text-center transition-colors group-hover:border-primary">
+                    class="flex w-full rounded-lg border p-1 px-2 text-center transition-colors group-hover:border-primary truncate">
                     {{ campaignQuery.data.value?.joinCode }}
                 </div>
 
@@ -55,7 +55,7 @@
 
     const config = useRuntimeConfig();
     const route = useRoute("app-campaigns-campaignId");
-    const campaignQuery = useQuery(
-        { ...getCampaignQuery(() => route.params.campaignId) }
-    );
+    const campaignQuery = useQuery({
+        ...getCampaignQuery(() => route.params.campaignId),
+    });
 </script>

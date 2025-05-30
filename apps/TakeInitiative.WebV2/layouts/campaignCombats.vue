@@ -24,7 +24,7 @@
                                 " />
                             <Card
                                 class="p-4 border-primary/50 flex flex-col gap-4">
-                                <section class="flex flex-col gap-2">
+                                <section class="flex flex-col gap-2" v-if="isDm">
                                     <header>
                                         <FontAwesomeIcon
                                             :icon="faPenToSquare" />
@@ -284,6 +284,7 @@
     import { getCampaignQuery } from "~/utils/queries/campaign";
 
     // Stores
+    const userStore = useUserStore();
     const router = useRouter();
     const isLargeScreen = useMediaQuery("(min-width: 1024px)");
     const route = useRoute("app-campaigns-campaignId-combats");
@@ -308,6 +309,8 @@
             return route.params.campaignId;
         })
     );
+
+    const isDm = computed(() => campaignQuery.data.value?.campaign.ownerId == userStore.state.user?.userId)
 
     const hasALiveCombat = computed(() =>
         combatsQuery.data.value?.combats.some(

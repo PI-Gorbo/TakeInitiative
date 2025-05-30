@@ -18,7 +18,11 @@
                 </FormFieldWrapper>
 
                 <Button
-                    v-if="userIsDm"
+                    v-if="
+                        userIsDm &&
+                        props.character?.playerId ==
+                            userStore.state.user?.userId
+                    "
                     @click="() => (isHidden = !isHidden)"
                     type="button"
                     variant="outline"
@@ -86,11 +90,11 @@
     import { useDeleteStagedCharacterMutation } from "~/utils/queries/combats";
     import { toast } from "vue-sonner";
 
+    const { userIsDm } = storeToRefs(useCombatStore());
+    const userStore = useUserStore()
     const emits = defineEmits<{
         submitted: [];
     }>();
-    const { userIsDm } = storeToRefs(useCombatStore());
-
     const props = withDefaults(
         defineProps<{
             combatId: string;
