@@ -28,6 +28,7 @@
                         <button
                             v-for="npc in stage.npcs"
                             variant="outline"
+                            type="button"
                             :key="npc.id"
                             :class="[
                                 'min-h-fit min-w-fit cursor-pointer rounded-xl border border-take-navy-light transition-colors interactable',

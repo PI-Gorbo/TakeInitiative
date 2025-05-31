@@ -203,7 +203,7 @@ export const useCampaignStore = defineStore("campaignStore", () => {
             return [
                 {
                     userId: state.userCampaignMember?.userId,
-                    username: userStore.state.user?.username!,
+                    username: userStore.state.user?.username,
                     resources: state.userCampaignMember?.resources?.sort(
                         (a, b) =>
                             multiplePropertyAlphabeticalSort(

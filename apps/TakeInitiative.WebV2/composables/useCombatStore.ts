@@ -87,8 +87,8 @@ export const useCombatStore = defineStore("combatStore", () => {
             a: StagedPlayerDto,
             b: StagedPlayerDto
         ): number => {
-            const aIsDungeonMaster = a.user?.isDungeonMaster;
-            const bIsDungeonMaster = b.user?.isDungeonMaster;
+            const aIsDungeonMaster = campaignQuery.data.value?.campaign.ownerId === a.user?.userId;
+            const bIsDungeonMaster = campaignQuery.data.value?.campaign.ownerId === b.user?.userId;
             if (aIsDungeonMaster && !bIsDungeonMaster) {
                 return -1;
             } else if (!aIsDungeonMaster && bIsDungeonMaster) {

@@ -24,7 +24,7 @@
                             :campaignId="route.params.campaignId"
                             :combatId="route.params.combatId" />
                         <div class="flex justify-between pb-1">
-                            <div >
+                            <div>
                                 <template v-if="store.userIsDm">
                                     <AsyncButton
                                         v-if="store.combatIsOpen"

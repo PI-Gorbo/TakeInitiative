@@ -1,13 +1,22 @@
 <template>
-    <form @submit.prevent="onSubmit" class="flex flex-col gap-2">
+    <form
+        @submit.prevent="onSubmit"
+        class="flex flex-col gap-2">
         <div class="flex gap-2">
-            <FormFieldWrapper label="Name" :error="form.errors.value.name">
-                <Input autofocus v-model="name" />
+            <FormFieldWrapper
+                label="Name"
+                :error="form.errors.value.name">
+                <Input
+                    autofocus
+                    v-model="name" />
             </FormFieldWrapper>
             <FormFieldWrapper
                 label="Quantity"
                 :error="form.errors.value.quantity">
-                <Input v-model="quantity" type="number" pattern="[0-9]*" />
+                <Input
+                    v-model="quantity"
+                    type="number"
+                    pattern="[0-9]*" />
             </FormFieldWrapper>
         </div>
 
@@ -15,14 +24,16 @@
             v-model:initiative="initiativeRoll"
             :error="form.errors.value['initiative.roll']" />
 
-        <!-- @vue-ignore -->
-        <CampaignCharacterUnevaluatedHealthInput
-            v-model:health="health"
+        <CampaignCharacterHealthInput
+            :health="health as FormHealthInput"
+            @update:health="(v) => (health = v)"
             @evaluateExpression="evaluteFromHealth"
-            :error="form.errors.value.health" />
+            :error="form.errors.value.health"
+            allowRoll />
 
-        <CampaignCharacterArmorClassInput
-            v-model:ac="ac"
+        <CampaignCharacterArmourClassInput
+            :ac="Number(ac)"
+            @update:ac="(v) => (ac = v)"
             :error="form.errors.value.armourClass" />
 
         <ErrorPanel v-if="formState.error?.errors?.generalErrors">
@@ -80,6 +91,7 @@
     import {
         evaluateHealthInput,
         mappedHealthInputValidator,
+        type FormHealthInput,
     } from "~/utils/forms/healthFormValidator";
     import { armorClassFormValidator } from "~/utils/forms/armorClassFormValidator";
     import type { UpdatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";

@@ -1,18 +1,24 @@
 <template>
-    <form @submit.prevent="onSubmit" class="flex flex-col gap-2">
-        <FormFieldWrapper label="Name" :error="form.errors.value.name">
-            <Input autofocus v-model="name" />
+    <form
+        @submit.prevent="onSubmit"
+        class="flex flex-col gap-2">
+        <FormFieldWrapper
+            label="Name"
+            :error="form.errors.value.name">
+            <Input
+                autofocus
+                v-model="name" />
         </FormFieldWrapper>
 
         <CampaignCharacterInitiativeRollInput
             v-model:initiative="initiative"
             :error="form.errors.value['initiative.roll']" />
 
-        <!-- @vue-ignore -->
-        <CampaignCharacterUnevaluatedHealthInput
-            v-model:health="health"
+        <CampaignCharacterHealthInput
+            v-model:health="health as FormHealthInput"
             @evaluateExpression="evaluteFromHealth"
-            :error="form.errors.value.health" />
+            :error="form.errors.value.health"
+            allowRoll />
 
         <FormFieldWrapper
             label="Armor Class"
@@ -95,6 +101,7 @@
     import {
         evaluateHealthInput,
         mappedHealthInputValidator,
+        type FormHealthInput,
     } from "~/utils/forms/healthFormValidator";
     import { armorClassFormValidator } from "~/utils/forms/armorClassFormValidator";
 

@@ -4,7 +4,6 @@ import { z } from "zod";
 const campaignMemberInfoValidator = z.object({
     memberId: z.string(),
     userId: z.string(),
-    isDungeonMaster: z.boolean(),
 });
 export type CampaignMemberInfo = z.infer<typeof campaignMemberInfoValidator>;
 

@@ -13,9 +13,7 @@ export const useCombatControls = (combatId: RefOrGetter<string>) => {
             .mutateAsync({
                 combatId: toValue(combatId),
             })
-            .then(() => toast.success("Ended Turn!", {
-                position: 'top-right'
-            }))
+            .then(() => toast.success("Ended Turn!"))
             .catch(() => toast.error("Failed to end turn!"));
     };
 

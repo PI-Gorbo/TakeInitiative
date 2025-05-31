@@ -2,7 +2,7 @@
     <div>
         <ul class="flex flex-col gap-2 w-full overflow-y-auto max-h-full">
             <ReinforcementListCharacter
-                v-for="dto in combatStore.orderedStagedCharacterListWithPlayerInfo"
+                v-for="dto in filteredCharacterList"
                 :key="dto.character.id"
                 :dto="dto"
                 @addStagedCharacter="
@@ -29,9 +29,7 @@
                         :campaignId="props.campaignId"
                         :combatId="props.combatId"
                         :userIsDm="combatStore.userIsDm"
-                        :plannedStages="
-                            combatStore.combat?.plannedStages!
-                        " />
+                        :plannedStages="combatStore.combat?.plannedStages!" />
                 </SheetContent>
             </Sheet>
         </footer>
@@ -52,9 +50,9 @@
     import ReinforcementListCharacter from "./ReinforcementListCharacter.vue";
 
     const props = defineProps<{
-        campaignId: string
-        combatId: string
-    }>()
+        campaignId: string;
+        combatId: string;
+    }>();
 
     const combatStore = useCombatStore();
     const addStagedCharacterMutation = useAddStagedCharactersToCombatMutation();
@@ -67,9 +65,20 @@
             .then(() => toast.success("Added successfully!"));
     };
 
-    
     // state
     const sheetStates = reactive({
         addReinforcementsSheetOpen: false,
+    });
+
+    const filteredCharacterList = computed(() => {
+        if (combatStore.userIsDm) {
+            return combatStore.orderedStagedCharacterListWithPlayerInfo;
+        }
+
+        return combatStore.orderedStagedCharacterListWithPlayerInfo.filter(
+            // Only show the DM's reinforcements to the DM.
+            (x) =>
+                x.user.userId !== combatStore.combat?.dungeonMaster
+        );
     });
 </script>

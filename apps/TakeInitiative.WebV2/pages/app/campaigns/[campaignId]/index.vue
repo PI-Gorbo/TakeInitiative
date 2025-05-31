@@ -45,12 +45,18 @@
                                 <div class="flex gap-2">
                                     <FontAwesomeIcon
                                         :class="
-                                            item.isDungeonMaster
+                                            item.userId ===
+                                            campaignQuery.data.value?.campaign
+                                                .ownerId
                                                 ? 'text-gold'
                                                 : 'text-primary'
                                         "
                                         :icon="
-                                            !item.isDungeonMaster
+                                            !(
+                                                item.userId ===
+                                                campaignQuery.data.value
+                                                    ?.campaign.ownerId
+                                            )
                                                 ? faUserLarge
                                                 : faCrown
                                         " />
@@ -126,11 +132,15 @@
             }
 
             // Then dungeon master
-            if (a.isDungeonMaster && !b.isDungeonMaster) {
+            const aIsDm =
+                a.userId === campaignQuery.data.value?.campaign.ownerId;
+            const bIsDm =
+                b.userId === campaignQuery.data.value?.campaign.ownerId;
+            if (aIsDm && !bIsDm) {
                 return -1;
             }
 
-            if (!a.isDungeonMaster && b.isDungeonMaster) {
+            if (!aIsDm && bIsDm) {
                 return 1;
             }
 

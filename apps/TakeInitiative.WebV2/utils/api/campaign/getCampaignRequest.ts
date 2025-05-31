@@ -20,7 +20,6 @@ const campaignMemberDtoValidator = z
     .object({
         userId: z.string(),
         username: z.string(),
-        isDungeonMaster: z.boolean(),
         resources: z.array(campaignMemberResourceValidator),
         characters: z.array(playerCharacterValidator)
     })

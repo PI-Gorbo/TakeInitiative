@@ -4,6 +4,7 @@
             class="flex items-center justify-between gap-2 w-full">
             <div class="flex items-center gap-2">
                 <CampaignCombatDraftStageNameForm
+                    @keyup.space.prevent 
                     @click.prevent="(e) => e.stopPropagation()"
                     :initalStageName="props.stage.name"
                     :allStageNames="props.allStages.map((x) => x.name)"

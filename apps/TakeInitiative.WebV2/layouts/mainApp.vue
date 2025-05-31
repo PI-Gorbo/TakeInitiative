@@ -24,7 +24,7 @@
                                         class="dice-icon h-[2em] w-[2em]"
                                         src="~/public/img/yellowDice.png" />
                                     <div class="flex flex-col">
-                                        <span class="hidden lg:block">
+                                        <span v-if="isDesktopSized || !currentRoute.name.startsWith('app-campaigns-campaignId')">
                                             Take Initiative
                                         </span>
                                         <span
@@ -80,7 +80,7 @@
     const showSidebar = computed(() => {
         return !isDesktopSized.value;
     });
-
+    const currentRoute = useRoute()
     const route = useRoute("app-campaigns-campaignId");
     const user = useUserStore();
 

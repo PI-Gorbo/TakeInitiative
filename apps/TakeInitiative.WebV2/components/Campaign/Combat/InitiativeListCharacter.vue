@@ -5,12 +5,18 @@
                 variant="outline"
                 class="group flex p-2 gap-2 w-full h-fit justify-start text-start disabled:opacity-100"
                 :class="{
-                    [`${styles.interactable}`]: userIsDmOrCharacterOwner(),
+                    [`${styles.interactable}`]:
+                        userIsDmOrCharacterOwner() &&
+                        !combatStore.combatIsFinished,
                     'shadow-gold border-gold hover:shadow-gold hover:border-gold':
+                        !combatStore.combatIsFinished &&
                         index ===
-                        combatStore.combatQuery.data?.combat.initiativeIndex,
+                            combatStore.combatQuery.data?.combat
+                                .initiativeIndex,
                 }"
-                :disabled="!userIsDmOrCharacterOwner()">
+                :disabled="
+                    !userIsDmOrCharacterOwner() || combatStore.combatIsFinished
+                ">
                 <section
                     v-if="
                         !combatStore.combatIsOpen &&

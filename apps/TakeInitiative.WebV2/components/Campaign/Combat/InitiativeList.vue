@@ -1,7 +1,7 @@
 <template>
-    <div class="flex flex-col">
+    <div class="flex flex-col pb-1 h-full">
         <TransitionGroup
-            class="flex select-none flex-col gap-2 overflow-y-auto h-full pb-2"
+            class="flex select-none flex-col gap-2 overflow-y-auto pb-2 flex-1 lg:flex-initial"
             tag="section"
             name="shuffleList">
             <template v-if="characterList.length">
@@ -91,7 +91,7 @@
             return orderedInitiativeList.value ?? [];
         }
 
-        const list = getList()
+        const list = getList();
 
         return list;
     });
