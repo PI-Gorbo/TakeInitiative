@@ -23,11 +23,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup .NET
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
+        uses: oven-sh/setup-bun@v2
       - name: Run Typecheck
         run: |
           cd ./apps/TakeInitiative.Web
-          npm ci
-          npx nuxi typecheck
+          bun i
+          bun nuxi typecheck
