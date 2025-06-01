@@ -1,9 +1,0 @@
-{
-    "tabWidth": 4,
-    "plugins": [],
-    "semi": true,
-    "trailingComma": "es5",
-    "bracketSameLine": true,
-    "vueIndentScriptAndStyle": true,
-    "singleAttributePerLine": true
-}

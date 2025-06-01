@@ -9,9 +9,9 @@
     "typescript": "^5.0.0"
   },
   "scripts": {
-    "setup": "bun i && cd ./apps/TakeInitiative.WebV2 && bun i",
+    "setup": "bun i && cd ./apps/TakeInitiative.Web && bun i",
     "api": "dotnet watch run --project apps/TakeInitiative.Api",
-    "web": "cd apps/TakeInitiative.WebV2/ && bun run dev",
+    "web": "cd apps/TakeInitiative.Web/ && bun run dev",
     "database": "docker start takedb || docker run -p 5432:5432 --name takedb -e POSTGRES_PASSWORD=postgres -d postgres",
     "dev": "bun run database && concurrently --names api,web \"bun run api\" \"bun run web\""
   },
