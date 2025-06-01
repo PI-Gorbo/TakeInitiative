@@ -6,9 +6,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
         return;
     }
     const userStore = useUserStore();
-    const isLoggedIn = await userStore.isLoggedIn();
+    await userStore.init();
+
     // If the user is not logged in, return them to the 'does not require auth zone'
-    if (!isLoggedIn && to.meta.requiresAuth) {
+    if (!userStore.isLoggedIn && to.meta.requiresAuth) {
         return navigateTo({
             path: "/login",
             query: {
@@ -17,7 +18,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
         });
     }
 
-    if ((to.name == "login" || to.name == "signup") && isLoggedIn) {
+    if ((to.name == "login" || to.name == "signup") && userStore.isLoggedIn) {
         return userStore.navigateToFirstAvailableCampaignOrFallbackToCreateOrJoin();
     }
 

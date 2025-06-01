@@ -194,7 +194,7 @@
 
     const openAccordionValue = useLocalStorage(
         `campaigns-${route.params.campaignId}-accordion-current-user`,
-        userStore.state.user?.userId
+        userStore.state?.userId
     );
 
     definePageMeta({
@@ -212,7 +212,7 @@
             ...campaignQuery.data.value!.campaignMembers,
             {
                 ...campaignQuery.data.value!.userCampaignMember,
-                username: userStore.state.user?.username!,
+                username: userStore.state?.username!,
             },
         ] satisfies CampaignMemberDto[];
     });
@@ -220,11 +220,11 @@
     const membersToDisplay = computed(() =>
         memberDtos.value.sort((a, b) => {
             // Player should be first
-            if (a.userId === userStore.state.user?.userId) {
+            if (a.userId === userStore.state?.userId) {
                 return -1;
             }
 
-            if (b.userId === userStore.state.user?.userId) {
+            if (b.userId === userStore.state?.userId) {
                 return 1;
             }
 

@@ -310,7 +310,7 @@
         })
     );
 
-    const isDm = computed(() => campaignQuery.data.value?.campaign.ownerId == userStore.state.user?.userId)
+    const isDm = computed(() => campaignQuery.data.value?.campaign.ownerId == userStore.state?.userId)
 
     const hasALiveCombat = computed(() =>
         combatsQuery.data.value?.combats.some(

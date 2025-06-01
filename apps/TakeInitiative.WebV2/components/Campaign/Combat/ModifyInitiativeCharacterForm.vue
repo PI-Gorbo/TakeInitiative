@@ -21,7 +21,7 @@
                     v-if="
                         userIsDm &&
                         props.character?.playerId ==
-                            userStore.state.user?.userId
+                        userStore.state?.userId
                     "
                     @click="() => (isHidden = !isHidden)"
                     type="button"

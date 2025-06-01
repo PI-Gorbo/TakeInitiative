@@ -2,7 +2,7 @@
     <div class="flex h-full w-full justify-center">
         <main class="w-page flex flex-col gap-4">
             <template
-                v-if="(userStore.state.user?.dmCampaigns ?? []).length > 0">
+                v-if="(userStore.state?.dmCampaigns ?? []).length > 0">
                 <header class="flex justify-between">
                     <span class="font-NovaCut text-xl text-gold sm:text-2xl"
                         >My Campaigns</span
@@ -45,7 +45,7 @@
                     </div>
                 </header>
                 <ul class="flex flex-col gap-4">
-                    <li v-for="campaign in userStore.state.user?.dmCampaigns">
+                    <li v-for="campaign in userStore.state?.dmCampaigns">
                         <CampaignCard
                             :campaignId="campaign.campaignId"
                             :campaignName="campaign.campaignName"
@@ -55,12 +55,12 @@
                 </ul>
             </template>
             <template
-                v-if="(userStore.state.user?.memberCampaigns ?? []).length > 0">
+                v-if="(userStore.state?.memberCampaigns ?? []).length > 0">
                 <header class="font-NovaCut text-xl text-gold sm:text-2xl">
                     Joined Campaigns
                 </header>
                 <ul>
-                    <li v-for="campaign in userStore.state.user?.memberCampaigns">
+                    <li v-for="campaign in userStore.state?.memberCampaigns">
                         <CampaignCard
                             :campaignId="campaign.campaignId"
                             :campaignName="campaign.campaignName"
@@ -95,8 +95,8 @@
             () => {
                 const userStore = useUserStore();
                 if (
-                    userStore.state.user?.dmCampaigns.length === 0 &&
-                    userStore.state.user?.memberCampaigns.length === 0
+                    userStore.state?.dmCampaigns.length === 0 &&
+                    userStore.state?.memberCampaigns.length === 0
                 ) {
                     return navigateTo(helpers.path("/createOrJoinCampaign"));
                 }

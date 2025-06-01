@@ -98,7 +98,7 @@
             store.combat?.initiativeList[store.combat.initiativeIndex];
         if (
             characterWithCurrentInitiative?.playerId ==
-            userStore.state.user?.userId
+            userStore.state?.userId
         ) {
             return true;
         }
@@ -129,7 +129,7 @@
         await connection.send(
             // Rejoin, as users are kicked from all groups on disconnect
             "joinCombat",
-            userStore.state.user?.userId,
+            userStore.state?.userId,
             joinedCombatDetails.value.combatId
         );
     });
@@ -184,7 +184,7 @@
             .send(
                 // Rejoin, as users are kicked from all groups on disconnect
                 "joinCombat",
-                userStore.state.user?.userId,
+                userStore.state?.userId,
                 id
             )
             .then(
@@ -200,7 +200,7 @@
         return await connection
             .send(
                 "leaveCombat",
-                userStore.state.user?.userId,
+                userStore.state?.userId,
                 joinedCombatDetails.value?.combatId
             )
             .then(() => (joinedCombatDetails.value = null));

@@ -48,7 +48,7 @@
             <DropdownMenu>
                 <DropdownMenuTrigger class="flex items-center gap-2"
                     ><FontAwesomeIcon :icon="faUserCircle" size="2x" />
-                    {{ user.state.user?.username }}</DropdownMenuTrigger
+                    {{ user.state?.username }}</DropdownMenuTrigger
                 >
                 <DropdownMenuContent>
                     <DropdownMenuItem>

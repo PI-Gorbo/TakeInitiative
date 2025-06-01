@@ -16,7 +16,7 @@
             </FormFieldWrapper>
 
             <Button
-                v-if="userIsDm && props.character?.playerId == userStore.state.user?.userId"
+                v-if="userIsDm && props.character?.playerId == userStore.state?.userId"
                 @click="() => (isHidden = !isHidden)"
                 type="button"
                 variant="outline"

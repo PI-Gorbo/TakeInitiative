@@ -54,7 +54,7 @@
                             <FontAwesomeIcon
                                 :icon="faUserCircle"
                                 size="2x" />
-                            {{ user.state.user?.username }}
+                            {{ user.state?.username }}
                         </NuxtLink>
                     </SidebarMenuButton>
                 </SidebarMenuItem>

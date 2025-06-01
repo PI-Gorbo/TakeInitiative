@@ -256,7 +256,7 @@
         getCampaignQuery(() => route.params.campaignId)
     );
     const isViewingCurrentUsersData = computed(
-        () => user.state.user?.userId == props.userId
+        () => user.state?.userId == props.userId
     );
 
     const props = defineProps<{

@@ -173,7 +173,6 @@
         .configureLogging(signalR.LogLevel.Debug)
         .build();
     connection.on("campaignStateUpdated", async () => {
-        console.log("here");
         queryClient.invalidateQueries({
             queryKey: getCampaignQueryKey(joinedCampaignId.value),
         });
@@ -190,11 +189,10 @@
             queryKey: getCampaignQueryKey(joinedCampaignId.value),
         });
     });
-
+ 
     watch(
         () => baseLayoutRoute.params.campaignId,
         async (newCampaignId) => {
-            console.log("here", newCampaignId);
             if (!newCampaignId) return;
 
             if (joinedCampaignId.value) {

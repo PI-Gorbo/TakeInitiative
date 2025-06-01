@@ -56,7 +56,7 @@
     const userIsDmOrCharacterOwner = computed(() => {
         return (
             store.userIsDm ||
-            props.dto.user.userId === userStore.state.user?.userId
+            props.dto.user.userId === userStore.state?.userId
         );
     });
 </script>

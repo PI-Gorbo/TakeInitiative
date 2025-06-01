@@ -1,46 +1,41 @@
-import { useQueryClient } from "@tanstack/vue-query";
+import { useQuery, useQueryClient } from "@tanstack/vue-query";
 import type { CreateCampaignRequest } from "../utils/api/campaign/createCampaignRequest";
 import type { DeleteCampaignRequest } from "../utils/api/campaign/deleteCampaignRequest";
 import type { JoinCampaignRequest } from "../utils/api/campaign/joinCampaignRequest";
-import type { UpdateCampaignDetailsRequest } from "../utils/api/campaign/updateCampaignDetailsRequest";
 import type { GetUserResponse } from "../utils/api/user/getUserRequest";
 import type { LoginRequest } from "../utils/api/user/loginRequest";
 import type { SignUpRequest } from "../utils/api/user/signUpRequest";
 import type { Campaign } from "../utils/types/models";
-import { getCampaignQuery, getCampaignQueryKey } from "~/utils/queries/campaign";
-import { helpers } from "@typed-router";
+import { getUserQuery, getUserQueryKey } from "~/utils/queries/user";
 
 type User = GetUserResponse;
 export const useUserStore = defineStore("userStore", () => {
 
     const queryClient = useQueryClient()
+    const userDetails = useQuery({ ...getUserQuery(), retry: false })
+    const state = computed(() => userDetails.data.value)
 
     // Stores
     const api = useApi();
 
-    // State
-    const state = reactive({
-        user: null as User | null,
-    });
-
     // Computed
-    const username = computed(() => state.user?.username);
+    const username = computed(() => userDetails.data.value?.username);
 
     const campaignCount = computed(() => {
-        if (state.user == null) {
+        if (userDetails.data.value == null) {
             return 0;
         }
 
         return (
-            state.user.dmCampaigns.length + state.user.memberCampaigns.length
+            userDetails.data.value.dmCampaigns.length + userDetails.data.value.memberCampaigns.length
         );
     });
 
     const campaignList = computed(() => {
-        return state.user?.dmCampaigns
+        return userDetails.data.value?.dmCampaigns
             .map((campaign) => ({ ...campaign, isDm: true }))
             .concat(
-                state.user.memberCampaigns.map((c) => ({
+                userDetails.data.value?.memberCampaigns.map((c) => ({
                     ...c,
                     isDm: false,
                 }))
@@ -49,25 +44,16 @@ export const useUserStore = defineStore("userStore", () => {
 
     // Mutations
     async function init(): Promise<void> {
-        return await isLoggedIn().then(() => { });
+        await fetchUser()
     }
 
     async function fetchUser(): Promise<User> {
         // fetch the user.
-        return await api.user.getUser().then((user) => (state.user = user));
+        await userDetails.refetch();
+        return userDetails.data.value!
     }
 
-    async function isLoggedIn(): Promise<Boolean> {
-        if (state.user != null) {
-            return true;
-        }
-
-        return await fetchUser()
-            .then(() => true)
-            .catch((error) => {
-                return false;
-            });
-    }
+    const isLoggedIn = computed(() => userDetails.data.value != null)
 
     async function login(request: LoginRequest): Promise<void> {
         await api.user.login(request).then(async () => {
@@ -82,16 +68,16 @@ export const useUserStore = defineStore("userStore", () => {
     async function confirmEmail(code: string): Promise<unknown> {
         return await api.user
             .confirmEmailWithToken(code)
-            .then((user) => (state.user = user));
+            .then((user) => (userDetails.data.value = user));
     }
 
     async function logout(): Promise<void> {
         await api.user
             .logout()
             .then(() => {
-                state.user = null;
+                queryClient.setQueryData(getUserQueryKey(), () => null)
             })
-            .then(async () => await navigateTo("/login"));
+            .then(async () => await navigateTo("/login"))
     }
 
     async function createCampaign(
@@ -127,13 +113,13 @@ export const useUserStore = defineStore("userStore", () => {
     }
 
     function navigateToFirstAvailableCampaignOrFallbackToCreateOrJoin() {
-        if (state.user == null) {
+        if (userDetails.data.value == null) {
             return;
         }
 
         // Get the first campaign available
-        const campaign = state.user.memberCampaigns.concat(
-            state.user.dmCampaigns
+        const campaign = userDetails.data.value?.memberCampaigns.concat(
+            userDetails.data.value?.dmCampaigns
         )[0];
 
         if (campaign == null) {
@@ -160,5 +146,6 @@ export const useUserStore = defineStore("userStore", () => {
         campaignCount,
         campaignList,
         navigateToFirstAvailableCampaignOrFallbackToCreateOrJoin,
+
     };
 });

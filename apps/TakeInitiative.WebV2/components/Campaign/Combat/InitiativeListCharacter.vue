@@ -33,11 +33,11 @@
                                 'bg-secondary text-secondary-foreground':
                                     index == 0 &&
                                     characterDto.user.userId !=
-                                        userStore.state.user?.userId,
+                                        userStore.state?.userId,
                                 'bg-gold text-gold-foreground':
                                     index == 0 &&
                                     characterDto.user.userId ==
-                                        userStore.state.user?.userId,
+                                        userStore.state?.userId,
                                 'bg-take-navy-medium text-xs': index != 0,
                             },
                         ]">
@@ -55,7 +55,7 @@
                             v-if="
                                 combatStore.userIsDm &&
                                 characterDto.character.playerId ==
-                                    userStore.state.user?.userId
+                                    userStore.state?.userId
                             "
                             :icon="
                                 characterDto.character.hidden
@@ -136,7 +136,7 @@
     function userIsDmOrCharacterOwner() {
         return (
             combatStore.userIsDm ||
-            characterDto.user.userId === userStore.state.user?.userId
+            characterDto.user.userId === userStore.state?.userId
         );
     }
 </script>

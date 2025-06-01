@@ -48,7 +48,7 @@
                         </header>
                     </div>
                     <div
-                        v-if="userStore.state.user"
+                        v-if="userStore.state"
                         class="flex-grow px-2 overflow-auto">
                         <slot />
                     </div>

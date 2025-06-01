@@ -42,7 +42,7 @@ export const useCombatStore = defineStore("combatStore", () => {
     // User Details
     const userIsDm = computed(() => {
         return (
-            userStore.state.user?.userId ===
+            userStore.state?.userId ===
             combatQuery.data.value?.combat?.dungeonMaster
         );
     });
@@ -57,7 +57,7 @@ export const useCombatStore = defineStore("combatStore", () => {
             ...campaignQuery.data.value?.campaignMembers!,
             {
                 ...campaignQuery.data.value!.userCampaignMember,
-                username: userStore.state.user?.username!,
+                username: userStore.state?.username!,
             },
         ];
 
@@ -158,15 +158,15 @@ export const useCombatStore = defineStore("combatStore", () => {
             character: InitiativeCharacter | StagedCharacter;
         }) => {
             return (
-                userStore.state.user?.userId == combatQuery.data.value?.combat.dungeonMaster ||
-                charInfo.user?.userId == userStore.state.user?.userId
+                userStore.state?.userId == combatQuery.data.value?.combat.dungeonMaster ||
+                charInfo.user?.userId == userStore.state?.userId
             );
         },
         getIconForUser: (charInfo: {
             user: CampaignMemberDto;
             character: InitiativeCharacter | StagedCharacter;
         }) => {
-            const currentUserId = userStore.state.user?.userId;
+            const currentUserId = userStore.state?.userId;
 
             if (charInfo.user?.userId == combatQuery.data.value?.combat.dungeonMaster) {
                 return faCrown;
