@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/vue-query";
 import type { CreateCampaignRequest } from "../utils/api/campaign/createCampaignRequest";
 import type { DeleteCampaignRequest } from "../utils/api/campaign/deleteCampaignRequest";
 import type { JoinCampaignRequest } from "../utils/api/campaign/joinCampaignRequest";
@@ -6,9 +7,14 @@ import type { GetUserResponse } from "../utils/api/user/getUserRequest";
 import type { LoginRequest } from "../utils/api/user/loginRequest";
 import type { SignUpRequest } from "../utils/api/user/signUpRequest";
 import type { Campaign } from "../utils/types/models";
+import { getCampaignQuery, getCampaignQueryKey } from "~/utils/queries/campaign";
+import { helpers } from "@typed-router";
 
 type User = GetUserResponse;
 export const useUserStore = defineStore("userStore", () => {
+
+    const queryClient = useQueryClient()
+
     // Stores
     const api = useApi();
 
@@ -111,35 +117,12 @@ export const useUserStore = defineStore("userStore", () => {
             .delete(request)
             .then(fetchUser)
             .then(async () => {
+                debugger;
                 if ((campaignList.value?.length ?? 0) == 0) {
-                    return useNavigator().toCreateOrJoinCampaign();
+                    return await useNavigator().toCreateOrJoinCampaign();
                 }
 
-                // Check if its the campaigns route.
-                const route = useRoute();
-                const isCampaignRoute = route.name
-                    ?.toString()
-                    .startsWith("campaign-id");
-                if (!isCampaignRoute) {
-                    return;
-                }
-
-                // Check if the campaign the user is viewing is the
-                // campaign that is being deleted
-                if ('id' in route.params) {
-                    const id = route.params.id as string;
-                    // If it is not the campaign that is being deleted, then we are done and can exit.
-                    if (id != request.campaignId) {
-                        return;
-                    }
-                }
-
-                // Otherwise, we need to navigate to a new campaign, since this one does not exist anymore.
-                if ((campaignList.value?.length ?? 0) > 0) {
-                    return useNavigator().toCampaign(
-                        campaignList.value![0].campaignId
-                    );
-                }
+                return await useNavigator().toCampaignsList()
             });
     }
 

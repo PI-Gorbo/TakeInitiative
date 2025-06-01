@@ -18,16 +18,23 @@
                                     }
                                 ">
                                 <TabsList>
-                                    <TabsTrigger
-                                        v-for="tab in tabValues"
-                                        :value="tab.routeName">
-                                        <FontAwesomeIcon
-                                            v-if="tab.icon"
-                                            :icon="tab.icon" />
-                                        <span v-if="tab.label">{{
-                                            tab.label
-                                        }}</span>
-                                    </TabsTrigger>
+                                    <template
+                                        v-for="(tab, index) in tabValues"
+                                        :key="index">
+                                        <TabsTrigger
+                                            :value="tab.routeName"
+                                            v-if="
+                                                !tab.shouldHideTab ||
+                                                tab.shouldHideTab() === false
+                                            ">
+                                            <FontAwesomeIcon
+                                                v-if="tab.icon"
+                                                :icon="tab.icon" />
+                                            <span v-if="tab.label">{{
+                                                tab.label
+                                            }}</span>
+                                        </TabsTrigger>
+                                    </template>
                                 </TabsList>
                             </Tabs>
 
@@ -105,7 +112,10 @@
 
     const queryClient = useQueryClient();
     const campaignQuery = useQuery(
-        getCampaignQuery(() => baseLayoutRoute.params.campaignId as string)
+        getCampaignQuery(
+            () => baseLayoutRoute.params.campaignId as string,
+            () => navigateTo(helpers.route({ name: "app-campaigns" }))
+        )
     );
 
     const shareModalOpen = ref(false);
@@ -113,6 +123,7 @@
         label?: string;
         icon?: IconDefinition;
         routeName: RoutesNamesList;
+        shouldHideTab?: () => boolean;
     }[] = [
         {
             icon: faHome,
@@ -125,6 +136,15 @@
         {
             label: "Settings",
             routeName: "app-campaigns-campaignId-settings",
+            shouldHideTab: () => {
+                if (
+                    campaignQuery.data.value?.userCampaignMember.isDungeonMaster
+                ) {
+                    return false;
+                }
+
+                return true;
+            },
         },
     ] as const;
 

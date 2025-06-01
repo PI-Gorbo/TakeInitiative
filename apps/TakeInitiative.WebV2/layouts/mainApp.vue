@@ -24,7 +24,13 @@
                                         class="dice-icon h-[2em] w-[2em]"
                                         src="~/public/img/yellowDice.png" />
                                     <div class="flex flex-col">
-                                        <span v-if="isDesktopSized || !currentRoute.name.startsWith('app-campaigns-campaignId')">
+                                        <span
+                                            v-if="
+                                                isDesktopSized ||
+                                                !currentRoute.name.startsWith(
+                                                    'app-campaigns-campaignId'
+                                                )
+                                            ">
                                             Take Initiative
                                         </span>
                                         <span
@@ -42,7 +48,7 @@
                         </header>
                     </div>
                     <div
-                        v-if="user.state.user"
+                        v-if="userStore.state.user"
                         class="flex-grow px-2 overflow-auto">
                         <slot />
                     </div>
@@ -80,9 +86,9 @@
     const showSidebar = computed(() => {
         return !isDesktopSized.value;
     });
-    const currentRoute = useRoute()
+    const currentRoute = useRoute();
     const route = useRoute("app-campaigns-campaignId");
-    const user = useUserStore();
+    const userStore = useUserStore();
 
     const campaignNameQuery = useQuery({
         ...getCampaignQuery(() => route.params?.campaignId),

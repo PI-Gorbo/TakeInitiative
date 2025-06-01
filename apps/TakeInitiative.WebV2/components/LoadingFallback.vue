@@ -7,7 +7,7 @@
             mode="out-in">
             <div
                 v-if="props.isLoading"
-                class="w-full flex flex-col items-center gap-2">
+                class="h-full w-full flex flex-col items-center gap-2">
                 <FontAwesomeIcon
                     :icon="faDiceD20"
                     class="fa-spin"
@@ -15,8 +15,13 @@
                 <div>loading...</div>
             </div>
             <div
+                v-else-if="props.isError"
+                class="h-full w-full flex flex-col items-center gap-2">
+                Something went wrong!
+            </div>
+            <div
                 v-else
-                :class="cn(['w-full h-full', $attrs.class]) ">
+                :class="cn(['w-full h-full', $attrs.class])">
                 <slot />
             </div>
         </Transition>
@@ -25,7 +30,7 @@
 
 <script setup lang="ts">
     import { cn } from "@/lib/utils";
-import {
+    import {
         faCircleNotch,
         faDiceD20,
     } from "@fortawesome/free-solid-svg-icons";
@@ -38,12 +43,14 @@ import {
     const props = withDefaults(
         defineProps<{
             isLoading: boolean;
+            isError?: boolean;
             container?: string | Component;
             iconSize?: FontAwesomeIconProps["size"];
         }>(),
         {
             container: "div",
-            iconSize: '5x'
+            iconSize: "5x",
+            isError: false,
         }
     );
 </script>

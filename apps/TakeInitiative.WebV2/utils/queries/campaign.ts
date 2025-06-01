@@ -6,13 +6,18 @@ import type { GetCampaignResponse } from "../api/campaign/getCampaignRequest";
 export const getCampaignQueryKey = (
     campaignId: MaybeRefOrGetter<string | null>
 ) => ["campaign", campaignId];
-export const getCampaignQuery = (campaign: RefOrGetter<string | null>) =>
+export const getCampaignQuery = (campaign: RefOrGetter<string | null>, onError: (() => Promise<unknown>) | undefined = undefined) =>
     queryOptions({
         queryKey: getCampaignQueryKey(campaign),
         queryFn: () =>
-            useApi().campaign.get({ campaignId: toValue(campaign)! }),
+            useApi().campaign.get({ campaignId: toValue(campaign)! }).catch(async err => {
+                if (onError) {
+                    await onError();
+                }
+                throw err;
+            }),
         enabled: () => !!toValue(campaign),
-        staleTime: 1000 * 60 * 5, // 5 minutes
+        staleTime: 1000 * 60 * 5, // 5 minutes,
     });
 
 export const updateCampaignDetailsMutation = () => {

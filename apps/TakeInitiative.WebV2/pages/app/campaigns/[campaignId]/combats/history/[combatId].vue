@@ -1,5 +1,9 @@
 <template>
-    <div>Hello</div>
+    <Card>
+        <CardHeader>
+            <CardTitle>Combat History Coming Soon!</CardTitle>
+        </CardHeader>
+    </Card>
 </template>
 <script setup lang="ts">
     definePageMeta({
