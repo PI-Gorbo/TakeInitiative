@@ -9,7 +9,7 @@
                 : {
                       [`border-orange-400 text-${TakeInitContrastColour['take-cream']}`]:
                           healthDisplayState.state == 'Bloodied',
-                      'border-success': healthDisplayState.state == 'Healthy',
+                      'border-green-600': healthDisplayState.state == 'Healthy',
                       'border-destructive': healthDisplayState.state == 'Dead',
                   },
         ]"
@@ -37,7 +37,7 @@
         }>(),
         {
             displayMethod: HealthDisplayOptionsEnum["RealValue"],
-            unstyled: false
+            unstyled: false,
         }
     );
     const shouldDisplay = computed(

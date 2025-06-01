@@ -2,11 +2,14 @@
     <div class="flex flex-wrap gap-1">
         <CampaignCharacterArmourClassDisplay
             v-if="props.armourClass != 'NO VALUE'"
-            :armourClass="props.armourClass" />
+            :armourClass="props.armourClass"
+            :armourClassDisplayMethod="armourClassDisplayMethod" />
         <CampaignCharacterHealthDisplay
             v-if="props.health"
+            :displayMethod="props.healthDisplayMethod"
             :health="props.health"
-            unstyled />
+            :unstyled="props.healthDisplayMethod === undefined"
+             />
         <CampaignCharacterInitiativeDisplay
             v-if="props.initiative"
             :initiative="props.initiative" />
@@ -14,7 +17,9 @@
 </template>
 <script setup lang="ts">
     import type {
+        ArmourClassDisplayOptionValues,
         CharacterHealth,
+        HealthDisplayOptionValues,
         UnevaluatedCharacterHealth,
     } from "~/utils/types/models";
 
@@ -23,6 +28,8 @@
             health?: UnevaluatedCharacterHealth | CharacterHealth;
             armourClass?: number | null | undefined | "NO VALUE";
             initiative?: string;
+            healthDisplayMethod?: HealthDisplayOptionValues
+            armourClassDisplayMethod?: ArmourClassDisplayOptionValues;
         }>(),
         {
             armourClass: "NO VALUE",

@@ -96,6 +96,12 @@
                             isStagedCharacter(characterDto.character)
                                 ? characterDto.character.initiative.roll
                                 : undefined
+                        "
+                        :healthDisplayMethod="
+                            getHealthDisplayMethod(characterDto)
+                        "
+                        :armourClassDisplayMethod="
+                            getArmourClassDisplayMethod(characterDto)
                         " />
                 </section>
             </Button>
@@ -118,6 +124,12 @@
     import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
     import { isInitiativeCharacter, isStagedCharacter } from "./combatHelpers";
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+    import {
+        ArmourClassDisplayOptionsEnum,
+        HealthDisplayOptionsEnum,
+        type ArmourClassDisplayOptionValues,
+        type HealthDisplayOptionValues,
+    } from "~/utils/types/models";
 
     const combatStore = useCombatStore();
     const userStore = useUserStore();
@@ -138,5 +150,44 @@
             combatStore.userIsDm ||
             characterDto.user.userId === userStore.state?.userId
         );
+    }
+
+    function getHealthDisplayMethod(
+        character: StagedPlayerDto | InitiativePlayerDto
+    ): HealthDisplayOptionValues {
+        if (combatStore.userIsDm) {
+            return HealthDisplayOptionsEnum["RealValue"];
+        }
+
+        if (
+            character.user.userId ===
+            combatStore.combatQuery.data?.combat.dungeonMaster
+        ) {
+            return combatStore.campaignQuery.data?.campaign.campaignSettings
+                .combatHealthDisplaySettings.dmCharacterDisplayMethod!;
+        }
+
+        return combatStore.campaignQuery.data?.campaign.campaignSettings
+            .combatHealthDisplaySettings.otherPlayerCharacterDisplayMethod!;
+    }
+
+    function getArmourClassDisplayMethod(
+        character: StagedPlayerDto | InitiativePlayerDto
+    ): ArmourClassDisplayOptionValues {
+        if (combatStore.userIsDm) {
+            return ArmourClassDisplayOptionsEnum.RealValue;
+        }
+
+        if (
+            character.user.userId ===
+            combatStore.combatQuery.data?.combat.dungeonMaster
+        ) {
+            return combatStore.campaignQuery.data?.campaign.campaignSettings
+                .combatArmourClassDisplaySettings.dmCharacterDisplayMethod!;
+        }
+
+        return combatStore.campaignQuery.data?.campaign.campaignSettings
+            .combatArmourClassDisplaySettings
+            .otherPlayerCharacterDisplayMethod!;
     }
 </script>

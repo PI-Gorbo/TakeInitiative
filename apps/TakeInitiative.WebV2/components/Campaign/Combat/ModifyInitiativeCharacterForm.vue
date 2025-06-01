@@ -20,8 +20,7 @@
                 <Button
                     v-if="
                         userIsDm &&
-                        props.character?.playerId ==
-                        userStore.state?.userId
+                        props.character?.playerId == userStore.state?.userId
                     "
                     @click="() => (isHidden = !isHidden)"
                     type="button"
@@ -91,7 +90,7 @@
     import { toast } from "vue-sonner";
 
     const { userIsDm } = storeToRefs(useCombatStore());
-    const userStore = useUserStore()
+    const userStore = useUserStore();
     const emits = defineEmits<{
         submitted: [];
     }>();
@@ -218,10 +217,15 @@
                 characterId: props.character.id,
                 combatId: props.combatId,
             })
-            .catch((error) => (formState.error = parseAsApiError(error)))
             .then(() => {
                 toast.success("Deleted character");
                 emits("submitted");
+            })
+            .catch((error) => {
+                formState.error = parseAsApiError(error);
+                toast.error(
+                    "Something went wrong while deleting the character"
+                );
             });
     }
 </script>

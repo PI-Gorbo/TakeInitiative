@@ -251,7 +251,7 @@ export const useDeleteStagedCharacterMutation = () => {
     const client = useQueryClient();
     const api = useApi();
     return useMutation({
-        mutationFn: api.combat.stage.character.delete,
+        mutationFn: api.combat.initiative.character.delete,
         onSuccess: (data, request) => {
             setCombatQueryData(
                 data.combat.campaignId,
