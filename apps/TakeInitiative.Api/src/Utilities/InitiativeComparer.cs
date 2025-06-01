@@ -1,5 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
-
 namespace TakeInitiative.Utilities;
 
 public class InitiativeComparer : IComparer<int[]>, IEqualityComparer<int[]>, IComparer<DiceRoll[]>,

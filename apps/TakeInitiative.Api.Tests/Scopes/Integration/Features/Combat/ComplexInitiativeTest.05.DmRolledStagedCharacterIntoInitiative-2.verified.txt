@@ -79,11 +79,6 @@
                   Total: 3,
                   Roll: 3,
                   Evaluation: 3
-                },
-                {
-                  Total: 19,
-                  Roll: 1d20,
-                  Evaluation: 1d20(19)
                 }
               ],
               RolledHealth: null
@@ -96,11 +91,6 @@
                   Total: 3,
                   Roll: 3,
                   Evaluation: 3
-                },
-                {
-                  Total: 20,
-                  Roll: 1d20,
-                  Evaluation: 1d20(**20**)
                 }
               ],
               RolledHealth: null
@@ -124,11 +114,6 @@
                   Total: 5,
                   Roll: 5,
                   Evaluation: 5
-                },
-                {
-                  Total: 12,
-                  Roll: 1d20,
-                  Evaluation: 1d20(12)
                 }
               ],
               RolledHealth: null
@@ -141,11 +126,6 @@
                   Total: 3,
                   Roll: 3,
                   Evaluation: 3
-                },
-                {
-                  Total: 20,
-                  Roll: 1d20,
-                  Evaluation: 1d20(**20**)
                 }
               ],
               RolledHealth: null
@@ -158,11 +138,6 @@
                   Total: 3,
                   Roll: 3,
                   Evaluation: 3
-                },
-                {
-                  Total: 19,
-                  Roll: 1d20,
-                  Evaluation: 1d20(19)
                 }
               ],
               RolledHealth: null
@@ -175,11 +150,6 @@
                   Total: 5,
                   Roll: 5,
                   Evaluation: 5
-                },
-                {
-                  Total: 17,
-                  Roll: 1d20,
-                  Evaluation: 1d20(17)
                 }
               ],
               RolledHealth: null
@@ -205,8 +175,8 @@
   StagedList: [],
   InitiativeList: [
     {
-      Id: Guid_5,
-      Name: Another Enemy - 2!,
+      Id: Guid_2,
+      Name: Player - 1,
       Health: {
         TYPE: None
       },
@@ -216,11 +186,6 @@
             Total: 5,
             Roll: 5,
             Evaluation: 5
-          },
-          {
-            Total: 17,
-            Roll: 1d20,
-            Evaluation: 1d20(17)
           }
         ]
       },
@@ -235,8 +200,8 @@
       Conditions: []
     },
     {
-      Id: Guid_2,
-      Name: Player - 1,
+      Id: Guid_5,
+      Name: Another Enemy - 2!,
       Health: {
         TYPE: None
       },
@@ -246,11 +211,6 @@
             Total: 5,
             Roll: 5,
             Evaluation: 5
-          },
-          {
-            Total: 12,
-            Roll: 1d20,
-            Evaluation: 1d20(12)
           }
         ]
       },
@@ -276,11 +236,6 @@
             Total: 3,
             Roll: 3,
             Evaluation: 3
-          },
-          {
-            Total: 20,
-            Roll: 1d20,
-            Evaluation: 1d20(**20**)
           }
         ]
       },
@@ -306,11 +261,6 @@
             Total: 3,
             Roll: 3,
             Evaluation: 3
-          },
-          {
-            Total: 19,
-            Roll: 1d20,
-            Evaluation: 1d20(19)
           }
         ]
       },
@@ -325,7 +275,7 @@
       Conditions: []
     }
   ],
-  InitiativeIndex: 1,
+  InitiativeIndex: 0,
   RoundNumber: 1,
   FinishedTimestamp: null
 }
