@@ -44,7 +44,7 @@ public class InitiativeComparer : IComparer<int[]>, IEqualityComparer<int[]>, IC
             return false;
         }
 
-        return x.SequenceEqual(y);
+        return x!.SequenceEqual(y!);
     }
 
     public int GetHashCode([DisallowNull] int[] obj)
@@ -57,5 +57,5 @@ public class InitiativeComparer : IComparer<int[]>, IEqualityComparer<int[]>, IC
 
     public bool Equals(DiceRoll[]? x, DiceRoll[]? y) =>
         this.Equals(x?.Select(x => x.Total).ToArray(), y?.Select(x => x.Total).ToArray());
-    public int GetHashCode(DiceRoll[] obj) => this.GetHashCode(obj?.Select(x => x.Total).ToArray());
+    public int GetHashCode(DiceRoll[] obj) => this.GetHashCode(obj?.Select(x => x.Total).ToArray()!);
 }
