@@ -59,7 +59,9 @@
                         </div>
                     </header>
 
-                    <slot />
+                    <div class="overflow-auto flex-1">
+                        <slot />
+                    </div>
                 </div>
             </LoadingFallback>
         </NuxtLayout>
@@ -151,7 +153,7 @@
         .configureLogging(signalR.LogLevel.Debug)
         .build();
     connection.on("campaignStateUpdated", async () => {
-        console.log('here')
+        console.log("here");
         queryClient.invalidateQueries({
             queryKey: getCampaignQueryKey(joinedCampaignId.value),
         });
