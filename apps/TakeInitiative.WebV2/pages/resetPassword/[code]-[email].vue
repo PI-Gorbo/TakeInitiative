@@ -1,41 +1,41 @@
 <template>
-    <section class="w-full">
-        <div class="flex w-full flex-col justify-center">
-            <h1 class="text-center text-xl">Reset Password</h1>
-        </div>
+    <Card>
+        <CardHeader class="flex w-full flex-col justify-center">
+            <CardTitle>Reset Password</CardTitle>
+        </CardHeader>
 
-        <FormBase
-            class="flex flex-col gap-4"
-            v-slot="{ submitting }"
-            :onSubmit="submit">
-            <FormInput
-                v-model:value="password"
-                label="Password"
-                type="password"
-                v-bind="passwordInputProps" />
-            <FormInput
-                v-model:value="confirmPassword"
-                label="Confirm password"
-                type="password"
-                v-bind="confirmPasswordProps" />
-
-            <div
-                v-if="formState.submitError?.errors?.generalErrors"
-                class="text-take-red">
-                {{ formState.submitError?.errors?.generalErrors[0] }}
-            </div>
-
-            <div class="flex justify-center">
-                <FormButton
-                    label="Reset"
-                    :loadingDisplay="{
-                        showSpinner: true,
-                        loadingText: 'Resetting...',
-                    }"
-                    :isLoading="submitting" />
-            </div>
-        </FormBase>
-    </section>
+        <CardContent>
+            <FormBase
+                class="flex flex-col gap-4"
+                v-slot="{ submitting }"
+                :onSubmit="submit">
+                <FormFieldWrapper label="Password">
+                    <Input
+                        v-model="password"
+                        type="password"
+                        v-bind="passwordInputProps" />
+                </FormFieldWrapper>
+                <FormFieldWrapper label="Confirm password">
+                    <Input
+                        v-model="confirmPassword"
+                        type="password"
+                        v-bind="confirmPasswordProps" />
+                </FormFieldWrapper>
+                <div
+                    v-if="formState.submitError?.errors?.generalErrors"
+                    class="text-take-red">
+                    {{ formState.submitError?.errors?.generalErrors[0] }}
+                </div>
+                <div class="flex justify-center">
+                    <AsyncButton
+                        label="Reset"
+                        loadingLabel="Resetting..."
+                        :icon="faArrowCircleRight"
+                        :isLoading="!!submitting" />
+                </div>
+            </FormBase>
+        </CardContent>
+    </Card>
 </template>
 
 <script setup lang="ts">
@@ -43,10 +43,12 @@
     import type { SignUpRequest } from "~/utils/api/user/signUpRequest";
     import { useForm } from "vee-validate";
     import { z } from "zod";
+    import { faArrowCircleRight } from "@fortawesome/free-solid-svg-icons";
     const route = useRoute();
 
     definePageMeta({
         requiresAuth: false,
+        layout: "logo",
     });
 
     // Form Definition
@@ -73,8 +75,7 @@
     const [password, passwordInputProps] = defineField("password", {
         props: (state) => ({
             errorMessage:
-                formState.submitError?.errors?.password ??
-                state.errors[0],
+                formState.submitError?.errors?.password ?? state.errors[0],
         }),
     });
     const [confirmPassword, confirmPasswordProps] = defineField(
@@ -95,7 +96,7 @@
             return;
         }
 
-        if (route.name == 'resetPassword-code-email') {
+        if (route.name == "resetPassword-code-email") {
             await useApi()
                 .user.resetPasswordWithToken({
                     email: route.params.email,

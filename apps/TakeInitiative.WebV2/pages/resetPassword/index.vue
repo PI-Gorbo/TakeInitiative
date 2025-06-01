@@ -1,37 +1,57 @@
 <template>
-    <section class="w-full">
-        <div class="flex w-full flex-col justify-center">
-            <h1 class="text-center text-xl">Reset Your password</h1>
-            <NuxtLink :to="{
-                    path: '/login',
-                    query: redirectToPath ? { redirectTo: redirectToPath } : {},
-                }" class="text-center text-sm underline">
-                Back to login</NuxtLink>
-        </div>
+    <Card>
+        <CardHeader class="flex w-full flex-col justify-center">
+            <CardTitle class="flex justify-between"
+                ><span>Reset Your password</span>
+                <CardDescription>
+                    <NuxtLink
+                        :to="{
+                            path: '/login',
+                            query: redirectToPath
+                                ? { redirectTo: redirectToPath }
+                                : {},
+                        }"
+                        class="text-sm underline">
+                        Back to login
+                    </NuxtLink>
+                </CardDescription></CardTitle
+            >
+        </CardHeader>
 
-        <FormBase class="flex flex-col gap-4" v-slot="{ submitting }" :onSubmit="onLogin" v-if="!state.sentResetEmail">
-            <FormInput v-model:value="email" label="Email" type="email" placeholder="example@email.com"
-                v-bind="emailInputProps" />
-
-            <div v-if="state.errorObject" class="text-take-red">
-                {{ state.errorObject.errors?.generalErrors }}
+        <CardContent>
+            <FormBase
+                v-if="!state.sentResetEmail"
+                class="flex flex-col gap-4"
+                v-slot="{ submitting }"
+                :onSubmit="onLogin">
+                <FormFieldWrapper
+                    label="Email"
+                    :error="emailInputProps.errorMessage">
+                    <Input
+                        v-model="email"
+                        type="email"
+                        placeholder="example@email.com" />
+                </FormFieldWrapper>
+                <div
+                    v-if="state.errorObject"
+                    class="text-take-red">
+                    {{ state.errorObject.errors?.generalErrors }}
+                </div>
+                <div class="flex justify-center">
+                    <AsyncButton
+                        type="submit"
+                        :icon="faMailForward"
+                        label="Send Reset Email"
+                        loadingLabel="Sending..."
+                        :isLoading="!!submitting" />
+                </div>
+            </FormBase>
+            <div v-else>
+                If there exists an account with the given email, a password
+                reset email has been sent.
             </div>
-
-            <!-- {{ state.errorObject }} -->
-
-            <div class="flex justify-center">
-                <FormButton label="Send Reset Email" type="submit" :loadingDisplay="{
-                        loadingText: 'Sending...',
-                        showSpinner: true,
-                    }" :isLoading="submitting" />
-            </div>
-        </FormBase>
-
-        <div v-else>
-            If there exists an account with the given email, a password reset
-            email has been sent.
-        </div>
-    </section>
+        </CardContent>
+    </Card>
 </template>
 
 <script setup lang="ts">
@@ -42,6 +62,7 @@
         type SendResetPasswordEmailRequest,
     } from "~/utils/api/user/putSendResetPasswordRequest";
     import { toTypedSchema } from "@vee-validate/zod";
+    import { faMailForward } from "@fortawesome/free-solid-svg-icons";
     const redirectToPath = useRoute().query.redirectTo as LocationQueryValue;
     const state = reactive({
         errorObject: null as null | ApiError<SendResetPasswordEmailRequest>,
@@ -50,6 +71,7 @@
 
     definePageMeta({
         requiresAuth: false,
+        layout: "logo",
     });
 
     // Form Definition
@@ -58,8 +80,7 @@
     });
     const [email, emailInputProps] = defineField("email", {
         props: (_state) => ({
-            errorMessage:
-                state.errorObject?.errors?.email ?? _state.errors[0],
+            errorMessage: state.errorObject?.errors?.email?.at(0) ?? _state.errors[0],
         }),
     });
 
