@@ -1,7 +1,7 @@
 <template>
     <AutoForm :onSubmit="onSubmit" v-slot="{ isSubmitting }" :schema="joinValidator" :form="form">
-        <ErrorPanel v-if="formState.formError?.errors?.generalErrors">
-            {{ formState.formError?.errors?.generalErrors }}
+        <ErrorPanel v-if="formState.formError?.errors?.generalErrors?.length">
+            {{ formState.formError?.errors?.generalErrors.at(0) }}
         </ErrorPanel>
         <AsyncButton type="submit" label="Join" loadingLabel="Joining..." :isLoading="isSubmitting" />
     </AutoForm>
