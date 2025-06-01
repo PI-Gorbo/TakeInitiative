@@ -151,6 +151,7 @@
         .configureLogging(signalR.LogLevel.Debug)
         .build();
     connection.on("campaignStateUpdated", async () => {
+        console.log('here')
         queryClient.invalidateQueries({
             queryKey: getCampaignQueryKey(joinedCampaignId.value),
         });

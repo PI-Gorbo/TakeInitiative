@@ -13,7 +13,7 @@
                     :combatId="route.params.combatId" />
             </div>
             <div
-                class="lg:col-span-2 lg:col-start-2 flex flex-col gap-4 h-full">
+                class="lg:col-span-2 lg:col-start-2 flex flex-col gap-4 max-h-full h-full">
                 <CampaignCombatMobileCombatDetailsTabs
                     :campaignId="route.params.campaignId"
                     :combatId="route.params.combatId"
@@ -76,10 +76,7 @@
     const userStore = useUserStore();
     const store = useCombatStore();
     const combatControls = useCombatControls(combatId);
-    watchEffect(() => {
-        console.log("triggered here");
-        store.init(route.params.campaignId, combatId.value);
-    });
+    watchEffect(() => store.init(route.params.campaignId, combatId.value));
 
     definePageMeta({
         layout: "main-app",

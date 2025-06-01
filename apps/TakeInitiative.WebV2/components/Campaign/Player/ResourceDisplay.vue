@@ -14,18 +14,7 @@
             <Badge>
                 {{ resourceVisibilityOptionNameMap[resource.visibility] }}
             </Badge>
-            <Button
-                v-if="isViewingCurrentUsersData"
-                variant="link"
-                size="icon"
-                @click="
-                    (e: Event) => {
-                        e.stopPropagation();
-                        emits('edit')
-                    }
-                ">
-                <FontAwesomeIcon :icon="faPen" />
-            </Button>
+           
         </div>
     </a>
 </template>
@@ -38,12 +27,7 @@
         ResourceVisibilityOptions,
     } from "~/utils/types/models";
 
-    const emits = defineEmits<{
-        edit: [];
-    }>();
-
     const props = defineProps<{
-        isViewingCurrentUsersData: boolean;
         resource: {
             name: string;
             link: string;

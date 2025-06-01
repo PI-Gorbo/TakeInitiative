@@ -7,25 +7,27 @@ import { validateResponse } from "~/utils/apiErrorParser";
 export type GetCombatsRequest = {
     campaignId: string;
 };
+const combatHistoryDto = z.array(
+    z
+        .object({
+            combatId: z.string(),
+            combatName: z.string(),
+            state: z.nativeEnum(CombatState),
+            finishedTimestamp: z.string().nullable(),
+        })
+        .required({
+            combatId: true,
+            combatName: true,
+        })
+)
+export type CombatHistoryDto = z.infer<typeof combatHistoryDto>;
 
 export const getCombatsResponseValidator = z.object({
     plannedCombats: z.array(z.object({
         id: z.string().uuid(),
         name: z.string()
     })),
-    combats: z.array(
-        z
-            .object({
-                combatId: z.string(),
-                combatName: z.string(),
-                state: z.nativeEnum(CombatState),
-                finishedTimestamp: z.string().nullable(),
-            })
-            .required({
-                combatId: true,
-                combatName: true,
-            })
-    ),
+    combats: combatHistoryDto,
 });
 
 export type GetCombatsResponse = z.infer<typeof getCombatsResponseValidator>;

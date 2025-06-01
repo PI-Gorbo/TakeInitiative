@@ -18,7 +18,7 @@
                 <SelectContent>
                     <SelectGroup>
                         <SelectLabel>Visibility</SelectLabel>
-                        <SelectItem :value="ResourceVisibilityOptions.DMsOnly">
+                        <SelectItem :value="ResourceVisibilityOptions.DMsOnly" v-if="!props.isDm">
                             {{
                                 resourceVisibilityOptionNameMap[
                                     ResourceVisibilityOptions.DMsOnly
@@ -94,20 +94,21 @@
     } from "~/utils/types/models";
 
     const props = defineProps<
-        | {
-              type: "Add";
-              addResource: (
-                  resource: CampaignMemberResource
-              ) => Promise<unknown>;
-          }
-        | {
-              type: "Edit";
-              resource: CampaignMemberResource | null;
-              deleteResource: () => Promise<unknown>;
-              editResource: (
-                  resource: CampaignMemberResource
-              ) => Promise<unknown>;
-          }
+        (| {
+            type: "Add";
+            addResource: (
+                resource: CampaignMemberResource
+            ) => Promise<unknown>;
+        }
+            | {
+                type: "Edit";
+                resource: CampaignMemberResource | null;
+                deleteResource: () => Promise<unknown>;
+                editResource: (
+                    resource: CampaignMemberResource
+                ) => Promise<unknown>;
+        }) & {
+        isDm: boolean}
     >();
 
     // Form
@@ -130,7 +131,6 @@
     const [link] = form.defineField("link");
     const [visibility] = form.defineField("visibility");
     const submit = form.handleSubmit(async (newResource) => {
-        console.log("here", newResource);
         if (props.type === "Add") {
             return await props.addResource(newResource);
         }

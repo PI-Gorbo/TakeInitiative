@@ -16,7 +16,7 @@
 
         <TabsContent
             value="Combat"
-            class="mt-0 flex flex-col max-h-full data-[state=active]:h-full">
+            class="mt-0 flex flex-col max-h-full data-[state=active]:h-full overflow-auto">
             <header class="lg:hidden flex gap-2 items-center">
                 <CardTitle class="font-NovaCut text-gold font-bold"
                     >{{ store.combatQuery.data?.combat?.combatName }}
@@ -46,7 +46,7 @@
         </TabsContent>
         <TabsContent
             value="Reinforcements"
-            class="mt-0 data-[state=active]:h-full">
+            class="mt-0 data-[state=active]:h-full overflow-auto">
             <header>
                 <div>
                     <FontAwesomeIcon :icon="faPersonMilitaryPointing" />

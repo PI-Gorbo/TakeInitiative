@@ -1,17 +1,27 @@
 <template>
-    <FormFieldWrapper
-        label="Intro"
-        :error="form.errors.value.description"
-        :description="
-            !!form.errors.value.description
-                ? ''
-                : 'This introduction won\'t be visible to players until you\'ve filled it out'
-        ">
-        <template #Header>
-            <AsyncSuccessIcon :state="debouncedFunc.state.value" />
-        </template>
-        <template #default><Textarea v-model="description" /></template>
-    </FormFieldWrapper>
+    <div>
+        <FormFieldWrapper
+            label="Intro"
+            :error="form.errors.value.description"
+            :description="
+                !campaignQuery.data.value?.userCampaignMember.isDungeonMaster ||
+                !!description
+                    ? ''
+                    : 'This introduction won\'t be visible to players until you\'ve filled it out'
+            ">
+            <template #Header>
+                <AsyncSuccessIcon :state="debouncedFunc.state.value" />
+            </template>
+            <template #default
+                ><Textarea
+                    v-model="description"
+                    :readonly="
+                        !campaignQuery.data.value?.userCampaignMember
+                            .isDungeonMaster
+                    "
+            /></template>
+        </FormFieldWrapper>
+    </div>
 </template>
 <script setup lang="ts">
     import { faCheck, faCircleNotch } from "@fortawesome/free-solid-svg-icons";
@@ -30,6 +40,14 @@
     const route = useRoute("app-campaigns-campaignId");
     const campaignQuery = useQuery(
         getCampaignQuery(() => route.params.campaignId)
+    );
+    watch(
+        () => campaignQuery.data.value?.campaign.campaignDescription,
+        (newDescription) => {
+            if (newDescription) {
+                form.setFieldValue("description", newDescription);
+            }
+        }
     );
 
     const schema = z.object({
@@ -65,6 +83,10 @@
     watch(
         () => form.values.description,
         (newDescription) => {
+            if (!campaignQuery.data.value?.userCampaignMember.isDungeonMaster) {
+                return;
+            }
+            
             if (!form.isFieldValid("description")) {
                 return;
             }

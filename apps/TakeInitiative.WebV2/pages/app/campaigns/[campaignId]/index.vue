@@ -2,80 +2,162 @@
     <LoadingFallback
         container="main"
         :isLoading="campaignQuery.isLoading.value">
-        <div class="lg:grid w-full flex flex-col gap-4 lg:grid-cols-3 pb-2">
-            <div class="lg:col-span-2 lg:col-start-2 flex flex-col gap-4">
-                <CampaignCombatJoinBanner
-                    class="block lg:hidden"
-                    :campaignId="route.params.campaignId"
-                    :combatInfo="
-                        campaignQuery.data.value?.currentCombatInfo ?? null
-                    " />
-                <Card
-                    class="p-4 border-primary/50"
-                    :class="{
-                        'border-2 border-dashed':
-                            campaignQuery.data.value?.campaign
-                                ?.campaignDescription == null ||
-                            campaignQuery.data.value?.campaign
-                                ?.campaignDescription == '',
-                    }">
-                    <CampaignEditIntroductionForm />
-                </Card>
-            </div>
-            <div
-                class="lg:col-span-1 lg:col-start-1 lg:row-start-1 flex flex-col gap-4">
-                <CampaignCombatJoinBanner
-                    class="hidden lg:block"
-                    :campaignId="route.params.campaignId"
-                    :combatInfo="
-                        campaignQuery.data.value?.currentCombatInfo ?? null
-                    " />
-                <Card class="p-4 border-primary/50">
-                    <header><FontAwesomeIcon :icon="faUsers" /> Players</header>
-                    <Accordion
-                        type="single"
-                        class="w-full"
-                        collapsible
-                        v-model:modelValue="openAccordionValue">
-                        <AccordionItem
-                            v-for="item in membersToDisplay"
-                            :key="item.userId"
-                            :value="item.userId">
-                            <AccordionTrigger>
-                                <div class="flex gap-2">
-                                    <FontAwesomeIcon
-                                        :class="
-                                            item.userId ===
-                                            campaignQuery.data.value?.campaign
-                                                .ownerId
-                                                ? 'text-gold'
-                                                : 'text-primary'
-                                        "
-                                        :icon="
-                                            !(
+        <template v-if="screenSize.isLargeScreen.value">
+            <div class="grid grid-cols-3 pb-2 gap-4">
+                <div class="col-span-2 col-start-2 flex flex-col gap-4">
+                    <Card
+                        v-if="
+                            campaignQuery.data.value?.userCampaignMember
+                                .isDungeonMaster ||
+                            (campaignQuery.data.value?.campaign
+                                ?.campaignDescription != '' &&
+                                campaignQuery.data.value?.campaign
+                                    ?.campaignDescription != null)
+                        "
+                        class="p-4 border-primary/50"
+                        :class="{
+                            'border-2 border-dashed':
+                                campaignQuery.data.value?.campaign
+                                    ?.campaignDescription == null ||
+                                campaignQuery.data.value?.campaign
+                                    ?.campaignDescription == '',
+                        }">
+                        <CampaignEditIntroductionForm />
+                    </Card>
+                </div>
+                <div
+                    class="col-span-1 col-start-1 row-start-1 flex flex-col gap-4">
+                    <CampaignCombatJoinBanner
+                        :campaignId="route.params.campaignId"
+                        :combatInfo="
+                            campaignQuery.data.value?.currentCombatInfo ?? null
+                        " />
+                    <Card class="p-4 border-primary/50">
+                        <header>
+                            <FontAwesomeIcon :icon="faUsers" /> Players
+                        </header>
+                        <Accordion
+                            type="single"
+                            class="w-full"
+                            collapsible
+                            v-model:modelValue="openAccordionValue">
+                            <AccordionItem
+                                v-for="item in membersToDisplay"
+                                :key="item.userId"
+                                :value="item.userId">
+                                <AccordionTrigger>
+                                    <div class="flex gap-2">
+                                        <FontAwesomeIcon
+                                            :class="
                                                 item.userId ===
                                                 campaignQuery.data.value
                                                     ?.campaign.ownerId
-                                            )
-                                                ? faUserLarge
-                                                : faCrown
-                                        " />
-                                    <label class="select-none">
-                                        {{ item.username }}
-                                    </label>
-                                </div>
-                            </AccordionTrigger>
-                            <AccordionContent class="pl-4">
-                                <CampaignPlayerResourcesSection
-                                    :userId="item.userId"
-                                    :characters="item.characters"
-                                    :resources="item.resources" />
-                            </AccordionContent>
-                        </AccordionItem>
-                    </Accordion>
-                </Card>
+                                                    ? 'text-gold'
+                                                    : 'text-primary'
+                                            "
+                                            :icon="
+                                                !(
+                                                    item.userId ===
+                                                    campaignQuery.data.value
+                                                        ?.campaign.ownerId
+                                                )
+                                                    ? faUserLarge
+                                                    : faCrown
+                                            " />
+                                        <label class="select-none">
+                                            {{ item.username }}
+                                        </label>
+                                    </div>
+                                </AccordionTrigger>
+                                <AccordionContent class="pl-4">
+                                    <CampaignPlayerResourcesSection
+                                        :userId="item.userId"
+                                        :characters="item.characters"
+                                        :resources="item.resources" />
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Accordion>
+                    </Card>
+                </div>
             </div>
-        </div>
+        </template>
+        <template v-else>
+            <div class="w-full flex flex-col gap-4 pb-2">
+                <div class="flex flex-col gap-4">
+                    <CampaignCombatJoinBanner
+                        :campaignId="route.params.campaignId"
+                        :combatInfo="
+                            campaignQuery.data.value?.currentCombatInfo ?? null
+                        " />
+                    <Card
+                        v-if="
+                            campaignQuery.data.value?.userCampaignMember
+                                .isDungeonMaster ||
+                            (campaignQuery.data.value?.campaign
+                                ?.campaignDescription != '' &&
+                                campaignQuery.data.value?.campaign
+                                    ?.campaignDescription != null)
+                        "
+                        class="p-4 border-primary/50"
+                        :class="{
+                            'border-2 border-dashed':
+                                campaignQuery.data.value?.campaign
+                                    ?.campaignDescription == null ||
+                                campaignQuery.data.value?.campaign
+                                    ?.campaignDescription == '',
+                        }">
+                        <CampaignEditIntroductionForm />
+                    </Card>
+                </div>
+                <div class="flex flex-col gap-4">
+                    <Card class="p-4 border-primary/50">
+                        <header>
+                            <FontAwesomeIcon :icon="faUsers" /> Players
+                        </header>
+                        <Accordion
+                            type="single"
+                            class="w-full"
+                            collapsible
+                            v-model:modelValue="openAccordionValue">
+                            <AccordionItem
+                                v-for="item in membersToDisplay"
+                                :key="item.userId"
+                                :value="item.userId">
+                                <AccordionTrigger>
+                                    <div class="flex gap-2">
+                                        <FontAwesomeIcon
+                                            :class="
+                                                item.userId ===
+                                                campaignQuery.data.value
+                                                    ?.campaign.ownerId
+                                                    ? 'text-gold'
+                                                    : 'text-primary'
+                                            "
+                                            :icon="
+                                                !(
+                                                    item.userId ===
+                                                    campaignQuery.data.value
+                                                        ?.campaign.ownerId
+                                                )
+                                                    ? faUserLarge
+                                                    : faCrown
+                                            " />
+                                        <label class="select-none">
+                                            {{ item.username }}
+                                        </label>
+                                    </div>
+                                </AccordionTrigger>
+                                <AccordionContent class="pl-4">
+                                    <CampaignPlayerResourcesSection
+                                        :userId="item.userId"
+                                        :characters="item.characters"
+                                        :resources="item.resources" />
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Accordion>
+                    </Card>
+                </div></div
+        ></template>
     </LoadingFallback>
 </template>
 <script setup lang="ts">
@@ -90,6 +172,7 @@
     import type { CampaignMemberDto } from "~/utils/api/campaign/getCampaignRequest";
     import { getCampaignQuery } from "~/utils/queries/campaign";
 
+    const screenSize = useScreenSize();
     const route = useRoute("app-campaigns-campaignId");
     const userStore = useUserStore();
     const campaignQuery = useQuery(

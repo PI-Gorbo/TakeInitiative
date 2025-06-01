@@ -3,7 +3,7 @@
         <slot />
         <!-- Nuxt  -->
         <ClientOnly>
-            <Toaster :position="'top-right'" />
+            <Toaster :position="'top-right'" :duration="1000" />
         </ClientOnly>
     </div>
 </template>

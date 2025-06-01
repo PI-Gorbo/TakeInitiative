@@ -27,12 +27,12 @@
                                     <NuxtLink
                                         :to="{
                                             name: 'app-campaigns-campaignId',
-                                            params: { campaignId: campaign.campaignId },
+                                            params: {
+                                                campaignId: campaign.campaignId,
+                                            },
                                         }"
                                         class="flex w-full items-center justify-between gap-2 truncate"
-                                        @click.native="
-                                            () => sidebar.setOpen(false)
-                                        ">
+                                        @click="closeSidebar">
                                         <span>{{ campaign.campaignName }}</span>
                                         <FontAwesomeIcon
                                             v-if="campaign.currentCombatName"
@@ -51,7 +51,9 @@
                         <NuxtLink
                             :to="{ name: 'app-me' }"
                             class="flex items-center gap-2">
-                            <FontAwesomeIcon :icon="faUserCircle" size="2x" />
+                            <FontAwesomeIcon
+                                :icon="faUserCircle"
+                                size="2x" />
                             {{ user.state.user?.username }}
                         </NuxtLink>
                     </SidebarMenuButton>
@@ -80,4 +82,8 @@
     const user = useUserStore();
 
     const sidebar = useSidebar();
+
+    function closeSidebar() {
+        sidebar.toggleSidebar()
+    }
 </script>

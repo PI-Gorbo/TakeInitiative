@@ -103,33 +103,53 @@
             <!--Display all resources-->
             <template v-else>
                 <ul class="flex flex-col gap-2">
-                    <Button
+                    <template
                         v-for="(resource, index) in props.resources"
-                        variant="outline"
-                        class="interactable shadow-solid-sm disabled:opacity-100">
-                        <ResourceDisplay
-                            :resource="resource"
-                            :resourceVisibilityOptionNameMap="
-                                resourceVisibilityOptionNameMap
-                            "
-                            :isViewingCurrentUsersData="
-                                isViewingCurrentUsersData
-                            "
-                            @edit="
-                                () => {
+                        :key="index">
+                        <li
+                            class="flex gap-1 items-center"
+                            v-if="canSeeResource(resource)">
+                            <Button
+                                variant="outline"
+                                class="interactable shadow-solid-sm disabled:opacity-100 flex-1">
+                                <ResourceDisplay
+                                    :resource="resource"
+                                    :resourceVisibilityOptionNameMap="
+                                        resourceVisibilityOptionNameMap
+                                    "
+                                    @edit="
+                                        () => {
+                                            dialogState.resourceClicked = {
+                                                resource,
+                                                index,
+                                            };
+                                            openDialog('edit-resource');
+                                        }
+                                    " />
+                            </Button>
+                            <Button
+                                v-if="isViewingCurrentUsersData"
+                                variant="outline"
+                                size="icon"
+                                class="interactable"
+                                @click="
                                     () => {
                                         dialogState.resourceClicked = {
                                             resource,
                                             index,
                                         };
                                         openDialog('edit-resource');
-                                    };
-                                }
-                            " />
-                    </Button>
+                                    }
+                                ">
+                                <FontAwesomeIcon :icon="faPen" />
+                            </Button>
+                        </li>
+                    </template>
                 </ul>
 
-                <div class="flex justify-end" v-if="isViewingCurrentUsersData">
+                <div
+                    class="flex justify-end"
+                    v-if="isViewingCurrentUsersData">
                     <Button
                         variant="link"
                         @click="() => openDialog('create-resource')">
@@ -146,7 +166,9 @@
                         {{ dialogInfoMap[dialogState.dialogType].title }}
                     </SheetTitle>
                 </SheetHeader>
-                <Transition name="fade" mode="out-in">
+                <Transition
+                    name="fade"
+                    mode="out-in">
                     <div
                         :key="'create-character'"
                         v-if="dialogState.dialogType == 'create-character'">
@@ -177,11 +199,19 @@
                             dialogState.dialogType === 'create-resource'
                         ">
                         <CUDResourceForm
+                            :isDm="
+                                campaignQuery.data?.value?.userCampaignMember
+                                    ?.isDungeonMaster ?? false
+                            "
                             type="Add"
                             :addResource="addResource" />
                     </div>
                     <div v-else-if="dialogState.dialogType === 'edit-resource'">
                         <CUDResourceForm
+                            :isDm="
+                                campaignQuery.data?.value?.userCampaignMember
+                                    ?.isDungeonMaster ?? false
+                            "
                             type="Edit"
                             :resource="dialogState.resourceClicked?.resource!"
                             :deleteResource="deleteResource"
@@ -328,11 +358,13 @@
             })
             .then(() => (dialogState.dialogOpen = false))
             .then(() => toast.success("Saved!"))
-            .then(() =>
+            .catch((e) => {
                 toast.error(
                     "Something went wrong while trying to edit your character"
-                )
-            );
+                );
+
+                throw e;
+            });
     }
 
     const deleteCharacterM = deleteCharacterMutation();
@@ -392,9 +424,14 @@
     }
 
     async function editResource(resource: CampaignMemberResource) {
-        const array =
+        let resourcesArray =
             campaignQuery.data.value?.userCampaignMember?.resources ?? [];
-        array[dialogState.resourceClicked?.index!] = resource;
+        const array = [
+            ...resourcesArray.slice(0, dialogState.resourceClicked?.index!),
+            resource,
+            ...resourcesArray.slice(dialogState.resourceClicked?.index! + 1),
+        ];
+        debugger;
         return await setResourcesMutation
             .mutateAsync({
                 memberId: campaignQuery.data.value?.userCampaignMember.id!,
@@ -407,5 +444,23 @@
                     "Something went wrong while trying to update resource."
                 )
             );
+    }
+
+    function canSeeResource(resource: CampaignMemberResource): boolean {
+        if (
+            resource.visibility === ResourceVisibilityOptions.Public ||
+            isViewingCurrentUsersData.value
+        ) {
+            return true;
+        }
+
+        if (
+            resource.visibility === ResourceVisibilityOptions.DMsOnly &&
+            campaignQuery.data.value?.userCampaignMember?.isDungeonMaster
+        ) {
+            return true;
+        }
+
+        return false;
     }
 </script>
