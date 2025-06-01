@@ -6,11 +6,11 @@
                 <div
                     class="flex rounded-lg border p-1 px-2 text-center transition-colors group-hover:border-primary truncate">
                     {{
-                        `${config.public.webUrl}/join/${campaignQuery.data.value?.joinCode}`
+                        `${config.public.webUrl}/app/campaigns/join/${campaignQuery.data.value?.joinCode}`
                     }}
                 </div>
                 <CopiedTooltip
-                    :textToCopyToClipboard="`${config.public.webUrl}/join/${campaignQuery.data.value?.joinCode}`">
+                    :textToCopyToClipboard="`${config.public.webUrl}/app/campaigns/join/${campaignQuery.data.value?.joinCode}`">
                     <template #Trigger="{ copyText }">
                         <Button
                             size="icon"

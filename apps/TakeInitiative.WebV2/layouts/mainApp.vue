@@ -34,7 +34,7 @@
                                             Take Initiative
                                         </span>
                                         <span
-                                            class="font-NovaCut text-xl text-gold lg:text-lg lg:text-gray-300"
+                                            class="font-NovaCut text-xl text-gold lg:text-lg text-gray-300"
                                             v-if="
                                                 campaignNameQuery.isSuccess
                                                     .value
