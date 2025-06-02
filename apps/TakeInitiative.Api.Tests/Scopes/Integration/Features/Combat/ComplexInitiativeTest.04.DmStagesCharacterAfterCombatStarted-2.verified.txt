@@ -79,6 +79,11 @@
                   Total: 3,
                   Roll: 3,
                   Evaluation: 3
+                },
+                {
+                  Total: 19,
+                  Roll: 1d20,
+                  Evaluation: 1d20(19)
                 }
               ],
               RolledHealth: null
@@ -91,6 +96,11 @@
                   Total: 3,
                   Roll: 3,
                   Evaluation: 3
+                },
+                {
+                  Total: 20,
+                  Roll: 1d20,
+                  Evaluation: 1d20(**20**)
                 }
               ],
               RolledHealth: null
@@ -171,6 +181,11 @@
             Total: 3,
             Roll: 3,
             Evaluation: 3
+          },
+          {
+            Total: 20,
+            Roll: 1d20,
+            Evaluation: 1d20(**20**)
           }
         ]
       },
@@ -196,6 +211,11 @@
             Total: 3,
             Roll: 3,
             Evaluation: 3
+          },
+          {
+            Total: 19,
+            Roll: 1d20,
+            Evaluation: 1d20(19)
           }
         ]
       },
