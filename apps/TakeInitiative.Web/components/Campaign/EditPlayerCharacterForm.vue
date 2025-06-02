@@ -15,7 +15,8 @@
             :error="form.errors.value['initiative.roll']" />
 
         <CampaignCharacterHealthInput
-            v-model:health="health as FormHealthInput"
+            :health="health as FormHealthInput"
+            @update:health="(v) => (health = v)"
             @evaluateExpression="evaluteFromHealth"
             :error="form.errors.value.health"
             allowRoll />
