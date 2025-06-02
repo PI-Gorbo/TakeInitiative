@@ -1,68 +1,116 @@
 /** @type {import('tailwindcss').Config} */
+
+const plugin = require("tailwindcss/plugin");
+const colors = require("tailwindcss/colors");
+
 export default {
-    content: ["./layers/**/*.{js,vue,ts}"],
+    darkMode: ["class"],
+    content: ["./{components,pages}/**/*.{js,vue,ts}"],
     theme: {
         extend: {
+            borderRadius: {
+                lg: "var(--radius)",
+                md: "calc(var(--radius) - 2px)",
+                sm: "calc(var(--radius) - 4px)",
+            },
             colors: {
-                "take-navy": {
-                    light: "#4A6082",
-                    medium: "#152846",
-                    dark: "#1f2b43",
-                    DEFAULT: "#020617",
+                background: "hsl(var(--background))",
+                foreground: "hsl(var(--foreground))",
+                card: {
+                    DEFAULT: "hsl(var(--card))",
+                    foreground: "hsl(var(--card-foreground))",
                 },
-                "take-teal": {
-                    DEFAULT: "#019D89",
+                popover: {
+                    DEFAULT: "hsl(var(--popover))",
+                    foreground: "hsl(var(--popover-foreground))",
                 },
-                "take-charcoal": {
-                    DEFAULT: "#264652",
+                primary: {
+                    DEFAULT: "hsl(var(--primary))",
+                    foreground: "hsl(var(--primary-foreground))",
                 },
-                "take-purple": {
-                    light: "#36374f",
-                    DEFAULT: "#2a2635",
-                    dark: "#171322",
-                    "very-dark": "#040307",
+                secondary: {
+                    DEFAULT: "hsl(var(--secondary))",
+                    foreground: "hsl(var(--secondary-foreground))",
                 },
-                "take-red": {
-                    DEFAULT: "#FF652E",
+                muted: {
+                    DEFAULT: "hsl(var(--muted))",
+                    foreground: "hsl(var(--muted-foreground))",
                 },
-                "take-yellow": {
-                    light: "#fdc465",
-                    DEFAULT: "#FBB426",
-                    dark: "#da9c20",
+                accent: {
+                    DEFAULT: "hsl(var(--accent))",
+                    foreground: "hsl(var(--accent-foreground))",
                 },
-                "take-grey": {
-                    light: "#E7E7E7",
-                    DEFAULT: "#D1D1D1",
-                    dark: "#686868",
+                destructive: {
+                    tint: "hsl(var(--destructive-tint))",
+                    DEFAULT: "hsl(var(--destructive))",
+                    shade: "hsl(var(--destructive-shade))",
+                    foreground: "hsl(var(--destructive-foreground))",
                 },
-                "take-cream": {
-                    DEFAULT: "#FDF2C1",
-                    medium: "#F2CC8F",
+                gold: {
+                    tint: "hsl(var(--gold-tint))",
+                    DEFAULT: "hsl(var(--gold))",
+                    shade: "hsl(var(--gold-shade))",
+                    foreground: "hsl(var(--gold-foreground))",
+                },
+                success: {
+                    tint: "hsl(var(--success-tint))",
+                    DEFAULT: "hsl(var(--success))",
+                    foreground: "hsl(var(--success-foreground))",
+                },
+                border: "hsl(var(--border))",
+                input: "hsl(var(--input))",
+                ring: "hsl(var(--ring))",
+                chart: {
+                    1: "hsl(var(--chart-1))",
+                    2: "hsl(var(--chart-2))",
+                    3: "hsl(var(--chart-3))",
+                    4: "hsl(var(--chart-4))",
+                    5: "hsl(var(--chart-5))",
+                },
+                sidebar: {
+                    DEFAULT: "hsl(var(--sidebar-background))",
+                    foreground: "hsl(var(--sidebar-foreground))",
+                    primary: "hsl(var(--sidebar-primary))",
+                    "primary-foreground":
+                        "hsl(var(--sidebar-primary-foreground))",
+                    accent: "hsl(var(--sidebar-accent))",
+                    "accent-foreground":
+                        "hsl(var(--sidebar-accent-foreground))",
+                    border: "hsl(var(--sidebar-border))",
+                    ring: "hsl(var(--sidebar-ring))",
                 },
             },
-        },
-        fontFamily: {
-            NovaCut: ["NovaCut"],
-            Overpass: ["Overpass"],
+            fontFamily: {
+                NovaCut: ["NovaCut"],
+                Overpass: ["Overpass"],
+            },
+            keyframes: {
+                "accordion-down": {
+                    from: {
+                        height: "0",
+                    },
+                    to: {
+                        height: "var(--reka-accordion-content-height)",
+                    },
+                },
+                "accordion-up": {
+                    from: {
+                        height: "var(--reka-accordion-content-height)",
+                    },
+                    to: {
+                        height: "0",
+                    },
+                },
+            },
+            animation: {
+                "accordion-down": "accordion-down 0.2s ease-out",
+                "accordion-up": "accordion-up 0.2s ease-out",
+            },
+            boxShadow: {
+                "solid-sm": "0 0.2rem",
+                "solid-xs": "0 0.1rem hsl(var(--accent))",
+            },
         },
     },
-    safelist: [
-        {
-            // Automatically imports all the colours since we want them for changing colours based on variables.
-            pattern:
-                /bg-take-(navy|navy-light|navy-medium|navy-dark|red|yellow|yellow-light|yellow-dark|purple|purple-dark|purple-very-dark|purple-light|cream)/,
-            variants: ["hover", "group-hover"],
-        },
-        {
-            pattern:
-                /text-take-(navy|navy-light|navy-medium|navy-dark|red|yellow|yellow-light|yellow-dark|purple|purple-dark|purple-very-dark|purple-light|cream)/,
-            variants: ["hover", "group-hover"],
-        },
-        {
-            pattern:
-                /border-take-(navy|navy-light|navy-medium|navy-dark|red|yellow|yellow-light|yellow-dark|purple|purple-dark|purple-very-dark|purple-light|cream)/,
-            variants: ["hover", "group-hover"],
-        },
-    ],
-    plugins: [require("daisyui")],
+    plugins: [require("tailwindcss-animate")],
 };

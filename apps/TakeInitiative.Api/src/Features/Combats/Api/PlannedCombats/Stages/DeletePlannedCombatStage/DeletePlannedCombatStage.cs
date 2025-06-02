@@ -33,7 +33,7 @@ public class DeletePlannedCombatStage(IDocumentStore Store) : Endpoint<DeletePla
                 ThrowError(x => x.CombatId, "The combat does not belong to a campaign.", (int)HttpStatusCode.NotFound);
             }
 
-            if (!campaign.isDm(userId))
+            if (!campaign.IsDm(userId))
             {
                 ThrowError("Planned combats can only be edited by DMs.");
             }

@@ -16,6 +16,8 @@ on:
       - ".github/workflows/testApi.yml"
       - "**.cs"
       - "**.csproj"
+  workflow_dispatch: ~
+  
 
 jobs:
   test:
