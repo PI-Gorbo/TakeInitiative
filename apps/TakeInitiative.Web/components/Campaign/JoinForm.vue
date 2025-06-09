@@ -36,7 +36,9 @@ const form = useForm({
 async function onSubmit(req: z.infer<typeof joinValidator>): Promise<void> {
     formState.formError = null;
     return await props
-        .submit(req)
+        .submit({
+            joinCode: req.joinCode!
+        })
         .catch((e) => (formState.formError = parseAsApiError(e)));
 }
 </script>

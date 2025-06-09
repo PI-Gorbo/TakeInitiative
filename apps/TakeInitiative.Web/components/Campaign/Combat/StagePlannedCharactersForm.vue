@@ -217,10 +217,8 @@
 
     const hasAnyValidStages = computed(
         () =>
-            (
-                props.plannedStages
-                    ?.map((x) => x.npcs?.length)
-                    .filter((length) => (length ?? 0) > 0) ?? 0
-            ).length > 0
+            ((props.plannedStages
+                ?.map((x) => x.npcs?.length)
+                .filter((length) => (length ?? 0) > 0)).length ?? 0) > 0
     );
 </script>

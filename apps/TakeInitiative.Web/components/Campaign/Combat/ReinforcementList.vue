@@ -77,8 +77,7 @@
 
         return combatStore.orderedStagedCharacterListWithPlayerInfo.filter(
             // Only show the DM's reinforcements to the DM.
-            (x) =>
-                x.user.userId !== combatStore.combat?.dungeonMaster
+            (x) => x.user.userId !== combatStore.combat?.dungeonMaster
         );
     });
 </script>
