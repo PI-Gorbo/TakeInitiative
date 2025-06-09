@@ -9,7 +9,7 @@ const path = require("path");
 // Import necessary modules from the libraries
 import { Args, Command } from "@effect/cli"
 import { NodeContext, NodeRuntime } from "@effect/platform-node"
-import { Console, Effect } from "effect"
+import { Console, Effect, pipe, Schedule, Schema } from "effect"
 
 // Define the top-level command
 type IncrementVersion = 'Patch' | 'Minor' | 'Major'
@@ -62,7 +62,44 @@ const incrementVersionAndCreatePr = (newVersionNumber: VersionNumber) => Effect.
     return prName;
 })
 
-// const waitForPrTobeClosed = (prName: string) => Effect.
+const PrResponse = Schema.Array(Schema.Struct({
+    state: Schema.Literal('OPEN', "CLOSED"),
+    title: Schema.String
+}))
+const waitForClosedPrWithName = (prName: string) =>
+    Effect.retry(
+        pipe(
+            Effect.tryPromise(async () => {
+                const openPrs = (await $`gh pr list --state open --search '${prName}'`).json();
+                const closedPrs = (await $`gh pr list --state closed --search '${prName}'`).json();
+                return {
+                    openPrs,
+                    closedPrs
+                }
+            }),
+            Effect.flatMap(({ openPrs, closedPrs }) => {
+                const schema = Schema.decodeUnknown(PrResponse)
+                return pipe(
+                    Effect.all([schema(openPrs), schema(closedPrs)]),
+                    Effect.map(([parsedOpenPrs, parsedClosedPrs]) => ({ openPrs: parsedOpenPrs, closedPrs: parsedClosedPrs }))
+                )
+            }),
+            Effect.flatMap(({ openPrs, closedPrs }) => {
+                if (closedPrs.length != 1) {
+                    if (openPrs.length != 1) {
+                        return Effect.fail('No PRs')
+                    }
+
+                    return Effect.fail('PR has not been closed yet.')
+                }
+
+                return Effect.succeed(`Found one closed pr with the expected name ${prName}`)
+            }),
+            Effect.tapError((err) => {
+                console.log(`Trying to fetch closed pr with the name ${prName} : ${err}. Retyring again in one second`);
+                return Effect.Do;
+            })
+        ), Schedule.fixed(1000))
 
 const release = Command.make("release", { sematicVersionType }, ({ sematicVersionType }) =>
     Effect.gen(function* () {
@@ -70,52 +107,10 @@ const release = Command.make("release", { sematicVersionType }, ({ sematicVersio
         yield* Effect.promise(async () => await $`git pull`)
         const newVersionNumber = yield* updatePackageJson(sematicVersionType)
         const newVersionPrName = yield* incrementVersionAndCreatePr(newVersionNumber)
+        yield* waitForClosedPrWithName(newVersionPrName)
+        console.log("Detected closed PR.")
+        yield* Effect.promise(async () => await $`gh pr create --title 'Push version ${newVersionNumber} to main' --body 'This pr was automatically generated.' --base main --head dev --web`)
     })
-
-
-// // Read package.json
-// const packagePath = path.resolve(__dirname, "../package.json");
-// const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
-
-// let [major, minor, patch] = packageJson.version.split(".").map(Number);
-
-// switch (type) {
-//     case "patch":
-//         patch += 1;
-//         break;
-//     case "minor":
-//         minor += 1;
-//         patch = 0; // Reset patch
-//         break;
-//     case "major":
-//         major += 1;
-//         minor = 0; // Reset minor
-//         patch = 0; // Reset patch
-//         break;
-// }
-
-// const newVersion = `${major}.${minor}.${patch}`;
-// packageJson.version = newVersion;
-
-    // // Write updated package.json
-    // fs.writeFileSync(packagePath, JSON.stringify(packageJson, null, 2), "utf8");
-
-    // console.log(`-- Version updated to ${newVersion}`);
-    // console.log("-- Creating PR to update the version.")
-    // await $`git checkout -b 'release/${newVersion}'`
-    // await $`git add package.json`
-    // await $`git commit -am 'Incremented package.json to version ${newVersion}'`
-    // await $`git push`
-    // await $`gh pr create --title 'Increment to ${newVersion} on dev' --body 'This pr was automatically generated.' --base dev --head release/${newVersion} --web`
-
-
-
-
-    // console.log("-- Making a new PR with the update.")
-    // await $`gh pr create --title 'Push version ${newVersion} to main' --body 'This pr was automatically generated.' --base main --head dev --web`
-
-
-
 )
 
 // Set up the CLI application
