@@ -11,6 +11,7 @@ RUN bun install  --ignore-scripts
 # Copy the entire project
 COPY . .
 
+ENV TAKE_INIT_ENVIRONMENT=PRODUCTION
 RUN bun run build
 
 # copy production dependencies and source code into final image
