@@ -7,7 +7,8 @@ const args = process.argv.slice(2);
 const type = args[0]; // patch, minor, major
 
 const currentBranch = await $`git branch --show-current`
-if (currentBranch.text() != 'dev') {
+
+if (currentBranch.text() != 'dev\n') {
     console.error('In order to publish a new release, please ensure you are on the dev branch.')
     process.exit(1)
 }
@@ -44,9 +45,12 @@ packageJson.version = newVersion;
 // Write updated package.json
 fs.writeFileSync(packagePath, JSON.stringify(packageJson, null, 2), "utf8");
 
-console.log(`Version updated to ${newVersion}`);
+console.log(`-- Version updated to ${newVersion}`);
 
-$`git add package.json`
-$`git commit -am 'Incremented package.json to version ${newVersion}'`
-$`git push`
-$`gh pr create --title 'Push version ${newVersion} to main' --body 'This pr was automatically generated.' --base main --head dev`
+console.log("-- Making a new commit with the update.")
+await $`git add package.json`
+await $`git commit -am 'Incremented package.json to version ${newVersion}'`
+await $`git push`
+
+console.log("-- Making a new PR with the update.")
+await $`gh pr create --fill-verbose --title 'Push version ${newVersion} to main' --body 'This pr was automatically generated.' --base main --head dev --web`
