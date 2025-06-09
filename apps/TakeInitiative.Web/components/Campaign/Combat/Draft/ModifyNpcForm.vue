@@ -155,6 +155,7 @@
             .onEdit({
                 ...formValue,
                 npcId: props.npc.id,
+                armourClass: Number(formValue.armourClass)
             })
             .catch((error) => {
                 formState.error = parseAsApiError<{

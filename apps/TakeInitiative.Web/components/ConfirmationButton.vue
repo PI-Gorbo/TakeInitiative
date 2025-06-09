@@ -1,6 +1,8 @@
 <template>
     <Dialog v-model:open="open">
-        <Button v-bind="props.triggerButtonProps" @click="() => (open = true)">
+        <Button
+            v-bind="{ ...props.triggerButtonProps, as: undefined }"
+            @click="() => (open = true)">
             <slot name="TriggerButton" />
         </Button>
         <DialogContent>
@@ -14,12 +16,12 @@
             </DialogHeader>
             <div class="flex gap-2 justify-between">
                 <Button
-                    v-bind="props.cancelButtonProps"
+                    v-bind="{ ...props.cancelButtonProps, as: undefined }"
                     @click="() => (open = false)">
                     <slot name="CancelButton" />
                 </Button>
 
-                <Button v-bind="props.confirmButtonProps">
+                <Button v-bind="{ ...props.confirmButtonProps, as: undefined }">
                     <slot name="ConfirmButton" />
                 </Button>
             </div>
