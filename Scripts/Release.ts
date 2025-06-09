@@ -59,14 +59,14 @@ const incrementVersionAndCreatePr = (newVersionNumber: VersionNumber) => Effect.
     await $`git commit -am 'Incremented package.json to version ${newVersionNumber}'`
     await $`git push`
     await $`gh pr create --title 'Increment to ${newVersionNumber} on dev' --body 'This pr was automatically generated.' --base dev --head ${prName} --web`
-    return prName;
+    return 'Increment to 1.0.11 on dev';
 })
 
 const PrResponse = Schema.Array(Schema.Struct({
     state: Schema.Literal('OPEN', "CLOSED"),
     title: Schema.String
 }))
-const waitForClosedPrWithName = (prName: string) =>
+const waitForClosedPrWithTitle = (prName: string) =>
     Effect.retry(
         pipe(
             Effect.tryPromise(async () => {
@@ -108,8 +108,8 @@ const release = Command.make("release", { sematicVersionType }, ({ sematicVersio
         yield* Effect.promise(async () => await $`git switch dev`)
         yield* Effect.promise(async () => await $`git pull`)
         const newVersionNumber = yield* updatePackageJson(sematicVersionType)
-        const newVersionPrName = yield* incrementVersionAndCreatePr(newVersionNumber)
-        yield* waitForClosedPrWithName(newVersionPrName)
+        const newVersionPrTitle = yield* incrementVersionAndCreatePr(newVersionNumber)
+        yield* waitForClosedPrWithTitle(newVersionPrTitle)
         console.log("Detected closed PR.")
         yield* Effect.promise(async () => await $`gh pr create --title 'Push version ${newVersionNumber} to main' --body 'This pr was automatically generated.' --base main --head dev --web`)
     })
