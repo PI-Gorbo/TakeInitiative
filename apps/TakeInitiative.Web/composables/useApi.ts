@@ -42,6 +42,7 @@ import { getCombatHistory } from "~/utils/api/combat/getCombatHistoryRequest";
 import { postAddStagedCharacter } from "~/utils/api/combat/postAddStagedCharacter";
 import { getPlannedCombatRequest } from "~/utils/api/plannedCombat/getPlannedCombatRequest";
 import { updatePlannedCombatRequest } from "~/utils/api/plannedCombat/updatePlannedCombatRequest";
+import { putUsername } from "~/utils/api/user/putUsernameRequest";
 
 export const useApi = () => {
     const { $axios } = useNuxtApp();
@@ -55,6 +56,7 @@ export const useApi = () => {
             sendConfirmationEmail: postSendConfirmEmailRequest($axios),
             sendResetPasswordEmail: putSendResetPasswordRequest($axios),
             resetPasswordWithToken: putResetPassword($axios),
+            updateUsername: putUsername($axios)
         },
         campaign: {
             create: createCampaignRequest($axios),
