@@ -71,7 +71,12 @@ export default defineNuxtConfig({
     },
 
     typescript: {
-        strict: process.env.TAKE_INIT_ENVIRONMENT === 'DEVELOPMENT',
-        typeCheck: process.env.TAKE_INIT_ENVIRONMENT === 'DEVELOPMENT'
+        strict: true,
+        typeCheck: true,
+        tsConfig: {
+            compilerOptions: {
+                strictNullChecks: true
+            }
+        }
     },
 });
