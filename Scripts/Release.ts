@@ -70,6 +70,7 @@ const waitForClosedPrWithName = (prName: string) =>
     Effect.retry(
         pipe(
             Effect.tryPromise(async () => {
+                debugger;
                 const openPrs = (await $`gh pr list --state open --search '${prName}'`).json();
                 const closedPrs = (await $`gh pr list --state closed --search '${prName}'`).json();
                 return {
@@ -85,6 +86,7 @@ const waitForClosedPrWithName = (prName: string) =>
                 )
             }),
             Effect.flatMap(({ openPrs, closedPrs }) => {
+                debugger;
                 if (closedPrs.length != 1) {
                     if (openPrs.length != 1) {
                         return Effect.fail('No PRs')
