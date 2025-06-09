@@ -53,4 +53,4 @@ await $`git commit -am 'Incremented package.json to version ${newVersion}'`
 await $`git push`
 
 console.log("-- Making a new PR with the update.")
-await $`gh pr create --fill-verbose --title 'Push version ${newVersion} to main' --base main --head dev --web`
+await $`gh pr create --title 'Push version ${newVersion} to main' --body 'This pr was automatically generated.' --base main --head dev --web`
