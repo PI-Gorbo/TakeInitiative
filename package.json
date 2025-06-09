@@ -17,6 +17,9 @@
     "dev": "bun run database && concurrently --names api,web \"bun run api\" \"bun run web\""
   },
   "dependencies": {
-    "concurrently": "^9.1.2"
+    "@effect/cli": "^0.63.9",
+    "@effect/platform-node": "^0.85.11",
+    "concurrently": "^9.1.2",
+    "effect": "^3.16.5"
   }
 }
