@@ -13,6 +13,8 @@ if (currentBranch.text() != 'dev\n') {
     process.exit(1)
 }
 
+await $`git pull`
+
 if (!["patch", "minor", "major"].includes(type)) {
     console.error("Usage: bun run Scripts/Release.ts [patch|minor|major]");
     process.exit(1);
