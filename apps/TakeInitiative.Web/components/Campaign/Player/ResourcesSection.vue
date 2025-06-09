@@ -113,7 +113,11 @@
                                 variant="outline"
                                 class="interactable shadow-solid-sm disabled:opacity-100 flex-1">
                                 <ResourceDisplay
-                                    :resource="resource"
+                                    :resource="{
+                                        link: resource.link!,
+                                        name: resource.name!,
+                                        visibility: resource.visibility!,
+                                    }"
                                     :resourceVisibilityOptionNameMap="
                                         resourceVisibilityOptionNameMap
                                     "

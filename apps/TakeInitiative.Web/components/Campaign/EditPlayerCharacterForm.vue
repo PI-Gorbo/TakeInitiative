@@ -160,7 +160,7 @@
                 health: formValue.health,
                 initiative: formValue.initiative,
                 name: formValue.name,
-                armourClass: formValue.armourClass,
+                armourClass: Number(formValue.armourClass),
             })
             .catch((error) => {
                 formState.error = parseAsApiError<{
