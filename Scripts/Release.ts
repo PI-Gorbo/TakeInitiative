@@ -71,8 +71,8 @@ const waitForClosedPrWithName = (prName: string) =>
         pipe(
             Effect.tryPromise(async () => {
                 debugger;
-                const openPrsResp = (await $`gh pr list --state open --search '${prName} --json title,state'`);
-                const closedPrsResp = (await $`gh pr list --state closed --search '${prName} --json title,state'`);
+                const openPrsResp = (await $`gh pr list --state open --search '${prName}' --json title,state'`);
+                const closedPrsResp = (await $`gh pr list --state closed --search '${prName}' --json title,state'`);
                 return {
                     openPrs: openPrsResp.json(),
                     closedPrs: closedPrsResp.json()
