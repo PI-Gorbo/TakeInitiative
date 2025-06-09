@@ -2,13 +2,13 @@
     <li class="pb-1 flex gap-1">
         <Button
             variant="outline"
-            class="w-full flex justify-between h-fit flex-1 disabled:opacity-100"
+            class="w-full flex justify-between h-fit flex-1 disabled:opacity-100 flex-wrap"
             :class="{
                 interactable: userIsDmOrCharacterOwner,
             }"
             :disabled="!userIsDmOrCharacterOwner"
             @click="emits('addStagedCharacter')">
-            <div class="flex flex-col items-start">
+            <div class="flex flex-col items-start text-wrap">
                 <label>{{ props.dto.character.name }}</label>
                 <label class="text-muted-foreground">{{
                     props.dto.user.username
@@ -55,8 +55,7 @@
 
     const userIsDmOrCharacterOwner = computed(() => {
         return (
-            store.userIsDm ||
-            props.dto.user.userId === userStore.state?.userId
+            store.userIsDm || props.dto.user.userId === userStore.state?.userId
         );
     });
 </script>
