@@ -1,5 +1,7 @@
 <template>
-    <div>Content</div>
+    <main>
+        <MeUsernameForm/>
+    </main>
 </template>
 <script setup lang="ts">
     definePageMeta({
