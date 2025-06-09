@@ -3,54 +3,125 @@
 const fs = require("fs");
 const path = require("path");
 
-const args = process.argv.slice(2);
-const type = args[0]; // patch, minor, major
+// const args = process.argv.slice(2);
+// const type = args[0]; // patch, minor, major
 
-const currentBranch = await $`git branch --show-current`
+// Import necessary modules from the libraries
+import { Args, Command } from "@effect/cli"
+import { NodeContext, NodeRuntime } from "@effect/platform-node"
+import { Console, Effect, pipe, Schedule, Schema } from "effect"
 
-if (currentBranch.text() != 'dev\n') {
-    console.error('In order to publish a new release, please ensure you are on the dev branch.')
-    process.exit(1)
-}
+// Define the top-level command
+type IncrementVersion = 'Patch' | 'Minor' | 'Major'
+type VersionNumber = `${string}.${string}.${string}`
+const sematicVersionType = Args.choice<IncrementVersion>([['Patch', 'Patch'], ['Minor', 'Minor'], ['Major', 'Major']], { name: 'Update type' })
 
-if (!["patch", "minor", "major"].includes(type)) {
-    console.error("Usage: bun run Scripts/Release.ts [patch|minor|major]");
-    process.exit(1);
-}
+const updatePackageJson = (incrementType: IncrementVersion) =>
+    Effect.try({
+        try: () => {
+            // Read package.json
+            const packagePath = path.resolve(__dirname, "../package.json");
+            const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
 
-// Read package.json
-const packagePath = path.resolve(__dirname, "../package.json");
-const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
+            let [major, minor, patch] = packageJson.version.split(".").map(Number);
 
-let [major, minor, patch] = packageJson.version.split(".").map(Number);
+            switch (incrementType) {
+                case "Patch":
+                    patch += 1;
+                    break;
+                case "Minor":
+                    minor += 1;
+                    patch = 0; // Reset patch
+                    break;
+                case "Major":
+                    major += 1;
+                    minor = 0; // Reset minor
+                    patch = 0; // Reset patch
+                    break;
+            }
 
-switch (type) {
-    case "patch":
-        patch += 1;
-        break;
-    case "minor":
-        minor += 1;
-        patch = 0; // Reset patch
-        break;
-    case "major":
-        major += 1;
-        minor = 0; // Reset minor
-        patch = 0; // Reset patch
-        break;
-}
+            const newVersion: VersionNumber = `${major}.${minor}.${patch}`;
+            packageJson.version = newVersion;
 
-const newVersion = `${major}.${minor}.${patch}`;
-packageJson.version = newVersion;
+            // Write updated package.json
+            fs.writeFileSync(packagePath, JSON.stringify(packageJson, null, 2), "utf8");
 
-// Write updated package.json
-fs.writeFileSync(packagePath, JSON.stringify(packageJson, null, 2), "utf8");
+            return newVersion;
+        },
+        catch: (err) => `Something went wrong while trying to update the package.json file: ${err}`
+    })
 
-console.log(`-- Version updated to ${newVersion}`);
 
-console.log("-- Making a new commit with the update.")
-await $`git add package.json`
-await $`git commit -am 'Incremented package.json to version ${newVersion}'`
-await $`git push`
+const incrementVersionAndCreatePr = (newVersionNumber: VersionNumber) => Effect.tryPromise(async () => {
+    const prName = `release/${newVersionNumber}`
+    await $`git checkout -b '${prName}'`
+    await $`git add package.json`
+    await $`git commit -am 'Incremented package.json to version ${newVersionNumber}'`
+    await $`git push`
+    await $`gh pr create --title 'Increment to ${newVersionNumber} on dev' --body 'This pr was automatically generated.' --base dev --head ${prName} --web`
+    return 'Increment to 1.0.11 on dev';
+})
 
-console.log("-- Making a new PR with the update.")
-await $`gh pr create --title 'Push version ${newVersion} to main' --body 'This pr was automatically generated.' --base main --head dev --web`
+const PrResponse = Schema.Array(Schema.Struct({
+    state: Schema.Literal('OPEN', "CLOSED"),
+    title: Schema.String
+}))
+const waitForClosedPrWithTitle = (prName: string) =>
+    Effect.retry(
+        pipe(
+            Effect.tryPromise(async () => {
+                debugger;
+                const command = async (state: 'open' | 'closed') => await $`gh pr list --state ${state} --search '${prName}' --json title,state`
+                const openCommand = command('open')
+                const openPrsResp = (await openCommand);
+                const closedPrsResp = (await command('closed'));
+                return {
+                    openPrs: openPrsResp.json(),
+                    closedPrs: closedPrsResp.json()
+                }
+            }),
+            Effect.flatMap(({ openPrs, closedPrs }) => {
+                const schema = Schema.decodeUnknown(PrResponse)
+                return pipe(
+                    Effect.all([schema(openPrs), schema(closedPrs)]),
+                    Effect.map(([parsedOpenPrs, parsedClosedPrs]) => ({ openPrs: parsedOpenPrs, closedPrs: parsedClosedPrs }))
+                )
+            }),
+            Effect.flatMap(({ openPrs, closedPrs }) => {
+                debugger;
+                if (closedPrs.length != 1) {
+                    if (openPrs.length != 1) {
+                        return Effect.fail('No PRs')
+                    }
+
+                    return Effect.fail('PR has not been closed yet.')
+                }
+
+                return Effect.succeed(`Found one closed pr with the expected name ${prName}`)
+            }),
+            Effect.tapError((err) => {
+                console.log(`Trying to fetch closed pr with the name ${prName} : ${err}. Retyring again in one second`);
+                return Effect.Do;
+            })
+        ), Schedule.fixed(1000))
+
+const release = Command.make("release", { sematicVersionType }, ({ sematicVersionType }) =>
+    Effect.gen(function* () {
+        yield* Effect.promise(async () => await $`git switch dev`)
+        yield* Effect.promise(async () => await $`git pull`)
+        const newVersionNumber = yield* updatePackageJson(sematicVersionType)
+        const newVersionPrTitle = yield* incrementVersionAndCreatePr(newVersionNumber)
+        yield* waitForClosedPrWithTitle(newVersionPrTitle)
+        console.log("Detected closed PR.")
+        yield* Effect.promise(async () => await $`gh pr create --title 'Push version ${newVersionNumber} to main' --body 'This pr was automatically generated.' --base main --head dev --web`)
+    })
+)
+
+// Set up the CLI application
+const cli = Command.run(release, {
+    name: "Hello World CLI",
+    version: "v1.0.0"
+})
+
+// Prepare and run the CLI application
+cli(process.argv).pipe(Effect.provide(NodeContext.layer), NodeRuntime.runMain)
