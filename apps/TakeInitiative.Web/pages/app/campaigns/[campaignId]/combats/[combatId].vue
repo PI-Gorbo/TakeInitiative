@@ -4,16 +4,17 @@
         :isLoading="
             store.campaignQuery.isPending || store.combatQuery.isPending
         "
-        class="h-full w-full max-h-full flex justify-center">
-        <div class="lg:grid lg:grid-cols-3 w-page lg:gap-4 max-h-full pb-4">
-            <div
+        class="h-full w-full max-h-full flex justify-center overflow-auto">
+        <section
+            class="lg:grid lg:grid-cols-3 w-page lg:gap-4 max-h-full pb-4 overflow-auto">
+            <header
                 class="hidden lg:block lg:col-span-1 lg:col-start-1 overflow-auto">
                 <CampaignCombatFullScreenCombatDetailsCard
                     :campaignId="route.params.campaignId"
                     :combatId="route.params.combatId" />
-            </div>
-            <div
-                class="lg:col-span-2 lg:col-start-2 flex flex-col gap-4 max-h-full h-full">
+            </header>
+            <section
+                class="lg:col-span-2 lg:col-start-2 flex flex-col gap-4 max-h-full h-full overflow-auto">
                 <CampaignCombatMobileCombatDetailsTabs
                     :campaignId="route.params.campaignId"
                     :combatId="route.params.combatId"
@@ -54,8 +55,8 @@
                         </div>
                     </div>
                 </CampaignCombatMobileCombatDetailsTabs>
-            </div>
-        </div>
+            </section>
+        </section>
     </LoadingFallback>
 </template>
 <script setup lang="ts">
@@ -97,8 +98,7 @@
         const characterWithCurrentInitiative =
             store.combat?.initiativeList[store.combat.initiativeIndex];
         if (
-            characterWithCurrentInitiative?.playerId ==
-            userStore.state?.userId
+            characterWithCurrentInitiative?.playerId == userStore.state?.userId
         ) {
             return true;
         }
