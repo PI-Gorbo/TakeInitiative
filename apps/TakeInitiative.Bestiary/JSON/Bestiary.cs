@@ -10,16 +10,16 @@ using System.Threading.Tasks;
 using System.Collections;
 using Microsoft.CodeAnalysis;
 
-namespace BestiaryAPI
+namespace BestiaryAPI.JSON
 {
     public class Bestiary
     {
-        //public List<Alignment> align { get; init; }
+        //public List<Alignment> align { get; set; }
 
     }
     public class SpecialProperty
     {
-        public string special { get; init; }
+        public string? special { get; set; }
     }
     public class alignment
     {
@@ -45,11 +45,11 @@ namespace BestiaryAPI
 
     public class abilityScore {
         //is either an int/null or special
-        public Nullable<int> score { get; init; }
+        public Nullable<int>  score { get; set; }
     }
 
     public class _legendaryActions {
-        public int num { get; init; }
+        public int num { get; set; }
     }
 
     public class creatureData {
