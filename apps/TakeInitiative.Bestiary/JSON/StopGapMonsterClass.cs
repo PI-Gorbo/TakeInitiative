@@ -11,7 +11,7 @@ using Newtonsoft.Json.Linq;
 namespace BestiaryAPI.JSON
 
 {
-    public class root {
+    public class monster_root {
         //Itemconvertertype is used here so that each item in the list is converted using the MonsterConverter
         [JsonProperty(ItemConverterType = typeof(MonsterConverter), PropertyName = "monster")]
         public List<StopGapMonsterClass> Monsters { get; set; }

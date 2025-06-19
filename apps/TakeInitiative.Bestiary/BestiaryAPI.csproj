@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="FastEndpoints" Version="6.1.0" />
+    <PackageReference Include="Marten" Version="8.3.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 
