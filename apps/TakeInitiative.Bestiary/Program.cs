@@ -2,12 +2,13 @@ using FastEndpoints;
 using Marten;
 using JasperFx;
 using Marten.Services.Json;
+using System.Threading.Tasks;
 
 namespace BestiaryAPI;
 
 internal class Program
 {
-    private static void Main(string[] args)
+    private static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder();
         builder.Services.AddFastEndpoints();
@@ -39,8 +40,8 @@ internal class Program
                 options.AutoCreateSchemaObjects = AutoCreate.All;
             }
         });
-
-
+        //omg is this me using await and async??? Im a coding god now??
+        await BestiaryAPI.Startup.Bestiary_Load_Data.download_5etools_data(builder.Configuration, builder.Environment.IsDevelopment());
         var app = builder.Build();
         app.UseDefaultExceptionHandler().UseFastEndpoints();
         app.Run();

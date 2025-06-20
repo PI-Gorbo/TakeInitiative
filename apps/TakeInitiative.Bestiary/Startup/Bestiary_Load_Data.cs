@@ -15,7 +15,7 @@ namespace BestiaryAPI.Startup
         static readonly HttpClient client = new HttpClient();
         const string download_url = "https://api.github.com/repos/5etools-mirror-3/5etools-src/releases/latest";
 
-        static async Task download_5etools_data(IConfiguration config, bool IsDevelopment)
+        public static async Task download_5etools_data(IConfiguration config, bool IsDevelopment)
         {
             //HttpClient.DefaultRequestHeaders.UserAgent.TryParseAdd("request");
             client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36");
