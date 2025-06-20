@@ -15,14 +15,12 @@ internal class Program
         // Build config
         var configBuilder = builder.Configuration
             .AddJsonFile("appsettings.json", optional: false);
-
-
-
+        if (!builder.Environment.IsProduction())
+        {
+            configBuilder = configBuilder.AddJsonFile("appsettings.development.json", optional: true);
+        }
 
         var connstring = builder.Configuration.GetConnectionString("BestiaryDB");
-
-
-
 
         // This is the absolute, simplest way to integrate Marten into your
         // .NET application with Marten's default configuration
