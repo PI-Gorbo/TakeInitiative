@@ -9,6 +9,6 @@ namespace BestiaryAPI
 {
     public class Search_Response
     {
-        public monster_root monsters { get; set; }
+        public Monster_root monsters { get; set; }
     }
 }

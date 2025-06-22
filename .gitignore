@@ -486,3 +486,4 @@ $RECYCLE.BIN/
 apps/TakeInitiative.Api/appsettings.Development.json
 nuget.config
 apps/TakeInitiative.Bestiary/appsettings.Development.json
+apps/TakeInitiative.Bestiary/5etools/

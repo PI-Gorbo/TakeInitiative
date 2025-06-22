@@ -11,7 +11,7 @@ using Newtonsoft.Json.Linq;
 namespace BestiaryAPI.JSON
 
 {
-    public class monster_root {
+    public class Monster_root {
         //Itemconvertertype is used here so that each item in the list is converted using the MonsterConverter
         [JsonProperty(ItemConverterType = typeof(MonsterConverter), PropertyName = "monster")]
         public List<StopGapMonsterClass> Monsters { get; set; }
@@ -52,7 +52,7 @@ namespace BestiaryAPI.JSON
         internal void onDeserialized(StreamingContext context)
         {
             //only calc initiative if this is not a copy of another monster in json (will throw error because missing data from deserialisation)
-            if (!IsCopy.HasValue || IsCopy == null)
+            if (!IsCopy.HasValue)
             {
                 this.calculate_initiative();
             }
