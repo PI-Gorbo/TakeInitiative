@@ -71,7 +71,7 @@ namespace BestiaryAPI.JSON
            
             JToken jtoken = JToken.Load(reader);
             if (jtoken.Type == JTokenType.Integer) {
-                return new ac_int(jtoken.ToObject<int>());
+                return new ac_object() {ac = jtoken.ToObject<int>() };
             } else if (jtoken.Type == JTokenType.Object) {
                 return jtoken.ToObject<ac_object>();
             } else {

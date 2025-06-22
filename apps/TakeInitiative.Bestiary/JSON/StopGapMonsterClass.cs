@@ -14,7 +14,7 @@ namespace BestiaryAPI.JSON
     public class Monster_root {
         //Itemconvertertype is used here so that each item in the list is converted using the MonsterConverter
         [JsonProperty(ItemConverterType = typeof(MonsterConverter), PropertyName = "monster")]
-        public List<StopGapMonsterClass> Monsters { get; set; }
+        public List<StopGapMonsterClass> Monsters { get; set; } = [];
     }
     public class StopGapMonsterClass
     {
@@ -29,7 +29,7 @@ namespace BestiaryAPI.JSON
         [JsonProperty("hp")]
         public required hp Hp { get; set; }
         [JsonProperty(ItemConverterType = typeof(ACConverter), PropertyName = "ac")]
-        public required List<I_acItem> Ac { get; set; }
+        public required List<ac_object> Ac { get; set; }
         
         [JsonProperty("initiative")]
         public initiative_object Initiative { get; set; }
@@ -111,30 +111,29 @@ namespace BestiaryAPI.JSON
         public string formula { get; set; }
     }
 
-    public class ac_object : I_acItem
+    public class ac_object
     {
-        
-        public int ac;
-        public List<string> from { get; set; }
 
-        public string condition { get; set; }
+        public required int ac { get; set; }
+        public List<string> from { get; set; } = [];
+
+        public string condition { get; set; } = string.Empty;
         public bool braces { get; set; }
-        public int get_ac()
-        {
-            return ac;
-        }
+        
+
+
     }
 
-    public class ac_int : I_acItem {
-        public int ac; 
+    //public class ac_int : I_acItem {
+    //    public int ac; 
 
-        public int get_ac() {
-            return ac;
-        }
-        public ac_int(int ac) {
-            this.ac = ac;
-        }
-    }
+    //    public int get_ac() {
+    //        return ac;
+    //    }
+    //    public ac_int(int ac) {
+    //        this.ac = ac;
+    //    }
+    //}
 
     //will have to calculate from dex score if not explicitly mentioned
     public class initiative_object {
@@ -193,9 +192,9 @@ namespace BestiaryAPI.JSON
         public string special { get; set; }
     }
 
-    public interface I_acItem {
-        int get_ac();
-    }
+    //public interface I_acItem {
+    //    int get_ac();
+    //}
 
     
     //public interface I_initiative
