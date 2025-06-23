@@ -51,10 +51,19 @@ internal class Program
 
 
         }).UseLightweightSessions();
-        
+
+        var app = builder.Build();
+
+        // From here, the container is built and ready to use.
+        var session = app.Services.GetRequiredService<IDocumentSession>();
+
         //omg is this me using await and async??? Im a coding god now?? I definitely know what im doing and how they work????!!!
         await BestiaryAPI.Startup.Bestiary_Load_Data.download_5etools_data(connstring, builder.Environment.IsDevelopment());
-        var app = builder.Build();
+
+
+
+
+
         app.UseDefaultExceptionHandler().UseFastEndpoints();
         app.Run();
     }
