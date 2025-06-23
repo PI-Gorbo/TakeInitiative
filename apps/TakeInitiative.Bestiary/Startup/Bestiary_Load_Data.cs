@@ -111,6 +111,11 @@ namespace BestiaryAPI.Startup
             
 
             Debug.WriteLine("Done inserting {0} monsters into DB", monsters.Count());
+            //Clean up 5etools folder, delete it
+            if (Directory.Exists("5etools"))
+            {
+                Directory.Delete("5etools", true);
+            }
         }
     }
 }
