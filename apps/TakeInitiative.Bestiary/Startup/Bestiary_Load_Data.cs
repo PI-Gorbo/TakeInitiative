@@ -17,23 +17,31 @@ namespace BestiaryAPI.Startup
         static readonly HttpClient client = new HttpClient();
         const string download_url = "https://api.github.com/repos/5etools-mirror-3/5etools-src/releases/latest";
 
-        public static async Task download_5etools_data(String conn_string, bool IsDevelopment)
+        public static async Task download_5etools_data(IDocumentStore store)
         {
-            //HttpClient.DefaultRequestHeaders.UserAgent.TryParseAdd("request");
-            client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36");
-            //try
-            //{
+            var monsters = await Download_Data_SrcGithub();
+            Debug.WriteLine("Downloaded {0} monsters from 5etools", monsters.Count);
+            //insert data into marten db
+            await Insert_Data_marten(store, monsters);
+            //clean up
+            Debug.WriteLine("Done inserting {0} monsters into DB", monsters.Count());
+            //Clean up 5etools folder, delete it
+            if (Directory.Exists("5etools"))
+            {
+                Directory.Delete("5etools", true);
+            }
+        }
 
-            //}
-            //catch (HttpRequestException e)
-            //{
-            //    Console.WriteLine("\nException Caught!");
-            //    Console.WriteLine("Message :{0} ", e.Message);
-            //}
+
+        public static async Task<List<StopGapMonsterClass>> Download_Data_SrcGithub()
+        {
+
+            client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36");
+
             string responseBody = await client.GetStringAsync(download_url);
-            //Debug.WriteLine(responseBody);
+
             JObject jobject = JObject.Parse(responseBody);
-            //Debug.WriteLine(jobject["zipball_url"]);
+
             var zipfile = "5etools.zip";
             using var downloadStream = await client.GetStreamAsync(jobject["zipball_url"].ToString());
             using var fileStream = new FileStream(zipfile, FileMode.Create, FileAccess.Write);
@@ -67,20 +75,6 @@ namespace BestiaryAPI.Startup
             Debug.WriteLine("Besteiary path is " + bestiary_path);
             var bestiary_files = Directory.GetFiles(bestiary_path);
 
-            
-            //setup marten store
-            var store = DocumentStore.For(options => {
-                options.Connection(conn_string);
-                options.UseNewtonsoftForSerialization();
-            });
-            //identity works but not index?
-            //if this duplicate shit works i will be PISSED off
-            store.Options.Schema.For<StopGapMonsterClass>()
-                //.Identity(x => x.Name)
-                .Identity(x => x._5etools_link)
-                .Index(x => x.Source)
-                .Duplicate(x => x.Name);
-
             List<StopGapMonsterClass> monsters = new List<StopGapMonsterClass>();
             //ignore everything but the bestiary files (eg the fluff files) for now
 
@@ -96,7 +90,7 @@ namespace BestiaryAPI.Startup
                 //read file
                 //TODO: Use streamreader if files are super big but surely this doesn't happen
                 Monster_root mon_root = JsonConvert.DeserializeObject<Monster_root>(File.ReadAllText(bestiary_file));
-                monsters = monsters.Concat(mon_root.Monsters).ToList();
+                monsters.AddRange(mon_root.Monsters);
 
             }
             //remove null elements from list
@@ -104,18 +98,20 @@ namespace BestiaryAPI.Startup
             //returning a null reference was the best way I had to deserialise incorrect json 
             //unless im stupid which I probably am and theres a much better way
             monsters.RemoveAll(x => x == null);
+            return monsters;
 
+        }
+
+        public static async Task Insert_Data_marten(IDocumentStore store, List<StopGapMonsterClass> monsters)
+        {
             //bulkinsertasync uses copy to insert data all in one transaction, very handy for something like this
             //overwrite existing data if it exists so we can update documents without clearing out the whole db
             await store.BulkInsertAsync(monsters, BulkInsertMode.OverwriteExisting);
-            
 
-            Debug.WriteLine("Done inserting {0} monsters into DB", monsters.Count());
-            //Clean up 5etools folder, delete it
-            if (Directory.Exists("5etools"))
-            {
-                Directory.Delete("5etools", true);
-            }
+
+            
         }
     }
+
+
 }

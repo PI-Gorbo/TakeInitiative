@@ -54,11 +54,11 @@ internal class Program
 
         var app = builder.Build();
 
-        // From here, the container is built and ready to use.
-        var session = app.Services.GetRequiredService<IDocumentSession>();
+        // Thanky Sam!!
+        var store = app.Services.GetRequiredService<IDocumentStore>();
 
         //omg is this me using await and async??? Im a coding god now?? I definitely know what im doing and how they work????!!!
-        await BestiaryAPI.Startup.Bestiary_Load_Data.download_5etools_data(connstring, builder.Environment.IsDevelopment());
+        await BestiaryAPI.Startup.Bestiary_Load_Data.download_5etools_data(store);
 
 
 
