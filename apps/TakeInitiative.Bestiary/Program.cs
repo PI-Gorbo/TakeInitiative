@@ -4,9 +4,10 @@ using JasperFx;
 using Marten.Services.Json;
 using System.Threading.Tasks;
 using System.Diagnostics;
-using BestiaryAPI.JSON;
+using TakeInitiative.Bestiary.Domain.JSON;
+using TakeInitiative.BestiaryAPI.Startup;
 
-namespace BestiaryAPI;
+namespace TakeInitiative.BestiaryAPI;
 
 internal class Program
 {
@@ -58,7 +59,7 @@ internal class Program
         var store = app.Services.GetRequiredService<IDocumentStore>();
 
         //omg is this me using await and async??? Im a coding god now?? I definitely know what im doing and how they work????!!!
-        await BestiaryAPI.Startup.Bestiary_Load_Data.download_5etools_data(store);
+        await Bestiary_Load_Data.download_5etools_data(store);
 
 
 

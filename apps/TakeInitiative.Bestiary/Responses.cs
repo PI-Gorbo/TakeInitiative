@@ -2,9 +2,9 @@
 using Marten;
 using JasperFx;
 using Marten.Services.Json;
-using BestiaryAPI.JSON;
+using TakeInitiative.Bestiary.Domain.JSON;
 
-namespace BestiaryAPI
+namespace TakeInitiative.BestiaryAPI
 
 {
     public class Search_Response

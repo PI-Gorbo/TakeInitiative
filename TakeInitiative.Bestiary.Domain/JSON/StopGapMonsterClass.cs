@@ -1,14 +1,11 @@
 ﻿using System.Diagnostics.Eventing.Reader;
 using System.Runtime.Serialization;
-
-using BestiaryAPI.helpers;
-
-using Microsoft.AspNetCore.Routing.Constraints;
+using TakeInitiative.Bestiary.Domain.Helpers;
 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace BestiaryAPI.JSON
+namespace TakeInitiative.Bestiary.Domain.JSON
 
 {
     public class Monster_root {
@@ -86,7 +83,7 @@ namespace BestiaryAPI.JSON
                 if (Initiative.proficiency.HasValue)
                 {
                     //get prof bonus from cr
-                    int prof_bonus = helpers.helpers.GetProficiencyBonus(cr.cr);
+                    int prof_bonus = helpers.GetProficiencyBonus(cr.cr);
                     //add proficiency bonus x amount of times
                     //where x is stored in the json
                     //then add dexmod
@@ -99,7 +96,7 @@ namespace BestiaryAPI.JSON
         //callback function: calculate 5etools link after deserialisation
         internal void calc_link()
         {
-            this._5etools_link = helpers.helpers.build_link(Name, Source);
+            this._5etools_link = helpers.build_link(Name, Source);
         }
     }
 

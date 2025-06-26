@@ -7,9 +7,11 @@ using JasperFx;
 using Marten;
 using Marten.Services.Json;
 using Newtonsoft.Json.Linq;
-using BestiaryAPI.JSON;
+using TakeInitiative.BestiaryAPI;
 using Newtonsoft.Json;
-namespace BestiaryAPI.Startup
+using TakeInitiative.Bestiary.Domain.JSON;
+
+namespace TakeInitiative.BestiaryAPI.Startup
 {
     //download, load and store data in marten db
     public static class Bestiary_Load_Data

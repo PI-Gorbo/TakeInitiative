@@ -2,10 +2,10 @@
 using Marten;
 using JasperFx;
 using Marten.Services.Json;
-using BestiaryAPI.JSON;
+using TakeInitiative.Bestiary.Domain.JSON;
 using System.Diagnostics;
 
-namespace BestiaryAPI
+namespace TakeInitiative.BestiaryAPI
 {
     //Here we use iquerysession as this is a read only session
     public class EndPoint(IQuerySession session) : Endpoint<Search_Request, Search_Response>

@@ -1,24 +1,24 @@
 ﻿using System;
 
-using BestiaryAPI.helpers;
+using TakeInitiative.Bestiary.Domain.Helpers;
 using System.Diagnostics;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace BestiaryAPI.JSON
+namespace TakeInitiative.Bestiary.Domain.JSON
 
 
-        /*
-         * → JToken: It is the base class for all JSON tokens and represents a single JSON value like string, 
-         * number, boolean, array, or object. It allows you to dynamically navigate through the JSON structure
-         * and extract values without knowing the exact structure in advance. It is useful for working with JSON 
-         * data flexibly and dynamically.
+/*
+ * → JToken: It is the base class for all JSON tokens and represents a single JSON value like string, 
+ * number, boolean, array, or object. It allows you to dynamically navigate through the JSON structure
+ * and extract values without knowing the exact structure in advance. It is useful for working with JSON 
+ * data flexibly and dynamically.
 
-        →     JObject: It is a subclass of JToken and specifically represents a JSON object. It behaves like a dictionary,
-        allowing you to access and manipulate individual properties within the JSON object using key-value pairs. 
-        It provides methods for adding, removing, or modifying properties. It is useful when you have a structured 
-        JSON object with known properties and need direct access to specific properties.
-         */
+→     JObject: It is a subclass of JToken and specifically represents a JSON object. It behaves like a dictionary,
+allowing you to access and manipulate individual properties within the JSON object using key-value pairs. 
+It provides methods for adding, removing, or modifying properties. It is useful when you have a structured 
+JSON object with known properties and need direct access to specific properties.
+ */
 {
 
     // need hp,  ac name source initiative
@@ -126,7 +126,7 @@ namespace BestiaryAPI.JSON
                 double rating = 0;
                 if (numstring.Contains('/')) {
                     //assume it's a fraction in string form
-                    rating = helpers.helpers.FractionToDouble(numstring);
+                    rating = helpers.FractionToDouble(numstring);
                 }
                 else
                 {

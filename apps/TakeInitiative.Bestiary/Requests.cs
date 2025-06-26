@@ -2,7 +2,8 @@
 using Marten;
 using JasperFx;
 using Marten.Services.Json;
-namespace BestiaryAPI
+
+namespace TakeInitiative.BestiaryAPI
 {
     public class Search_Request
     {
