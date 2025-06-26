@@ -209,8 +209,7 @@ namespace TakeInitiative.BestiaryAPI.Startup
         {
             //bulkinsertasync uses copy to insert data all in one transaction, very handy for something like this
             //overwrite existing data if it exists so we can update documents without clearing out the whole db
-
-
+            await store.BulkInsertAsync(monsters, BulkInsertMode.OverwriteExisting);
             
         }
     }

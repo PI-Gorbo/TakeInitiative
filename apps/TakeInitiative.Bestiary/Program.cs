@@ -65,10 +65,6 @@ internal class Program
         //omg is this me using await and async??? Im a coding god now?? I definitely know what im doing and how they work????!!!
         await Bestiary_Load_Data.download_5etools_data(store);
 
-
-
-
-
         app.UseDefaultExceptionHandler().UseFastEndpoints();
         app.Run();
     }
