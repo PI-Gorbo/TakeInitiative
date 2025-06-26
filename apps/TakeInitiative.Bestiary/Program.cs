@@ -57,6 +57,10 @@ internal class Program
 
         // Thanky Sam!!
         var store = app.Services.GetRequiredService<IDocumentStore>();
+        if (store == null)
+        {
+            throw new Exception("Bruh wtf why is store null??? This should never be null");
+        }
 
         //omg is this me using await and async??? Im a coding god now?? I definitely know what im doing and how they work????!!!
         await Bestiary_Load_Data.download_5etools_data(store);

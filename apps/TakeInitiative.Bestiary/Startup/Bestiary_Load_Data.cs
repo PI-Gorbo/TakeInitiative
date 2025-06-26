@@ -1,37 +1,73 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using System.IO;
 using System.IO.Compression;
+using System.Threading;
+
 using FastEndpoints;
+
 using JasperFx;
+
 using Marten;
 using Marten.Services.Json;
-using Newtonsoft.Json.Linq;
-using TakeInitiative.BestiaryAPI;
+
+using Microsoft.Playwright;
+
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+
 using TakeInitiative.Bestiary.Domain.JSON;
+using TakeInitiative.BestiaryAPI;
 
 namespace TakeInitiative.BestiaryAPI.Startup
 {
+    
+
     //download, load and store data in marten db
     public static class Bestiary_Load_Data
     {
+
+        private static readonly Lock _lock = new();
+
         static readonly HttpClient client = new HttpClient();
         const string download_url = "https://api.github.com/repos/5etools-mirror-3/5etools-src/releases/latest";
 
         public static async Task download_5etools_data(IDocumentStore store)
         {
-            var monsters = await Download_Data_SrcGithub();
+            var monsters = new List<StopGapMonsterClass>();
+
+            try {
+                monsters = await Download_Data_Src5etools();
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine("Error downloading data from 5etools: " + e.Message);
+                Debug.WriteLine("Falling back to downloading from src github");
+                monsters = await Download_Data_SrcGithub();
+                //Clean up 5etools folder, delete it
+                //sometimes there is an error it usually doesn't matter though
+                try
+                {
+                    if (Directory.Exists("5etools"))
+                    {
+                        Directory.Delete("5etools", true);
+                    }
+                }
+                catch (Exception e_0)
+                {
+                    Debug.WriteLine("Error deleting 5etools in cleanup: " + e_0.Message);
+                }
+            }
+
+            
             Debug.WriteLine("Downloaded {0} monsters from 5etools", monsters.Count);
             //insert data into marten db
             await Insert_Data_marten(store, monsters);
             //clean up
-            Debug.WriteLine("Done inserting {0} monsters into DB", monsters.Count());
-            //Clean up 5etools folder, delete it
-            if (Directory.Exists("5etools"))
-            {
-                Directory.Delete("5etools", true);
-            }
+            Debug.WriteLine("Done inserting {0} monsters into DB", monsters.Count);
+            
+            
         }
 
 
@@ -104,11 +140,75 @@ namespace TakeInitiative.BestiaryAPI.Startup
 
         }
 
+        public static async Task<List<StopGapMonsterClass>> Download_Data_Src5etools()
+        {
+            using var playwright = await Playwright.CreateAsync();
+            var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+            {
+                Headless = true,
+
+            });
+            var page = await browser.NewPageAsync(new BrowserNewPageOptions
+            {
+                UserAgent = @"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36"
+            });
+
+            var response = await page.GotoAsync("https://5e.tools/data/bestiary/index.json");
+            string re = await response.TextAsync();
+            //Debug.WriteLine(re);
+            JObject jobject = JObject.Parse(re);
+
+            var urls_to_download = new List<string>();
+
+            foreach (JToken jtoken in jobject.PropertyValues())
+            {
+                var bestiary_file = jtoken.ToString();
+                const string base_url = "https://5e.tools/data/bestiary/";
+                var file_url = base_url + bestiary_file;
+                urls_to_download.Add(file_url);
+
+            }
+            Task[] tasks = new Task[urls_to_download.Count];
+            var monsters = new List<StopGapMonsterClass>();
+            for (int i = 0; i < urls_to_download.Count; i++)
+            {
+
+                var task_page = await browser.NewPageAsync(new BrowserNewPageOptions
+                {
+                    UserAgent = @"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36"
+                });
+
+                string url = urls_to_download[i];
+                //Debug.WriteLine("Downloading file: " + url);
+                tasks[i] = Task.Run(() => down_and_des(url, task_page, monsters));
+            }
+
+            await Task.WhenAll(tasks);
+            return monsters;
+
+        }
+
+        private static async Task down_and_des(string url, IPage page, List<StopGapMonsterClass> monsters)
+        {
+            var response = await page.GotoAsync(url);
+            string re = await response.TextAsync();
+            Monster_root r = JsonConvert.DeserializeObject<Monster_root>(re);
+            //Debug.WriteLine("waiting mutex");
+
+            //Debug.WriteLine("Adding " + r.Monsters.Count + " to mons");
+            //Use lock to prevent race conditions
+            lock (_lock) {
+                monsters.AddRange(r.Monsters);
+            }
+            //mutex.WaitOne();
+            
+            //mutex.ReleaseMutex();
+        }
+
         public static async Task Insert_Data_marten(IDocumentStore store, List<StopGapMonsterClass> monsters)
         {
             //bulkinsertasync uses copy to insert data all in one transaction, very handy for something like this
             //overwrite existing data if it exists so we can update documents without clearing out the whole db
-            await store.BulkInsertAsync(monsters, BulkInsertMode.OverwriteExisting);
 
 
             
