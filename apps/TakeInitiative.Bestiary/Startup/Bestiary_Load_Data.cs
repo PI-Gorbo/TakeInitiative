@@ -60,7 +60,12 @@ namespace TakeInitiative.BestiaryAPI.Startup
                 }
             }
 
-            
+            //remove null elements from list
+            //because uhhhhhhhh
+            //returning a null reference was the best way I had to deserialise incorrect json 
+            //unless im stupid which I probably am and theres a much better way
+            monsters.RemoveAll(x => x == null);
+
             Debug.WriteLine("Downloaded {0} monsters from 5etools", monsters.Count);
             //insert data into marten db
             await Insert_Data_marten(store, monsters);
@@ -131,11 +136,7 @@ namespace TakeInitiative.BestiaryAPI.Startup
                 monsters.AddRange(mon_root.Monsters);
 
             }
-            //remove null elements from list
-            //because uhhhhhhhh
-            //returning a null reference was the best way I had to deserialise incorrect json 
-            //unless im stupid which I probably am and theres a much better way
-            monsters.RemoveAll(x => x == null);
+            
             return monsters;
 
         }
