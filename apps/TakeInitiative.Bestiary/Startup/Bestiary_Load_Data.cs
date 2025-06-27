@@ -9,6 +9,8 @@ using FastEndpoints;
 
 using JasperFx;
 
+using LiteDB;
+
 using Marten;
 using Marten.Services.Json;
 
@@ -212,6 +214,11 @@ namespace TakeInitiative.BestiaryAPI.Startup
             //overwrite existing data if it exists so we can update documents without clearing out the whole db
             await store.BulkInsertAsync(monsters, BulkInsertMode.OverwriteExisting);
             
+        }
+
+        public static async Task Insert_Data_LiteDB(LiteDatabase litedb, List<StopGapMonsterClass> monsters)
+        {
+            var col = litedb.GetCollection<StopGapMonsterClass>("monsters");
         }
     }
 

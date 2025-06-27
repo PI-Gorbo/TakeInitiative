@@ -27,6 +27,13 @@ internal class Program
 
         var connstring = builder.Configuration.GetConnectionString("BestiaryDB") ?? throw new OperationCanceledException("Required Config 'ConnectionStrings:BestiaryDB' is missing.");
 
+        var LiteDB_Path = builder.Configuration.GetConnectionString("BestiaryDB");
+        if (LiteDB_Path == null || LiteDB_Path == "") {
+            LiteDB_Path = "bestiary.db"; // Default path if not set in config -  just in the same folder
+        }
+        builder.Services.AddLiteDB(LiteDB_Path);
+
+
         // This is the absolute, simplest way to integrate Marten into your
         // .NET application with Marten's default configuration
         builder.Services.AddMarten(options =>
@@ -61,6 +68,8 @@ internal class Program
         {
             throw new Exception("Bruh wtf why is store null??? This should never be null");
         }
+
+        var litedb = app.Services.GetRequiredService<LiteDBContext>();
 
         //omg is this me using await and async??? Im a coding god now?? I definitely know what im doing and how they work????!!!
         await Bestiary_Load_Data.download_5etools_data(store);
