@@ -1,6 +1,5 @@
 ﻿
 using System.Diagnostics;
-using System.Diagnostics;
 using System.IO.Compression;
 using System.Threading;
 
@@ -64,6 +63,9 @@ namespace TakeInitiative.Bestiary.IngestionScript
 
             //insert data into litedb
             await Insert_Data_LiteDB(litedb, monsters);
+
+            //IMPORTANT: if we dont dispose the db, the write log will stay open and keep accumulating in size!
+            litedb.Dispose();
         }
 
         public static async Task<List<StopGapMonsterClass>> Download_Data_SrcGithub()
@@ -195,7 +197,6 @@ namespace TakeInitiative.Bestiary.IngestionScript
 
             //mutex.ReleaseMutex();
         }
-
 
         public static async Task Insert_Data_LiteDB(LiteDatabase litedb, List<StopGapMonsterClass> monsters)
         {

@@ -24,41 +24,43 @@ internal class Program
             Debug.WriteLine("Loading dev configuration");
             configBuilder = configBuilder.AddJsonFile("appsettings.development.json", optional: true);
         }
+        //marten conn string
+        //var connstring = builder.Configuration.GetConnectionString("BestiaryDB") ?? throw new OperationCanceledException("Required Config 'ConnectionStrings:BestiaryDB' is missing.");
 
-        var connstring = builder.Configuration.GetConnectionString("BestiaryDB") ?? throw new OperationCanceledException("Required Config 'ConnectionStrings:BestiaryDB' is missing.");
-
-        var LiteDB_Path = builder.Configuration.GetConnectionString("BestiaryDB.db");
+        var LiteDB_Path = builder.Configuration.GetConnectionString("Bestiary_LiteDB");
         if (LiteDB_Path == null || LiteDB_Path == "") {
-            LiteDB_Path = "bestiary.db"; // Default path if not set in config -  just in the same folder
+            LiteDB_Path = "BestiaryDB.db"; // Default path if not set in config -  just in the same folder
         }
+
+        LiteDB_Path += ";Connection=Shared"; // Ensure shared connection for LiteDB instead of direct since we are only reading from it
         builder.Services.AddLiteDB(LiteDB_Path);
 
 
         // This is the absolute, simplest way to integrate Marten into your
         // .NET application with Marten's default configuration
-        builder.Services.AddMarten(options =>
-        {
-            // Establish the connection string to your Marten database
-            options.Connection(builder.Configuration.GetConnectionString("BestiaryDB")!);
+        //builder.Services.AddMarten(options =>
+        //{
+        //    // Establish the connection string to your Marten database
+        //    options.Connection(builder.Configuration.GetConnectionString("BestiaryDB")!);
 
-            // Specify that we want to use STJ as our serializer
-            options.UseNewtonsoftForSerialization();
+        //    // Specify that we want to use STJ as our serializer
+        //    options.UseNewtonsoftForSerialization();
 
-            // If we're running in development mode, let Marten just take care
-            // of all necessary schema building and patching behind the scenes
-            if (builder.Environment.IsDevelopment())
-            {
-                options.AutoCreateSchemaObjects = AutoCreate.All;
-            }
-            //5etools link as ID is jank but its a combo of name + source which should work when given cringe name duplicates
-            options.Schema.For<StopGapMonsterClass>()
-                //.Identity(x => x.Name)
-                .Identity(x => x._5etools_link)
-                .Index(x => x.Source)
-                .Duplicate(x => x.Name); 
+        //    // If we're running in development mode, let Marten just take care
+        //    // of all necessary schema building and patching behind the scenes
+        //    if (builder.Environment.IsDevelopment())
+        //    {
+        //        options.AutoCreateSchemaObjects = AutoCreate.All;
+        //    }
+        //    //5etools link as ID is jank but its a combo of name + source which should work when given cringe name duplicates
+        //    options.Schema.For<StopGapMonsterClass>()
+        //        //.Identity(x => x.Name)
+        //        .Identity(x => x._5etools_link)
+        //        .Index(x => x.Source)
+        //        .Duplicate(x => x.Name); 
 
 
-        }).UseLightweightSessions();
+        //}).UseLightweightSessions();
 
         var app = builder.Build();
 
@@ -69,10 +71,10 @@ internal class Program
             throw new Exception("Bruh wtf why is store null??? This should never be null");
         }
 
-        var litedb_context = app.Services.GetRequiredService<LiteDBContext>();
-        var lite = litedb_context.litedb;
-        //omg is this me using await and async??? Im a coding god now?? I definitely know what im doing and how they work????!!!
-        await Bestiary_Load_Data.download_5etools_data(store, lite);
+        //var litedb_context = app.Services.GetRequiredService<LiteDBContext>();
+        //var lite = litedb_context.litedb;
+        ////omg is this me using await and async??? Im a coding god now?? I definitely know what im doing and how they work????!!!
+        //await Bestiary_Load_Data.download_5etools_data(store, lite);
 
 
         

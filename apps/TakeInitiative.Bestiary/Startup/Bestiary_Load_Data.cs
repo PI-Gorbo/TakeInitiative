@@ -73,6 +73,7 @@ namespace TakeInitiative.BestiaryAPI.Startup
             //insert data into litedb
             await Insert_Data_LiteDB(litedb, monsters);
 
+            
         }
 
 

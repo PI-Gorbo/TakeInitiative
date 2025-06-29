@@ -9,11 +9,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TakeInitiative.Api", "apps\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TakeInitiative.Api.Tests", "apps\TakeInitiative.Api.Tests\TakeInitiative.Api.Tests.csproj", "{EAE43750-0316-450C-B61B-3CCD023EF06E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BestiaryAPI", "apps\TakeInitiative.Bestiary\BestiaryAPI.csproj", "{D3CFC8BC-E638-414E-A09E-802C06A8F803}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TakeInitiative.BestiaryAPI", "apps\TakeInitiative.Bestiary\TakeInitiative.BestiaryAPI.csproj", "{D3CFC8BC-E638-414E-A09E-802C06A8F803}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Bestiary", "Bestiary", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bestiary_DB_Builder", "apps\Bestiary_DB_Builder\Bestiary_DB_Builder.csproj", "{E261C2EF-C9CD-4D10-9499-774F60D8952B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TakeInitiative.Bestiary.IngestionScript", "apps\Bestiary_DB_Builder\TakeInitiative.Bestiary.IngestionScript.csproj", "{E261C2EF-C9CD-4D10-9499-774F60D8952B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TakeInitiative.Bestiary.Domain", "apps\TakeInitiative.Bestiary.Domain\TakeInitiative.Bestiary.Domain.csproj", "{6A91B7BF-1972-D183-063F-DB0C23A86077}"
 EndProject
