@@ -27,7 +27,7 @@ internal class Program
 
         var connstring = builder.Configuration.GetConnectionString("BestiaryDB") ?? throw new OperationCanceledException("Required Config 'ConnectionStrings:BestiaryDB' is missing.");
 
-        var LiteDB_Path = builder.Configuration.GetConnectionString("BestiaryDB");
+        var LiteDB_Path = builder.Configuration.GetConnectionString("BestiaryDB.db");
         if (LiteDB_Path == null || LiteDB_Path == "") {
             LiteDB_Path = "bestiary.db"; // Default path if not set in config -  just in the same folder
         }
@@ -69,11 +69,13 @@ internal class Program
             throw new Exception("Bruh wtf why is store null??? This should never be null");
         }
 
-        var litedb = app.Services.GetRequiredService<LiteDBContext>();
-
+        var litedb_context = app.Services.GetRequiredService<LiteDBContext>();
+        var lite = litedb_context.litedb;
         //omg is this me using await and async??? Im a coding god now?? I definitely know what im doing and how they work????!!!
-        await Bestiary_Load_Data.download_5etools_data(store);
+        await Bestiary_Load_Data.download_5etools_data(store, lite);
 
+
+        
         app.UseDefaultExceptionHandler().UseFastEndpoints();
         app.Run();
     }

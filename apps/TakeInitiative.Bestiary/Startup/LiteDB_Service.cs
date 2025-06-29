@@ -30,7 +30,7 @@ namespace TakeInitiative.BestiaryAPI.Startup
     public static class LiteDBServiceExtension {
         public static void AddLiteDB(this IServiceCollection services, string dbpath)
         {
-            services.AddSingleton<LiteDBContext, LiteDBContext>(serviceProvider=>
+            services.AddTransient<LiteDBContext, LiteDBContext>(serviceProvider=>
             {
                 return new LiteDBContext(dbpath);
             });

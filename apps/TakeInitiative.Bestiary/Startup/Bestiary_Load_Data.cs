@@ -4,39 +4,34 @@ using System.Diagnostics.Metrics;
 using System.IO;
 using System.IO.Compression;
 using System.Threading;
-
+using System.Xml.Linq;
 using FastEndpoints;
-
 using JasperFx;
-
 using LiteDB;
-
 using Marten;
 using Marten.Services.Json;
-
 using Microsoft.Playwright;
-
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-
 using TakeInitiative.Bestiary.Domain.JSON;
 using TakeInitiative.BestiaryAPI;
 
 namespace TakeInitiative.BestiaryAPI.Startup
 {
-    
+
 
     //download, load and store data in marten db
     public static class Bestiary_Load_Data
     {
-
+        
         private static readonly Lock _lock = new();
 
         static readonly HttpClient client = new HttpClient();
         const string download_url = "https://api.github.com/repos/5etools-mirror-3/5etools-src/releases/latest";
 
-        public static async Task download_5etools_data(IDocumentStore store)
+        public static async Task download_5etools_data(IDocumentStore store, LiteDatabase litedb)
         {
+            
             var monsters = new List<StopGapMonsterClass>();
 
             try {
@@ -74,7 +69,10 @@ namespace TakeInitiative.BestiaryAPI.Startup
             //clean up
             Debug.WriteLine("Done inserting {0} monsters into DB", monsters.Count);
             
-            
+
+            //insert data into litedb
+            await Insert_Data_LiteDB(litedb, monsters);
+
         }
 
 
@@ -218,7 +216,20 @@ namespace TakeInitiative.BestiaryAPI.Startup
 
         public static async Task Insert_Data_LiteDB(LiteDatabase litedb, List<StopGapMonsterClass> monsters)
         {
-            var col = litedb.GetCollection<StopGapMonsterClass>("monsters");
+            
+            BsonMapper.Global.SerializeNullValues = true; // Serialize null values to ensure all fields are stored
+
+            var mapper = BsonMapper.Global;
+            mapper.Entity<StopGapMonsterClass>()
+                .Id(x => x._5etools_link);
+
+
+            var collection = litedb.GetCollection<StopGapMonsterClass>("Bestiary_monsters");
+            foreach (StopGapMonsterClass monster in monsters)
+            {
+                collection.Upsert(monster);
+            }
+            collection.EnsureIndex(x => x.Name);
         }
     }
 
