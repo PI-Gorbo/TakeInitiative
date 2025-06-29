@@ -28,15 +28,11 @@ namespace TakeInitiative.BestiaryAPI
             //query session, returns readonly list
             Debug.WriteLine("Searching for monsters with name containing: " + request_name);
 
-
-
             var litedb = litedbcontext.litedb;
             var collection = litedb.GetCollection<StopGapMonsterClass>("Bestiary_monsters");
             var monsters = collection.Query()
                 .Where(x => x.Name.Contains(request_name))
                 .ToList();
-
-
 
 
             Debug.WriteLine("found {0} monsters", monsters.Count());
