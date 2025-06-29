@@ -17,6 +17,8 @@ internal class Program
         var builder = WebApplication.CreateBuilder();
         builder.Services.AddFastEndpoints();
 
+
+
         // Build config
         var configBuilder = builder.Configuration
             .AddJsonFile("appsettings.json", optional: false);
@@ -44,12 +46,7 @@ internal class Program
 
         var app = builder.Build();
 
-
-
-        
-        app.UseDefaultExceptionHandler().UseFastEndpoints();
-        //fuck you STJ
-        app.UseFastEndpoints(c => 
+        app.UseFastEndpoints(c =>
         {
             c.Serializer.ResponseSerializer = (rsp, dto, cType, jCtx, ct) =>
             {
@@ -57,6 +54,12 @@ internal class Program
                 return rsp.WriteAsync(JsonConvert.SerializeObject(dto), ct);
             };
         });
+
+
+
+        app.UseDefaultExceptionHandler();
+        //fuck you STJ
+        
         app.Run();
     }
 }
