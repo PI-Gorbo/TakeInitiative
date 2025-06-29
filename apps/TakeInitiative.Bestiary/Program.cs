@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 using TakeInitiative.Bestiary.Domain.JSON;
 using TakeInitiative.BestiaryAPI.Startup;
+using Newtonsoft.Json;
 
 namespace TakeInitiative.BestiaryAPI;
 
@@ -47,6 +48,15 @@ internal class Program
 
         
         app.UseDefaultExceptionHandler().UseFastEndpoints();
+        //fuck you STJ
+        app.UseFastEndpoints(c => 
+        {
+            c.Serializer.ResponseSerializer = (rsp, dto, cType, jCtx, ct) =>
+            {
+                rsp.ContentType = cType;
+                return rsp.WriteAsync(JsonConvert.SerializeObject(dto), ct);
+            };
+        });
         app.Run();
     }
 }

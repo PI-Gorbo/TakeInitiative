@@ -4,11 +4,10 @@ using JasperFx;
 using Marten.Services.Json;
 using TakeInitiative.Bestiary.Domain.JSON;
 
-namespace TakeInitiative.BestiaryAPI
+namespace TakeInitiative.BestiaryAPI;
 
+
+public class Search_Response
 {
-    public class Search_Response
-    {
-        public Monster_root monsters { get; set; }
-    }
+    public MonsterRoot monsters { get; set; }
 }

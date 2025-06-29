@@ -3,10 +3,9 @@ using Marten;
 using JasperFx;
 using Marten.Services.Json;
 
-namespace TakeInitiative.BestiaryAPI
+namespace TakeInitiative.BestiaryAPI;
+
+public class Search_Request
 {
-    public class Search_Request
-    {
-        public string Name { get; set; } 
-    }
+    public string Name { get; set; } 
 }

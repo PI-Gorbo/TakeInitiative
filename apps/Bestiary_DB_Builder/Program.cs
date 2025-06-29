@@ -124,7 +124,7 @@ namespace TakeInitiative.Bestiary.IngestionScript
                 Debug.WriteLine("Processing file: " + bestiary_file);
                 //read file
                 //TODO: Use streamreader if files are super big but surely this doesn't happen
-                Monster_root mon_root = JsonConvert.DeserializeObject<Monster_root>(File.ReadAllText(bestiary_file));
+                MonsterRoot mon_root = JsonConvert.DeserializeObject<MonsterRoot>(File.ReadAllText(bestiary_file));
                 monsters.AddRange(mon_root.Monsters);
 
             }
@@ -184,7 +184,7 @@ namespace TakeInitiative.Bestiary.IngestionScript
         {
             var response = await page.GotoAsync(url);
             string re = await response.TextAsync();
-            Monster_root r = JsonConvert.DeserializeObject<Monster_root>(re);
+            MonsterRoot r = JsonConvert.DeserializeObject<MonsterRoot>(re);
             //Debug.WriteLine("waiting mutex");
 
             //Debug.WriteLine("Adding " + r.Monsters.Count + " to mons");
