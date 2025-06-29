@@ -29,10 +29,6 @@ namespace TakeInitiative.BestiaryAPI
             Debug.WriteLine("Searching for monsters with name containing: " + request_name);
 
 
-            //this is the marten query method
-            //var monsters = await session.Query<StopGapMonsterClass>()
-            //    .Where(x => x.Name.Contains(request_name))
-            //    .ToListAsync<StopGapMonsterClass>();
 
             var litedb = litedbcontext.litedb;
             var collection = litedb.GetCollection<StopGapMonsterClass>("Bestiary_monsters");
