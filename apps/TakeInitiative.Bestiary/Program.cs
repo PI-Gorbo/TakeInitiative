@@ -65,11 +65,11 @@ internal class Program
         var app = builder.Build();
 
         // Thanky Sam!!
-        var store = app.Services.GetRequiredService<IDocumentStore>();
-        if (store == null)
-        {
-            throw new Exception("Bruh wtf why is store null??? This should never be null");
-        }
+        //var store = app.Services.GetRequiredService<IDocumentStore>();
+        //if (store == null)
+        //{
+        //    throw new Exception("Bruh wtf why is store null??? This should never be null");
+        //}
 
         //var litedb_context = app.Services.GetRequiredService<LiteDBContext>();
         //var lite = litedb_context.litedb;

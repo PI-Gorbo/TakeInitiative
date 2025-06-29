@@ -15,7 +15,7 @@ using TakeInitiative.BestiaryAPI.Startup;
 namespace TakeInitiative.BestiaryAPI
 {
     //Here we use iquerysession as this is a read only session
-    public class EndPoint(IQuerySession session, LiteDBContext litedbcontext) : Endpoint<Search_Request, Search_Response>
+    public class EndPoint(LiteDBContext litedbcontext) : Endpoint<Search_Request, Search_Response>
     {
         public override void Configure()
         {
