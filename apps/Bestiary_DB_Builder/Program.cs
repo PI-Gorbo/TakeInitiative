@@ -110,24 +110,44 @@ namespace TakeInitiative.Bestiary.IngestionScript
             Debug.WriteLine("Besteiary path is " + bestiary_path);
             var bestiary_files = Directory.GetFiles(bestiary_path);
 
-            List<StopGapMonsterClass> monsters = new List<StopGapMonsterClass>();
+            //old method
             //ignore everything but the bestiary files (eg the fluff files) for now
+            //List<StopGapMonsterClass> monsters = new List<StopGapMonsterClass>();
+            //foreach (var bestiary_file in bestiary_files)
+            //{
+            //    var fname = Path.GetFileName(bestiary_file);
+            //    if (!fname.StartsWith("bestiary"))
+            //    {
+            //        Debug.WriteLine("Skipping file: " + bestiary_file);
+            //        continue;
+            //    }
+            //    Debug.WriteLine("Processing file: " + bestiary_file);
+            //    //read file
+            //    //TODO: Use streamreader if files are super big but surely this doesn't happen
+            //    MonsterRoot mon_root = JsonConvert.DeserializeObject<MonsterRoot>(File.ReadAllText(bestiary_file));
+            //    monsters.AddRange(mon_root.Monsters);
 
-            foreach (var bestiary_file in bestiary_files)
-            {
-                var fname = Path.GetFileName(bestiary_file);
-                if (!fname.StartsWith("bestiary"))
-                {
-                    Debug.WriteLine("Skipping file: " + bestiary_file);
-                    continue;
-                }
-                Debug.WriteLine("Processing file: " + bestiary_file);
-                //read file
-                //TODO: Use streamreader if files are super big but surely this doesn't happen
-                MonsterRoot mon_root = JsonConvert.DeserializeObject<MonsterRoot>(File.ReadAllText(bestiary_file));
-                monsters.AddRange(mon_root.Monsters);
+            //}
 
-            }
+            //linq method
+            var monsters = bestiary_files
+                //filter out irrelevant files
+                .Where(file => {
+                    var fname = Path.GetFileName(file);
+                    return fname.StartsWith("bestiary");
+                })
+                //then run for each valid file
+                .Select(bestiary_file => {
+                    Debug.WriteLine("Processing file: " + bestiary_file);
+                    MonsterRoot mon_root = JsonConvert.DeserializeObject<MonsterRoot>(File.ReadAllText(bestiary_file));
+                    return mon_root.Monsters;
+                })
+                //selectmany here flattens the list of lists into a single list
+                .SelectMany(x => x)
+                .ToList();
+
+
+
 
             return monsters;
 
@@ -151,20 +171,27 @@ namespace TakeInitiative.Bestiary.IngestionScript
             //Debug.WriteLine(re);
             JObject jobject = JObject.Parse(re);
 
-            var urls_to_download = new List<string>();
 
-            foreach (JToken jtoken in jobject.PropertyValues())
+
+            //non linq method
+            //var urls_to_download = new List<string>();
+            //foreach (JToken jtoken in jobject.PropertyValues())
+            //{
+            //    var bestiary_file = jtoken.ToString();
+
+            //    var file_url = bestiaryBaseUrl + bestiary_file;
+            //    urls_to_download.Add(file_url);
+
+            //}            
+
+            //linq method
+            var urls_to_download = jobject.PropertyValues().Select(jtoken =>
             {
                 var bestiary_file = jtoken.ToString();
-                
+
                 var file_url = bestiaryBaseUrl + bestiary_file;
-                urls_to_download.Add(file_url);
-
-            }
-
-
-
-            
+                return file_url;
+            }).ToList();
 
             Task<List<StopGapMonsterClass>>[] tasks = new Task<List<StopGapMonsterClass>>[urls_to_download.Count];
             //var monsters = new List<StopGapMonsterClass>();
