@@ -16,10 +16,10 @@ namespace TakeInitiative.Bestiary.IngestionScript
     public static class Program
     {
 
-        private static readonly Lock _lock = new();
-
         static readonly HttpClient client = new HttpClient();
-        const string download_url = "https://api.github.com/repos/5etools-mirror-3/5etools-src/releases/latest";
+        const string downloadUrl = "https://api.github.com/repos/5etools-mirror-3/5etools-src/releases/latest";
+        const string bestiaryBaseUrl = "https://5e.tools/data/bestiary/";
+        const string bestiaryIndexUrl = "https://5e.tools/data/bestiary/index.json";
         public static async Task Main(string[] args)
         {
 
@@ -28,13 +28,13 @@ namespace TakeInitiative.Bestiary.IngestionScript
 
             try
             {
-                monsters = await Download_Data_Src5etools();
+                monsters = await DownloadDataSrc5etools();
             }
             catch (Exception e)
             {
                 Debug.WriteLine("Error downloading data from 5etools: " + e.Message);
                 Debug.WriteLine("Falling back to downloading from src github");
-                monsters = await Download_Data_SrcGithub();
+                monsters = await DownloadDataSrcGithub();
                 //Clean up 5etools folder, delete it
                 //sometimes there is an error it usually doesn't matter though
                 try
@@ -68,12 +68,12 @@ namespace TakeInitiative.Bestiary.IngestionScript
             litedb.Dispose();
         }
 
-        public static async Task<List<StopGapMonsterClass>> Download_Data_SrcGithub()
+        public static async Task<List<StopGapMonsterClass>> DownloadDataSrcGithub()
         {
 
             client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36");
 
-            string responseBody = await client.GetStringAsync(download_url);
+            string responseBody = await client.GetStringAsync(downloadUrl);
 
             JObject jobject = JObject.Parse(responseBody);
 
@@ -133,7 +133,7 @@ namespace TakeInitiative.Bestiary.IngestionScript
 
         }
 
-        public static async Task<List<StopGapMonsterClass>> Download_Data_Src5etools()
+        public static async Task<List<StopGapMonsterClass>> DownloadDataSrc5etools()
         {
             using var playwright = await Playwright.CreateAsync();
             var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
@@ -146,7 +146,7 @@ namespace TakeInitiative.Bestiary.IngestionScript
                 UserAgent = @"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36"
             });
 
-            var response = await page.GotoAsync("https://5e.tools/data/bestiary/index.json");
+            var response = await page.GotoAsync(bestiaryIndexUrl);
             string re = await response.TextAsync();
             //Debug.WriteLine(re);
             JObject jobject = JObject.Parse(re);
@@ -156,13 +156,18 @@ namespace TakeInitiative.Bestiary.IngestionScript
             foreach (JToken jtoken in jobject.PropertyValues())
             {
                 var bestiary_file = jtoken.ToString();
-                const string base_url = "https://5e.tools/data/bestiary/";
-                var file_url = base_url + bestiary_file;
+                
+                var file_url = bestiaryBaseUrl + bestiary_file;
                 urls_to_download.Add(file_url);
 
             }
-            Task[] tasks = new Task[urls_to_download.Count];
-            var monsters = new List<StopGapMonsterClass>();
+
+
+
+            
+
+            Task<List<StopGapMonsterClass>>[] tasks = new Task<List<StopGapMonsterClass>>[urls_to_download.Count];
+            //var monsters = new List<StopGapMonsterClass>();
             for (int i = 0; i < urls_to_download.Count; i++)
             {
 
@@ -173,29 +178,26 @@ namespace TakeInitiative.Bestiary.IngestionScript
 
                 string url = urls_to_download[i];
                 //Debug.WriteLine("Downloading file: " + url);
-                tasks[i] = Task.Run(() => down_and_des(url, task_page, monsters));
+                tasks[i] = Task.Run(() => DownloadMonstersFromUrl(url, task_page));
             }
 
-            await Task.WhenAll(tasks);
+            List<StopGapMonsterClass>[] pages = await Task.WhenAll(tasks);
+            List<StopGapMonsterClass> monsters = pages.SelectMany(x => x).ToList();
             return monsters;
 
         }
-        private static async Task down_and_des(string url, IPage page, List<StopGapMonsterClass> monsters)
+        private static async Task<List<StopGapMonsterClass>> DownloadMonstersFromUrl(string url, IPage page)
         {
             var response = await page.GotoAsync(url);
             string re = await response.TextAsync();
             MonsterRoot r = JsonConvert.DeserializeObject<MonsterRoot>(re);
-            //Debug.WriteLine("waiting mutex");
 
-            //Debug.WriteLine("Adding " + r.Monsters.Count + " to mons");
             //Use lock to prevent race conditions
-            lock (_lock)
-            {
-                monsters.AddRange(r.Monsters);
-            }
-            //mutex.WaitOne();
-
-            //mutex.ReleaseMutex();
+            //lock (_lock)
+            //{
+            //    monsters.AddRange(r.Monsters);
+            //}
+            return r.Monsters;
         }
 
         public static async Task Insert_Data_LiteDB(LiteDatabase litedb, List<StopGapMonsterClass> monsters)
