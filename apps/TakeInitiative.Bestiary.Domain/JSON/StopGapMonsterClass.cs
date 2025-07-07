@@ -34,6 +34,7 @@ public class StopGapMonsterClass
     //TODO: Apparently ability scores can be "null" But I dont know where or when or why or how
     //wait we dont even need a class we can just make it a nullable int in the class lol
     //public required abilityScore dex;
+    [JsonConverter(typeof(DexConverter))]
     [JsonProperty("dex")]
     public required int? Dex;
 

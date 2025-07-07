@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Threading;
 
 using FastEndpoints;
 
@@ -9,9 +10,10 @@ using LiteDB;
 using Marten;
 using Marten.Services.Json;
 
+using Newtonsoft;
+
 using TakeInitiative.Bestiary.Domain.JSON;
 using TakeInitiative.BestiaryAPI.Startup;
-using Newtonsoft;
 namespace TakeInitiative.BestiaryAPI;
 
 //Here we use iquerysession as this is a read only session
@@ -36,6 +38,13 @@ public class EndPoint(LiteDBContext litedbcontext) : Endpoint<Search_Request, Se
 
 
         Debug.WriteLine("found {0} monsters", monsters.Count());
+
+
+        foreach (var m in monsters)
+        {
+            Debug.WriteLine("Found monster: {0} with dex: {1}", m.Name, m.Dex);
+        }
+
 
         MonsterRoot mr = new MonsterRoot();
         mr.Monsters = monsters.ToList<StopGapMonsterClass>();

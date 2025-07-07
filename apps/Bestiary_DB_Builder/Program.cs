@@ -229,17 +229,25 @@ namespace TakeInitiative.Bestiary.IngestionScript
 
         public static async Task Insert_Data_LiteDB(LiteDatabase litedb, List<StopGapMonsterClass> monsters)
         {
-
-            BsonMapper.Global.SerializeNullValues = true; // Serialize null values to ensure all fields are stored
-
             var mapper = BsonMapper.Global;
+            mapper.SerializeNullValues = true; // Serialize null values to ensure all fields are stored            
+            mapper.IncludeFields = true; // Include all fields in serialization
+            mapper.IncludeNonPublic = true; // Include non-public fields in serialization
+
             mapper.Entity<StopGapMonsterClass>()
-                .Id(x => x._5etools_link);
+                .Id(x => x._5etools_link)
+                .Field(x => x.Dex, "Dex");
+            
+            
 
 
             var collection = litedb.GetCollection<StopGapMonsterClass>("Bestiary_monsters");
             foreach (StopGapMonsterClass monster in monsters)
             {
+                Debug.WriteLine("Inserting monster: {0} with initiative: {1}", monster.Name, JsonConvert.SerializeObject(monster.Initiative));
+                var doc = BsonMapper.Global.ToDocument(monster); // Ensure the monster is serialized correctly before insertion
+
+                Debug.WriteLine(doc["Dex"].AsInt32);
                 collection.Upsert(monster);
             }
             collection.EnsureIndex(x => x.Name);

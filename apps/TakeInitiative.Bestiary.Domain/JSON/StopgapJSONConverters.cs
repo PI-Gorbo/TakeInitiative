@@ -21,6 +21,30 @@ JSON object with known properties and need direct access to specific properties.
 */
 
 
+
+//For some reason dex isnt being deserialised properly so this is kinda for testing
+class DexConverter : BoilerplateConverter {
+    public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+    {
+        JToken JToken = JToken.Load(reader);
+        if (JToken.Type == JTokenType.Null)
+        {
+            return null;
+        }
+        else if (JToken.Type == JTokenType.Integer)
+        {
+            return JToken.ToObject<int>();
+        }
+        else
+        {
+            return Int32.MaxValue;
+        }
+    }
+
+}
+
+
+
 // need hp,  ac name source initiative
 //Returns a monster object
 class MonsterConverter : BoilerplateConverter

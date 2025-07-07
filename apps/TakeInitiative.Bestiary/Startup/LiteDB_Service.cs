@@ -11,6 +11,13 @@ namespace TakeInitiative.BestiaryAPI.Startup
     {
         public LiteDatabase GetSession()
         {
+            //TODO: this probably has a better place to be 
+            var mapper = BsonMapper.Global;
+            mapper.SerializeNullValues = true; // Serialize null values to ensure all fields are stored            
+            mapper.IncludeFields = true; // Include all fields in serialization
+            mapper.IncludeNonPublic = true; // Include non-public fields in serialization
+
+
             //User is STUPID so only trust them with the db filename
             //and we will ensure that we use a shared connection
             var LiteDB_Path = dbPath + ";Connection=Shared";// Ensure shared connection for LiteDB instead of direct since we are only reading from it
