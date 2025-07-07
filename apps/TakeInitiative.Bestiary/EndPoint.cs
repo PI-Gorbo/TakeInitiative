@@ -40,11 +40,6 @@ public class EndPoint(LiteDBContext litedbcontext) : Endpoint<Search_Request, Se
         Debug.WriteLine("found {0} monsters", monsters.Count());
 
 
-        foreach (var m in monsters)
-        {
-            Debug.WriteLine("Found monster: {0} with dex: {1}", m.Name, m.Dex);
-        }
-
 
         MonsterRoot mr = new MonsterRoot();
         mr.Monsters = monsters.ToList<StopGapMonsterClass>();
