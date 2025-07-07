@@ -34,9 +34,7 @@ internal class Program
             LiteDB_Path = "Filename=BestiaryDB.db"; // Default path if not set in config -  just in the same folder
         }
 
-        //User is STUPID so only trust them with the db filename
-        //and we will ensure that we use a shared connection
-        LiteDB_Path += ";Connection=Shared"; // Ensure shared connection for LiteDB instead of direct since we are only reading from it
+        
         builder.Services.AddLiteDB(LiteDB_Path);
 
 

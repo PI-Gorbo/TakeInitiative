@@ -28,7 +28,7 @@ public class EndPoint(LiteDBContext litedbcontext) : Endpoint<Search_Request, Se
         //query session, returns readonly list
         Debug.WriteLine("Searching for monsters with name containing: " + request_name);
 
-        var litedb = litedbcontext.litedb;
+        using var litedb = litedbcontext.GetSession();
         var collection = litedb.GetCollection<StopGapMonsterClass>("Bestiary_monsters");
         var monsters = collection.Query()
             .Where(x => x.Name.Contains(request_name))
