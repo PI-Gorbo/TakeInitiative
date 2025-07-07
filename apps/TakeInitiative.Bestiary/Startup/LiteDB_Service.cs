@@ -9,10 +9,12 @@ namespace TakeInitiative.BestiaryAPI.Startup
 {
     public class LiteDBContext(string dbPath)
     {
+        
         public LiteDatabase GetSession()
         {
-            //TODO: this probably has a better place to be 
-            var mapper = BsonMapper.Global;
+            //TODO: Do these settings have a better place to be?
+            //Like when this class is initialised?
+            BsonMapper mapper = BsonMapper.Global;
             mapper.SerializeNullValues = true; // Serialize null values to ensure all fields are stored            
             mapper.IncludeFields = true; // Include all fields in serialization
             mapper.IncludeNonPublic = true; // Include non-public fields in serialization
