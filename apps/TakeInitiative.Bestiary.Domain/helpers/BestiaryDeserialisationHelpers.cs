@@ -1,6 +1,6 @@
 ﻿namespace TakeInitiative.Bestiary.Domain.Helpers;
 
-public static class helpers {
+public static class BestiaryDeserialisationHelpers {
     public static double FractionToDouble(string fraction)
     {
         double result;
@@ -39,7 +39,7 @@ public static class helpers {
     //FOrmat: {<Max level that has this proficiency bonus>, <Proficiency Bonus>}
     // Eg {4,2) means from level 0 to 4, the proficiency bonus is 2
     //The dictionary is meant to be traversed in order - a level of between 8 to 12 would have a proficiency bonus of 4
-    public static readonly Dictionary<double, int> cr_prof_dict = new Dictionary<double, int> {
+    public static readonly Dictionary<double, int> CrProfDict = new Dictionary<double, int> {
         {4, 2 },
         {8, 3 },
         {12, 4 },
@@ -54,19 +54,19 @@ public static class helpers {
     public static int GetProficiencyBonus(double cr)
     {
         //find the highest key that cr is less than or equal to
-        var keys = cr_prof_dict.Keys.OrderBy(k => k).ToList();
+        var keys = CrProfDict.Keys.OrderBy(k => k).ToList();
         foreach (var key in keys)
         {
             if (cr <= key)
             {
-                return cr_prof_dict[key];
+                return CrProfDict[key];
             }
         }
         return 0; //default case, should not happen if data is correct
     }
     
     //returns 5etools bestiary link for given monster name and its source
-    public static string build_link(string name, string source)
+    public static string BuildLink(string name, string source)
     {
         string base_url = "https://5e.tools/bestiary.html#";
         base_url += name;

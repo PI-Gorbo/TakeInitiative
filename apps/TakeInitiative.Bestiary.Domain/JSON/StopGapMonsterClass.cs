@@ -87,7 +87,7 @@ public class StopGapMonsterClass
             if (Initiative.Proficiency.HasValue)
             {
                 //get prof bonus from cr
-                int prof_bonus = helpers.GetProficiencyBonus(Cr.Cr);
+                int prof_bonus = BestiaryDeserialisationHelpers.GetProficiencyBonus(Cr.Cr);
                 //add proficiency bonus x amount of times
                 //where x is stored in the json
                 //then add dexmod
@@ -100,7 +100,7 @@ public class StopGapMonsterClass
     //callback function: calculate 5etools link after deserialisation
     internal void calc_link()
     {
-        this._5etools_link = helpers.build_link(Name, Source);
+        this._5etools_link = BestiaryDeserialisationHelpers.BuildLink(Name, Source);
     }
 }
 

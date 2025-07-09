@@ -150,7 +150,7 @@ class CrConverter : BoilerplateConverter{
             double rating = 0;
             if (numstring.Contains('/')) {
                 //assume it's a fraction in string form
-                rating = helpers.FractionToDouble(numstring);
+                rating = BestiaryDeserialisationHelpers.FractionToDouble(numstring);
             }
             else
             {

@@ -110,24 +110,6 @@ namespace TakeInitiative.Bestiary.IngestionScript
             Debug.WriteLine("Besteiary path is " + bestiary_path);
             var bestiary_files = Directory.GetFiles(bestiary_path);
 
-            //old method
-            //ignore everything but the bestiary files (eg the fluff files) for now
-            //List<StopGapMonsterClass> monsters = new List<StopGapMonsterClass>();
-            //foreach (var bestiary_file in bestiary_files)
-            //{
-            //    var fname = Path.GetFileName(bestiary_file);
-            //    if (!fname.StartsWith("bestiary"))
-            //    {
-            //        Debug.WriteLine("Skipping file: " + bestiary_file);
-            //        continue;
-            //    }
-            //    Debug.WriteLine("Processing file: " + bestiary_file);
-            //    //read file
-            //    //TODO: Use streamreader if files are super big but surely this doesn't happen
-            //    MonsterRoot mon_root = JsonConvert.DeserializeObject<MonsterRoot>(File.ReadAllText(bestiary_file));
-            //    monsters.AddRange(mon_root.Monsters);
-
-            //}
 
             //linq method
             var monsters = bestiary_files
@@ -171,18 +153,6 @@ namespace TakeInitiative.Bestiary.IngestionScript
             //Debug.WriteLine(re);
             JObject jobject = JObject.Parse(re);
 
-
-
-            //non linq method
-            //var urls_to_download = new List<string>();
-            //foreach (JToken jtoken in jobject.PropertyValues())
-            //{
-            //    var bestiary_file = jtoken.ToString();
-
-            //    var file_url = bestiaryBaseUrl + bestiary_file;
-            //    urls_to_download.Add(file_url);
-
-            //}            
 
             //linq method
             var urls_to_download = jobject.PropertyValues().Select(jtoken =>
