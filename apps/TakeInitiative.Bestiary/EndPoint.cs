@@ -16,7 +16,7 @@ using TakeInitiative.Bestiary.Domain.JSON;
 using TakeInitiative.BestiaryAPI.Startup;
 namespace TakeInitiative.BestiaryAPI;
 
-//Here we use iquerysession as this is a read only session
+
 public class EndPoint(LiteDBContext litedbcontext) : Endpoint<Search_Request, Search_Response>
 {
     public override void Configure()
@@ -27,7 +27,7 @@ public class EndPoint(LiteDBContext litedbcontext) : Endpoint<Search_Request, Se
     public override async Task HandleAsync(Search_Request request, CancellationToken ct)
     {
         string request_name = request.Name;
-        //query session, returns readonly list
+        
         Debug.WriteLine("Searching for monsters with name containing: " + request_name);
 
         using var litedb = litedbcontext.GetSession();

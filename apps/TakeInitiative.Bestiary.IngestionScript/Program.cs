@@ -214,7 +214,7 @@ namespace TakeInitiative.Bestiary.IngestionScript
             var collection = litedb.GetCollection<StopGapMonsterClass>("Bestiary_monsters");
             foreach (StopGapMonsterClass monster in monsters)
             {
-                //Debug.WriteLine("Inserting monster: {0} with initiative: {1}", monster.Name, JsonConvert.SerializeObject(monster.Initiative));
+                
                 //var doc = BsonMapper.Global.ToDocument(monster); // Ensure the monster is serialized correctly before insertion
                 //Debug.WriteLine(doc["Dex"].AsInt32);
                 collection.Upsert(monster);

@@ -67,7 +67,7 @@ class MonsterConverter : BoilerplateConverter
         //check if monster object has _copy property
         //if so, set IsCopy to true which will prevent some post serialisation methods from running and throwing errors
         //why does the first one not work bruh
-        #region this shit DOESNT work the jobject.toobject fires the ondeserialization before this code fires!
+        #region this shit DOESNT work the jobject.toobject fires the ondeserialization callback before this code fires!
         //if (jobject.TryGetValue("_copy", out _))
         //{
             
@@ -81,15 +81,13 @@ class MonsterConverter : BoilerplateConverter
         //}
         #endregion
 
-        //Debug.WriteLine("1 is " + jobject.TryGetValue("_copy", out _) + "2 is " + jobject["_copy"] +  " for " + monster.Name);
         return monster;
     }
 
 
 }
 
-//convert a single json object into acitem
-//returns type I_acItem
+
 class ACConverter : BoilerplateConverter {
     public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer) {
        
@@ -105,32 +103,6 @@ class ACConverter : BoilerplateConverter {
     }
 }
 
-
-//public class InitiativeConverter : JsonConverter {
-//    #region boilerplate jsonconverter stuff
-//    public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-//    {
-//        serializer.Serialize(writer, value);
-//    }
-//    public override bool CanWrite
-//    {
-//        get { return false; }
-//    }
-
-//    public override bool CanConvert(Type objectType)
-//    {
-//        return false;
-//    }
-//    #endregion
-
-//    public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer) {
-//        JToken jtoken = JToken.Load(reader);
-
-
-
-//    }
-
-//}
 
 class CrConverter : BoilerplateConverter{       
     
@@ -171,12 +143,12 @@ class CrConverter : BoilerplateConverter{
 
 /// <summary>
 /// TEMP FUNCTION to handle post deserialisation methods that break if the monster is a copy!
-/// In the future we will properly handle the data in the _copy field instead of checking and then ignoring it!
+/// In the future we will properly handle the data in the _copy field instead of 
+/// checking and then setting a bool to indicate if it exists or not
 /// </summary>
 class _copyConverter : BoilerplateConverter
 {
     
-
     public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
     {
         JToken jtoken = JToken.Load(reader);
@@ -194,7 +166,7 @@ class _copyConverter : BoilerplateConverter
 
 
 //INTERMEDIATE CLASS for json converters - since the first 3 overrides are exactly the same for all of them
- class BoilerplateConverter : JsonConverter
+abstract class BoilerplateConverter : JsonConverter
 {
     #region boilerplate jsonconverter stuff
     public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
