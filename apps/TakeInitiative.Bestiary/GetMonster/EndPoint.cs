@@ -14,14 +14,14 @@ using Newtonsoft;
 
 using TakeInitiative.Bestiary.Domain.JSON;
 using TakeInitiative.BestiaryAPI.Startup;
-namespace TakeInitiative.BestiaryAPI;
+namespace TakeInitiative.BestiaryAPI.GetMonster;
 
 
 public class EndPoint(LiteDBContext litedbcontext) : Endpoint<Search_Request, Search_Response>
 {
     public override void Configure()
     {
-        Post("/search");
+        Get("/search");
         AllowAnonymous();
     }
     public override async Task HandleAsync(Search_Request request, CancellationToken ct)
@@ -42,7 +42,7 @@ public class EndPoint(LiteDBContext litedbcontext) : Endpoint<Search_Request, Se
 
 
         MonsterRoot mr = new MonsterRoot();
-        mr.Monsters = monsters.ToList<StopGapMonsterClass>();
+        mr.Monsters = monsters.ToList();
         Search_Response response = new Search_Response();
         response.monsters = mr;
         await SendAsync(response);

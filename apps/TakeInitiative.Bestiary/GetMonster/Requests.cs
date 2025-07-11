@@ -3,7 +3,7 @@ using Marten;
 using JasperFx;
 using Marten.Services.Json;
 
-namespace TakeInitiative.BestiaryAPI;
+namespace TakeInitiative.BestiaryAPI.GetMonster;
 
 public class Search_Request
 {
