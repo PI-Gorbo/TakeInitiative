@@ -4,9 +4,11 @@ using JasperFx;
 using Marten.Services.Json;
 using System.Threading.Tasks;
 using System.Diagnostics;
-using BestiaryAPI.JSON;
+using TakeInitiative.Bestiary.Domain.JSON;
+using TakeInitiative.BestiaryAPI.Startup;
+using Newtonsoft.Json;
 
-namespace BestiaryAPI;
+namespace TakeInitiative.BestiaryAPI;
 
 internal class Program
 {
@@ -14,6 +16,8 @@ internal class Program
     {
         var builder = WebApplication.CreateBuilder();
         builder.Services.AddFastEndpoints();
+
+
 
         // Build config
         var configBuilder = builder.Configuration
@@ -23,48 +27,37 @@ internal class Program
             Debug.WriteLine("Loading dev configuration");
             configBuilder = configBuilder.AddJsonFile("appsettings.development.json", optional: true);
         }
+        
 
-        var connstring = builder.Configuration.GetConnectionString("BestiaryDB") ?? throw new OperationCanceledException("Required Config 'ConnectionStrings:BestiaryDB' is missing.");
+        var LiteDB_Path = builder.Configuration.GetConnectionString("Bestiary_LiteDB");
+        if (LiteDB_Path == null || LiteDB_Path == "") {
+            LiteDB_Path = "Filename=BestiaryDB.db"; // Default path if not set in config -  just in the same folder
+        }
 
-        // This is the absolute, simplest way to integrate Marten into your
-        // .NET application with Marten's default configuration
-        builder.Services.AddMarten(options =>
-        {
-            // Establish the connection string to your Marten database
-            options.Connection(builder.Configuration.GetConnectionString("BestiaryDB")!);
-
-            // Specify that we want to use STJ as our serializer
-            options.UseNewtonsoftForSerialization();
-
-            // If we're running in development mode, let Marten just take care
-            // of all necessary schema building and patching behind the scenes
-            if (builder.Environment.IsDevelopment())
-            {
-                options.AutoCreateSchemaObjects = AutoCreate.All;
-            }
-            //5etools link as ID is jank but its a combo of name + source which should work when given cringe name duplicates
-            options.Schema.For<StopGapMonsterClass>()
-                //.Identity(x => x.Name)
-                .Identity(x => x._5etools_link)
-                .Index(x => x.Source)
-                .Duplicate(x => x.Name); 
+        
+        builder.Services.AddLiteDB(LiteDB_Path);
 
 
-        }).UseLightweightSessions();
+
+
+        //}).UseLightweightSessions();
 
         var app = builder.Build();
 
-        // Thanky Sam!!
-        var store = app.Services.GetRequiredService<IDocumentStore>();
+        app.UseFastEndpoints(c =>
+        {
+            c.Serializer.ResponseSerializer = (rsp, dto, cType, jCtx, ct) =>
+            {
+                rsp.ContentType = cType;
+                return rsp.WriteAsync(JsonConvert.SerializeObject(dto), ct);
+            };
+        });
 
-        //omg is this me using await and async??? Im a coding god now?? I definitely know what im doing and how they work????!!!
-        await BestiaryAPI.Startup.Bestiary_Load_Data.download_5etools_data(store);
 
 
-
-
-
-        app.UseDefaultExceptionHandler().UseFastEndpoints();
+        app.UseDefaultExceptionHandler();
+        //fuck you STJ
+        
         app.Run();
     }
 }

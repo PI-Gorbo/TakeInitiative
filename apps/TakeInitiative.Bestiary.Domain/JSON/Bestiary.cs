@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using System.Collections;
 using Microsoft.CodeAnalysis;
 
-namespace BestiaryAPI.JSON
+namespace TakeInitiative.Bestiary.Domain.JSON
 {
     public class Bestiary
     {
