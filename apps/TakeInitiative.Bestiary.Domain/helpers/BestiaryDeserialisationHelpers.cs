@@ -64,8 +64,13 @@ public static class BestiaryDeserialisationHelpers {
         }
         return 0; //default case, should not happen if data is correct
     }
-    
-    //returns 5etools bestiary link for given monster name and its source
+
+    /// <summary>
+    /// Returns the corresponding valid 5etools bestiary link, given the name of the monster, and the abbreviated name of the source.
+    /// </summary>
+    /// <param name="name"></param>
+    /// <param name="source"></param>
+    /// <returns></returns>
     public static string BuildLink(string name, string source)
     {
         string base_url = "https://5e.tools/bestiary.html#";
