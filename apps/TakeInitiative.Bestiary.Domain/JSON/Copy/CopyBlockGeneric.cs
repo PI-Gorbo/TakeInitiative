@@ -14,11 +14,11 @@ namespace TakeInitiative.Bestiary.Domain.JSON.Copy;
 /// This is the top level "_copy" object found in the Monster Object.
 /// The only fields that are required as per the schema are the name and source fields
 /// </summary>
-class CopyBlockGeneric
+public class CopyBlockGeneric
 {
-    //TODO: add _mod object
+    
     [JsonProperty("_mod")]
-    //MOD OBJECT FIELD HERE
+    public ModObject Mod { get; set; } = new ModObject();
 
     //TODO: Add the "_preserve" field and figure out how it fits in
     //preserve seems to preserve some fields from the original monster
@@ -48,8 +48,12 @@ public class NameSourcePair
 
 public class ModObject 
 {
-    //GlobalMods apply to the entire monster and are not specific to a single trait of the monster (I think)
-    [JsonProperty("*")]
+    //GlobalMods or "*" 
+    // apply to all text properties
+    // text properties are: "action", "reaction", "trait", "legendary", "variant", and "spellcasting"
+    //The converter must take into account that the array in this field can sometimes be a standalone object
+    [JsonProperty(PropertyName ="*")]
+    [JsonConverter(typeof(ICopyModifierConverter))]
     public List<ICopyModifier> GlobalMods { get; set; } = new List<ICopyModifier>();
 
 

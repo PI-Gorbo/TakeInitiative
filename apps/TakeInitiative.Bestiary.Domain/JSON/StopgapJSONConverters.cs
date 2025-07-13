@@ -146,27 +146,27 @@ class CrConverter : BoilerplateConverter{
 /// In the future we will properly handle the data in the _copy field instead of 
 /// checking and then setting a bool to indicate if it exists or not
 /// </summary>
-class _copyConverter : BoilerplateConverter
-{
+//class _copyConverter : BoilerplateConverter
+//{
     
-    public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
-    {
-        JToken jtoken = JToken.Load(reader);
-        if (jtoken.Type != JTokenType.Null)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-}
+//    public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+//    {
+//        JToken jtoken = JToken.Load(reader);
+//        if (jtoken.Type != JTokenType.Null)
+//        {
+//            return true;
+//        }
+//        else
+//        {
+//            return false;
+//        }
+//    }
+//}
 
 
 
 //INTERMEDIATE CLASS for json converters - since the first 3 overrides are exactly the same for all of them
-abstract class BoilerplateConverter : JsonConverter
+public abstract class BoilerplateConverter : JsonConverter
 {
     #region boilerplate jsonconverter stuff
     public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)

@@ -214,11 +214,18 @@ public static class Program
         var collection = litedb.GetCollection<StopGapMonsterClass>("Bestiary_monsters");
         foreach (StopGapMonsterClass monster in monsters)
         {
-            
             //var doc = BsonMapper.Global.ToDocument(monster); // Ensure the monster is serialized correctly before insertion
             //Debug.WriteLine(doc["Dex"].AsInt32);
+
             collection.Upsert(monster);
         }
         collection.EnsureIndex(x => x.Name);
+
+        //debug output
+        MonsterRoot root = new MonsterRoot
+        {
+            Monsters = monsters
+        };
+        File.WriteAllText("DebugMonsterSerialization.json", JsonConvert.SerializeObject(root, formatting:Formatting.Indented));
     }
 }

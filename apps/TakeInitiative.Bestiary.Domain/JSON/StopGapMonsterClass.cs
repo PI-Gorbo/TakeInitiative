@@ -4,6 +4,7 @@ using TakeInitiative.Bestiary.Domain.Helpers;
 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using TakeInitiative.Bestiary.Domain.JSON.Copy;
 
 namespace TakeInitiative.Bestiary.Domain.JSON;
 
@@ -38,9 +39,9 @@ public class StopGapMonsterClass
     [JsonProperty("dex")]
     public required int? Dex;
 
-    [JsonConverter(typeof(_copyConverter))]
+    //[JsonConverter(typeof(_copyConverter))]
     [JsonProperty("_copy")]
-    public bool? IsCopy { get; set; }
+    public CopyBlockGeneric Copy { get; set; }
 
     [JsonProperty("cr")]
     [JsonConverter(typeof(CrConverter))]
@@ -53,7 +54,7 @@ public class StopGapMonsterClass
         //this is stupid btw I was checking it was null and it wasnt or some shit it behaved in a way i did not understand
         //so i kinda just /shrug
         //this seems to work so i leave
-        if (!IsCopy.HasValue)
+        if (Copy == null)
         {
             this.CalculateInitiative();
         }
