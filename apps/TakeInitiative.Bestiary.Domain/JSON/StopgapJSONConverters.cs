@@ -178,6 +178,10 @@ public abstract class BoilerplateConverter : JsonConverter
         get { return false; }
     }
 
+    //Important:
+    //CanConvert does not get called when you mark something with [JsonConverter].
+    //When you use the attribute, Json.Net assumes you have provided the correct converter,
+    //so it doesn't bother with the CanConvert check. 
     public override bool CanConvert(Type objectType)
     {
         return false;

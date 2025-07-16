@@ -145,6 +145,12 @@ public class  ArrItemEntryConverter : BoilerplateConverter
 
 public class ReplaceArrConverter :  BoilerplateConverter
 {
+    //Important:
+    //CanConvert does not get called when you mark something with [JsonConverter].
+    //When you use the attribute, Json.Net assumes you have provided the correct converter,
+    //so it doesn't bother with the CanConvert check. 
+    //However, since we are calling this converter manually in ArrModObjectOrArrayConverter,
+    //We need to actually tell it that the base interface class is in face convertable
     public override bool CanConvert(Type objectType)
     {
         return (objectType == typeof(ArrModObject));
