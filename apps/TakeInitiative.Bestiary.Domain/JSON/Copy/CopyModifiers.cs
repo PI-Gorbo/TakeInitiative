@@ -13,6 +13,11 @@ namespace TakeInitiative.Bestiary.Domain.JSON.Copy;
 //wtf this spec 
 //Spec/Reference for _copy objects and how they work is below:
 //https://github.com/TheGiddyLimit/homebrew/blob/master/_doc/Spec_Copy.md
+//IMPORTANT: This code is expected to break sooner or later (but likely sooner)
+//The spec is really vague (eg this json field can either be an object, array, or string)
+//But does not tell us what kind of object or objects it will contain!
+//And some objects are used like ONCE in the entire bestiary so 
+//there aren't even enough examples to figure out what the hell is going on
 
 
 
@@ -47,6 +52,7 @@ public class PrependArr : ICopyModifier
 {
     public string mode { get; set; } = "prependArr";
     [JsonProperty("items")]
+    [JsonConverter(typeof(ArrItemConverter))]
     public List<ArrItem> Items { get; set; } = new List<ArrItem>();
 }
 
@@ -56,6 +62,7 @@ public class AppendArr : ICopyModifier
 {
     public string mode { get; set; } = "appendArr";
     [JsonProperty("items")]
+    [JsonConverter(typeof(ArrItemConverter))]
     public List<ArrItem> Items { get; set; } = new List<ArrItem>();
 }
 
@@ -71,7 +78,11 @@ public class ReplaceArr : ICopyModifier
     public string mode { get; set; } = "replaceArr";
     //replace seems to be string most of the time but the spec says it can be other things
     [JsonProperty("replace")]
-    public ArrModObject Replace { get; set; } 
+    [JsonConverter(typeof(ReplaceArrConverter))]
+    public ArrModObject Replace { get; set; }
+    [JsonProperty("items")]
+    [JsonConverter(typeof(ArrItemConverter))]
+    public List<ArrItem> Items { get; set; } = new List<ArrItem>();
 
 }
 
@@ -90,16 +101,16 @@ public class InsertArr : ICopyModifier
     public string mode { get; set; } = "insertArr";
     [JsonProperty("index")]
     public required int Index { get; set; }
-    [JsonProperty("items")]
+    [JsonConverter(typeof(ArrModObjectOrArrayConverter))]
     public required List<ArrModObject> Items { get; set; } = new List<ArrModObject>();
 }
 
 public class  RemoveArr : ICopyModifier
 {
     public string mode { get; set; } = "removeArr";
-    //this can be something else but I am ignoring it and hoping the tech debt doesnt catch me later
-    //since I dont see it used in a skim of the bestiary files
+    //Jsonconverter must take into account names can either be an array of strings or a string by itself
     [JsonProperty("names")]
+    [JsonConverter(typeof(StringOrArrToStringArrConverter))]
     public required List<string> Names { get; set; } = new List<string>();
 }
 
@@ -120,13 +131,14 @@ public interface ArrModObject
 
 #region classes that are children of the "mode" classes
 //ArrItem is used in objects that want to modify a monster's arrays
-public class ArrItem
+public class ArrItem : ArrModObject
 {
     //name here is what category array of the base monster is being affected
     //eg if name is items then the items array of the monster if being modified
     [JsonProperty("name")]
     public required string Name { get; set; }
-    [JsonProperty("entries")]
+    [JsonProperty(ItemConverterType = typeof(ArrItemEntryConverter), PropertyName = "entries")]
+    
     public required List<string> Entries { get; set; }
 }
 

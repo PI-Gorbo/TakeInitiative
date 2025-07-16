@@ -52,9 +52,38 @@ public class ModObject
     // apply to all text properties
     // text properties are: "action", "reaction", "trait", "legendary", "variant", and "spellcasting"
     //The converter must take into account that the array in this field can sometimes be a standalone object
+
+    //As a TEMP HACK, if the value isnt a json object but a astring eg: "remove"
+    //then the converter will return null
+
     [JsonProperty(PropertyName ="*")]
     [JsonConverter(typeof(ICopyModifierConverter))]
     public List<ICopyModifier> GlobalMods { get; set; } = new List<ICopyModifier>();
+
+    [JsonProperty(PropertyName = "action")]
+    [JsonConverter(typeof(ICopyModifierConverter))]
+    public List<ICopyModifier> ActionMods { get; set; } = new List<ICopyModifier>();
+
+    [JsonProperty(PropertyName = "reaction")]
+    [JsonConverter(typeof(ICopyModifierConverter))]
+    public List<ICopyModifier> ReactionMods { get; set; } = new List<ICopyModifier>();
+
+    [JsonProperty(PropertyName = "trait")]
+    [JsonConverter(typeof(ICopyModifierConverter))]
+    public List<ICopyModifier> TraitMods { get; set; } = new List<ICopyModifier>();
+
+    [JsonProperty(PropertyName = "legendary")]
+    [JsonConverter(typeof(ICopyModifierConverter))]
+    public List<ICopyModifier> LegendaryMods { get; set; } = new List<ICopyModifier>();
+
+    [JsonProperty(PropertyName = "variant")]
+    [JsonConverter(typeof(ICopyModifierConverter))]
+    public List<ICopyModifier> VariantMods { get; set; } = new List<ICopyModifier>();
+
+    [JsonProperty(PropertyName = "spellcasting")]
+    [JsonConverter(typeof(ICopyModifierConverter))]
+    public List<ICopyModifier> SpellcastingMods { get; set; } = new List<ICopyModifier>();
+
 
 
 }

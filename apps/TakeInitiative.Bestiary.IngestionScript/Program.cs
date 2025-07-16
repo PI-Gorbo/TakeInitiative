@@ -187,7 +187,18 @@ public static class Program
     {
         var response = await page.GotoAsync(url);
         string re = await response.TextAsync();
-        MonsterRoot r = JsonConvert.DeserializeObject<MonsterRoot>(re);
+
+        Debug.WriteLine("deserializing JSON from URL: " + url);
+        MonsterRoot r;
+        try
+        {
+            r = JsonConvert.DeserializeObject<MonsterRoot>(re);
+        }
+        catch (JsonReaderException e){
+            Debug.WriteLine("Error deserializing JSON from URL: " + url);
+            throw;
+        }
+        
 
         //Use lock to prevent race conditions
         //lock (_lock)
