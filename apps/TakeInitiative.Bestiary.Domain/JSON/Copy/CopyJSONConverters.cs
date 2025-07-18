@@ -104,7 +104,7 @@ public class ArrItemConverter : BoilerplateConverter
                 .Children<JObject>()
                 .Select(j =>
                 {
-                    Debug.WriteLine($" array item is {j.ToString()}");
+                    //Debug.WriteLine($" array item is {j.ToString()}");
                     return j.ToObject<ArrItem>();
                 }).ToList();
         }

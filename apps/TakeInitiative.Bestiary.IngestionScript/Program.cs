@@ -223,14 +223,44 @@ public static class Program
 
 
         var collection = litedb.GetCollection<StopGapMonsterClass>("Bestiary_monsters");
-        foreach (StopGapMonsterClass monster in monsters)
-        {
-            //var doc = BsonMapper.Global.ToDocument(monster); // Ensure the monster is serialized correctly before insertion
-            //Debug.WriteLine(doc["Dex"].AsInt32);
+        //foreach (StopGapMonsterClass monster in monsters)
+        //{
+        //    //var doc = BsonMapper.Global.ToDocument(monster); // Ensure the monster is serialized correctly before insertion
+        //    //Debug.WriteLine(doc["Dex"].AsInt32);
 
-            collection.Upsert(monster);
-        }
+        //    collection.Upsert(monster);
+        //}
+        //insert noncopy monsters
+        monsters
+            .ForEach(monster =>
+            {
+                if (monster.Copy == null)
+                {
+                    collection.Upsert(monster);
+                }
+
+            });
+
+
+
+        var normalisedMonsters = monsters
+            .Where(monster => monster.Copy != null)
+            .Select(monster => {
+                var m =NormaliseMonsters.NormaliseMonster(litedb, monster);
+                collection.Upsert(m);
+                return m;
+            })
+            .ToList();
+
         collection.EnsureIndex(x => x.Name);
+        //TODO: ACTUALLY INSERT INTO DB
+        MonsterRoot normRoot = new MonsterRoot
+        {
+            Monsters = normalisedMonsters
+        };
+        File.WriteAllText("DebugMonsterNormalisation.json", JsonConvert.SerializeObject(normalisedMonsters, formatting: Formatting.Indented));
+
+        
 
         //debug output
         MonsterRoot root = new MonsterRoot
