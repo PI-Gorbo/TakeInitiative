@@ -52,7 +52,8 @@ public static class Program
 
         //remove null elements from list
         //because uhhhhhhhh
-        //returning a null reference was the best way I had to deserialise incorrect json 
+        //returning a null reference was the best way I had to deserialise an incorrect/invalid json object without
+        //completely stopping the whole deserialisation process
         //unless im stupid which I probably am and theres a much better way
         monsters.RemoveAll(x => x == null);
 
@@ -62,7 +63,7 @@ public static class Program
 
 
         //insert data into litedb
-        await Insert_Data_LiteDB(litedb, monsters);
+        await InsertDataLiteDb(litedb, monsters);
 
         //IMPORTANT: if we dont dispose the db, the write log will stay open and keep accumulating in size!
         litedb.Dispose();
@@ -199,16 +200,10 @@ public static class Program
             throw;
         }
         
-
-        //Use lock to prevent race conditions
-        //lock (_lock)
-        //{
-        //    monsters.AddRange(r.Monsters);
-        //}
         return r.Monsters;
     }
 
-    public static async Task Insert_Data_LiteDB(LiteDatabase litedb, List<StopGapMonsterClass> monsters)
+    public static async Task InsertDataLiteDb(LiteDatabase litedb, List<StopGapMonsterClass> monsters)
     {
         var mapper = BsonMapper.Global;
         mapper.SerializeNullValues = true; // Serialize null values to ensure all fields are stored            
@@ -253,7 +248,8 @@ public static class Program
             .ToList();
 
         collection.EnsureIndex(x => x.Name);
-        //TODO: ACTUALLY INSERT INTO DB
+
+        //debug output
         MonsterRoot normRoot = new MonsterRoot
         {
             Monsters = normalisedMonsters
@@ -262,7 +258,7 @@ public static class Program
 
         
 
-        //debug output
+        
         MonsterRoot root = new MonsterRoot
         {
             Monsters = monsters
