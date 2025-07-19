@@ -47,6 +47,8 @@ public static class NormaliseMonsters
     }
 
 
+    //Maybe should move this function to the Domain, since it needs to be updated each time the monster class 
+    //is expanded!
     public static void CopyMonsterFields(ref StopGapMonsterClass monster, StopGapMonsterClass refMonster)
     {
         monster.Ac = refMonster.Ac;

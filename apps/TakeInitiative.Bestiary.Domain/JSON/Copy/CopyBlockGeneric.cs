@@ -23,6 +23,17 @@ public class CopyBlockGeneric
     //TODO: Add the "_preserve" field and figure out how it fits in
     //preserve seems to preserve some fields from the original monster
     //but like.... isn't that done by default when the monster is copied?
+
+
+
+
+    //TODO: WTF are templates? Spec is vague and json data seems to be inconsistent
+    //What does it actaully do? The data for templates contains a name and source reference
+    //similar to copy, except a monster by that name and source don't actually exist in the files??
+    //REF: bestiary-cos.json, look for "Vistana" monsters
+    //EDIT: It seems the templates, wherrever they are used, are contained in template.json??
+    //And the templates seem to be mod "Actions"/"modes" like AppendArr?
+    //Which are supposed to be applied on the source monster specified in the copy block?
     [JsonProperty("_templates")]
     public List<NameSourcePair> templates { get; set; }
 
