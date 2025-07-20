@@ -2,12 +2,10 @@
 using Marten;
 using JasperFx;
 using Marten.Services.Json;
-using TakeInitiative.Bestiary.Domain.JSON;
 
 namespace TakeInitiative.BestiaryAPI.GetMonster;
 
-
-public class Search_Response
+public class SearchRequest
 {
-    public MonsterRoot monsters { get; set; }
+    public string Name { get; set; } 
 }

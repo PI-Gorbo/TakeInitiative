@@ -10,7 +10,7 @@ using Newtonsoft.Json;
 
 namespace TakeInitiative.BestiaryAPI;
 
-internal class Program
+public class Program
 {
     private static async Task Main(string[] args)
     {

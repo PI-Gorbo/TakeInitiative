@@ -12,19 +12,20 @@ using Marten.Services.Json;
 
 using Newtonsoft;
 
+
 using TakeInitiative.Bestiary.Domain.JSON;
 using TakeInitiative.BestiaryAPI.Startup;
 namespace TakeInitiative.BestiaryAPI.GetMonster;
 
 
-public class EndPoint(LiteDBContext litedbcontext) : Endpoint<Search_Request, Search_Response>
+public class EndPoint(LiteDBContext litedbcontext) : Endpoint<SearchRequest, SearchResponse>
 {
     public override void Configure()
     {
         Get("/search");
         AllowAnonymous();
     }
-    public override async Task HandleAsync(Search_Request request, CancellationToken ct)
+    public override async Task HandleAsync(SearchRequest request, CancellationToken ct)
     {
         string request_name = request.Name;
         
@@ -43,7 +44,7 @@ public class EndPoint(LiteDBContext litedbcontext) : Endpoint<Search_Request, Se
 
         MonsterRoot mr = new MonsterRoot();
         mr.Monsters = monsters.ToList();
-        Search_Response response = new Search_Response();
+        SearchResponse response = new SearchResponse();
         response.monsters = mr;
         await SendAsync(response);
         
