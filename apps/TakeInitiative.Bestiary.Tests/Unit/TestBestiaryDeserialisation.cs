@@ -10,10 +10,8 @@ using TakeInitiative.Bestiary.IngestionScript;
 using TakeInitiative.Bestiary.Domain.JSON;
 namespace TakeInitiative.Bestiary.Tests.Unit;
 
-public class TestBestiary
-{
-    
-    
+public class TestBestiaryDeserialisation
+{       
     [Fact]
     public async Task TestDeserialisation()
     {
