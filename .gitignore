@@ -488,3 +488,6 @@ nuget.config
 
 # Turborepo
 .turbo/
+
+# Python virtualenv created by scripts/setup-python.mjs
+.venv/

@@ -182,6 +182,25 @@ public static class Bootstrap
 
 
                 Runtime.PythonDLL = pythonConfig;
+
+                // PythonHome and PythonPath must both be set before Initialize();
+                // setting them afterwards silently does nothing. They are needed
+                // because the interpreter and the packages live in different
+                // prefixes locally - CPython finds its stdlib but not d20 without
+                // them. Both are optional so the container, which pip-installs into
+                // the system interpreter, keeps working unchanged.
+                var pythonHome = configuration.GetValue<string>("PythonHome");
+                if (!string.IsNullOrWhiteSpace(pythonHome))
+                {
+                    PythonEngine.PythonHome = pythonHome;
+                }
+
+                var pythonPath = configuration.GetValue<string>("PythonPath");
+                if (!string.IsNullOrWhiteSpace(pythonPath))
+                {
+                    PythonEngine.PythonPath = pythonPath;
+                }
+
                 PythonEngine.Initialize();
                 PythonEngine.BeginAllowThreads();
             }
