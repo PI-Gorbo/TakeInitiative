@@ -485,3 +485,6 @@ $RECYCLE.BIN/
 
 apps/TakeInitiative.Api/appsettings.Development.json
 nuget.config
+
+# Turborepo
+.turbo/

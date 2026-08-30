@@ -38,7 +38,7 @@ gets solved once instead of twice.
 
 | # | Step | Status | Depends on | Goal |
 |---|---|---|---|---|
-| 01 | [pnpm + Turborepo](01-pnpm-turborepo.md) | `todo` | — | Bun and the Makefile gone; pnpm workspace + turbo drive everything |
+| 01 | [pnpm + Turborepo](01-pnpm-turborepo.md) | `done` | — | Bun and the Makefile gone; pnpm workspace + turbo drive everything |
 | 02 | [Drop GorboPackages](02-drop-gorbopackages.md) | `done` | — | `dotnet restore` succeeds with only nuget.org |
 | 03 | [Retarget net10.0](03-retarget-net10.md) | `done` | 02 | `dotnet build` and `dotnet run` work on the installed runtime |
 | 04 | [Install Python](04-install-python.md) | `todo` | 01, 03 | The embedded interpreter resolves its stdlib and `d20` |

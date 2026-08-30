@@ -1,5 +1,5 @@
 {
-    "name": "nuxt-app",
+    "name": "@ti/web",
     "private": true,
     "type": "module",
     "scripts": {
