@@ -95,7 +95,7 @@ importers:
         version: 1.0.7(tailwindcss@3.4.19(yaml@2.9.0))
       v-wave:
         specifier: ^3.0.2
-        version: 3.1.1(magic-string@0.30.21)(magicast@0.5.4)(oxc-parser@0.143.0)(unplugin@3.3.0(esbuild@0.28.2)(rollup@4.63.1)(vite@7.3.6(jiti@2.7.0)(stylus@0.57.0)(terser@5.51.2)(yaml@2.9.0)))(vue@3.5.42(typescript@5.9.3))
+        version: 3.1.1(magic-string@1.2.3)(magicast@0.5.4)(oxc-parser@0.143.0)(unplugin@3.3.0(esbuild@0.28.2)(rollup@4.63.1)(vite@7.3.6(jiti@2.7.0)(stylus@0.57.0)(terser@5.51.2)(yaml@2.9.0)))(vue@3.5.42(typescript@5.9.3))
       vee-validate:
         specifier: ^4.15.0
         version: 4.15.1(vue@3.5.42(typescript@5.9.3))
@@ -115,6 +115,9 @@ importers:
       prettier:
         specifier: ^3.5.3
         version: 3.9.6
+      tailwindcss:
+        specifier: 3.4.19
+        version: 3.4.19(yaml@2.9.0)
       typescript:
         specifier: ^5.8.2
         version: 5.9.3
@@ -9963,9 +9966,9 @@ snapshots:
 
   util-deprecate@1.0.2: {}
 
-  v-wave@3.1.1(magic-string@0.30.21)(magicast@0.5.4)(oxc-parser@0.143.0)(unplugin@3.3.0(esbuild@0.28.2)(rollup@4.63.1)(vite@7.3.6(jiti@2.7.0)(stylus@0.57.0)(terser@5.51.2)(yaml@2.9.0)))(vue@3.5.42(typescript@5.9.3)):
+  v-wave@3.1.1(magic-string@1.2.3)(magicast@0.5.4)(oxc-parser@0.143.0)(unplugin@3.3.0(esbuild@0.28.2)(rollup@4.63.1)(vite@7.3.6(jiti@2.7.0)(stylus@0.57.0)(terser@5.51.2)(yaml@2.9.0)))(vue@3.5.42(typescript@5.9.3)):
     dependencies:
-      '@nuxt/kit': 4.5.2(magic-string@0.30.21)(magicast@0.5.4)(oxc-parser@0.143.0)(unplugin@3.3.0(esbuild@0.28.2)(rollup@4.63.1)(vite@7.3.6(jiti@2.7.0)(stylus@0.57.0)(terser@5.51.2)(yaml@2.9.0)))
+      '@nuxt/kit': 4.5.2(magic-string@1.2.3)(magicast@0.5.4)(oxc-parser@0.143.0)(unplugin@3.3.0(esbuild@0.28.2)(rollup@4.63.1)(vite@7.3.6(jiti@2.7.0)(stylus@0.57.0)(terser@5.51.2)(yaml@2.9.0)))
       vue: 3.5.42(typescript@5.9.3)
     transitivePeerDependencies:
       - magic-string

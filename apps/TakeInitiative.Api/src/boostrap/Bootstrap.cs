@@ -53,10 +53,15 @@ public static class Bootstrap
 
         }).AddAsyncDaemon(DaemonMode.Solo);
 
-        // if (IsDevelopment)
-        // {
-        //     martenOpts.ApplyAllDatabaseChangesOnStartup();
-        // }
+        if (IsDevelopment)
+        {
+            // Create the schema up front rather than leaning on Marten's implicit
+            // auto-create, which makes a fresh database's behaviour depend on which
+            // endpoint happens to be hit first. A schema conflict now fails startup
+            // loudly; `docker compose -p takeinitiative -f compose.dev.yml down -v`
+            // resets a stale local database.
+            martenOpts.ApplyAllDatabaseChangesOnStartup();
+        }
 
         martenOpts.UseLightweightSessions();
 

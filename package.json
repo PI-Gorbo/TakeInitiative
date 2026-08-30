@@ -5,8 +5,9 @@
     "type": "module",
     "scripts": {
         "___ SETUP ___": "",
+        "setup:env": "node scripts/setup-env.mjs",
         "setup:python": "node scripts/setup-python.mjs",
-        "setup_environment": "(pnpm i) && (pnpm run setup:python) && (docker compose -p takeinitiative -f compose.dev.yml up -d postgres)",
+        "setup_environment": "(pnpm i) && (pnpm run setup:env) && (pnpm run setup:python) && (docker compose -p takeinitiative -f compose.dev.yml up -d postgres)",
         "___ DEV ___": "",
         "dev": "pnpm run setup_environment && (pnpm turbo run dev --ui tui)",
         "api": "pnpm run setup_environment && (pnpm turbo watch dev --filter=@ti/api)",
