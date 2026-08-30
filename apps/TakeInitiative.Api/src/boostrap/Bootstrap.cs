@@ -1,6 +1,6 @@
 using FastEndpoints.Security;
 
-using GP.MartenIdentity;
+using TakeInitiative.Api.Identity;
 
 using Marten;
 using Marten.Events.Daemon.Resiliency;
@@ -29,8 +29,8 @@ public static class Bootstrap
             // Use system.text.json            
             opts.UseSystemTextJsonForSerialization();
 
-            opts.Schema.For<ApplicationUser>();
-            opts.Schema.For<ApplicationUserRole>();
+            // Registers the identity documents and enforces a unique index on NormalizedEmail.
+            opts.RegisterIdentityModels<ApplicationUser, ApplicationUserRole>();
             
             opts.Schema.For<Campaign>()
                 .Index(x => x.CampaignName);
