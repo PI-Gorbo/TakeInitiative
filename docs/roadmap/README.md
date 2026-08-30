@@ -40,7 +40,7 @@ gets solved once instead of twice.
 |---|---|---|---|---|
 | 01 | [pnpm + Turborepo](01-pnpm-turborepo.md) | `todo` | — | Bun and the Makefile gone; pnpm workspace + turbo drive everything |
 | 02 | [Drop GorboPackages](02-drop-gorbopackages.md) | `done` | — | `dotnet restore` succeeds with only nuget.org |
-| 03 | [Retarget net10.0](03-retarget-net10.md) | `todo` | 02 | `dotnet build` and `dotnet run` work on the installed runtime |
+| 03 | [Retarget net10.0](03-retarget-net10.md) | `done` | 02 | `dotnet build` and `dotnet run` work on the installed runtime |
 | 04 | [Install Python](04-install-python.md) | `todo` | 01, 03 | The embedded interpreter resolves its stdlib and `d20` |
 | 05 | [Fix dev infrastructure](05-fix-dev-infra.md) | `todo` | 01 | compose, ports, env vars and README all agree |
 | 06 | [release-please](06-release-please.md) | `todo` | 01 | Releases automated; `Scripts/Release.ts` deleted |

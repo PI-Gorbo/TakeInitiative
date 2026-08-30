@@ -167,13 +167,16 @@ public static class Bootstrap
                 var pythonConfig = configuration.GetValue<string>("PythonDLL") ?? throw new InvalidConfigurationException("There is no configuration value for PythonDLL. Please set a value.");
                 if (pythonConfig == "null")
                 {
-                    // /usr/lib/python3.11/config-3.11-x86_64-linux-gnu/libpython3.11.so
+                    // e.g. /usr/lib/python3.12/config-3.12-aarch64-linux-gnu/libpython3.12.so
+                    // The container's Python version tracks its base image, so discover it
+                    // rather than hardcoding one. Removed wholesale in roadmap step 11.
                     Log.Information("Identified PythonDLL path as null and attempting to identify .so location...");
-                    var configName = new DirectoryInfo("/usr/lib/python3.11")
-                        .EnumerateDirectories("config-3.11-*")
-                        .First();
-
-                    pythonConfig = configName.FullName + "/libpython3.11.so";
+                    pythonConfig = (
+                        from libDir in new DirectoryInfo("/usr/lib").EnumerateDirectories("python3.*")
+                        let version = libDir.Name["python".Length..]
+                        from configDir in libDir.EnumerateDirectories($"config-{version}-*")
+                        select Path.Combine(configDir.FullName, $"libpython{version}.so")
+                    ).First();
                     Log.Information($"Found! {pythonConfig}");
                 }
 

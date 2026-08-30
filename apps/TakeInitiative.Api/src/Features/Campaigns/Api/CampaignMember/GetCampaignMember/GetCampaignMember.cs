@@ -27,7 +27,7 @@ public class GetCampaignMember(IDocumentStore Store) : Endpoint<GetCampaignMembe
                 ThrowError("User must be part of the campaign to request information about its members", (int)HttpStatusCode.BadRequest);
             }
 
-            return campaignMember;
+            return campaignMember!;
         });
 
         if (result.IsFailure)

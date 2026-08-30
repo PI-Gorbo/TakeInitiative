@@ -74,7 +74,7 @@ public class RollStagedCharacterIntoInitiativeCommandHandler(IDocumentStore Stor
                 await session.SaveChangesAsync();
 
                 combat = await session.LoadAsync<Combat>(command.CombatId);
-                return combat;
+                return combat!;
             });
     }
 }
