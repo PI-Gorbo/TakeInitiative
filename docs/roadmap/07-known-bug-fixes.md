@@ -30,9 +30,14 @@ So **any authenticated user can join any campaign's SignalR group** and receive
 its `campaignStateUpdated` and `campaignMemberStateUpdated` broadcasts, for a
 campaign they are not a member of.
 
-Fix: compare against the caller's id from the connection context, presumably
-`x.UserId == callerUserId`. Check how `CombatHub.JoinCombat` does its equivalent
-check — that one appears to be correct — and mirror it.
+Fix: compare against the caller's id read from the authenticated connection.
+
+**Correction (verified during execution): `CombatHub.JoinCombat` was NOT correct.**
+Its signature was `JoinCombat(IDocumentStore Store, Guid UserId, Guid CombatId)` —
+the user id came *from the client*, so any authenticated user could pass a known
+member's id and join that combat's group. Same hole, different mechanism. Both
+hubs are fixed; the fix changes the SignalR contract, so the Vue client calling
+`joinCombat` / `leaveCombat` had to change in lockstep.
 
 **Add a test.** This is exactly the class of bug that silently returns after a
 refactor: a test asserting a non-member is rejected from `Join` is worth more than
