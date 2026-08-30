@@ -33,6 +33,10 @@ services:
             start_period: 10s
             timeout: 5s
     api:
+        # Tagged rather than anonymous, so a built image is identifiable.
+        # `pnpm sync:version` writes TAKEINITIATIVE_VERSION into the root .env
+        # from package.json; without it the tag falls back to :latest.
+        image: takeinitiative-api:${TAKEINITIATIVE_VERSION:-latest}
         build:
             context: ./apps/TakeInitiative.Api/
         container_name: takeapi
@@ -57,6 +61,7 @@ services:
             start_period: 30s
             timeout: 10s
     web:
+        image: takeinitiative-web:${TAKEINITIATIVE_VERSION:-latest}
         build:
             # The repo root, because pnpm needs the workspace lockfile.
             context: .

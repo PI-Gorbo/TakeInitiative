@@ -1,0 +1,28 @@
+#!/usr/bin/env sh
+
+message="$(cat $1)"
+requiredPattern="^(feat|fix|chore|docs|style|refactor|perf|test|build|ci)(\((api|web|identity|dice|root|ci|docs)\))?(!)?: .*$"
+if ! echo "$message" | grep -Eq "$requiredPattern";
+then
+  echo "🚨 Incorrect commit message format! 😕"
+  echo "The commit message must follow Conventional Commits:"
+  echo "[feat|fix|chore|docs|style|refactor|perf|test|build|ci](scope)?: <your message>"
+  echo ""
+  echo "Available scopes: api, web, identity, dice, root, ci, docs"
+  echo ""
+  echo "Examples:"
+  echo "  feat(web): add combat history filter"
+  echo "  fix(api): reject non-members from the campaign hub"
+  echo "  chore: update dependencies"
+  echo "  feat(api)!: change the combat response shape (breaking change)"
+  echo ""
+  echo "release-please reads these messages to work out the next version, so a"
+  echo "wrong type or a missing scope silently changes what gets released."
+  echo ""
+  echo "Your commit message was:"
+  echo "$message"
+  echo ""
+  echo "For more information, check script in .husky/commit-msg"
+  echo ""
+  exit 1
+fi

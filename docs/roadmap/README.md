@@ -43,8 +43,8 @@ gets solved once instead of twice.
 | 03 | [Retarget net10.0](03-retarget-net10.md) | `done` | 02 | `dotnet build` and `dotnet run` work on the installed runtime |
 | 04 | [Install Python](04-install-python.md) | `done` | 01, 03 | The embedded interpreter resolves its stdlib and `d20` |
 | 05 | [Fix dev infrastructure](05-fix-dev-infra.md) | `todo` | 01 | compose, ports, env vars and README all agree |
-| 06 | [release-please](06-release-please.md) | `todo` | 01 | Releases automated; `Scripts/Release.ts` deleted |
-| 07 | [Known bug fixes](07-known-bug-fixes.md) | `todo` | 03 | Campaign membership actually verified; enum drift resolved |
+| 06 | [release-please](06-release-please.md) | `done` | 01 | Releases automated; `Scripts/Release.ts` deleted |
+| 07 | [Known bug fixes](07-known-bug-fixes.md) | `done` | 03 | Campaign membership actually verified; enum drift resolved |
 
 **Stage 1 exit criteria** — from a clean clone, with no GitHub PAT:
 `pnpm install && pnpm dev` → sign up → create a campaign → start a combat →

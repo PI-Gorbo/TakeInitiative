@@ -5,6 +5,7 @@
     "type": "module",
     "scripts": {
         "___ SETUP ___": "",
+        "prepare": "husky",
         "setup:env": "node scripts/setup-env.mjs",
         "setup:python": "node scripts/setup-python.mjs",
         "setup_environment": "(pnpm i) && (pnpm run setup:env) && (pnpm run setup:python) && (docker compose -p takeinitiative -f compose.dev.yml up -d postgres)",
@@ -14,9 +15,11 @@
         "web": "pnpm run setup_environment && (pnpm turbo watch dev --filter=@ti/web)",
         "___ UTILITY ___": "",
         "build": "pnpm turbo run build",
-        "test": "pnpm turbo run test"
+        "test": "pnpm turbo run test",
+        "sync:version": "node scripts/sync-version.mjs"
     },
     "devDependencies": {
+        "husky": "^9.1.7",
         "turbo": "2.9.16"
     },
     "packageManager": "pnpm@10.33.0",
