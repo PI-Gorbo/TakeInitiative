@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
 
@@ -10,15 +10,30 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <!-- This project hosts the API in-process via Alba/WebApplicationFactory, so it
+             needs the ASP.NET Core shared framework. It also lets NuGet prune the
+             framework-provided packages, which keeps JasperFx.RuntimeCompiler's upper
+             bound on Microsoft.Extensions.Logging.Abstractions out of the graph. -->
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="Alba" Version="7.4.1" />
         <PackageReference Include="CSharpFunctionalExtensions.FluentAssertions" Version="2.0.0" />
         <PackageReference Include="FakeItEasy" Version="8.3.0" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.6.0" />
+        <!-- Direct pin: Alba 7.4.1 drags in Microsoft.AspNetCore.TestHost 7.0.0,
+             whose ResponseBodyPipeWriter predates PipeWriter.UnflushedBytes and so
+             throws on every System.Text.Json response under .NET 10. -->
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.11" />
         <PackageReference Include="NSubstitute" Version="5.1.0" />
         <PackageReference Include="NSubstitute.Analyzers.CSharp" Version="1.0.17">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
+        <!-- Direct pin only to lift SSH.NET 2023.0.0 (GHSA-q939-rpr3-3284),
+             pulled in transitively by Testcontainers. -->
+        <PackageReference Include="SSH.NET" Version="2026.0.0" />
         <PackageReference Include="Testcontainers" Version="3.9.0" />
         <PackageReference Include="Testcontainers.PostgreSql" Version="3.9.0" />
         <PackageReference Include="Verify" Version="26.2.0" />

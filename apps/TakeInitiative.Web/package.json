@@ -1,5 +1,5 @@
 {
-    "name": "nuxt-app",
+    "name": "@ti/web",
     "private": true,
     "type": "module",
     "scripts": {
@@ -44,6 +44,7 @@
     },
     "devDependencies": {
         "prettier": "^3.5.3",
+        "tailwindcss": "3.4.19",
         "typescript": "^5.8.2"
     }
 }

@@ -1,79 +1,74 @@
 # TakeInitiative
 
-s
-A webapp designed to help dungeon masters to create combats and track initiative for those combats.
+A webapp designed to help dungeon masters to create combats and track initiative
+for those combats.
 
 ## Technologies
 
 -   C# ASP.NET WebAPI for the backend
 -   Nuxt Frontend (BFF pattern)
+-   pnpm workspace driven by Turborepo
 
 ## Requirements for local development
 
-1. Have `Docker` Installed
-2. Have `make` installed
-3. If you are developing the API:
-    - The `dotnet 8 SDK` is required
-    - Python3 is required and the d20 package
-4. If you are developing the Frontend, then `node` / `npm` is required (>= v18)
+1. `Docker` (for Postgres, and for the full-stack compose setup)
+2. `Node` 24 — via [Volta](https://volta.sh), which reads the pinned version
+   from `package.json`
+3. `pnpm` 10 — `corepack enable` picks up the pinned version
+4. The `.NET 10 SDK`
+
+You do **not** need `make`, `bun`, or a manual Python install. `pnpm dev`
+installs the Python interpreter the dice roller embeds.
 
 ## QuickStart
 
-If you want to just get all resources up and running on your computer, without having to install any extra SDKs, run `make docker.dev.compose`
+```bash
+pnpm install
+pnpm dev
+```
 
-This will:
+`pnpm dev` will:
 
--   Build a local image of the API and Frontend, with all requirements.
--   Run 3 docker containers, with the Database, API and Frontend.
+1. Install node dependencies.
+2. Create `apps/TakeInitiative.Web/.env` from `TEMPLATE.env` if it is missing.
+3. Install CPython 3.11 via `uv`, create `.venv`, install `d20`, and write the
+   resolved interpreter paths into the gitignored
+   `apps/TakeInitiative.Api/appsettings.Development.json`.
+4. Start Postgres in Docker.
+5. Run the API and the web app side by side in a Turborepo TUI.
+
+| Service  | URL                     |
+| -------- | ----------------------- |
+| Web      | http://localhost:3000   |
+| API      | http://localhost:5010   |
+| Postgres | `localhost:7401`        |
 
 ## Working on individual projects
 
-### API
+-   `pnpm api` — Postgres plus the API only
+-   `pnpm web` — Postgres plus the web app only
+-   `pnpm build` — build everything through turbo
+-   `pnpm test` — run the API test suite (Alba + Testcontainers; needs Docker)
 
-1. Run the in an individual container using `make docker.isolated.database`
-2. Go to the folder `./apps/TakeInitiative.Api/`
-3. Set the path for the python3 dll. `appsettings.json` has an example path, but that can be overriden in `appsettings.Development.json`
+## Running everything in containers
 
-    An example is as follows:
-
-    `appsettings.Development.json`
-
-    ```
-    {
-        "Logging": {
-            "LogLevel": {
-                "Default": "Information",
-                "Microsoft.AspNetCore": "Warning"
-            }
-        },
-        "PythonDLL": "my own custom value"
-    }
-    ```
-
-4. Install the d20 package from python
-5. Run `make api` (Runs `dotnet run`)
-
-## Nuget
-
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<configuration>
-    <packageSources>
-        <add key="github" value="https://nuget.pkg.github.com/PI-Gorbo/index.json" />
-    </packageSources>
-    <packageSourceCredentials>
-        <github>
-            <add key="Username" value="PI-Gorbo" />
-            <add key="ClearTextPassword" value="%peronsal_github_token%" />
-        </github>
-    </packageSourceCredentials>
-</configuration>
+```bash
+docker compose -p takeinitiative -f compose.dev.yml up -d --build
 ```
 
-### Web
+This builds and runs Postgres, the API and the web app.
 
-1. Go to the folder `./apps/TakeInitiative.Web`
-2. Run `npm i` to install all relevant packages.
-3. Make a copy of the file `TEMPLATE.env`, and rename it `.env`. This file serves the same utility as the `appsettings.development.json` file on the API.
-4. Run `npm run dev` to launch the web.
+| Service  | URL                     |
+| -------- | ----------------------- |
+| Web      | http://localhost:7403   |
+| API      | http://localhost:7402   |
+| Postgres | `localhost:7401`        |
 
+## Resetting the database
+
+The API applies all Marten schema changes on startup in Development, so a stale
+local database can block startup. To wipe it:
+
+```bash
+docker compose -p takeinitiative -f compose.dev.yml down -v
+```

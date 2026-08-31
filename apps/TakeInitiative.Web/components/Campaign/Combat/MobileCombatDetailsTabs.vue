@@ -25,14 +25,14 @@
                     <template
                         v-if="
                             store.combatQuery.data?.combat?.state ===
-                            CombatState.Open
+                            CombatState.Started
                         ">
                         - Open to players.
                     </template>
                     <template
                         v-else-if="
                             store.combatQuery.data?.combat?.state ===
-                            CombatState.Started
+                            CombatState.InitiativeRolled
                         "
                         >- Round
                         {{ store.combatQuery.data?.combat?.roundNumber }}

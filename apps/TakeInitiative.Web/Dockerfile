@@ -1,26 +1,43 @@
-﻿# use the official Bun image
-# see all versions at https://hub.docker.com/r/oven/bun/tags
-FROM oven/bun:1 AS build
-WORKDIR /app
+FROM node:24-alpine AS base
+RUN apk add --no-cache libc6-compat
+RUN corepack enable
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+WORKDIR /repo
 
-COPY package.json bun.lockb ./
+# ---
+FROM base AS build
 
-# use ignore-scripts to avoid builting node modules like better-sqlite3
-RUN bun install  --ignore-scripts
+# Manifests first, so the install layer is cached until a dependency changes.
+# pnpm needs every workspace member's package.json to satisfy --frozen-lockfile.
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/TakeInitiative.Api/package.json apps/TakeInitiative.Api/
+COPY apps/TakeInitiative.Api.Tests/package.json apps/TakeInitiative.Api.Tests/
+COPY apps/TakeInitiative.Web/package.json apps/TakeInitiative.Web/
+# --ignore-scripts skips the web package's `nuxt prepare` postinstall, which
+# needs source that has not been copied yet. `nuxt build` re-runs it anyway.
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
-# Copy the entire project
-COPY . .
+COPY apps/TakeInitiative.Web/ apps/TakeInitiative.Web/
 
+# nuxt.config.ts inlines these into runtimeConfig at build time.
+ARG API_URL
+ARG WEB_URL
+ENV API_URL=$API_URL
+ENV WEB_URL=$WEB_URL
 ENV TAKE_INIT_ENVIRONMENT=PRODUCTION
-RUN bun run build
+RUN pnpm --filter @ti/web run build
 
-# copy production dependencies and source code into final image
-FROM oven/bun:1 AS production
+# ---
+FROM node:24-alpine AS production
 WORKDIR /app
+RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nuxtjs
+USER nuxtjs
 
-# Only `.output` folder is needed from the build stage
-COPY --from=build /app/.output /app
+# `.output` is self-contained: server bundle plus public assets.
+COPY --from=build --chown=nuxtjs:nodejs /repo/apps/TakeInitiative.Web/.output /app
 
-# run the app
+ENV HOST=0.0.0.0
+ENV PORT=3000
+ENV NODE_ENV=production
 EXPOSE 3000/tcp
-ENTRYPOINT [ "bun", "--bun", "run", "/app/server/index.mjs" ]
+ENTRYPOINT ["node", "/app/server/index.mjs"]

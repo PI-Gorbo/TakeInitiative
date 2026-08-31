@@ -192,7 +192,7 @@
       ArmourClass: 20,
       PlayerId: PlayerId,
       CharacterOriginDetails: {
-        CharacterOrigin: 0,
+        CharacterOrigin: 2,
         Id: null
       },
       Hidden: false,
@@ -226,10 +226,10 @@
       ArmourClass: 12,
       PlayerId: DmId,
       CharacterOriginDetails: {
-        CharacterOrigin: 0,
+        CharacterOrigin: 1,
         Id: Guid_6
       },
-      Hidden: true,
+      Hidden: false,
       CopyNumber: null,
       Conditions: []
     },
@@ -254,7 +254,7 @@
       ArmourClass: null,
       PlayerId: DmId,
       CharacterOriginDetails: {
-        CharacterOrigin: 0,
+        CharacterOrigin: 2,
         Id: null
       },
       Hidden: false,

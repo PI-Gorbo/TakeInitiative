@@ -7,7 +7,7 @@
                 </CardTitle>
                 <template v-if="store.userIsDm">
                     <AsyncButton
-                        v-if="store.combatIsOpen"
+                        v-if="store.combatIsStarted"
                         label="Start Combat"
                         loadingLabel="Starting..."
                         :icon="faFlag"
@@ -15,7 +15,7 @@
                         class="interactable"
                         :click="combatControls.startCombat" />
                     <AsyncButton
-                        v-else-if="store.combatIsStarted"
+                        v-else-if="store.combatIsInitiativeRolled"
                         label="End Combat"
                         loadingLabel="Ending..."
                         :icon="faFlag"
@@ -39,7 +39,7 @@
                 <template
                     v-if="
                         store.combatQuery.data?.combat?.state ===
-                        CombatState.Open
+                        CombatState.Started
                     ">
                     Combat has not started yet. Players can add their characters
                     to the combat.
@@ -47,7 +47,7 @@
                 <template
                     v-else-if="
                         store.combatQuery.data?.combat?.state ===
-                        CombatState.Started
+                        CombatState.InitiativeRolled
                     ">
                     Round
                     {{ store.combatQuery.data?.combat?.roundNumber }}
@@ -62,7 +62,7 @@
                 <section
                     v-show="
                         store.combatQuery.data?.combat?.state ===
-                        CombatState.Started
+                        CombatState.InitiativeRolled
                     "
                     class="flex flex-col gap-2 flex-1 overlfow-auto h-full max-h-full">
                     <header>

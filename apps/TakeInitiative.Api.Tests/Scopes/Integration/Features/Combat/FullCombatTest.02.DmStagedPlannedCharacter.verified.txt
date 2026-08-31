@@ -46,7 +46,7 @@
     {
       PlayerId: PlayerId,
       CharacterOriginDetails: {
-        CharacterOrigin: 0,
+        CharacterOrigin: 2,
         Id: null
       },
       Hidden: false,
@@ -66,7 +66,7 @@
     {
       PlayerId: DmId,
       CharacterOriginDetails: {
-        CharacterOrigin: 0,
+        CharacterOrigin: 1,
         Id: Guid_4
       },
       Hidden: false,

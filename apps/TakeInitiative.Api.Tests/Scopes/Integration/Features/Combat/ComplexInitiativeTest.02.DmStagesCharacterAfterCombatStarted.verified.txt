@@ -70,7 +70,7 @@
     {
       PlayerId: DmId,
       CharacterOriginDetails: {
-        CharacterOrigin: 0,
+        CharacterOrigin: 2,
         Id: null
       },
       Hidden: false,
@@ -105,7 +105,7 @@
       ArmourClass: null,
       PlayerId: DmId,
       CharacterOriginDetails: {
-        CharacterOrigin: 0,
+        CharacterOrigin: 2,
         Id: null
       },
       Hidden: false,
@@ -130,7 +130,7 @@
       ArmourClass: null,
       PlayerId: DmId,
       CharacterOriginDetails: {
-        CharacterOrigin: 0,
+        CharacterOrigin: 2,
         Id: null
       },
       Hidden: false,
