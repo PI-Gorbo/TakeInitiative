@@ -164,57 +164,62 @@ public static class Bootstrap
 
     public static IServiceCollection AddDiceRollers(this IServiceCollection services, IConfiguration configuration)
     {
-        // Add dice roller.
-        services.AddTransient<IDiceRoller, DiceRoller>((_) =>
-        {
-            if (!PythonEngine.IsInitialized)
-            {
-                var pythonConfig = configuration.GetValue<string>("PythonDLL") ?? throw new InvalidConfigurationException("There is no configuration value for PythonDLL. Please set a value.");
-                if (pythonConfig == "null")
-                {
-                    // e.g. /usr/lib/python3.12/config-3.12-aarch64-linux-gnu/libpython3.12.so
-                    // The container's Python version tracks its base image, so discover it
-                    // rather than hardcoding one. Removed wholesale in roadmap step 11.
-                    Log.Information("Identified PythonDLL path as null and attempting to identify .so location...");
-                    pythonConfig = (
-                        from libDir in new DirectoryInfo("/usr/lib").EnumerateDirectories("python3.*")
-                        let version = libDir.Name["python".Length..]
-                        from configDir in libDir.EnumerateDirectories($"config-{version}-*")
-                        select Path.Combine(configDir.FullName, $"libpython{version}.so")
-                    ).First();
-                    Log.Information($"Found! {pythonConfig}");
-                }
-
-
-                Runtime.PythonDLL = pythonConfig;
-
-                // PythonHome and PythonPath must both be set before Initialize();
-                // setting them afterwards silently does nothing. They are needed
-                // because the interpreter and the packages live in different
-                // prefixes locally - CPython finds its stdlib but not d20 without
-                // them. Both are optional so the container, which pip-installs into
-                // the system interpreter, keeps working unchanged.
-                var pythonHome = configuration.GetValue<string>("PythonHome");
-                if (!string.IsNullOrWhiteSpace(pythonHome))
-                {
-                    PythonEngine.PythonHome = pythonHome;
-                }
-
-                var pythonPath = configuration.GetValue<string>("PythonPath");
-                if (!string.IsNullOrWhiteSpace(pythonPath))
-                {
-                    PythonEngine.PythonPath = pythonPath;
-                }
-
-                PythonEngine.Initialize();
-                PythonEngine.BeginAllowThreads();
-            }
-
-            return new DiceRoller();
-        });
+        // Random.Shared is thread-safe; a single shared `new Random()` is not.
+        services.AddSingleton<IDiceRoller>(new DiceRoller(Random.Shared));
         services.AddTransient<IInitiativeRoller, InitiativeRoller>();
         services.AddTransient<IHealthRoller, HealthRoller>();
         return services;
+    }
+
+    /// <summary>
+    /// The embedded CPython bootstrap for the old d20-based roller. Nothing calls this
+    /// since roadmap step 10 swapped in TakeInitiative.Dice; it is kept only so falling
+    /// back is a one-line change. Deleted in step 11.
+    /// </summary>
+    private static void InitialisePython(IConfiguration configuration)
+    {
+        if (!PythonEngine.IsInitialized)
+        {
+            var pythonConfig = configuration.GetValue<string>("PythonDLL") ?? throw new InvalidConfigurationException("There is no configuration value for PythonDLL. Please set a value.");
+            if (pythonConfig == "null")
+            {
+                // e.g. /usr/lib/python3.12/config-3.12-aarch64-linux-gnu/libpython3.12.so
+                // The container's Python version tracks its base image, so discover it
+                // rather than hardcoding one. Removed wholesale in roadmap step 11.
+                Log.Information("Identified PythonDLL path as null and attempting to identify .so location...");
+                pythonConfig = (
+                    from libDir in new DirectoryInfo("/usr/lib").EnumerateDirectories("python3.*")
+                    let version = libDir.Name["python".Length..]
+                    from configDir in libDir.EnumerateDirectories($"config-{version}-*")
+                    select Path.Combine(configDir.FullName, $"libpython{version}.so")
+                ).First();
+                Log.Information($"Found! {pythonConfig}");
+            }
+
+
+            Runtime.PythonDLL = pythonConfig;
+
+            // PythonHome and PythonPath must both be set before Initialize();
+            // setting them afterwards silently does nothing. They are needed
+            // because the interpreter and the packages live in different
+            // prefixes locally - CPython finds its stdlib but not d20 without
+            // them. Both are optional so the container, which pip-installs into
+            // the system interpreter, keeps working unchanged.
+            var pythonHome = configuration.GetValue<string>("PythonHome");
+            if (!string.IsNullOrWhiteSpace(pythonHome))
+            {
+                PythonEngine.PythonHome = pythonHome;
+            }
+
+            var pythonPath = configuration.GetValue<string>("PythonPath");
+            if (!string.IsNullOrWhiteSpace(pythonPath))
+            {
+                PythonEngine.PythonPath = pythonPath;
+            }
+
+            PythonEngine.Initialize();
+            PythonEngine.BeginAllowThreads();
+        }
     }
 
     public static IServiceCollection AddSendGrid(this IServiceCollection services, IConfiguration configuration)

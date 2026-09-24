@@ -14,7 +14,7 @@ public class UnevaluatedCharacterHealthRollValidator : AbstractValidator<Unevalu
             .NotEmpty()
             .Custom((value, context) =>
                 roller
-                    .EvaluateRoll(value!)
+                    .Check(value!)
                     .TapError(context.AddFailure));
     }
 }

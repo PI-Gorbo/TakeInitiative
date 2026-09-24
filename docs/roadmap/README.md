@@ -61,7 +61,7 @@ roll initiative → end a turn → SignalR update lands in the browser.
 |---|---|---|---|---|
 | 08 | [Dice language spec](08-dice-language-spec.md) | `done` | — | Agreed grammar + type rules. **Design doc, no code.** |
 | 09 | [Dice library](09-dice-parser-and-typechecker.md) | `done` | 08, 03 | `packages/TakeInitiative.Dice` + its own tests: parse, check, evaluate. Wired to nothing |
-| 10 | [Swap](10-dice-evaluator-and-swap.md) | `todo` | 09 | App and validators running on the new roller; Python installed but unused |
+| 10 | [Swap](10-dice-evaluator-and-swap.md) | `done` | 09 | App and validators running on the new roller; Python installed but unused |
 | 11 | [Remove Python](11-remove-python.md) | `todo` | 10 | Zero Python in the repo |
 
 > **CHECKPOINT.** Stop and report at the end of **10**, before 11 deletes Python.
