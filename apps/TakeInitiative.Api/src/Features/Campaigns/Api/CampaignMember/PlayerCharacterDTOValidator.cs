@@ -11,7 +11,8 @@ public class PlayerCharacterDTOValidator : AbstractValidator<PlayerCharacterDTO>
             .NotEmpty();
 
         RuleFor(x => x.Health)
-            .NotNull();
+            .NotNull()
+            .SetValidator(new UnevaluatedCharacterHealthValidator(roller));
 
         RuleFor(x => x.Initiative)
             .SetValidator(new UnevaluatedCharacterInitiativeValidator(roller));
