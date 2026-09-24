@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!-- The dice language. Deliberately references nothing from the API and no
+         ASP.NET, so it can be compiled to wasm for in-browser validation later.
+         See docs/roadmap/08-dice-language-spec.md. -->
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>TakeInitiative.Dice</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <!-- Kept on the API's major version so referencing this project doesn't
+             silently upgrade the API's railway types. -->
+        <PackageReference Include="CSharpFunctionalExtensions" Version="2.40.3" />
+        <PackageReference Include="Parlot" Version="1.5.9" />
+    </ItemGroup>
+
+</Project>
