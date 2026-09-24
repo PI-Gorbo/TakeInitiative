@@ -25,8 +25,8 @@ interpreter.
 - `.github/workflows/testApi.yml` — drop `setup-python` and the `PythonDLL` export
 - `package.json` — drop `setup:python` from the `setup_environment` chain
 - `README.md` — drop the Python requirement
-- The ~12 FluentValidation validators — point them at `Check`
-- `apps/TakeInitiative.Web/components/Campaign/Character/InitiativeRollInput.vue`
+- `apps/TakeInitiative.Web/components/Campaign/Character/InitiativeRollInput.vue`, `HealthInput.vue`
+- `apps/TakeInitiative.Api/src/Utilities/DiceRoller/DiceRoller.cs` and `Bootstrap.cs` comments that mention d20
 
 ## Steps
 
@@ -59,37 +59,14 @@ From `testApi.yml`, remove the `actions/setup-python` step and the
 Also delete the stray empty `apps/TakeInitiative.Api/dockerignore` (beside the
 real `.dockerignore`) if step 05 didn't.
 
-### 3. Point the validators at `Check`
+### 3. Frontend errors and help text
 
-Roughly a dozen validators inject `IDiceRoller` purely to decide whether an
-expression is valid, and do it by evaluating a throwaway roll:
-
-- `UnevaluatedCharacterInitiativeValidator`
-- `UnevaluatedCharacterHealthRollValidator`
-- `UnevaluatedCharacterHealthValidator`
-- `CharacterValidator` and its subclasses
-- `PostPlannedCombatNpcRequestValidator`, `PutPlannedCombatNpcRequestValidator`
-- `PostAddStagedCharacterRequestValidator`, `PutUpdateStagedCharacterRequestValidator`
-- `PlayerCharacterDTOValidator`, `PostPlayerCharacterRequestValidator`,
-  `PutPlayerCharacterRequestValidator`
-- `StagedCombatCharacterDtoValidator`, `StagedCombatCharacterWithoutIdDtoValidator`,
-  `PlannedCombatCharacterValidator`
-
-Switch each to `Check`. Two benefits: no dice are rolled just to validate, and the
-error message becomes the structured one from the spec instead of a generic
-failure string.
-
-Grep for `EvaluateRoll` afterwards — the only remaining callers should be places
-that genuinely want a number.
-
-### 4. Frontend errors and help text
-
-`InitiativeRollInput.vue`:
+`InitiativeRollInput.vue` and `HealthInput.vue`:
 
 - Update the placeholder from `1d20 + 2` and the tooltip, which currently teaches
   the legacy syntax: *"For Advantage, you can use `2d20kh1`, and disadvantage is
-  `2d20kl1`"*. Teach `adv(1d20)` / `dis(1d20)` instead, and mention the old form
-  still works.
+  `2d20kl1`"*. Teach `adv(1d20)` / `dis(1d20)` and `kh1(2d20)` instead. The old form is
+  no longer accepted.
 - Surface the structured error inline. The component already takes an `error`
   prop; the win is that the message is now written for a DM rather than being a
   CPython exception.
@@ -119,7 +96,7 @@ The image should be noticeably smaller — no interpreter, no dev headers.
 
 End to end, on a machine with **no Python at all** available to the app:
 `pnpm dev`, create a campaign, add characters using `1d20 + 2`, `adv(1d20)` and
-the legacy `2d20kh1`, start a combat, roll initiative, end a turn.
+`kh1(2d20)`, start a combat, roll initiative, end a turn.
 
 Finally, confirm a bad expression produces a readable inline error rather than
 anything mentioning Python or an exception type.
