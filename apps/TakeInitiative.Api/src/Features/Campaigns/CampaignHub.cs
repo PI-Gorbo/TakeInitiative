@@ -2,6 +2,7 @@ using CSharpFunctionalExtensions;
 using Marten;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Campaigns;
 
@@ -26,17 +27,21 @@ public class CampaignHub : Hub
 {
     public async Task Join(IDocumentSession session, Guid CampaignId)
     {
-        // Ensure the user is a member of the campaign by finding the campaign member entity for this user.
-        Result joinHubResult = await Result
-        .Try(async () => await session
-                .Query<CampaignMember>()
-                .AnyAsync(x => x.CampaignId == CampaignId && x.UserId == x.UserId))
-        .Ensure(memberExists => memberExists, "The user must be part of the campaign to join the hub.")
-        .TapTry(async () =>
+        // The caller's id comes from the authenticated connection, never from the client.
+        Result<Guid> callerUserId = Context.User.GetUserId();
+        if (callerUserId.IsFailure)
         {
+            throw new OperationCanceledException(callerUserId.Error);
+        }
 
-            await Groups.AddToGroupAsync(Context.ConnectionId, CampaignId.ToString());
-        });
+        // Ensure the caller is a member of the campaign by finding the campaign member entity for them.
+        Result joinHubResult = await Result
+            .Try(async () => await session.UserIsApartOfCampaign(callerUserId.Value, CampaignId))
+            .Ensure(memberExists => memberExists, "The user must be part of the campaign to join the hub.")
+            .TapTry(async () =>
+            {
+                await Groups.AddToGroupAsync(Context.ConnectionId, CampaignId.ToString());
+            });
 
         if (joinHubResult.IsFailure)
         {
@@ -51,4 +56,3 @@ public class CampaignHub : Hub
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, CampaignId.ToString());
     }
 }
-

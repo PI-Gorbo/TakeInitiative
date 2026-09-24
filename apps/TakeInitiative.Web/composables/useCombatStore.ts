@@ -144,11 +144,11 @@ export const useCombatStore = defineStore("combatStore", () => {
         memberDtos,
         orderedStagedCharacterListWithPlayerInfo,
         getMemberDetailsFor,
-        combatIsOpen: computed(
-            () => combatQuery.data.value?.combat?.state == CombatState.Open
-        ),
         combatIsStarted: computed(
             () => combatQuery.data.value?.combat?.state == CombatState.Started
+        ),
+        combatIsInitiativeRolled: computed(
+            () => combatQuery.data.value?.combat?.state == CombatState.InitiativeRolled
         ),
         combatIsFinished: computed(
             () => combatQuery.data.value?.combat?.state == CombatState.Finished

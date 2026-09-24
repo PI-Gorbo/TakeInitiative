@@ -26,12 +26,17 @@ public class CombatVerifier
 
     public Task Verify(Combat combat, string? description, int? onlyVerifyCount = null)
     {
-        if (onlyVerifyCount.HasValue && onlyVerifyCount != Count)
+        // The counter has to advance on every call, verified or not. It used to be
+        // incremented inside the guard below, so a run pinned to stage N > 0 never
+        // reached stage N and silently asserted nothing at all.
+        var stage = this.Count++;
+
+        if (onlyVerifyCount.HasValue && onlyVerifyCount != stage)
         {
             return Task.CompletedTask;
         }
 
-        settings.UseFileName($"{fileName}.{this.Count++:D2}.{description}");
+        settings.UseFileName($"{fileName}.{stage:D2}.{description}");
         var serializedValue = JsonSerializer.Serialize(combat);
         serializedValue = serializedValue.Replace("\"!\"", "\"TYPE\"");
         return VerifyJson(serializedValue, settings);

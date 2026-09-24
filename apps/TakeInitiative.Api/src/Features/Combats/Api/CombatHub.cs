@@ -24,8 +24,15 @@ public class CombatHub : Hub
             .SendAsync("combatUpdated", combat);
     }
 
-    public async Task JoinCombat(IDocumentStore Store, Guid UserId, Guid CombatId)
+    public async Task JoinCombat(IDocumentStore Store, Guid CombatId)
     {
+        // The caller's id comes from the authenticated connection, never from the client.
+        Result<Guid> callerUserId = Context.User.GetUserId();
+        if (callerUserId.IsFailure)
+        {
+            throw new OperationCanceledException(callerUserId.Error);
+        }
+
         // Check the user can join the combat. 
         Result joinedCombatResult = await Store.Try(async (session) =>
         {
@@ -36,14 +43,14 @@ public class CombatHub : Hub
             }
 
             // Check if the user is already part of the combat.
-            if (combat.CurrentPlayers.Any(x => x.UserId == UserId))
+            if (combat.CurrentPlayers.Any(x => x.UserId == callerUserId.Value))
             {
                 await Groups.AddToGroupAsync(Context.ConnectionId, combat.Id.ToString());
                 return Result.Success(combat);
             }
 
             // Check the user is in the combat, if they are, they can be added to the combat.
-            var isApartOfCampaign = await session.UserIsApartOfCampaign(UserId, combat.CampaignId);
+            var isApartOfCampaign = await session.UserIsApartOfCampaign(callerUserId.Value, combat.CampaignId);
             if (!isApartOfCampaign)
             {
                 return Result.Failure("Cannot join a combat of a campaign you are not apart of.");
@@ -62,27 +69,8 @@ public class CombatHub : Hub
         return;
     }
 
-    public async Task LeaveCombat(IDocumentStore Store, Guid UserId, Guid CombatId)
+    public async Task LeaveCombat(Guid CombatId)
     {
-        // Check the user can leave the combat. 
-        Result leaveCombatResult = await Store.Try(async (session) =>
-        {
-            var combat = await session.LoadAsync<Combat>(CombatId);
-            if (combat == null)
-            {
-                return Result.Failure("Combat does not exist.");
-            }
-
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, combat!.Id.ToString());
-
-            return Result.Success(combat);
-        });
-
-        if (leaveCombatResult.IsFailure)
-        {
-            throw new OperationCanceledException(leaveCombatResult.Error);
-        }
-
-        return;
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, CombatId.ToString());
     }
 }

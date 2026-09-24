@@ -1,0 +1,8 @@
+{
+    "name": "@ti/api",
+    "private": true,
+    "scripts": {
+        "dev": "dotnet watch run",
+        "build": "dotnet build"
+    }
+}

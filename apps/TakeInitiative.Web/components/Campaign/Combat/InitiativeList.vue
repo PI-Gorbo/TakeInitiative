@@ -28,7 +28,7 @@
         </TransitionGroup>
         <Sheet
             v-model:open="addStagedCharacterSheet"
-            v-if="combatStore.combatIsOpen">
+            v-if="combatStore.combatIsStarted">
             <SheetTrigger asChild>
                 <Button
                     variant="outline"
@@ -84,7 +84,7 @@
                 return [];
             }
 
-            if (combatStore.combatIsOpen) {
+            if (combatStore.combatIsStarted) {
                 return combatStore.orderedStagedCharacterListWithPlayerInfo;
             }
 

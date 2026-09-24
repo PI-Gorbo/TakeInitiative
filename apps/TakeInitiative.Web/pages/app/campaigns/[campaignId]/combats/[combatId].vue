@@ -28,7 +28,7 @@
                             <div>
                                 <template v-if="store.userIsDm">
                                     <AsyncButton
-                                        v-if="store.combatIsOpen"
+                                        v-if="store.combatIsStarted"
                                         label="Start"
                                         loadingLabel="Starting..."
                                         :icon="faFlag"
@@ -36,7 +36,7 @@
                                         class="interactable lg:hidden"
                                         :click="combatControls.startCombat" />
                                     <AsyncButton
-                                        v-else-if="store.combatIsStarted"
+                                        v-else-if="store.combatIsInitiativeRolled"
                                         label="End Combat"
                                         loadingLabel="Ending..."
                                         :icon="faFlag"
@@ -46,7 +46,7 @@
                                 </template>
                             </div>
                             <AsyncButton
-                                v-if="store.combatIsStarted"
+                                v-if="store.combatIsInitiativeRolled"
                                 variant="destructive"
                                 label="End Turn"
                                 loadingLabel="Ending..."
@@ -129,7 +129,6 @@
         await connection.send(
             // Rejoin, as users are kicked from all groups on disconnect
             "joinCombat",
-            userStore.state?.userId,
             joinedCombatDetails.value.combatId
         );
     });
@@ -184,7 +183,6 @@
             .send(
                 // Rejoin, as users are kicked from all groups on disconnect
                 "joinCombat",
-                userStore.state?.userId,
                 id
             )
             .then(
@@ -198,11 +196,7 @@
 
     async function leaveCombat() {
         return await connection
-            .send(
-                "leaveCombat",
-                userStore.state?.userId,
-                joinedCombatDetails.value?.combatId
-            )
+            .send("leaveCombat", joinedCombatDetails.value?.combatId)
             .then(() => (joinedCombatDetails.value = null));
     }
 </script>

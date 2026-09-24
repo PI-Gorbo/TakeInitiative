@@ -485,3 +485,12 @@ $RECYCLE.BIN/
 
 apps/TakeInitiative.Api/appsettings.Development.json
 nuget.config
+
+# Turborepo
+.turbo/
+
+# Python virtualenv created by scripts/setup-python.mjs
+.venv/
+
+# Verify snapshot artifacts - only *.verified.* belongs in the repo
+*.received.*

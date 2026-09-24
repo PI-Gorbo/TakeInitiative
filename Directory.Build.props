@@ -1,0 +1,26 @@
+<Project>
+
+    <!--
+        NuGet audit suppressions.
+
+        Everything here is a deliberate, documented exception. Prefer bumping the
+        package; only suppress when the roadmap says the upgrade is out of scope.
+    -->
+    <ItemGroup>
+        <!--
+            GHSA-vmw2-qwm8-x84c - Marten <= 8.36: SQL injection through the
+            full-text search `regConfig` parameter.
+
+            Not exploitable here: this codebase uses no full-text search at all
+            (no FullTextIndex, PlainTextSearch, SearchTsQuery, PhraseSearch or
+            NgramSearch call sites), so the vulnerable code path is unreachable.
+
+            The fix ships in Marten 8.37.0, and Marten 8 reworked the projection
+            APIs. docs/roadmap/03-retarget-net10.md deliberately holds Marten at
+            7.31.1 because Stage 3 rewrites the projections anyway. Remove this
+            suppression when Marten is upgraded.
+        -->
+        <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-vmw2-qwm8-x84c" />
+    </ItemGroup>
+
+</Project>

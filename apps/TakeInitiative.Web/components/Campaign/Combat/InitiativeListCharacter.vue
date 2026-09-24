@@ -19,7 +19,7 @@
                 ">
                 <section
                     v-if="
-                        !combatStore.combatIsOpen &&
+                        !combatStore.combatIsStarted &&
                         isInitiativeCharacter(characterDto.character)
                     "
                     class="flex gap-2">
@@ -74,8 +74,8 @@
                                     combatStore.isEditableForUser(
                                         characterDto
                                     ) &&
-                                    (combatStore.combatIsOpen ||
-                                        combatStore.combatIsStarted),
+                                    (combatStore.combatIsStarted ||
+                                        combatStore.combatIsInitiativeRolled),
                             },
                         ]">
                         <FontAwesomeIcon

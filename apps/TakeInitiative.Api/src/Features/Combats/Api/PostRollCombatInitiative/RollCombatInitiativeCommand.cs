@@ -69,7 +69,7 @@ public class RollCombatInitiativeCommandHandler(IDocumentStore Store, IInitiativ
                 await session.SaveChangesAsync();
 
                 combat = await session.LoadAsync<Combat>(command.CombatId);
-                return combat;
+                return combat!;
             });
     }
 }

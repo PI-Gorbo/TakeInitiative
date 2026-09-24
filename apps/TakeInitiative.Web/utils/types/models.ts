@@ -230,9 +230,11 @@ export const draftCombatValidator = z
 export type PlannedCombat = z.infer<typeof draftCombatValidator>;
 
 // Combat
+// Mirrors TakeInitiative.Api.Features.Combats.CombatState. Keep the members and
+// their numeric values identical to the C# enum - the wire format is the raw int.
 export enum CombatState {
-    Open = 0,
-    Started = 1,
+    Started = 0,
+    InitiativeRolled = 1,
     Paused = 2,
     Finished = 3,
 }

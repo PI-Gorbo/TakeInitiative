@@ -1,6 +1,6 @@
 using FastEndpoints.Security;
 
-using GP.MartenIdentity;
+using TakeInitiative.Api.Identity;
 
 using Marten;
 using Marten.Events.Daemon.Resiliency;
@@ -29,8 +29,8 @@ public static class Bootstrap
             // Use system.text.json            
             opts.UseSystemTextJsonForSerialization();
 
-            opts.Schema.For<ApplicationUser>();
-            opts.Schema.For<ApplicationUserRole>();
+            // Registers the identity documents and enforces a unique index on NormalizedEmail.
+            opts.RegisterIdentityModels<ApplicationUser, ApplicationUserRole>();
             
             opts.Schema.For<Campaign>()
                 .Index(x => x.CampaignName);
@@ -53,10 +53,15 @@ public static class Bootstrap
 
         }).AddAsyncDaemon(DaemonMode.Solo);
 
-        // if (IsDevelopment)
-        // {
-        //     martenOpts.ApplyAllDatabaseChangesOnStartup();
-        // }
+        if (IsDevelopment)
+        {
+            // Create the schema up front rather than leaning on Marten's implicit
+            // auto-create, which makes a fresh database's behaviour depend on which
+            // endpoint happens to be hit first. A schema conflict now fails startup
+            // loudly; `docker compose -p takeinitiative -f compose.dev.yml down -v`
+            // resets a stale local database.
+            martenOpts.ApplyAllDatabaseChangesOnStartup();
+        }
 
         martenOpts.UseLightweightSessions();
 
@@ -167,18 +172,40 @@ public static class Bootstrap
                 var pythonConfig = configuration.GetValue<string>("PythonDLL") ?? throw new InvalidConfigurationException("There is no configuration value for PythonDLL. Please set a value.");
                 if (pythonConfig == "null")
                 {
-                    // /usr/lib/python3.11/config-3.11-x86_64-linux-gnu/libpython3.11.so
+                    // e.g. /usr/lib/python3.12/config-3.12-aarch64-linux-gnu/libpython3.12.so
+                    // The container's Python version tracks its base image, so discover it
+                    // rather than hardcoding one. Removed wholesale in roadmap step 11.
                     Log.Information("Identified PythonDLL path as null and attempting to identify .so location...");
-                    var configName = new DirectoryInfo("/usr/lib/python3.11")
-                        .EnumerateDirectories("config-3.11-*")
-                        .First();
-
-                    pythonConfig = configName.FullName + "/libpython3.11.so";
+                    pythonConfig = (
+                        from libDir in new DirectoryInfo("/usr/lib").EnumerateDirectories("python3.*")
+                        let version = libDir.Name["python".Length..]
+                        from configDir in libDir.EnumerateDirectories($"config-{version}-*")
+                        select Path.Combine(configDir.FullName, $"libpython{version}.so")
+                    ).First();
                     Log.Information($"Found! {pythonConfig}");
                 }
 
 
                 Runtime.PythonDLL = pythonConfig;
+
+                // PythonHome and PythonPath must both be set before Initialize();
+                // setting them afterwards silently does nothing. They are needed
+                // because the interpreter and the packages live in different
+                // prefixes locally - CPython finds its stdlib but not d20 without
+                // them. Both are optional so the container, which pip-installs into
+                // the system interpreter, keeps working unchanged.
+                var pythonHome = configuration.GetValue<string>("PythonHome");
+                if (!string.IsNullOrWhiteSpace(pythonHome))
+                {
+                    PythonEngine.PythonHome = pythonHome;
+                }
+
+                var pythonPath = configuration.GetValue<string>("PythonPath");
+                if (!string.IsNullOrWhiteSpace(pythonPath))
+                {
+                    PythonEngine.PythonPath = pythonPath;
+                }
+
                 PythonEngine.Initialize();
                 PythonEngine.BeginAllowThreads();
             }

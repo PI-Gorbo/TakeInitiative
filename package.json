@@ -1,25 +1,29 @@
 {
-  "name": "takeinitiative",
-  "version": "1.0.14",
-  "module": "index.ts",
-  "type": "module",
-  "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5.0.0"
-  },
-  "scripts": {
-    "setup": "bun i && cd ./apps/TakeInitiative.Web && bun i",
-    "api": "dotnet watch run --project apps/TakeInitiative.Api",
-    "web": "cd apps/TakeInitiative.Web/ && bun run dev",
-    "database": "docker start takedb || docker run -p 5432:5432 --name takedb -e POSTGRES_PASSWORD=postgres -d postgres",
-    "dev": "bun run database && concurrently --names api,web \"bun run api\" \"bun run web\""
-  },
-  "dependencies": {
-    "@effect/cli": "^0.63.9",
-    "@effect/platform-node": "^0.85.11",
-    "concurrently": "^9.1.2",
-    "effect": "^3.16.5"
-  }
+    "name": "takeinitiative",
+    "version": "1.0.14",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "___ SETUP ___": "",
+        "prepare": "husky",
+        "setup:env": "node scripts/setup-env.mjs",
+        "setup:python": "node scripts/setup-python.mjs",
+        "setup_environment": "(pnpm i) && (pnpm run setup:env) && (pnpm run setup:python) && (docker compose -p takeinitiative -f compose.dev.yml up -d postgres)",
+        "___ DEV ___": "",
+        "dev": "pnpm run setup_environment && (pnpm turbo run dev --ui tui)",
+        "api": "pnpm run setup_environment && (pnpm turbo watch dev --filter=@ti/api)",
+        "web": "pnpm run setup_environment && (pnpm turbo watch dev --filter=@ti/web)",
+        "___ UTILITY ___": "",
+        "build": "pnpm turbo run build",
+        "test": "pnpm turbo run test",
+        "sync:version": "node scripts/sync-version.mjs"
+    },
+    "devDependencies": {
+        "husky": "^9.1.7",
+        "turbo": "2.9.16"
+    },
+    "packageManager": "pnpm@10.33.0",
+    "volta": {
+        "node": "24.15.0"
+    }
 }

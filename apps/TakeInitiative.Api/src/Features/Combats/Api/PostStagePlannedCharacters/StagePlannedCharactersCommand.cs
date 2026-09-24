@@ -92,7 +92,7 @@ public class StagePlannedCharactersCommandHandler(IDocumentStore Store) : Comman
                 session.Events.Append(command.CombatId, @event);
                 await session.SaveChangesAsync();
 
-                return await session.LoadAsync<Combat>(command.CombatId);
+                return (await session.LoadAsync<Combat>(command.CombatId))!;
             });
     }
 }

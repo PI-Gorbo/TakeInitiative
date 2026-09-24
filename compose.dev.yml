@@ -1,57 +1,82 @@
-version: "3.9"
+# Full-stack compose for local development.
+#
+# `pnpm dev` starts ONLY the postgres service from this file and runs the API
+# and web natively. Use `docker compose -p takeinitiative -f compose.dev.yml
+# up -d --build` when you want everything in containers instead.
+#
+# Ports: postgres 7401, api 7402, web 7403.
 
 services:
     postgres:
-        image: postgres:latest
+        # Pinned, and matched to the image the Alba/Testcontainers suite uses
+        # (apps/TakeInitiative.Api.Tests/Scopes/Integration/*Fixture.cs), so dev
+        # and test run against the same major version. `postgres:latest` is now
+        # 18+, which moved its data directory and stopped mounting at
+        # /var/lib/postgresql/data.
+        image: postgres:15-alpine
         container_name: takedb
         ports:
-            - 7401:5432
+            - "7401:5432"
         volumes:
-            - "/dockerVolumes/take-initiative/postgresql:/var/lib/postgresql/data"
+            # A named volume rather than a host bind mount: portable across
+            # machines, and `docker compose down -v` resets it cleanly.
+            - takedb-data:/var/lib/postgresql/data
         environment:
             - POSTGRES_PASSWORD=postgres
             - POSTGRES_USER=postgres
             - POSTGRES_DB=postgres
         restart: always
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U postgres"]
+            interval: 10s
+            retries: 5
+            start_period: 10s
+            timeout: 5s
     api:
+        # Tagged rather than anonymous, so a built image is identifiable.
+        # `pnpm sync:version` writes TAKEINITIATIVE_VERSION into the root .env
+        # from package.json; without it the tag falls back to :latest.
+        image: takeinitiative-api:${TAKEINITIATIVE_VERSION:-latest}
         build:
             context: ./apps/TakeInitiative.Api/
         container_name: takeapi
+        depends_on:
+            postgres:
+                condition: service_healthy
         ports:
             - "7402:8080"
         environment:
             - "ConnectionStrings:TakeDB=User ID=postgres;Password=postgres;Host=postgres;Port=5432;Database=postgres;"
             - "CORS:MainApp=http://localhost:7403;https://localhost:7403"
-            - "CORS:AdminApp=http://localhost:7404;https://localhost:7404"
+            # There is no admin frontend in this repo; this only exists because
+            # Program.cs requires the key to be present.
+            - "CORS:AdminApp=http://localhost:3001;https://localhost:3001"
             - "AllowedHosts=localhost"
             - "CookieDomain=localhost"
         restart: always
-        # healthcheck:
-        #     test: curl --fail http://localhost:8080/heathz || exit 1
-        #     interval: 60s
-        #     retries: 5
-        #     start_period: 20s
-        #     timeout: 10s
+        healthcheck:
+            test: ["CMD-SHELL", "curl --fail http://localhost:8080/healthz || exit 1"]
+            interval: 30s
+            retries: 5
+            start_period: 30s
+            timeout: 10s
     web:
+        image: takeinitiative-web:${TAKEINITIATIVE_VERSION:-latest}
         build:
-            context: ./apps/TakeInitiative.Web/
-            dockerfile: ./dockerfile.Main
+            # The repo root, because pnpm needs the workspace lockfile.
+            context: .
+            dockerfile: apps/TakeInitiative.Web/Dockerfile
+            args:
+                # nuxt.config.ts reads these at BUILD time, so they have to be
+                # build args - setting them as container env vars does nothing.
+                API_URL: http://localhost:7402
+                WEB_URL: http://localhost:7403
         container_name: takeweb
+        depends_on:
+            - api
         ports:
             - "7403:3000"
-        environment:
-            - "NUXT_PUBLIC_AXIOS_BASE_URL=https://localhost:7402"
-            - "NUXT_PUBLIC_WEB_URL=http://localhost:7403"
         restart: always
-    admin:
-        build:
-            context: ./apps/TakeInitiative.Web/
-            dockerfile: ./dockerfile.Admin
-        container_name: takeadmin
-        ports:
-            - "7404:3000"
-        environment:
-            - "NUXT_PUBLIC_AXIOS_BASE_URL=https://localhost:7402"
-            - "NUXT_PUBLIC_WEB_URL=http://localhost:7403"
-            - "NUXT_PUBLIC_ADMIN_URL=http://localhost:7404"
-        restart: always
+
+volumes:
+    takedb-data:
