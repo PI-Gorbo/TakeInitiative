@@ -41,4 +41,8 @@
         <EmbeddedResource Include="Embedded/ConfirmationEmail.mjml" />
         <EmbeddedResource Include="Embedded/ResetPasswordEmail.mjml" />
     </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\packages\TakeInitiative.Dice\TakeInitiative.Dice.csproj" />
+    </ItemGroup>
 </Project>

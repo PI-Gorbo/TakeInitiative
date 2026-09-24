@@ -1,24 +1,18 @@
 using CSharpFunctionalExtensions;
-using Python.Runtime;
 
 namespace TakeInitiative.Utilities;
 
-public class DiceRoller : IDiceRoller
+/// <summary>Adapts <see cref="DiceLanguage"/> to the API's railway types.</summary>
+public class DiceRoller(Random random) : IDiceRoller
 {
-    public Result<DiceRoll> EvaluateRoll(string roll)
-    {
-        return Result.Try(() =>
-        {
-            using (Py.GIL())
-            {
-                dynamic d20 = Py.Import("d20");
-                var result = d20.roll(roll);
-                return new DiceRoll((int)result.total, roll, (string)result.result);
-                // return (int)result.total;
-            };
-        }, ex => $"Failed to evaluate dice roll, please check your syntax. {ex.Message}");
-    }
+    public Result<DiceRoll> EvaluateRoll(string roll) =>
+        DiceLanguage.Roll(roll, random).MapError(Describe);
 
-    public DiceRoll RollD20() => EvaluateRoll("1d20").Value;
+    public DiceRoll RollD20() => DiceLanguage.RollD20(random);
+
+    public Result Check(string roll) =>
+        DiceLanguage.Check(roll).MapError(Describe);
+
+    private static string Describe(DiceError[] errors) =>
+        string.Join("; ", errors.Select(e => e.Message));
 }
-

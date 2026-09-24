@@ -11,7 +11,7 @@ public class UnevaluatedCharacterInitiativeValidator : AbstractValidator<Unevalu
         RuleFor(x => x.Roll)
             .Custom((value, context) =>
                 diceRoller
-                    .EvaluateRoll(value)
+                    .Check(value)
                     .TapError(context.AddFailure)
         );
     }

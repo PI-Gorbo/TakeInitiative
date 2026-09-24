@@ -1,18 +1,17 @@
-# Create a layer to build the image.
-# Use the official .NET Core SDK as a parent image
+# Build context is the repo root (see compose.dev.yml), so the API can reference
+# packages/TakeInitiative.Dice. What gets sent is allowlisted in dockerfile.dockerignore.
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
-WORKDIR ./app
+WORKDIR /src
 
-# Copy the project file and restore any dependencies (use .csproj for the project name)
-# Copying from working directory into the layer.
-COPY *.csproj ./ 
-RUN dotnet restore
+# Project files first, so restore is cached until a dependency changes.
+COPY Directory.Build.props ./
+COPY packages/TakeInitiative.Dice/TakeInitiative.Dice.csproj packages/TakeInitiative.Dice/
+COPY apps/TakeInitiative.Api/TakeInitiative.Api.csproj apps/TakeInitiative.Api/
+RUN dotnet restore apps/TakeInitiative.Api/TakeInitiative.Api.csproj
 
-# Copy the rest of the application code
-COPY . ./
-
-# Publish the application
-RUN dotnet publish -c Release -o out
+COPY packages/TakeInitiative.Dice/ packages/TakeInitiative.Dice/
+COPY apps/TakeInitiative.Api/ apps/TakeInitiative.Api/
+RUN dotnet publish apps/TakeInitiative.Api/TakeInitiative.Api.csproj -c Release -o /app/out --no-restore
 
 # Now, from the published layer, we take the artifacts and place them into their own layer for running.
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime

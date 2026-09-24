@@ -38,7 +38,9 @@ services:
         # from package.json; without it the tag falls back to :latest.
         image: takeinitiative-api:${TAKEINITIATIVE_VERSION:-latest}
         build:
-            context: ./apps/TakeInitiative.Api/
+            # The repo root, so the API can reference packages/TakeInitiative.Dice.
+            context: .
+            dockerfile: apps/TakeInitiative.Api/dockerfile
         container_name: takeapi
         depends_on:
             postgres:
