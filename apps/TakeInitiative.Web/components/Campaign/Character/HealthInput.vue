@@ -17,6 +17,9 @@
                         The health fields support basic arithmetic including
                         grouping with brackets (), add (+), subtract (-),
                         multiply (*) and divide (/).
+                        <br />
+                        In roll mode, health is rolled when the character
+                        enters combat, e.g. `4d10 + 8` or `max(2d6, 5)`.
                     </template>
                 </TooltipWrapper>
                 <div>

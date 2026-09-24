@@ -10,11 +10,12 @@
                     <div class="w-[200px] text-wrap">
                         Initiative is rolled when the character enters combat.
                         The higher a character's initiative, the earlier they
-                        act in a round of combat. Supports fixed number, or a
-                        dice roll. >An example of a roll is '1d20 + 2d4 + 3'
-                        which sums one 20 sided dice, two 4 sided die and adds
-                        3. For Advantage, you can use `2d20kh1`, and
-                        disadvantage is `2d20kl1`
+                        act in a round of combat. Supports a fixed number, or a
+                        dice roll. An example of a roll is `1d20 + 2d4 + 3`,
+                        which sums one 20 sided die, two 4 sided dice and adds
+                        3. For advantage use `adv(1d20)`, and for disadvantage
+                        `dis(1d20)`. To keep the highest of several dice use
+                        `kh1(2d20)` (or `kl1` for the lowest).
                     </div>
                 </template>
             </TooltipWrapper>
