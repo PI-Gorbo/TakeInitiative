@@ -1,0 +1,7 @@
+{
+    "name": "@ti/dice",
+    "private": true,
+    "scripts": {
+        "build": "dotnet build"
+    }
+}
