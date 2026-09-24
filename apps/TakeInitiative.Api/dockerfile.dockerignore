@@ -1,6 +1,6 @@
 # The API image builds from the repo root so it can see packages/. BuildKit picks
 # this file up because it sits next to the dockerfile. Allowlist only what the
-# build needs; everything else (web, node_modules, .git, .venv) stays out.
+# build needs; everything else (web, node_modules, .git) stays out.
 *
 !Directory.Build.props
 !apps/TakeInitiative.Api/

@@ -1,6 +1,5 @@
 <template>
     <FontAwesomeIcon
-        v-bind="delegatedProps"
         :icon="props.isLoading ? faCircleNotch : props.icon"
         :class="{
             'fa-spin': props.isLoading,
@@ -13,14 +12,9 @@
         type FontAwesomeIconProps,
     } from "@fortawesome/vue-fontawesome";
 
-    const props = defineProps<
-        FontAwesomeIconProps & {
-            isLoading: boolean;
-        }
-    >();
-
-    const delegatedProps = computed(() => {
-        const { icon: _, ...delegated } = props;
-        return delegated;
-    });
+    // Other FontAwesomeIcon props fall through as attrs.
+    const props = defineProps<{
+        icon: FontAwesomeIconProps["icon"];
+        isLoading: boolean;
+    }>();
 </script>

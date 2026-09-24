@@ -7,6 +7,8 @@ for those combats.
 
 -   C# ASP.NET WebAPI for the backend
 -   Nuxt Frontend (BFF pattern)
+-   `packages/TakeInitiative.Dice` — the dice roll language (Parlot parser, type
+    checker, evaluator); see `docs/roadmap/08-dice-language-spec.md`
 -   pnpm workspace driven by Turborepo
 
 ## Requirements for local development
@@ -17,8 +19,7 @@ for those combats.
 3. `pnpm` 10 — `corepack enable` picks up the pinned version
 4. The `.NET 10 SDK`
 
-You do **not** need `make`, `bun`, or a manual Python install. `pnpm dev`
-installs the Python interpreter the dice roller embeds.
+You do **not** need `make`, `bun`, or Python.
 
 ## QuickStart
 
@@ -31,11 +32,8 @@ pnpm dev
 
 1. Install node dependencies.
 2. Create `apps/TakeInitiative.Web/.env` from `TEMPLATE.env` if it is missing.
-3. Install CPython 3.11 via `uv`, create `.venv`, install `d20`, and write the
-   resolved interpreter paths into the gitignored
-   `apps/TakeInitiative.Api/appsettings.Development.json`.
-4. Start Postgres in Docker.
-5. Run the API and the web app side by side in a Turborepo TUI.
+3. Start Postgres in Docker.
+4. Run the API and the web app side by side in a Turborepo TUI.
 
 | Service  | URL                     |
 | -------- | ----------------------- |
@@ -48,7 +46,8 @@ pnpm dev
 -   `pnpm api` — Postgres plus the API only
 -   `pnpm web` — Postgres plus the web app only
 -   `pnpm build` — build everything through turbo
--   `pnpm test` — run the API test suite (Alba + Testcontainers; needs Docker)
+-   `pnpm test` — run the dice language tests and the API test suite
+    (Alba + Testcontainers; needs Docker)
 
 ## Running everything in containers
 
