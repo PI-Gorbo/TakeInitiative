@@ -15,11 +15,12 @@
         "@fortawesome/free-regular-svg-icons": "^6.7.2",
         "@fortawesome/free-solid-svg-icons": "^6.7.2",
         "@fortawesome/vue-fontawesome": "^3.0.8",
+        "@internationalized/date": "^3.12.3",
         "@microsoft/signalr": "^8.0.7",
         "@nuxtjs/device": "3.2.4",
         "@nuxtjs/tailwindcss": "6.13.1",
         "@pinia/nuxt": "^0.10.1",
-        "@tanstack/vue-query": "^5.71.5",
+        "@tanstack/vue-query": "^5.103.2",
         "@tanstack/vue-table": "^8.21.2",
         "@vee-validate/zod": "^4.15.0",
         "@vueuse/core": "^13.3.0",
@@ -43,6 +44,7 @@
         "zod": "^3.24.2"
     },
     "devDependencies": {
+        "@types/node": "^22.20.4",
         "prettier": "^3.5.3",
         "tailwindcss": "3.4.19",
         "typescript": "^5.8.2"
