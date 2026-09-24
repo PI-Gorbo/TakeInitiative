@@ -21,6 +21,23 @@
             suppression when Marten is upgraded.
         -->
         <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-vmw2-qwm8-x84c" />
+
+        <!--
+            GHSA-rfx3-98h7-v3xp - Marten >= 7.0.0, <= 9.12.0: SQL injection through
+            unescaped string literals in the LINQ provider and tenant management.
+
+            Not exploitable here. The sinks are: a dictionary indexer key or
+            ContainsKey argument inside a Marten query, a runtime string constant
+            projected through Select, and tenant ids reaching projection teardown or
+            partition DDL. This codebase has no dictionary-keyed Marten filters (the
+            only indexers near LINQ run over in-memory lists), every Marten Select
+            projects plain members, it is single-tenant, and it serialises with
+            System.Text.Json, not Newtonsoft.
+
+            The fix ships in Marten 9.13.0, two majors up; same reasoning as above.
+            Remove this suppression when Marten is upgraded.
+        -->
+        <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-rfx3-98h7-v3xp" />
     </ItemGroup>
 
 </Project>
