@@ -37,7 +37,9 @@ player-first experiences: **combat**, **note taking**, **⌘K search** and
 | **Player character** | A Character entry claimed by a member. A member can claim several. | PC in the UI |
 | **Stats** | An optional stat line on a Character entry: initiative roll, max HP, AC. | — |
 | **Reference** | Rules content from outside the campaign (SRD, 5eTools) that ⌘K can find. It is never part of the wiki until it is added. | compendium, bestiary |
-| **Source** | An entry's link to where it came from (a reference item or a D&D Beyond sheet). | origin |
+| **Source** | Where an entry or session note came from: a reference item, a D&D Beyond sheet, or an imported Discord message. | origin |
+| **Suggestion** | A mention or entry proposed by a model. It has no effect until a member accepts it. | auto-tag, prediction |
+| **Import** | Bringing outside notes (e.g. a Discord export) in as session notes. | sync, migration |
 | **Combat** | One encounter. Status: `Draft`, `Active` or `Finished`. | planned/draft combat as a separate thing |
 | **Combatant** | One row in a combat. It can link to an entry. | Staged/Initiative/Planned character |
 | **Round / Turn / Condition** | As in 5e. A condition is a text label with an optional note. | — |
@@ -285,7 +287,8 @@ Combatant { Id, Name, EntryId?, OwnerMemberId?, Initiative?: int, Tiebreak: int,
   This supersedes Proposal 1 (one stream per campaign): it brought contention and
   async lag, and ordering by session plus timestamp is enough at this scale.
 - **Provenance:** correlation, causation and header metadata are on from day one.
-  Every event carries `Actor { MemberId }`, shaped so an `Llm` case can be added
+  Every event carries `Actor { MemberId }`, shaped so a `Model { name, version,
+  confidence }` case can be added (§11a)
   later.
 - **Read models:**
   - `SessionStream`: notes and combat cards per session.
@@ -361,9 +364,64 @@ sources appear under their own **REFERENCE** heading.
   it breaks, the button fails gracefully with an error and the link stays.
 - No live sync.
 
+## 11a. Post-MVP: automated categorisation and import
+
+**Goal:** make it cheap to bring in outside notes and links (the Discord channels
+first), and have them identified and categorised mostly automatically.
+
+**Model choice:** small **zero-shot entity extraction** models that run **in the
+browser**:
+- **GLiNER**: zero-shot named-entity recognition. You pass it labels at inference
+  time, so the labels are simply our kinds: `Character`, `Place`, `Faction`,
+  `Item`, `Event`. There's no training step and no custom label mapping.
+- **Laya**: named by the user as a second small in-browser candidate. Evaluate it
+  against GLiNER in step 23 before choosing.
+
+Running on the client keeps invariant 10 (no paid services) intact: no inference
+server and no API bill. The model is loaded lazily, only when someone opens
+suggestions or an import, so the normal app bundle stays small.
+
+**How it fits:**
+- **Suggestions, never facts.** The model produces **suggestions**: "this span
+  looks like a Place", or "this matches the existing entry @Phandalin". They are
+  shown in **Loose ends** and inline on the note ("✨ 3 suggestions"). Accepting
+  one records a normal mention by the member. The event's provenance also records
+  the model, its version and its confidence (the `Actor.Model` seam in §9). So:
+  - "Human-asserted only" is a filter, not a separate store.
+  - A bad model run can be reverted by model and version without touching
+    anything a human wrote.
+- **Matching before creating.** A detected span is first matched against entry
+  names and aliases, using the same trigram search as ⌘K. A new entry is proposed
+  only when nothing matches, which keeps duplicates down.
+- **Loose ends get smarter.** A session note with no mentions stops being just
+  "unlinked" and becomes "unlinked, 2 suggestions". Uncaptioned images still need
+  a human.
+
+**Discord import (and other sources):**
+```
+ Import ▸ Discord export (.json)  →  preview
+ ────────────────────────────────────────────────────────────────────
+ #notes   142 messages   → Sessions 1–9   (grouped by the 3-day gap rule)
+ #maps     23 images      → image notes, captions kept
+ #recaps    9 messages   → flagged as recaps
+ Authors: sam#1234 → Sam ✓   priya → Priya ✓   bot → skip
+ ✨ Suggestions: 61 mentions, 18 new entries (review before import ▸)
+ [ Import ]
+```
+- Uses the Discord **export file** only, with no bot and no API credentials.
+  Channels are mapped to note types: text notes, image notes, or recaps.
+- Messages are grouped into sessions with the same **3-day gap** rule, and the
+  preview shows exactly where each one will land.
+- Discord users are mapped to members, and unmapped authors are skipped. Each
+  imported note keeps a `Source` link back to its original message.
+- Imported notes default to `Everyone` visibility (they were already shared) and
+  are posted as the importing member, with `Source` preserving the original
+  author.
+- Links in the export are kept as markdown. Link previews are out of scope.
+
 ## 12. Out of scope for v1
 
-LLM auto-categorisation · typed relations · DM prep tools beyond Draft combats ·
+automated categorisation and import (§11a is post-MVP) · server-side LLMs · typed relations · DM prep tools beyond Draft combats ·
 integrations (§11 is post-MVP) · channels ·
 named-member visibility · custom entry kinds · map pins · real-time co-editing ·
 notifications · offline · migrating v1 data (v2 starts empty).
@@ -383,6 +441,8 @@ notifications · offline · migrating v1 data (v2 starts empty).
 | 20 | SRD reference | Bundled SRD 5.2 provider, stat-block card, + wiki with Stats |
 | 21 | 5eTools index | Preprocessing script, search-only provider, deep links; delete the Bestiary branches |
 | 22 | D&D Beyond link | Sheet URL on player characters, manual refresh of core stats |
+| 23 | In-browser suggestions | Evaluate GLiNER vs Laya; lazy-loaded model, suggestions in loose ends and on notes, `Actor.Model` provenance, revert by model version |
+| 24 | Discord import | Export-file importer, session grouping preview, author mapping, suggestions review |
 
 ---
 

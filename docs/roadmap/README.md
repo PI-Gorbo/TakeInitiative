@@ -90,13 +90,15 @@ Steps 08–11 ship as one stack of PRs (`gh stack`), one PR per step.
 | 18 | Combat v2 | `todo` | 15 | Simplified model, combatants from entries, per-combatant PlayersSee, combat card |
 | 19 | Connections + loose ends | `todo` | 15, 18 | Evidence panel, graph page, loose ends in the wiki and on sessions |
 
-**MVP line.** Everything below is post-MVP (design §11).
+**MVP line.** Everything below is post-MVP (design §11 and §11a).
 
 | # | Step | Status | Depends on | Goal |
 |---|---|---|---|---|
 | 20 | SRD reference | `todo` | 17 | Bundled SRD 5.2 provider, stat-block card, + wiki with Stats |
 | 21 | 5eTools index | `todo` | 20 | Preprocessing script, search-only provider, deep links; delete the Bestiary branches |
 | 22 | D&D Beyond link | `todo` | 15 | Sheet URL on player characters, manual refresh of core stats |
+| 23 | In-browser suggestions | `todo` | 15, 17 | Zero-shot extraction (GLiNER vs Laya) in the browser; suggestions, never facts |
+| 24 | Discord import | `todo` | 16, 23 | Import a Discord export into sessions, with suggested mentions to review |
 
 Step 12 is the design every later step must respect, and its
 [invariants](12-v2-design-session.md#10-invariants) are binding. Step files 13+
