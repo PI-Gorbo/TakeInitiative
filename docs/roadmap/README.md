@@ -81,15 +81,27 @@ Steps 08–11 ship as one stack of PRs (`gh stack`), one PR per step.
 
 | # | Step | Status | Depends on | Goal |
 |---|---|---|---|---|
-| 12 | [v2 design session](12-v2-design-session.md) | `todo` | Stage 2 | Agree design invariants **together** before any step files are written |
+| 12 | [v2 design](12-v2-design-session.md) | `done` | Stage 2 | Glossary, UX, combat simplification, architecture and invariants agreed |
+| 13 | v2 skeleton | `todo` | 12 | New branch. Campaign, members and roles, auth, OpenAPI type generation, PWA shell with three tabs |
+| 14 | Sessions + session notes | `todo` | 13 | Composer, markdown, visibility, filters, back-posting, gap prompt, live over SignalR |
+| 15 | Wiki + mentions | `todo` | 14 | `@` composer, entries, articles, timeline, promote, secret blocks, aliases, merge, edit access |
+| 16 | Images | `todo` | 14 | S3 blob store, image notes, captions, galleries, share target |
+| 17 | ⌘K search | `todo` | 15 | FTS plus trigram, visibility-aware, actions |
+| 18 | Combat v2 | `todo` | 15 | Simplified model, combatants from entries, per-combatant PlayersSee, combat card |
+| 19 | Connections + loose ends | `todo` | 15, 18 | Evidence panel, graph page, loose ends in the wiki and on sessions |
 
-**Stage 3 is deliberately not broken into steps.** Pre-writing it as executable
-work is exactly how this scope-creeps into something nobody wanted. Step 12 is an
-*agenda*, not a plan: it carries the design work already done, framed as proposals
-to argue with, and ends with an open-questions list and an empty Invariants
-section to fill in together.
+**MVP line.** Everything below is post-MVP (design §11).
 
-Only once those invariants are agreed do steps 13+ get written.
+| # | Step | Status | Depends on | Goal |
+|---|---|---|---|---|
+| 20 | SRD reference | `todo` | 17 | Bundled SRD 5.2 provider, stat-block card, + wiki with Stats |
+| 21 | 5eTools index | `todo` | 20 | Preprocessing script, search-only provider, deep links; delete the Bestiary branches |
+| 22 | D&D Beyond link | `todo` | 15 | Sheet URL on player characters, manual refresh of core stats |
+
+Step 12 is the design every later step must respect, and its
+[invariants](12-v2-design-session.md#10-invariants) are binding. Step files 13+
+are written **one at a time**, just before each one starts, so they reflect what
+the previous step actually taught us.
 
 ---
 
