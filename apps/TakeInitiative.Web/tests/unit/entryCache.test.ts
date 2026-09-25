@@ -38,6 +38,7 @@ function note(id: string, minute: number, text = `note ${id}`): SessionNote {
         visibility: "Everyone",
         isRecap: false,
         postedAt: `2026-09-01T19:${String(minute).padStart(2, "0")}:00Z`,
+        images: [],
         addedLater: false,
         editedAt: null,
         isHidden: false,

@@ -10,6 +10,7 @@ const note = (extra: Partial<SessionNote> = {}): SessionNote => ({
     visibility: "Everyone",
     isRecap: false,
     postedAt: "2026-09-20T19:00:00Z",
+    images: [],
     addedLater: false,
     editedAt: null,
     isHidden: false,

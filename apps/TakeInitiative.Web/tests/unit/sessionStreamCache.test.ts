@@ -37,6 +37,7 @@ function note(id: string, sessionNumber: number, minute: number, extra: Partial<
         visibility: "Everyone",
         isRecap: false,
         postedAt: `2026-09-${String(sessionNumber).padStart(2, "0")}T19:${String(minute).padStart(2, "0")}:00Z`,
+        images: [],
         addedLater: false,
         editedAt: null,
         isHidden: false,
