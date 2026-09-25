@@ -100,10 +100,6 @@
         @apply bg-background text-foreground;
     }
 
-    .w-page {
-        @apply w-full max-w-[1080px] sm:w-4/5;
-    }
-
     .w-page-slim {
         @apply w-full max-w-2xl sm:w-4/5;
     }
