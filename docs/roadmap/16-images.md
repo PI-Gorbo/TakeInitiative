@@ -120,11 +120,13 @@ Add each sub-step on top with `gh stack add v2/16a-blob-store` and so on.
 
 ### 16a. Blob store, upload and serve (API)
 
-1. **MinIO in dev** (`compose.dev.yml`). The Ripple image, pinned:
+1. **MinIO in dev** (`compose.dev.yml`), pinned. The plan was Ripple's image; 16a
+   uses `pgsty/minio:RELEASE.2026-08-04T00-00-00Z` because that one no longer pulls
+   (Notes, "16a, as built"):
 
    ```yaml
    minio:
-       image: quay.io/minio/minio:RELEASE.2025-07-18T21-56-31Z
+       image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
        container_name: takeminio
        command: server /data --console-address ":9001"
        ports: ["7404:9000", "7405:9001"]     # S3 API, console
@@ -604,8 +606,10 @@ Add each sub-step on top with `gh stack add v2/16a-blob-store` and so on.
   `WHEN_REQUIRED`, and keep `ForcePathStyle`. Integration tests run against MinIO,
   so a regression shows in CI.
 - **MinIO's images.** MinIO stopped publishing community Docker images in late
-  2025, and the pinned `quay.io` tag (Ripple's) still pulls. The app speaks only
-  S3, so replacing MinIO in dev (Garage, SeaweedFS) is a compose change. In
+  2025. By 16a, its `quay.io` and Docker Hub repositories no longer pull anonymously,
+  not even the tag Ripple pins, so dev and CI use `pgsty/minio`, a community build of
+  the same server (16a, as built). The app speaks only S3, so replacing MinIO in dev
+  (Garage, SeaweedFS, RustFS) is a change to compose and `MinioFixture.Image`. In
   production a self-hosted S3 server beside Postgres keeps invariant 10 plainly,
   and R2 (§9's example) also works through config alone.
 - **EXIF.** Phone photos carry GPS positions. Re-encoding drops all metadata after
@@ -644,6 +648,19 @@ Add each sub-step on top with `gh stack add v2/16a-blob-store` and so on.
     3.9.0, on the compose image), so the path-style and checksum settings are tested in
     CI with no workflow change. The fixtures also set `Images:SweepStartDelay` to a day:
     tests sweep by hand with `ImageSweeper.SweepOnce`.
+  - **Deviation: the MinIO image.** The plan pinned Ripple's
+    `quay.io/minio/minio:RELEASE.2025-07-18T21-56-31Z`. It ran locally only because it
+    was cached. CI's first run failed on the pull ("unauthorized: access to the
+    requested resource is not authorized"), and an anonymous registry check gives 401 for
+    every tag on both `quay.io/minio/minio` and Docker Hub's `minio/minio`. Compose and
+    `MinioFixture` now use `pgsty/minio:RELEASE.2026-08-04T00-00-00Z`, a maintained
+    community build of the same MinIO server (AGPLv3, like MinIO). It has the same
+    entrypoint, the same `MINIO_ROOT_*` variables and `mc`, so the healthcheck and
+    Testcontainers.Minio work unchanged. The ports and container name are as planned.
+    Ripple on a fresh machine has the same problem. **Local gotcha:** on this Mac,
+    `docker pull` and `docker manifest inspect` hang in the Docker Desktop credential
+    and Scout hooks. `DOCKER_CONFIG=<a dir with {}> DOCKER_HOST=unix://$HOME/.docker/run/docker.sock
+    docker pull …` works, and after that `docker compose up -d --pull never`.
   - **Packages.** `AWSSDK.S3` 4.0.103.4, `SkiaSharp` and
     `SkiaSharp.NativeAssets.Linux.NoDependencies` 4.152.1. A `docker build` of the API
     image has `runtimes/linux-*/native/libSkiaSharp.so` with every `ldd` dependency
@@ -711,6 +728,7 @@ Add each sub-step on top with `gh stack add v2/16a-blob-store` and so on.
       44/44, `pages15c` 24/24, `wiki15c` 64/64, `mentions15d` 56/56, `pages15d` 19/19,
       `articles15e` 35/35, `article15f` 64/64, `pages15f` 34/34, `merge15g` 63/63 and
       `pages15g` 23/23.
+    - The 417 tests and `16a.mjs` (47/47) were re-run on the `pgsty/minio` container.
     - Verify 2: `docker compose … up -d postgres minio` starts MinIO, the healthcheck
       (`mc ready local`) reports healthy, and the API logs "Blob store bucket
       takeinitiative is ready". The console on 7405 was not opened (no browser).
