@@ -46,7 +46,7 @@ public record SessionNote
             MentionedEntryIds = MentionParser.EntryIds(e.Text),
             Visibility = e.Visibility,
             IsRecap = e.IsRecap,
-            PostedAt = @event.Timestamp,
+            PostedAt = ToMicroseconds(@event.Timestamp),
             AddedLater = e.AddedLater,
         };
     }
@@ -69,4 +69,14 @@ public record SessionNote
         => this with { IsHidden = false, HiddenByMemberId = null, HiddenAt = null };
 
     public bool ShouldDelete(SessionNoteDeleted _) => true;
+
+    /// <summary>
+    /// <see cref="PostedAt"/> is kept at Postgres's precision (microseconds). Queries compare
+    /// and project it as a <c>timestamptz</c>, so a finer value (.NET ticks are 100 ns on
+    /// Linux) would differ from itself between the document and SQL: a timeline cursor could
+    /// skip a note, and a mention count's <c>lastMentionedAt</c> would not equal its note's
+    /// <c>postedAt</c>.
+    /// </summary>
+    private static DateTimeOffset ToMicroseconds(DateTimeOffset value)
+        => new(value.Ticks - value.Ticks % 10, value.Offset);
 }
