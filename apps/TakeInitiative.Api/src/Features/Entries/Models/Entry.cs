@@ -3,8 +3,8 @@ using Marten.Events;
 namespace TakeInitiative.Api.Features.Entries;
 
 /// <summary>
-/// Inline projection of an Entry stream (stream id = entry id). The article arrives in
-/// 15e, and merge, claim and stats in 15g. <see cref="Source"/> and <see cref="Links"/> are
+/// Inline projection of an Entry stream (stream id = entry id). The article is from 15e,
+/// and merge, claim and stats arrive in 15g. <see cref="Source"/> and <see cref="Links"/> are
 /// the §11 seams: declared now so steps 20–22 add events rather than a migration, never
 /// written in step 15 and left out of every response.
 /// </summary>
@@ -26,6 +26,18 @@ public record Entry
     public EntrySource? Source { get; init; }
     /// <summary>§11 seam. Always empty in step 15.</summary>
     public IReadOnlyList<EntryLink> Links { get; init; } = [];
+
+    /// <summary>
+    /// Every block, secret ones included. Never sent as is: reads go through
+    /// <see cref="ArticleView"/>, which keeps only the blocks the viewer can see.
+    /// </summary>
+    public Article Article { get; init; } = new();
+    /// <summary>
+    /// The entries any block mentions (<see cref="MentionParser.EntryIds"/> over the blocks in
+    /// order), for <see cref="MentionIndex"/>. It has a GIN index. Each block's own visibility
+    /// is applied when the index is read.
+    /// </summary>
+    public Guid[] ArticleMentionIds { get; init; } = [];
 
     public const int NameMaxLength = 100;
     public const int MaxAliases = 20;
@@ -63,6 +75,19 @@ public record Entry
 
     public Entry Apply(IEvent<EntryEditAccessChanged> @event)
         => this with { EditAccess = @event.Data.EditAccess, UpdatedAt = @event.Timestamp };
+
+    // Article events leave UpdatedAt alone. It is on the summary every member who can see
+    // the entry receives, so moving it on an edit inside a secret block would tell them that
+    // the secret exists (invariant 5).
+    public Entry Apply(EntryArticleEdited e) => WithBlocks(e.Blocks);
+
+    public Entry Apply(EntryQuotePromoted e) => WithBlocks([.. Article.Blocks, e.Block]);
+
+    private Entry WithBlocks(IReadOnlyList<ArticleBlock> blocks) => this with
+    {
+        Article = new Article { Blocks = blocks },
+        ArticleMentionIds = blocks.SelectMany(b => MentionParser.EntryIds(b.Text)).Distinct().ToArray(),
+    };
 }
 
 /// <summary>§11: a reference item, a D&amp;D Beyond sheet or an imported message. Unused in step 15.</summary>

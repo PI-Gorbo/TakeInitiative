@@ -97,6 +97,6 @@ public class PostEntry(IDocumentSession session, IHubContext<CampaignHub> hub) :
 
         var entry = (await session.LoadAsync<Entry>(entryId, ct))!;
         await hub.NotifyEntryUpserted(entry);
-        await SendAsync(EntryResponse.From(entry), cancellation: ct);
+        await SendAsync(EntryResponse.From(entry, member), cancellation: ct);
     }
 }

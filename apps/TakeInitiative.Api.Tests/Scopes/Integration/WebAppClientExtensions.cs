@@ -189,6 +189,46 @@ public static class WebAppClientExtensions
         return client.Get<EntryTimelineResponse>(url);
     }
 
+    // Articles, secret blocks and promote (step 15e).
+
+    /// <summary>One block of a <c>PUT article</c> body: an existing block's id, or null for a new one.</summary>
+    public record BlockEdit(Guid? Id, string Text, Visibility Visibility = Visibility.Everyone)
+    {
+        public static BlockEdit Keep(ArticleBlockResponse block) => new(block.Id, block.Text, block.Visibility);
+        public static BlockEdit Change(ArticleBlockResponse block, string text) => new(block.Id, text, block.Visibility);
+    }
+
+    public static object ArticleBody(string etag, IEnumerable<BlockEdit> blocks, params NewEntry[] newEntries) => new
+    {
+        etag,
+        blocks = blocks.Select(b => new { id = b.Id, text = b.Text, visibility = b.Visibility.ToString() }).ToArray(),
+        newEntries = NewEntriesBody(newEntries),
+    };
+
+    public static string ArticleUrl(Guid campaignId, Guid entryId) => $"/api/campaigns/{campaignId}/entries/{entryId}/article";
+
+    public static string QuotesUrl(Guid campaignId, Guid entryId) => $"/api/campaigns/{campaignId}/entries/{entryId}/quotes";
+
+    public static Task<Result<EntryResponse>> PutEntryArticle(
+        this IWebAppClient client, Guid campaignId, Guid entryId, string etag, IEnumerable<BlockEdit> blocks, params NewEntry[] newEntries)
+        => client.Put<object, EntryResponse>(ArticleBody(etag, blocks, newEntries), ArticleUrl(campaignId, entryId));
+
+    public static Task<Result<EntryQuoteResponse>> PostEntryQuote(this IWebAppClient client, Guid campaignId, Guid entryId, Guid noteId, string? text = null)
+        => client.Post<object, EntryQuoteResponse>(new { noteId, text }, QuotesUrl(campaignId, entryId));
+
+    /// <summary>Sends a request that should fail and returns its status and body, to check error keys and that nothing leaks.</summary>
+    public static async Task<(int Status, string Body)> Send(this IWebAppClient client, HttpMethod method, string url, object body)
+    {
+        var result = await client.AlbaHost.Scenario(_ =>
+        {
+            if (method == HttpMethod.Post) _.Post.Json(body).ToUrl(url);
+            else if (method == HttpMethod.Put) _.Put.Json(body).ToUrl(url);
+            else throw new NotSupportedException(method.ToString());
+            _.IgnoreStatusCode();
+        });
+        return (result.Context.Response.StatusCode, await result.ReadAsTextAsync());
+    }
+
     private static Task<Result<TResponse>> Get<TResponse>(this IWebAppClient client, string url)
         => Result.Try(async () =>
             {

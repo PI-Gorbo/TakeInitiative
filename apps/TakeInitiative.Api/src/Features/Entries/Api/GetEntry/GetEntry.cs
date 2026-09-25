@@ -24,6 +24,6 @@ public class GetEntry(IDocumentSession session) : Endpoint<GetEntryRequest, Entr
         var (_, member) = await this.RequireMember(session, req.CampaignId, userId, ct);
         var entry = await this.RequireVisibleEntry(session, req.CampaignId, req.EntryId, member, ct);
 
-        await SendAsync(EntryResponse.From(entry), cancellation: ct);
+        await SendAsync(EntryResponse.From(entry, member), cancellation: ct);
     }
 }

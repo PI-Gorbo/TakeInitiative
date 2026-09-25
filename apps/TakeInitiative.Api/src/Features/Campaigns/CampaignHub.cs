@@ -39,6 +39,9 @@ public static class CampaignHubMessages
     // Entries (step 15a). Entry messages go only to the entry's audience.
     public const string EntryUpserted = "entryUpserted";
     public const string EntryRemoved = "entryRemoved";
+
+    // Articles (step 15e): only to the members whose view of the article changed.
+    public const string EntryArticleChanged = "entryArticleChanged";
 }
 
 /// <summary>
