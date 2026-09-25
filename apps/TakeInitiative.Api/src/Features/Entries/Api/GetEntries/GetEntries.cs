@@ -16,16 +16,19 @@ public record GetEntriesResponse
 }
 
 /// <summary>
-/// An entry in the wiki's list, with how often and how recently the notes the caller can
-/// see mention it. The counts are per viewer and never pushed: a count over notes the
-/// viewer cannot see would reveal that they exist.
+/// An entry in the wiki's list, with how often the notes and article blocks the caller can
+/// see mention it, and how recently the notes do. The counts are per viewer and never
+/// pushed: a count over notes or blocks the viewer cannot see would reveal that they exist.
 /// </summary>
 public record EntryListItemResponse
 {
     public required EntrySummaryResponse Entry { get; init; }
-    /// <summary>How many notes the caller can see mention the entry. A note that mentions it twice counts once.</summary>
+    /// <summary>
+    /// How many notes and article blocks (15e) the caller can see mention the entry. A note or
+    /// block that mentions it twice counts once, and its own article does not count.
+    /// </summary>
     public required int MentionCount { get; init; }
-    /// <summary>When the latest of those notes was posted. Null when there are none.</summary>
+    /// <summary>When the latest of those notes was posted. Null when no note mentions it (blocks have no time).</summary>
     public DateTimeOffset? LastMentionedAt { get; init; }
 }
 
@@ -50,7 +53,7 @@ public class GetEntries(IDocumentSession session) : Endpoint<GetEntriesRequest, 
             .Where(EntryVisibility.VisibleTo(member))
             .OrderBy(e => e.Name)
             .ToListAsync(ct);
-        var counts = await MentionIndex.CountsFor(session, req.CampaignId, member, ct);
+        var counts = await MentionIndex.CountsFor(session, req.CampaignId, member, ct, entries);
 
         await SendAsync(new GetEntriesResponse
         {
