@@ -28,7 +28,9 @@ import { getEntriesRequest } from "~/utils/api/entry/getEntriesRequest";
 import { getEntryRequest } from "~/utils/api/entry/getEntryRequest";
 import { getEntryTimelineRequest } from "~/utils/api/entry/getEntryTimelineRequest";
 import { postEntryRequest } from "~/utils/api/entry/postEntryRequest";
+import { postEntryQuoteRequest } from "~/utils/api/entry/postEntryQuoteRequest";
 import { putEntryAliasesRequest } from "~/utils/api/entry/putEntryAliasesRequest";
+import { putEntryArticleRequest } from "~/utils/api/entry/putEntryArticleRequest";
 import { putEntryEditAccessRequest } from "~/utils/api/entry/putEntryEditAccessRequest";
 import { putEntryKindRequest } from "~/utils/api/entry/putEntryKindRequest";
 import { putEntryNameRequest } from "~/utils/api/entry/putEntryNameRequest";
@@ -80,6 +82,8 @@ export const useApi = () => {
             putAliases: putEntryAliasesRequest($axios),
             putVisibility: putEntryVisibilityRequest($axios),
             putEditAccess: putEntryEditAccessRequest($axios),
+            putArticle: putEntryArticleRequest($axios),
+            promote: postEntryQuoteRequest($axios),
         },
         admin: {
             getMaintenance: getMaintenanceRequest($axios),

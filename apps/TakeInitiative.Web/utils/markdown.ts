@@ -18,17 +18,27 @@ import { ENTRY_KIND_ICONS } from "./entries";
 export type NoteMarkdownEnv = {
     campaignId: string;
     resolve: (entryId: string) => { id: string; kind: EntryKind } | undefined;
+    /** An article block (15f): a document, so headings stay headings. */
+    document?: boolean;
 };
 
 /** A mention as the API's `MentionParser` reads it (15b). */
 export type NoteMention = { entryId: string; text: string };
 
-const md = new MarkdownIt({ html: false, linkify: true, breaks: true, typographer: false });
+const md = new MarkdownIt({
+    html: false,
+    linkify: true,
+    breaks: true,
+    typographer: false,
+});
 md.disable(["image"]);
 
-// A note is a chat line, not a document: headings render as bold paragraphs.
-md.renderer.rules.heading_open = () => "<p><strong>";
-md.renderer.rules.heading_close = () => "</strong></p>\n";
+// A note is a chat line, not a document: headings render as bold paragraphs. An
+// article is a document (15f's `document` option), so there they stay headings.
+md.renderer.rules.heading_open = (tokens, idx, options, env: Partial<NoteMarkdownEnv>, self) =>
+    env?.document ? self.renderToken(tokens, idx, options) : "<p><strong>";
+md.renderer.rules.heading_close = (tokens, idx, options, env: Partial<NoteMarkdownEnv>, self) =>
+    env?.document ? self.renderToken(tokens, idx, options) : "</strong></p>\n";
 
 // Links open in a new tab and pass nothing on.
 md.renderer.rules.link_open = (tokens, idx, options, _env, self) => {

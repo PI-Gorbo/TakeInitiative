@@ -4,6 +4,7 @@ import { toast } from "vue-sonner";
 import type { Campaign, EntrySummary, Role, Session, SessionNote } from "~/utils/api/types";
 import { getCampaignQueryKey, getCampaignsQueryKey } from "~/utils/queries/campaign";
 import {
+    applyEntryArticleChanged,
     applyEntryRemoved,
     applyEntrySummary,
     invalidateEntries,
@@ -18,11 +19,20 @@ import {
 import { dropPendingCopy, removeNote, upsertNote } from "~/utils/sessionStreamCache";
 
 // Payloads of `CampaignHubMessages` (the API's CampaignHub.cs and SessionHub.cs).
-type MemberRoleChangedMessage = { campaignId: string; memberId: string; role: Role };
+type MemberRoleChangedMessage = {
+    campaignId: string;
+    memberId: string;
+    role: Role;
+};
 type SessionNoteRemovedMessage = { noteId: string; sessionId: string };
-type SessionNoteHiddenMessage = { noteId: string; sessionId: string; byMemberId: string };
+type SessionNoteHiddenMessage = {
+    noteId: string;
+    sessionId: string;
+    byMemberId: string;
+};
 // Payloads of the entry messages (the API's EntryHub.cs).
 type EntryRemovedMessage = { entryId: string };
+type EntryArticleChangedMessage = { entryId: string };
 
 /**
  * Keeps the open campaign live over `CampaignHub`: joins the `campaign:{id}` group
@@ -57,7 +67,9 @@ export function useCampaignHub(campaignId: MaybeRefOrGetter<string | undefined>)
         const me = id ? queryClient.getQueryData<Campaign>(getCampaignQueryKey(id))?.currentMemberId : undefined;
         void refreshCampaign();
         // The caller's own role may have changed; the campaign list shows it.
-        void queryClient.invalidateQueries({ queryKey: getCampaignsQueryKey() });
+        void queryClient.invalidateQueries({
+            queryKey: getCampaignsQueryKey(),
+        });
         // A new role changes which notes the caller can see (DM notes, hidden notes).
         if (id && message?.memberId === me) {
             void invalidateSessionStreams(queryClient, id);
@@ -99,7 +111,9 @@ export function useCampaignHub(campaignId: MaybeRefOrGetter<string | undefined>)
     });
     connection.on("sessionNoteHidden", (_message: SessionNoteHiddenMessage) => {
         // Sent to the author only. The note itself arrives as an upsert with `isHidden`.
-        toast.info("A DM hid your note. You can still see it.", { duration: 6000 });
+        toast.info("A DM hid your note. You can still see it.", {
+            duration: 6000,
+        });
     });
 
     // Entry pushes (15a). `entryUpserted` is a bare summary: mention counts are per
@@ -111,6 +125,12 @@ export function useCampaignHub(campaignId: MaybeRefOrGetter<string | undefined>)
     connection.on("entryRemoved", ({ entryId }: EntryRemovedMessage) => {
         const id = joinedCampaignId.value;
         if (id) applyEntryRemoved(queryClient, id, entryId);
+    });
+
+    // Sent only to members whose view of the article changed (15e), with no content.
+    connection.on("entryArticleChanged", ({ entryId }: EntryArticleChangedMessage) => {
+        const id = joinedCampaignId.value;
+        if (id) applyEntryArticleChanged(queryClient, id, entryId);
     });
 
     connection.onreconnected(async () => {
