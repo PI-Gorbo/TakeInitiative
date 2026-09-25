@@ -18,7 +18,7 @@ PR, which sits on 13d (#199). Each PR leaves the app runnable:
 |---|---|---|---|---|
 | 14a | `v2/14a-session-model` | Session and note model | 13's app unchanged in the browser. The API has sessions and notes, and a new campaign has Session 1 | [x] |
 | 14b | `v2/14b-live-notes` | Visibility-aware push | The same, and note and session changes are pushed only to the groups allowed to see them | [x] |
-| 14c | `v2/14c-session-stream` | Stream (read and live) | The Campaign tab shows the session stream, live. Members and the join code move to a panel | [ ] |
+| 14c | `v2/14c-session-stream` | Stream (read and live) | The Campaign tab shows the session stream, live. Members and the join code move to a panel | [x] |
 | 14d | `v2/14d-composer` | Composer and note actions | Post, edit, delete, hide, history, back-posting and the gap prompt, on every screen size | [ ] |
 | 14e | `v2/14e-mobile-composer` | Mobile composer, commands, filters | The step's Verify passes | [ ] |
 
@@ -581,3 +581,65 @@ This PR adds the nouns the step puts into code and UI:
   - Each viewer's pushed cache matched a fresh `GET stream`.
 
   `schema.d.ts` did not change, because no HTTP contract changed.
+
+### Deviations and decisions in 14c
+
+- **Extra files beyond Files touched:** `utils/sessionDates.ts` (the divider date, note
+  times and the "added N days later" label), `vitest.config.ts`, `tests/unit/{markdown,
+  sessionStreamCache,sessionDates}.test.ts`, `vitest` as a dev dependency with a `test`
+  script, and a "Unit tests" step in `.github/workflows/testWeb.yml`. The tests import
+  what they use, because Nuxt's auto-imports do not exist under vitest.
+- **All eleven session and note endpoints are wired now** as `useApi().session`
+  (`list`, `start`, `putTitle`, `getStream`) and `useApi().note` (`post`, `get`, `put`,
+  `putVisibility`, `putHidden`, `delete`, `history`). 14d only adds queries and mutations.
+- **Query keys.** The stream is `["sessionStream", campaignId, filter]`, apart from
+  `["campaign", id]`, so a member joining does not refetch it. `updateSessionStreams`
+  (in `utils/queries/sessions.ts`) applies one cache function to every loaded filter of a
+  campaign, passing that filter and the caller's `currentMemberId`; the hub and 14d's
+  mutations both use it. `staleTime` is `Infinity`: pushes keep it fresh.
+- **The stream is refetched after every hub join**, not only after a reconnect. A stream
+  fetched before `Join` finished could miss a note pushed in between. It costs one extra
+  request when a campaign opens.
+- **`upsertSession` also turns the gap prompt off** on the newest page when a new
+  session becomes current, since an empty current session never suggests another (14a).
+- **Markdown.** Images are off (`![x](url)` renders as text): a note is text in 14, and
+  images in step 16 are uploads, not remote URLs that could track readers. The `@` seam
+  is a core rule, `entry_mentions`, that turns an `entry:` link into
+  `entry_mention_open` / `entry_mention_close` tokens and drops the `@` before it. Their
+  renderer rules output nothing, so the mention reads as its text. Step 15 replaces those
+  two renderer rules with the chip.
+- **Divider date.** The parts are ordered weekday, day, month in every locale
+  ("Sat 20 Sep"; en-GB's ICU data says "Sept"), with the year added when it is not this
+  year.
+- **Layout.** The members button sits in a slim row above the stream, where 14e's filter
+  chips go. `MembersPanel` is a bottom sheet on a phone and a side sheet from 768px, with
+  its own 44px close button instead of the shadcn one. The stream scrolls inside its own
+  container, so 14d's composer mounts below `<SessionStream>` in
+  `pages/app/campaigns/[campaignId]/index.vue`, outside the scroller.
+- **Hooks for 14d.** `SessionNoteCard` has an `actions` slot in its header and an
+  `id="note-{id}"` anchor for copy link. `SessionStream` exposes `scrollToBottom()`. Its own
+  new note scrolls into view; a note from someone else while scrolled up shows the "New
+  notes" pill. That covers any note new to the cache that did not come with an older
+  page, so an unhide or a visibility change the reader gains counts too.
+- **Filters in the stream.** `SessionStream` takes a `filter` prop (default `All`) and
+  already hides the divider of a session with no matching note, except the current one.
+  14e only passes the filter.
+- **Hide toast.** The app's `Toaster` defaults to 1 second, so the hide toast asks for 6.
+- **Verify, as run in 14c** (no browser; the UI was not looked at):
+  - `nuxi typecheck` is clean and `nuxt build` succeeds.
+  - `vitest` passes 33/33: the cache functions (18), markdown sanitising and the mention
+    seam (10), and the dates (5). Turning `html: true` on and removing the mention rule
+    failed 3 of them.
+  - Against the API on 5010 and `nuxt dev` on 3100, `stream14c.mjs` passed 111/111 checks.
+    It fetched the campaign routes and had Vite compile every new module. Then three
+    viewers (a DM and two players) loaded the stream page by page, as the infinite query
+    does, under `All`, `Recaps` and `Mine`, and applied the real hub pushes through
+    `utils/sessionStreamCache.ts`. After each step, every viewer's cache equalled a
+    fresh `GET stream` for every filter. The steps were: posts in every visibility, a
+    recap, edits (one un-recapped), hide (the toast went to the author only), unhide,
+    DM → Everyone → Me, a title change, Session 6 (only it current, gap prompt off), a
+    back-posted note (last in its session, added later), a note for an unloaded
+    session (ignored), deletes, and promoting a player (only they refetched, and they
+    then held the DM note).
+  - `smoke14a.mjs` passed 70/70, `hub14b.mjs` 28/28 and `pages13d.mjs` 19/19.
+
