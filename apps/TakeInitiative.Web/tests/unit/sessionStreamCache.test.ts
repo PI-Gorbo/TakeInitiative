@@ -1,11 +1,15 @@
 import { describe, expect, it } from "vitest";
-import type { Session, SessionNote, SessionStream } from "~/utils/api/types";
+import type { Session, SessionList, SessionNote, SessionStream } from "~/utils/api/types";
 import {
+    dropPendingCopy,
     flattenSessions,
+    isPendingNote,
+    newPendingNoteId,
     noteMatchesFilter,
     removeNote,
     upsertNote,
     upsertSession,
+    upsertSessionInList,
     type SessionStreamData,
 } from "~/utils/sessionStreamCache";
 
@@ -196,5 +200,73 @@ describe("noteMatchesFilter", () => {
         expect(noteMatchesFilter(recap, "Mine", undefined)).toBe(false);
         expect(noteMatchesFilter(recap, "Images", ME)).toBe(false);
         expect(noteMatchesFilter(recap, "Combats", ME)).toBe(false);
+    });
+});
+
+describe("optimistic notes (14d)", () => {
+    it("pending ids are recognisable and unique", () => {
+        const a = newPendingNoteId();
+        const b = newPendingNoteId();
+        expect(isPendingNote(a)).toBe(true);
+        expect(a).not.toBe(b);
+        expect(isPendingNote("0b6f5c1e-8a8b-4e36-9f5e-0c2f6a1d2b3c")).toBe(false);
+    });
+
+    it("a post shown optimistically and then answered leaves exactly one note", () => {
+        const temp = note(newPendingNoteId(), 4, 30, { authorMemberId: ME, text: "hello" });
+        const real = note("real", 4, 31, { authorMemberId: ME, text: "hello" });
+        const shown = upsertNote(stream(), temp, "All", ME);
+        const answered = upsertNote(removeNote(shown, temp.id), real, "All", ME);
+        expect(ids(answered, 4)).toEqual(["c", "real"]);
+        // The push for the same note is a no-op afterwards.
+        expect(upsertNote(answered, real, "All", ME)).toBe(answered);
+    });
+
+    it("a push that beats the POST's answer replaces the optimistic copy", () => {
+        const temp = note(newPendingNoteId(), 4, 30, { authorMemberId: ME, text: "hello" });
+        const real = note("real", 4, 31, { authorMemberId: ME, text: "hello" });
+        const shown = upsertNote(stream(), temp, "All", ME);
+        const pushed = upsertNote(dropPendingCopy(shown, real), real, "All", ME);
+        expect(ids(pushed, 4)).toEqual(["c", "real"]);
+        // Then the answer: removing the (gone) temp and upserting the same note changes nothing.
+        expect(upsertNote(removeNote(pushed, temp.id), real, "All", ME)).toBe(pushed);
+    });
+
+    it("dropPendingCopy leaves other people's and other text's pending notes alone", () => {
+        const temp = note(newPendingNoteId(), 4, 30, { authorMemberId: ME, text: "hello" });
+        const shown = upsertNote(stream(), temp, "All", ME);
+        expect(dropPendingCopy(shown, note("x", 4, 31, { authorMemberId: OTHER, text: "hello" }))).toBe(shown);
+        expect(dropPendingCopy(shown, note("x", 4, 31, { authorMemberId: ME, text: "other" }))).toBe(shown);
+    });
+});
+
+describe("upsertSessionInList", () => {
+    const list = (): SessionList => ({
+        sessions: [session(2, { isCurrent: true }), session(1)],
+        currentSessionId: "s2",
+        suggestNextSession: true,
+    });
+
+    it("adds a new current session first, clears the old current one and the gap prompt", () => {
+        const next = upsertSessionInList(list(), session(3, { isCurrent: true }))!;
+        expect(next.sessions.map((s) => [s.number, s.isCurrent])).toEqual([
+            [3, true],
+            [2, false],
+            [1, false],
+        ]);
+        expect(next.currentSessionId).toBe("s3");
+        expect(next.suggestNextSession).toBe(false);
+    });
+
+    it("replaces a renamed session in place and keeps the gap prompt", () => {
+        const next = upsertSessionInList(list(), session(1, { title: "Neverwinter" }))!;
+        expect(next.sessions[1].title).toBe("Neverwinter");
+        expect(next.suggestNextSession).toBe(true);
+    });
+
+    it("is a no-op for a repeated push, and for no data", () => {
+        const data = list();
+        expect(upsertSessionInList(data, session(2, { isCurrent: true }))).toBe(data);
+        expect(upsertSessionInList(undefined, session(3))).toBeUndefined();
     });
 });

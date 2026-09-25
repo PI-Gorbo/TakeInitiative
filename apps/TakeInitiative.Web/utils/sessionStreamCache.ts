@@ -7,9 +7,24 @@
 // function returns new objects for what it changes and the same object when nothing
 // changed, and treats a repeated push as a no-op, keyed by note or session id.
 import type { InfiniteData } from "@tanstack/vue-query";
-import type { Session, SessionNote, SessionStream, SessionStreamFilter, SessionStreamSession } from "./api/types";
+import type {
+    Session,
+    SessionList,
+    SessionNote,
+    SessionStream,
+    SessionStreamFilter,
+    SessionStreamSession,
+} from "./api/types";
 
 export type SessionStreamData = InfiniteData<SessionStream, unknown>;
+
+// Optimistic notes (14d's composer) carry a temporary id until the POST answers.
+// This file has no runtime imports so Node scripts can load it as it is.
+const PENDING_PREFIX = "pending-";
+export const newPendingNoteId = () =>
+    `${PENDING_PREFIX}${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
+/** Whether a note is the optimistic copy of a post still on its way. */
+export const isPendingNote = (noteId: string) => noteId.startsWith(PENDING_PREFIX);
 
 /**
  * Whether a note belongs in a stream loaded with `filter`. The server applies the
@@ -199,4 +214,42 @@ function sameSession(a: Session, b: Session): boolean {
         a.startedByMemberId === b.startedByMemberId &&
         a.isCurrent === b.isCurrent
     );
+}
+
+/**
+ * Adds or replaces a session in the `GET sessions` list (newest first) behind the
+ * composer's session picker. A new current session takes over `currentSessionId`
+ * and turns the gap prompt off, as `upsertSession` does for the stream.
+ */
+export function upsertSessionInList(data: SessionList | undefined, session: Session): SessionList | undefined {
+    if (!data) return data;
+    const existing = data.sessions.find((s) => s.id === session.id);
+    if (existing && sameSession(existing, session)) return data;
+
+    const others = data.sessions
+        .filter((s) => s.id !== session.id)
+        .map((s) => (session.isCurrent && s.isCurrent ? { ...s, isCurrent: false } : s));
+    const sessions = [...others, session].sort((a, b) => b.number - a.number);
+    const becameCurrent = session.isCurrent && data.currentSessionId !== session.id;
+    return {
+        sessions,
+        currentSessionId: session.isCurrent ? session.id : data.currentSessionId,
+        suggestNextSession: becameCurrent ? false : data.suggestNextSession,
+    };
+}
+
+/**
+ * Removes the caller's optimistic copy of a note that just arrived by push, before
+ * the POST answered: same author, session and text. The response then replaces
+ * nothing and upserts a note that is already there.
+ */
+export function dropPendingCopy(data: SessionStreamData | undefined, note: SessionNote): SessionStreamData | undefined {
+    if (!data) return data;
+    return mapSessions(data, (entry) => {
+        if (entry.session.id !== note.sessionId) return entry;
+        const index = entry.notes.findIndex(
+            (n) => isPendingNote(n.id) && n.authorMemberId === note.authorMemberId && n.text === note.text
+        );
+        return index === -1 ? entry : { ...entry, notes: entry.notes.filter((_, i) => i !== index) };
+    });
 }
