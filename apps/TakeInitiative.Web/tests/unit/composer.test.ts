@@ -21,6 +21,7 @@ import {
     toggleList,
     type TextEdit,
 } from "~/utils/composer";
+import type { Attachment } from "~/utils/images";
 
 const session = (number: number, extra: Partial<Session> = {}): Session => ({
     id: `s${number}`,
@@ -43,6 +44,7 @@ describe("composer state", () => {
             sessionId: null,
             visibility: "Everyone",
             isRecap: false,
+            attachments: [],
         });
     });
 
@@ -90,6 +92,51 @@ describe("composer state", () => {
             newEntries: [{ id, name: "Glasstaff", kind: "Character" }],
         });
         expect(buildPostBody({ ...state, newEntries: [] }, sessions)).not.toHaveProperty("newEntries");
+    });
+
+    it("sends imageIds in order, and allows no caption when there are images (16c)", () => {
+        const ready = (id: string): Attachment => ({
+            key: `k-${id}`,
+            status: "ready",
+            previewUrl: "",
+            progress: 1,
+            image: { id, width: 640, height: 480 },
+        });
+        const withImages = { ...initialComposerState("Map of the cave"), attachments: [ready("b"), ready("a")] };
+        expect(buildPostBody(withImages, sessions)).toEqual({
+            text: "Map of the cave",
+            visibility: "Everyone",
+            isRecap: false,
+            imageIds: ["b", "a"],
+        });
+        // Captionless: the text is empty.
+        expect(buildPostBody({ ...withImages, text: "  " }, sessions)).toEqual({
+            text: "",
+            visibility: "Everyone",
+            isRecap: false,
+            imageIds: ["b", "a"],
+        });
+        // No text and no images is still nothing to post.
+        expect(buildPostBody({ ...withImages, text: "", attachments: [] }, sessions)).toBeNull();
+    });
+
+    it("builds no body while an upload is still going or has failed (16c)", () => {
+        const base = initialComposerState("caption");
+        const uploading: Attachment = { key: "u", status: "uploading", previewUrl: "blob:x", progress: 0.4 };
+        const preparing: Attachment = { key: "p", status: "preparing", previewUrl: "blob:y", progress: 0 };
+        const failed: Attachment = { key: "f", status: "failed", previewUrl: "blob:z", progress: 0, error: "no" };
+        expect(buildPostBody({ ...base, attachments: [uploading] }, sessions)).toBeNull();
+        expect(buildPostBody({ ...base, attachments: [preparing] }, sessions)).toBeNull();
+        expect(buildPostBody({ ...base, attachments: [failed] }, sessions)).toBeNull();
+    });
+
+    it("draws the ready images on the optimistic note (16c)", () => {
+        const now = new Date("2026-09-25T20:00:00Z");
+        const body = { text: "", visibility: "Everyone" as const, isRecap: false };
+        const images = [{ id: "i1", width: 640, height: 480 }];
+        const note = optimisticNote({ tempId: "pending-1", body, session: sessions[0], authorMemberId: "me", now, images });
+        expect(note.images).toEqual(images);
+        expect(optimisticNote({ tempId: "pending-2", body, session: sessions[0], authorMemberId: "me", now }).images).toEqual([]);
     });
 
     it("builds an optimistic note that is added later when the session is not current", () => {
@@ -194,6 +241,35 @@ describe("draft", () => {
         saveDraft(storage, "c1", { text: "  ", links: {}, newEntries: [] });
         expect(storage.map.has(draftKey("c1"))).toBe(false);
         expect(loadDraft(storage, "c1").text).toBe("");
+    });
+
+    it("keeps the uploaded images in the draft, and not the ones still going up (16c)", () => {
+        const storage = memory();
+        const image = { id: "i1", width: 640, height: 480 };
+        const attachments: Attachment[] = [
+            { key: "a", status: "ready", previewUrl: "blob:a", progress: 1, image },
+            { key: "b", status: "uploading", previewUrl: "blob:b", progress: 0.5 },
+            { key: "c", status: "failed", previewUrl: "blob:c", progress: 0, error: "no" },
+        ];
+        saveDraft(storage, "c1", { text: "", links: {}, newEntries: [], attachments });
+        expect(JSON.parse(storage.map.get(draftKey("c1"))!)).toEqual({ text: "", links: {}, newEntries: [], images: [image] });
+        const loaded = loadDraft(storage, "c1");
+        expect(loaded.images).toEqual([image]);
+        // The draft's images come back as ready attachments, drawn from `thumb`.
+        expect(initialComposerState(loaded).attachments).toEqual([
+            { key: "image-i1", status: "ready", previewUrl: "", progress: 1, image },
+        ]);
+        // No text and no uploaded image: no draft.
+        saveDraft(storage, "c1", { text: "", links: {}, newEntries: [], attachments: attachments.slice(1) });
+        expect(storage.map.has(draftKey("c1"))).toBe(false);
+    });
+
+    it("loads a draft with malformed images, or none, as no images", () => {
+        const storage = memory();
+        storage.setItem(draftKey("c1"), JSON.stringify({ text: "x", links: {}, newEntries: [], images: [{ id: 3 }, "no"] }));
+        expect(loadDraft(storage, "c1")).toEqual({ text: "x", links: {}, newEntries: [], images: [] });
+        storage.setItem(draftKey("c1"), "a 14d draft");
+        expect(loadDraft(storage, "c1").images).toEqual([]);
     });
 
     it("survives storage that throws or is missing", () => {

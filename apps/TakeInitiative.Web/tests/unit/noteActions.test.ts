@@ -43,7 +43,18 @@ describe("noteActionsFor", () => {
         ).toEqual(["promote", "unhide", "copyLink"]);
     });
 
-    it("never offers hide on a Me note", () => {
+    it("offers no Promote on an image note with no caption (16c)", () => {
+        const captionless = note({ text: "", images: [{ id: "i", width: 1, height: 1 }] });
+        expect(noteActionsFor(captionless, { isAuthor: true, isDm: false })).toEqual([
+            "edit",
+            "visibility",
+            "copyLink",
+            "delete",
+        ]);
+        expect(noteActionsFor(note({ text: "a map", images: [{ id: "i", width: 1, height: 1 }] }), { isAuthor: false, isDm: false })).toContain("promote");
+    });
+
+        it("never offers hide on a Me note", () => {
         expect(
             noteActionsFor(note({ visibility: "Me" }), {
                 isAuthor: true,
