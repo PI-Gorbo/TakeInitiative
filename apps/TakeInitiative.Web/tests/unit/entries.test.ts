@@ -3,7 +3,6 @@ import type { EntryList, EntryListItem, EntrySummary } from "~/utils/api/types";
 import {
     ENTRY_ALIASES_MAX,
     ENTRY_KINDS,
-    aboutPrefill,
     addAlias,
     aliasesLabel,
     canChangeEntryAccess,
@@ -161,25 +160,6 @@ describe("mentionMarkup", () => {
             expect(markup.startsWith("@[")).toBe(true);
             expect(noteMentions(`We met ${markup} today.`)).toEqual([{ entryId: id, text: name }]);
         }
-    });
-});
-
-describe("aboutPrefill", () => {
-    const entry = { id: "0b7c5e1a-8f3d-4c2b-9a61-2d4e8f00a001", name: "Gundren", visibility: "Everyone" as const };
-    const mention = "@[Gundren](entry:0b7c5e1a-8f3d-4c2b-9a61-2d4e8f00a001) ";
-
-    it("starts the text with the mention", () => {
-        expect(aboutPrefill("", entry)).toEqual({ text: mention, visibility: undefined });
-        expect(aboutPrefill("  a draft", entry).text).toBe(`${mention}a draft`);
-    });
-
-    it("does not add the mention twice", () => {
-        expect(aboutPrefill(`${mention}more`, entry).text).toBe(`${mention}more`);
-    });
-
-    it("matches a DM or Me entry's visibility", () => {
-        expect(aboutPrefill("", { ...entry, visibility: "DM" }).visibility).toBe("DM");
-        expect(aboutPrefill("", { ...entry, visibility: "Me" }).visibility).toBe("Me");
     });
 });
 
