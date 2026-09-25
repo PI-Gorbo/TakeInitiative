@@ -38,7 +38,9 @@
                             current
                         </span>
                     </div>
-                    <SessionNoteMarkdown :text="version.text" />
+                    <SessionNoteMarkdown
+                        :campaignId="campaignId"
+                        :text="version.text" />
                 </li>
             </ol>
         </DialogContent>

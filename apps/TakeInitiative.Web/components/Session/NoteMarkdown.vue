@@ -4,14 +4,38 @@
     <!-- eslint-disable-next-line vue/no-v-html -->
     <div
         class="note-markdown break-words"
+        @click="onClick"
         v-html="html" />
 </template>
 
 <script setup lang="ts">
+    import { resolveEntry } from "~/utils/entries";
     import { renderNoteMarkdown } from "~/utils/markdown";
+    import { useEntryDirectory } from "~/utils/queries/entries";
 
-    const props = defineProps<{ text: string }>();
-    const html = computed(() => renderNoteMarkdown(props.text));
+    const props = defineProps<{ campaignId: string; text: string }>();
+
+    // Mention chips (15c): an id in the viewer's entry directory is a chip linking to
+    // the entry; any other id is its plain text.
+    const directory = useEntryDirectory(() => props.campaignId);
+    const html = computed(() =>
+        renderNoteMarkdown(props.text, {
+            campaignId: props.campaignId,
+            resolve: (entryId) => resolveEntry(directory.value, entryId),
+        })
+    );
+
+    // A chip is an app link: follow it client-side. A modified click keeps the
+    // browser's own behaviour (a new tab or window).
+    function onClick(event: MouseEvent) {
+        if (event.defaultPrevented || event.button !== 0) return;
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        const chip = (event.target as Element | null)?.closest?.("a.mention");
+        const href = chip?.getAttribute("href");
+        if (!href) return;
+        event.preventDefault();
+        void navigateTo(href);
+    }
 </script>
 
 <style scoped>
@@ -41,6 +65,27 @@
         color: hsl(var(--primary));
         text-decoration: underline;
         text-underline-offset: 2px;
+    }
+    /* The mention chip: its text, linking to the entry (glossary). */
+    .note-markdown :deep(a.mention) {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 0.2em;
+        border-radius: 0.375rem;
+        background: hsl(var(--gold) / 0.12);
+        padding: 0 0.35em;
+        color: hsl(var(--gold));
+        font-weight: 500;
+        text-decoration: none;
+        white-space: normal;
+    }
+    .note-markdown :deep(a.mention:hover),
+    .note-markdown :deep(a.mention:focus-visible) {
+        background: hsl(var(--gold) / 0.22);
+        text-decoration: underline;
+    }
+    .note-markdown :deep(.mention-icon) {
+        font-size: 0.85em;
     }
     .note-markdown :deep(blockquote) {
         border-left: 3px solid hsl(var(--border));

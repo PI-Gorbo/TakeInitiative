@@ -13,6 +13,14 @@
             !editing && '[-webkit-touch-callout:none] [@media(pointer:coarse)]:select-none',
         ]">
         <header class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm">
+            <!-- On a timeline (15c): the session number, linking to the note in the stream. -->
+            <NuxtLink
+                v-if="timeline"
+                :to="noteHref"
+                class="-my-2 flex min-h-11 items-center rounded font-semibold text-gold hover:underline md:min-h-0"
+                :aria-label="`Session ${timeline.sessionNumber}: open this note in the session stream`">
+                S{{ timeline.sessionNumber }}
+            </NuxtLink>
             <span
                 v-if="note.isRecap"
                 class="text-xs font-semibold tracking-wide text-gold"
@@ -23,7 +31,7 @@
                 :datetime="note.postedAt"
                 :title="formatNoteDateTime(note.postedAt)"
                 class="text-xs text-muted-foreground">
-                {{ formatNoteTime(note.postedAt) }}
+                {{ timeline ? formatSessionDate(note.postedAt) : formatNoteTime(note.postedAt) }}
             </time>
             <span
                 v-if="note.visibility !== 'Everyone'"
@@ -38,9 +46,9 @@
                 (edited)
             </span>
             <span
-                v-if="note.addedLater"
+                v-if="note.addedLater && session"
                 class="text-xs italic text-muted-foreground">
-                {{ addedLaterLabel(session.startedAt, note.postedAt) }}
+                {{ addedLaterLabel(session!.startedAt, note.postedAt) }}
             </span>
             <span
                 v-if="note.isHidden"
@@ -62,7 +70,7 @@
                 :actions="actions"
                 :run="run">
                 <SessionNoteActions
-                    v-if="!editing"
+                    v-if="!editing && actions.length > 0"
                     :note="note"
                     :actions="actions"
                     @select="run" />
@@ -76,6 +84,7 @@
             @cancel="editing = false" />
         <SessionNoteMarkdown
             v-else
+            :campaignId="campaignId"
             :text="note.text"
             :class="(note.isHidden || pending) && 'opacity-60'" />
 
@@ -118,14 +127,14 @@
     import { toast } from "vue-sonner";
     import { apiErrorMessage } from "~/utils/apiErrorParser";
     import type { Session, SessionNote, Visibility } from "~/utils/api/types";
-    import { noteActionsFor, noteLink, type NoteAction } from "~/utils/noteActions";
+    import { NOTE_LINK_PARAM, noteActionsFor, noteLink, type NoteAction } from "~/utils/noteActions";
     import {
         deleteNoteMutation,
         putNoteHiddenMutation,
         putNoteMutation,
         putNoteVisibilityMutation,
     } from "~/utils/queries/sessions";
-    import { addedLaterLabel, formatNoteDateTime, formatNoteTime } from "~/utils/sessionDates";
+    import { addedLaterLabel, formatNoteDateTime, formatNoteTime, formatSessionDate } from "~/utils/sessionDates";
     import { isPendingNote } from "~/utils/sessionStreamCache";
 
     const emit = defineEmits<{
@@ -136,7 +145,14 @@
     const props = defineProps<{
         campaignId: string;
         note: SessionNote;
-        session: Session;
+        /** The note's session, in the stream. */
+        session?: Session;
+        /**
+         * The compact variant on an entry's timeline (15c): the session number links to
+         * the note in the stream, the time shows its date, and the note is read-only
+         * here (15f adds Promote).
+         */
+        timeline?: { sessionNumber: number };
         authorName: string;
         /** The viewer's member id, to tell whether they wrote the note. */
         currentMemberId: string;
@@ -150,11 +166,16 @@
     );
 
     const pending = computed(() => isPendingNote(props.note.id));
+    const noteHref = computed(
+        () => `/app/campaigns/${encodeURIComponent(props.campaignId)}?${NOTE_LINK_PARAM}=${encodeURIComponent(props.note.id)}`
+    );
     const actions = computed(() =>
-        noteActionsFor(props.note, {
-            isAuthor: props.note.authorMemberId === props.currentMemberId,
-            isDm: props.isDm,
-        })
+        props.timeline
+            ? []
+            : noteActionsFor(props.note, {
+                  isAuthor: props.note.authorMemberId === props.currentMemberId,
+                  isDm: props.isDm,
+              })
     );
 
     const editing = ref(false);
