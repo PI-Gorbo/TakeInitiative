@@ -11,13 +11,15 @@ namespace TakeInitiative.Api.Features.Sessions;
 /// </summary>
 public static class SessionNoteAudience
 {
-    public static IReadOnlyList<string> Groups(SessionNote note, Guid campaignId) => note switch
-    {
-        { Visibility: Visibility.Everyone, IsHidden: false } => [CampaignGroups.Campaign(campaignId)],
-        { Visibility: Visibility.Everyone or Visibility.DM } =>
-            [CampaignGroups.Dms(campaignId), CampaignGroups.Member(note.AuthorMemberId)],
-        _ => [CampaignGroups.Member(note.AuthorMemberId)],
-    };
+    /// <summary>
+    /// The note's <see cref="Audience"/>, owned by its author. Hiding is the notes' own case:
+    /// a hidden <c>Everyone</c> note narrows to the DMs and its author.
+    /// </summary>
+    public static Audience Of(SessionNote note) => note is { Visibility: Visibility.Everyone, IsHidden: true }
+        ? Audience.Of(Visibility.DM, note.AuthorMemberId)
+        : Audience.Of(note.Visibility, note.AuthorMemberId);
+
+    public static IReadOnlyList<string> Groups(SessionNote note, Guid campaignId) => Of(note).Groups(campaignId);
 }
 
 /// <summary><c>sessionNoteRemoved</c>: drop this note. Sent only to groups that could see it.</summary>
