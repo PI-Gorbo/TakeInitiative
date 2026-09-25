@@ -24,7 +24,7 @@ PR, which sits on 14e (#205). Each PR leaves the app runnable:
 | 15d | `v2/15d-mention-composer` | `@` in the composer | `@` links or creates entries from the composer: a popover on desktop, the mention strip on a phone | [x] |
 | 15e | `v2/15e-articles-api` | Articles, secret blocks, promote (API) | The same in the browser. The API stores articles as blocks, redacts secret blocks per viewer and promotes quotes | [x] |
 | 15f | `v2/15f-article-editor` | Article editor and promote (web) | Articles are shown and edited, with 🔒 and `@`. Promote works from the stream, the timeline and the long-press sheet | [x] |
-| 15g | `v2/15g-merge-claim-stats` | Merge, claim, stats, history | The step's Verify passes | [ ] |
+| 15g | `v2/15g-merge-claim-stats` | Merge, claim, stats, history | The step's Verify passes | [x] |
 
 Images (galleries) are step 16, ⌘K search is step 17, combats on an entry are step
 18, and connections and loose ends are step 19. This step leaves a seam for each
@@ -112,6 +112,7 @@ Paths are relative to `apps/TakeInitiative.Api` (API), `apps/TakeInitiative.Api.
 - Web add `components/Wiki/{MergeDialog,ClaimControl,StatsEditor,EntryHistoryDialog}.vue`
 - Web modify `utils/entries.ts`, `utils/entryCache.ts`, `composables/useCampaignHub.ts`, `components/Wiki/EntryHeader.vue`, `pages/app/campaigns/[campaignId]/wiki/[entryId].vue`
 - Web `utils/api/schema.d.ts`: regenerated
+- As built, also: API `Api/GetEntryHistory` holds its response types (`EntryHistoryResponse`, `EntryHistoryItem`, `EntryChange`, `EntryChangeType`); modify `EntryAccess.cs` (merged ids redirect), `EntryVisibility.cs` (`Listed`), `ArticleView.cs` (`ArticleHistory.Changed`), `GetEntries`, `GetEntryTimeline`, `PostEntry`, `PutEntryKind` (the claim lock), `PutEntryArticle` (writes to the resolved id), `Mentions/NewEntries.cs`, `CampaignHub.cs` (the two message names); add Tests `Scopes/Unit/EntryMergeTests.cs` and typed calls in `WebAppClientExtensions.cs`. Web: add `utils/api/entry/{postEntryMerge,putEntryClaim,putEntryStats,getEntryHistory}Request.ts` and `tests/unit/mergeClaimStats.test.ts`; modify `composables/useApi.ts`, `utils/api/types.ts`, `utils/article.ts` (`restoreEditorBlocks`), `utils/queries/entries.ts`, `components/Wiki/{ArticleEditor,EntryPicker,EntryListItem}.vue`, and the `EntrySummary` fixtures in five test files and `utils/mentions.ts` (`mergedFromIds: []`)
 
 ## Steps
 
@@ -985,3 +986,88 @@ This PR adds the nouns the step puts into code and UI:
     - **Header actions.** `EntryHeader.vue` has one `[Edit]` button that emits `edit`. Merge, claim and history belong beside it, as a menu or buttons. `ClaimControl` and `StatsEditor` fit under the header.
     - **Restore.** Build the version's blocks with `toEditorBlocks`, then save with `articleSaveBody(currentEtag, …)` through `putEntryArticleMutation`. A version's block ids that no longer exist would be a 400 `errors.blocks`, so send those blocks without an id (new blocks the restorer owns). Hidden blocks survive through the server's merge. Opening `WikiArticleEditor` on the restored blocks would need a `blocks` prop. Today it starts from `entry.article`.
     - **The hub.** `applyEntryArticleChanged` is in `utils/queries/entries.ts`, next to where `entryMerged` goes. `entryHref(campaignId, entryId)` builds entry links. `EntryPicker` and `promoteTargets` are ready for `MergeDialog`, which should drop the Create row.
+- **15g, as built** (PR on `v2/15g-merge-claim-stats`):
+  - **Model.** `Entry` gains `MergedIntoId?`, `MergedFromIds[]`, `ClaimedByMemberId?` and `Stats?` (`Stats { InitiativeRoll?, MaxHp?, Ac? }`, `Stats.Of` trims and turns all-blank into null), and `MentionIds()` = its id plus `MergedFromIds`. Events: `EntryMerged { Actor, IntoEntryId }`, `EntryAbsorbed { Actor, FromEntryId, FromName, FromAliases, FromBlocks, FromMergedIds, HeadingBlockId, FromClaimedByMemberId?, Stats? }`, `EntryClaimed { Actor, MemberId }`, `EntryUnclaimed { Actor }`, `EntryStatsChanged { Actor, Stats? }`. `EntryAbsorbed` carries the heading's block id, so replaying the target's stream alone rebuilds it.
+  - **Merge** (`POST …/entries/{entryId}/merge`, `PostEntryMerge`; the rules are pure in `Models/EntryMerge.cs`).
+    - The caller must see and edit both (404, then 403). The merged entry into itself is a 400.
+    - Either one already merged is a 409 with `errors.merged`. Both streams are appended with `FetchForWriting`, so a racing write to either one is also a 409 with `errors.merged` ("try again").
+    - The guard (`EntryMerge.RevealsNothing`) is a 409 with `errors.visibility`: "Some people who can see "Iarno" cannot see "Glasstaff". Change visibility first." `EntryMergeTests` checks it against the read rule for all 81 pairs of visibility × creator.
+    - A claimed entry into a non-Character, or into another member's player character, is a 409 with `errors.claim`.
+    - **Addition:** a merge that would give the target more than 20 aliases is a 409 with `errors.aliases`, so `PUT aliases`, which checks the whole list, still works afterwards.
+    - The target's projection:
+      - adds the merged name and aliases through `NormalizeAliases`;
+      - appends the heading block and then the merged blocks. Each block keeps its id, owner and visibility;
+      - adds the merged id and its `MergedFromIds` to `MergedFromIds`;
+      - takes the claim when the target has none.
+    - **Deviations:**
+      - The heading "Merged from Gundren" is an ordinary block owned by the actor, and it is added **even when the merged article is empty**. If it were added only when there were blocks, a player who saw a heading with nothing under it would learn that the merged entry had secret blocks.
+      - **Stats move too** (`EntryMerge.AdoptedStats`), when the target has none and moving them shows them to nobody new. So an NPC's DM-only stats never land on a claimed target.
+    - Pushes, in order (`NotifyEntryMerged`): `entryRemoved` to the groups that could see the merged entry but not the target, then `entryMerged { fromEntryId, intoEntryId }` and the target's `entryUpserted` to the target's audience.
+    - **The redirect is everywhere, not only on `GET`.** `EntryAccess.RequireVisibleEntry` follows `MergedIntoId`, up to 32 hops, and applies the read rule to the target. So a read, a timeline, the history, a PUT or a promote to an old id acts on the target. A stale page or picker therefore still works. `PutEntryArticle` now writes to the resolved id. The merge endpoint alone loads without following (`followMerge: false`).
+    - Every list and name check leaves merged entries out: `EntryVisibility.Listed(campaignId, viewer)` is used by `GET entries`, the duplicate-name checks of `POST entries` and `newEntries`, and both `MentionIndex` queries. Otherwise a merged entry's blocks, which now also live in the target, would count twice.
+  - **Mentions** (invariant 6). The timeline asks `MentionIndex` for `entry.MentionIds()`, and `BlocksMentioning` treats a merged id as the article's own entry. `CountsFor` maps each merged id to its live target (`MentionIndex.MergeTargets`) before grouping, so a note that mentions both entries counts once.
+  - **Claim** (`PUT …/claim { memberId? }`, `PutEntryClaim`).
+    - Only a Character can be claimed (409 `errors.kind`).
+    - A player can claim only for themselves (403 otherwise), and a character someone else has claimed is a 409 with `errors.memberId`. Only the claimer and the DMs can unclaim (403 otherwise).
+    - A DM can assign or reassign to any member. **Addition:** the member must be able to see the entry (400 `errors.memberId`, as for someone who is not a member), since a player character its player cannot open would be useless.
+    - The same claim appends nothing.
+    - `PutEntryKind` refuses to move a claimed entry away from Character (409 `errors.kind`).
+    - Pushes: `entryUpserted`, then `entryStatsChanged` to the members whose readable stats changed.
+  - **Stats** (`PUT …/stats { initiativeRoll?, maxHp?, ac? }`, `PutEntryStats`).
+    - The validator runs both expressions through `IDiceRoller.Check`, resolved in the validator, and reports the dice language's message under `errors.initiativeRoll` or `errors.maxHp`. An expression is at most 100 characters, and `ac` is 0–99.
+    - Only a Character has stats (409 `errors.kind`). Writing is `EntryStats.CanWrite` (403 otherwise).
+    - `EntryResponse.stats` is `EntryStats.For(entry, viewer)`: absent for a player on an unclaimed entry, the same as no stats.
+    - `EntryStatsChanged` leaves `updatedAt` alone. That is the article's side-channel rule: a player's summary would otherwise move when a DM edits a monster.
+    - `entryStatsChanged { entryId }` (no content) goes to `member:{id}` for each member whose `EntryStats.For` changed. An NPC's edit pings only the DMs, and a claim pings the players who can now read the stats.
+    - **Deviation:** a Character with stats that changes kind keeps them stored, but they are not sent until it is a Character again.
+    - **The test fixtures fake `IDiceRoller`.** `StatsTests` and `EntryHistoryTests` point the fake's `Check` at the real `DiceRoller`.
+  - **History** (`GET …/history`, `GetEntryHistory`).
+    - The response is `{ items: { at, actorMemberId, change }[] }`. `change` is `EntryChange`, a tagged union flattened into one record: `type` (`EntryChangeType`: `Created`, `Renamed`, `KindChanged`, `AliasAdded`, `AliasRemoved`, `VisibilityChanged`, `EditAccessChanged`, `ArticleEdited`, `QuotePromoted`, `Merged`, `Claimed`, `Unclaimed`, `StatsChanged`) says which of `name`, `kind`, `alias`, `visibility`, `editAccess`, `blocks`, `mergedEntryId`, `memberId` and `stats` are set. A flat record keeps the generated types simple.
+    - Every article version (edit, promote, merge) goes through `ArticleHistory.Changed`, the by-position form of 15e's `ArticleHistory.For`. It keeps only the visible blocks and drops a version that changed nothing the viewer sees.
+    - A stats change is shown only if the viewer could read the stats at that point in the stream (the kind and the claim are replayed).
+    - **Deviation (interpretation):** "`EntryAbsorbed` shows the merged entry's name only if the viewer can see the target." History is served only to people who can see the target (an old id redirects there), and they can already read the name, since it is an alias and the heading's text. So the name is always shown. By the guard, everyone who could see the target when the merge happened could also see the merged entry.
+  - **Web.**
+    - **Directory.** `entryDirectory` maps every `mergedFromIds` id to its target (a live id wins), so `resolveEntry`, chips, `@` and the reveal check follow merges with no other change.
+    - **Cache.** `entryCache.applyMerge` drops the merged entry and adds its ids to the target, idempotently. `applyEntryMerged` and `applyEntryStatsChanged` in `utils/queries/entries.ts` handle the two new pushes in `useCampaignHub`. `applyEntryResponse` now *replaces* the loaded entry, so stats the caller may no longer read do not linger.
+    - **Pure rules** in `utils/entries.ts`: `canClaimEntry`, `canUnclaimEntry`, `canAssignClaim`, `canReadStats`, `canWriteStats`, `parseStatsForm`, `statsLabel`, `entryVisibleTo`, `mergeRevealsNothing`, `mergeLosers`, `mergeProblem` (mirrors the API's four refusals, so the dialog explains before the request), `describeChange`, `isArticleVersion` and `currentVersionIndex`. `addAlias` takes an optional limit.
+    - **Components.**
+      - `EntryHeader` gains a ⋯ menu beside Edit, with History for everyone and "Merge into…" for editors, and a "Sam's character" badge. `EntryListItem` marks "Player character".
+      - `ClaimControl` and `StatsEditor` sit under the header. A DM gets a member select, limited to members who can see the entry. Stats on an unclaimed Character are labelled "🔒 DMs only".
+      - `MergeDialog` uses `EntryPicker` with the new `noCreate` and `excludeId`. It lists what moves, shows `mergeProblem` as an alert with Merge disabled, warns "🔒 Players will no longer see Gundren" (`mergeLosers`), then navigates to the target.
+      - `EntryHistoryDialog` lists the changes newest first, with each article version in a `<details>` drawn by `WikiArticle`.
+    - **Restore.**
+      - "Restore this version" (editors, not on the current version) opens `WikiArticleEditor` with the new `restore` prop. The editor builds its blocks with `restoreEditorBlocks` and keeps the current article as its base, so the etag is the current one and Save is an ordinary save.
+      - `restoreEditorBlocks` keeps the id, owner and quote of each block that still exists. It takes the old visibility only where the viewer may change it. A block that is gone becomes a new block the viewer owns, with no id, so the save is never a 400. **Known edge:** a gone quote comes back as its text only, and a gone 🔒 DM block written by someone else comes back owned by the restorer.
+    - **The merged URL.** When the loaded entry's id differs from the route's, the page replaces the URL with the target's and keeps the query.
+  - **Verify, as run in 15g** (no browser, so the dialogs, the ⋯ menu, the docked editor after a restore, and everything in Verify 2 on a phone were not seen):
+    - `dotnet test` passes 379/379 on two runs. That is the 271 from 15f plus:
+      - `EntryMergeTests` 84 (unit);
+      - `MergeTests` 7;
+      - `ClaimTests` 4;
+      - `StatsTests` 8;
+      - `EntryHistoryTests` 5.
+    - `nuxi typecheck` is clean, `nuxt build` succeeds, and `vitest` passes 263/263: the 249 from 15f plus `mergeClaimStats` 14. `schema.d.ts` is regenerated.
+    - `merge15g.mjs` passed 63/63 against the API on 5010, with a DM and two players on a real `CampaignHub`. It is driven through the web's own `entries.ts`, `entryCache.ts`, `article.ts` and `markdown.ts`, and covers Verify 2.11, 2.12 and the history part of 2.8:
+      - the merge: pushes, each viewer's push-fed list equal to `GET entries`, the redirect, both notes on the timeline, the counts, the old chip linking to the target and reading "Gundren", and the DM secret absent from the players' reads, pushes and history;
+      - the guard both ways, with the web's `mergeProblem` and `mergeLosers`, and the old id a 404 once the target is hidden;
+      - claim and stats: the dice 400, the 403s and 409s, and `entryStatsChanged` reaching `D--` for an NPC and `-PQ` for a claim;
+      - a restore through `restoreEditorBlocks` that keeps the DM's secret.
+    - `pages15g.mjs` passed 23/23 against `nuxt dev`.
+    - The earlier scripts pass: `smoke14a`, `hub14b`, `stream14c` 111/111, `composer14d` 142/142, `filters14e` 233/233, `pages13d`, `entries15a`, `mentions15b` 44/44, `wiki15c` 64/64, `mentions15d` 56/56, `pages15c` 24/24, `pages15d` 19/19, `article15f` 64/64 and `pages15f` 34/34. `articles15e` 35/35 passed on three of four runs. The other run failed its first "no `entryUpserted`" check: the script's own entry-creation push arrived late. The API sends no `entryUpserted` for an article edit (`ArticleTests` checks this).
+    - Verify 3: every `entry_*` row in the dev database's `mt_events` has a `correlation_id` and an `Actor`, including the new `entry_merged`, `entry_absorbed`, `entry_claimed` and `entry_stats_changed`. `MergeTests` checks that `entry_merged` and `entry_absorbed` share a correlation id.
+- **Step 15 is `done`** in the README: every part of Verify that runs without a browser passed (Verify 1, with CI green on #205–#213, and Verify 3), and Verify 2 is covered at the API level by the scripts above. The hand checks below are still owed.
+- **Left to check by hand** (Verify 2 needs three browser profiles at 390 × 844, A the owner and DM, B and C Players; items marked 📱 need a real phone, iOS Safari and Android Chrome, installed as a PWA):
+  1. B types `We met @Gund` in the composer. The popover (desktop) or the mention strip above the keyboard (📱) offers Create "Gundren". B picks it, chooses Character with the kind chips (Tab cycles the kind on desktop), and posts. A and C see a Gundren chip at once, without reloading. The Wiki tab lists "Gundren · Character · 1 mention".
+  2. A posts a `/dm` note that creates `@Glasstaff`. C's wiki has no Glasstaff, and opening `/wiki/<its id>` as C shows "That entry is not there, or you cannot see it."
+  3. A posts an Everyone note mentioning Glasstaff. The reveal dialog appears. A picks "Post without revealing". C sees the note with "Glasstaff" as plain text, not a link.
+  4. On Gundren's page, A's timeline has both notes and C's has one. "Add a note about Gundren…" opens the composer with the mention and the caret after it, and the Wiki tab stays highlighted on the entry page.
+  5. B renames Gundren to "Gundren Rockseeker". The old notes still read "Gundren" and their chips open the renamed entry.
+  6. B adds the alias "Rockseeker". `@Rock` suggests "Gundren Rockseeker · aka Rockseeker".
+  7. On desktop, A selects part of B's note. "Add to wiki" appears under the selection, and promoting it adds a quote that links back to the note ("— B, Session N ↗"). 📱 C long-presses a note, picks Promote to wiki, and lands in the article editor at the new quote, with the docked toolbar above the keyboard and the tab bar hidden. C trims the quote and saves.
+  8. A adds a 🔒 DM secret block (🔒 with a selection splits the block). B and C never see it, and their History dialog shows no version for that edit. C edits and saves the article, and A's secret is still there, in the same place.
+  9. B and C open the article editor together. The first save wins. The second gets "This article changed while you were editing" or, on saving, the conflict dialog with Copy, and Reload re-applies cleanly.
+  10. B sets Gundren to Only me. C's Edit and "Merge into…" disappear, and A can still edit.
+  11. C creates "Gundren" again. A opens its ⋯ menu, picks "Merge into…", and chooses Gundren Rockseeker. The preview lists what moves, and A merges. Every open page of the old entry (A's, B's and C's) changes to Gundren Rockseeker's URL. C's old chip now opens the target and still reads "Gundren". "Gundren" is an alias, and the timeline holds both entries' notes. Also try merging an Everyone entry into a 🔒 DM one: the dialog warns "Players will no longer see …". Try the reverse: the dialog shows "Change visibility first" and Merge is disabled.
+  12. B claims their Character ("Claim as my character"), and the wiki list marks it "Player character". B adds stats. A bad Max HP such as `3d` shows the dice message under the field, and `2d8+2` saves. C sees the stats but has no Edit. For an NPC that A gives stats, B and C see no Stats section at all, and A's shows "🔒 DMs only". A then assigns the NPC to C with the member select, and B's and C's open pages show its stats without reloading.
+  13. History: every change is listed with its actor. "Restore this version" on an older article version opens the editor with the banner. Saving brings the text back, and A's secret block survives.
+  14. 📱 On a phone: the ⋯ menu items, the merge and history dialogs (they sit at the top and stop above the keyboard), the stats fields (the numeric keyboard for AC), and the member select are all usable by touch, and no popup is covered by the keyboard (invariant 11).
