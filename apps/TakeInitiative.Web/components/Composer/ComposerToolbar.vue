@@ -6,41 +6,46 @@
         role="toolbar"
         aria-label="Formatting"
         class="flex items-center gap-0.5">
-        <template
-            v-for="item in items"
-            :key="item.id">
-            <span
-                v-if="item.separatorBefore"
-                class="mx-1 h-6 w-px bg-border"
-                aria-hidden="true" />
-            <button
-                type="button"
-                :title="item.shortcut ? `${item.label} (${item.shortcut})` : item.label"
-                :aria-label="item.label"
-                :aria-pressed="item.pressed === undefined ? undefined : item.pressed"
-                :disabled="item.disabled"
-                :class="[
-                    'flex h-11 min-w-11 items-center justify-center gap-1 rounded-md px-2 text-sm transition-colors disabled:opacity-50 md:h-8 md:min-w-8',
-                    item.pressed
-                        ? 'bg-gold/15 text-gold'
-                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                ]"
-                @mousedown.prevent
-                @click="item.run()">
-                <component
-                    :is="item.icon"
-                    v-if="item.icon"
-                    class="size-4"
-                    aria-hidden="true" />
+        <!-- The items scroll sideways when a narrow phone cannot fit them all, so ➤
+             always stays in view. On a phone they sit edge to edge: each is 44 px. -->
+        <div class="flex min-w-0 flex-1 items-center overflow-x-auto [scrollbar-width:none] md:gap-0.5">
+            <template
+                v-for="item in items"
+                :key="item.id">
                 <span
-                    v-if="item.text"
-                    aria-hidden="true"
-                    >{{ item.text }}</span
-                >
-            </button>
-        </template>
+                    v-if="item.separatorBefore"
+                    class="mx-1 h-6 w-px shrink-0 bg-border"
+                    aria-hidden="true" />
+                <button
+                    type="button"
+                    :title="item.shortcut ? `${item.label} (${item.shortcut})` : item.label"
+                    :aria-label="item.label"
+                    :aria-pressed="item.pressed === undefined ? undefined : item.pressed"
+                    :disabled="item.disabled"
+                    :class="[
+                        'flex h-11 min-w-11 shrink-0 items-center justify-center gap-1 rounded-md px-2 text-sm transition-colors disabled:opacity-50 md:h-8 md:min-w-8',
+                        item.pressed
+                            ? 'bg-gold/15 text-gold'
+                            : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                    ]"
+                    @mousedown.prevent
+                    @click="item.run()">
+                    <component
+                        :is="item.icon"
+                        v-if="item.icon"
+                        class="size-4"
+                        aria-hidden="true" />
+                    <!-- With an icon, the text goes on the narrowest phones so 📷 (16e) fits. -->
+                    <span
+                        v-if="item.text"
+                        aria-hidden="true"
+                        :class="item.icon && 'max-[399.98px]:hidden'"
+                        >{{ item.text }}</span
+                    >
+                </button>
+            </template>
+        </div>
 
-        <div class="flex-1" />
         <slot name="end" />
         <!-- `mousedown.prevent` here and on every item keeps the text box focused, so
              on a phone the keyboard stays up and the pinned composer does not move. -->

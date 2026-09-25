@@ -123,6 +123,20 @@ export default defineNuxtConfig({
                     purpose: "maskable",
                 },
             ],
+            // The Web Share Target (16e): images shared from the phone's share sheet.
+            // `public/sw.js` receives the POST; `server/routes/app/share-target.post.ts`
+            // answers it when no service worker was active yet.
+            share_target: {
+                action: "/app/share-target",
+                method: "POST",
+                enctype: "multipart/form-data",
+                params: {
+                    title: "title",
+                    text: "text",
+                    url: "url",
+                    files: [{ name: "images", accept: ["image/*"] }],
+                },
+            },
             launch_handler: {
                 client_mode: "focus-existing",
             },
