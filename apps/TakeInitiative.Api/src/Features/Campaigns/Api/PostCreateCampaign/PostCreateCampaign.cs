@@ -18,7 +18,7 @@ public class PostCreateCampaignRequestValidator : Validator<PostCreateCampaignRe
     }
 }
 
-/// <summary>Starts a Campaign stream. The caller becomes its owner and first member, as a DM.</summary>
+/// <summary>Starts a Campaign stream and Session 1. The caller becomes its owner and first member, as a DM.</summary>
 public class PostCreateCampaign(IDocumentSession session) : Endpoint<PostCreateCampaignRequest, CampaignResponse>
 {
     private const int JoinCodeAttempts = 5;
@@ -41,6 +41,10 @@ public class PostCreateCampaign(IDocumentSession session) : Endpoint<PostCreateC
             OwnerMemberId: ownerMemberId,
             OwnerUserId: userId,
             JoinCode: joinCode));
+        // A new campaign starts with Session 1. Both streams are saved together, so they
+        // share a transaction and a correlation id.
+        session.Events.StartStream<Session>(Guid.NewGuid(),
+            new SessionStarted(Actor.Member(ownerMemberId), campaignId, Number: 1));
         await session.SaveChangesAsync(ct);
 
         var campaign = await session.LoadAsync<Campaign>(campaignId, ct);
