@@ -142,7 +142,15 @@ const applyNote = (queryClient: QueryClient, campaignId: string, note: SessionNo
 
 export type PostNoteVariables = {
     campaignId: string;
-    body: { sessionId?: string; text: string; visibility: Visibility; isRecap: boolean; newEntries?: NewEntry[] };
+    body: {
+        sessionId?: string;
+        text: string;
+        visibility: Visibility;
+        isRecap: boolean;
+        newEntries?: NewEntry[];
+        /** Uploaded images, in order (16c). */
+        imageIds?: string[];
+    };
     /** Shown at once under a temporary id and replaced by the response. */
     optimistic?: SessionNote;
 };
@@ -211,7 +219,8 @@ export const getNoteHistoryQuery = (campaignId: RefOrGetter<string>, noteId: Ref
         queryFn: () => useApi().note.history({ campaignId: toValue(campaignId), noteId: toValue(noteId) }),
     });
 
-// Author: edit the text and the recap flag, creating any new entries (15d).
+// Author: edit the text and the recap flag, creating any new entries (15d). `imageIds`,
+// when sent, replaces the note's images (16c); left out, it keeps them.
 export const putNoteMutation = () => {
     const api = useApi();
     const queryClient = useQueryClient();

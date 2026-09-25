@@ -166,3 +166,16 @@ export function noteMentions(text: string): NoteMention[] {
 export function mentionedEntryIds(text: string): string[] {
     return [...new Set(noteMentions(text).map((m) => m.entryId))];
 }
+
+/**
+ * A note's text as one line of plain text (16c: an image's `alt`). Mentions read as
+ * their text, emphasis and links are dropped, and blocks and breaks become spaces.
+ */
+export function notePlainText(text: string): string {
+    const parts: string[] = [];
+    for (const block of md.parse(text, {})) {
+        if (block.type === "inline" && block.children) parts.push(plainText(block.children));
+        else if (block.type === "fence" || block.type === "code_block") parts.push(block.content.trim());
+    }
+    return parts.filter((p) => p.length > 0).join(" ").replace(/\s+/g, " ").trim();
+}

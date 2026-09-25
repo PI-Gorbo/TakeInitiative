@@ -28,16 +28,13 @@ export function filterToQuery(filter: SessionStreamFilter): string | undefined {
 }
 
 /**
- * What an empty stream says under a filter. Images and Combats have nothing to show
- * until images (step 16) and combats (step 18) join the stream.
+ * What an empty stream says under a filter. Combats have nothing to show until
+ * combats join the stream (step 18).
  */
 export function filterEmptyState(filter: SessionStreamFilter): { title: string; detail?: string } {
     switch (filter) {
         case "Images":
-            return {
-                title: "No images yet.",
-                detail: "Posting images to a session arrives in step 16. They will show here.",
-            };
+            return { title: "No images yet. Attach one with 🖼." };
         case "Combats":
             return {
                 title: "No combats yet.",

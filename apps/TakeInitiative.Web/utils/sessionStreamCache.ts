@@ -28,23 +28,25 @@ export const isPendingNote = (noteId: string) => noteId.startsWith(PENDING_PREFI
 
 /**
  * Whether a note belongs in a stream loaded with `filter`. The server applies the
- * same rule to reads (14a). In step 14 no note has images or is a combat, so `Text`
- * is every note and `Images` and `Combats` are none.
+ * same rule to reads (14a, 16b): `Text` is a note with no images and `Images` one with
+ * at least one. No note is a combat until step 18.
  */
 export function noteMatchesFilter(
-    note: Pick<SessionNote, "isRecap" | "authorMemberId">,
+    note: Pick<SessionNote, "isRecap" | "authorMemberId"> & { images?: readonly unknown[] | null },
     filter: SessionStreamFilter,
     currentMemberId: string | undefined
 ): boolean {
     switch (filter) {
         case "All":
-        case "Text":
             return true;
+        case "Text":
+            return (note.images?.length ?? 0) === 0;
+        case "Images":
+            return (note.images?.length ?? 0) > 0;
         case "Recaps":
             return note.isRecap;
         case "Mine":
             return !!currentMemberId && note.authorMemberId === currentMemberId;
-        case "Images":
         case "Combats":
             return false;
     }
@@ -201,8 +203,13 @@ function sameNote(a: SessionNote, b: SessionNote): boolean {
         a.addedLater === b.addedLater &&
         (a.editedAt ?? null) === (b.editedAt ?? null) &&
         a.isHidden === b.isHidden &&
-        (a.hiddenByMemberId ?? null) === (b.hiddenByMemberId ?? null)
+        (a.hiddenByMemberId ?? null) === (b.hiddenByMemberId ?? null) &&
+        sameImages(a.images ?? [], b.images ?? [])
     );
+}
+
+function sameImages(a: SessionNote["images"], b: SessionNote["images"]): boolean {
+    return a.length === b.length && a.every((image, i) => image.id === b[i].id);
 }
 
 function sameSession(a: Session, b: Session): boolean {
@@ -240,7 +247,8 @@ export function upsertSessionInList(data: SessionList | undefined, session: Sess
 
 /**
  * Removes the caller's optimistic copy of a note that just arrived by push, before
- * the POST answered: same author, session and text. The response then replaces
+ * the POST answered: same author, session, text and images (16c: two captionless
+ * image notes differ only by their images). The response then replaces
  * nothing and upserts a note that is already there.
  */
 export function dropPendingCopy(data: SessionStreamData | undefined, note: SessionNote): SessionStreamData | undefined {
@@ -248,7 +256,11 @@ export function dropPendingCopy(data: SessionStreamData | undefined, note: Sessi
     return mapSessions(data, (entry) => {
         if (entry.session.id !== note.sessionId) return entry;
         const index = entry.notes.findIndex(
-            (n) => isPendingNote(n.id) && n.authorMemberId === note.authorMemberId && n.text === note.text
+            (n) =>
+                isPendingNote(n.id) &&
+                n.authorMemberId === note.authorMemberId &&
+                n.text === note.text &&
+                sameImages(n.images ?? [], note.images ?? [])
         );
         return index === -1 ? entry : { ...entry, notes: entry.notes.filter((_, i) => i !== index) };
     });

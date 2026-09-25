@@ -2,7 +2,15 @@
 // these to the DOM, so they are unit tested without Nuxt. 14e's `/` commands change
 // the same `ComposerState` fields the pickers and the recap toggle do.
 import type { Component } from "vue";
-import type { Session, SessionNote, SessionStreamSession, Visibility } from "./api/types";
+import type { NoteImage, Session, SessionNote, SessionStreamSession, Visibility } from "./api/types";
+import {
+    attachmentsBusy,
+    attachmentsFailed,
+    attachmentsFromImages,
+    draftImages,
+    readyImages,
+    type Attachment,
+} from "./images";
 import { emptyMentionText, mentionBody, parseDraft, serializeDraft, type MentionText, type NewEntry } from "./mentions";
 import { isPendingNote } from "./sessionStreamCache";
 
@@ -31,14 +39,26 @@ export type ComposerState = MentionText & {
     sessionId: string | null;
     visibility: Visibility;
     isRecap: boolean;
+    /** The images being attached (16c), in order. */
+    attachments: Attachment[];
 };
 
-export const initialComposerState = (draft: MentionText | string = ""): ComposerState => ({
-    ...(typeof draft === "string" ? emptyMentionText(draft) : draft),
-    sessionId: null,
-    visibility: "Everyone",
-    isRecap: false,
-});
+/** A saved draft: the mention text plus its uploaded images (16c). */
+export type ComposerDraft = MentionText & { images: NoteImage[] };
+
+export const initialComposerState = (draft: Partial<ComposerDraft> & MentionText | string = ""): ComposerState => {
+    const text = typeof draft === "string" ? emptyMentionText(draft) : draft;
+    return {
+        text: text.text,
+        links: text.links,
+        newEntries: text.newEntries,
+        sessionId: null,
+        visibility: "Everyone",
+        isRecap: false,
+        // A draft's images are already uploaded; they draw from `thumb`.
+        attachments: attachmentsFromImages(typeof draft === "string" ? [] : (draft.images ?? [])),
+    };
+};
 
 /**
  * After a post: the text clears, and the session, visibility and recap toggle reset
@@ -65,6 +85,8 @@ export type PostBody = {
     visibility: Visibility;
     isRecap: boolean;
     newEntries?: NewEntry[];
+    /** The uploaded images, in order (16b). */
+    imageIds?: string[];
 };
 
 /**
@@ -72,19 +94,34 @@ export type PostBody = {
  * the post follows the current session if someone starts another meanwhile. The text
  * is the stored form (15d), and `newEntries` are the Creates it still mentions.
  */
-export function buildPostBody(state: ComposerState, sessions: readonly Session[]): PostBody | null {
-    const trimmed = postableText(state.text);
-    if (trimmed === null) return null;
-    const body = mentionBody(state, trimmed);
-    const text = postableText(body.text);
-    if (text === null) return null;
+export function buildPostBody(
+    state: MentionText & Pick<ComposerState, "sessionId" | "visibility" | "isRecap"> & { attachments?: Attachment[] },
+    sessions: readonly Session[]
+): PostBody | null {
+    // Images (16c): every attachment must be uploaded, and then the text may be empty.
+    const attachments = state.attachments ?? [];
+    if (attachmentsBusy(attachments) || attachmentsFailed(attachments)) return null;
+    const imageIds = readyImages(attachments).map((i) => i.id);
+
+    let text = "";
+    let newEntries: NewEntry[] = [];
+    if (state.text.trim() !== "" || imageIds.length === 0) {
+        const trimmed = postableText(state.text);
+        if (trimmed === null) return null;
+        const body = mentionBody(state, trimmed);
+        const stored = postableText(body.text);
+        if (stored === null) return null;
+        text = stored;
+        newEntries = body.newEntries;
+    }
     const target = state.sessionId ? sessions.find((s) => s.id === state.sessionId) : undefined;
     return {
         ...(target && !target.isCurrent ? { sessionId: target.id } : {}),
         text,
         visibility: state.visibility,
         isRecap: state.isRecap,
-        ...(body.newEntries.length > 0 ? { newEntries: body.newEntries } : {}),
+        ...(newEntries.length > 0 ? { newEntries } : {}),
+        ...(imageIds.length > 0 ? { imageIds } : {}),
     };
 }
 
@@ -96,6 +133,8 @@ export function optimisticNote(args: {
     session: Session;
     authorMemberId: string;
     now: Date;
+    /** The ready attachments' images (16c); their uploader may fetch them at once. */
+    images?: NoteImage[];
 }): SessionNote {
     return {
         id: args.tempId,
@@ -109,7 +148,7 @@ export function optimisticNote(args: {
         editedAt: null,
         isHidden: false,
         hiddenByMemberId: null,
-        images: [],
+        images: args.images ?? [],
     };
 }
 
@@ -212,22 +251,46 @@ export const draftKey = (campaignId: string) => `ti:composerDraft:${campaignId}`
 type DraftStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
 /**
- * The saved draft: its text, links and new entries (15d). An empty one when there is
- * none or storage is unavailable. A 14d draft, a plain string, still loads.
+ * The saved draft: its text, links and new entries (15d), and its uploaded images
+ * (16c). An empty one when there is none or storage is unavailable. A 14d draft, a
+ * plain string, still loads.
  */
-export function loadDraft(storage: DraftStorage | undefined, campaignId: string): MentionText {
+export function loadDraft(storage: DraftStorage | undefined, campaignId: string): ComposerDraft {
     try {
-        return parseDraft(storage?.getItem(draftKey(campaignId)));
+        const saved = storage?.getItem(draftKey(campaignId));
+        return { ...parseDraft(saved), images: savedImages(saved) };
     } catch {
-        return emptyMentionText();
+        return { ...emptyMentionText(), images: [] };
     }
 }
 
-/** Saves the draft; blank text removes it. Storage errors (private mode, quota) are ignored. */
-export function saveDraft(storage: DraftStorage | undefined, campaignId: string, draft: MentionText): void {
+function savedImages(saved: string | null | undefined): NoteImage[] {
+    if (!saved?.startsWith("{")) return [];
     try {
-        if (draft.text.trim().length === 0) storage?.removeItem(draftKey(campaignId));
-        else storage?.setItem(draftKey(campaignId), serializeDraft(draft));
+        return draftImages((JSON.parse(saved) as { images?: unknown }).images);
+    } catch {
+        return [];
+    }
+}
+
+/**
+ * Saves the draft: the text and the images that are uploaded (a draft never waits for
+ * an upload). Blank text and no images removes it. Storage errors (private mode,
+ * quota) are ignored.
+ */
+export function saveDraft(
+    storage: DraftStorage | undefined,
+    campaignId: string,
+    draft: MentionText & { attachments?: readonly Attachment[] }
+): void {
+    try {
+        const images = readyImages(draft.attachments ?? []);
+        if (draft.text.trim().length === 0 && images.length === 0) {
+            storage?.removeItem(draftKey(campaignId));
+            return;
+        }
+        const text = JSON.parse(serializeDraft({ text: draft.text, links: draft.links, newEntries: draft.newEntries }));
+        storage?.setItem(draftKey(campaignId), JSON.stringify(images.length > 0 ? { ...text, images } : text));
     } catch {
         // A draft is a convenience; losing it is fine.
     }
