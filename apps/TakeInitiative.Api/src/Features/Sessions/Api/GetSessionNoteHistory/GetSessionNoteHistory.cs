@@ -21,6 +21,11 @@ public record SessionNoteVersion
     public required string Text { get; init; }
     public required bool IsRecap { get; init; }
     public required DateTimeOffset At { get; init; }
+    /// <summary>
+    /// How many images the note had in this version (step 16b). Removed images are deleted for
+    /// real, so a past version names a count rather than showing them.
+    /// </summary>
+    public required int ImageCount { get; init; }
 }
 
 /// <summary>A note's edit history, read from its stream. Whoever can see the note can read it.</summary>
@@ -39,16 +44,24 @@ public class GetSessionNoteHistory(IDocumentSession session)
         var note = await this.RequireVisibleNote(session, req.CampaignId, req.NoteId, member, ct);
 
         var events = await session.Events.FetchStreamAsync(note.Id, token: ct);
-        var versions = events
-            .Select(e => e.Data switch
+        // An edit that left the images alone has none in its event: the count carries over.
+        var imageCount = 0;
+        var versions = new List<SessionNoteVersion>();
+        foreach (var e in events)
+        {
+            switch (e.Data)
             {
-                SessionNotePosted posted => new SessionNoteVersion { Text = posted.Text, IsRecap = posted.IsRecap, At = e.Timestamp },
-                SessionNoteEdited edited => new SessionNoteVersion { Text = edited.Text, IsRecap = edited.IsRecap, At = e.Timestamp },
-                _ => null,
-            })
-            .OfType<SessionNoteVersion>()
-            .ToArray();
+                case SessionNotePosted posted:
+                    imageCount = posted.Images?.Length ?? 0;
+                    versions.Add(new SessionNoteVersion { Text = posted.Text, IsRecap = posted.IsRecap, At = e.Timestamp, ImageCount = imageCount });
+                    break;
+                case SessionNoteEdited edited:
+                    imageCount = edited.Images?.Length ?? imageCount;
+                    versions.Add(new SessionNoteVersion { Text = edited.Text, IsRecap = edited.IsRecap, At = e.Timestamp, ImageCount = imageCount });
+                    break;
+            }
+        }
 
-        await SendAsync(new GetSessionNoteHistoryResponse { Versions = versions }, cancellation: ct);
+        await SendAsync(new GetSessionNoteHistoryResponse { Versions = [.. versions] }, cancellation: ct);
     }
 }
