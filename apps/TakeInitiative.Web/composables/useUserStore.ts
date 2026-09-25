@@ -4,7 +4,7 @@ import type { JoinCampaignRequest } from "../utils/api/campaign/joinCampaignRequ
 import type { GetUserResponse } from "../utils/api/user/getUserRequest";
 import type { LoginRequest } from "../utils/api/user/loginRequest";
 import type { SignUpRequest } from "../utils/api/user/signUpRequest";
-import type { Campaign } from "../utils/types/models";
+import type { Campaign } from "../utils/api/types";
 import { getUserQuery, getUserQueryKey } from "~/utils/queries/user";
 import { getCampaignsQuery, getCampaignsQueryKey } from "~/utils/queries/campaign";
 

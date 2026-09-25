@@ -1,13 +1,12 @@
 import type { AxiosInstance } from "axios";
-import { getUserResponseSchema, type GetUserResponse } from "./getUserRequest";
+import type { ApiRequestBody, ApiResponse } from "../types";
 
-export type ConfirmEmailRequest = {};
+export type ConfirmEmailRequest = ApiRequestBody<"PostConfirmEmail">;
+export type ConfirmEmailResponse = ApiResponse<"PostConfirmEmail">;
 export function postConfirmEmailRequest(axios: AxiosInstance) {
-    return async function (code: string): Promise<GetUserResponse> {
-        return axios
-            .post("/api/confirmEmail", {
-                ConfirmEmailToken: code,
-            })
-            .then((resp) => validateResponse(resp, getUserResponseSchema));
+    return async function (code: string): Promise<ConfirmEmailResponse> {
+        const request: ConfirmEmailRequest = { confirmEmailToken: code };
+        const response = await axios.post<ConfirmEmailResponse>("/api/confirmEmail", request);
+        return response.data;
     };
 }

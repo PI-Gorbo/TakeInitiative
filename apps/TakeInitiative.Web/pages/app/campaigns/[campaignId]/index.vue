@@ -45,7 +45,8 @@
         getCampaignQuery,
         putMemberRoleMutation,
     } from "~/utils/queries/campaign";
-    import { currentMember, type CampaignMember } from "~/utils/types/models";
+    import type { CampaignMember } from "~/utils/api/types";
+    import { currentMember } from "~/utils/campaign";
 
     const route = useRoute("app-campaigns-campaignId");
     const campaignQuery = useQuery(

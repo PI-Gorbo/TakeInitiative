@@ -1,24 +1,15 @@
-import { validateResponse } from "~/utils/apiErrorParser";
 import type { AxiosInstance } from "axios";
-import type { z } from "zod";
-import { campaignValidator, type Role } from "../../types/models";
+import type { ApiPathParams, ApiRequestBody, ApiResponse } from "../types";
 
 // Put Member Role (owner only)
-export type PutMemberRoleRequest = {
-    campaignId: string;
-    memberId: string;
-    role: Role;
-};
-export type PutMemberRoleResponse = z.infer<typeof campaignValidator>;
+export type PutMemberRoleRequest = ApiPathParams<"PutMemberRole"> & ApiRequestBody<"PutMemberRole">;
+export type PutMemberRoleResponse = ApiResponse<"PutMemberRole">;
 export function putMemberRoleRequest(axios: AxiosInstance) {
-    return async function (
-        request: PutMemberRoleRequest
-    ): Promise<PutMemberRoleResponse> {
-        return await axios
-            .put(
-                `/api/campaigns/${encodeURIComponent(request.campaignId)}/members/${encodeURIComponent(request.memberId)}/role`,
-                { role: request.role }
-            )
-            .then((response) => validateResponse(response, campaignValidator));
+    return async function ({ campaignId, memberId, ...body }: PutMemberRoleRequest): Promise<PutMemberRoleResponse> {
+        const response = await axios.put<PutMemberRoleResponse>(
+            `/api/campaigns/${encodeURIComponent(campaignId)}/members/${encodeURIComponent(memberId)}/role`,
+            body satisfies ApiRequestBody<"PutMemberRole">
+        );
+        return response.data;
     };
 }

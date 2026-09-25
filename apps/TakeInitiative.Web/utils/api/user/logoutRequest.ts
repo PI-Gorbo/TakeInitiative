@@ -1,7 +1,7 @@
-import type { AxiosInstance, AxiosResponse } from "axios";
+import type { AxiosInstance } from "axios";
 
 export function logoutRequest(axios: AxiosInstance) {
     return async function (): Promise<void> {
-        return await axios.post("/api/logout");
+        await axios.post("/api/logout");
     };
 }

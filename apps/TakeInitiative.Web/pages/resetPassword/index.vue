@@ -57,11 +57,9 @@
 <script setup lang="ts">
     import { useForm } from "vee-validate";
     import type { LocationQueryValue } from "vue-router";
-    import {
-        SendResetPasswordEmailRequestValidator,
-        type SendResetPasswordEmailRequest,
-    } from "~/utils/api/user/putSendResetPasswordRequest";
+    import type { SendResetPasswordEmailRequest } from "~/utils/api/user/putSendResetPasswordRequest";
     import { toTypedSchema } from "@vee-validate/zod";
+    import { z } from "zod";
     import { faMailForward } from "@fortawesome/free-solid-svg-icons";
     const redirectToPath = useRoute().query.redirectTo as LocationQueryValue;
     const state = reactive({
@@ -75,8 +73,13 @@
     });
 
     // Form Definition
+    const sendResetPasswordEmailFormSchema = z
+        .object({
+            email: z.string().email(),
+        })
+        .required();
     const { values, errors, defineField, validate } = useForm({
-        validationSchema: toTypedSchema(SendResetPasswordEmailRequestValidator),
+        validationSchema: toTypedSchema(sendResetPasswordEmailFormSchema),
     });
     const [email, emailInputProps] = defineField("email", {
         props: (_state) => ({
