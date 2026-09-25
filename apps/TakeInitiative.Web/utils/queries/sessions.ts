@@ -12,14 +12,24 @@ import type {
     SessionNote,
     SessionStream,
     SessionStreamFilter,
+    Gallery,
+    EntryList,
     Visibility,
 } from "~/utils/api/types";
+import { entryDirectory, resolveEntry } from "~/utils/entries";
+import { GALLERY_PAGE_SIZE, galleriesTouchedBy, type GalleryData, type TouchingNote } from "~/utils/gallery";
 import type { NewEntry } from "~/utils/mentions";
 import { pendingEntrySummary } from "~/utils/mentions";
 import type { SessionStreamData } from "~/utils/sessionStreamCache";
 import { removeNote, upsertNote, upsertSession, upsertSessionInList } from "~/utils/sessionStreamCache";
 import { getCampaignQueryKey } from "./campaign";
-import { addPendingEntries, getEntriesQueryKey, invalidateTimelinesTouchedBy, removePendingEntries } from "./entries";
+import {
+    addPendingEntries,
+    entryGalleriesKey,
+    getEntriesQueryKey,
+    invalidateTimelinesTouchedBy,
+    removePendingEntries,
+} from "./entries";
 import type { RefOrGetter } from "./utils";
 
 /** Sessions per page. The server allows 1–10. */
@@ -78,9 +88,85 @@ export function updateSessionStreams(
     }
 }
 
-/** Refetches every loaded stream of a campaign. */
+/** Refetches every loaded stream of a campaign, and its session galleries (16d). */
 export const invalidateSessionStreams = (queryClient: QueryClient, campaignId: string) =>
-    queryClient.invalidateQueries({ queryKey: sessionStreamsKey(campaignId) });
+    Promise.all([
+        queryClient.invalidateQueries({ queryKey: sessionStreamsKey(campaignId) }),
+        queryClient.invalidateQueries({ queryKey: sessionGalleriesKey(campaignId) }),
+    ]);
+
+// ── Galleries (16d) ──────────────────────────────────────────────────────────
+
+const sessionGalleriesKey = (campaignId: string) => ["sessionImages", campaignId];
+export const getSessionImagesQueryKey = (campaignId: MaybeRefOrGetter<string>, sessionId: MaybeRefOrGetter<string>) => [
+    "sessionImages",
+    campaignId,
+    sessionId,
+];
+
+/**
+ * A session's gallery: its image notes the viewer can see, newest page first. Read only
+ * while `enabled` (the sheet is open); a note push invalidates it
+ * (`invalidateGalleriesTouchedBy`).
+ */
+export const getSessionImagesQuery = (
+    campaignId: RefOrGetter<string>,
+    sessionId: RefOrGetter<string>,
+    enabled: RefOrGetter<boolean> = () => true
+) =>
+    infiniteQueryOptions({
+        queryKey: getSessionImagesQueryKey(campaignId, sessionId),
+        queryFn: ({ pageParam }) =>
+            useApi().image.sessionGallery({
+                campaignId: toValue(campaignId),
+                sessionId: toValue(sessionId),
+                before: pageParam,
+                take: GALLERY_PAGE_SIZE,
+            }),
+        initialPageParam: undefined as string | undefined,
+        getNextPageParam: (lastPage: Gallery) =>
+            lastPage.hasOlder && lastPage.items.length > 0 ? lastPage.items[0].note.postedAt : undefined,
+        enabled: () => !!toValue(enabled) && !!toValue(campaignId) && !!toValue(sessionId),
+        staleTime: Infinity,
+    });
+
+/**
+ * A note was posted, edited, moved or removed: refetch the loaded galleries it can
+ * change (`galleriesTouchedBy`), session and entry. Like timelines, nothing else is
+ * pushed: the note's own push reaches exactly its audience.
+ */
+export function invalidateGalleriesTouchedBy(queryClient: QueryClient, campaignId: string, note: TouchingNote) {
+    const cache = queryClient.getQueryCache();
+    const sessions = cache.findAll({ queryKey: sessionGalleriesKey(campaignId) });
+    const entries = cache.findAll({ queryKey: entryGalleriesKey(campaignId) });
+    const directory = entryDirectory(queryClient.getQueryData<EntryList>(getEntriesQueryKey(campaignId)));
+    const touched = galleriesTouchedBy(
+        note,
+        {
+            sessions: sessions.map((q) => ({ sessionId: String(q.queryKey[2]), data: q.state.data as GalleryData | undefined })),
+            entries: entries.map((q) => ({ entryId: String(q.queryKey[2]), data: q.state.data as GalleryData | undefined })),
+        },
+        (id) => resolveEntry(directory, id)?.id
+    );
+    const sessionIds = new Set(touched.sessionIds);
+    const entryIds = new Set(touched.entryIds);
+    for (const query of sessions) {
+        if (sessionIds.has(String(query.queryKey[2]).toLowerCase())) {
+            void queryClient.invalidateQueries({ queryKey: query.queryKey, exact: true });
+        }
+    }
+    for (const query of entries) {
+        if (entryIds.has(String(query.queryKey[2]).toLowerCase())) {
+            void queryClient.invalidateQueries({ queryKey: query.queryKey, exact: true });
+        }
+    }
+}
+
+/** The timelines (15c) and galleries (16d) a note change can alter. */
+export function invalidateNoteViews(queryClient: QueryClient, campaignId: string, note: TouchingNote) {
+    invalidateTimelinesTouchedBy(queryClient, campaignId, note);
+    invalidateGalleriesTouchedBy(queryClient, campaignId, note);
+}
 
 // ── Sessions list (the composer's session picker and gap prompt) ─────────────
 
@@ -133,11 +219,11 @@ export const startSessionMutation = () => {
 
 /**
  * Applies a note response to every loaded stream, keyed by note id, like a push, and
- * refetches the loaded timelines it touches (15c).
+ * refetches the loaded timelines (15c) and galleries (16d) it touches.
  */
 const applyNote = (queryClient: QueryClient, campaignId: string, note: SessionNote) => {
     updateSessionStreams(queryClient, campaignId, (data, filter, me) => upsertNote(data, note, filter, me));
-    invalidateTimelinesTouchedBy(queryClient, campaignId, note);
+    invalidateNoteViews(queryClient, campaignId, note);
 };
 
 export type PostNoteVariables = {
@@ -192,7 +278,7 @@ export const postNoteMutation = () => {
             updateSessionStreams(queryClient, campaignId, (data, filter, me) =>
                 upsertNote(optimistic ? removeNote(data, optimistic.id) : data, note, filter, me)
             );
-            invalidateTimelinesTouchedBy(queryClient, campaignId, note);
+            invalidateNoteViews(queryClient, campaignId, note);
         },
         onError: (_error, { campaignId, optimistic, body }) => {
             if (optimistic) updateSessionStreams(queryClient, campaignId, (data) => removeNote(data, optimistic.id));
@@ -263,7 +349,7 @@ export const deleteNoteMutation = () => {
         mutationFn: api.note.delete,
         onSuccess: (_void, { campaignId, noteId }) => {
             updateSessionStreams(queryClient, campaignId, (data) => removeNote(data, noteId));
-            invalidateTimelinesTouchedBy(queryClient, campaignId, { id: noteId });
+            invalidateNoteViews(queryClient, campaignId, { id: noteId });
         },
     });
 };

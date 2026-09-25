@@ -68,3 +68,6 @@ export type EntryChangeType = Schemas["EntryChangeType"];
 export type NoteImage = Schemas["NoteImageResponse"];
 /** An uploaded image, on no note yet (16a). */
 export type UploadedImage = Schemas["ImageResponse"];
+/** A page of a gallery (16d): image notes, oldest first, each with its session number. */
+export type Gallery = Schemas["GalleryResponse"];
+export type GalleryItem = Schemas["GalleryItem"];
