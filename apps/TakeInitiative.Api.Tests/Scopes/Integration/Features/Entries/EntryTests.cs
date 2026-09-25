@@ -46,7 +46,7 @@ public class EntryTests(AuthenticatedWebAppWithDatabaseFixture fixture) : IClass
 
         var list = await fixture.GetEntries(campaign.Id);
         list.Should().Succeed();
-        list.Value.Entries.Should().ContainSingle().Which.Id.Should().Be(created.Id);
+        list.Value.Entries.Should().ContainSingle().Which.Entry.Id.Should().Be(created.Id);
     }
 
     [Fact]
@@ -179,7 +179,7 @@ public class EntryTests(AuthenticatedWebAppWithDatabaseFixture fixture) : IClass
         (await fixture.PostEntry(campaign.Id, "Glasstaff", EntryKind.Character, Visibility.DM)).Should().Succeed();
         // Two DM-only Glasstaffs by different creators now exist; the DM sees both.
         fixture.LoginAsUser(Users.DM);
-        (await fixture.GetEntries(campaign.Id)).Value.Entries.Count(e => e.Name == "Glasstaff").Should().Be(2);
+        (await fixture.GetEntries(campaign.Id)).Value.Entries.Count(e => e.Entry.Name == "Glasstaff").Should().Be(2);
     }
 
     [Fact]
