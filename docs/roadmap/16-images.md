@@ -20,7 +20,7 @@ which sits on 15g (#213). Each PR leaves the app runnable:
 | PR | Branch | Sub-step | Runnable state after merge | Status |
 |---|---|---|---|---|
 | 16a | `v2/16a-blob-store` | Blob store, upload and serve (API) | 15's app unchanged in the browser. `pnpm dev` also starts MinIO. The API stores an upload as two WebP variants and serves them to their uploader only | [x] |
-| 16b | `v2/16b-image-notes-api` | Image notes (API) | The same in the browser. Notes take `imageIds`, may have no text, and their images are served to exactly the note's audience. The Text and Images filters work on the server | [ ] |
+| 16b | `v2/16b-image-notes-api` | Image notes (API) | The same in the browser. Notes take `imageIds`, may have no text, and their images are served to exactly the note's audience. The Text and Images filters work on the server | [x] |
 | 16c | `v2/16c-image-notes-web` | Image notes in the composer and stream | 🖼, paste and drop attach images. The stream draws them, a viewer opens them full screen, the note editor adds and removes them, and the filters work | [ ] |
 | 16d | `v2/16d-galleries` | Session and entry galleries | A session divider opens its session's gallery, and an entry page has a Gallery section | [ ] |
 | 16e | `v2/16e-share-target` | Camera and share target | 📷 on a phone. Sharing images to the installed PWA opens the composer with them attached. The step's Verify passes | [ ] |
@@ -63,7 +63,10 @@ Paths are relative to `apps/TakeInitiative.Api` (API), `apps/TakeInitiative.Api.
 - Web `utils/api/schema.d.ts`: regenerated
 
 **16b**
-- API add `src/Features/Sessions/Models/NoteImage.cs`, `src/Features/Images/ImageAttachments.cs`
+- API add `src/Features/Sessions/Models/NoteImage.cs`, `src/Features/Images/ImageAttachments.cs`,
+  `src/Features/Images/NoteWrite.cs` (added in 16b, see Notes)
+- API modify `src/Features/Entries/Api/PostEntryQuote/PostEntryQuote.cs` (a note with no caption),
+  `src/boostrap/Bootstrap.cs` (the `Image` correlation id), `src/boostrap/CorrelationMiddleware.cs`
 - API modify `src/Features/Sessions/Models/SessionNote.cs` (`Images`, `HasImages`), `Models/Events/{SessionNotePosted,SessionNoteEdited}.cs`
 - API modify `src/Features/Sessions/Api/{PostSessionNote,PutSessionNote,DeleteSessionNote,GetSessionStream,GetSessionNoteHistory}/*.cs`, `Api/GetSessionNote/SessionNoteResponse.cs`
 - API modify `src/Features/Images/Api/GetImageVariant/GetImageVariant.cs` and `ImageAccess.cs` (the note's rule)
@@ -732,3 +735,62 @@ Add each sub-step on top with `gh stack add v2/16a-blob-store` and so on.
     - Verify 2: `docker compose … up -d postgres minio` starts MinIO, the healthcheck
       (`mc ready local`) reports healthy, and the API logs "Blob store bucket
       takeinitiative is ready". The console on 7405 was not opened (no browser).
+- **16b, as built** (PR on `v2/16b-image-notes-api`):
+  - **Shapes for 16c.** `SessionNoteResponse.images: NoteImageResponse[]`, each
+    `{ id, width, height }` (display-variant size), in order, `[]` for a text note, on every
+    read and on `sessionNoteUpserted`. `text` stays a required string and may be `""` when
+    there are images. `POST notes` and `PUT notes/{id}` take `imageIds?: string[]` (at most
+    10, in order). On `PUT`, `imageIds` left out (or null) keeps the images, and `[]` removes
+    them all. History versions gain `imageCount`. Filter values are `?filter=Text` and
+    `?filter=Images`.
+  - **Flow.** Upload each file with `POST images` (multipart `file`), keep the returned ids,
+    and send them as `imageIds` with the note. Removing an attachment before posting is
+    `DELETE images/{id}`. Once posted, only the note's `PUT` removes an image, and the image
+    is then deleted for real.
+  - **Error keys.** `errors.text`: "A session note needs some text or an image." (400).
+    `errors.imageIds` (400): "A session note can have at most 10 images.", "The same image
+    cannot be on a note twice.", and `ImageAttachments.UnavailableMessage`, "An image could
+    not be attached. Upload it again." (one message for another member's image, another
+    campaign's, a deleted one, one already on a note, and an unknown id).
+    `errors.imageIds` (409): `ConflictMessage`, "An image was attached to another note at the
+    same time. Upload it again." (the race). `DELETE images/{id}` on an attached image is 16a's
+    409.
+  - **Deviation: `NoteWrite`, two batches in one transaction.** Marten 7.31.1 reports a false
+    `ConcurrencyException` when an optimistic-concurrency document (`Image`) is updated in the
+    same batch as a **new** event stream (a note's `StartStream`, or a new entry's), even when
+    the version matches. Appends to an existing stream are fine. The batch's SQL was correct,
+    so this is a Marten result-reading bug. So `POST`, `PUT` and `DELETE notes` open one
+    Postgres transaction (`NoteWrite`: its own connection, and a Marten session over it with
+    `SessionOptions.ForTransaction` and the request's correlation id and `request` header). The
+    image changes are saved first, with Marten's real version check (a stale image is the
+    409, and the row locks are held until commit, so a racing attach waits and then fails).
+    Then the note's events and any new entries are saved, and then the transaction commits. The note
+    and its images still commit together, and the race test uses `InterferingSaveFixture` as
+    planned. The `Image` document now stores Marten's `correlation_id` metadata, so an attach
+    shares the note event's correlation id. That column is additive, so no reset is needed.
+  - **Old notes.** SQL reads a missing `HasImages` as null, so `!HasImages` alone dropped
+    every note projected before 16b from the Text filter (a test caught it). The Text filter is
+    `SessionNote.WithoutImages` (`!HasImages || Images == null`) and Images is `HasImages ==
+    true`. `ANoteProjectedBeforeImages_IsText_WithNoDatabaseReset` strips both keys from a
+    document to check this. The dev database had 424 such notes and needed no reset.
+  - **Loose-ends seam.** `SessionNote.UntaggedImageNote` (`HasImages && no
+    MentionedEntryIds`) is the step 19 query, with a test. `MentionIndex` needed no change,
+    because captions are note text.
+  - **Added.** Quoting a note with no caption into an article (`POST entries/{id}/quotes`)
+    is a 400, "This note has no text to quote." (`errors.text`). Promote copies text only.
+  - **Timestamps.** `AttachedAt` and `DeletedAt` are truncated to microseconds.
+  - **Verify, as run in 16b** (API only, so no browser):
+    - `dotnet test` passes 453/453 on three runs. That is 417 plus 36 new:
+      `ImageNoteTests` 13, `ImageAttachRaceTests` 2 (the race, and the push payload carrying
+      images to the DM group only), `ImageVisibilityTests` 19 (the 15 cells of Everyone, DM
+      and Me, hidden or not, × author, DM and other player, each with and without the ETag,
+      plus visibility changes, hide and unhide, a deleted note, and a cross-campaign URL) and
+      `SessionTests` 2. `SessionNoteAudienceTests` pass unchanged.
+    - `nuxi typecheck` is clean, `vitest` passes 263/263, `nuxt build` succeeds, and
+      `schema.d.ts` is regenerated. `images: []` was added to the `SessionNote` fixtures and
+      to `optimisticNote` in `utils/composer.ts`.
+    - `16b.mjs` passed 57/57 against the API on 5010 and the dev MinIO. It checked D, P and Q
+      across Everyone, DM and Me, hide and unhide with the old ETag, a visibility change, the
+      filters per viewer, the error keys, an edit that removes an image (gone from MinIO's
+      data directory), and a delete. Every earlier script still passes, from `16a` 47/47 and
+      `smoke14a` through `merge15g` 63/63 and `pages15g` 23/23.
