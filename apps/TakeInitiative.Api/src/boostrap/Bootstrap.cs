@@ -55,10 +55,12 @@ public static class Bootstrap
                 .UniqueIndex(UniqueIndexType.Computed, x => x.CampaignId, x => x.Number);
 
             // SessionNote stream -> SessionNote document (SessionNoteDeleted deletes it).
+            // The GIN index serves MentionIndex's "notes that mention this entry" containment.
             opts.Projections.Snapshot<SessionNote>(SnapshotLifecycle.Inline);
             opts.Schema.For<SessionNote>()
                 .Index([x => x.CampaignId, x => x.PostedAt])
-                .Index(x => x.SessionId);
+                .Index(x => x.SessionId)
+                .Index(x => x.MentionedEntryIds, idx => idx.Method = IndexMethod.gin);
 
             // Entry stream -> Entry document. (CampaignId, Kind) serves the wiki's lists; the
             // GIN index serves alias lookups.
