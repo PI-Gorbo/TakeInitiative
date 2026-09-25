@@ -758,6 +758,7 @@ This PR adds the nouns the step puts into code and UI:
       - the per-filter live cache, fed by hub pushes, equalled a fresh `GET`.
   - The earlier scripts still pass: `smoke14a` 70/70, `hub14b` 28/28, `stream14c` 111/111, `composer14d` 142/142 and `pages13d` 19/19.
   - Verify 4, re-checked: all 332 session and note events in the dev database have a `correlation_id` and an `Actor`. `smoke14a`'s deleted note has no `mt_doc_sessionnote` row, and its `session_note_posted` and `session_note_deleted` events remain.
+- **Step 14 stays `in progress`.** Verify 1 asks for green CI on every PR in the stack, and #201 and #202 are red with the flaky test above (it failed again when re-run). The fix is here in #205, and #203–#205 are green. Once the user accepts that, or the stack merges with the fix, and the hand checks below pass, step 14 can be marked `done`.
 - **Left to check by hand** (Verify 2 needs browsers, and 2.10 needs a real phone):
   - **Phone** (iOS Safari and Android Chrome, installed as a PWA and in the browser):
     - Focus the composer. The tab bar hides, and the composer (pickers, text box, toolbar) sits directly on the keyboard, with no gap and no jitter while the keyboard animates.
