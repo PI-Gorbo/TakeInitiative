@@ -9,7 +9,7 @@ namespace TakeInitiative.Api.Tests.Integration;
 /// </summary>
 public class MinioFixture : IAsyncLifetime
 {
-    public const string Image = "quay.io/minio/minio:RELEASE.2025-07-18T21-56-31Z";
+    public const string Image = "pgsty/minio:RELEASE.2026-08-04T00-00-00Z";
 
     public MinioContainer Container { get; } = new MinioBuilder().WithImage(Image).Build();
 
