@@ -18,9 +18,14 @@
 
         <div class="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col">
             <SessionStream
+                ref="stream"
                 :campaignId="campaign.id"
+                :campaign="campaign"
+                :focusNoteId="focusNoteId"
+                @noteOpened="clearNoteLink" />
+            <Composer
+                :key="campaign.id"
                 :campaign="campaign" />
-            <!-- 14d: the Composer mounts here, below the stream. -->
         </div>
 
         <CampaignMembersPanel
@@ -32,6 +37,7 @@
 <script setup lang="ts">
     import { useQuery } from "@tanstack/vue-query";
     import { Users } from "lucide-vue-next";
+    import { NOTE_LINK_PARAM } from "~/utils/noteActions";
     import { getCampaignQuery } from "~/utils/queries/campaign";
 
     definePageMeta({
@@ -44,4 +50,16 @@
     const campaign = computed(() => campaignQuery.data.value);
 
     const membersOpen = ref(false);
+
+    // A copied note link: `?note={noteId}`. The stream opens at the note, then the
+    // parameter is dropped so a reload opens at the bottom again.
+    const router = useRouter();
+    const focusNoteId = computed(() => {
+        const value = route.query[NOTE_LINK_PARAM];
+        return typeof value === "string" && value ? value : undefined;
+    });
+    function clearNoteLink() {
+        const { [NOTE_LINK_PARAM]: _, ...query } = route.query;
+        void router.replace({ query });
+    }
 </script>
