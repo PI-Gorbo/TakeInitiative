@@ -116,6 +116,8 @@ public class SessionNoteTests(AuthenticatedWebAppWithDatabaseFixture fixture)
         await fixture.ExpectStatus(HttpMethod.Get, NoteUrl(campaign, note.Id), null, 404);
     }
 
+    private static readonly TimeSpan StoredTimePrecision = TimeSpan.FromMicroseconds(1);
+
     [Fact]
     public async Task AnEdit_SetsEditedAt_AndTheHistoryListsBothVersions()
     {
@@ -129,7 +131,9 @@ public class SessionNoteTests(AuthenticatedWebAppWithDatabaseFixture fixture)
         edited.Value.Text.Should().Be("We found **20gp**");
         edited.Value.IsRecap.Should().BeTrue();
         edited.Value.EditedAt.Should().NotBeNull().And.BeOnOrAfter(note.PostedAt);
-        edited.Value.PostedAt.Should().Be(note.PostedAt);
+        // Postgres keeps microseconds and .NET keeps ticks (100ns), so a time read back
+        // from the database can differ from the one the POST returned by under 1µs.
+        edited.Value.PostedAt.Should().BeCloseTo(note.PostedAt, StoredTimePrecision);
 
         // Unchanged appends nothing.
         (await fixture.PutSessionNote(campaign.Id, note.Id, "We found **20gp**", isRecap: true)).Should().Succeed();
@@ -142,8 +146,8 @@ public class SessionNoteTests(AuthenticatedWebAppWithDatabaseFixture fixture)
         history.Value.Versions.Select(v => (v.Text, v.IsRecap)).Should().Equal(
             ("We found 10gp", false),
             ("We found **20gp**", true));
-        history.Value.Versions[0].At.Should().Be(note.PostedAt);
-        history.Value.Versions[1].At.Should().Be(edited.Value.EditedAt!.Value);
+        history.Value.Versions[0].At.Should().BeCloseTo(note.PostedAt, StoredTimePrecision);
+        history.Value.Versions[1].At.Should().BeCloseTo(edited.Value.EditedAt!.Value, StoredTimePrecision);
     }
 
     [Fact]
