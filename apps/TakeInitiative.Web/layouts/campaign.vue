@@ -92,6 +92,7 @@
     import { useQuery } from "@tanstack/vue-query";
     import { BookOpen, Castle, ChevronLeft, Search, Swords } from "lucide-vue-next";
     import { getCampaignQuery } from "~/utils/queries/campaign";
+    import { rememberCampaign } from "~/utils/shareTarget";
 
     const route = useRoute();
     const campaignId = computed(
@@ -125,6 +126,19 @@
     };
 
     const hideTabBar = useComposerPinned();
+
+    // The share page (16e) goes straight to the last opened campaign.
+    watch(
+        campaignId,
+        (id) => {
+            try {
+                rememberCampaign(window.localStorage, id);
+            } catch {
+                // No storage: the share page lists the campaigns instead.
+            }
+        },
+        { immediate: true }
+    );
 
     // Live updates for every tab.
     useCampaignHub(campaignId);
