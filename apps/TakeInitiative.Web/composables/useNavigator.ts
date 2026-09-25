@@ -6,10 +6,6 @@ export const useNavigator = () => {
         toCampaign: (
             id: string,
         ) => navigateTo(`/app/campaigns/${id}`),
-        toCampaignTab: (
-            id: string,
-            tab: "settings",
-        ) => navigateTo(`/app/campaigns/${id}/${tab}`),
         toCreateOrJoinCampaign: () => navigateTo("/createOrJoinCampaign"),
         // confirmEmail: () => navigateTo("/confirm"),
         toLogin: (opts: NavigateToOptions | undefined = undefined) =>

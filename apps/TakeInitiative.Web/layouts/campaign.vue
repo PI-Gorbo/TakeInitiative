@@ -104,6 +104,7 @@
     import {
         getCampaignQuery,
         getCampaignQueryKey,
+        getCampaignsQueryKey,
     } from "~/utils/queries/campaign";
     import * as signalR from "@microsoft/signalr";
 
@@ -129,28 +130,11 @@
             icon: faHome,
             routeName: "app-campaigns-campaignId",
         },
-        {
-            label: "Settings",
-            routeName: "app-campaigns-campaignId-settings",
-            shouldHideTab: () => {
-                if (
-                    campaignQuery.data.value?.userCampaignMember.isDungeonMaster
-                ) {
-                    return false;
-                }
-
-                return true;
-            },
-        },
     ] as const;
 
     const currentTab = computed(() => {
         if (route?.name === tabValues[0].routeName) {
             return route?.name;
-        }
-
-        if (route?.name.startsWith(tabValues[1].routeName)) {
-            return tabValues[1].routeName;
         }
     });
 
@@ -164,15 +148,16 @@
         .withAutomaticReconnect()
         .configureLogging(signalR.LogLevel.Debug)
         .build();
-    connection.on("campaignStateUpdated", async () => {
+    // v2 CampaignHub messages: a member joined, or the owner changed a role.
+    const refreshCampaign = () =>
         queryClient.invalidateQueries({
             queryKey: getCampaignQueryKey(joinedCampaignId.value),
         });
-    });
-    connection.on("campaignMemberStateUpdated", async () => {
-        queryClient.invalidateQueries({
-            queryKey: getCampaignQueryKey(joinedCampaignId.value),
-        });
+    connection.on("memberJoined", refreshCampaign);
+    connection.on("memberRoleChanged", async () => {
+        await refreshCampaign();
+        // The caller's own role may have changed; the campaign list shows it.
+        await queryClient.invalidateQueries({ queryKey: getCampaignsQueryKey() });
     });
     connection.onreconnected(async () => {
         // Join the campaign hub.

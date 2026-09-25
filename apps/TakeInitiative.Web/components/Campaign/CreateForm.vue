@@ -22,7 +22,7 @@ const props = defineProps<{
 
 const createCampaignValidator = z
     .object({
-        campaignName: z.string(),
+        campaignName: z.string().min(1, "Campaign name is required"),
     })
     .required()
 
@@ -35,7 +35,7 @@ const form = useForm({
 async function onSubmit(req: z.infer<typeof createCampaignValidator>): Promise<void> {
     formState.formError = null;
     return await props
-        .submit({ campaignName: req.campaignName })
+        .submit({ name: req.campaignName })
         .catch((e) => (formState.formError = parseAsApiError(e)));
 }
 </script>

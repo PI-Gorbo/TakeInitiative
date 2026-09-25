@@ -1,22 +1,12 @@
 import type { AxiosInstance } from "axios";
 import { z } from "zod";
 
-// Get User
-const getUserCampaignDto = z
-    .object({
-        campaignName: z.string(),
-        campaignId: z.string(),
-        joinCode: z.string(),
-    })
-    .required();
-
+// Get User. The user's campaigns come from GET /api/campaigns.
 export const getUserResponseSchema = z
     .object({
         userId: z.string(),
         username: z.string(),
         confirmedEmail: z.boolean(),
-        dmCampaigns: z.array(getUserCampaignDto),
-        memberCampaigns: z.array(getUserCampaignDto),
     })
     .required();
 export type GetUserResponse = z.infer<typeof getUserResponseSchema>;

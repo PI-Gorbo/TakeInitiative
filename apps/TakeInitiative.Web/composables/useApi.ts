@@ -1,8 +1,8 @@
 import { createCampaignRequest } from "~/utils/api/campaign/createCampaignRequest";
-import { deleteCampaignRequest } from "~/utils/api/campaign/deleteCampaignRequest";
 import { getCampaignRequest } from "~/utils/api/campaign/getCampaignRequest";
+import { getCampaignsRequest } from "~/utils/api/campaign/getCampaignsRequest";
 import { joinCampaignRequest } from "~/utils/api/campaign/joinCampaignRequest";
-import { updateCampaignDetailsRequest } from "~/utils/api/campaign/updateCampaignDetailsRequest";
+import { putMemberRoleRequest } from "~/utils/api/campaign/putMemberRoleRequest";
 import { getUserRequest } from "~/utils/api/user/getUserRequest";
 import { loginRequest } from "~/utils/api/user/loginRequest";
 import { logoutRequest } from "~/utils/api/user/logoutRequest";
@@ -31,9 +31,9 @@ export const useApi = () => {
         campaign: {
             create: createCampaignRequest($axios),
             join: joinCampaignRequest($axios),
-            update: updateCampaignDetailsRequest($axios),
             get: getCampaignRequest($axios),
-            delete: deleteCampaignRequest($axios),
+            list: getCampaignsRequest($axios),
+            putMemberRole: putMemberRoleRequest($axios),
         },
         admin: {
             getMaintenance: getMaintenanceRequest($axios),

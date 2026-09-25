@@ -1,24 +1,21 @@
 import { validateResponse } from "~/utils/apiErrorParser";
 import type { AxiosInstance } from "axios";
-import { z } from "zod";
+import type { z } from "zod";
 import { campaignValidator } from "../../types/models";
 
 // Create Campaign
 export type CreateCampaignRequest = {
-    campaignName: string;
+    name: string;
 };
-const createCampaignResponseSchema = campaignValidator;
-export type CreateCampaignResponse = z.infer<
-    typeof createCampaignResponseSchema
->;
+export type CreateCampaignResponse = z.infer<typeof campaignValidator>;
 export function createCampaignRequest(axios: AxiosInstance) {
     return async function (
         request: CreateCampaignRequest
     ): Promise<CreateCampaignResponse> {
         return await axios
-            .post("/api/campaign", request)
+            .post("/api/campaigns", request)
             .then(async (response) =>
-                validateResponse(response, createCampaignResponseSchema)
+                validateResponse(response, campaignValidator)
             );
     };
 }

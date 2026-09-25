@@ -28,7 +28,7 @@
                             :to="{
                                 name: 'app-campaigns-campaignId',
                                 params: {
-                                    campaignId: campaign.campaignId,
+                                    campaignId: campaign.id,
                                 },
                             }">
                             <NavigationMenuLink
@@ -37,7 +37,7 @@
                                 :class="navigationMenuTriggerStyle()"
                                 @click="navigate"
                                 class="w-full">
-                                {{ campaign.campaignName }}
+                                {{ campaign.name }}
                             </NavigationMenuLink>
                         </NuxtLink>
                     </ul>
