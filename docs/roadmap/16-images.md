@@ -19,7 +19,7 @@ which sits on 15g (#213). Each PR leaves the app runnable:
 
 | PR | Branch | Sub-step | Runnable state after merge | Status |
 |---|---|---|---|---|
-| 16a | `v2/16a-blob-store` | Blob store, upload and serve (API) | 15's app unchanged in the browser. `pnpm dev` also starts MinIO. The API stores an upload as two WebP variants and serves them to their uploader only | [ ] |
+| 16a | `v2/16a-blob-store` | Blob store, upload and serve (API) | 15's app unchanged in the browser. `pnpm dev` also starts MinIO. The API stores an upload as two WebP variants and serves them to their uploader only | [x] |
 | 16b | `v2/16b-image-notes-api` | Image notes (API) | The same in the browser. Notes take `imageIds`, may have no text, and their images are served to exactly the note's audience. The Text and Images filters work on the server | [ ] |
 | 16c | `v2/16c-image-notes-web` | Image notes in the composer and stream | 🖼, paste and drop attach images. The stream draws them, a viewer opens them full screen, the note editor adds and removes them, and the filters work | [ ] |
 | 16d | `v2/16d-galleries` | Session and entry galleries | A session divider opens its session's gallery, and an entry page has a Gallery section | [ ] |
@@ -634,3 +634,83 @@ Add each sub-step on top with `gh stack add v2/16a-blob-store` and so on.
 - **iOS and the file picker.** Opening the picker blurs the text box, so the
   keyboard drops. Focus returns to the text box after files are chosen, so the
   pinned composer (14e) comes back.
+- **16a, as built** (PR on `v2/16a-blob-store`):
+  - **Test choice: an in-memory fake plus one real-MinIO suite.** Both default
+    fixtures (`AuthenticatedWebAppWithDatabaseFixture`, `WebAppWithDatabaseFixture`)
+    replace `IBlobStore` with `InMemoryBlobStore` (`fixture.Blobs`, with
+    `Contains(key)` and `FailNextDeletes(n)`) and set `Blobs:CreateBucket=false`, so the
+    ~400 other tests start no extra container. `S3BlobStoreTests` runs the real
+    `S3BlobStore` and `BlobBucketInitializer` against `MinioFixture` (Testcontainers.Minio
+    3.9.0, on the compose image), so the path-style and checksum settings are tested in
+    CI with no workflow change. The fixtures also set `Images:SweepStartDelay` to a day:
+    tests sweep by hand with `ImageSweeper.SweepOnce`.
+  - **Packages.** `AWSSDK.S3` 4.0.103.4, `SkiaSharp` and
+    `SkiaSharp.NativeAssets.Linux.NoDependencies` 4.152.1. A `docker build` of the API
+    image has `runtimes/linux-*/native/libSkiaSharp.so` with every `ldd` dependency
+    found in `aspnet:10.0`.
+  - **Dev.** MinIO is `takeminio` on 7404 (S3) and 7405 (console), with the volume
+    `takeminio-data`. Ripple's MinIO is on 3002 and 9001, and its Postgres on 5432, so
+    nothing clashes. `setup_environment` starts `postgres minio`. `scripts/setup-env.mjs`
+    needed no change: the API's `Blobs` defaults are in `appsettings.json`. The API
+    creates the bucket on start. `BlobBucketInitializer` retries 15 times, 2 seconds
+    apart, because MinIO may still be starting, and then logs an error rather than
+    failing startup (only uploads need the bucket). `--export-openapi` runs with MinIO
+    stopped.
+  - **The rule function for 16b** is `ImageAccess.CanSee(session, image, viewer, ct)`,
+    which `ImageAccess.RequireVisibleImage` (the 404) calls. It checks `DeletedAt` first,
+    then "on no note: its uploader only". The branch for `NoteId` set returns false and
+    carries a comment for 16b: load the note, return false when it is missing, and
+    otherwise return `SessionNoteVisibility.CanSee(note, viewer)`. `GetImageVariant` runs it
+    before comparing `If-None-Match`, so 16b needs no endpoint change for the 304 rule.
+  - **Shapes.** `Image` has `Variants: ImageVariants { Display, Thumb }` (a record with
+    `All()` and the names `display` and `thumb`), `Image.Variant(name)` (null for any
+    other name) and `Image.BlobKey(campaignId, imageId, variant)`. It implements Marten's
+    `IVersioned` (`Version`) with `UseOptimisticConcurrency`, so a `Store` or `Update` of a
+    stale copy is a `ConcurrencyException`, which 16b's attach can turn into its 409.
+    `ImageSweeper.Purge(image, ct)` deletes the blobs and then the document. `DeleteImage`
+    uses it after marking `DeletedAt`, and 16b's edit and delete paths can too.
+    `ImageResponse { id, width, height, uploadedAt }` is in `PostImage.cs`.
+  - **Processing details.** Output is converted to sRGB, so the WebP carries no ICC
+    profile either. A JPEG larger than the display variant is decoded at a reduced scale
+    (`SKCodec.GetScaledDimensions`) when that still covers 3200 px, which saves most of the
+    memory for a large photo. **Added:** a file Skia cannot fully decode (the truncated
+    JPEG) is a 400, "This image could not be read. It may be damaged.", rather than a half-grey
+    picture. `ImageRejectedException` carries the status. The bomb test checks
+    `SkiaImageProcessor.Decodes` stays 0.
+  - **Uploads.** `PostImage` uses `AllowFileUploads(dontAutoBindFormData: true)` and reads
+    the `file` part with `FormFileSectionsAsync`, after `RequireMember` and the 20-image
+    check, so an outsider's body is never read. The 413 comes from `Content-Length`
+    (and a byte count while copying, when there is none). **Gotcha for 16c:** Kestrel
+    sends that 413 and can then reset the connection while the client is still sending,
+    so a browser may see a network error instead of the 413. The composer must check the
+    size before uploading. `TestServer` has no `IHttpMaxRequestBodySizeFeature`, so the
+    tests exercise the endpoint's own check. Two uploads racing at 19 unposted images
+    can both pass the count, reaching 21. That is harmless, so it is not locked.
+  - **Also.** `UseChunkEncoding = false` on puts (a plain signed body, since not every
+    S3-compatible store accepts `aws-chunked`). The sweeper's first run is one minute
+    after start (`Images:SweepStartDelay`) and then hourly, so a server that restarts
+    often still sweeps. `DELETE` on a visible image that is on a note is a 409, and one
+    that someone else uploaded is a 403. Neither can happen until 16b. The fixtures are
+    made by `Fixtures/images/generate.py` (`uv run`, Pillow and pillow-heif, so
+    `photo.heic` is real HEIC), and `Scopes/ImageFixtures.cs` names them.
+  - **Verify, as run in 16a** (API only, so no browser):
+    - `dotnet test` passes 417/417 on three runs. That is 379 from 15g plus 38 new:
+      `ImageProcessorTests` 15, `S3BlobStoreTests` 5, `ImageUploadTests` 15 and
+      `ImageSweeperTests` 3.
+    - `nuxi typecheck` is clean, `vitest` passes 263/263, `nuxt build` succeeds, and
+      `schema.d.ts` is regenerated.
+    - `16a.mjs` passed 47/47 against the API on 5010 and the dev MinIO. It checked
+      upload and both variants with their headers, with no EXIF, GPS or camera make in
+      the bytes. It checked 304 for the uploader, and 404 for the DM and the other player,
+      also with the ETag. It checked 403 for a non-member, 403 for an anonymous GET
+      straight to MinIO, the 415s, the 400s, and a 21 MB upload refused. It checked the
+      wide JPEG's 3200 x 533, the 21st upload's 409, and a delete. Afterwards, MinIO's data
+      directory had both variants of a kept image and nothing of the deleted one.
+    - The earlier scripts still pass: `smoke14a`, `hub14b`, `stream14c` 111/111,
+      `composer14d` 142/142, `filters14e` 233/233, `pages13d`, `entries15a`, `mentions15b`
+      44/44, `pages15c` 24/24, `wiki15c` 64/64, `mentions15d` 56/56, `pages15d` 19/19,
+      `articles15e` 35/35, `article15f` 64/64, `pages15f` 34/34, `merge15g` 63/63 and
+      `pages15g` 23/23.
+    - Verify 2: `docker compose … up -d postgres minio` starts MinIO, the healthcheck
+      (`mc ready local`) reports healthy, and the API logs "Blob store bucket
+      takeinitiative is ready". The console on 7405 was not opened (no browser).
