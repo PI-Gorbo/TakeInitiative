@@ -22,7 +22,7 @@ which sits on 15g (#213). Each PR leaves the app runnable:
 | 16a | `v2/16a-blob-store` | Blob store, upload and serve (API) | 15's app unchanged in the browser. `pnpm dev` also starts MinIO. The API stores an upload as two WebP variants and serves them to their uploader only | [x] |
 | 16b | `v2/16b-image-notes-api` | Image notes (API) | The same in the browser. Notes take `imageIds`, may have no text, and their images are served to exactly the note's audience. The Text and Images filters work on the server | [x] |
 | 16c | `v2/16c-image-notes-web` | Image notes in the composer and stream | 🖼, paste and drop attach images. The stream draws them, a viewer opens them full screen, the note editor adds and removes them, and the filters work | [x] |
-| 16d | `v2/16d-galleries` | Session and entry galleries | A session divider opens its session's gallery, and an entry page has a Gallery section | [ ] |
+| 16d | `v2/16d-galleries` | Session and entry galleries | A session divider opens its session's gallery, and an entry page has a Gallery section | [x] |
 | 16e | `v2/16e-share-target` | Camera and share target | 📷 on a phone. Sharing images to the installed PWA opens the composer with them attached. The step's Verify passes | [ ] |
 
 Loose ends proper (the counts on dividers and in the wiki, resolving) are step 19,
@@ -85,6 +85,7 @@ Paths are relative to `apps/TakeInitiative.Api` (API), `apps/TakeInitiative.Api.
 - Tests add `Scopes/Integration/Features/Images/GalleryTests.cs`
 - Web add `utils/api/image/{getSessionImagesRequest,getEntryImagesRequest}.ts`, `utils/gallery.ts`, `components/Image/{ImageGrid,SessionGallerySheet}.vue`, `components/Wiki/EntryGallery.vue`
 - Web modify `components/Session/SessionDivider.vue`, `pages/app/campaigns/[campaignId]/wiki/[entryId].vue`, `utils/queries/sessions.ts`, `utils/queries/entries.ts`, `composables/useCampaignHub.ts` (gallery invalidation)
+- Web modify (added in 16d, see Notes) `components/Image/ImageViewer.vue` (`sequence`, `source`), `composables/useImageViewer.ts` (the source), `components/Session/SessionStream.vue` (the count and the sheet), `composables/useApi.ts`, `utils/api/types.ts`
 - Web add `tests/unit/gallery.test.ts`
 - Web `utils/api/schema.d.ts`: regenerated
 
@@ -896,3 +897,60 @@ Add each sub-step on top with `gh stack add v2/16a-blob-store` and so on.
     - Not checked: anything in a browser. That covers the picker, paste, drop, previews
       and progress, the nudge, the viewer's swipe and pinch, the back gesture, and the
       phone keyboard. Verify 3 and 4 are for 16e's full pass.
+- **16d, as built** (PR on `v2/16d-galleries`):
+  - **Endpoints.** `GetSessionImages` (`GET …/sessions/{sessionId}/images`, `RequireSession`,
+    so another campaign's session is a 404) and `GetEntryImages` (`GET …/entries/{entryId}/images`,
+    `RequireVisibleEntry`, then `MentionIndex.NotesMentioning(…, imagesOnly: true)` over
+    `entry.MentionIds()`). Both answer `GalleryResponse { items: GalleryItem { note, sessionNumber }[],
+    hasOlder, imageCount }`, `take` 30 by default and 1–60. `MentionIndex` gained
+    `NotesMentioningQuery` (the unpaged query, which `NotesMentioning` now uses).
+  - **Deviation: `imageCount` added.** "See all (n)" and "Session 12 · 5 images" need the whole
+    count, which one page does not give. It is the number of images (not notes) in every note of
+    the gallery the caller can see, on every page. Only the `Images` lists are loaded for it.
+  - **Order.** The web shows galleries newest note first (each note's images in their order), so
+    older pages append at the end. The viewer's swipe follows the same order.
+  - **Viewer.** `ImageViewer` gained `sequence` (swipe through every image of every item) and
+    `source`. `useImageViewer().open(id, source)` records which viewer answers (`source` is a
+    module-level ref, reset when `?image=` goes). A gallery opens with `GALLERY_VIEWER_SOURCE`,
+    and its own viewer is mounted inside the sheet (so it stacks above it and Escape closes it
+    first) or beside the entry's Gallery section. The list viewer of the same page (the stream's,
+    the timeline's) answers only an unset source, so a deep link still opens there and two
+    viewers never open together. The `ready` rule only closes a viewer's own image. The viewer's
+    note link (`?note=`) closes the session sheet.
+  - **Divider.** `SessionDivider` has `imageCount` and emits `openGallery`. `dividerImageCount`
+    is the images on the loaded notes under All and Images, and undefined (no "🖼") otherwise
+    or at 0. `SessionStream` mounts one `ImageSessionGallerySheet` (Nuxt's name for
+    `components/Image/SessionGallerySheet.vue`), built on reka's Dialog: a bottom sheet under
+    `md`, a centred dialog from `md`. Its query only runs while it is open.
+  - **Staying current.** `invalidateNoteViews` (`utils/queries/sessions.ts`) runs
+    `invalidateTimelinesTouchedBy` and the new `invalidateGalleriesTouchedBy`, from the hub's
+    `sessionNoteUpserted` and `sessionNoteRemoved` and from every note mutation.
+    `galleriesTouchedBy` (`utils/gallery.ts`): a note with images touches its session and the
+    entries its caption mentions, and any loaded gallery holding the note is touched too (an
+    edit dropping images or a mention, a visibility change, a hide, a delete). **Added:** a
+    mention of a merged id also touches its target, through the entry directory. Role changes,
+    reconnects and joins invalidate every gallery (`invalidateSessionStreams` and
+    `invalidateEntries`), and `entryMerged` and `entryRemoved` cover `entryImages` too.
+  - **Entry gallery.** `WikiEntryGallery` after the timeline: 12 tiles, "See all (n)" shows every
+    loaded tile (fetching the next page when 12 is all it has), then "Load more" while older
+    pages remain. Nothing is drawn with no images. `ImageGrid` tiles are `aspect-square` buttons
+    (`min-h-11`) with the caption as `alt` (`imageAlt`).
+  - **Verify, as run in 16d** (no browser):
+    - `dotnet test` passes 460/460: 453 plus `GalleryTests` 7 (per viewer with DM, Me and hidden
+      notes, the counts, text notes left out, the 404s and `take` bounds, session paging with
+      `take=2`, the entry gallery by caption and not by article block, through a merged id, a DM
+      entry's 404, and entry paging).
+    - `nuxi typecheck` is clean, `nuxt build` succeeds, and `vitest` passes 316/316 (305 plus
+      `gallery.test.ts` 11). `schema.d.ts` is regenerated.
+    - `16d.mjs` passed 44/44 against the API on 5010 and `nuxt dev` on 3100: both galleries for
+      D, P, Q and an outsider, CORS from the web's origin, `imageCount`, paging, the merge, an
+      edit to no images leaving both galleries, the two pages, and every new or changed module
+      compiling. Every earlier script passes (`16a` 47, `16b` 57, `16c` 64, `smoke14a` through
+      `pages15g`). `articles15e` failed one push-timing check ("an article edit sends no
+      entryUpserted") on the first run and passed 35/35 on a re-run.
+    - Not checked: anything in a browser (the sheet, the grid's columns, swipe through a
+      gallery, the back gesture, nested dialogs and focus).
+  - **For 16e.** Nothing in 16d touches the composer. `Composer.vue`'s `attach(files)`
+    (`defineExpose`) is still the entry point for 📷 and the share target. A shared image note
+    joins the galleries by itself: its post goes through `postNoteMutation`, whose answer and
+    push run `invalidateNoteViews`.
