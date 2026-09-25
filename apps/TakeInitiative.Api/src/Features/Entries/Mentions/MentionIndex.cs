@@ -42,16 +42,14 @@ public static class MentionIndex
     /// <summary>
     /// The notes the viewer can see that mention any of <paramref name="entryIds"/>, for a
     /// timeline: the newest <paramref name="take"/> posted before <paramref name="before"/>
-    /// (all when null), returned oldest first.
+    /// (all when null), returned oldest first. With <paramref name="imagesOnly"/>, only image
+    /// notes, whose captions mention the entry: an entry's gallery (16d).
     /// </summary>
     public static async Task<MentionedNotesPage> NotesMentioning(
         IQuerySession session, Guid campaignId, IReadOnlyCollection<Guid> entryIds, Member viewer,
-        DateTimeOffset? before, int take, CancellationToken ct)
+        DateTimeOffset? before, int take, CancellationToken ct, bool imagesOnly = false)
     {
-        var query = session.Query<SessionNote>()
-            .Where(n => n.CampaignId == campaignId)
-            .Where(MentioningAny<SessionNote>(nameof(SessionNote.MentionedEntryIds), entryIds))
-            .Where(SessionNoteVisibility.VisibleTo(viewer));
+        var query = NotesMentioningQuery(session, campaignId, entryIds, viewer, imagesOnly);
         if (before is { } cursor)
         {
             query = query.Where(n => n.PostedAt < cursor);
@@ -65,6 +63,21 @@ public static class MentionIndex
         return new MentionedNotesPage(
             newestFirst.Take(take).Reverse().ToList(),
             HasOlder: newestFirst.Count > take);
+    }
+
+    /// <summary>
+    /// Every note the viewer can see that mentions any of <paramref name="entryIds"/>, as a
+    /// query, and with <paramref name="imagesOnly"/> only image notes. The entry gallery
+    /// (16d) counts its images with it.
+    /// </summary>
+    public static IQueryable<SessionNote> NotesMentioningQuery(
+        IQuerySession session, Guid campaignId, IReadOnlyCollection<Guid> entryIds, Member viewer, bool imagesOnly = false)
+    {
+        var query = session.Query<SessionNote>()
+            .Where(n => n.CampaignId == campaignId)
+            .Where(MentioningAny<SessionNote>(nameof(SessionNote.MentionedEntryIds), entryIds))
+            .Where(SessionNoteVisibility.VisibleTo(viewer));
+        return imagesOnly ? query.Where(SessionNote.WithImages) : query;
     }
 
     /// <summary>
