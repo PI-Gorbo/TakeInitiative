@@ -1,8 +1,8 @@
 <template>
     <div class="w-full h-full">
         <NuxtLayout name="default">
-            <div class="flex h-full w-full flex-col items-center pt-20">
-                <div class="w-page-slim flex flex-col">
+            <div class="flex h-full w-full flex-col items-center pb-safe pt-safe px-safe">
+                <div class="w-page-slim flex flex-col pt-10 sm:pt-20">
                     <header>
                         <NuxtLink to="/">
                             <h1
