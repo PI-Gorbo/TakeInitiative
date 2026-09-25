@@ -260,6 +260,38 @@ From a clean clone, with no GitHub PAT:
   commands that can never be reached. Both leave with the rest of v1 combat in
   13a, and step 18 must not bring them back (design §8).
 
+### Deviations and decisions in 13b
+
+- **Membership index.** Marten 7 turns `Members.Any(m => m.UserId == id)` into
+  `data -> 'Members' @> '[{"UserId": …}]'`. A whole-document `GinIndexJsonData()`
+  cannot serve that expression, so 13b adds a GIN index on `(data -> 'Members')`
+  instead (`mt_doc_campaign_idx_members`). `EXPLAIN` shows a bitmap index scan on it.
+- **Join codes** are 8 random characters from an alphabet without `0/O/1/I/L`,
+  stored on `CampaignCreated` and in `Campaign.JoinCode` (unique index). Join
+  trims and upper-cases the code. An unknown code is a 400 on `joinCode`.
+- **Responses.** Create, join, get and the role change all return the same
+  `CampaignResponse` { id, name, joinCode, ownerMemberId, createdAt,
+  currentMemberId, members[] { memberId, userId, username, role, joinedAt,
+  isOwner } }. `GET /api/campaigns` returns `{ campaigns[] { id, name, role,
+  isOwner, memberCount } }`. `GET /api/user` no longer lists campaigns.
+- **Role changes.** Setting the role a member already has appends nothing. The
+  owner cannot be set to `Player` (400). A non-owner DM gets 403.
+- **Metadata.** The correlation id is the request's W3C trace id
+  (`Activity.Current`), falling back to `HttpContext.TraceIdentifier`, and is
+  echoed in `X-Correlation-Id`. Each event also gets a `request` header
+  (`METHOD /path`). Causation is enabled but unset until events cause events.
+- **Enums** are stored as strings (`EnumStorage.AsString`), and `Role` has a
+  `JsonStringEnumConverter`, so the API sends `"DM"` / `"Player"`.
+- **Hub DM group.** A role change moves the member's live connections in or out
+  of `campaign:{id}:dm` through an in-memory `CampaignConnections` registry. That
+  assumes one API instance; scaling out needs a backplane or a reconnect message.
+- **Dropped:** the "you already own a campaign with that name" check (the
+  projection stores the owner's member id, not their user id), the web settings
+  page (rename, delete) and the campaign introduction, which has no v2 event.
+  The owner's role control sits on the campaign overview until 13d.
+- **Local dev Postgres** is `takedb` on port 7401 (`compose.dev.yml`). Port 5432
+  on this machine can belong to another project.
+
 ### Behaviour kept from the v1 combat tests (filled in during 13a)
 
 The v1 tests were snapshot tests (`CombatVerifier`) with a faked dice roller and
