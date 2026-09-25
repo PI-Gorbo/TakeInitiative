@@ -10,12 +10,12 @@ tabs plus a search button. The Wiki and Combat tabs are empty.
 The step ships as four PRs stacked with `gh stack` on top of this file's docs
 PR, one per sub-step. Each PR leaves `dev` runnable as **v2 so far**:
 
-| PR | Sub-step | Runnable state after merge |
-|---|---|---|
-| 13a | Delete v1 combat | Sign up, create a campaign, join it. There is no combat |
-| 13b | Campaign model | The same flows, on the v2 Campaign stream with members and roles |
-| 13c | Generated API types | The same flows, with `models.ts` gone |
-| 13d | PWA shell | The step's Verify passes |
+| PR | Sub-step | Runnable state after merge | Status |
+|---|---|---|---|
+| 13a | Delete v1 combat | Sign up, create a campaign, join it. There is no combat | [x] built (#195) |
+| 13b | Campaign model | The same flows, on the v2 Campaign stream with members and roles | [x] built (#197) |
+| 13c | Generated API types | The same flows, with `models.ts` gone | [x] built (#198) |
+| 13d | PWA shell | The step's Verify passes | [x] built; browser checks in Verify pending |
 
 v1 combat comes back as Combat v2 in step 18. The app has no combat until then,
 which is fine because v2 starts with no data and has no users to protect.
@@ -327,6 +327,63 @@ From a clean clone, with no GitHub PAT:
   zod schema for them, and `validateResponse` is gone.
 - **`testWeb.yml`** now uses pnpm (from `packageManager`), Node 24 and .NET 10 instead
   of bun, and also runs on `.cs`/`.csproj` changes, since those can change the types.
+
+### Deviations and decisions in 13d
+
+- **`srcDir: "public"`, not Ripple's `"../public"`.** Ripple's Nuxt `srcDir` is
+  `app/` (compatibility version 4); here it is the app root, so `"../public"` points
+  outside the app and the service worker build fails. `devOptions.type` is
+  `classic` because `sw.js` has no imports.
+- **Viewport meta** is Ripple's plus `viewport-fit=cover`. Without it iOS reports
+  zero safe-area insets, so the `pt-safe`/`pb-safe`/`px-safe` utilities in
+  `assets/index.css` would do nothing. Also `theme-color` and the Apple standalone
+  meta tags. The theme colour is `--background` (`#030712`).
+- **Icons** are generated offline from `public/yellowDice.png` (256px): `sips` for
+  the 192 and 512 icons, and a small CoreGraphics script for the opaque maskable 512
+  (the dice at 340px on `#030712`, inside the 80% safe zone) and a 180px
+  `apple-touch-icon`. The 512 icon is upscaled from 256px.
+- **`/app` is a page now.** It is the manifest's `start_url`, and it uses the
+  existing `index-reroute` middleware to open the first campaign, or create/join
+  when there is none.
+- **Tabs.** One `<nav>` is the bottom bar on a phone (`min-h-14`, 56px targets) and a
+  side rail from `md` up (`min-h-11`). Header buttons are 44px (`size-11`). Tab
+  routes are `app-campaigns-campaignId{,-wiki,-combat}`; the layout persists across
+  them, so the hub connection does too.
+- **Live updates** moved from the layout into `composables/useCampaignHub.ts`. Hub
+  handlers return nothing: the SignalR client logs "Result given for … method but
+  server is not expecting a result" when a handler returns a value, which the old
+  layout did by returning the invalidation promise. `Join`/`Leave` use `invoke`, so
+  a failed join is reported instead of dropped.
+- **Search sheet.** Full screen on a phone. From `md` up the same component is a
+  centred panel over the page, which suits ⌘K better; both show the same empty
+  state naming step 17. ⌘K / Ctrl+K toggles it anywhere in the campaign shell.
+- **Role control.** The owner sees a DM / Player segmented control (44px) for every
+  other member; the owner's own row shows a badge only. Everyone else sees badges.
+- **Join code.** "Copy" copies the code; "Share" uses the Web Share API with the join
+  link (`/app/campaigns/join/{code}`) and falls back to copying the link. The link
+  uses `window.location.origin`, not `WEB_URL`.
+- **Outside a campaign** a small `layouts/app.vue` (logo and an account menu with
+  Settings and Log out) replaces `mainApp.vue`, and the campaign list is one list
+  with each campaign's role and member count. The old list showed the Join and New
+  buttons only to users with a DM campaign.
+- **Deleted** beyond the named pieces: `CustomSidebarTrigger`, `CopiedTooltip`,
+  `TooltipWrapper`, `ConfirmationButton`, `AutoSaveSpinner`, `AsyncSuccessIcon`,
+  `AsyncFontAwesomeIcon`, `useDebouncedAsyncFn`, `useScreenSize`, the shadcn
+  `sidebar` and `navigation-menu` primitives, the `w-page` class and the sidebar
+  colours. `EditIntroductionForm` was already gone. `v-wave` stays: the shadcn
+  `Button` uses it. The other shadcn primitives stay for later steps.
+- **Tailwind content** now includes `layouts/`, `composables/` and `app.vue`. Before,
+  classes used only in layouts were never generated.
+- **Verify, as run in 13d** (no browser): `nuxi typecheck` clean, `nuxt build` and
+  root `pnpm build` pass with `manifest.webmanifest` and `sw.js` in `.output/public`,
+  `dotnet test` 20/20. Against `nuxt dev` on 3100 and the API on 5010: every route,
+  the manifest, the three icons (sizes checked) and `sw.js` return 200, and the 13c
+  API smoke test passes. A Node SignalR client checked the live path: A's
+  connection gets `memberJoined` when B joins, B's gets `memberRoleChanged` when A
+  promotes B. In Postgres, all 18 v2 campaign events have a `correlation_id` and an
+  `Actor`; the 30 rows without them are v1 combat events from before 13a. Not run:
+  `pnpm dev` from a clean clone (port 3000 belongs to another project on this
+  machine), and Verify 2 and 3, which need a browser.
 
 ### Behaviour kept from the v1 combat tests (filled in during 13a)
 
