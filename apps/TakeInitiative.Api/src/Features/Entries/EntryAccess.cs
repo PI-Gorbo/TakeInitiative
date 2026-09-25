@@ -10,15 +10,29 @@ namespace TakeInitiative.Api.Features.Entries;
 /// </summary>
 public static class EntryAccess
 {
+    /// <summary>How many merges a redirect follows before giving up. Chains are short: each merge is a deliberate act.</summary>
+    private const int MaxMergeHops = 32;
+
     /// <summary>
     /// An entry of this campaign that the viewer can see. Anything else is a 404, never a
     /// 403, so an entry's existence does not leak (invariant 5).
+    /// <para>
+    /// A merged entry's id redirects (15g): with <paramref name="followMerge"/> (the default)
+    /// this returns the entry it was merged into, following a chain, and the read rule is the
+    /// target's. So a read, a timeline or a write to an old id acts on the target, and a
+    /// caller who cannot see the target gets a 404.
+    /// </para>
     /// </summary>
     public static async Task<Entry> RequireVisibleEntry<TRequest, TResponse>(
-        this Endpoint<TRequest, TResponse> endpoint, IQuerySession session, Guid campaignId, Guid entryId, Member viewer, CancellationToken ct)
+        this Endpoint<TRequest, TResponse> endpoint, IQuerySession session, Guid campaignId, Guid entryId, Member viewer, CancellationToken ct,
+        bool followMerge = true)
         where TRequest : notnull
     {
         var entry = await session.LoadAsync<Entry>(entryId, ct);
+        for (var hops = 0; followMerge && entry?.MergedIntoId is { } into && hops < MaxMergeHops; hops++)
+        {
+            entry = await session.LoadAsync<Entry>(into, ct);
+        }
         if (entry is null || entry.CampaignId != campaignId || !EntryVisibility.CanSee(entry, viewer))
         {
             endpoint.ThrowError("There is no entry with the given id.", (int)HttpStatusCode.NotFound);

@@ -73,10 +73,12 @@ public class GetEntryTimeline(IDocumentSession session) : Endpoint<GetEntryTimel
         var (_, member) = await this.RequireMember(session, req.CampaignId, userId, ct);
         var entry = await this.RequireVisibleEntry(session, req.CampaignId, req.EntryId, member, ct);
 
+        // A merged entry's mentions are this entry's (15g): the text keeps the old id.
+        var ids = entry.MentionIds();
         var page = await MentionIndex.NotesMentioning(
-            session, req.CampaignId, [entry.Id], member, req.Before, req.Take ?? DefaultTake, ct);
+            session, req.CampaignId, ids, member, req.Before, req.Take ?? DefaultTake, ct);
 
-        var blocks = await MentionIndex.BlocksMentioning(session, req.CampaignId, [entry.Id], member, ct);
+        var blocks = await MentionIndex.BlocksMentioning(session, req.CampaignId, ids, member, ct);
 
         var sessionIds = page.Notes.Select(n => n.SessionId).Distinct().ToArray();
         var numbers = sessionIds.Length == 0

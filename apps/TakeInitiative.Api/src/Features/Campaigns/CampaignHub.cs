@@ -42,6 +42,10 @@ public static class CampaignHubMessages
 
     // Articles (step 15e): only to the members whose view of the article changed.
     public const string EntryArticleChanged = "entryArticleChanged";
+
+    // Merge, claim and stats (step 15g).
+    public const string EntryMerged = "entryMerged";
+    public const string EntryStatsChanged = "entryStatsChanged";
 }
 
 /// <summary>

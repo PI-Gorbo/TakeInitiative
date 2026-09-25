@@ -117,8 +117,7 @@ public static class NewEntries
         }
 
         var visible = await session.Query<Entry>()
-            .Where(e => e.CampaignId == campaignId)
-            .Where(EntryVisibility.VisibleTo(author))
+            .Listed(campaignId, author)
             .ToListAsync(ct);
         foreach (var entry in newEntries)
         {

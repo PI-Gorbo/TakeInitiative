@@ -74,8 +74,7 @@ public class PostEntry(IDocumentSession session, IHubContext<CampaignHub> hub) :
         var name = req.Name.Trim();
 
         var visible = await session.Query<Entry>()
-            .Where(e => e.CampaignId == req.CampaignId)
-            .Where(EntryVisibility.VisibleTo(member))
+            .Listed(req.CampaignId, member)
             .ToListAsync(ct);
         var existing = visible.FirstOrDefault(e => EntryNameRules.IsCalled(e, name));
         if (existing is not null)

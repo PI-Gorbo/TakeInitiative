@@ -49,8 +49,7 @@ public class GetEntries(IDocumentSession session) : Endpoint<GetEntriesRequest, 
         var (_, member) = await this.RequireMember(session, req.CampaignId, userId, ct);
 
         var entries = await session.Query<Entry>()
-            .Where(e => e.CampaignId == req.CampaignId)
-            .Where(EntryVisibility.VisibleTo(member))
+            .Listed(req.CampaignId, member)
             .OrderBy(e => e.Name)
             .ToListAsync(ct);
         var counts = await MentionIndex.CountsFor(session, req.CampaignId, member, ct, entries);
