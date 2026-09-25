@@ -1,6 +1,7 @@
 <template>
-    <!-- An entry (design §4, 15c): its header and its timeline. The article (15f),
-         connections (19), gallery (16) and combats (18) arrive with their steps. -->
+    <!-- An entry (design §4): its header (15c), its article (15f) and its timeline
+         (15c). Connections (19), gallery (16) and combats (18) arrive with their steps.
+         `?edit={blockId}` opens the article editor at a block (a phone's promote, §3a). -->
     <div class="mx-auto flex w-full max-w-3xl flex-col gap-5 px-4 py-4 pb-safe">
         <NuxtLink
             :to="`/app/campaigns/${encodeURIComponent(campaignId)}/wiki`"
@@ -42,10 +43,29 @@
                 :editing="editing"
                 @edit="editing = true" />
 
+            <WikiArticleEditor
+                v-if="articleEditing && canEdit"
+                :key="`${entry.id}-editor`"
+                :campaignId="campaignId"
+                :entry="entry"
+                :viewer="viewer"
+                :nameOf="memberName"
+                :focusBlockId="focusBlockId"
+                @done="articleEditing = false" />
+            <WikiArticle
+                v-else
+                :campaignId="campaignId"
+                :article="entry.article"
+                :viewerMemberId="viewer.memberId"
+                :canEdit="canEdit"
+                :nameOf="memberName"
+                @edit="openArticleEditor()" />
+
             <WikiEntryTimeline
                 :campaign="campaign"
                 :entryId="entry.id"
-                :entryName="entry.name" />
+                :entryName="entry.name"
+                :canEdit="canEdit" />
 
             <!-- Posts to the current session with the mention prefilled (design §4). -->
             <Button
@@ -68,6 +88,7 @@
     import { BookX, ChevronLeft, MessageSquarePlus } from "lucide-vue-next";
     import { apiErrorStatus } from "~/utils/apiErrorParser";
     import { currentMember } from "~/utils/campaign";
+    import { EDIT_BLOCK_PARAM } from "~/utils/article";
     import { ABOUT_PARAM, canChangeEntryAccess, canEditEntry } from "~/utils/entries";
     import { getCampaignQuery } from "~/utils/queries/campaign";
     import { getEntryQuery } from "~/utils/queries/entries";
@@ -87,7 +108,9 @@
     const entry = computed(() => entryQuery.data.value);
     const notFound = computed(() => apiErrorStatus(entryQuery.error.value) === 404);
 
-    useHead({ title: () => (entry.value ? `${entry.value.name} · Wiki` : "Wiki") });
+    useHead({
+        title: () => (entry.value ? `${entry.value.name} · Wiki` : "Wiki"),
+    });
 
     const viewer = computed(() => ({
         memberId: campaign.value?.currentMemberId ?? "",
@@ -99,12 +122,40 @@
         () => campaign.value?.members.find((m) => m.memberId === entry.value?.creatorMemberId)?.username ?? "the creator"
     );
 
+    const memberName = (memberId: string) =>
+        campaign.value?.members.find((m) => m.memberId === memberId)?.username ?? "Unknown member";
+
     const editing = ref(false);
     // Losing the right to edit (edit access or a role change) closes the editor.
     watch([canEdit, canChangeAccess], ([edit, access]) => {
         if (!edit && !access) editing.value = false;
     });
-    watch(entryId, () => (editing.value = false));
+
+    // ── The article editor (15f) ─────────────────────────────────────────────
+    const articleEditing = ref(false);
+    const focusBlockId = ref<string | undefined>();
+    function openArticleEditor(blockId?: string) {
+        focusBlockId.value = blockId;
+        articleEditing.value = true;
+    }
+    watch(canEdit, (edit) => {
+        if (!edit) articleEditing.value = false;
+    });
+    watch(entryId, () => {
+        editing.value = false;
+        articleEditing.value = false;
+    });
+    // `?edit={blockId}` is used once, when the entry has loaded, then dropped.
+    watch(
+        [() => route.query[EDIT_BLOCK_PARAM], entry, campaign, canEdit],
+        ([blockId, loaded, member, edit]) => {
+            if (typeof blockId !== "string" || !loaded || !member) return;
+            if (edit) openArticleEditor(blockId);
+            const { [EDIT_BLOCK_PARAM]: _, ...query } = route.query;
+            void navigateTo({ query }, { replace: true });
+        },
+        { immediate: true }
+    );
 
     const aboutLink = computed(
         () => `/app/campaigns/${encodeURIComponent(campaignId.value)}?${ABOUT_PARAM}=${encodeURIComponent(entryId.value)}`
