@@ -23,7 +23,7 @@ PR, which sits on 14e (#205). Each PR leaves the app runnable:
 | 15c | `v2/15c-wiki-pages` | Wiki home and entry page | The Wiki tab lists entries. An entry page shows its header and timeline, mentions in notes are chips, and "Add a note about X" works | [x] |
 | 15d | `v2/15d-mention-composer` | `@` in the composer | `@` links or creates entries from the composer: a popover on desktop, the mention strip on a phone | [x] |
 | 15e | `v2/15e-articles-api` | Articles, secret blocks, promote (API) | The same in the browser. The API stores articles as blocks, redacts secret blocks per viewer and promotes quotes | [x] |
-| 15f | `v2/15f-article-editor` | Article editor and promote (web) | Articles are shown and edited, with 🔒 and `@`. Promote works from the stream, the timeline and the long-press sheet | [ ] |
+| 15f | `v2/15f-article-editor` | Article editor and promote (web) | Articles are shown and edited, with 🔒 and `@`. Promote works from the stream, the timeline and the long-press sheet | [x] |
 | 15g | `v2/15g-merge-claim-stats` | Merge, claim, stats, history | The step's Verify passes | [ ] |
 
 Images (galleries) are step 16, ⌘K search is step 17, combats on an entry are step
@@ -101,6 +101,7 @@ Paths are relative to `apps/TakeInitiative.Api` (API), `apps/TakeInitiative.Api.
 - Web add `components/Wiki/{Article,ArticleBlock,ArticleEditor,ArticleBlockEditor,SecretBlockPicker,ConflictDialog}.vue`, `components/Wiki/PromoteDialog.vue`, `components/Wiki/EntryPicker.vue`
 - Web modify `utils/noteActions.ts` (`promote`), `components/Session/{SessionNoteCard,NoteActions,NoteActionSheet}.vue`, `components/Wiki/EntryTimeline.vue`, `pages/app/campaigns/[campaignId]/wiki/[entryId].vue`
 - Web add `tests/unit/{article,promote}.test.ts`
+- As built, also: add `components/Wiki/PromoteSelection.vue` (the desktop "Add to wiki" button) and `utils/api/entry/{putEntryArticle,postEntryQuote}Request.ts`; modify `components/Session/{NoteMarkdown,SessionStream}.vue`, `components/Composer/{ComposerToolbar,RevealDialog}.vue`, `utils/markdown.ts` (the `document` option), `utils/queries/entries.ts`, `composables/{useApi,useCampaignHub}.ts`, `utils/api/types.ts`, `tests/unit/{markdown,noteActions}.test.ts`. `NoteActions.vue` and `NoteActionSheet.vue` only gained the icon
 
 **15g**
 - API add `src/Features/Entries/Models/{Stats,EntryMerge}.cs`
@@ -931,3 +932,56 @@ This PR adds the nouns the step puts into code and UI:
     - Only offer 🔒 on blocks whose `ownerMemberId` is the viewer, or to DMs (anything else is a 403). An ordinary block is `Everyone` with no `quote`.
     - Hub: on `entryArticleChanged { entryId }`, invalidate `["entry", campaignId, entryId]`, or show "This article changed" while its editor is open. `mergeEntrySummary` already keeps the loaded article on `entryUpserted`.
     - Promote: `POST quotes { noteId, text? }` → `{ entry, blockId }`. Send the note's stored text for a selection (`utils/promote.ts` maps it). A quote links with `quote.noteId`, `quote.sessionNumber` and `quote.authorMemberId`.
+- **15f, as built** (PR on `v2/15f-article-editor`):
+  - **Pure logic.**
+    - `utils/article.ts`: `EditorBlock { key, id | null, visibility, ownerMemberId, quote, mention: MentionText }`, `toEditorBlocks`, `newBlock`, `moveBlock`, `removeBlock`, `setBlockVisibility`, `wrapSecret`, `articleSaveBody`, `articleUnchanged`, `editedBlocks`, `relinkArticleNewEntry`, `articleRevealCheck`, `quotesNote`, `blockKind`, `secretLabel`, `secretAudience`, `canChangeBlockVisibility`, `EDIT_BLOCK_PARAM` and `entryHref`.
+    - `utils/promote.ts`: `plainView`, `normalizeForMatch`, `selectionToSource`, `isExcerptOf`, `promoteTargets` and `noteAudience`.
+    - `tests/unit/article.test.ts` has 27 tests and `promote.test.ts` 17.
+  - **Reading** (`WikiArticle`, `WikiArticleBlock`). Blocks draw through `NoteMarkdown` with the new `document` prop, which turns 14c's heading rule off (`NoteMarkdownEnv.document`). A secret block has a dashed gold frame labelled 🔒 DM or 🔒 Me, with "Visible to the DMs and Sam" as its title. A quote is a blockquote with "— Sam, Session 12 ↗" linking to `?note=`. A quote of a 🔒 note gets both. An empty article reads "Nothing written yet", with Edit for editors.
+  - **Editing** (`WikiArticleEditor`, one `WikiArticleBlockEditor` per block).
+    - Each block has its own `MentionText` and `useMentionPicker`, 15d's `ComposerMentionLinks`, and `ComposerToolbar` with `@`, B, I, List and 🔒. `ComposerToolbar` gained `showPost` (the ➤ button is off here).
+    - From md, the toolbar sits under every block and `@` is the popover. On a phone, only the focused block shows its toolbar, docked above the keyboard (`useKeyboardInset`) with the mention strip inside it, and the editor sets `useComposerPinned` so the tab bar hides (invariant 11).
+    - Blocks move up and down and can be deleted. "+ Text" and "+ 🔒 Secret" add blocks. ⌘/Ctrl+Enter saves. Cancel asks "Discard changes?" once when something changed.
+  - **🔒 rules** (`wrapSecret`). 🔒 is offered on ordinary blocks only. Secret blocks and quotes change visibility through `SecretBlockPicker` (Ordinary or Everyone, 🔒 DM, 🔒 Me), which shows only to the block's owner and the DMs.
+    - With a selection, the block splits into three, and the middle becomes the viewer's new 🔒 DM block. A selection never cuts a mention in two. The first non-blank ordinary part keeps the block's id, and the others are new blocks the viewer owns. Each part keeps only the links and new entries it uses.
+    - **Deviation:** without a selection, the owner or a DM makes the block secret in place. Anyone else gets the block back as a new secret block they own, with the id dropped. That is the same as selecting all of it, so it is never a 403.
+  - **Saving.** `articleSaveBody` sends every block in order, with `id` only for existing ones and the stored text. It leaves blank blocks out, joins adjacent ordinary blocks under the first id in the run, and merges each block's new entries. An unchanged article saves nothing. The reveal check runs per block, where a block's readers are the entry's audience narrowed by the block's visibility. `RevealDialog` gained `verb="save"`. After a 200 the response replaces the loaded entry, and loaded timelines and the list are read again (article mentions).
+    - **Known edge:** joining two ordinary blocks that were separate on the server moves the second one's text above any hidden block between them, because the merge re-inserts a hidden block after the block it followed (15e). The viewer cannot know. Nothing leaks.
+  - **Conflicts.**
+    - A 409 `errors.etag`, and also a 400 `errors.blocks` (a block removed or hidden meanwhile), open `ConflictDialog`. It lists `editedBlocks`, meaning the viewer's new or changed blocks. Copy takes the stored form, so pasted mentions stay linked. However the dialog closes, the editor then reloads from a fresh `GET`.
+    - A 403 shows a toast. The `newEntries` errors are handled as in `NoteEditor`.
+  - **Pushes.** `entryArticleChanged` calls `applyEntryArticleChanged`, which invalidates `["entry", campaignId, entryId]` and the loaded timelines. There is no editor registry. The editor keeps its own snapshot (`base`) and watches the loaded entry's etag. When it changes while not saving, it shows "This article changed while you were editing" with Reload, which goes through `ConflictDialog` when the viewer changed something. The viewer's own save takes the response as its new snapshot first, so its own push is not a change.
+  - **Promote.**
+    - `NoteAction` gains `promote` ("Promote to wiki"), first in the menu and the sheet, for anyone who can see the note, except while it is pending. The sheet runs it after closing.
+    - `SessionNoteCard` opens `WikiPromoteDialog` lazily, like its history dialog. On a timeline it takes `promoteEntryId`: its only action is then `promote`, and long-press is off. `EntryTimeline` draws `[Promote]` through the actions slot, for editors of the entry.
+    - `WikiPromoteSelection` (addition, one per page, in `SessionStream` and `EntryTimeline`) shows "Add to wiki" under a selection inside one note's `.note-markdown`, on desktop with a fine pointer only. It maps the selection through `selectionToSource`.
+    - `selectionToSource`: both sides are compared with whitespace runs collapsed, ignoring `*`, `_`, `~`, backticks, backslashes, zero-width joiners and the kind icons that chips draw. So `snake_case`, escapes and emphasis match either way. Markup at the very edges of a selection is dropped, the first occurrence wins, and the result is always a real slice of the source, widened to whole mentions and links.
+    - `WikiPromoteDialog` has `WikiEntryPicker` (`promoteTargets`: 15d's matching over the entries the viewer can edit, plus Create "…" when no visible entry has that name or alias). Create posts the entry first, with the note's audience (`noteAudience`: a hidden `Everyone` note gives `DM`), then promotes into it. These are two requests: a failed promote leaves the new entry, empty.
+    - The dialog also has the quote's text box, checked with `isExcerptOf`. It says "Players won't see this quote" for `DM`, `Me` and hidden notes, and warns when the picked entry's article already quotes the note (`quotesNote`, read with `getEntryQuery`). An untouched whole note is sent without `text`.
+    - On a phone the dialog has no text box: the whole note goes in, and it navigates to `/wiki/{entryId}?edit={blockId}`. The entry page uses the parameter once to open the editor at that block, then drops it. On desktop, a toast links to the entry. The dialog sits at the top on a phone, and its height stops above the keyboard.
+  - **Addition: the timeline draws 15e's `articleMentions`** as "Also mentioned in the articles of" plus links, resolved through the directory.
+  - **Script fix:** `composer14d.mjs`'s four exact `noteActionsFor` lists now start with `promote`.
+  - **Verify, as run in 15f** (no browser, so the docked toolbar, the selection button's position and the phone flow were not seen):
+    - `dotnet test` passes 271/271. The API is unchanged, so `schema.d.ts` is unchanged.
+    - `nuxi typecheck` is clean and `nuxt build` succeeds. `vitest` passes 249/249: the 204 from before plus `article` 27, `promote` 17 and `markdown` 1. `noteActions`' lists gained `promote`.
+    - `article15f.mjs` passed 64/64 against the API on 5010, with a DM and two players on a real `CampaignHub`. Every article in it is built through the web's own `article.ts`, `promote.ts` and `mentions.ts`. It covers:
+      - the first block, a 🔒 split by the DM and the pings for it, and an edit inside the secret that pings only the DM;
+      - a player's save that keeps the DM's secret in place, and the join under the first id;
+      - 🔒 on another member's whole block (a new 🔒 Me block, 200, hidden from the others), and the 403 that the web never offers;
+      - the stale-save 409 with `editedBlocks`, then reload and re-apply, and the 400 `errors.blocks`;
+      - a rendered-chip selection mapped to source and promoted, the quote's link fields, a whole-note promote trimmed in the editor, and a rewrite refused;
+      - a 🔒 DM note's quote, which pings only the DM and is absent for players, and the 404 on an unseen note;
+      - `@` Create inside a block, and the `articleMentions` it adds;
+      - the reveal check, `promoteTargets`, and Promote first in the note actions;
+      - an unchanged save that is a no-op for every viewer.
+    - `pages15f.mjs` passed 34/34 against `nuxt dev`, including the entry page with `?edit=`.
+    - The earlier scripts pass: `smoke14a`, `hub14b` 28/28, `stream14c` 111/111, `composer14d` 142/142 (after the fix above), `filters14e` 233/233, `pages13d`, `entries15a` 30/30, `mentions15b` 44/44, `wiki15c` 64/64, `mentions15d` 56/56, `pages15c` 24/24, `pages15d` 19/19 and `articles15e` 35/35.
+  - **For 15g.**
+    - **The entry page** is `pages/app/campaigns/[campaignId]/wiki/[entryId].vue`. From top to bottom:
+      - the header, `WikiEntryHeader`, which swaps for `WikiEntryHeaderEditor` while `editing`;
+      - the article, `WikiArticle`, which swaps for `WikiArticleEditor` while `articleEditing`. `openArticleEditor(blockId?)` opens it, and `?edit=` does too;
+      - `WikiEntryTimeline`, then "Add a note about…".
+    - Permissions come from `canEdit` and `canChangeAccess` there, and names from `memberName`.
+    - **Header actions.** `EntryHeader.vue` has one `[Edit]` button that emits `edit`. Merge, claim and history belong beside it, as a menu or buttons. `ClaimControl` and `StatsEditor` fit under the header.
+    - **Restore.** Build the version's blocks with `toEditorBlocks`, then save with `articleSaveBody(currentEtag, …)` through `putEntryArticleMutation`. A version's block ids that no longer exist would be a 400 `errors.blocks`, so send those blocks without an id (new blocks the restorer owns). Hidden blocks survive through the server's merge. Opening `WikiArticleEditor` on the restored blocks would need a `blocks` prop. Today it starts from `entry.article`.
+    - **The hub.** `applyEntryArticleChanged` is in `utils/queries/entries.ts`, next to where `entryMerged` goes. `entryHref(campaignId, entryId)` builds entry links. `EntryPicker` and `promoteTargets` are ready for `MergeDialog`, which should drop the Create row.
