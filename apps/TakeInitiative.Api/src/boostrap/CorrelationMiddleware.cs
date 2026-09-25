@@ -11,12 +11,14 @@ namespace TakeInitiative.Api.Bootstrap;
 public class CorrelationMiddleware(RequestDelegate next)
 {
     public const string HeaderName = "X-Correlation-Id";
+    /// <summary>The event header naming the request (method and path).</summary>
+    public const string RequestHeaderKey = "request";
 
     public async Task InvokeAsync(HttpContext context, IDocumentSession session)
     {
         var correlationId = CorrelationIdFor(context);
         session.CorrelationId = correlationId;
-        session.SetHeader("request", $"{context.Request.Method} {context.Request.Path}");
+        session.SetHeader(RequestHeaderKey, $"{context.Request.Method} {context.Request.Path}");
 
         context.Response.OnStarting(() =>
         {

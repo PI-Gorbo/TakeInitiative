@@ -73,6 +73,11 @@ public partial class PostEntryQuote(IDocumentSession session, IHubContext<Campai
         {
             ThrowError(new ValidationFailure(TextErrorKey, "A quote must be text from the note."), StatusCodes.Status400BadRequest);
         }
+        // An image note may have no caption (16b). Promote copies text only.
+        if (text.Length == 0)
+        {
+            ThrowError(new ValidationFailure(TextErrorKey, "This note has no text to quote."), StatusCodes.Status400BadRequest);
+        }
 
         // The limits are checked on what the caller can see, like PUT article, so they reveal
         // nothing about hidden blocks.

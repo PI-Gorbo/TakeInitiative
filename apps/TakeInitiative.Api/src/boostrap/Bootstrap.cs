@@ -76,9 +76,11 @@ public static class Bootstrap
 
             // Image documents (step 16a): storage bookkeeping, not an aggregate. Optimistic
             // concurrency makes two writers racing on one image (attaching it to two notes,
-            // or attaching it while it is swept) a conflict for the loser.
+            // or attaching it while it is swept) a conflict for the loser. The correlation id
+            // (16b) ties an attach to the note event saved with it (invariant 9).
             opts.Schema.For<Image>()
                 .UseOptimisticConcurrency(true)
+                .Metadata(m => m.CorrelationId.Enabled = true)
                 .Index([x => x.CampaignId, x => x.UploaderMemberId, x => x.NoteId!])
                 .Index(x => x.NoteId!);
 

@@ -7,7 +7,7 @@ namespace TakeInitiative.Api.Features.Images;
 /// <summary>
 /// The read rule for images (invariant 5), run on every request for an image's bytes,
 /// including one that would be answered "not modified". Nothing about who can see an
-/// image is stored on it: the rule reads the image's state, and from 16b its note, at
+/// image is stored on it: the rule reads the image's state and its note at
 /// request time, so a change to the note takes effect on the next request.
 /// </summary>
 public static class ImageAccess
@@ -34,21 +34,22 @@ public static class ImageAccess
     /// <summary>
     /// Whether <paramref name="viewer"/> can see <paramref name="image"/>, checked in order:
     /// a deleted image is seen by nobody; an image on no note by its uploader only (not even
-    /// a DM, since it is an unsent draft).
+    /// a DM, since it is an unsent draft); an image on a note by exactly who can see the note,
+    /// through <see cref="SessionNoteVisibility.CanSee"/>, the function the stream uses. The
+    /// note is read now, so hiding it, changing its visibility or deleting it takes effect on
+    /// the next request, with nothing copied onto the image that could drift.
     /// </summary>
-    public static Task<bool> CanSee(IQuerySession session, Image image, Member viewer, CancellationToken ct)
+    public static async Task<bool> CanSee(IQuerySession session, Image image, Member viewer, CancellationToken ct)
     {
         if (image.DeletedAt is not null)
         {
-            return Task.FromResult(false);
+            return false;
         }
-        if (image.NoteId is null)
+        if (image.NoteId is not { } noteId)
         {
-            return Task.FromResult(image.UploaderMemberId == viewer.MemberId);
+            return image.UploaderMemberId == viewer.MemberId;
         }
-        // 16b: load the note by image.NoteId (a missing note is false) and return
-        // SessionNoteVisibility.CanSee(note, viewer), the function the stream uses. Until
-        // then no image is on a note, so this is never reached.
-        return Task.FromResult(false);
+        var note = await session.LoadAsync<SessionNote>(noteId, ct);
+        return note is not null && note.CampaignId == image.CampaignId && SessionNoteVisibility.CanSee(note, viewer);
     }
 }

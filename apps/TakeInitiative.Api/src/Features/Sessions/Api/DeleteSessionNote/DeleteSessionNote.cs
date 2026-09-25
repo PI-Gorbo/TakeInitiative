@@ -11,8 +11,17 @@ public record DeleteSessionNoteRequest
     public Guid NoteId { get; init; }
 }
 
-/// <summary>The author deletes their note. The document goes; the stream keeps every event.</summary>
-public class DeleteSessionNote(IDocumentSession session, IHubContext<CampaignHub> hub) : Endpoint<DeleteSessionNoteRequest>
+/// <summary>
+/// The author deletes their note. The document goes; the stream keeps every event. Its
+/// images are marked deleted in the same transaction and deleted for real after it (the
+/// sweeper retries a failure); the note's events keep only their ids.
+/// </summary>
+public class DeleteSessionNote(
+    IDocumentSession session,
+    IHubContext<CampaignHub> hub,
+    ImageSweeper sweeper,
+    [FromKeyedServices(SessionGap.ClockKey)] TimeProvider clock,
+    ILogger<DeleteSessionNote> logger) : Endpoint<DeleteSessionNoteRequest>
 {
     public override void Configure()
     {
@@ -27,9 +36,17 @@ public class DeleteSessionNote(IDocumentSession session, IHubContext<CampaignHub
         var note = await this.RequireVisibleNote(session, req.CampaignId, req.NoteId, member, ct);
         this.RequireAuthor(note, member);
 
-        session.Events.Append(note.Id, new SessionNoteDeleted(Actor.Member(member.MemberId)));
-        await session.SaveChangesAsync(ct);
+        IReadOnlyList<Image> images;
+        await using (var write = await NoteWrite.Begin(session, ct))
+        {
+            images = await ImageAttachments.StageNoteDeleted(write.Session, note.Id, clock.GetUtcNow(), ct);
+            await this.SaveImagesAsync(write.Session, ct);
+            write.Session.Events.Append(note.Id, new SessionNoteDeleted(Actor.Member(member.MemberId)));
+            await write.Session.SaveChangesAsync(ct);
+            await write.CommitAsync(ct);
+        }
         await hub.NotifySessionNoteRemoved(note);
+        await sweeper.PurgeRemoved(images, logger, ct);
 
         await SendNoContentAsync(ct);
     }
