@@ -39,6 +39,8 @@ import { postEntryMergeRequest } from "~/utils/api/entry/postEntryMergeRequest";
 import { putEntryClaimRequest } from "~/utils/api/entry/putEntryClaimRequest";
 import { putEntryStatsRequest } from "~/utils/api/entry/putEntryStatsRequest";
 import { getEntryHistoryRequest } from "~/utils/api/entry/getEntryHistoryRequest";
+import { postImageRequest } from "~/utils/api/image/postImageRequest";
+import { deleteImageRequest } from "~/utils/api/image/deleteImageRequest";
 
 export const useApi = () => {
     const { $axios } = useNuxtApp();
@@ -92,6 +94,10 @@ export const useApi = () => {
             putClaim: putEntryClaimRequest($axios),
             putStats: putEntryStatsRequest($axios),
             history: getEntryHistoryRequest($axios),
+        },
+        image: {
+            post: postImageRequest($axios),
+            delete: deleteImageRequest($axios),
         },
         admin: {
             getMaintenance: getMaintenanceRequest($axios),
