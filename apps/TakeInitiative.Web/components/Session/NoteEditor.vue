@@ -4,20 +4,31 @@
          picker: a popover below the caret from md, and on a phone the mention strip
          docked above the keyboard. -->
     <form
-        class="flex flex-col gap-1 py-1"
+        ref="form"
+        class="relative flex flex-col gap-1 py-1"
         aria-label="Edit note"
-        @submit.prevent="save">
+        @submit.prevent="save"
+        @dragover="onDragOver"
+        @dragleave="onDragLeave"
+        @drop="onDrop">
+        <div
+            v-if="dragging"
+            class="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-md border-2 border-dashed border-gold bg-background/90 text-sm font-medium text-gold">
+            Drop images to attach them
+        </div>
         <div class="relative flex flex-col gap-1">
             <textarea
                 ref="textarea"
                 v-model="state.text"
                 aria-label="Note text"
                 :enterkeyhint="touch ? 'enter' : 'done'"
+                :placeholder="attachments.length > 0 ? IMAGE_MESSAGES.captionPlaceholder : undefined"
                 :aria-controls="mentions.open.value ? `${id}-mentions` : undefined"
                 :aria-activedescendant="mentions.open.value ? `${id}-mentions-${mentions.highlighted.value}` : undefined"
                 class="max-h-[50dvh] min-h-11 w-full resize-none overflow-y-auto rounded-md border bg-background px-3 py-2 text-base leading-snug outline-none focus-visible:ring-1 focus-visible:ring-ring md:text-sm"
                 @keydown="onKeydown"
-                @input="grow" />
+                @input="grow"
+                @paste="onPaste" />
             <ComposerMentionStrip
                 :picker="mentions"
                 :listId="`${id}-mentions`"
@@ -26,7 +37,37 @@
             <ComposerMentionLinks
                 :state="state"
                 :directory="mentions.directory.value" />
+            <!-- The note's images (16c): remove, move and add. -->
+            <ImageAttachmentStrip
+                :campaignId="campaignId"
+                :attachments="attachments"
+                movable
+                @remove="uploads.remove"
+                @retry="uploads.retry"
+                @move="uploads.move">
+                <p
+                    v-if="removedCount > 0"
+                    class="text-xs text-muted-foreground">
+                    {{
+                        removedCount === 1
+                            ? IMAGE_MESSAGES.willBeDeleted
+                            : `${removedCount} images will be deleted.`
+                    }}
+                </p>
+            </ImageAttachmentStrip>
+            <p
+                v-if="attachments.length === 0 && removedCount > 0"
+                class="text-xs text-muted-foreground">
+                {{ removedCount === 1 ? IMAGE_MESSAGES.willBeDeleted : `${removedCount} images will be deleted.` }}
+            </p>
         </div>
+        <input
+            ref="fileInput"
+            type="file"
+            accept="image/*"
+            multiple
+            hidden
+            @change="onFilesPicked" />
         <div class="flex flex-wrap items-center gap-1">
             <button
                 type="button"
@@ -36,6 +77,17 @@
                 @mousedown.prevent
                 @click="mentions.trigger()">
                 <AtSign
+                    class="size-4"
+                    aria-hidden="true" />
+            </button>
+            <button
+                type="button"
+                title="Attach images"
+                aria-label="Attach images"
+                class="flex h-11 min-w-11 items-center justify-center rounded-md px-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground md:h-8 md:min-w-8"
+                @mousedown.prevent
+                @click="fileInput?.click()">
+                <ImagePlus
                     class="size-4"
                     aria-hidden="true" />
             </button>
@@ -69,9 +121,9 @@
             <Button
                 type="submit"
                 class="h-11 md:h-8"
-                :disabled="!canSave || saving">
+                :disabled="!canSave || saving || uploads.busy.value">
                 <LoaderCircle
-                    v-if="saving"
+                    v-if="saving || uploads.busy.value"
                     class="animate-spin"
                     aria-hidden="true" />
                 Save
@@ -86,11 +138,21 @@
 <script setup lang="ts">
     import { useQueryClient } from "@tanstack/vue-query";
     import { useMediaQuery } from "@vueuse/core";
-    import { AtSign, LoaderCircle, ScrollText } from "lucide-vue-next";
+    import { AtSign, ImagePlus, LoaderCircle, ScrollText } from "lucide-vue-next";
     import { toast } from "vue-sonner";
     import { apiErrorMessage } from "~/utils/apiErrorParser";
     import type { SessionNote, Visibility } from "~/utils/api/types";
     import { NOTE_TEXT_MAX, enterAction, postableText } from "~/utils/composer";
+    import {
+        IMAGE_MESSAGES,
+        attachmentsFromImages,
+        failUploads,
+        imageFiles,
+        imageIdsErrorFrom,
+        imagesChanged,
+        removedNoteImages,
+        type Attachment,
+    } from "~/utils/images";
     import type { EntryViewer } from "~/utils/entries";
     import {
         fromStoredText,
@@ -117,7 +179,17 @@
     const state = reactive<MentionText>({ ...fromStoredText(props.note.text), newEntries: [] });
     const isRecap = ref(props.note.isRecap);
     const storedLength = computed(() => toStoredText(state.text, state.links).trim().length);
-    const canSave = computed(() => postableText(state.text) !== null && storedLength.value <= NOTE_TEXT_MAX);
+    // The note's images (16c): the ones on it are removed on save; new ones upload now.
+    const attachments = ref<Attachment[]>(attachmentsFromImages(props.note.images, { onNote: true }));
+    const uploads = useImageAttachments({ attachments, campaignId: () => props.campaignId });
+    const removedCount = computed(() => removedNoteImages(props.note.images, attachments.value));
+    // With images the caption may be empty.
+    const canSave = computed(
+        () =>
+            !uploads.failed.value &&
+            (postableText(state.text) !== null || (attachments.value.length > 0 && state.text.trim() === "")) &&
+            storedLength.value <= NOTE_TEXT_MAX
+    );
     const overLimit = computed(() => storedLength.value > NOTE_TEXT_MAX);
 
     const touch = useMediaQuery("(pointer: coarse)");
@@ -129,12 +201,23 @@
     const queryClient = useQueryClient();
     const saving = computed(() => putNote.isPending.value);
 
+    let saved = false;
     async function save() {
+        if (!canSave.value || saving.value || uploads.busy.value) return;
         const trimmed = postableText(state.text);
-        if (trimmed === null || saving.value) return;
-        const body = mentionBody(state, trimmed);
-        if (body.text === props.note.text && isRecap.value === props.note.isRecap && body.newEntries.length === 0) {
-            emit("saved");
+        // A caption may be empty when the note keeps an image.
+        const body = trimmed === null ? { text: "", newEntries: [] } : mentionBody(state, trimmed);
+        // `imageIds` only when the list changed: left out, the API keeps the images.
+        const imageIds = imagesChanged(props.note.images, attachments.value)
+            ? uploads.images.value.map((i) => i.id)
+            : undefined;
+        if (
+            body.text === props.note.text &&
+            isRecap.value === props.note.isRecap &&
+            body.newEntries.length === 0 &&
+            !imageIds
+        ) {
+            done();
             return;
         }
         // A hidden `Everyone` note is read by the DMs and its author only.
@@ -150,8 +233,9 @@
                 text: body.text,
                 isRecap: isRecap.value,
                 ...(body.newEntries.length > 0 ? { newEntries: body.newEntries } : {}),
+                ...(imageIds ? { imageIds } : {}),
             });
-            emit("saved");
+            done();
         } catch (error) {
             const entryError = newEntryErrorFrom(error);
             if (entryError?.kind === "alreadyCreated") {
@@ -159,7 +243,7 @@
                 toast.info("That edit was already saved.");
                 void invalidateSessionStreams(queryClient, props.campaignId);
                 void invalidateEntries(queryClient, props.campaignId);
-                emit("saved");
+                done();
                 return;
             }
             if (entryError?.kind === "duplicate") {
@@ -170,8 +254,63 @@
                 toast.error(`"${name ?? "That entry"}" already exists, so the mention now links to it. Save again.`);
                 return;
             }
+            // 16b's `errors.imageIds`: a new upload was swept or taken; upload it again.
+            const imagesError = imageIdsErrorFrom(error);
+            if (imagesError) {
+                attachments.value = failUploads(attachments.value, imagesError);
+                toast.error(imagesError);
+                return;
+            }
             toast.error(apiErrorMessage(error, "Could not save the note."));
         }
+    }
+
+    /** Saved: the new images are on the note now, so only their previews go. */
+    function done() {
+        saved = true;
+        uploads.release(attachments.value);
+        emit("saved");
+    }
+
+    // Cancelled, or the note went away: uploads the note never took are deleted.
+    onBeforeUnmount(() => {
+        if (!saved) uploads.discard();
+    });
+
+    // ── Adding images: 🖼, paste and drop ────────────────────────────────────
+    const fileInput = useTemplateRef<HTMLInputElement>("fileInput");
+    const form = useTemplateRef<HTMLFormElement>("form");
+    const dragging = ref(false);
+    function onFilesPicked(event: Event) {
+        const input = event.target as HTMLInputElement;
+        uploads.add(Array.from(input.files ?? []));
+        input.value = "";
+        textarea.value?.focus();
+    }
+    function onPaste(event: ClipboardEvent) {
+        const files = imageFiles(event.clipboardData?.files);
+        if (files.length === 0) return;
+        event.preventDefault();
+        uploads.add(files);
+    }
+    const carriesFiles = (event: DragEvent) => !!event.dataTransfer && Array.from(event.dataTransfer.types).includes("Files");
+    function onDragOver(event: DragEvent) {
+        if (!carriesFiles(event)) return;
+        event.preventDefault();
+        dragging.value = true;
+    }
+    function onDragLeave(event: DragEvent) {
+        if (event.relatedTarget instanceof Node && form.value?.contains(event.relatedTarget)) return;
+        dragging.value = false;
+    }
+    function onDrop(event: DragEvent) {
+        dragging.value = false;
+        if (!carriesFiles(event)) return;
+        event.preventDefault();
+        const files = Array.from(event.dataTransfer?.files ?? []);
+        const images = imageFiles(files);
+        if (images.length < files.length) toast.error(IMAGE_MESSAGES.unsupported);
+        uploads.add(images);
     }
 
     function onKeydown(event: KeyboardEvent) {
