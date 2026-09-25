@@ -23,7 +23,7 @@ which sits on 15g (#213). Each PR leaves the app runnable:
 | 16b | `v2/16b-image-notes-api` | Image notes (API) | The same in the browser. Notes take `imageIds`, may have no text, and their images are served to exactly the note's audience. The Text and Images filters work on the server | [x] |
 | 16c | `v2/16c-image-notes-web` | Image notes in the composer and stream | 🖼, paste and drop attach images. The stream draws them, a viewer opens them full screen, the note editor adds and removes them, and the filters work | [x] |
 | 16d | `v2/16d-galleries` | Session and entry galleries | A session divider opens its session's gallery, and an entry page has a Gallery section | [x] |
-| 16e | `v2/16e-share-target` | Camera and share target | 📷 on a phone. Sharing images to the installed PWA opens the composer with them attached. The step's Verify passes | [ ] |
+| 16e | `v2/16e-share-target` | Camera and share target | 📷 on a phone. Sharing images to the installed PWA opens the composer with them attached. The step's Verify passes | [x] |
 
 Loose ends proper (the counts on dividers and in the wiki, resolving) are step 19,
 and ⌘K's IMAGES section is step 17. This step leaves a seam for each (Notes) and
@@ -93,6 +93,7 @@ Paths are relative to `apps/TakeInitiative.Api` (API), `apps/TakeInitiative.Api.
 - Web modify `nuxt.config.ts` (the manifest's `share_target`), `public/sw.js` (one `fetch` handler, for the share POST only)
 - Web add `utils/shareTarget.ts`, `pages/app/share.vue`, `server/routes/app/share-target.post.ts` (the fallback when no service worker is active)
 - Web modify `components/Composer/Composer.vue` (📷, `?share=`), `pages/app/campaigns/[campaignId]/index.vue`, `layouts/campaign.vue` (remember the last campaign)
+- Web modify (added in 16e, see Notes) `components/Composer/ComposerToolbar.vue` (the items scroll on a narrow phone), `middleware/checkAuth.global.ts` (`redirectTo` keeps the query)
 - Web add `tests/unit/shareTarget.test.ts`
 
 ## Steps
@@ -954,3 +955,97 @@ Add each sub-step on top with `gh stack add v2/16a-blob-store` and so on.
     (`defineExpose`) is still the entry point for 📷 and the share target. A shared image note
     joins the galleries by itself: its post goes through `postNoteMutation`, whose answer and
     push run `invalidateNoteViews`.
+- **16e, as built** (PR on `v2/16e-share-target`):
+  - **📷.** A `camera` item after `gallery` in `toolbarItems`, only while `(pointer: coarse)`
+    matches (the composer's existing `touch` query). It clicks a second hidden `<input
+    type="file" accept="image/*" capture="environment">`, whose change goes through the same
+    `onFilesPicked`, so the photo is prepared and uploaded like a 🖼 pick and focus comes back
+    to the text box.
+  - **Added: the toolbar fits a phone.** With 📷 the items are 7 buttons of 44 px plus Recap
+    and ➤, which overflowed a 390 px screen. `ComposerToolbar` now puts its items in a row that
+    scrolls sideways (`overflow-x-auto`, no scrollbar) with ➤ outside it, so ➤ is always in
+    view. Below `md` the items sit edge to edge (no gap), and below 400 px a button with an
+    icon drops its text (Recap shows 📜 only, still with its pressed state and `aria-label`).
+    That fits 390 px without scrolling. The article editor's toolbar (15f) draws the same way;
+    its 🔒 has no icon, so it keeps its text.
+  - **The service worker** (`public/sw.js`, about 40 lines of logic). One `fetch` listener,
+    which returns at once unless the request is a `POST` to `/app/share-target`. It reads the
+    form, keeps the `images` files that are images (an `image/*` type, or no type or
+    `application/octet-stream` with an image extension, which is how a typeless HEIC arrives),
+    at most 10, plus non-blank `title`, `text` and `url`, and counts what it left out
+    (`notImages`, `overLimit`). It stores that as **one** multipart `Response` (`new
+    Response(formData)`) in the `ti-share` cache under `/app/share-target/{uuid}`, with an
+    `x-shared-at` header, and answers `303` to `/app/share?id={uuid}`. The page reads it back
+    with `response.formData()`, so file names and types survive. A body it cannot read answers
+    `303` to `/app/share?error=failed` (**added**). The built `sw.js` is minified by
+    `injectManifest` and still has no precaching.
+  - **Nitro fallback.** `server/routes/app/share-target.post.ts` answers `303` to
+    `/app/share?error=unavailable` ("Take Initiative was still starting, so the share did not
+    arrive. Share again."), on `nuxt dev` and on the built server.
+  - **`/app/share`** (`layout: "app"`, `requiresAuth`). On load it deletes shares older than an
+    hour (`pruneShares`), then reads the share. Missing or expired: "Nothing to share. Try
+    sharing again." Nothing but non-images: "Only images can be shared to Take Initiative."
+    (and the entry is deleted). Then `chooseCampaign(campaigns, ti:lastCampaignId)`: none shows
+    "Join or create a campaign first, then share again." with a link (the share stays cached
+    for its hour), one or a remembered one still in the list goes straight to
+    `/app/campaigns/{id}?share={id}` (`replace`), and otherwise "Share to…" lists them.
+    - **Deviation: no "remembered one first".** A remembered campaign the user is still in
+      is gone to straight away, so the list only ever appears when the remembered one is
+      stale. It keeps the campaigns' own order.
+    - **Signed out** (**fix to an earlier step**): `checkAuth.global.ts` sent `redirectTo:
+      to.path`, which dropped `?id=`. It now sends `to.fullPath`, so login and signup come back
+      to `/app/share?id=…`, and the share waits in Cache Storage meanwhile.
+  - **The composer** takes `share` (the page passes `validShareId(route.query.share)`, a
+    UUID or nothing) and emits `shareUsed`, which drops the parameter, like 15c's `about`. It
+    reads the share once (a `Set` of taken ids), deletes the cache entry, targets the current
+    session (`state.sessionId = null`), fills an empty caption with `shareCaption` (title, text
+    and URL, one per line, dropping a part already inside an earlier one, since Android puts
+    the URL in the text too), and calls `uploads.add(files)`, so the 10-image cap and its toast
+    also cover a share on top of a draft's images. It toasts "Only images were attached. The
+    other files were left out." and "A note can have at most 10 images. The first 10 were
+    attached." when the service worker left anything out. The visibility stays what the
+    composer has.
+  - **A text-only share** (a link from the browser) is kept: the manifest's `text` and `url`
+    params make the app a target for them too, and the composer opens with the text as the
+    note. Design §3a asks only for images; this costs nothing.
+  - **`launch_handler: focus-existing`** (13d) is not honoured on Android, where the share
+    target works, so a share always navigates. On ChromeOS it could focus an open window
+    without the POST. That is left as is, since ChromeOS is not a target platform.
+  - **Tests.** `shareTarget.test.ts` (19) loads the real `public/sw.js` into a `vm` context
+    with a fake Cache Storage and dispatches share `POST`s built with Node's `Request` and
+    `FormData`: the 303 and the stored payload, non-images dropped, a typeless HEIC kept, at
+    most 10, an only-non-images share, other requests left alone, an unreadable body, and the
+    constants matching `utils/shareTarget.ts`. The page side reads from the same fake cache:
+    missing and expired entries, `pruneShares`, `validShareId`, the caption rules, the
+    campaign choice for none, one, a remembered one and a stale one, and remembering with
+    blocked storage.
+  - **Verify, as run in 16e** (no browser, no phone):
+    - `dotnet test` passes 460/460 (no API change, `schema.d.ts` untouched).
+    - `nuxi typecheck` is clean, `nuxt build` succeeds, and `vitest` passes 335/335 (316 plus
+      `shareTarget.test.ts` 19). `.output/public/manifest.webmanifest` has the `share_target`
+      above, and `.output/public/sw.js` has the handler.
+    - `16e.mjs` passed 46/46 against the API on 5010, `nuxt dev` on 3100 and the built server
+      (`node .output/server/index.mjs`) on 3101. It checks the built manifest and runs the
+      **built, minified** `sw.js` in a VM on a share of 12 images and a PDF with text and a
+      URL: the 303 to `/app/share?id=`, 10 images kept in order with their bytes, the counts,
+      and GET, other POSTs and navigation left alone. It checks the Nitro fallback on dev and
+      built, `/app/share` served, the built server's manifest and `sw.js`, and every new or
+      changed module compiling. Then the API side of a share: D starts session 2, P uploads the
+      shared file and posts it with no `sessionId`, and it lands in session 2, with D, P and Q
+      all fetching it and seeing it in session 2's gallery. A captionless 🔒 DM share is a 404
+      for Q and missing from Q's gallery count, and 11 images on a note is a 400.
+    - Every earlier script passes: `16a` 47, `16b` 57, `16c` 64, `16d` 44, `smoke14a`,
+      `hub14b` 28, `stream14c` 111, `composer14d` 142, `filters14e` 233, `pages13d`,
+      `entries15a` 30, `mentions15b` 44, `pages15c` 24, `wiki15c` 64, `mentions15d` 56,
+      `pages15d` 19, `articles15e` 35, `article15f` 64, `pages15f` 34, `merge15g` 63 and
+      `pages15g` 23. `pages13d` checked that `sw.js` had **no** `fetch` listener. It now
+      checks for the share handler and no precaching.
+    - **Verify 1**: as above, and CI (see the PR). **Verify 2**: the API logs "Blob store
+      bucket takeinitiative is ready at http://localhost:7404" and `takeminio` is healthy. The
+      console on 7405 was not opened. **Verify 5**, on the dev database: all 1000 `mt_events`
+      rows of the note streams have a `correlation_id` and an `Actor`, and all 33 images on
+      notes have an `Image` document whose `NoteId` is that note.
+    - **Not checked** (needs a browser or a phone): Verify 3 (1 to 7) and 4 in full, as well as
+      📷 opening the camera, the toolbar at 360 and 390 px, the Android share sheet, the
+      service worker taking the POST in a real browser, the login round trip with a share,
+      and the "Share to…" list.
