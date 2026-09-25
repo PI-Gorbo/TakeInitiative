@@ -1,6 +1,7 @@
 using FastEndpoints;
 using FluentValidation;
 using Marten;
+using Microsoft.AspNetCore.SignalR;
 using Npgsql;
 using TakeInitiative.Utilities.Extensions;
 
@@ -26,7 +27,7 @@ public class PostStartSessionRequestValidator : Validator<PostStartSessionReques
 /// it without appending (someone else just started it), so a double tap or two members
 /// at once end on the same session. Any other number is a 409.
 /// </summary>
-public class PostStartSession(IDocumentSession session) : Endpoint<PostStartSessionRequest, SessionResponse>
+public class PostStartSession(IDocumentSession session, IHubContext<CampaignHub> hub) : Endpoint<PostStartSessionRequest, SessionResponse>
 {
     public override void Configure()
     {
@@ -73,8 +74,10 @@ public class PostStartSession(IDocumentSession session) : Endpoint<PostStartSess
             return;
         }
 
-        var started = (await session.LoadAsync<Session>(sessionId, ct))!;
-        await SendAsync(SessionResponse.From(started, started.Id), cancellation: ct);
+        // Only the request that appended pushes; a caller who lost the race returns the winner silently.
+        var started = SessionResponse.From((await session.LoadAsync<Session>(sessionId, ct))!, sessionId);
+        await hub.NotifySessionStarted(req.CampaignId, started);
+        await SendAsync(started, cancellation: ct);
     }
 
     private static bool IsUniqueViolation(Exception? ex)

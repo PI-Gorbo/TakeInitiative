@@ -1,6 +1,7 @@
 using FastEndpoints;
 using FluentValidation;
 using Marten;
+using Microsoft.AspNetCore.SignalR;
 using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Sessions;
@@ -38,7 +39,7 @@ public static class SessionNoteTextRule
 /// Any member posts a session note, to the current session by default. A note posted
 /// to an older session is marked added later, decided now and never recomputed.
 /// </summary>
-public class PostSessionNote(IDocumentSession session) : Endpoint<PostSessionNoteRequest, SessionNoteResponse>
+public class PostSessionNote(IDocumentSession session, IHubContext<CampaignHub> hub) : Endpoint<PostSessionNoteRequest, SessionNoteResponse>
 {
     public override void Configure()
     {
@@ -67,6 +68,7 @@ public class PostSessionNote(IDocumentSession session) : Endpoint<PostSessionNot
         await session.SaveChangesAsync(ct);
 
         var note = (await session.LoadAsync<SessionNote>(noteId, ct))!;
+        await hub.NotifySessionNoteUpserted(note);
         await SendAsync(SessionNoteResponse.From(note), cancellation: ct);
     }
 }

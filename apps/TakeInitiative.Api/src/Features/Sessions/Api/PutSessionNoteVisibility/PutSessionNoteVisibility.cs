@@ -1,6 +1,7 @@
 using FastEndpoints;
 using FluentValidation;
 using Marten;
+using Microsoft.AspNetCore.SignalR;
 using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Sessions;
@@ -21,7 +22,7 @@ public class PutSessionNoteVisibilityRequestValidator : Validator<PutSessionNote
 }
 
 /// <summary>The author changes who can see their note. The same visibility appends nothing.</summary>
-public class PutSessionNoteVisibility(IDocumentSession session)
+public class PutSessionNoteVisibility(IDocumentSession session, IHubContext<CampaignHub> hub)
     : Endpoint<PutSessionNoteVisibilityRequest, SessionNoteResponse>
 {
     public override void Configure()
@@ -40,7 +41,9 @@ public class PutSessionNoteVisibility(IDocumentSession session)
         {
             session.Events.Append(note.Id, new SessionNoteVisibilityChanged(Actor.Member(member.MemberId), req.Visibility));
             await session.SaveChangesAsync(ct);
+            var before = note;
             note = (await session.LoadAsync<SessionNote>(note.Id, ct))!;
+            await hub.NotifySessionNoteMoved(before, note);
         }
 
         await SendAsync(SessionNoteResponse.From(note), cancellation: ct);

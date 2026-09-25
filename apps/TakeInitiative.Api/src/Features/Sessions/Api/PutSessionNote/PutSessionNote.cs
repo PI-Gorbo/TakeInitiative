@@ -1,6 +1,7 @@
 using FastEndpoints;
 using FluentValidation;
 using Marten;
+using Microsoft.AspNetCore.SignalR;
 using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Sessions;
@@ -25,7 +26,7 @@ public class PutSessionNoteRequestValidator : Validator<PutSessionNoteRequest>
 /// The author edits their note. An unchanged note appends nothing. Last write wins: only
 /// the author can edit, so a conflict is the same person on two devices.
 /// </summary>
-public class PutSessionNote(IDocumentSession session) : Endpoint<PutSessionNoteRequest, SessionNoteResponse>
+public class PutSessionNote(IDocumentSession session, IHubContext<CampaignHub> hub) : Endpoint<PutSessionNoteRequest, SessionNoteResponse>
 {
     public override void Configure()
     {
@@ -45,6 +46,7 @@ public class PutSessionNote(IDocumentSession session) : Endpoint<PutSessionNoteR
             session.Events.Append(note.Id, new SessionNoteEdited(Actor.Member(member.MemberId), text, req.IsRecap));
             await session.SaveChangesAsync(ct);
             note = (await session.LoadAsync<SessionNote>(note.Id, ct))!;
+            await hub.NotifySessionNoteUpserted(note);
         }
 
         await SendAsync(SessionNoteResponse.From(note), cancellation: ct);
