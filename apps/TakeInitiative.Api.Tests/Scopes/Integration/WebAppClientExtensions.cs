@@ -294,6 +294,17 @@ public static class WebAppClientExtensions
         return result.Context.Response.StatusCode;
     }
 
+    /// <summary>Posts a note with images (step 16b). The text may be empty.</summary>
+    public static Task<Result<SessionNoteResponse>> PostImageNote(
+        this IWebAppClient client, Guid campaignId, string text, Guid[] imageIds, Visibility visibility = Visibility.Everyone)
+        => client.Post<object, SessionNoteResponse>(
+            new { text, visibility = visibility.ToString(), isRecap = false, imageIds }, $"/api/campaigns/{campaignId}/notes");
+
+    /// <summary>Edits a note with an image list (step 16b): null leaves the images alone.</summary>
+    public static Task<Result<SessionNoteResponse>> PutImageNote(
+        this IWebAppClient client, Guid campaignId, Guid noteId, string text, Guid[]? imageIds, bool isRecap = false)
+        => client.Put<object, SessionNoteResponse>(new { text, isRecap, imageIds }, $"/api/campaigns/{campaignId}/notes/{noteId}");
+
     /// <summary>Sends a request that should fail and returns its status and body, to check error keys and that nothing leaks.</summary>
     public static async Task<(int Status, string Body)> Send(this IWebAppClient client, HttpMethod method, string url, object body)
     {
