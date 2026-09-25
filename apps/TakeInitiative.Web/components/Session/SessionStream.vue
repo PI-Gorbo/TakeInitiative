@@ -55,7 +55,8 @@
                             :authorName="authorName(note.authorMemberId)"
                             :currentMemberId="campaign.currentMemberId"
                             :isDm="isDm"
-                            :highlighted="note.id === highlightedId" />
+                            :highlighted="note.id === highlightedId"
+                            @openActions="openSheet(note, $event)" />
                         <SessionNoteCard
                             v-for="note in entry.notes"
                             :key="note.id"
@@ -65,14 +66,20 @@
                             :authorName="authorName(note.authorMemberId)"
                             :currentMemberId="campaign.currentMemberId"
                             :isDm="isDm"
-                            :highlighted="note.id === highlightedId" />
+                            :highlighted="note.id === highlightedId"
+                            @openActions="openSheet(note, $event)" />
                     </section>
 
-                    <p
+                    <div
                         v-if="noteCount === 0"
-                        class="px-4 py-6 text-center text-sm text-muted-foreground">
-                        No session notes yet.
-                    </p>
+                        class="flex flex-col gap-1 px-4 py-6 text-center text-sm text-muted-foreground">
+                        <p>{{ emptyState.title }}</p>
+                        <p
+                            v-if="emptyState.detail"
+                            class="text-xs">
+                            {{ emptyState.detail }}
+                        </p>
+                    </div>
                 </template>
             </div>
         </div>
@@ -90,6 +97,15 @@
                     aria-hidden="true" />
             </button>
         </Transition>
+
+        <!-- One sheet for the whole stream, opened by a long-press on a note (14e). -->
+        <SessionNoteActionSheet
+            v-if="sheet"
+            v-model:open="sheetOpen"
+            :note="sheet.note"
+            :actions="sheet.actions"
+            :authorName="authorName(sheet.note.authorMemberId)"
+            @select="(action, visibility) => sheet?.run(action, visibility)" />
     </div>
 </template>
 
@@ -98,11 +114,12 @@
     import { useResizeObserver } from "@vueuse/core";
     import { ArrowDown, LoaderCircle } from "lucide-vue-next";
     import { toast } from "vue-sonner";
-    import type { Campaign, SessionNote, SessionStreamFilter } from "~/utils/api/types";
+    import type { Campaign, SessionNote, SessionStreamFilter, Visibility } from "~/utils/api/types";
     import { currentMember } from "~/utils/campaign";
     import { getSessionStreamQuery } from "~/utils/queries/sessions";
-    import { noteLinkProgress } from "~/utils/noteActions";
+    import { noteLinkProgress, type NoteAction } from "~/utils/noteActions";
     import { flattenSessions } from "~/utils/sessionStreamCache";
+    import { filterEmptyState, visibleStreamSessions } from "~/utils/streamFilters";
 
     const props = withDefaults(
         defineProps<{
@@ -129,16 +146,33 @@
     // Sessions oldest first, recaps lifted under the divider. Under a filter, a
     // session with no matching note has no divider, except the current one (14e).
     const visibleSessions = computed(() =>
-        flattenSessions(streamQuery.data.value)
-            .filter((s) => props.filter === "All" || s.notes.length > 0 || s.session.isCurrent)
-            .map((s) => ({
-                session: s.session,
-                recaps: s.notes.filter((n) => n.isRecap),
-                notes: s.notes.filter((n) => !n.isRecap),
-            }))
+        visibleStreamSessions(flattenSessions(streamQuery.data.value), props.filter).map((s) => ({
+            session: s.session,
+            recaps: s.notes.filter((n) => n.isRecap),
+            notes: s.notes.filter((n) => !n.isRecap),
+        }))
     );
     const allNotes = computed<SessionNote[]>(() => flattenSessions(streamQuery.data.value).flatMap((s) => s.notes));
     const noteCount = computed(() => allNotes.value.length);
+    const emptyState = computed(() => filterEmptyState(props.filter));
+
+    // ── The long-press action sheet ──────────────────────────────────────────
+    type SheetTarget = {
+        note: SessionNote;
+        actions: NoteAction[];
+        run: (action: NoteAction, visibility?: Visibility) => Promise<void>;
+    };
+    const sheet = shallowRef<SheetTarget | null>(null);
+    const sheetOpen = ref(false);
+    function openSheet(note: SessionNote, target: Omit<SheetTarget, "note">) {
+        sheet.value = { note, ...target };
+        sheetOpen.value = true;
+    }
+    // The note left the stream (deleted, hidden from this viewer, filtered out).
+    watch(allNotes, (notes) => {
+        const open = sheet.value;
+        if (open && !notes.some((n) => n.id === open.note.id)) sheetOpen.value = false;
+    });
 
     // ── Scrolling ────────────────────────────────────────────────────────────
     // Newest at the bottom, like Discord. The stream opens at the bottom, stays
@@ -199,6 +233,11 @@
     // Content grows (a new note, fonts, a wrapped line): stay pinned to the bottom
     // when the reader was there; paging restores its own position above.
     useResizeObserver(content, () => {
+        if (restoreFromBottom === null && atBottom.value) scrollToBottom();
+    });
+    // The stream itself shrinks when the composer is pinned above the keyboard (14e):
+    // a reader at the bottom stays at the bottom.
+    useResizeObserver(scroller, () => {
         if (restoreFromBottom === null && atBottom.value) scrollToBottom();
     });
 

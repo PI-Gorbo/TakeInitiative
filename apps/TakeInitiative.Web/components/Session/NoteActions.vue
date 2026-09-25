@@ -1,13 +1,15 @@
 <template>
     <!-- A note's menu on desktop (14d). The actions come from `noteActionsFor`, the
-         same list 14e's long-press `NoteActionSheet` draws; both emit the choice. -->
+         same list the long-press `NoteActionSheet` draws; both emit the choice. -->
     <DropdownMenu
         v-if="actions.length > 0"
         v-model:open="open">
         <DropdownMenuTrigger
             :class="[
                 'ml-auto flex size-11 shrink-0 items-center justify-center self-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground -my-3 md:-my-1 md:size-7',
-                // Always there on touch screens; on hover or focus with a mouse.
+                // On hover or focus with a mouse. On a touch screen a long-press opens the
+                // action sheet (14e), so the button is kept only for screen readers.
+                '[@media(pointer:coarse)]:sr-only',
                 '[@media(pointer:fine)]:opacity-0 [@media(pointer:fine)]:focus-visible:opacity-100 [@media(pointer:fine)]:group-focus-within:opacity-100 [@media(pointer:fine)]:group-hover:opacity-100 data-[state=open]:!opacity-100',
             ]"
             aria-label="Note actions">
