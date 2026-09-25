@@ -262,4 +262,36 @@ From a clean clone, with no GitHub PAT:
 
 ### Behaviour kept from the v1 combat tests (filled in during 13a)
 
-_To be written in 13a step 1, before the tests are deleted._
+The v1 tests were snapshot tests (`CombatVerifier`) with a faked dice roller and
+initiative roller. Step 18 rewrites these behaviours against the 7-event model.
+Words in brackets are the v1 names.
+
+**Lifecycle** (`FullCombatTest`, `EmptyCombatTest`)
+- A DM creates a Draft combat [planned combat], adds combatants, then starts it
+  [open]. A player then adds their own combatant [staged character].
+- Starting a combat with no combatants succeeds.
+- The DM finishes a combat. Finishing an empty combat succeeds.
+- The player whose combatant has the turn ends it. The turn then moves to the
+  next combatant in initiative order.
+
+**Combatants** (`FullCombatTest`)
+- Each combatant has a name, AC (optional), HP (none, or current and max), an
+  initiative expression, and a hidden flag.
+- HP given as a roll (`20d20 + 10`) is rolled once, when the combatant is added.
+- The DM edits a combatant: un-hides it, changes current HP, and adds and removes
+  a condition (a name plus a note).
+- A combatant can be removed after the combat has started.
+- v1 `Quantity = 10` split one planned NPC into 10 copies. v2 uses `@Goblin ×4`.
+
+**Late joiners** (`CharactersAddedAfterCombatStartedTest`)
+- A combatant added after the combat starts waits without an initiative, and the
+  next roll slots it into the existing order without re-rolling anyone else.
+
+**Ties** (`ComplexInitiativeTest`, `InitiativeRollerTests`, `InitiativeOrderingTests`)
+- Equal initiatives never produce an ambiguous order. v1 re-rolled a d20 per tie,
+  kept every roll as an array, and sorted the arrays lexicographically (for
+  example `[24, 4, 16]` before `[24, 4, 11]` before `[22]`). A late joiner that
+  tied an existing combatant rolled again against it only.
+- v2 replaces all of this with one int plus a hidden random `Tiebreak` (design §8).
+  The rule to keep: the sort is total and stable, and adding a combatant never
+  reorders the ones already placed.
