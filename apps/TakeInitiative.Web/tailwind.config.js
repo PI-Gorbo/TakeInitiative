@@ -5,7 +5,7 @@ const colors = require("tailwindcss/colors");
 
 export default {
     darkMode: ["class"],
-    content: ["./{components,pages}/**/*.{js,vue,ts}"],
+    content: ["./{components,pages,layouts,composables}/**/*.{js,vue,ts}", "./app.vue"],
     theme: {
         extend: {
             borderRadius: {

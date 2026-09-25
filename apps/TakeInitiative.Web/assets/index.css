@@ -109,6 +109,27 @@
     }
 }
 
+/* Safe-area insets (notches, home indicator). They are non-zero only with
+   `viewport-fit=cover`, which nuxt.config.ts sets. */
+@layer utilities {
+    .pt-safe {
+        padding-top: env(safe-area-inset-top);
+    }
+    .pb-safe {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+    .pl-safe {
+        padding-left: env(safe-area-inset-left);
+    }
+    .pr-safe {
+        padding-right: env(safe-area-inset-right);
+    }
+    .px-safe {
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+    }
+}
+
 .interactable {
     @apply shadow-[0_0.2rem] active:shadow-[0_0.1rem] active:translate-y-[0.1rem] cursor-pointer shadow-accent active:shadow-accent hover:shadow-primary hover:border-primary;
 }
