@@ -17,6 +17,7 @@ import type {
 import type { SessionStreamData } from "~/utils/sessionStreamCache";
 import { removeNote, upsertNote, upsertSession, upsertSessionInList } from "~/utils/sessionStreamCache";
 import { getCampaignQueryKey } from "./campaign";
+import { invalidateTimelinesTouchedBy } from "./entries";
 import type { RefOrGetter } from "./utils";
 
 /** Sessions per page. The server allows 1–10. */
@@ -128,9 +129,14 @@ export const startSessionMutation = () => {
 
 // ── Notes ─────────────────────────────────────────────────────────────────────
 
-/** Applies a note response to every loaded stream, keyed by note id, like a push. */
-const applyNote = (queryClient: QueryClient, campaignId: string, note: SessionNote) =>
+/**
+ * Applies a note response to every loaded stream, keyed by note id, like a push, and
+ * refetches the loaded timelines it touches (15c).
+ */
+const applyNote = (queryClient: QueryClient, campaignId: string, note: SessionNote) => {
     updateSessionStreams(queryClient, campaignId, (data, filter, me) => upsertNote(data, note, filter, me));
+    invalidateTimelinesTouchedBy(queryClient, campaignId, note);
+};
 
 export type PostNoteVariables = {
     campaignId: string;
@@ -149,10 +155,12 @@ export const postNoteMutation = () => {
         onMutate: ({ campaignId, optimistic }) => {
             if (optimistic) applyNote(queryClient, campaignId, optimistic);
         },
-        onSuccess: (note, { campaignId, optimistic }) =>
+        onSuccess: (note, { campaignId, optimistic }) => {
             updateSessionStreams(queryClient, campaignId, (data, filter, me) =>
                 upsertNote(optimistic ? removeNote(data, optimistic.id) : data, note, filter, me)
-            ),
+            );
+            invalidateTimelinesTouchedBy(queryClient, campaignId, note);
+        },
         onError: (_error, { campaignId, optimistic }) => {
             if (optimistic) updateSessionStreams(queryClient, campaignId, (data) => removeNote(data, optimistic.id));
         },
@@ -213,7 +221,9 @@ export const deleteNoteMutation = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: api.note.delete,
-        onSuccess: (_void, { campaignId, noteId }) =>
-            updateSessionStreams(queryClient, campaignId, (data) => removeNote(data, noteId)),
+        onSuccess: (_void, { campaignId, noteId }) => {
+            updateSessionStreams(queryClient, campaignId, (data) => removeNote(data, noteId));
+            invalidateTimelinesTouchedBy(queryClient, campaignId, { id: noteId });
+        },
     });
 };

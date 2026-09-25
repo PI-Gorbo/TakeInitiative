@@ -1,8 +1,14 @@
 import * as signalR from "@microsoft/signalr";
 import { useQueryClient } from "@tanstack/vue-query";
 import { toast } from "vue-sonner";
-import type { Campaign, Role, Session, SessionNote } from "~/utils/api/types";
+import type { Campaign, EntrySummary, Role, Session, SessionNote } from "~/utils/api/types";
 import { getCampaignQueryKey, getCampaignsQueryKey } from "~/utils/queries/campaign";
+import {
+    applyEntryRemoved,
+    applyEntrySummary,
+    invalidateEntries,
+    invalidateTimelinesTouchedBy,
+} from "~/utils/queries/entries";
 import {
     applySession,
     invalidateSessions,
@@ -15,12 +21,14 @@ import { dropPendingCopy, removeNote, upsertNote } from "~/utils/sessionStreamCa
 type MemberRoleChangedMessage = { campaignId: string; memberId: string; role: Role };
 type SessionNoteRemovedMessage = { noteId: string; sessionId: string };
 type SessionNoteHiddenMessage = { noteId: string; sessionId: string; byMemberId: string };
+// Payloads of the entry messages (the API's EntryHub.cs).
+type EntryRemovedMessage = { entryId: string };
 
 /**
  * Keeps the open campaign live over `CampaignHub`: joins the `campaign:{id}` group
  * for the given campaign, refreshes the campaign query when a member joins or the
  * owner changes a role, and applies session and note pushes to the session stream
- * cache. Call it once, from the campaign layout.
+ * cache and entry pushes to the wiki (15c). Call it once, from the campaign layout.
  */
 export function useCampaignHub(campaignId: MaybeRefOrGetter<string | undefined>) {
     const queryClient = useQueryClient();
@@ -54,6 +62,7 @@ export function useCampaignHub(campaignId: MaybeRefOrGetter<string | undefined>)
         if (id && message?.memberId === me) {
             void invalidateSessionStreams(queryClient, id);
             void invalidateSessions(queryClient, id);
+            void invalidateEntries(queryClient, id);
         }
     });
 
@@ -74,16 +83,34 @@ export function useCampaignHub(campaignId: MaybeRefOrGetter<string | undefined>)
     connection.on("sessionTitleChanged", (session: Session) => {
         updateSession(session);
     });
+    // A note change can change the timelines of the entries it mentions (15c).
+    const touchTimelines = (note: Pick<SessionNote, "id"> & Partial<Pick<SessionNote, "text">>) => {
+        const id = joinedCampaignId.value;
+        if (id) invalidateTimelinesTouchedBy(queryClient, id, note);
+    };
     connection.on("sessionNoteUpserted", (note: SessionNote) => {
         // The caller's own post can arrive before its POST answers: drop the optimistic copy.
         updateStreams((data, filter, me) => upsertNote(dropPendingCopy(data, note), note, filter, me));
+        touchTimelines(note);
     });
     connection.on("sessionNoteRemoved", ({ noteId }: SessionNoteRemovedMessage) => {
         updateStreams((data) => removeNote(data, noteId));
+        touchTimelines({ id: noteId });
     });
     connection.on("sessionNoteHidden", (_message: SessionNoteHiddenMessage) => {
         // Sent to the author only. The note itself arrives as an upsert with `isHidden`.
         toast.info("A DM hid your note. You can still see it.", { duration: 6000 });
+    });
+
+    // Entry pushes (15a). `entryUpserted` is a bare summary: mention counts are per
+    // viewer and never pushed, so the list keeps the counts it has.
+    connection.on("entryUpserted", (entry: EntrySummary) => {
+        const id = joinedCampaignId.value;
+        if (id) applyEntrySummary(queryClient, id, entry);
+    });
+    connection.on("entryRemoved", ({ entryId }: EntryRemovedMessage) => {
+        const id = joinedCampaignId.value;
+        if (id) applyEntryRemoved(queryClient, id, entryId);
     });
 
     connection.onreconnected(async () => {
@@ -94,6 +121,7 @@ export function useCampaignHub(campaignId: MaybeRefOrGetter<string | undefined>)
             await connection.invoke("Join", id);
             void invalidateSessionStreams(queryClient, id);
             void invalidateSessions(queryClient, id);
+            void invalidateEntries(queryClient, id);
         }
         await refreshCampaign();
     });
@@ -107,6 +135,8 @@ export function useCampaignHub(campaignId: MaybeRefOrGetter<string | undefined>)
         // A stream fetched before the join finished can miss a note pushed in between.
         void invalidateSessionStreams(queryClient, id);
         void invalidateSessions(queryClient, id);
+        // The wiki list too, and with it the mention counts, which are never pushed.
+        void invalidateEntries(queryClient, id);
     }
 
     async function leave() {

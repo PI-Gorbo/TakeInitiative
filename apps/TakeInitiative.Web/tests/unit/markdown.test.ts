@@ -49,14 +49,21 @@ describe("renderNoteMarkdown", () => {
         expect(renderNoteMarkdown("Loot\n===")).toBe("<p><strong>Loot</strong></p>\n");
     });
 
-    it("renders an entry mention as its plain text (the step 15 seam)", () => {
-        const out = renderNoteMarkdown("We met @[Gundren](entry:0b7c) on the road.");
+    it("renders a mention as its plain text when there is no entry directory", () => {
+        const out = renderNoteMarkdown("We met @[Gundren](entry:0b7c5e1a-8f3d-4c2b-9a61-2d4e8f00a001) on the road.");
         expect(out).toBe("<p>We met Gundren on the road.</p>\n");
     });
 
     it("keeps formatting inside a mention and leaves other links alone", () => {
-        const out = renderNoteMarkdown("@[**Klarg**](entry:1) and [a map](https://example.com)");
+        const out = renderNoteMarkdown(
+            "@[**Klarg**](entry:0b7c5e1a-8f3d-4c2b-9a61-2d4e8f00a003) and [a map](https://example.com)"
+        );
         expect(out).toContain("<strong>Klarg</strong> and <a href=");
         expect(out).not.toContain("entry:");
+    });
+
+    it("draws an entry: link that is not a mention as its plain text", () => {
+        const out = renderNoteMarkdown("[Gundren](entry:0b7c) and @[Klarg](entry:1)");
+        expect(out).toBe("<p>Gundren and @Klarg</p>\n");
     });
 });
