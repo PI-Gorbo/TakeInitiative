@@ -34,18 +34,26 @@ player-first experiences: **combat**, **note taking**, **⌘K search** and
 | **Filter** | One of `All · Text · Images · Recaps · Combats · Mine` on the session stream. | channel |
 | **Wiki** | The campaign's knowledge base: all entries. Built by integrating session notes. | knowledge base, codex |
 | **Entry** | One named thing in the wiki. | entity, page, topic, tag |
+| **Creator** | The member who created an entry. An entry's `DM` and `Me` visibility and its `Only me` edit access are relative to them. | owner (that is the campaign's), author (that is a note's) |
 | **Kind** | An entry's category, from a closed set: `Character`, `Place`, `Faction`, `Item`, `Event`, `Other`. | type |
 | **Article** | An entry's editable content (markdown, can contain mentions). | description, body |
+| **Block** | One part of an article: ordinary text, a secret block or a quote. Ordinary text stays one block until a secret block or a quote splits it. | paragraph, section |
+| **Quote** | A block made by promote: text from a session note that links back to it and has that note's visibility. | citation, excerpt |
 | **Timeline** | The read-only list on an entry of every session note that mentions it. | backlinks (in UI) |
 | **Promote** | "Add to wiki": copies a selection of a session note into an entry's article as a quote that links back to the note. | integrate, pin |
 | **Secret block** | A block in an article with its own visibility (🔒 DM / 🔒 Me). | — |
 | **Mention** | An `@` link to an entry, in a session note or an article. | tag, reference |
+| **Mention chip** | How a mention is drawn: its text, linking to the entry. A viewer who cannot see the entry gets plain text. | tag, pill |
+| **Mention strip** | On mobile, the `@` suggestions docked above the keyboard (§3a). It replaces the desktop popover. | popup |
+| **Mention index** (code: `MentionIndex`) | Which session notes and blocks mention which entry, each with its source's visibility (§9). | backlinks |
 | **Alias** | An alternative name that resolves to an entry. | — |
+| **Merge** | Folding one entry into another: its name becomes an alias, its mentions resolve to the other, its article is appended, and its id redirects. | combine, dedupe |
 | **Connection** | Two entries mentioned together. It is explained by **evidence**, the snippets where they co-occur. | relation, edge |
 | **Visibility** | Who can see something: `Everyone`, `DM` (all DMs plus the author), `Me`. Applies to session notes, entries and secret blocks. | audience, privacy |
 | **Edit access** | Who can edit an entry: `Anyone` (who can see it) or `Only me`. DMs can always edit. | — |
 | **Loose ends** | Unidentified things that are waiting to be linked (§5). | inbox, triage |
 | **Player character** | A Character entry claimed by a member. A member can claim several. | PC in the UI |
+| **Claim** | A member marking a Character entry as their player character. That member is its **claimer**. | own, assign |
 | **Stats** | An optional stat line on a Character entry: initiative roll, max HP, AC. | — |
 | **Reference** | Rules content from outside the campaign (SRD, 5eTools) that ⌘K can find. It is never part of the wiki until it is added. | compendium, bestiary |
 | **Source** | Where an entry or session note came from: a reference item, a D&D Beyond sheet, or an imported Discord message. | origin |
