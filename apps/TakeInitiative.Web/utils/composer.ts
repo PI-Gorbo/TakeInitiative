@@ -109,6 +109,7 @@ export function optimisticNote(args: {
         editedAt: null,
         isHidden: false,
         hiddenByMemberId: null,
+        images: [],
     };
 }
 

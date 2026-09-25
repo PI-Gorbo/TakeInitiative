@@ -685,9 +685,18 @@ export interface components {
             isHidden: boolean;
             /** Format: guid */
             hiddenByMemberId?: string | null;
+            images: components["schemas"]["NoteImageResponse"][];
         };
         /** @enum {string} */
         Visibility: "Everyone" | "DM" | "Me";
+        NoteImageResponse: {
+            /** Format: guid */
+            id: string;
+            /** Format: int32 */
+            width: number;
+            /** Format: int32 */
+            height: number;
+        };
         GetSessionNoteRequest: Record<string, never>;
         GetSessionNoteHistoryResponse: {
             versions: components["schemas"]["SessionNoteVersion"][];
@@ -697,6 +706,8 @@ export interface components {
             isRecap: boolean;
             /** Format: date-time */
             at: string;
+            /** Format: int32 */
+            imageCount: number;
         };
         GetSessionNoteHistoryRequest: Record<string, never>;
         GetSessionsResponse: {
@@ -739,6 +750,7 @@ export interface components {
             visibility: components["schemas"]["Visibility"];
             isRecap: boolean;
             newEntries?: components["schemas"]["NewEntryRequest"][] | null;
+            imageIds?: string[] | null;
         };
         NewEntryRequest: {
             /** Format: guid */
@@ -756,6 +768,7 @@ export interface components {
             text: string;
             isRecap: boolean;
             newEntries?: components["schemas"]["NewEntryRequest"][] | null;
+            imageIds?: string[] | null;
         };
         PutSessionNoteHiddenRequest: {
             hidden: boolean;
