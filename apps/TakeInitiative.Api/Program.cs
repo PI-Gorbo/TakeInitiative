@@ -1,12 +1,21 @@
 using FastEndpoints;
+using FastEndpoints.Swagger;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Text.Json.Serialization;
+using NSwag.Generation;
 
 namespace TakeInitiative.Api;
 internal class Program
 {
-    
-    private static void Main(string[] args)
+    private const string OpenApiDocumentName = "v1";
+
+    private static async Task Main(string[] args)
     {
+        // `dotnet run -- --export-openapi <path>` writes the OpenAPI document and exits.
+        // The host is never started, so no hosted service (Marten's schema migration
+        // included) runs and no database is needed.
+        var exportOpenApiPath = ExportOpenApiPath(args);
+
         var builder = WebApplication.CreateBuilder(args);
 
         // Build config
@@ -19,9 +28,24 @@ internal class Program
         configBuilder.AddEnvironmentVariables();
 
         // Add services to the container.
-        // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-        builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddSwaggerGen();
+        builder.Services.SwaggerDocument(opts =>
+        {
+            opts.DocumentSettings = s =>
+            {
+                s.DocumentName = OpenApiDocumentName;
+                s.Title = "TakeInitiative API";
+                s.Version = "v1";
+                // Non-nullable properties are required, so the generated TypeScript
+                // types only mark genuinely nullable fields as optional.
+                s.MarkNonNullablePropsAsRequired();
+            };
+            // Role and friends go over the wire as strings (see Serializer below), so
+            // the document describes them as string enums too.
+            opts.SerializerSettings = s => s.Converters.Add(new JsonStringEnumConverter());
+            opts.ShortSchemaNames = true;
+            opts.ExcludeNonFastEndpoints = true;
+            opts.AutoTagPathSegmentIndex = 2;
+        });
         builder.Services.AddHealthChecks();
         builder.Services.AddFastEndpoints();
         builder.Services.AddSignalR();
@@ -62,13 +86,6 @@ internal class Program
         
         var app = builder.Build();
 
-        // Configure the HTTP request pipeline.
-        if (app.Environment.IsDevelopment())
-        {
-            app.UseSwagger();
-            app.UseSwaggerUI();
-        }
-
         // Map SignalR Hubs
         app.MapHub<CampaignHub>("/campaignHub");
 
@@ -77,6 +94,10 @@ internal class Program
             .UseMiddleware<CorrelationMiddleware>()
             .UseFastEndpoints(cfg =>
             {
+                // Operation ids are the endpoint class names (GetCampaign, not
+                // TakeInitiativeApiFeaturesCampaignsGetCampaign).
+                cfg.Endpoints.ShortNames = true;
+                cfg.Serializer.Options.Converters.Add(new JsonStringEnumConverter());
                 cfg.Endpoints.Configurator = (endpoint) =>
                 {
                     if (endpoint.Routes?.Any(route => route.StartsWith("/api/admin")) ?? false)
@@ -100,7 +121,49 @@ internal class Program
             .UseAuthentication()
             .UseAuthorization();
 
+        // Must come after UseFastEndpoints, which sets up the resolver the document generator uses.
+        if (app.Environment.IsDevelopment())
+        {
+            app.UseSwaggerGen();
+        }
+
         app.UseHealthChecks("/healthz");
-        app.Run();
+
+        if (exportOpenApiPath is not null)
+        {
+            await ExportOpenApi(app, exportOpenApiPath);
+            return;
+        }
+
+        await app.RunAsync();
+    }
+
+    private static string? ExportOpenApiPath(string[] args)
+    {
+        var index = Array.IndexOf(args, "--export-openapi");
+        if (index < 0)
+        {
+            return null;
+        }
+        if (index + 1 >= args.Length)
+        {
+            throw new ArgumentException("--export-openapi needs a destination path.");
+        }
+        return Path.GetFullPath(args[index + 1]);
+    }
+
+    private static async Task ExportOpenApi(WebApplication app, string path)
+    {
+        // WebApplication only hands its endpoints to the API explorer when the host
+        // starts. Wire them up by hand instead, since starting would also run the
+        // hosted services. The pipeline is never served, so middleware order is moot.
+        app.UseRouting();
+        app.UseEndpoints(_ => { });
+
+        var generator = app.Services.GetRequiredService<IOpenApiDocumentGenerator>();
+        var document = await generator.GenerateAsync(OpenApiDocumentName);
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        await File.WriteAllTextAsync(path, document.ToJson() + "\n");
+        Console.WriteLine($"Wrote OpenAPI document to {path}");
     }
 }
