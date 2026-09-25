@@ -4,7 +4,7 @@ namespace TakeInitiative.Api.Features.Sessions;
 
 /// <summary>
 /// The one read rule for session notes (invariant 5). Every note query filters with
-/// <see cref="VisibleTo"/>; single loads (and the hub, from 14b) use <see cref="CanSee"/>.
+/// <see cref="VisibleTo"/>; single loads use <see cref="CanSee"/>.
 /// A viewer sees a note when:
 /// <list type="bullet">
 /// <item>they wrote it (whatever its visibility, hidden or not);</item>
@@ -12,7 +12,8 @@ namespace TakeInitiative.Api.Features.Sessions;
 /// <item>they are a Player and it is <c>Everyone</c> and not hidden.</item>
 /// </list>
 /// A <c>Me</c> note is its author's alone. A note the caller cannot see is a 404, never
-/// a 403. The push-side twin (the audience groups, 14b) must change with this.
+/// a 403. The push-side twin, <see cref="SessionNoteAudience"/>, must change with this;
+/// <c>SessionNoteAudienceTests</c> checks the two agree for every case.
 /// </summary>
 public static class SessionNoteVisibility
 {

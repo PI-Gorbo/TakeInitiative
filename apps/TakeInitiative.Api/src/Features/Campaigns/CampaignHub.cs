@@ -13,6 +13,14 @@ public static class CampaignGroups
     public static string Campaign(Guid campaignId) => $"campaign:{campaignId}";
     public static string Dms(Guid campaignId) => $"campaign:{campaignId}:dm";
     public static string Member(Guid memberId) => $"member:{memberId}";
+
+    /// <summary>
+    /// The groups <see cref="CampaignHub.Join"/> puts a member's connection in. The push-side
+    /// visibility rule (<c>SessionNoteAudience</c>) is tested against this.
+    /// </summary>
+    public static IReadOnlyList<string> Of(Guid campaignId, Member member) => member.Role == Role.DM
+        ? [Campaign(campaignId), Member(member.MemberId), Dms(campaignId)]
+        : [Campaign(campaignId), Member(member.MemberId)];
 }
 
 /// <summary>Client method names the hub sends.</summary>
@@ -20,6 +28,13 @@ public static class CampaignHubMessages
 {
     public const string MemberJoined = "memberJoined";
     public const string MemberRoleChanged = "memberRoleChanged";
+
+    // Sessions and notes (step 14b). Note messages go only to the note's audience.
+    public const string SessionStarted = "sessionStarted";
+    public const string SessionTitleChanged = "sessionTitleChanged";
+    public const string SessionNoteUpserted = "sessionNoteUpserted";
+    public const string SessionNoteRemoved = "sessionNoteRemoved";
+    public const string SessionNoteHidden = "sessionNoteHidden";
 }
 
 /// <summary>
@@ -121,13 +136,11 @@ public class CampaignHub(CampaignConnections connections) : Hub
             throw new OperationCanceledException("The user must be part of the campaign to join the hub.");
         }
 
-        await Groups.AddToGroupAsync(Context.ConnectionId, CampaignGroups.Campaign(CampaignId));
-        await Groups.AddToGroupAsync(Context.ConnectionId, CampaignGroups.Member(member.MemberId));
-        if (member.Role == Role.DM)
+        foreach (var group in CampaignGroups.Of(CampaignId, member))
         {
-            await Groups.AddToGroupAsync(Context.ConnectionId, CampaignGroups.Dms(CampaignId));
+            await Groups.AddToGroupAsync(Context.ConnectionId, group);
         }
-        else
+        if (member.Role != Role.DM)
         {
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, CampaignGroups.Dms(CampaignId));
         }

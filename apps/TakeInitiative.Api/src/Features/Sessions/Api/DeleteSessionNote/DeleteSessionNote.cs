@@ -1,5 +1,6 @@
 using FastEndpoints;
 using Marten;
+using Microsoft.AspNetCore.SignalR;
 using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Sessions;
@@ -11,7 +12,7 @@ public record DeleteSessionNoteRequest
 }
 
 /// <summary>The author deletes their note. The document goes; the stream keeps every event.</summary>
-public class DeleteSessionNote(IDocumentSession session) : Endpoint<DeleteSessionNoteRequest>
+public class DeleteSessionNote(IDocumentSession session, IHubContext<CampaignHub> hub) : Endpoint<DeleteSessionNoteRequest>
 {
     public override void Configure()
     {
@@ -28,6 +29,7 @@ public class DeleteSessionNote(IDocumentSession session) : Endpoint<DeleteSessio
 
         session.Events.Append(note.Id, new SessionNoteDeleted(Actor.Member(member.MemberId)));
         await session.SaveChangesAsync(ct);
+        await hub.NotifySessionNoteRemoved(note);
 
         await SendNoContentAsync(ct);
     }
