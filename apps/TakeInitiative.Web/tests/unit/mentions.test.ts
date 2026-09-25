@@ -62,6 +62,12 @@ const directory = entryDirectory({
     ],
 });
 
+/** "We met @Gu|nd" → the text without the "|" marker, and the caret where it was. */
+function withCaret(marked: string): [string, number] {
+    const caret = marked.indexOf("|");
+    return [marked.slice(0, caret) + marked.slice(caret + 1), caret];
+}
+
 const state = (text: string, links: Record<string, string> = {}, newEntries: MentionText["newEntries"] = []) => ({
     text,
     links,
@@ -145,7 +151,7 @@ describe("mentionBody", () => {
 });
 
 describe("activeMention", () => {
-    const at = (text: string, links: Record<string, string> = {}) => activeMention(text.replace("|", ""), text.indexOf("|"), links);
+    const at = (text: string, links: Record<string, string> = {}) => activeMention(...withCaret(text), links);
 
     it("finds a typed query at the start, after a space or after (", () => {
         expect(at("@Gund|")).toEqual({ kind: "typed", start: 0, end: 5, query: "Gund" });
@@ -255,7 +261,7 @@ describe("mentionSuggestions", () => {
 });
 
 describe("picking", () => {
-    const typed = (text: string): ActiveMention => activeMention(text.replace("|", ""), text.indexOf("|"), {})!;
+    const typed = (text: string): ActiveMention => activeMention(...withCaret(text), {})!;
 
     it("replaces a typed query with @[Name] and a space, and links it", () => {
         const active = typed("We met @Gund|");
