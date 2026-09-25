@@ -1,0 +1,75 @@
+{
+  "about": "Mention parsing cases, run by the API's MentionParserTests and the web's mentionMarkdown.test.ts so the two parsers cannot drift apart. A mention is an unescaped '@' directly followed by an inline link to 'entry:' plus a 36-character GUID, outside code, in CommonMark with raw HTML off. 'text' is the link text as plain text. 'mentions' lists every mention in order, repeats included.",
+  "cases": [
+    {
+      "name": "plain",
+      "text": "We met @[Gundren](entry:0b7c5e1a-8f3d-4c2b-9a61-2d4e8f00a001) on the road.",
+      "mentions": [{ "entryId": "0b7c5e1a-8f3d-4c2b-9a61-2d4e8f00a001", "text": "Gundren" }]
+    },
+    {
+      "name": "several, with a repeat",
+      "text": "@[Gundren](entry:0b7c5e1a-8f3d-4c2b-9a61-2d4e8f00a001) hired us to reach @[Phandalin](entry:0b7c5e1a-8f3d-4c2b-9a61-2d4e8f00a002).\n\nLater @[the dwarf](entry:0b7c5e1a-8f3d-4c2b-9a61-2d4e8f00a001) vanished.",
+      "mentions": [
+        { "entryId": "0b7c5e1a-8f3d-4c2b-9a61-2d4e8f00a001", "text": "Gundren" },
+        { "entryId": "0b7c5e1a-8f3d-4c2b-9a61-2d4e8f00a002", "text": "Phandalin" },
+        { "entryId": "0b7c5e1a-8f3d-4c2b-9a61-2d4e8f00a001", "text": "the dwarf" }
+      ]
+    },
+    {
+      "name": "at the start of a line and after punctuation",
+      "text": "Who?\n@[Klarg](entry:0b7c5e1a-8f3d-4c2b-9a61-2d4e8f00a003), (@[Sildar](entry:0b7c5e1a-8f3d-4c2b-9a61-2d4e8f00a004))",
+      "mentions": [
+        { "entryId": "0b7c5e1a-8f3d-4c2b-9a61-2d4e8f00a003", "text": "Klarg" },
+        { "entryId": "0b7c5e1a-8f3d-4c2b-9a61-2d4e8f00a004", "text": "Sildar" }
+      ]
+    },
+    {
+      "name": "nested brackets",
+      "text": "Ask @[Gundren [the dwarf]](entry:0b7c5e1a-8f3d-4c2b-9a61-2d4e8f00a001) about it.",
+      "mentions": [{ "entryId": "0b7c5e1a-8f3d-4c2b-9a61-2d4e8f00a001", "text": "Gundren [the dwarf]" }]
+    },
+    {
+      "name": "formatting inside the text",
+      "text": "@[**Klarg**](entry:0b7c5e1a-8f3d-4c2b-9a61-2d4e8f00a003) and @[Cragmaw `Castle`](entry:0b7c5e1a-8f3d-4c2b-9a61-2d4e8f00a005)",
+      "mentions": [
+        { "entryId": "0b7c5e1a-8f3d-4c2b-9a61-2d4e8f00a003", "text": "Klarg" },
+        { "entryId": "0b7c5e1a-8f3d-4c2b-9a61-2d4e8f00a005", "text": "Cragmaw Castle" }
+      ]
+    },
+    {
+      "name": "escaped @",
+      "text": "Not a mention: \\@[Gundren](entry:0b7c5e1a-8f3d-4c2b-9a61-2d4e8f00a001)",
+      "mentions": []
+    },
+    {
+      "name": "a link with no @",
+      "text": "[Gundren](entry:0b7c5e1a-8f3d-4c2b-9a61-2d4e8f00a001) and @ [Klarg](entry:0b7c5e1a-8f3d-4c2b-9a61-2d4e8f00a003)",
+      "mentions": []
+    },
+    {
+      "name": "inside inline code",
+      "text": "Type `@[Gundren](entry:0b7c5e1a-8f3d-4c2b-9a61-2d4e8f00a001)` to mention, like @[Klarg](entry:0b7c5e1a-8f3d-4c2b-9a61-2d4e8f00a003).",
+      "mentions": [{ "entryId": "0b7c5e1a-8f3d-4c2b-9a61-2d4e8f00a003", "text": "Klarg" }]
+    },
+    {
+      "name": "inside fenced code",
+      "text": "```\n@[Gundren](entry:0b7c5e1a-8f3d-4c2b-9a61-2d4e8f00a001)\n```\n\n~~~md\n@[Klarg](entry:0b7c5e1a-8f3d-4c2b-9a61-2d4e8f00a003)\n~~~",
+      "mentions": []
+    },
+    {
+      "name": "a malformed id",
+      "text": "@[Gundren](entry:not-a-guid) @[Klarg](entry:1234) @[Sildar](entry:0b7c5e1a8f3d4c2b9a612d4e8f00a004) @[Nobody](entry:)",
+      "mentions": []
+    },
+    {
+      "name": "a link that is not entry:",
+      "text": "@[Gundren](https://example.com/0b7c5e1a-8f3d-4c2b-9a61-2d4e8f00a001) @[Klarg](mailto:klarg@example.com) @[Sildar](Entry:0b7c5e1a-8f3d-4c2b-9a61-2d4e8f00a004)",
+      "mentions": []
+    },
+    {
+      "name": "an image is not a mention",
+      "text": "@![Gundren](entry:0b7c5e1a-8f3d-4c2b-9a61-2d4e8f00a001)",
+      "mentions": []
+    }
+  ]
+}
