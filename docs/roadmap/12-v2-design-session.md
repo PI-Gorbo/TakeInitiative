@@ -61,6 +61,13 @@ player-first experiences: **combat**, **note taking**, **⌘K search** and
 | **Player character** | A Character entry claimed by a member. A member can claim several. | PC in the UI |
 | **Claim** | A member marking a Character entry as their player character. That member is its **claimer**. | own, assign |
 | **Stats** | An optional stat line on a Character entry: initiative roll, max HP, AC. | — |
+| **⌘K search** (code: `Search`) | Campaign-wide search, opened with ⌘K / Ctrl+K or the 🔍 button. It shows results in search sections, then actions, and finds only what the viewer can see. | command palette, omnibox, global search |
+| **Search section** | One heading of ⌘K results: `Entries`, `Notes`, `Images`, `Sessions` or `Actions` (later `Combats` and `Reference`). | category, group, tab |
+| **Snippet** | The words of a matching session note or block shown under a ⌘K result, with the match highlighted. It is cut from exactly one note or block that the viewer can see. | excerpt, preview |
+| **Action** | Something ⌘K does, where a hit is something it finds: create an entry, start the next session, post a note about an entry, go to a tab. `>` searches actions only. | command (that is the composer's `/`), shortcut |
+| **Search provider** (code: `ISearchProvider`) | A source of ⌘K results. Each fills one or more search sections (§11). | plugin, backend |
+| **Search doc** (code: `SearchDoc`) | One searchable unit with exactly one audience: an entry's names, one article block, one session note or one session. It is the row shape of the search query, built from the projected documents and never stored (§9). | search record, index row |
+| **Entry matcher** (code: `EntryMatcher`) | Trigram matching of a piece of text against entry names and aliases, under the viewer's visibility. ⌘K, loose ends and suggestions share it (§11a). | fuzzy finder, resolver |
 | **Reference** | Rules content from outside the campaign (SRD, 5eTools) that ⌘K can find. It is never part of the wiki until it is added. | compendium, bestiary |
 | **Source** | Where an entry or session note came from: a reference item, a D&D Beyond sheet, or an imported Discord message. | origin |
 | **Suggestion** | A mention or entry proposed by a model. It has no effect until a member accepts it. | auto-tag, prediction |

@@ -86,7 +86,7 @@ Steps 08–11 ship as one stack of PRs (`gh stack`), one PR per step.
 | 14 | [Sessions + session notes](14-sessions-and-notes.md) | `in progress` | 13 | Composer, markdown, visibility, filters, back-posting, gap prompt, live over SignalR |
 | 15 | [Wiki + mentions](15-wiki-and-mentions.md) | `done` | 14 | `@` composer, entries, articles, timeline, promote, secret blocks, aliases, merge, edit access |
 | 16 | [Images](16-images.md) | `done` | 14, 15 | S3 blob store, image notes, captions, galleries, share target |
-| 17 | ⌘K search | `todo` | 15 | FTS plus trigram, visibility-aware, actions |
+| 17 | [⌘K search](17-search.md) | `in progress` | 15 | FTS plus trigram, visibility-aware, actions |
 | 18 | Combat v2 | `todo` | 15 | Simplified model, combatants from entries, per-combatant PlayersSee, combat card |
 | 19 | Connections + loose ends | `todo` | 15, 18 | Evidence panel, graph page, loose ends in the wiki and on sessions |
 
