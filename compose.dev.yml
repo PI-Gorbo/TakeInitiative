@@ -1,10 +1,12 @@
 # Full-stack compose for local development.
 #
-# `pnpm dev` starts ONLY the postgres service from this file and runs the API
-# and web natively. Use `docker compose -p takeinitiative -f compose.dev.yml
+# `pnpm dev` starts ONLY the postgres and minio services from this file and runs
+# the API and web natively. Use `docker compose -p takeinitiative -f compose.dev.yml
 # up -d --build` when you want everything in containers instead.
 #
-# Ports: postgres 7401, api 7402, web 7403.
+# Ports: postgres 7401, api 7402, web 7403, minio 7404 (S3 API) and 7405 (console).
+# `docker compose -p takeinitiative -f compose.dev.yml down -v` resets the database
+# and the images together.
 
 services:
     postgres:
@@ -32,6 +34,30 @@ services:
             retries: 5
             start_period: 10s
             timeout: 5s
+    minio:
+        # The image blob store (step 16a). Pinned to the tag Ripple uses: MinIO stopped
+        # publishing community images to Docker Hub in 2025, and this quay.io tag still
+        # pulls. The API only speaks S3, so swapping it (Garage, SeaweedFS) is a change
+        # here alone. There is no bucket-creating container: the API creates its bucket
+        # on start (Blobs:CreateBucket), and the bucket stays private.
+        image: quay.io/minio/minio:RELEASE.2025-07-18T21-56-31Z
+        container_name: takeminio
+        command: server /data --console-address ":9001"
+        ports:
+            - "7404:9000" # S3 API
+            - "7405:9001" # console (takeinitiative / takeinitiative-dev)
+        environment:
+            - MINIO_ROOT_USER=takeinitiative
+            - MINIO_ROOT_PASSWORD=takeinitiative-dev
+        volumes:
+            - takeminio-data:/data
+        restart: always
+        healthcheck:
+            test: ["CMD", "mc", "ready", "local"]
+            interval: 10s
+            retries: 5
+            start_period: 10s
+            timeout: 5s
     api:
         # Tagged rather than anonymous, so a built image is identifiable.
         # `pnpm sync:version` writes TAKEINITIATIVE_VERSION into the root .env
@@ -45,6 +71,8 @@ services:
         depends_on:
             postgres:
                 condition: service_healthy
+            minio:
+                condition: service_healthy
         ports:
             - "7402:8080"
         environment:
@@ -55,6 +83,8 @@ services:
             - "CORS:AdminApp=http://localhost:3001;https://localhost:3001"
             - "AllowedHosts=localhost"
             - "CookieDomain=localhost"
+            # The other Blobs:* keys keep their appsettings.json dev defaults.
+            - "Blobs__ServiceUrl=http://minio:9000"
         restart: always
         healthcheck:
             test: ["CMD-SHELL", "curl --fail http://localhost:8080/healthz || exit 1"]
@@ -82,3 +112,4 @@ services:
 
 volumes:
     takedb-data:
+    takeminio-data:
