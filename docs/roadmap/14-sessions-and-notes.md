@@ -1,0 +1,483 @@
+# 14 — Sessions and session notes
+
+## Goal
+
+The Campaign tab becomes the **session stream**: every session, separated by
+session dividers, opening at the current session. Any member writes markdown
+session notes in the **composer**, picks the session and the visibility, marks
+recaps, and posts back in time. Notes arrive live over `CampaignHub`, and a note
+reaches only the members allowed to see it, on every read and every push
+(invariant 5). The author edits (with history) and deletes their notes, a DM
+hides any note, and the stream filters by All · Text · Images · Recaps · Combats
+· Mine. On a phone the composer toolbar sits just above the keyboard.
+
+The step ships as five PRs stacked with `gh stack` on top of this file's docs
+PR, which sits on 13d (#199). Each PR leaves the app runnable:
+
+| PR | Branch | Sub-step | Runnable state after merge | Status |
+|---|---|---|---|---|
+| 14a | `v2/14a-session-model` | Session and note model | 13's app unchanged in the browser. The API has sessions and notes, and a new campaign has Session 1 | [ ] |
+| 14b | `v2/14b-live-notes` | Visibility-aware push | The same, and note and session changes are pushed only to the groups allowed to see them | [ ] |
+| 14c | `v2/14c-session-stream` | Stream (read and live) | The Campaign tab shows the session stream, live. Members and the join code move to a panel | [ ] |
+| 14d | `v2/14d-composer` | Composer and note actions | Post, edit, delete, hide, history, back-posting and the gap prompt, on every screen size | [ ] |
+| 14e | `v2/14e-mobile-composer` | Mobile composer, commands, filters | The step's Verify passes | [ ] |
+
+`@` mentions are step 15 and images are step 16. This step leaves a seam for each
+(Notes) and builds neither.
+
+## Depends on
+
+**13**. The glossary (§1), the sessions and composer UX (§3, §3a), the architecture
+(§9) and the invariants (§10) in [12-v2-design-session.md](12-v2-design-session.md)
+are binding.
+
+## Files touched
+
+Paths are relative to `apps/TakeInitiative.Api` (API), `apps/TakeInitiative.Api.Tests`
+(Tests) and `apps/TakeInitiative.Web` (Web).
+
+**This PR (docs)**
+- `docs/roadmap/12-v2-design-session.md` §1: the new nouns (step 0 below)
+- `docs/roadmap/README.md`: link step 14, `in progress`
+
+**14a: add**
+- API `src/Features/Campaigns/Models/Visibility.cs` (`Everyone | DM | Me`, shared with entries in step 15)
+- API `src/Features/Campaigns/CampaignAccess.cs`: `RequireMember` for endpoints (see 14a step 3)
+- API `src/Features/Sessions/Models/Session.cs`, `SessionNote.cs`, `SessionNoteVisibility.cs`, `SessionGap.cs`
+- API `src/Features/Sessions/Models/Events/{SessionStarted,SessionTitleChanged}.cs`
+- API `src/Features/Sessions/Models/Events/{SessionNotePosted,SessionNoteEdited,SessionNoteVisibilityChanged,SessionNoteHidden,SessionNoteUnhidden,SessionNoteDeleted}.cs`
+- API `src/Features/Sessions/Api/{GetSessions,PostStartSession,PutSessionTitle,GetSessionStream}/**`
+- API `src/Features/Sessions/Api/{PostSessionNote,GetSessionNote,PutSessionNote,PutSessionNoteVisibility,PutSessionNoteHidden,DeleteSessionNote,GetSessionNoteHistory}/**`
+- Tests `Scopes/Integration/Features/Sessions/{SessionTests,SessionNoteTests,SessionNoteVisibilityTests}.cs`
+
+**14a: modify**
+- API `src/boostrap/Bootstrap.cs`: register the two projections and their indexes
+- API `src/Features/Campaigns/Api/PostCreateCampaign/PostCreateCampaign.cs`: start Session 1 in the same save
+- Tests `Scopes/Integration/WebAppClientExtensions.cs`: typed calls for the new endpoints
+- Web `utils/api/schema.d.ts`: regenerated
+
+**14b**
+- API add `src/Features/Sessions/SessionHub.cs`: `SessionNoteAudience` and the `IHubContext<CampaignHub>` notify extensions
+- API modify `src/Features/Campaigns/CampaignHub.cs`: the new message names in `CampaignHubMessages`
+- API modify every 14a write endpoint: notify after `SaveChangesAsync`
+- Tests add `Scopes/Unit/SessionNoteAudienceTests.cs`, `Scopes/Integration/Features/Sessions/SessionHubTests.cs`
+
+**14c**
+- Web `package.json`: add `markdown-it` and `@types/markdown-it`
+- Web add `utils/markdown.ts`, `utils/sessionStreamCache.ts`, `utils/queries/sessions.ts`
+- Web add `utils/api/session/*.ts`, `utils/api/sessionNote/*.ts`; modify `composables/useApi.ts`, `utils/api/types.ts`
+- Web add `components/Session/{SessionStream,SessionDivider,SessionNoteCard,NoteMarkdown}.vue`
+- Web add `components/Campaign/MembersPanel.vue`: the 13d members and join code UI, moved out of the page
+- Web modify `pages/app/campaigns/[campaignId]/index.vue`: the stream
+- Web modify `composables/useCampaignHub.ts`: the session and note handlers
+
+**14d**
+- Web add `components/Composer/{Composer,SessionPicker,VisibilityPicker,ComposerToolbar,GapPrompt}.vue`
+- Web add `components/Session/{NoteActions,NoteEditor,NoteHistoryDialog}.vue`
+- Web modify `components/Session/SessionNoteCard.vue`, `pages/app/campaigns/[campaignId]/index.vue`, `utils/queries/sessions.ts`
+
+**14e**
+- Web add `composables/{useKeyboardInset,useComposerCommands,useLongPress}.ts`
+- Web add `components/Session/{StreamFilters,NoteActionSheet}.vue`
+- Web modify `components/Composer/*`, `components/Session/SessionStream.vue`, `layouts/campaign.vue` (hide the tab bar while the composer has focus on a phone)
+
+## Steps
+
+### 0. Start the stack (this PR)
+
+```sh
+git switch v2/13d-pwa-shell
+gh stack add v2/14-step-file
+```
+
+Add each sub-step on top with `gh stack add v2/14a-session-model` and so on.
+
+**Glossary check.** Session, Session note, Recap, Visibility and Member are in §1.
+This PR adds the nouns the step puts into code and UI:
+
+- **Current session**: the latest session. The composer posts to it unless
+  another is picked.
+- **Session stream**: the Campaign tab's list of every session's notes, split by
+  session dividers.
+- **Session divider**: the line that starts a session in the stream: number, date
+  and title.
+- **Composer**: where a session note is written: the text, the session and
+  visibility pickers, and the toolbar.
+- **Gap prompt**: the composer's "Start Session N?" suggestion.
+- **Added later**: the marker on a note posted to a session that was no longer
+  current.
+- **Hide**: a DM hides a session note from everyone except its author and the
+  DMs. It is not a delete.
+- **Edit history**: the earlier versions of an edited session note.
+- **Filter**: one of `All · Text · Images · Recaps · Combats · Mine` on the
+  session stream. Not a channel.
+
+### 14a. Session and note model
+
+1. **Two aggregates, one stream each** (§9). Stream id = aggregate id. Every event
+   implements `IActorEvent`.
+
+   ```
+   Visibility                    Everyone | DM | Me        // JsonStringEnumConverter, stored as a string
+
+   // Session stream
+   SessionStarted                { Actor, CampaignId, Number }
+   SessionTitleChanged           { Actor, Title? }          // null clears it
+
+   Session (inline projection)
+     { Id, CampaignId, Number, Title?, StartedAt, StartedByMemberId }
+
+   // SessionNote stream
+   SessionNotePosted             { Actor, CampaignId, SessionId, AuthorMemberId,
+                                   Text, Visibility, IsRecap, AddedLater }
+   SessionNoteEdited             { Actor, Text, IsRecap }
+   SessionNoteVisibilityChanged  { Actor, Visibility }
+   SessionNoteHidden             { Actor }
+   SessionNoteUnhidden           { Actor }
+   SessionNoteDeleted            { Actor }                  // the projection deletes the document
+
+   SessionNote (inline projection)
+     { Id, CampaignId, SessionId, AuthorMemberId, Text, Visibility, IsRecap,
+       PostedAt, AddedLater, EditedAt?, IsHidden, HiddenByMemberId?, HiddenAt? }
+   ```
+
+   - `AuthorMemberId` is on the event, not read from `Actor`, so the author stays
+     a member when `Actor` gains a model case (§11a).
+   - `AddedLater` is decided when the note is posted (the session was not the
+     current one then) and never recomputed, because "current" moves.
+   - Hidden state is three flat fields rather than a nested object so the
+     visibility filter below stays a simple Marten LINQ expression.
+   - Deletion uses the `ShouldDelete(SessionNoteDeleted)` convention on the
+     self-aggregating `SessionNote`. If `Snapshot<T>` ignores it on Marten 7.31,
+     use a `SingleStreamProjection<SessionNote>` with `DeleteEvent<SessionNoteDeleted>()`.
+     The stream keeps every event either way.
+2. **Registration and indexes** (`Bootstrap.AddMartenDB`):
+   - `opts.Projections.Snapshot<Session>(SnapshotLifecycle.Inline)` and the same
+     for `SessionNote`.
+   - `Session`: a unique computed index on `(CampaignId, Number)`. It is the
+     backstop when two members start the next session at once.
+   - `SessionNote`: an index on `(CampaignId, PostedAt)` and one on `SessionId`.
+3. **`CampaignAccess.RequireMember(session, campaignId, userId)`** returns
+   `(Campaign, Member)` or throws 404 / 403, replacing the load-then-check block
+   13b repeats in every endpoint. The 13b endpoints may adopt it; nothing else in
+   them changes.
+4. **The visibility rule lives in one place** (invariant 5):
+   `SessionNoteVisibility.VisibleTo(Member viewer)` returns an
+   `Expression<Func<SessionNote, bool>>` that every note query uses, plus an
+   in-memory `CanSee(note, viewer)` for single loads and the hub. A viewer sees a
+   note when:
+
+   | Note | Author | DM | Other player |
+   |---|---|---|---|
+   | `Everyone` | yes | yes | yes |
+   | `Everyone`, hidden | yes, marked hidden | yes, marked hidden | **no** |
+   | `DM` | yes | yes | **no** |
+   | `Me` | yes | **no** | **no** |
+
+   A note the caller cannot see is a **404**, never a 403, so its existence does
+   not leak ("hidden things are absent").
+5. **Current session and Session 1.** The current session is the campaign's
+   `Session` with the highest `Number`. `PostCreateCampaign` starts the Campaign
+   stream and the Session 1 stream in the same `SaveChangesAsync`, so they share
+   a transaction and a correlation id. `SessionStarted` for Session 1 carries the
+   owner as its `Actor`.
+6. **Gap prompt rule** (`SessionGap`, one constant of 3 days, reused by the
+   Discord import in step 24). `SuggestNextSession` is true when the current
+   session has at least one note the caller can see and the newest such note in
+   the campaign is more than 3 days old. An empty current session never
+   suggests a new one: it is waiting to be used. Only notes the caller can see
+   count, so the prompt leaks nothing.
+7. **Endpoints.** All take `{campaignId}` in the route and resolve the caller's
+   member first. Operation ids are the class names (13c).
+
+   | Endpoint | Who | Does |
+   |---|---|---|
+   | `GET /api/campaigns/{campaignId}/sessions` | members | `{ sessions[] (newest first), currentSessionId, suggestNextSession }` |
+   | `POST /api/campaigns/{campaignId}/sessions` | members | body `{ number }`, the number the caller expects to start. `current + 1` appends `SessionStarted`. `current` returns the existing session (someone else just started it). Anything else is 409 |
+   | `PUT /api/campaigns/{campaignId}/sessions/{sessionId}/title` | DMs | appends `SessionTitleChanged`. Unchanged title appends nothing |
+   | `GET /api/campaigns/{campaignId}/stream?filter=&before=&take=` | members | a `SessionStream` page (below) |
+   | `POST /api/campaigns/{campaignId}/notes` | members | body `{ sessionId?, text, visibility, isRecap }`. No `sessionId` means the current session. Appends `SessionNotePosted` with `AddedLater = sessionId is not current` |
+   | `GET /api/campaigns/{campaignId}/notes/{noteId}` | who can see it | one note plus its session number (deep links) |
+   | `PUT /api/campaigns/{campaignId}/notes/{noteId}` | author | body `{ text, isRecap }`. Appends `SessionNoteEdited`. Unchanged appends nothing |
+   | `PUT /api/campaigns/{campaignId}/notes/{noteId}/visibility` | author | appends `SessionNoteVisibilityChanged` |
+   | `PUT /api/campaigns/{campaignId}/notes/{noteId}/hidden` | DMs | body `{ hidden }`. Appends `SessionNoteHidden` / `SessionNoteUnhidden`; a no-op appends nothing |
+   | `DELETE /api/campaigns/{campaignId}/notes/{noteId}` | author | appends `SessionNoteDeleted` |
+   | `GET /api/campaigns/{campaignId}/notes/{noteId}/history` | who can see it | `{ versions[] { text, isRecap, at } }`, oldest first, read from the stream (`SessionNotePosted` and each `SessionNoteEdited`) |
+
+   Responses:
+
+   ```
+   SessionResponse     { id, number, title?, startedAt, startedByMemberId, isCurrent }
+   SessionNoteResponse { id, sessionId, authorMemberId, text, visibility, isRecap,
+                         postedAt, addedLater, editedAt?, isHidden, hiddenByMemberId? }
+   SessionStreamResponse
+     { sessions[] { session: SessionResponse, notes[]: SessionNoteResponse },  // oldest first
+       currentSessionId, suggestNextSession, hasOlder }
+   ```
+
+   - **Stream paging** is by session: up to `take` (default 3, max 10) sessions
+     with `Number < before` (default: everything, so the first page ends at the
+     current session). Each session carries all of its notes the caller can see
+     that match the filter. Notes are ordered by `PostedAt`, so a back-posted note
+     lands at the end of its session. Recaps are ordered the same way; the web
+     lifts them under the divider.
+   - **`filter`** is applied on the server so paging stays correct: `All`;
+     `Text` (notes with no images, which in 14 is every note); `Images` (none
+     until step 16); `Recaps` (`IsRecap`); `Combats` (none until step 18);
+     `Mine` (`AuthorMemberId` is the caller). Sessions are returned even when no
+     note matches, and the web decides whether to draw their dividers.
+   - **Responses carry no per-viewer fields.** The web compares `authorMemberId`
+     with the campaign's `currentMemberId`. That lets 14b push one payload to
+     every allowed group.
+   - **Validation.** Text is trimmed, required, and at most 10,000 characters.
+     A title is at most 100 characters. `visibility` must be in the enum. A
+     `sessionId` from another campaign is a 404.
+   - **Edits are last-write-wins.** Only the author can edit, so a conflict means
+     the same person on two devices. No expected version.
+   - The text is stored verbatim. Nothing parses it in 14 (see Notes: the `@`
+     seam).
+8. **Tests.** Use `Users.DM` (owner), `Users.Player`, and `Users.Outsider` joined by
+   code as a second player, all on a campaign created inside the test.
+   - `SessionTests`: a new campaign has Session 1 as its current session, and its
+     `SessionStarted` shares the `CampaignCreated` correlation id; any member
+     starts the next session; starting `current` again returns it without
+     appending; starting `current + 2` is 409; only a DM changes the title; an
+     outsider gets 403 everywhere; the gap prompt is off for an empty current
+     session and for a note from today, and on for a note older than 3 days
+     (`SessionGap` reads the clock from an injected `TimeProvider`, and the test
+     host swaps in a `FakeTimeProvider` advanced 4 days); every event carries an `Actor` and a correlation id.
+   - `SessionNoteTests`: posting without a session goes to the current one;
+     posting to an older session sets `addedLater`; only the author edits,
+     changes visibility and deletes (others get 403, or 404 when they cannot see
+     it); an edit sets `editedAt` and the history lists both versions; a delete
+     removes the note from the stream and history returns 404; only a DM hides
+     and unhides; hiding twice appends one event; text validation.
+   - `SessionNoteVisibilityTests`: one test per cell of the table in step 4, on
+     `GET stream`, `GET notes/{id}` and `GET notes/{id}/history`; the `Mine` and
+     `Recaps` filters; the gap prompt ignores a note the caller cannot see.
+9. **Web.** Regenerate `schema.d.ts` (`pnpm gen:api`) and commit it. No UI change.
+
+### 14b. Visibility-aware push
+
+1. **Messages** (added to `CampaignHubMessages`; camelCase on the wire):
+
+   | Message | Payload | Sent to |
+   |---|---|---|
+   | `sessionStarted` | `SessionResponse` | `campaign:{id}` |
+   | `sessionTitleChanged` | `SessionResponse` | `campaign:{id}` |
+   | `sessionNoteUpserted` | `SessionNoteResponse` | the note's audience after the change |
+   | `sessionNoteRemoved` | `{ noteId, sessionId }` | the note's audience before the change |
+   | `sessionNoteHidden` | `{ noteId, sessionId, byMemberId }` | `member:{authorId}` only, so the author is told |
+
+2. **Audience** (`SessionNoteAudience.Groups(note, campaignId)`), the push-side twin
+   of the read rule in 14a:
+
+   | Note | Groups |
+   |---|---|
+   | `Everyone`, not hidden | `campaign:{id}` |
+   | `Everyone`, hidden | `campaign:{id}:dm`, `member:{authorId}` |
+   | `DM` | `campaign:{id}:dm`, `member:{authorId}` |
+   | `Me` | `member:{authorId}` |
+
+   Send with `Clients.Groups([...])`. The default lifetime manager sends once per
+   connection even when a connection is in several of the groups (a DM author).
+   The web handlers are idempotent upserts anyway.
+3. **Routing per write.** Each endpoint notifies after `SaveChangesAsync`, like
+   13b's `NotifyMemberRoleChanged`:
+   - post, edit, unhide: `sessionNoteUpserted` to the audience after.
+   - visibility change and hide: `sessionNoteRemoved` to the audience **before**,
+     then `sessionNoteUpserted` to the audience **after**. Messages on one
+     connection arrive in order, so a member who can still see the note ends with
+     it, and one who lost access ends without it. The removal goes only to groups
+     that could already see the note, so its id leaks nothing new. Hide also sends
+     `sessionNoteHidden` to the author.
+   - delete: `sessionNoteRemoved` to the audience before.
+   - `sessionStarted` and `sessionTitleChanged` to the campaign group.
+4. **Role changes** need no new server work: 13b already moves the member's
+   connections in or out of `campaign:{id}:dm`. The web refetches the stream when
+   `memberRoleChanged` names the caller (14c), which picks up or drops DM notes.
+5. **Tests.**
+   - `SessionNoteAudienceTests` (unit): every row of the audience table, and a
+     property check that for every visibility × hidden × role × is-author case,
+     `CanSee` (14a) is true exactly when the viewer is in one of `Groups`. This is
+     the test that keeps the read and push rules from drifting apart.
+   - `SessionHubTests` (integration): with a recording `IHubContext<CampaignHub>`
+     swapped into the host (`ConfigureTestServices`), assert the message names,
+     groups and order for post, edit, visibility change, hide, unhide and delete,
+     and that a `DM` note is never sent to `campaign:{id}`. If a real SignalR
+     client over the Alba `TestServer` proves easy, add one end-to-end case: a
+     Player connection does not receive a DM's `DM` note.
+6. No web change. The API is ahead of the UI until 14c.
+
+### 14c. Session stream (read and live)
+
+1. **Markdown.** Add `markdown-it`. `utils/markdown.ts` configures it with
+   `html: false` (raw HTML is escaped, which is the XSS guard), `linkify: true`,
+   `breaks: true`, and links opened with `target="_blank" rel="noopener noreferrer nofollow"`.
+   Headings render as bold paragraphs: a note is a chat line, not a document.
+   `NoteMarkdown.vue` is the only place that uses `v-html`, and only with this
+   renderer's output.
+2. **Requests and queries.** `utils/api/session/*` and `utils/api/sessionNote/*` on
+   the generated types, grouped as `useApi().session` and `useApi().note`. Aliases in
+   `utils/api/types.ts`: `Visibility`, `Session`, `SessionNote`, `SessionStream`.
+   `utils/queries/sessions.ts` has `getSessionStreamQuery(campaignId, filter)` as a
+   `useInfiniteQuery` whose next page is `before = oldest loaded session number`.
+3. **Cache updates in one place.** `utils/sessionStreamCache.ts` holds pure functions
+   over the infinite query's pages: `upsertSession`, `upsertNote` (placed by
+   `sessionId` and `postedAt`, a no-op when the note's session is not loaded yet),
+   `removeNote`. Hub handlers (here) and mutations (14d) both use them. Under a
+   filter other than `All`, an upserted note that no longer matches is removed.
+4. **Stream UI.** Chronological, newest at the bottom, like Discord. It opens
+   scrolled to the bottom of the current session and loads older sessions when
+   scrolled to the top, keeping the scroll position.
+   - `SessionDivider`: "Session 12 · Sat 20 Sep · The Triboar Trail". The date is
+     `startedAt` in the viewer's time zone. DMs get an inline title edit.
+   - Recaps sit directly under their divider, marked 📜 RECAP.
+   - `SessionNoteCard`: author, time, the visibility badge for 🔒 DM and 🔒 Me,
+     "(edited)", "added N days later" (whole days from the session's `startedAt`,
+     "added later" under a day), and "Hidden by a DM" for a hidden note.
+   - New notes from others while scrolled up show a "New notes ↓" pill instead of
+     jumping.
+5. **Members panel.** The 13d members list and join code move into
+   `MembersPanel.vue`, opened from a members button in the Campaign tab (a sheet
+   on a phone). The page is now the stream.
+6. **Live.** `useCampaignHub` gains handlers for the five 14b messages that call
+   the cache functions (returning nothing, per the 13d gotcha). `sessionNoteHidden`
+   shows a toast to the author: "A DM hid your note. You can still see it." On
+   `memberRoleChanged` for the caller, and on reconnect, the stream query is
+   invalidated.
+
+### 14d. Composer and note actions
+
+1. **Composer** (one component, sticky at the bottom of the stream):
+   - "Posting to: Session 13 ▾" (`SessionPicker`, every session, newest first; an
+     older one shows "added later" in the picker) and "Visible to: Everyone ▾"
+     (`VisibilityPicker`: Everyone, 🔒 DM, 🔒 Me).
+   - A plain `<textarea>` that grows with its content. Enter posts on desktop and
+     Shift+Enter is a new line; on a phone Enter is a new line and ➤ posts.
+   - `ComposerToolbar` below the text box on desktop: bold, italic, list and a
+     📜 Recap toggle, then ➤. It takes a list of items so steps 15 and 16 add `@`,
+     📷 and 🖼 without reshaping it.
+   - Posting is optimistic (`upsertNote` with a temporary id, replaced by the
+     response). The picker and visibility reset to the current session and
+     `Everyone` after each post; the recap toggle resets too.
+   - A draft per campaign survives a reload (`localStorage`, wrapped in try/catch).
+2. **Gap prompt.** When `suggestNextSession` is true, `GapPrompt` sits above the
+   text box: "Last note was 5 days ago. Start Session 14?" One tap calls
+   `POST sessions { number: current + 1 }` and targets the new session. Ignoring
+   it posts to the current session. The prompt re-reads after every post and on
+   `sessionStarted`.
+3. **Starting a session** without the prompt: "Start Session N" at the end of the
+   session picker, for any member.
+4. **Note actions** (a menu on each note on desktop): Edit and Delete (author),
+   Change visibility (author), Hide / Unhide (DM), Edit history (when edited),
+   Copy link. Edit opens `NoteEditor` in place with the recap toggle. Delete asks
+   for confirmation. Copy link copies `/app/campaigns/{id}?note={noteId}`; opening
+   it loads pages until that note's session is loaded, then scrolls to and
+   highlights it.
+5. **Edit history** (`NoteHistoryDialog`): each version with its time, oldest first.
+
+### 14e. Mobile composer, commands and filters
+
+1. **Keyboard inset.** 13d set `interactive-widget=overlays-content`, so the
+   on-screen keyboard covers the page instead of resizing it. `useKeyboardInset`
+   listens to `visualViewport` `resize` and `scroll` and exposes
+   `inset = innerHeight - (visualViewport.height + visualViewport.offsetTop)`.
+   The composer is `position: fixed` with `bottom: inset` while it has focus on
+   a phone, and the tab bar hides so nothing sits between the composer and the
+   keyboard (invariant 11). Where `visualViewport` is missing, the inset is 0.
+2. **Toolbar above the keyboard** on a phone, as §3a draws it: the session and
+   visibility row on top, the text box, then the toolbar row. 44px targets.
+3. **Commands, each with a touch control** (`useComposerCommands`). A command is
+   recognised only at the start of the text, and is consumed into the composer's
+   state as soon as it is followed by a space, so it never reaches the note's
+   text:
+
+   | Command | Touch control | Effect |
+   |---|---|---|
+   | `/recap` | 📜 Recap toggle | `isRecap = true` |
+   | `/dm` | visibility picker → 🔒 DM | `visibility = DM` |
+   | `/me` | visibility picker → 🔒 Me | `visibility = Me` |
+   | `/session N` | session picker | targets Session N; an unknown N shows an inline error and leaves the text alone |
+
+   Typing `/` at the start shows the four commands as a strip above the keyboard
+   (a popover at the caret on desktop), the same slot the `@` strip uses in
+   step 15.
+4. **Filters.** `StreamFilters` is a sticky chip row under the header:
+   `All · Text · Images · Recaps · Combats · Mine`. The filter is in the URL
+   (`?filter=recaps`) and is part of the query key. Under a filter, sessions with
+   no matching note have no divider, except the current one. Images and Combats
+   show an empty state naming steps 16 and 18.
+5. **Long-press** (`useLongPress`, 500ms, cancelled by movement) opens
+   `NoteActionSheet` with the same actions as the desktop menu. Promote to wiki is
+   step 15.
+
+## Verify
+
+1. `dotnet test` and `pnpm build` pass, `schema.d.ts` is fresh, and CI is green on
+   every PR in the stack.
+2. `pnpm dev`, then in three browser profiles at a phone size (390 × 844): A (the
+   owner, DM) creates a campaign, and B and C join it as Players.
+   1. The Campaign tab shows **Session 1** as the current session with an empty
+      stream and a composer.
+   2. A posts `**10gp** each` to Everyone. B sees it bold, without a reload.
+   3. B posts with `/dm`. A sees it with 🔒 DM. C does not see it in the
+      stream, by its link, or live.
+   4. A posts with `/me`. Only A sees it.
+   5. B edits their note. Everyone who can see it sees "(edited)", and the history
+      shows both versions.
+   6. A hides B's Everyone note. C loses it live, B keeps it marked hidden and is
+      told, A sees it marked hidden. A unhides it and C gets it back.
+   7. B posts `/recap We left Neverwinter…`. It appears under the Session 1 divider.
+   8. Any member starts Session 2. A posts to Session 1 from the session picker;
+      the note shows "added later" at the end of Session 1.
+   9. Filters: Recaps shows the recap only; Mine shows only the caller's notes;
+      Images and Combats show their empty states.
+   10. With the keyboard open on a real phone (or Chrome's device mode with a
+       virtual keyboard), the toolbar sits directly above the keyboard and every
+       command has a button.
+3. Gap prompt: back-date the newest note's `PostedAt` by 4 days in its
+   `mt_doc_sessionnote` row. The composer offers "Start Session 3?", and one tap starts it.
+4. In Postgres, every `mt_events` row of the new streams has a `correlation_id`
+   and an `actor`, and the note's `mt_doc_sessionnote` row is gone after a delete
+   while its events remain.
+
+## Notes / gotchas
+
+- **Commit scopes:** only `api`, `web`, `identity`, `dice`, `root`, `ci` and `docs`
+  pass the husky hook. Every PR that changes an API contract regenerates and
+  commits `schema.d.ts` (13c's CI check fails otherwise).
+- **Reset the dev database after 14a.** Campaigns created before it have no
+  Session 1, and nothing backfills it (there are no v2 users, §12):
+  `docker compose -p takeinitiative -f compose.dev.yml down -v`.
+- **Why sessions are not on the Campaign stream.** §9 makes Session and
+  SessionNote their own aggregates to avoid contention on one busy stream.
+  The price is that "next session number" is not guarded by one stream's
+  version; the unique `(CampaignId, Number)` index plus the expected-number
+  request body guard it instead, and turn a double tap into the same session.
+- **`SessionStream` is a query, not a stored document.** §9 lists it as a read
+  model. Visibility differs per viewer, so a stored per-session document would
+  need a copy per audience. It is assembled per request from the `Session` and
+  `SessionNote` projections with the visibility filter in the SQL. Combat cards
+  join it in step 18 as `combats[]` on each session.
+- **One visibility rule, two forms.** The LINQ expression (reads) and the audience
+  table (push) are tested against each other in 14b. Change them together.
+- **The `@` seam (step 15).** The text is stored verbatim, so a mention written
+  as `@[text](entry:<id>)` round-trips today. `utils/markdown.ts` has one link rule
+  where an `entry:` href renders as plain text; step 15 replaces that rule with a
+  mention chip, and adds a `MentionIndex` projection fed by `SessionNotePosted`
+  and `SessionNoteEdited`. The composer's strip slot and toolbar item list are
+  where the `@` autocomplete and button go. Nothing in 14 parses `@`.
+- **The images seam (step 16).** `Text` filter = "no images", `Images` filter and
+  a note without text are all defined against an image list that 16 adds to
+  `SessionNotePosted`. In 14 text is required.
+- **Hidden notes and DMs.** DMs see hidden notes (marked) so they can unhide them.
+  A `Me` note is invisible to DMs, so a DM can never hide one. Hide survives an
+  edit and a visibility change.
+- **Not in 14:** editing a session's date (the divider uses `startedAt`), moving a
+  note to another session, deleting a session, notifications beyond the hide toast
+  (§12), and optimistic concurrency on note edits.
+- **iOS and `visualViewport`.** iOS Safari always overlays the keyboard and fires
+  `visualViewport` `scroll` as well as `resize` while it animates; listen to both
+  and avoid CSS transitions on `bottom`. Test on a real device before calling 14e
+  done; Chrome's device mode does not show a keyboard.
