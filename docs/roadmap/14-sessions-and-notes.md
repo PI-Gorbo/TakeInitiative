@@ -717,6 +717,7 @@ This PR adds the nouns the step puts into code and UI:
   - Also modified: `components/Session/{SessionNoteCard,NoteActions}.vue` and `pages/app/campaigns/[campaignId]/index.vue`.
   - `useComposerPinned()` (in `useKeyboardInset.ts`) is a `useState` flag that the layout reads to hide the tab bar.
   - No API change, so `schema.d.ts` is unchanged.
+- **A flaky 14a test is fixed here.** `SessionNoteTests.AnEdit_SetsEditedAt_AndTheHistoryListsBothVersions` compared a time read back from Postgres with the one the POST returned. Postgres stores microseconds and .NET keeps 100ns ticks, so the two values sometimes differed by less than 1µs. That turned CI red on #201 and #202. It now uses `BeCloseTo(…, 1µs)`. The fix belongs in 14a, but earlier PRs are not changed, so it is made here.
 - **Pinning.** The composer is pinned while its text box has focus and either the screen is a phone (below `md`) or a keyboard is covering the page (a tablet).
   - `inset` is 0 without `visualViewport`, and also while pinch-zoomed (`scale ≠ 1`), when the visual viewport shrinks for another reason.
   - While pinned, the composer's wrapper keeps its height plus `inset`, so the stream ends where the composer starts. The stream also watches its own size, so a reader at the bottom stays at the bottom when it shrinks.
@@ -747,7 +748,7 @@ This PR adds the nouns the step puts into code and UI:
 - **Verify, as run in 14e** (no browser; the UI was not looked at on a device):
   - `nuxi typecheck` is clean and `nuxt build` succeeds.
   - `vitest` passes 94/94: 71 from 14d and 23 new (12 for commands, 11 for the inset, pinning, long-press and filters).
-  - `dotnet test` passes 74/74 (the API is unchanged).
+  - `dotnet test` passes 74/74. The API is unchanged; only the flaky test above changed.
   - `filters14e.mjs` passed 233/233 against the API on 5010 and `nuxt dev` on 3100:
     - Vite compiled every new or changed module, and `/app/campaigns/x?filter=…` served for every filter.
     - A DM and two players posted by typing text through `applyCommands` into the composer state and `buildPostBody`. This covered `/dm`, `/me`, `/recap`, chained commands, a command that is not at the start, `/session 1` (added later) and `/session 3`. `/session 9` was refused inline with its text kept.
