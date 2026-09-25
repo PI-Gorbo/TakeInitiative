@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Primitives;
 using TakeInitiative.Api.Bootstrap;
+using TakeInitiative.Api.Features.Images;
 using TakeInitiative.Api.Features.Sessions;
 using TakeInitiative.Api.Features.Users;
 using TakeInitiative.Utilities;
@@ -53,6 +54,8 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
     public IDiceRoller DiceRoller { get; } = A.Fake<IDiceRoller>();
     /// <summary>The gap prompt's clock. Tests move it forward to exercise the gap prompt, and must reset it.</summary>
     public ShiftableTimeProvider Clock { get; } = new();
+    /// <summary>The blob store (step 16a). S3BlobStoreTests covers the real one against MinIO.</summary>
+    public InMemoryBlobStore Blobs { get; } = new();
 
     /// <summary>Lets a derived fixture swap services in the host (for example the hub context).</summary>
     protected virtual void ConfigureTestServices(IServiceCollection services) { }
@@ -67,7 +70,10 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
                     configBuilder.AddInMemoryCollection(
                         new Dictionary<string, string?>
                         {
-                            ["ConnectionStrings:TakeDB"] = PostgreSqlContainer.GetConnectionString()
+                            ["ConnectionStrings:TakeDB"] = PostgreSqlContainer.GetConnectionString(),
+                            ["Blobs:CreateBucket"] = "false",
+                            // Tests sweep by hand (ImageSweeper.SweepOnce), never in the background.
+                            ["Images:SweepStartDelay"] = "1.00:00:00",
                         });
                 })
            .ConfigureServices((context, services) =>
@@ -76,6 +82,7 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
                         new ServiceDescriptor(typeof(IDiceRoller), DiceRoller)
                     );
                     services.AddKeyedSingleton<TimeProvider>(SessionGap.ClockKey, Clock);
+                    services.Replace(ServiceDescriptor.Singleton<IBlobStore>(Blobs));
                     services.AddMartenDB(context.Configuration, IsDevelopment: true);
                     ConfigureTestServices(services);
                 })

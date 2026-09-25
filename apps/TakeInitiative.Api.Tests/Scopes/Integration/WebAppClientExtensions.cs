@@ -2,6 +2,7 @@ using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Primitives;
 using TakeInitiative.Api.Features.Campaigns;
 using TakeInitiative.Api.Features.Entries;
+using TakeInitiative.Api.Features.Images;
 using TakeInitiative.Api.Features.Sessions;
 using TakeInitiative.Api.Features.Users;
 namespace TakeInitiative.Api.Tests.Integration;
@@ -233,6 +234,65 @@ public static class WebAppClientExtensions
 
     public static Task<Result<EntryHistoryResponse>> GetEntryHistory(this IWebAppClient client, Guid campaignId, Guid entryId)
         => client.Get<EntryHistoryResponse>(EntryUrl(campaignId, entryId, "history"));
+
+    // Images (step 16a).
+
+    public static string ImagesUrl(Guid campaignId) => $"/api/campaigns/{campaignId}/images";
+
+    public static string ImageUrl(Guid campaignId, Guid imageId, string? variant = null)
+        => $"/api/campaigns/{campaignId}/images/{imageId}" + (variant is null ? "" : $"/{variant}");
+
+    /// <summary>Uploads <paramref name="bytes"/> as the <c>file</c> part and returns the status, the body and, on a 200, the image.</summary>
+    public static async Task<(int Status, string Body, ImageResponse? Image)> UploadImage(
+        this IWebAppClient client, Guid campaignId, byte[] bytes, string fileName = "photo.jpg", string contentType = "image/jpeg")
+    {
+        using var content = new MultipartFormDataContent();
+        var file = new ByteArrayContent(bytes);
+        file.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
+        content.Add(file, "file", fileName);
+        var result = await client.AlbaHost.Scenario(_ =>
+        {
+            _.Post.MultipartFormData(content).ToUrl(ImagesUrl(campaignId));
+            _.IgnoreStatusCode();
+        });
+        var status = result.Context.Response.StatusCode;
+        var body = await result.ReadAsTextAsync();
+        var image = status == 200
+            ? System.Text.Json.JsonSerializer.Deserialize<ImageResponse>(body, new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web))
+            : null;
+        return (status, body, image);
+    }
+
+    /// <summary>Uploads a fixture from <c>Fixtures/images</c> and expects a 200.</summary>
+    public static async Task<ImageResponse> UploadFixture(this IWebAppClient client, Guid campaignId, string fixture)
+    {
+        var (status, body, image) = await client.UploadImage(campaignId, ImageFixtures.Bytes(fixture), fixture);
+        if (status != 200 || image is null)
+        {
+            throw new InvalidOperationException($"Uploading {fixture} gave {status}: {body}");
+        }
+        return image;
+    }
+
+    /// <summary>GETs a variant's bytes, never asserting the status.</summary>
+    public static Task<Alba.IScenarioResult> GetImageVariant(
+        this IWebAppClient client, Guid campaignId, Guid imageId, string variant, string? ifNoneMatch = null)
+        => client.AlbaHost.Scenario(_ =>
+        {
+            _.Get.Url(ImageUrl(campaignId, imageId, variant));
+            if (ifNoneMatch is not null) _.WithRequestHeader("If-None-Match", ifNoneMatch);
+            _.IgnoreStatusCode();
+        });
+
+    public static async Task<int> DeleteImage(this IWebAppClient client, Guid campaignId, Guid imageId)
+    {
+        var result = await client.AlbaHost.Scenario(_ =>
+        {
+            _.Delete.Url(ImageUrl(campaignId, imageId));
+            _.IgnoreStatusCode();
+        });
+        return result.Context.Response.StatusCode;
+    }
 
     /// <summary>Sends a request that should fail and returns its status and body, to check error keys and that nothing leaks.</summary>
     public static async Task<(int Status, string Body)> Send(this IWebAppClient client, HttpMethod method, string url, object body)

@@ -1,4 +1,7 @@
+using Amazon.S3;
 using FastEndpoints.Security;
+using Microsoft.Extensions.Options;
+using TakeInitiative.Api.Features.Images;
 
 using TakeInitiative.Api.Identity;
 
@@ -71,6 +74,14 @@ public static class Bootstrap
                 .Index(x => x.Aliases, idx => idx.Method = IndexMethod.gin)
                 .Index(x => x.ArticleMentionIds, idx => idx.Method = IndexMethod.gin);
 
+            // Image documents (step 16a): storage bookkeeping, not an aggregate. Optimistic
+            // concurrency makes two writers racing on one image (attaching it to two notes,
+            // or attaching it while it is swept) a conflict for the loser.
+            opts.Schema.For<Image>()
+                .UseOptimisticConcurrency(true)
+                .Index([x => x.CampaignId, x => x.UploaderMemberId, x => x.NoteId!])
+                .Index(x => x.NoteId!);
+
             opts.Schema.For<IAdminConfig>()
                 .AddSubClass<MaintenanceConfig>();
         }).AddAsyncDaemon(DaemonMode.Solo);
@@ -87,6 +98,27 @@ public static class Bootstrap
 
         martenOpts.UseLightweightSessions();
 
+        return services;
+    }
+
+    /// <summary>
+    /// Images (step 16a): the S3 blob store, the processor, the bucket for dev and the
+    /// sweeper. Building the S3 client does no I/O, so <c>--export-openapi</c> needs no
+    /// blob store.
+    /// </summary>
+    public static IServiceCollection AddImages(this IServiceCollection services, IConfiguration config)
+    {
+        services.Configure<BlobOptions>(config.GetSection(BlobOptions.SectionKey));
+        services.Configure<ImageOptions>(config.GetSection(ImageOptions.SectionKey));
+
+        services.AddSingleton<IAmazonS3>(sp => S3BlobStore.CreateClient(sp.GetRequiredService<IOptions<BlobOptions>>().Value));
+        services.AddSingleton<IBlobStore, S3BlobStore>();
+        services.AddHostedService<BlobBucketInitializer>();
+
+        services.AddSingleton<IImageProcessor, SkiaImageProcessor>();
+
+        services.AddSingleton<ImageSweeper>();
+        services.AddHostedService(sp => sp.GetRequiredService<ImageSweeper>());
         return services;
     }
 
