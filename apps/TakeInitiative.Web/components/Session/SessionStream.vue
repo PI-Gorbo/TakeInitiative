@@ -49,15 +49,23 @@
                         <SessionNoteCard
                             v-for="note in entry.recaps"
                             :key="note.id"
+                            :campaignId="campaignId"
                             :note="note"
                             :session="entry.session"
-                            :authorName="authorName(note.authorMemberId)" />
+                            :authorName="authorName(note.authorMemberId)"
+                            :currentMemberId="campaign.currentMemberId"
+                            :isDm="isDm"
+                            :highlighted="note.id === highlightedId" />
                         <SessionNoteCard
                             v-for="note in entry.notes"
                             :key="note.id"
+                            :campaignId="campaignId"
                             :note="note"
                             :session="entry.session"
-                            :authorName="authorName(note.authorMemberId)" />
+                            :authorName="authorName(note.authorMemberId)"
+                            :currentMemberId="campaign.currentMemberId"
+                            :isDm="isDm"
+                            :highlighted="note.id === highlightedId" />
                     </section>
 
                     <p
@@ -89,9 +97,11 @@
     import { useInfiniteQuery } from "@tanstack/vue-query";
     import { useResizeObserver } from "@vueuse/core";
     import { ArrowDown, LoaderCircle } from "lucide-vue-next";
+    import { toast } from "vue-sonner";
     import type { Campaign, SessionNote, SessionStreamFilter } from "~/utils/api/types";
     import { currentMember } from "~/utils/campaign";
     import { getSessionStreamQuery } from "~/utils/queries/sessions";
+    import { noteLinkProgress } from "~/utils/noteActions";
     import { flattenSessions } from "~/utils/sessionStreamCache";
 
     const props = withDefaults(
@@ -99,6 +109,8 @@
             campaignId: string;
             campaign: Campaign;
             filter?: SessionStreamFilter;
+            /** A note to open at (`?note=` from a copied link, 14d). */
+            focusNoteId?: string;
         }>(),
         { filter: "All" }
     );
@@ -239,5 +251,60 @@
         }
     });
 
-    defineExpose({ scrollToBottom });
+    // ── Note links ───────────────────────────────────────────────────────────
+    // `?note={id}`: load older pages until the note's session is loaded, then scroll
+    // to the note and highlight it. A note the viewer cannot see is a 404.
+    const emit = defineEmits<{ noteOpened: [noteId: string] }>();
+    const highlightedId = ref<string | null>(null);
+    let highlightTimer: ReturnType<typeof setTimeout> | undefined;
+
+    async function goToNote(noteId: string) {
+        let sessionNumber: number;
+        try {
+            sessionNumber = (await useApi().note.get({ campaignId: props.campaignId, noteId })).sessionNumber;
+        } catch {
+            toast.error("That note is not there, or you cannot see it.");
+            emit("noteOpened", noteId);
+            return;
+        }
+        // Bounded, in case the server keeps answering `hasOlder` without older sessions.
+        for (let pages = 0; pages < 500; pages++) {
+            const progress = noteLinkProgress(
+                flattenSessions(streamQuery.data.value),
+                sessionNumber,
+                !!streamQuery.hasNextPage.value
+            );
+            if (progress !== "more") break;
+            if (streamQuery.isFetchingNextPage.value) {
+                // A page is already on its way (the stream filling the screen).
+                await new Promise((resolve) => setTimeout(resolve, 50));
+                continue;
+            }
+            await loadOlder();
+        }
+        await nextTick();
+        const el = document.getElementById(`note-${noteId}`);
+        if (el) {
+            atBottom.value = false;
+            el.scrollIntoView({ block: "center" });
+            highlightedId.value = noteId;
+            clearTimeout(highlightTimer);
+            highlightTimer = setTimeout(() => (highlightedId.value = null), 2500);
+        } else {
+            toast.info("That note is not shown under this filter.");
+        }
+        emit("noteOpened", noteId);
+    }
+
+    // Once the stream has opened, and again whenever a new link is followed.
+    watch(
+        () => [opened.value, props.focusNoteId] as const,
+        ([isOpen, noteId]) => {
+            if (isOpen && noteId) void goToNote(noteId);
+        },
+        { immediate: true }
+    );
+    onBeforeUnmount(() => clearTimeout(highlightTimer));
+
+    defineExpose({ scrollToBottom, goToNote });
 </script>
