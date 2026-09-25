@@ -324,6 +324,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/campaigns/{campaignId}/entries/{entryId}/quotes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["PostEntryQuote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/campaigns/{campaignId}/entries/{entryId}/aliases": {
         parameters: {
             query?: never;
@@ -333,6 +349,22 @@ export interface paths {
         };
         get?: never;
         put: operations["PutEntryAliases"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/campaigns/{campaignId}/entries/{entryId}/article": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["PutEntryArticle"];
         post?: never;
         delete?: never;
         options?: never;
@@ -664,16 +696,50 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             updatedAt: string;
+            article: components["schemas"]["ArticleResponse"];
+        };
+        ArticleResponse: {
+            etag: string;
+            blocks: components["schemas"]["ArticleBlockResponse"][];
+        };
+        ArticleBlockResponse: {
+            /** Format: guid */
+            id: string;
+            text: string;
+            visibility: components["schemas"]["Visibility"];
+            /** Format: guid */
+            ownerMemberId: string;
+            quote?: components["schemas"]["QuoteResponse"] | null;
+        };
+        QuoteResponse: {
+            /** Format: guid */
+            noteId: string;
+            /** Format: guid */
+            sessionId: string;
+            /** Format: int32 */
+            sessionNumber: number;
+            /** Format: guid */
+            authorMemberId: string;
+            /** Format: guid */
+            promotedByMemberId: string;
+            /** Format: date-time */
+            promotedAt: string;
         };
         GetEntryRequest: Record<string, never>;
         EntryTimelineResponse: {
             items: components["schemas"]["EntryTimelineItem"][];
             hasOlder: boolean;
+            articleMentions: components["schemas"]["EntryArticleMention"][];
         };
         EntryTimelineItem: {
             note: components["schemas"]["SessionNoteResponse"];
             /** Format: int32 */
             sessionNumber: number;
+        };
+        EntryArticleMention: {
+            /** Format: guid */
+            entryId: string;
+            blockIds: string[];
         };
         GetEntryTimelineRequest: Record<string, never>;
         PostEntryRequest: {
@@ -681,8 +747,29 @@ export interface components {
             kind: components["schemas"]["EntryKind"];
             visibility: components["schemas"]["Visibility"];
         };
+        EntryQuoteResponse: {
+            entry: components["schemas"]["EntryResponse"];
+            /** Format: guid */
+            blockId: string;
+        };
+        PostEntryQuoteRequest: {
+            /** Format: guid */
+            noteId: string;
+            text?: string | null;
+        };
         PutEntryAliasesRequest: {
             aliases: string[];
+        };
+        PutEntryArticleRequest: {
+            etag: string;
+            blocks: components["schemas"]["ArticleBlockRequest"][];
+            newEntries?: components["schemas"]["NewEntryRequest"][] | null;
+        };
+        ArticleBlockRequest: {
+            /** Format: guid */
+            id?: string | null;
+            text: string;
+            visibility: components["schemas"]["Visibility"];
         };
         PutEntryEditAccessRequest: {
             editAccess: components["schemas"]["EditAccess"];
@@ -1594,6 +1681,47 @@ export interface operations {
             };
         };
     };
+    PostEntryQuote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostEntryQuoteRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryQuoteResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     PutEntryAliases: {
         parameters: {
             query?: never;
@@ -1607,6 +1735,47 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["PutEntryAliasesRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PutEntryArticle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PutEntryArticleRequest"];
             };
         };
         responses: {
