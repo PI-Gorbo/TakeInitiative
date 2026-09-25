@@ -73,8 +73,8 @@ describe("stream filters", () => {
         for (const { value } of STREAM_FILTERS) expect(filterFromQuery(filterToQuery(value))).toBe(value);
     });
 
-    it("names steps 16 and 18 in the Images and Combats empty states", () => {
-        expect(filterEmptyState("Images").detail).toContain("step 16");
+    it("points at 🖼 in the Images empty state, and names step 18 in the Combats one", () => {
+        expect(filterEmptyState("Images")).toEqual({ title: "No images yet. Attach one with 🖼." });
         expect(filterEmptyState("Combats").detail).toContain("step 18");
         expect(filterEmptyState("All").title).toBe("No session notes yet.");
     });
