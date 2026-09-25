@@ -24,6 +24,18 @@ public record EntryRemovedMessage(Guid EntryId);
 public record EntryArticleChangedMessage(Guid EntryId);
 
 /// <summary>
+/// <c>entryMerged</c> (15g): <see cref="FromEntryId"/> now resolves to <see cref="IntoEntryId"/>.
+/// Sent to the target's audience, who could all see the merged entry (the merge guard).
+/// </summary>
+public record EntryMergedMessage(Guid FromEntryId, Guid IntoEntryId);
+
+/// <summary>
+/// <c>entryStatsChanged</c> (15g): the stats this member may read changed, so refetch the
+/// entry. No content, and only to members whose readable stats changed.
+/// </summary>
+public record EntryStatsChangedMessage(Guid EntryId);
+
+/// <summary>
 /// Who an article change is pushed to (15e.7): each member who can see the entry and whose
 /// view of the article (<see cref="ArticleEtag"/>) differs before and after. So an edit inside
 /// a DM secret block reaches the DMs and that block's owner, and nobody else.
@@ -61,6 +73,42 @@ public static class EntryHubContextExtensions
         return groups.Count == 0
             ? Task.CompletedTask
             : hub.Clients.Groups(groups).SendAsync(CampaignHubMessages.EntryArticleChanged, new EntryArticleChangedMessage(after.Id));
+    }
+
+    /// <summary>
+    /// A claim or a stats change (15g): <c>entryStatsChanged</c> to <c>member:{id}</c> for each
+    /// member whose readable stats (<see cref="EntryStats.For"/>) differ before and after.
+    /// Nothing when nobody's do. So a DM editing an NPC's stats pings the DMs only.
+    /// </summary>
+    public static Task NotifyEntryStatsChanged(this IHubContext<CampaignHub> hub, IEnumerable<Member> members, Entry before, Entry after)
+    {
+        var groups = members
+            .Where(m => EntryStats.For(before, m) != EntryStats.For(after, m))
+            .Select(m => CampaignGroups.Member(m.MemberId))
+            .ToList();
+        return groups.Count == 0
+            ? Task.CompletedTask
+            : hub.Clients.Groups(groups).SendAsync(CampaignHubMessages.EntryStatsChanged, new EntryStatsChangedMessage(after.Id));
+    }
+
+    /// <summary>
+    /// A merge (15g.1): <c>entryRemoved</c> of the merged entry to the groups that could see it
+    /// but not the target, then <c>entryMerged</c> and the target's <c>entryUpserted</c> to the
+    /// target's audience. By the merge guard that audience could see the merged entry, so the
+    /// old id leaks nothing.
+    /// </summary>
+    public static async Task NotifyEntryMerged(this IHubContext<CampaignHub> hub, Entry from, Entry into)
+    {
+        var intoGroups = EntryAudience.Groups(into);
+        List<string> losing = intoGroups.Contains(CampaignGroups.Campaign(into.CampaignId))
+            ? []
+            : EntryAudience.Groups(from).Except(intoGroups).ToList();
+        if (losing.Count > 0)
+        {
+            await hub.Clients.Groups(losing).SendAsync(CampaignHubMessages.EntryRemoved, new EntryRemovedMessage(from.Id));
+        }
+        await hub.Clients.Groups(intoGroups).SendAsync(CampaignHubMessages.EntryMerged, new EntryMergedMessage(from.Id, into.Id));
+        await hub.Clients.Groups(intoGroups).SendAsync(CampaignHubMessages.EntryUpserted, EntrySummaryResponse.From(into));
     }
 
     /// <summary>
