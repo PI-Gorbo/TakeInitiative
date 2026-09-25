@@ -81,7 +81,8 @@
     import { Bold, Italic, List, ScrollText } from "lucide-vue-next";
     import { toast } from "vue-sonner";
     import { apiErrorMessage, apiErrorStatus } from "~/utils/apiErrorParser";
-    import type { Campaign, SessionStreamFilter } from "~/utils/api/types";
+    import type { Campaign, EntrySummary, SessionStreamFilter } from "~/utils/api/types";
+    import { aboutPrefill } from "~/utils/entries";
     import {
         NOTE_TEXT_MAX,
         NOTE_TEXT_WARN_AT,
@@ -119,10 +120,12 @@
             campaign: Campaign;
             /** The stream's filter, so the composer shares its query. */
             filter?: SessionStreamFilter;
+            /** "Add a note about X" (15c, `?about=`): start the text with its mention. */
+            about?: Pick<EntrySummary, "id" | "name" | "visibility">;
         }>(),
-        { filter: "All" }
+        { filter: "All", about: undefined }
     );
-    const emit = defineEmits<{ posted: [] }>();
+    const emit = defineEmits<{ posted: []; aboutUsed: [] }>();
 
     const id = useId();
     const campaignId = computed(() => props.campaign.id);
@@ -140,6 +143,26 @@
             saveDraft(storage, campaignId.value, text);
             void nextTick(grow);
         }
+    );
+
+    // ── "Add a note about X" (15c) ───────────────────────────────────────────
+    // Consumed once: the text starts with the entry's mention, and a DM or Me entry
+    // sets the note's visibility to match. The page then drops `?about=`.
+    watch(
+        () => props.about,
+        (entry) => {
+            if (!entry) return;
+            const prefill = aboutPrefill(state.text, entry);
+            state.text = prefill.text;
+            if (prefill.visibility) state.visibility = prefill.visibility;
+            emit("aboutUsed");
+            void nextTick(() => {
+                const el = textarea.value;
+                el?.focus();
+                el?.setSelectionRange(state.text.length, state.text.length);
+            });
+        },
+        { immediate: true }
     );
 
     // ── Sessions and the gap prompt ─────────────────────────────────────────

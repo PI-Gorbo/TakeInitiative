@@ -28,7 +28,9 @@
             <Composer
                 :key="campaign.id"
                 :campaign="campaign"
-                :filter="filter" />
+                :filter="filter"
+                :about="aboutEntry"
+                @aboutUsed="clearParam(ABOUT_PARAM)" />
         </div>
 
         <CampaignMembersPanel
@@ -41,9 +43,11 @@
     import { useQuery } from "@tanstack/vue-query";
     import { Users } from "lucide-vue-next";
     import type { SessionStreamFilter } from "~/utils/api/types";
+    import { ABOUT_PARAM, entryDirectory, resolveEntry } from "~/utils/entries";
     import { NOTE_LINK_PARAM } from "~/utils/noteActions";
     import { FILTER_PARAM, filterFromQuery, filterToQuery } from "~/utils/streamFilters";
     import { getCampaignQuery } from "~/utils/queries/campaign";
+    import { getEntriesQuery } from "~/utils/queries/entries";
 
     definePageMeta({
         layout: "campaign",
@@ -74,8 +78,28 @@
         const value = route.query[NOTE_LINK_PARAM];
         return typeof value === "string" && value ? value : undefined;
     });
-    function clearNoteLink() {
-        const { [NOTE_LINK_PARAM]: _, ...query } = route.query;
+    function clearParam(name: string) {
+        const { [name]: _, ...query } = route.query;
         void router.replace({ query });
     }
+    const clearNoteLink = () => clearParam(NOTE_LINK_PARAM);
+
+    // "Add a note about X" from an entry page: `?about={entryId}` (15c). The composer
+    // uses it once and the page drops it. An id the viewer's directory does not hold
+    // (unknown, or hidden from them) is dropped without a word.
+    const entriesQuery = useQuery(getEntriesQuery(() => route.params.campaignId as string));
+    const aboutId = computed(() => {
+        const value = route.query[ABOUT_PARAM];
+        return typeof value === "string" && value ? value : undefined;
+    });
+    const aboutEntry = computed(() =>
+        aboutId.value ? resolveEntry(entryDirectory(entriesQuery.data.value), aboutId.value) : undefined
+    );
+    watch(
+        [aboutId, aboutEntry, () => entriesQuery.isSuccess.value],
+        ([id, entry, loaded]) => {
+            if (id && !entry && loaded) clearParam(ABOUT_PARAM);
+        },
+        { immediate: true }
+    );
 </script>
