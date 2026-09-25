@@ -66,10 +66,10 @@
                         :key="tab.name">
                         <NuxtLink
                             :to="{ name: tab.name, params: { campaignId } }"
-                            :aria-current="route.name === tab.name ? 'page' : undefined"
+                            :aria-current="isCurrentTab(tab) ? 'page' : undefined"
                             :class="[
                                 'flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs transition-colors md:min-h-11 md:flex-row md:justify-start md:gap-3 md:rounded-md md:px-3 md:text-sm',
-                                route.name === tab.name
+                                isCurrentTab(tab)
                                     ? 'text-gold md:bg-accent'
                                     : 'text-muted-foreground hover:text-foreground md:hover:bg-accent/60',
                             ]">
@@ -115,6 +115,14 @@
         { name: "app-campaigns-campaignId-wiki", label: "Wiki", icon: BookOpen },
         { name: "app-campaigns-campaignId-combat", label: "Combat", icon: Swords },
     ] as const;
+
+    // The Wiki and Combat tabs stay current on their child pages (an entry page is
+    // `app-campaigns-campaignId-wiki-entryId`). The Campaign tab matches exactly, since
+    // every campaign route name starts with its own.
+    const isCurrentTab = (tab: (typeof tabs)[number]) => {
+        const name = String(route.name ?? "");
+        return name === tab.name || (tab.name !== tabs[0].name && name.startsWith(`${tab.name}-`));
+    };
 
     const hideTabBar = useComposerPinned();
 
