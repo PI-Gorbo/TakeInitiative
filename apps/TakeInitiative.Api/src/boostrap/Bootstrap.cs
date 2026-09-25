@@ -48,6 +48,18 @@ public static class Bootstrap
                 // `data -> 'Members' @> '[{"UserId": ...}]'`, which this GIN index serves.
                 .Index(x => x.Members, idx => idx.Method = IndexMethod.gin);
 
+            // Session stream -> Session document. The unique (CampaignId, Number) index is
+            // the backstop when two members start the next session at once.
+            opts.Projections.Snapshot<Session>(SnapshotLifecycle.Inline);
+            opts.Schema.For<Session>()
+                .UniqueIndex(UniqueIndexType.Computed, x => x.CampaignId, x => x.Number);
+
+            // SessionNote stream -> SessionNote document (SessionNoteDeleted deletes it).
+            opts.Projections.Snapshot<SessionNote>(SnapshotLifecycle.Inline);
+            opts.Schema.For<SessionNote>()
+                .Index([x => x.CampaignId, x => x.PostedAt])
+                .Index(x => x.SessionId);
+
             opts.Schema.For<IAdminConfig>()
                 .AddSubClass<MaintenanceConfig>();
         }).AddAsyncDaemon(DaemonMode.Solo);
