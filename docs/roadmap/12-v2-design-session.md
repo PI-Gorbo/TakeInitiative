@@ -32,6 +32,12 @@ player-first experiences: **combat**, **note taking**, **⌘K search** and
 | **Hide** | A DM hides a session note from everyone except its author and the DMs. It is not a delete. | moderate, remove |
 | **Edit history** | The earlier versions of an edited session note. | revisions |
 | **Filter** | One of `All · Text · Images · Recaps · Combats · Mine` on the session stream. | channel |
+| **Image** (code: `Image`; on a note, `NoteImage`) | A picture on a session note, stored as two variants (`display` and `thumb`). It has its note's visibility. Until its note is posted only its uploader can see it, and one never posted is deleted after 24 hours. | attachment, photo, file |
+| **Image note** | A session note with at least one image. | photo post |
+| **Caption** | An image note's text. It can contain mentions, and can be empty. | description, alt |
+| **Gallery** | The images of one session, or the images whose caption mentions an entry. | album, media |
+| **Share target** | The PWA as a destination in the phone's share sheet. Sharing images there opens the composer with them attached. | — |
+| **Blob store** (code: `IBlobStore`) | Where image bytes live, behind the S3 API. Only the API talks to it. | CDN, bucket (in UI) |
 | **Wiki** | The campaign's knowledge base: all entries. Built by integrating session notes. | knowledge base, codex |
 | **Entry** | One named thing in the wiki. | entity, page, topic, tag |
 | **Creator** | The member who created an entry. An entry's `DM` and `Me` visibility and its `Only me` edit access are relative to them. | owner (that is the campaign's), author (that is a note's) |
