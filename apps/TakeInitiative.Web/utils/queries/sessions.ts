@@ -14,10 +14,12 @@ import type {
     SessionStreamFilter,
     Visibility,
 } from "~/utils/api/types";
+import type { NewEntry } from "~/utils/mentions";
+import { pendingEntrySummary } from "~/utils/mentions";
 import type { SessionStreamData } from "~/utils/sessionStreamCache";
 import { removeNote, upsertNote, upsertSession, upsertSessionInList } from "~/utils/sessionStreamCache";
 import { getCampaignQueryKey } from "./campaign";
-import { invalidateTimelinesTouchedBy } from "./entries";
+import { addPendingEntries, getEntriesQueryKey, invalidateTimelinesTouchedBy, removePendingEntries } from "./entries";
 import type { RefOrGetter } from "./utils";
 
 /** Sessions per page. The server allows 1–10. */
@@ -140,20 +142,43 @@ const applyNote = (queryClient: QueryClient, campaignId: string, note: SessionNo
 
 export type PostNoteVariables = {
     campaignId: string;
-    body: { sessionId?: string; text: string; visibility: Visibility; isRecap: boolean };
+    body: { sessionId?: string; text: string; visibility: Visibility; isRecap: boolean; newEntries?: NewEntry[] };
     /** Shown at once under a temporary id and replaced by the response. */
     optimistic?: SessionNote;
 };
 
+/**
+ * A post's or an edit's new entries (15d), added to the entry directory until their
+ * `entryUpserted` arrives, so the note's chips show at once.
+ */
+const pendingEntries = (newEntries: readonly NewEntry[] | undefined, note: Pick<SessionNote, "authorMemberId" | "visibility" | "isHidden">) =>
+    (newEntries ?? []).map((entry) =>
+        pendingEntrySummary(entry, {
+            creatorMemberId: note.authorMemberId,
+            // A hidden `Everyone` note creates `DM` entries (15b's `NewEntries.VisibilityFrom`).
+            visibility: note.isHidden && note.visibility === "Everyone" ? "DM" : note.visibility,
+            now: new Date(),
+        })
+    );
+
+/** The list read again after a post that created entries: their counts, and the real entries if a push was missed. */
+const refreshEntriesAfter = (queryClient: QueryClient, campaignId: string, newEntries: readonly NewEntry[] | undefined) => {
+    if (newEntries?.length) void queryClient.invalidateQueries({ queryKey: getEntriesQueryKey(campaignId), exact: true });
+};
+
 // Any member: post a note. Optimistic; the push and the response are the same note
-// id, so whichever lands second is a no-op.
+// id, so whichever lands second is a no-op. New entries (15d) are in the directory
+// from the start, and leave it again if the post fails.
 export const postNoteMutation = () => {
     const api = useApi();
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: ({ campaignId, body }: PostNoteVariables) => api.note.post({ campaignId, ...body }),
-        onMutate: ({ campaignId, optimistic }) => {
-            if (optimistic) applyNote(queryClient, campaignId, optimistic);
+        onMutate: ({ campaignId, optimistic, body }) => {
+            if (optimistic) {
+                addPendingEntries(queryClient, campaignId, pendingEntries(body.newEntries, optimistic));
+                applyNote(queryClient, campaignId, optimistic);
+            }
         },
         onSuccess: (note, { campaignId, optimistic }) => {
             updateSessionStreams(queryClient, campaignId, (data, filter, me) =>
@@ -161,11 +186,15 @@ export const postNoteMutation = () => {
             );
             invalidateTimelinesTouchedBy(queryClient, campaignId, note);
         },
-        onError: (_error, { campaignId, optimistic }) => {
+        onError: (_error, { campaignId, optimistic, body }) => {
             if (optimistic) updateSessionStreams(queryClient, campaignId, (data) => removeNote(data, optimistic.id));
+            removePendingEntries(queryClient, campaignId, body.newEntries ?? []);
         },
         // The gap prompt re-reads after every post.
-        onSettled: (_note, _error, { campaignId }) => invalidateSessions(queryClient, campaignId),
+        onSettled: (_note, _error, { campaignId, body }) => {
+            invalidateSessions(queryClient, campaignId);
+            refreshEntriesAfter(queryClient, campaignId, body.newEntries);
+        },
     });
 };
 
@@ -182,13 +211,15 @@ export const getNoteHistoryQuery = (campaignId: RefOrGetter<string>, noteId: Ref
         queryFn: () => useApi().note.history({ campaignId: toValue(campaignId), noteId: toValue(noteId) }),
     });
 
-// Author: edit the text and the recap flag.
+// Author: edit the text and the recap flag, creating any new entries (15d).
 export const putNoteMutation = () => {
     const api = useApi();
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: api.note.put,
-        onSuccess: (note, { campaignId }) => {
+        onSuccess: (note, { campaignId, newEntries }) => {
+            addPendingEntries(queryClient, campaignId, pendingEntries(newEntries ?? undefined, note));
+            refreshEntriesAfter(queryClient, campaignId, newEntries ?? undefined);
             applyNote(queryClient, campaignId, note);
             void queryClient.invalidateQueries({ queryKey: getNoteHistoryQueryKey(campaignId, note.id) });
         },

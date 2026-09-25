@@ -41,6 +41,8 @@
                     :placeholder="placeholder"
                     aria-label="Session note"
                     :aria-describedby="overLimit ? `${id}-count` : undefined"
+                    :aria-controls="mentions.open.value ? `${id}-mentions` : undefined"
+                    :aria-activedescendant="mentions.open.value ? `${id}-mentions-${mentions.highlighted.value}` : undefined"
                     class="max-h-[40dvh] min-h-11 w-full resize-none overflow-y-auto rounded-md border bg-background px-3 py-2.5 text-base leading-snug outline-none placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring md:min-h-10 md:py-2 md:text-sm"
                     @keydown="onKeydown"
                     @input="grow"
@@ -55,7 +57,16 @@
                     :error="commands.error.value"
                     :listId="`${id}-commands`"
                     @pick="commands.pick" />
-                <!-- The strip slot: step 15's `@` suggestions go in the same place. -->
+                <!-- The `@` suggestions (15d): the mention strip on a phone, in the same
+                     place as the `/` strip; a popover at the caret from md. The `/` strip
+                     wins while it is open, so the two are never shown together. -->
+                <ComposerMentionStrip
+                    :picker="mentions"
+                    :listId="`${id}-mentions`" />
+                <ComposerMentionLinks
+                    v-if="!mentions.open.value"
+                    :state="state"
+                    :directory="mentions.directory.value" />
                 <slot
                     name="strip"
                     :state="state" />
@@ -65,24 +76,35 @@
                 v-if="state.text.length >= NOTE_TEXT_WARN_AT"
                 :id="`${id}-count`"
                 :class="['text-right text-xs', overLimit ? 'text-destructive-tint' : 'text-muted-foreground']">
-                {{ state.text.trim().length.toLocaleString() }} / {{ NOTE_TEXT_MAX.toLocaleString() }}
+                {{ storedLength.toLocaleString() }} / {{ NOTE_TEXT_MAX.toLocaleString() }}
             </p>
 
             <ComposerToolbar
                 :items="toolbarItems"
                 :canPost="canPost" />
         </form>
+        <ComposerRevealDialog
+            ref="reveal"
+            :campaignId="campaignId" />
     </div>
 </template>
 
 <script setup lang="ts">
-    import { useInfiniteQuery, useQuery } from "@tanstack/vue-query";
+    import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/vue-query";
     import { useElementSize, useMediaQuery, useNow } from "@vueuse/core";
-    import { Bold, Italic, List, ScrollText } from "lucide-vue-next";
+    import { AtSign, Bold, Italic, List, ScrollText } from "lucide-vue-next";
     import { toast } from "vue-sonner";
     import { apiErrorMessage, apiErrorStatus } from "~/utils/apiErrorParser";
-    import type { Campaign, EntrySummary, SessionStreamFilter } from "~/utils/api/types";
-    import { aboutPrefill } from "~/utils/entries";
+    import type { Campaign, EntrySummary, SessionStreamFilter, Visibility } from "~/utils/api/types";
+    import type { RevealItem } from "~/utils/mentions";
+    import { currentMember } from "~/utils/campaign";
+    import {
+        aboutPrefill,
+        newEntryErrorFrom,
+        relinkNewEntry,
+        revealCheck,
+        toStoredText,
+    } from "~/utils/mentions";
     import {
         NOTE_TEXT_MAX,
         NOTE_TEXT_WARN_AT,
@@ -109,9 +131,11 @@
     import {
         getSessionStreamQuery,
         getSessionsQuery,
+        invalidateSessionStreams,
         postNoteMutation,
         startSessionMutation,
     } from "~/utils/queries/sessions";
+    import { invalidateEntries } from "~/utils/queries/entries";
     import { composerPinned } from "~/utils/keyboardInset";
     import { flattenSessions, newPendingNoteId } from "~/utils/sessionStreamCache";
 
@@ -137,10 +161,11 @@
     const state = reactive<ComposerState>(initialComposerState(loadDraft(storage, campaignId.value)));
 
     watch(campaignId, (next) => Object.assign(state, initialComposerState(loadDraft(storage, next))));
+    // The draft keeps the mentions' links and new entries too (15d).
     watch(
-        () => state.text,
-        (text) => {
-            saveDraft(storage, campaignId.value, text);
+        () => [state.text, state.links, state.newEntries] as const,
+        () => {
+            saveDraft(storage, campaignId.value, state);
             void nextTick(grow);
         }
     );
@@ -152,8 +177,9 @@
         () => props.about,
         (entry) => {
             if (!entry) return;
-            const prefill = aboutPrefill(state.text, entry);
+            const prefill = aboutPrefill(state, entry);
             state.text = prefill.text;
+            state.links = prefill.links;
             if (prefill.visibility) state.visibility = prefill.visibility;
             emit("aboutUsed");
             void nextTick(() => {
@@ -206,8 +232,16 @@
 
     // ── Posting ──────────────────────────────────────────────────────────────
     const postNote = postNoteMutation();
-    const canPost = computed(() => postableText(state.text) !== null);
-    const overLimit = computed(() => state.text.trim().length > NOTE_TEXT_MAX);
+    const queryClient = useQueryClient();
+    // The limit counts the stored form (15d), which is what the API checks.
+    const storedLength = computed(() => toStoredText(state.text, state.links).trim().length);
+    const canPost = computed(() => postableText(state.text) !== null && storedLength.value <= NOTE_TEXT_MAX);
+    const overLimit = computed(() => storedLength.value > NOTE_TEXT_MAX);
+    const viewer = computed(() => ({
+        memberId: props.campaign.currentMemberId,
+        isDm: currentMember(props.campaign)?.role === "DM",
+    }));
+    const reveal = useTemplateRef<{ confirm: (v: Visibility, items: RevealItem[]) => Promise<boolean> }>("reveal");
     const placeholder = computed(() => {
         const target = targetSession(state.sessionId, sessions.value);
         return target ? `Write a note in Session ${target.number}…` : "Write a session note…";
@@ -216,6 +250,12 @@
     async function post() {
         const body = buildPostBody(state, sessions.value);
         if (!body) return;
+        // The reveal warning (15d): nothing is revealed without the tap.
+        const warn = revealCheck(body.visibility, body.text, mentions.directory.value, viewer.value);
+        if (warn.length > 0 && !(await reveal.value?.confirm(body.visibility, warn))) {
+            focus();
+            return;
+        }
         const target = targetSession(state.sessionId, sessions.value);
         const optimistic = target
             ? optimisticNote({
@@ -235,8 +275,28 @@
             await postNote.mutateAsync({ campaignId: campaignId.value, body, optimistic });
             emit("posted");
         } catch (error) {
+            const entryError = newEntryErrorFrom(error);
+            // A retry after a timeout: the first try went through, note and entries.
+            if (entryError?.kind === "alreadyCreated") {
+                toast.info("That note was already posted.");
+                void invalidateSessionStreams(queryClient, campaignId.value);
+                void invalidateEntries(queryClient, campaignId.value);
+                return;
+            }
             // Give the text back unless something new was typed meanwhile.
-            if (state.text.trim() === "") Object.assign(state, sent);
+            const restore = state.text.trim() === "";
+            if (restore) Object.assign(state, sent);
+            if (entryError?.kind === "duplicate") {
+                // Someone made an entry with that name meanwhile: link it instead.
+                const name = sent.newEntries.find((e) => e.id.toLowerCase() === entryError.newEntryId.toLowerCase())?.name;
+                if (restore) Object.assign(state, relinkNewEntry(state, entryError.newEntryId, entryError.existingEntryId));
+                toast.error(
+                    restore
+                        ? `"${name ?? "That entry"}" already exists, so the mention now links to it. Post again.`
+                        : `"${name ?? "That entry"}" already exists. Nothing was posted.`
+                );
+                return;
+            }
             toast.error(apiErrorMessage(error, "Could not post the note."));
         }
     }
@@ -248,8 +308,9 @@
     const mod = isMac ? "⌘" : "Ctrl+";
 
     function onKeydown(event: KeyboardEvent) {
-        // The `/` strip takes the arrows, Tab, Enter and Esc while it is open.
+        // The `/` strip, then the `@` picker, take the arrows, Tab, Enter and Esc while open.
         if (commands.onKeydown(event)) return;
+        if (mentions.onKeydown(event)) return;
         const action = enterAction(event, touch.value);
         if (action === "post") {
             event.preventDefault();
@@ -282,6 +343,8 @@
     const format = (kind: InlineFormat) => applyEdit((e) => toggleInline(e, kind));
 
     const toolbarItems = computed<ComposerToolbarItem[]>(() => [
+        // First (design §3a): for keyboards where `@` is hard to reach.
+        { id: "mention", label: "Mention an entry", icon: AtSign, run: () => mentions.trigger() },
         { id: "bold", label: "Bold", icon: Bold, shortcut: `${mod}B`, run: () => format("bold") },
         { id: "italic", label: "Italic", icon: Italic, shortcut: `${mod}I`, run: () => format("italic") },
         { id: "list", label: "List", icon: List, run: () => applyEdit(toggleList) },
@@ -298,6 +361,14 @@
 
     // ── Commands (14e) ───────────────────────────────────────────────────────
     const commands = useComposerCommands({ state, sessions, textarea });
+
+    // ── Mentions (15d) ───────────────────────────────────────────────────────
+    const mentions = useMentionPicker({
+        state,
+        textarea,
+        campaignId,
+        enabled: () => commands.suggestions.value.length === 0,
+    });
 
     // ── Pinned above the keyboard (14e) ──────────────────────────────────────
     const phone = useMediaQuery("(max-width: 767.98px)");

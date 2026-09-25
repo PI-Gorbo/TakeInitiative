@@ -110,6 +110,30 @@ export function applyEntrySummary(queryClient: QueryClient, campaignId: string, 
 }
 
 /**
+ * New entries a post is creating (15d): added to the list unless a push already did,
+ * so a real entry is never replaced by its placeholder.
+ */
+export function addPendingEntries(queryClient: QueryClient, campaignId: string, summaries: readonly EntrySummary[]) {
+    if (summaries.length === 0) return;
+    queryClient.setQueryData<EntryList>(getEntriesQueryKey(campaignId), (list) =>
+        summaries.reduce(
+            (acc, summary) =>
+                acc?.entries.some((i) => i.entry.id.toLowerCase() === summary.id.toLowerCase())
+                    ? acc
+                    : upsertEntrySummary(acc, summary),
+            list
+        )
+    );
+}
+
+/** A failed post's new entries leave the list again. */
+export function removePendingEntries(queryClient: QueryClient, campaignId: string, entries: readonly { id: string }[]) {
+    for (const { id } of entries) {
+        queryClient.setQueryData<EntryList>(getEntriesQueryKey(campaignId), (list) => removeEntry(list, id));
+    }
+}
+
+/**
  * `entryRemoved`: the viewer can no longer see the entry. It leaves the list, and an
  * open entry page reads it again and gets its 404.
  */

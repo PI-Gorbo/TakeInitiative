@@ -3,6 +3,7 @@
 // the same `ComposerState` fields the pickers and the recap toggle do.
 import type { Component } from "vue";
 import type { Session, SessionNote, SessionStreamSession, Visibility } from "./api/types";
+import { emptyMentionText, mentionBody, parseDraft, serializeDraft, type MentionText, type NewEntry } from "./mentions";
 import { isPendingNote } from "./sessionStreamCache";
 
 /** The API's limit on a note's text (14a), after trimming. */
@@ -21,16 +22,19 @@ export const VISIBILITY_OPTIONS = [
     { value: "Me", label: "🔒 Me", hint: "Only the author" },
 ] as const satisfies readonly { value: Visibility; label: string; hint: string }[];
 
-export type ComposerState = {
-    text: string;
+/**
+ * The composer's state. `text` is the text box's, where a mention reads `@[Name]`;
+ * `links` and `newEntries` are what those mentions link to (15d, `utils/mentions.ts`).
+ */
+export type ComposerState = MentionText & {
     /** The picked session, or null for the current session. */
     sessionId: string | null;
     visibility: Visibility;
     isRecap: boolean;
 };
 
-export const initialComposerState = (text = ""): ComposerState => ({
-    text,
+export const initialComposerState = (draft: MentionText | string = ""): ComposerState => ({
+    ...(typeof draft === "string" ? emptyMentionText(draft) : draft),
     sessionId: null,
     visibility: "Everyone",
     isRecap: false,
@@ -55,15 +59,24 @@ export function targetSession(sessionId: string | null, sessions: readonly Sessi
     return sessions.find((s) => s.id === sessionId) ?? current;
 }
 
+export type PostBody = {
+    sessionId?: string;
+    text: string;
+    visibility: Visibility;
+    isRecap: boolean;
+    newEntries?: NewEntry[];
+};
+
 /**
  * The POST body. A picked session that is the current one is sent as no session, so
- * the post follows the current session if someone starts another meanwhile.
+ * the post follows the current session if someone starts another meanwhile. The text
+ * is the stored form (15d), and `newEntries` are the Creates it still mentions.
  */
-export function buildPostBody(
-    state: ComposerState,
-    sessions: readonly Session[]
-): { sessionId?: string; text: string; visibility: Visibility; isRecap: boolean } | null {
-    const text = postableText(state.text);
+export function buildPostBody(state: ComposerState, sessions: readonly Session[]): PostBody | null {
+    const trimmed = postableText(state.text);
+    if (trimmed === null) return null;
+    const body = mentionBody(state, trimmed);
+    const text = postableText(body.text);
     if (text === null) return null;
     const target = state.sessionId ? sessions.find((s) => s.id === state.sessionId) : undefined;
     return {
@@ -71,6 +84,7 @@ export function buildPostBody(
         text,
         visibility: state.visibility,
         isRecap: state.isRecap,
+        ...(body.newEntries.length > 0 ? { newEntries: body.newEntries } : {}),
     };
 }
 
@@ -196,20 +210,23 @@ export const draftKey = (campaignId: string) => `ti:composerDraft:${campaignId}`
 
 type DraftStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
-/** The saved draft, or "" when there is none or storage is unavailable. */
-export function loadDraft(storage: DraftStorage | undefined, campaignId: string): string {
+/**
+ * The saved draft: its text, links and new entries (15d). An empty one when there is
+ * none or storage is unavailable. A 14d draft, a plain string, still loads.
+ */
+export function loadDraft(storage: DraftStorage | undefined, campaignId: string): MentionText {
     try {
-        return storage?.getItem(draftKey(campaignId)) ?? "";
+        return parseDraft(storage?.getItem(draftKey(campaignId)));
     } catch {
-        return "";
+        return emptyMentionText();
     }
 }
 
 /** Saves the draft; blank text removes it. Storage errors (private mode, quota) are ignored. */
-export function saveDraft(storage: DraftStorage | undefined, campaignId: string, text: string): void {
+export function saveDraft(storage: DraftStorage | undefined, campaignId: string, draft: MentionText): void {
     try {
-        if (text.trim().length === 0) storage?.removeItem(draftKey(campaignId));
-        else storage?.setItem(draftKey(campaignId), text);
+        if (draft.text.trim().length === 0) storage?.removeItem(draftKey(campaignId));
+        else storage?.setItem(draftKey(campaignId), serializeDraft(draft));
     } catch {
         // A draft is a convenience; losing it is fine.
     }

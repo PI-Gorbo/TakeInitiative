@@ -206,22 +206,7 @@ export const mentionMarkup = (name: string, entryId: string) =>
 /** `/app/campaigns/{id}?about={entryId}`: the composer starts with a mention of it. */
 export const ABOUT_PARAM = "about";
 
-/**
- * The composer's start for a note about an entry: the text begins with its mention
- * (15d turns the stored form into `@[Name]`), and a `DM` or `Me` entry makes the note
- * match, so the reveal warning (15d) does not fire on the note's own subject.
- */
-export function aboutPrefill(
-    currentText: string,
-    entry: Pick<EntrySummary, "id" | "name" | "visibility">
-): { text: string; visibility: Visibility | undefined } {
-    const mention = `${mentionMarkup(entry.name, entry.id)} `;
-    const rest = currentText.trimStart();
-    return {
-        text: rest.startsWith(mention.trimEnd()) ? currentText : mention + rest,
-        visibility: entry.visibility === "Everyone" ? undefined : entry.visibility,
-    };
-}
+// `aboutPrefill` is in `utils/mentions.ts` (15d): it writes `@[Name]` plus a link.
 
 // ── Errors ───────────────────────────────────────────────────────────────────
 
