@@ -1,0 +1,243 @@
+<template>
+    <div class="relative flex min-h-0 flex-1 flex-col">
+        <div
+            ref="scroller"
+            class="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+            aria-label="Session stream"
+            role="feed"
+            :aria-busy="streamQuery.isFetching.value"
+            @scroll.passive="onScroll">
+            <div
+                ref="content"
+                class="flex min-h-full flex-col justify-end pb-3">
+                <LoadingFallback
+                    v-if="!streamQuery.data.value"
+                    :isLoading="streamQuery.isLoading.value"
+                    :isError="streamQuery.isError.value"
+                    iconSize="2x"
+                    class="pt-8" />
+                <template v-else>
+                    <!-- The top: older sessions load when scrolled here. -->
+                    <div class="flex min-h-11 items-center justify-center px-4 py-2 text-xs text-muted-foreground">
+                        <span
+                            v-if="streamQuery.isFetchingNextPage.value"
+                            class="flex items-center gap-2">
+                            <LoaderCircle
+                                class="size-4 animate-spin"
+                                aria-hidden="true" />
+                            Loading older sessions…
+                        </span>
+                        <Button
+                            v-else-if="streamQuery.hasNextPage.value"
+                            variant="ghost"
+                            class="h-11 text-xs text-muted-foreground"
+                            @click="loadOlder">
+                            Load older sessions
+                        </Button>
+                        <span v-else>The start of the campaign</span>
+                    </div>
+
+                    <section
+                        v-for="entry in visibleSessions"
+                        :key="entry.session.id"
+                        :aria-label="`Session ${entry.session.number}`">
+                        <SessionDivider
+                            :campaignId="campaignId"
+                            :session="entry.session"
+                            :canEditTitle="isDm" />
+                        <!-- Recaps sit directly under their divider. -->
+                        <SessionNoteCard
+                            v-for="note in entry.recaps"
+                            :key="note.id"
+                            :note="note"
+                            :session="entry.session"
+                            :authorName="authorName(note.authorMemberId)" />
+                        <SessionNoteCard
+                            v-for="note in entry.notes"
+                            :key="note.id"
+                            :note="note"
+                            :session="entry.session"
+                            :authorName="authorName(note.authorMemberId)" />
+                    </section>
+
+                    <p
+                        v-if="noteCount === 0"
+                        class="px-4 py-6 text-center text-sm text-muted-foreground">
+                        No session notes yet.
+                    </p>
+                </template>
+            </div>
+        </div>
+
+        <!-- New notes from others while scrolled up: a pill instead of a jump. -->
+        <Transition name="fade">
+            <button
+                v-if="hasUnseen"
+                type="button"
+                class="absolute bottom-3 left-1/2 flex h-11 -translate-x-1/2 items-center gap-1 rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground shadow-lg"
+                @click="scrollToBottom('smooth')">
+                New notes
+                <ArrowDown
+                    class="size-4"
+                    aria-hidden="true" />
+            </button>
+        </Transition>
+    </div>
+</template>
+
+<script setup lang="ts">
+    import { useInfiniteQuery } from "@tanstack/vue-query";
+    import { useResizeObserver } from "@vueuse/core";
+    import { ArrowDown, LoaderCircle } from "lucide-vue-next";
+    import type { Campaign, SessionNote, SessionStreamFilter } from "~/utils/api/types";
+    import { currentMember } from "~/utils/campaign";
+    import { getSessionStreamQuery } from "~/utils/queries/sessions";
+    import { flattenSessions } from "~/utils/sessionStreamCache";
+
+    const props = withDefaults(
+        defineProps<{
+            campaignId: string;
+            campaign: Campaign;
+            filter?: SessionStreamFilter;
+        }>(),
+        { filter: "All" }
+    );
+
+    const streamQuery = useInfiniteQuery(
+        getSessionStreamQuery(
+            () => props.campaignId,
+            () => props.filter
+        )
+    );
+
+    const isDm = computed(() => currentMember(props.campaign)?.role === "DM");
+    const usernames = computed(() => new Map(props.campaign.members.map((m) => [m.memberId, m.username])));
+    const authorName = (memberId: string) => usernames.value.get(memberId) ?? "Unknown member";
+
+    // Sessions oldest first, recaps lifted under the divider. Under a filter, a
+    // session with no matching note has no divider, except the current one (14e).
+    const visibleSessions = computed(() =>
+        flattenSessions(streamQuery.data.value)
+            .filter((s) => props.filter === "All" || s.notes.length > 0 || s.session.isCurrent)
+            .map((s) => ({
+                session: s.session,
+                recaps: s.notes.filter((n) => n.isRecap),
+                notes: s.notes.filter((n) => !n.isRecap),
+            }))
+    );
+    const allNotes = computed<SessionNote[]>(() => flattenSessions(streamQuery.data.value).flatMap((s) => s.notes));
+    const noteCount = computed(() => allNotes.value.length);
+
+    // ── Scrolling ────────────────────────────────────────────────────────────
+    // Newest at the bottom, like Discord. The stream opens at the bottom, stays
+    // pinned there while the reader is at the bottom, and keeps the reader's place
+    // when older sessions load above.
+    const scroller = useTemplateRef<HTMLElement>("scroller");
+    const content = useTemplateRef<HTMLElement>("content");
+    const BOTTOM_SLACK = 80;
+    const TOP_LOAD_AT = 200;
+
+    const atBottom = ref(true);
+    const hasUnseen = ref(false);
+
+    function measureAtBottom() {
+        const el = scroller.value;
+        if (!el) return true;
+        return el.scrollHeight - el.scrollTop - el.clientHeight < BOTTOM_SLACK;
+    }
+
+    function scrollToBottom(behavior: ScrollBehavior = "auto") {
+        const el = scroller.value;
+        if (!el) return;
+        el.scrollTo({ top: el.scrollHeight, behavior });
+        atBottom.value = true;
+        hasUnseen.value = false;
+    }
+
+    // Loading older sessions: remember the distance from the bottom, then restore it
+    // once they are drawn above.
+    let restoreFromBottom: number | null = null;
+    async function loadOlder() {
+        const el = scroller.value;
+        if (!el || !streamQuery.hasNextPage.value || streamQuery.isFetchingNextPage.value) return;
+        restoreFromBottom = el.scrollHeight - el.scrollTop;
+        await streamQuery.fetchNextPage();
+        await nextTick();
+        if (restoreFromBottom !== null && scroller.value) {
+            scroller.value.scrollTop = scroller.value.scrollHeight - restoreFromBottom;
+        }
+        restoreFromBottom = null;
+        fillViewport();
+    }
+
+    // A short stream loads older sessions until it fills the screen or runs out.
+    function fillViewport() {
+        const el = scroller.value;
+        if (el && el.scrollHeight <= el.clientHeight && streamQuery.hasNextPage.value) void loadOlder();
+    }
+
+    function onScroll() {
+        const el = scroller.value;
+        if (!el) return;
+        atBottom.value = measureAtBottom();
+        if (atBottom.value) hasUnseen.value = false;
+        if (el.scrollTop < TOP_LOAD_AT) void loadOlder();
+    }
+
+    // Content grows (a new note, fonts, a wrapped line): stay pinned to the bottom
+    // when the reader was there; paging restores its own position above.
+    useResizeObserver(content, () => {
+        if (restoreFromBottom === null && atBottom.value) scrollToBottom();
+    });
+
+    let knownIds = new Set<string>();
+    let knownPages = 0;
+    const opened = ref(false);
+
+    // A different campaign or filter starts over at the bottom. Registered before
+    // the data watchers so it runs first when both change in one tick.
+    watch(
+        () => [props.campaignId, props.filter],
+        () => {
+            opened.value = false;
+            hasUnseen.value = false;
+            knownIds = new Set();
+            knownPages = 0;
+        }
+    );
+
+    // First load: open at the bottom of the current session.
+    watch(
+        () => streamQuery.data.value,
+        async (data) => {
+            if (!data || opened.value) return;
+            opened.value = true;
+            await nextTick();
+            scrollToBottom();
+            fillViewport();
+        },
+        { immediate: true }
+    );
+
+    // New notes from others while scrolled up show the pill; one's own note, or any
+    // note while at the bottom, scrolls into view. Notes that arrive with an older
+    // page are not new.
+    watch(allNotes, async (notes) => {
+        const pages = streamQuery.data.value?.pages.length ?? 0;
+        const paged = pages > knownPages;
+        const fresh = paged ? [] : notes.filter((n) => !knownIds.has(n.id));
+        knownIds = new Set(notes.map((n) => n.id));
+        knownPages = pages;
+        if (fresh.length === 0 || !opened.value) return;
+
+        const mine = fresh.some((n) => n.authorMemberId === props.campaign.currentMemberId);
+        if (atBottom.value || mine) {
+            await nextTick();
+            scrollToBottom(mine ? "smooth" : "auto");
+        } else {
+            hasUnseen.value = true;
+        }
+    });
+
+    defineExpose({ scrollToBottom });
+</script>
