@@ -40,3 +40,12 @@ export type SessionStreamSession = Schemas["SessionStreamSession"];
 export type SessionStreamFilter = Schemas["SessionStreamFilter"];
 export type SessionList = Schemas["GetSessionsResponse"];
 export type SessionNoteVersion = Schemas["SessionNoteVersion"];
+export type EntryKind = Schemas["EntryKind"];
+export type EditAccess = Schemas["EditAccess"];
+export type Entry = Schemas["EntryResponse"];
+export type EntrySummary = Schemas["EntrySummaryResponse"];
+/** One row of the wiki list: an entry plus the viewer's own mention count (15b). */
+export type EntryListItem = Schemas["EntryListItemResponse"];
+export type EntryList = Schemas["GetEntriesResponse"];
+export type TimelineItem = Schemas["EntryTimelineItem"];
+export type EntryTimeline = Schemas["EntryTimelineResponse"];

@@ -24,6 +24,15 @@ import { postSessionNoteRequest } from "~/utils/api/sessionNote/postSessionNoteR
 import { putSessionNoteHiddenRequest } from "~/utils/api/sessionNote/putSessionNoteHiddenRequest";
 import { putSessionNoteRequest } from "~/utils/api/sessionNote/putSessionNoteRequest";
 import { putSessionNoteVisibilityRequest } from "~/utils/api/sessionNote/putSessionNoteVisibilityRequest";
+import { getEntriesRequest } from "~/utils/api/entry/getEntriesRequest";
+import { getEntryRequest } from "~/utils/api/entry/getEntryRequest";
+import { getEntryTimelineRequest } from "~/utils/api/entry/getEntryTimelineRequest";
+import { postEntryRequest } from "~/utils/api/entry/postEntryRequest";
+import { putEntryAliasesRequest } from "~/utils/api/entry/putEntryAliasesRequest";
+import { putEntryEditAccessRequest } from "~/utils/api/entry/putEntryEditAccessRequest";
+import { putEntryKindRequest } from "~/utils/api/entry/putEntryKindRequest";
+import { putEntryNameRequest } from "~/utils/api/entry/putEntryNameRequest";
+import { putEntryVisibilityRequest } from "~/utils/api/entry/putEntryVisibilityRequest";
 
 export const useApi = () => {
     const { $axios } = useNuxtApp();
@@ -60,6 +69,17 @@ export const useApi = () => {
             putHidden: putSessionNoteHiddenRequest($axios),
             delete: deleteSessionNoteRequest($axios),
             history: getSessionNoteHistoryRequest($axios),
+        },
+        entry: {
+            list: getEntriesRequest($axios),
+            get: getEntryRequest($axios),
+            create: postEntryRequest($axios),
+            timeline: getEntryTimelineRequest($axios),
+            putName: putEntryNameRequest($axios),
+            putKind: putEntryKindRequest($axios),
+            putAliases: putEntryAliasesRequest($axios),
+            putVisibility: putEntryVisibilityRequest($axios),
+            putEditAccess: putEntryEditAccessRequest($axios),
         },
         admin: {
             getMaintenance: getMaintenanceRequest($axios),
