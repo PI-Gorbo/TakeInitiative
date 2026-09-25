@@ -4,7 +4,8 @@ namespace TakeInitiative.Api.Features.Entries;
 /// An entry as the wiki lists it and as <c>entryUpserted</c> pushes it. It carries no
 /// per-viewer fields: the web works out "can I edit" from <see cref="CreatorMemberId"/>,
 /// <see cref="EditAccess"/> and its own role, so one payload goes to every allowed group.
-/// Mention counts arrive in 15b; the claimer and merged ids in 15g.
+/// Mention counts are per viewer, so they sit beside it in <see cref="EntryListItemResponse"/>
+/// and are never pushed. The claimer and merged ids arrive in 15g.
 /// </summary>
 public record EntrySummaryResponse
 {

@@ -49,7 +49,7 @@ public class EntryVisibilityTests(AuthenticatedWebAppWithDatabaseFixture fixture
 
         if (canSee)
         {
-            list.Value.Entries.Should().ContainSingle().Which.Id.Should().Be(entry.Id);
+            list.Value.Entries.Should().ContainSingle().Which.Entry.Id.Should().Be(entry.Id);
             (await fixture.GetEntry(campaign.Id, entry.Id)).Should().Succeed();
             (await fixture.PutEntryKind(campaign.Id, entry.Id, EntryKind.Other)).Should().Succeed();
         }
