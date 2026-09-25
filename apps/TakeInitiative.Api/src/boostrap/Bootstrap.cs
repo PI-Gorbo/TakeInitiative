@@ -60,6 +60,13 @@ public static class Bootstrap
                 .Index([x => x.CampaignId, x => x.PostedAt])
                 .Index(x => x.SessionId);
 
+            // Entry stream -> Entry document. (CampaignId, Kind) serves the wiki's lists; the
+            // GIN index serves alias lookups.
+            opts.Projections.Snapshot<Entry>(SnapshotLifecycle.Inline);
+            opts.Schema.For<Entry>()
+                .Index([x => x.CampaignId, x => x.Kind])
+                .Index(x => x.Aliases, idx => idx.Method = IndexMethod.gin);
+
             opts.Schema.For<IAdminConfig>()
                 .AddSubClass<MaintenanceConfig>();
         }).AddAsyncDaemon(DaemonMode.Solo);
