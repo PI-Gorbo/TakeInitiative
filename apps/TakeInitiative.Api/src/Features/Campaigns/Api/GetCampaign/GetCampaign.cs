@@ -56,51 +56,12 @@ public class GetCampaign(IDocumentStore Store) : Endpoint<GetCampaignRequest, Ge
                 var nonUserCampaignMemberDtos = campaignMembers!.Where(x => x.UserId != userId)
                     .Select(member => CampaignMemberDto.FromMember(member, userDtos.Single(x => x.Id == member.UserId).UserName));
 
-                // If the user is a dm, retrieve all the planned combats.
-                var plannedCombats = userCampaignMember.IsDungeonMaster ? (await session.LoadManyAsync<PlannedCombat>(campaign.PlannedCombatIds)).ToArray() : null;
-
-                // If there is a active combat, load it
-                var dto = campaign.ActiveCombatId == null
-                    ? null
-                    : await session.Query<Combat>()
-                        .Where(x => x.Id == campaign.ActiveCombatId)
-                        .Select(x => new
-                        {
-                            x.Id,
-                            x.State,
-                            x.CombatName,
-                            x.CurrentPlayers,
-                            x.DungeonMaster,
-                        })
-                        .SingleOrDefaultAsync();
-
-                // Combat History
-                var combatHistoryData = await session.Query<Combat>()
-                        .Where(x => x.CampaignId == campaign.Id && x.FinishedTimestamp.HasValue)
-                        .OrderByDescending(x => x.FinishedTimestamp)
-                        .Select(x => new CombatHistoryDto()
-                        {
-                            CombatId = x.Id,
-                            CombatName = x.CombatName!,
-                            FinishedOn = x.FinishedTimestamp!.Value
-                        })
-                        .ToListAsync();
-
                 return new GetCampaignResponse()
                 {
                     Campaign = campaign,
                     JoinCode = CampaignIdShortener.ToShortId(campaign.Id),
                     CampaignMembers = nonUserCampaignMemberDtos.ToArray(),
                     UserCampaignMember = userCampaignMember,
-                    CurrentCombatInfo = dto == null ? null : new CurrentCombatDto()
-                    {
-                        CombatName = dto.CombatName,
-                        CurrentPlayers = dto.CurrentPlayers.ToList(),
-                        DungeonMaster = dto.DungeonMaster,
-                        Id = dto.Id,
-                        State = dto.State
-                    },
-                    CombatHistory = [.. combatHistoryData]
                 };
             });
 

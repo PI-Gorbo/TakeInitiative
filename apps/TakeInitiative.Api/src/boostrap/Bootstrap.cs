@@ -4,7 +4,6 @@ using TakeInitiative.Api.Identity;
 
 using Marten;
 using Marten.Events.Daemon.Resiliency;
-using Marten.Events.Projections;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -37,18 +36,8 @@ public static class Bootstrap
                 .ForeignKey<ApplicationUser>(x => x.UserId, fk => fk.OnDelete = CascadeAction.Cascade)
                 .ForeignKey<Campaign>(x => x.CampaignId, fk => fk.OnDelete = CascadeAction.Cascade);
 
-            opts.Schema.For<PlannedCombat>()
-                .Index(x => x.CombatName)
-                .ForeignKey<Campaign>(x => x.CampaignId, fk => fk.OnDelete = CascadeAction.Cascade);
-
             opts.Schema.For<IAdminConfig>()
                 .AddSubClass<MaintenanceConfig>();
-
-            // Event Projections
-            opts.Projections
-                .Add(new CombatProjection(), ProjectionLifecycle.Inline, null);
-
-
         }).AddAsyncDaemon(DaemonMode.Solo);
 
         if (IsDevelopment)
@@ -164,8 +153,6 @@ public static class Bootstrap
     {
         // Random.Shared is thread-safe; a single shared `new Random()` is not.
         services.AddSingleton<IDiceRoller>(new DiceRoller(Random.Shared));
-        services.AddTransient<IInitiativeRoller, InitiativeRoller>();
-        services.AddTransient<IHealthRoller, HealthRoller>();
         return services;
     }
 

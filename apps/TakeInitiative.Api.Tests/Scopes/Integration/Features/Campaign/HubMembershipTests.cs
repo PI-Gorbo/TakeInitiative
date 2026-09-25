@@ -5,16 +5,14 @@ using Marten;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
 using TakeInitiative.Api.Features.Campaigns;
-using TakeInitiative.Api.Features.Combats;
 
 namespace TakeInitiative.Api.Tests.Integration.Features.Campaign;
 
 /// <summary>
-/// The SignalR hubs are the only place group membership is enforced, and both hubs
-/// used to get the caller wrong: <see cref="CampaignHub.Join"/> compared
-/// <c>x.UserId == x.UserId</c> (always true) and <see cref="CombatHub.JoinCombat"/>
-/// took the user id as a client-supplied argument. Either let any authenticated user
-/// subscribe to a campaign or combat they are not a member of.
+/// The SignalR hub is the only place group membership is enforced, and
+/// <see cref="CampaignHub.Join"/> used to get the caller wrong: it compared
+/// <c>x.UserId == x.UserId</c> (always true), which let any authenticated user
+/// subscribe to a campaign they are not a member of.
 /// </summary>
 public class HubMembershipTests(AuthenticatedWebAppWithDatabaseFixture fixture)
     : IClassFixture<AuthenticatedWebAppWithDatabaseFixture>
@@ -86,38 +84,6 @@ public class HubMembershipTests(AuthenticatedWebAppWithDatabaseFixture fixture)
         var join = async () => await hub.Join(session, fixture.SeedData!.CampaignId);
 
         await join.Should().ThrowAsync<OperationCanceledException>();
-        A.CallTo(() => groups.AddToGroupAsync(A<string>._, A<string>._, A<CancellationToken>._))
-            .MustNotHaveHappened();
-    }
-
-    [Fact]
-    public async Task CombatHub_RejectsAUserWhoIsNotAMemberOfTheCampaign()
-    {
-        // The DM opens a combat in the seeded campaign.
-        fixture.LoginAsUser(Users.DM);
-        var plannedCombat = await fixture.PostPlannedCombat(new()
-        {
-            CampaignId = fixture.SeedData!.CampaignId,
-            CombatName = "Hub membership combat"
-        });
-        plannedCombat.Should().Succeed();
-
-        var openedCombat = await fixture.PostOpenCombat(new() { PlannedCombatId = plannedCombat.Value.Id });
-        openedCombat.Should().Succeed();
-        var combatId = openedCombat.Value.Combat.Id;
-
-        // A user who is not in the campaign must not be able to subscribe to it,
-        // even though the old signature let the client name whichever user it liked.
-        var nonMemberId = await UserIdOf(Users.Player);
-        var groups = A.Fake<IGroupManager>();
-        var hub = new CombatHub { Context = CallerContextFor(nonMemberId), Groups = groups };
-
-        var store = fixture.AlbaHost.Services.GetRequiredService<IDocumentStore>();
-        var join = async () => await hub.JoinCombat(store, combatId);
-
-        await join.Should().ThrowAsync<OperationCanceledException>()
-            .WithMessage("*campaign you are not apart of*");
-
         A.CallTo(() => groups.AddToGroupAsync(A<string>._, A<string>._, A<CancellationToken>._))
             .MustNotHaveHappened();
     }

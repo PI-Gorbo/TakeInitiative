@@ -1,7 +1,7 @@
 import { validateResponse } from "~/utils/apiErrorParser";
 import type { AxiosInstance } from "axios";
 import { z } from "zod";
-import { campaignValidator, type CampaignSettings } from "../../types/models";
+import { campaignValidator } from "../../types/models";
 
 // Update Campaign Details
 
@@ -9,7 +9,6 @@ export type UpdateCampaignDetailsRequest = {
     campaignId: string;
     campaignDescription?: string;
     campaignName?: string;
-    campaignSettings?: CampaignSettings;
 };
 const updateCampaignDetailsRequestSchema = campaignValidator;
 export type UpdateCampaignResponse = z.infer<

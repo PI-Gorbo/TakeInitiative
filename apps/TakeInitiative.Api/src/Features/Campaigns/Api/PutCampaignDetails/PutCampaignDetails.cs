@@ -37,7 +37,6 @@ public class PutCampaignDetails(IDocumentSession session, IHubContext<CampaignHu
             {
                 CampaignDescription = req.CampaignDescription ?? campaign.CampaignDescription,
                 CampaignName = req.CampaignName ?? campaign.CampaignName,
-                CampaignSettings = req.CampaignSettings ?? campaign.CampaignSettings,
             };
 
             session.Store(campaign);

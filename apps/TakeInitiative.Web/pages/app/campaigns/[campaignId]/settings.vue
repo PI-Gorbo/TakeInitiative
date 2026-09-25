@@ -8,24 +8,6 @@
                 <AutoForm
                     :schema="formSchema"
                     :form="settingsForm"
-                    :fieldConfig="{
-                        combatHealthDisplaySettings: {
-                            dmCharacterDisplayMethod: {
-                                label: 'How should the players see the health of the DM\'s characters?',
-                            },
-                            otherPlayerCharacterDisplayMethod: {
-                                label: 'How should the players see the health of other players?',
-                            },
-                        },
-                        combatArmourClassDisplaySettings: {
-                            dmCharacterDisplayMethod: {
-                                label: 'How should the players see the AC of the DM\'s characters?',
-                            },
-                            otherPlayerCharacterDisplayMethod: {
-                                label: 'How should the players see the AC of other players?',
-                            },
-                        },
-                    }"
                     :onSubmit="() => submit()">
                     <div class="flex justify-end">
                         <AsyncButton
@@ -75,16 +57,6 @@
         getCampaignQuery,
         updateCampaignDetailsMutation,
     } from "~/utils/queries/campaign";
-    import {
-        HealthDisplayOptionsEnum,
-        HealthDisplayOptionValueKeyMap,
-        type HealthDisplayOptionValues,
-        type HealthDisplayOptionKeys,
-        type ArmourClassDisplayOptionValues,
-        ArmourClassDisplayOptionValueKeyMap,
-        type ArmourClassDisplayOptionKeys,
-        ArmourClassDisplayOptionsEnum,
-    } from "~/utils/types/models";
 
     definePageMeta({
         layout: "campaign",
@@ -118,72 +90,12 @@
     const campaignDto = computed(() => {
         return campaignQuery.data?.value;
     });
-    const healthEnum = z.enum(["RealValue", "HealthyBloodied", "Hidden"]);
-    type HealthEnumType = z.infer<typeof healthEnum>;
-    function healthLabelToEnumValue(
-        healthEnumlabel: HealthEnumType
-    ): HealthDisplayOptionValues {
-        return HealthDisplayOptionsEnum[healthEnumlabel];
-    }
-    function healthEnumValueToLabel(
-        enumValue: HealthDisplayOptionValues
-    ): HealthEnumType {
-        return HealthDisplayOptionValueKeyMap[enumValue] as HealthEnumType;
-    }
-
-    const acEnum = z.enum(["RealValue", "Hidden"]);
-    type AcEnumType = z.infer<typeof acEnum>;
-    function acLabelToEnumValue(
-        acEnumLabel: AcEnumType
-    ): ArmourClassDisplayOptionValues {
-        return ArmourClassDisplayOptionsEnum[acEnumLabel];
-    }
-    function acEnumValueToLabel(
-        enumValue: ArmourClassDisplayOptionValues
-    ): AcEnumType {
-        return ArmourClassDisplayOptionValueKeyMap[enumValue] as AcEnumType;
-    }
     const formSchema = z.object({
         campaignName: z.string().min(1, "Campaign name is required"),
-        combatHealthDisplaySettings: z.object({
-            dmCharacterDisplayMethod: healthEnum,
-            otherPlayerCharacterDisplayMethod: healthEnum,
-        }),
-        combatArmourClassDisplaySettings: z.object({
-            dmCharacterDisplayMethod: acEnum,
-            otherPlayerCharacterDisplayMethod: acEnum,
-        }),
     });
     function generateInitalValues() {
         return {
             campaignName: campaignDto.value?.campaign.campaignName ?? "",
-            combatHealthDisplaySettings: {
-                dmCharacterDisplayMethod: healthEnumValueToLabel(
-                    campaignDto.value?.campaign?.campaignSettings
-                        .combatHealthDisplaySettings.dmCharacterDisplayMethod ??
-                        HealthDisplayOptionsEnum.HealthyBloodied
-                ),
-                otherPlayerCharacterDisplayMethod: healthEnumValueToLabel(
-                    campaignDto.value?.campaign?.campaignSettings
-                        .combatHealthDisplaySettings
-                        .otherPlayerCharacterDisplayMethod ??
-                        HealthDisplayOptionsEnum.HealthyBloodied
-                ),
-            },
-            combatArmourClassDisplaySettings: {
-                dmCharacterDisplayMethod: acEnumValueToLabel(
-                    campaignDto.value?.campaign?.campaignSettings
-                        .combatArmourClassDisplaySettings
-                        .dmCharacterDisplayMethod ??
-                        ArmourClassDisplayOptionsEnum.RealValue
-                ),
-                otherPlayerCharacterDisplayMethod: acEnumValueToLabel(
-                    campaignDto.value?.campaign?.campaignSettings
-                        .combatArmourClassDisplaySettings
-                        .otherPlayerCharacterDisplayMethod ??
-                        ArmourClassDisplayOptionsEnum.RealValue
-                ),
-            },
         };
     }
     const settingsForm = useForm({
@@ -204,29 +116,6 @@
                     formValues.campaignName,
                     campaignDto.value?.campaign.campaignName
                 ),
-                campaignSettings: {
-                    combatHealthDisplaySettings: {
-                        dmCharacterDisplayMethod: healthLabelToEnumValue(
-                            formValues.combatHealthDisplaySettings
-                                .dmCharacterDisplayMethod
-                        ),
-                        otherPlayerCharacterDisplayMethod:
-                            healthLabelToEnumValue(
-                                formValues.combatHealthDisplaySettings
-                                    .otherPlayerCharacterDisplayMethod
-                            ),
-                    },
-                    combatArmourClassDisplaySettings: {
-                        dmCharacterDisplayMethod: acLabelToEnumValue(
-                            formValues.combatArmourClassDisplaySettings
-                                .dmCharacterDisplayMethod
-                        ),
-                        otherPlayerCharacterDisplayMethod: acLabelToEnumValue(
-                            formValues.combatArmourClassDisplaySettings
-                                .otherPlayerCharacterDisplayMethod
-                        ),
-                    },
-                },
             })
             .then(() => {
                 toast.success("Updated Campaign Settings");

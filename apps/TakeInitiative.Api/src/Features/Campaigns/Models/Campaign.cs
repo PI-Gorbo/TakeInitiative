@@ -6,11 +6,8 @@ public record Campaign
 	public required Guid OwnerId { get; init; }
 	public required string CampaignName { get; init; }
 	public string CampaignDescription { get; init; } = "";
-	public List<Guid> PlannedCombatIds { get; init; } = [];
 	public List<CampaignMemberInfo> CampaignMemberInfo { get; init; } = [];
-	public Guid? ActiveCombatId { get; init; } = null; // Implies only one active combat at once.
 	public DateTimeOffset CreatedTimestamp { get; init; } = DateTimeOffset.UtcNow;
-	public CampaignSettings CampaignSettings { get; set; } = new(); // Initializes with default values.
 
 	public static Campaign CreateNewCampaign(Guid OwnerId, string CampaignName)
 	{

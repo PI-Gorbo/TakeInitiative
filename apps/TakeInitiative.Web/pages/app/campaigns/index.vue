@@ -48,9 +48,7 @@
                     <li v-for="campaign in userStore.state?.dmCampaigns">
                         <CampaignCard
                             :campaignId="campaign.campaignId"
-                            :campaignName="campaign.campaignName"
-                            :faCrown="faCrown"
-                            :faHandFist="faHandFist" />
+                            :campaignName="campaign.campaignName" />
                     </li>
                 </ul>
             </template>
@@ -63,9 +61,7 @@
                     <li v-for="campaign in userStore.state?.memberCampaigns">
                         <CampaignCard
                             :campaignId="campaign.campaignId"
-                            :campaignName="campaign.campaignName"
-                            :faCrown="faCrown"
-                            :faHandFist="faHandFist" />
+                            :campaignName="campaign.campaignName" />
                     </li>
                 </ul>
             </template>
@@ -75,8 +71,6 @@
 <script setup lang="ts">
     import {
         faChevronCircleRight,
-        faCrown,
-        faHandFist,
         faRightToBracket,
         faPerson,
         faPlusCircle,

@@ -34,10 +34,6 @@
                                         class="flex w-full items-center justify-between gap-2 truncate"
                                         @click="closeSidebar">
                                         <span>{{ campaign.campaignName }}</span>
-                                        <FontAwesomeIcon
-                                            v-if="campaign.currentCombatName"
-                                            class="text-destructive"
-                                            :icon="faHandFist" />
                                     </NuxtLink>
                                 </SidebarMenuSubButton>
                             </SidebarMenuSubItem>
@@ -74,7 +70,6 @@
 <script setup lang="ts">
     import {
         faArrowRightFromBracket,
-        faHandFist,
         faUserCircle,
     } from "@fortawesome/free-solid-svg-icons";
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";

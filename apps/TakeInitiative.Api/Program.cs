@@ -69,7 +69,6 @@ internal class Program
         }
 
         // Map SignalR Hubs
-        app.MapHub<CombatHub>("/combatHub");
         app.MapHub<CampaignHub>("/campaignHub");
 
         app

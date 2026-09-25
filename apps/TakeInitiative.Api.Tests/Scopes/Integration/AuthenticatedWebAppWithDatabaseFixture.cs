@@ -46,7 +46,6 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
         .Build();
     private Users CurrentUser;
     public AuthenticatedWebAppWithDatabaseFixtureSeededData? SeedData { get; set; }
-    public IInitiativeRoller InitiativeRoller { get; } = A.Fake<IInitiativeRoller>();
     public IDiceRoller DiceRoller { get; } = A.Fake<IDiceRoller>();
 
     public async Task InitializeAsync()
@@ -64,9 +63,6 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
                 })
            .ConfigureServices((context, services) =>
                 {
-                    services.Replace(
-                        new ServiceDescriptor(typeof(IInitiativeRoller), InitiativeRoller)
-                    );
                     services.Replace(
                         new ServiceDescriptor(typeof(IDiceRoller), DiceRoller)
                     );

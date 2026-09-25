@@ -8,10 +8,4 @@ public static class IMartenQueryableExtensions
     {
         return query.SingleOrDefaultAsync((x) => x.UserId == userId && x.CampaignId == campaignId);
     }
-
-    public static async Task<bool> CombatNameIsUnique(this IMartenQueryable<PlannedCombat> query, Guid campaignId, string combatName)
-    {
-        return await query.Where(x => x.CampaignId == campaignId && x.CombatName == combatName)
-                    .CountAsync() == 0;
-    }
 }

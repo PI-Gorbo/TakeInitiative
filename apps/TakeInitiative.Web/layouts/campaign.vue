@@ -130,10 +130,6 @@
             routeName: "app-campaigns-campaignId",
         },
         {
-            label: "Combats",
-            routeName: "app-campaigns-campaignId-combats",
-        },
-        {
             label: "Settings",
             routeName: "app-campaigns-campaignId-settings",
             shouldHideTab: () => {
@@ -155,10 +151,6 @@
 
         if (route?.name.startsWith(tabValues[1].routeName)) {
             return tabValues[1].routeName;
-        }
-
-        if (route?.name.startsWith(tabValues[2].routeName)) {
-            return tabValues[2].routeName;
         }
     });
 
