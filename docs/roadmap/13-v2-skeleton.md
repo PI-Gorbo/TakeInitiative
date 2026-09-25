@@ -292,6 +292,42 @@ From a clean clone, with no GitHub PAT:
 - **Local dev Postgres** is `takedb` on port 7401 (`compose.dev.yml`). Port 5432
   on this machine can belong to another project.
 
+### Deviations and decisions in 13c
+
+- **Versions.** `FastEndpoints.Swagger` 5.22.0 (NSwag 14.0.2), matching
+  FastEndpoints 5.22, so FastEndpoints itself was not upgraded. `openapi-typescript`
+  7.13. Swashbuckle and `Microsoft.AspNetCore.OpenApi` are gone.
+- **No built-in export in 5.22.** `ExportSwaggerJsonAndExitAsync` arrived in a later
+  FastEndpoints, so `Program.cs` has its own `--export-openapi <path>`: it builds the
+  app, wires the endpoints to the API explorer with `UseRouting`/`UseEndpoints`
+  (WebApplication otherwise only does that when the host starts), asks NSwag's
+  `IOpenApiDocumentGenerator` for the `v1` document and exits. The host never starts,
+  so Marten's `ApplyAllDatabaseChangesOnStartup` never runs; the export succeeds with
+  an unreachable connection string.
+- **Document shape.** Schema names are the short class names (`CampaignResponse`,
+  `CampaignSummary`, `Role`), operation ids are the endpoint class names
+  (`Endpoints.ShortNames`, so `GetCampaign`, `PutMemberRole`), non-nullable
+  properties are `required`, and only nullable ones (`MaintenanceConfig.reason`) are
+  optional. NJsonSchema does not recognise the generic `JsonStringEnumConverter<Role>`,
+  so the document serializer and FastEndpoints' runtime serializer both get a global
+  `JsonStringEnumConverter`. `Role` is `"DM" | "Player"` in the document and on the wire.
+- **`UseSwaggerGen` must come after `UseFastEndpoints`.** Before it, the NSwag
+  middleware builds the generator before FastEndpoints has a service resolver, and
+  every Alba test host fails to start. The UI is served at `/swagger` in Development.
+- **Web build does not depend on `gen:api`.** The Files touched list says
+  `@ti/web#build` depends on it, but that would make every web build need .NET and
+  contradicts committing `schema.d.ts` "so the web builds without .NET". Instead,
+  turbo has `gen:api` (depends on `@ti/api#gen:openapi`, uncached), the root has
+  `pnpm gen:api`, and `testWeb.yml` regenerates and fails on a diff.
+- **Generated-type helpers.** `utils/api/types.ts` holds `ApiResponse<"Op">`,
+  `ApiRequestBody<"Op">`, `ApiPathParams<"Op">` and named aliases (`Campaign`,
+  `CampaignMember`, `CampaignSummary`, `Role`, `User`, `MaintenanceConfig`).
+  `currentMember()` moved from `models.ts` to `utils/campaign.ts`. Error responses
+  (400 validation bodies) are not in the document; `apiErrorParser` keeps its small
+  zod schema for them, and `validateResponse` is gone.
+- **`testWeb.yml`** now uses pnpm (from `packageManager`), Node 24 and .NET 10 instead
+  of bun, and also runs on `.cs`/`.csproj` changes, since those can change the types.
+
 ### Behaviour kept from the v1 combat tests (filled in during 13a)
 
 The v1 tests were snapshot tests (`CombatVerifier`) with a faked dice roller and
