@@ -44,7 +44,9 @@
                         <SessionDivider
                             :campaignId="campaignId"
                             :session="entry.session"
-                            :canEditTitle="isDm" />
+                            :canEditTitle="isDm"
+                            :imageCount="entry.imageCount"
+                            @openGallery="openGallery(entry.session, entry.imageCount)" />
                         <!-- Recaps sit directly under their divider. -->
                         <SessionNoteCard
                             v-for="note in entry.recaps"
@@ -113,6 +115,13 @@
             :authorName="authorName"
             :ready="!!streamQuery.data.value && !streamQuery.isFetching.value" />
 
+        <!-- One gallery sheet for the whole stream, opened from a divider (16d). -->
+        <ImageSessionGallerySheet
+            v-model:open="galleryOpen"
+            :campaignId="campaignId"
+            :session="gallerySession"
+            :loadedCount="galleryCount"
+            :authorName="authorName" />
         <!-- One sheet for the whole stream, opened by a long-press on a note (14e). -->
         <SessionNoteActionSheet
             v-if="sheet"
@@ -129,7 +138,8 @@
     import { useResizeObserver } from "@vueuse/core";
     import { ArrowDown, LoaderCircle } from "lucide-vue-next";
     import { toast } from "vue-sonner";
-    import type { Campaign, SessionNote, SessionStreamFilter, Visibility } from "~/utils/api/types";
+    import type { Campaign, Session, SessionNote, SessionStreamFilter, Visibility } from "~/utils/api/types";
+    import { dividerImageCount } from "~/utils/gallery";
     import { currentMember } from "~/utils/campaign";
     import { getSessionStreamQuery } from "~/utils/queries/sessions";
     import { noteLinkProgress, type NoteAction } from "~/utils/noteActions";
@@ -165,6 +175,7 @@
             session: s.session,
             recaps: s.notes.filter((n) => n.isRecap),
             notes: s.notes.filter((n) => !n.isRecap),
+            imageCount: dividerImageCount(s.notes, props.filter),
         }))
     );
     const allNotes = computed<SessionNote[]>(() => flattenSessions(streamQuery.data.value).flatMap((s) => s.notes));
@@ -179,6 +190,21 @@
         )
     );
     const emptyState = computed(() => filterEmptyState(props.filter));
+
+    // ── A session's gallery (16d) ────────────────────────────────────────────
+    const galleryOpen = ref(false);
+    const gallerySession = shallowRef<Session | null>(null);
+    const galleryCount = ref<number>();
+    function openGallery(session: Session, count: number | undefined) {
+        gallerySession.value = session;
+        galleryCount.value = count;
+        galleryOpen.value = true;
+    }
+    // Another campaign starts with the sheet shut.
+    watch(
+        () => props.campaignId,
+        () => (galleryOpen.value = false)
+    );
 
     // ── The long-press action sheet ──────────────────────────────────────────
     type SheetTarget = {

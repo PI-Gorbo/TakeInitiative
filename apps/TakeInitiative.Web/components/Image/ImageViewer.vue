@@ -3,7 +3,8 @@
          phone's back gesture closes it. The `display` variant, with swipe and the
          arrow keys through the note's images, pinch zoom, the caption with chips,
          "S12 · Sam · 8:15pm" linking to the note, and ✕. The note's actions stay on
-         its card. -->
+         its card. With `sequence` (a gallery, 16d) the swipe runs through every
+         image of every item, not just the note's. -->
     <DialogRoot
         :open="!!current"
         @update:open="(open) => !open && viewer.close()">
@@ -117,20 +118,35 @@
         authorName: (memberId: string) => string;
         /** The notes are loaded: an `?image=` none of them has is dropped. */
         ready?: boolean;
+        /** Swipe through the images of all `items`, in order (a gallery, 16d). */
+        sequence?: boolean;
+        /**
+         * Which `useImageViewer().open(id, source)` this viewer answers. Unset for a
+         * page's list (and deep links); a gallery sets its own, so two viewers on one
+         * page never open together.
+         */
+        source?: string;
     }>();
 
     const viewer = useImageViewer();
     const src = useImageUrl();
 
+    const mine = computed(() => viewer.source.value === props.source);
     const current = computed(() => {
         const id = viewer.imageId.value;
-        return id
+        return id && mine.value
             ? props.items.find((item) =>
                   item.note.images.some((image) => image.id === id)
               )
             : undefined;
     });
-    const images = computed(() => current.value?.note.images ?? []);
+    const images = computed(() =>
+        !current.value
+            ? []
+            : props.sequence
+              ? props.items.flatMap((item) => item.note.images)
+              : current.value.note.images
+    );
     const index = computed(() =>
         Math.max(
             0,
@@ -205,7 +221,7 @@
     watch(
         () => [props.ready, viewer.imageId.value, current.value] as const,
         ([ready, id, item]) => {
-            if (ready && id && !item) viewer.close();
+            if (ready && id && !item && mine.value) viewer.close();
         },
         { immediate: true }
     );

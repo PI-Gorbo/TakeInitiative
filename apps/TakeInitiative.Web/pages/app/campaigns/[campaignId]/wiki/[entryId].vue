@@ -1,7 +1,7 @@
 <template>
     <!-- An entry (design §4): its header (15c), its claim and stats (15g), its article
-         (15f) and its timeline (15c). Connections (19), gallery (16) and combats (18)
-         arrive with their steps. `?edit={blockId}` opens the article editor at a block
+         (15f), its timeline (15c) and its gallery (16d). Connections (19) and combats
+         (18) arrive with their steps. `?edit={blockId}` opens the article editor at a block
          (a phone's promote, §3a). A merged entry's id loads its target (15g), and the
          URL is replaced with the target's. -->
     <div class="mx-auto flex w-full max-w-3xl flex-col gap-5 px-4 py-4 pb-safe">
@@ -84,6 +84,10 @@
                 :entryId="entry.id"
                 :entryName="entry.name"
                 :canEdit="canEdit" />
+
+            <WikiEntryGallery
+                :campaign="campaign"
+                :entryId="entry.id" />
 
             <!-- Posts to the current session with the mention prefilled (design §4). -->
             <Button

@@ -10,14 +10,15 @@ import {
     applyEntryRemoved,
     applyEntrySummary,
     invalidateEntries,
-    invalidateTimelinesTouchedBy,
 } from "~/utils/queries/entries";
 import {
     applySession,
+    invalidateNoteViews,
     invalidateSessions,
     invalidateSessionStreams,
     updateSessionStreams,
 } from "~/utils/queries/sessions";
+import type { TouchingNote } from "~/utils/gallery";
 import { dropPendingCopy, removeNote, upsertNote } from "~/utils/sessionStreamCache";
 
 // Payloads of `CampaignHubMessages` (the API's CampaignHub.cs and SessionHub.cs).
@@ -99,19 +100,20 @@ export function useCampaignHub(campaignId: MaybeRefOrGetter<string | undefined>)
     connection.on("sessionTitleChanged", (session: Session) => {
         updateSession(session);
     });
-    // A note change can change the timelines of the entries it mentions (15c).
-    const touchTimelines = (note: Pick<SessionNote, "id"> & Partial<Pick<SessionNote, "text">>) => {
+    // A note change can change the timelines of the entries it mentions (15c), and the
+    // galleries of its session and of those entries when it has, or had, images (16d).
+    const touchNoteViews = (note: TouchingNote) => {
         const id = joinedCampaignId.value;
-        if (id) invalidateTimelinesTouchedBy(queryClient, id, note);
+        if (id) invalidateNoteViews(queryClient, id, note);
     };
     connection.on("sessionNoteUpserted", (note: SessionNote) => {
         // The caller's own post can arrive before its POST answers: drop the optimistic copy.
         updateStreams((data, filter, me) => upsertNote(dropPendingCopy(data, note), note, filter, me));
-        touchTimelines(note);
+        touchNoteViews(note);
     });
-    connection.on("sessionNoteRemoved", ({ noteId }: SessionNoteRemovedMessage) => {
+    connection.on("sessionNoteRemoved", ({ noteId, sessionId }: SessionNoteRemovedMessage) => {
         updateStreams((data) => removeNote(data, noteId));
-        touchTimelines({ id: noteId });
+        touchNoteViews({ id: noteId, sessionId });
     });
     connection.on("sessionNoteHidden", (_message: SessionNoteHiddenMessage) => {
         // Sent to the author only. The note itself arrives as an upsert with `isHidden`.

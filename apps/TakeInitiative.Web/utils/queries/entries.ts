@@ -6,9 +6,10 @@ import {
     useQueryClient,
     type QueryClient,
 } from "@tanstack/vue-query";
-import type { Entry, EntryList, EntrySummary, EntryTimeline, SessionNote } from "~/utils/api/types";
+import type { Entry, EntryList, EntrySummary, EntryTimeline, Gallery, SessionNote } from "~/utils/api/types";
 import { apiErrorStatus } from "~/utils/apiErrorParser";
 import { entryDirectory } from "~/utils/entries";
+import { GALLERY_PAGE_SIZE } from "~/utils/gallery";
 import {
     applyMerge,
     mergeEntrySummary,
@@ -104,6 +105,37 @@ export const getEntryTimelineQuery = (campaignId: RefOrGetter<string>, entryId: 
         retry: retryUnless404,
     });
 
+/** Every loaded entry gallery of a campaign (16d). */
+export const entryGalleriesKey = (campaignId: string) => ["entryImages", campaignId];
+export const getEntryImagesQueryKey = (campaignId: MaybeRefOrGetter<string>, entryId: MaybeRefOrGetter<string>) => [
+    "entryImages",
+    campaignId,
+    entryId,
+];
+
+/**
+ * An entry's gallery (16d): the image notes the viewer can see whose caption mentions
+ * it, newest page first. A note push invalidates the galleries it touches
+ * (`invalidateGalleriesTouchedBy`).
+ */
+export const getEntryImagesQuery = (campaignId: RefOrGetter<string>, entryId: RefOrGetter<string>) =>
+    infiniteQueryOptions({
+        queryKey: getEntryImagesQueryKey(campaignId, entryId),
+        queryFn: ({ pageParam }) =>
+            useApi().image.entryGallery({
+                campaignId: toValue(campaignId),
+                entryId: toValue(entryId),
+                before: pageParam,
+                take: GALLERY_PAGE_SIZE,
+            }),
+        initialPageParam: undefined as string | undefined,
+        getNextPageParam: (lastPage: Gallery) =>
+            lastPage.hasOlder && lastPage.items.length > 0 ? lastPage.items[0].note.postedAt : undefined,
+        enabled: () => !!toValue(campaignId) && !!toValue(entryId),
+        staleTime: Infinity,
+        retry: retryUnless404,
+    });
+
 // ── Applying pushes and responses (the hub and the mutations share these) ────
 
 /** An entry push or response: the list (keeping its counts) and the loaded entry. */
@@ -146,7 +178,7 @@ export function applyEntryRemoved(queryClient: QueryClient, campaignId: string, 
     queryClient.setQueryData<EntryList>(getEntriesQueryKey(campaignId), (list) => removeEntry(list, entryId));
     void queryClient.invalidateQueries({
         predicate: (query) =>
-            (query.queryKey[0] === "entry" || query.queryKey[0] === "entryTimeline") &&
+            ["entry", "entryTimeline", "entryImages"].includes(String(query.queryKey[0])) &&
             query.queryKey[1] === campaignId &&
             String(query.queryKey[2]).toLowerCase() === entryId.toLowerCase(),
     });
@@ -195,9 +227,9 @@ export function applyEntryArticleChanged(queryClient: QueryClient, campaignId: s
     void queryClient.invalidateQueries({ queryKey: timelinesKey(campaignId) });
 }
 
-/** Whether a query is `["entry" | "entryTimeline" | "entryHistory", campaignId, one of ids]`. */
+/** Whether a query is `["entry" | "entryTimeline" | "entryHistory" | "entryImages", campaignId, one of ids]`. */
 const isEntryQueryFor = (queryKey: readonly unknown[], campaignId: string, ids: readonly string[]) =>
-    ["entry", "entryTimeline", "entryHistory"].includes(String(queryKey[0])) &&
+    ["entry", "entryTimeline", "entryHistory", "entryImages"].includes(String(queryKey[0])) &&
     queryKey[1] === campaignId &&
     ids.some((id) => String(queryKey[2]).toLowerCase() === id.toLowerCase());
 
@@ -213,6 +245,8 @@ export function applyEntryMerged(queryClient: QueryClient, campaignId: string, f
         predicate: (query) => isEntryQueryFor(query.queryKey, campaignId, [fromEntryId, intoEntryId]),
     });
     void queryClient.invalidateQueries({ queryKey: timelinesKey(campaignId) });
+    // The target's gallery gained the merged entry's images (16d).
+    void queryClient.invalidateQueries({ queryKey: entryGalleriesKey(campaignId) });
     void queryClient.invalidateQueries({ queryKey: getEntriesQueryKey(campaignId) });
 }
 
@@ -232,7 +266,8 @@ export function applyEntryStatsChanged(queryClient: QueryClient, campaignId: str
 export function invalidateEntries(queryClient: QueryClient, campaignId: string) {
     return queryClient.invalidateQueries({
         predicate: (query) =>
-            ["entries", "entry", "entryTimeline", "entryHistory"].includes(String(query.queryKey[0])) && query.queryKey[1] === campaignId,
+            ["entries", "entry", "entryTimeline", "entryHistory", "entryImages"].includes(String(query.queryKey[0])) &&
+            query.queryKey[1] === campaignId,
     });
 }
 
