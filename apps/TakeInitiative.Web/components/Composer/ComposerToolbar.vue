@@ -1,6 +1,7 @@
 <template>
     <!-- The composer's toolbar (design §3a). It draws whatever items it is given, so
-         step 15 adds @ and step 16 adds 📷 and 🖼 without reshaping it. -->
+         step 15 adds @ and step 16 adds 📷 and 🖼 without reshaping it. The article
+         editor (15f) draws the same items, plus 🔒, without the ➤ button. -->
     <div
         role="toolbar"
         aria-label="Formatting"
@@ -44,6 +45,7 @@
         <!-- `mousedown.prevent` here and on every item keeps the text box focused, so
              on a phone the keyboard stays up and the pinned composer does not move. -->
         <Button
+            v-if="showPost"
             type="submit"
             size="icon"
             class="size-11 shrink-0 md:size-9"
@@ -59,8 +61,13 @@
     import { SendHorizontal } from "lucide-vue-next";
     import type { ComposerToolbarItem } from "~/utils/composer";
 
-    defineProps<{
-        items: ComposerToolbarItem[];
-        canPost: boolean;
-    }>();
+    withDefaults(
+        defineProps<{
+            items: ComposerToolbarItem[];
+            canPost?: boolean;
+            /** The ➤ button; off in the article editor, which saves the whole article. */
+            showPost?: boolean;
+        }>(),
+        { canPost: false, showPost: true }
+    );
 </script>
