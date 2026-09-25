@@ -19,7 +19,7 @@ PR, which sits on 13d (#199). Each PR leaves the app runnable:
 | 14a | `v2/14a-session-model` | Session and note model | 13's app unchanged in the browser. The API has sessions and notes, and a new campaign has Session 1 | [x] |
 | 14b | `v2/14b-live-notes` | Visibility-aware push | The same, and note and session changes are pushed only to the groups allowed to see them | [x] |
 | 14c | `v2/14c-session-stream` | Stream (read and live) | The Campaign tab shows the session stream, live. Members and the join code move to a panel | [x] |
-| 14d | `v2/14d-composer` | Composer and note actions | Post, edit, delete, hide, history, back-posting and the gap prompt, on every screen size | [ ] |
+| 14d | `v2/14d-composer` | Composer and note actions | Post, edit, delete, hide, history, back-posting and the gap prompt, on every screen size | [x] |
 | 14e | `v2/14e-mobile-composer` | Mobile composer, commands, filters | The step's Verify passes | [ ] |
 
 `@` mentions are step 15 and images are step 16. This step leaves a seam for each
@@ -643,3 +643,67 @@ This PR adds the nouns the step puts into code and UI:
     then held the DM note).
   - `smoke14a.mjs` passed 70/70, `hub14b.mjs` 28/28 and `pages13d.mjs` 19/19.
 
+
+### Deviations and decisions in 14d
+
+- **Extra files beyond Files touched:**
+  - `utils/composer.ts` holds the composer's pure rules: its state and reset, the POST body, the optimistic note, what Enter does, the picker rows, the gap prompt, the draft, and bold/italic/list formatting. It also holds `ComposerToolbarItem` and `VISIBILITY_OPTIONS`.
+  - `utils/noteActions.ts` holds `noteActionsFor`, the labels, `noteLink` and `noteLinkProgress`.
+  - Tests: `tests/unit/{composer,noteActions}.test.ts`.
+  - Modified: `components/Session/SessionStream.vue` (the note props, and following a note link), `composables/useCampaignHub.ts` (the sessions list and the optimistic copy), `utils/sessionStreamCache.ts` (`upsertSessionInList`, `dropPendingCopy` and the pending-id helpers), `utils/api/types.ts` (`SessionList`, `SessionNoteVersion`) and `utils/apiErrorParser.ts` (`apiErrorMessage`, `apiErrorStatus`).
+  - No API change, so `schema.d.ts` is unchanged.
+- **The session picker reads `GET sessions`** (`["sessions", campaignId]`, `staleTime: Infinity`), because the stream only has the pages loaded so far.
+  - `applySession` upserts one session into both that list and every loaded stream. The hub's `sessionStarted` and `sessionTitleChanged` and the start and title mutations all use it.
+  - The list is invalidated wherever the stream is: after joining the hub, on reconnect, and when the caller's role changes.
+- **The gap prompt re-reads `GET sessions` after every post**, from the post mutation's `onSettled`.
+  - On `sessionStarted` it does not refetch. `upsertSessionInList` turns `suggestNextSession` off, since an empty current session never suggests one (14a).
+  - Between re-reads, `showGapPrompt` also hides the prompt when any loaded note is newer than 3 days. So a note someone else just posted hides it straight away. This does not duplicate the rule: it only turns off what the server turned on.
+  - "Last note was N days ago" counts days from the newest loaded note.
+- **Accepting the prompt, or "Start Session N"**, posts `number: current + 1`. It targets the new session by setting the pick back to "current" (`sessionId = null`).
+  - A 409 means the list is stale. It shows "Someone else started a session. Try again." and re-reads the list.
+  - A second tap on the same number gets back the same session (14a).
+- **Posting sends `sessionId` only for an older session.** A post with nothing picked follows the current session, even if someone started a new one while the note was being typed. Picking the current session in the picker is stored as "nothing picked".
+- **Optimistic posting.** The note appears at once with a `pending-…` id, marked "Sending…" and with no actions. The response replaces it in the same cache update (`removeNote` then `upsertNote`).
+  - The push can arrive before the response. In that case the hub's `dropPendingCopy` drops the caller's pending note with the same session and text, so the note never shows twice.
+  - If the post fails, the text, session, visibility and recap come back, unless something new has been typed since. A toast shows the API's error.
+- **Enter** posts on desktop. On a touch screen (`(pointer: coarse)`) Enter adds a new line. While an IME is composing, Enter is left to the IME. The note editor behaves the same way, and Esc cancels an edit.
+  - Ctrl/⌘+B and Ctrl/⌘+I toggle bold and italic.
+  - The draft is saved to `localStorage` on every change, under the key `ti:composerDraft:{campaignId}`. Every read and write is wrapped in try/catch, and blank text removes the key.
+- **The text box** grows up to 40dvh, then scrolls. A character count appears from 9,000 characters, and the limit is 10,000 after trimming, as in 14a.
+- **Note actions.**
+  - `SessionNoteCard` takes `campaignId`, `currentMemberId`, `isDm` and `highlighted`, and carries out every action in `run(action, visibility?)`.
+  - The `actions` slot now defaults to `SessionNoteActions`, and exposes `{ actions, run }` for 14e's sheet.
+  - With a mouse (`pointer: fine`) the ⋯ button shows on hover or focus. On touch screens it is always visible, at 44px, until 14e adds long-press.
+  - "Change visibility" is a submenu with the same three choices as the composer.
+  - A DM is never offered Hide on a `Me` note. They would get a 404 anyway, since only the author can see it.
+  - Delete asks for confirmation in a dialog. The edit history and delete dialogs are mounted the first time they are used, not once per note.
+- **Following a note link** (`?note=`) happens in `SessionStream` (`focusNoteId` prop, `goToNote` exposed):
+  - `GET notes/{id}` supplies the session number. The stream then loads older pages until that session is loaded, and does it with the same scroll-keeping `loadOlder`. That loop stops after 500 steps.
+  - The stream then scrolls the note to the centre and highlights it for 2.5s.
+  - A 404 shows "That note is not there, or you cannot see it." A note hidden by the current filter shows a toast of its own.
+  - The page then removes `?note=` from the URL, so a reload opens at the bottom again.
+- **Phone.** In 14d the composer sits below the stream, in the page's normal flow. Nothing pins it above the keyboard yet: `interactive-widget=overlays-content` lets the keyboard cover it until 14e's `useKeyboardInset`. The session and visibility buttons shorten to "S13 ▾" and "👁 Everyone ▾", and every target is 44px.
+- **Seams for 14e.**
+  - `Composer` exposes `{ focus, state }`, where `state` is the reactive `ComposerState`. It also has a `strip` slot, which receives `{ state }`, above the text box. `useComposerCommands` can set `state.isRecap`, `state.visibility` and `state.sessionId`, and rewrite `state.text`. `targetSession` and `sessionOptions` resolve `/session N`.
+  - The toolbar is `ComposerToolbar` with `items: ComposerToolbarItem[]` and an `end` slot. 14e can move it into the phone layout without changing its API.
+  - `NoteActionSheet` should draw `noteActionsFor(note, ctx)` with `NOTE_ACTION_LABELS`, and hand the choice to the card's `run` through the `actions` slot props.
+  - `SessionStream` already takes `filter` and passes it to the cards. `Composer` takes `filter` as well, so it shares the stream's query.
+- **Verify, as run in 14d** (no browser; the UI was not looked at):
+  - `nuxi typecheck` is clean and `nuxt build` succeeds.
+  - `vitest` passes 71/71: 33 from 14c and 38 new. Of the new ones, 21 are in `composer`, 10 in `noteActions`, and 7 are cache tests for optimistic notes and the sessions list.
+  - `composer14d.mjs` passed 142/142 against the API on 5010 and `nuxt dev` on 3100:
+    - Vite compiled every new or changed module, and `/app/campaigns/x?note=y` served.
+    - A DM and two players each drove the composer's flows through the web's own `utils/composer.ts`, `utils/noteActions.ts` and `utils/sessionStreamCache.ts`, with real hub pushes. Each flow checked that every viewer's stream and session list equalled a fresh `GET`. The flows were:
+      - posting a note, blank refused, optimistic, and the reset after posting;
+      - `DM`, `Me` and recap posts, and the player's 404 on a DM note's link;
+      - the push racing the response, which left one copy;
+      - the action lists per viewer, and the API's 403s for a player;
+      - an edit with its history, where an unchanged edit added no version;
+      - a visibility change, and hide and unhide with the toast to the author only;
+      - a delete, after which the history returned 404;
+      - the gap prompt, after back-dating `PostedAt` by 4 days: it read "Last note was 4 days ago. Start Session 2?", one tap started Session 2, the second player's picker updated live, a repeated tap returned the same session, and skipping a number was a 409;
+      - a back-post from the picker, which was added later and last in Session 1;
+      - a post with no pick, which followed a newly started session;
+      - a note link three sessions back, found by paging.
+  - The earlier runtime scripts still pass: `smoke14a` 70/70, `hub14b` 28/28, `stream14c` 111/111 and `pages13d` 19/19.
+  - Back-dating needs `to_jsonb(timestamptz)`, not `::text`. Postgres's text form (`… +00`) does not deserialize, so that campaign's reads return 400.
