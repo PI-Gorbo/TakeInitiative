@@ -38,7 +38,14 @@
                             current
                         </span>
                     </div>
+                    <!-- Removed images are deleted, so a version shows how many it had (16b). -->
+                    <p
+                        v-if="version.imageCount > 0"
+                        class="text-xs text-muted-foreground">
+                        🖼 {{ version.imageCount === 1 ? "1 image" : `${version.imageCount} images` }}
+                    </p>
                     <SessionNoteMarkdown
+                        v-if="version.text"
                         :campaignId="campaignId"
                         :text="version.text" />
                 </li>

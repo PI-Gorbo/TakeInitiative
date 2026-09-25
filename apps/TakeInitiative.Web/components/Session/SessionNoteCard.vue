@@ -83,11 +83,32 @@
             :viewer="{ memberId: currentMemberId, isDm }"
             @saved="editing = false"
             @cancel="editing = false" />
-        <SessionNoteMarkdown
-            v-else
-            :campaignId="campaignId"
-            :text="note.text"
-            :class="(note.isHidden || pending) && 'opacity-60'" />
+        <template v-else>
+            <!-- Images first, then the caption under them (16c). -->
+            <ImageNoteImages
+                v-if="note.images.length > 0"
+                :campaignId="campaignId"
+                :images="note.images"
+                :text="note.text"
+                :authorName="authorName"
+                :compact="!!timeline"
+                :class="['my-0.5', (note.isHidden || pending) && 'opacity-60']"
+                @open="(imageId) => emit('openImage', imageId)" />
+            <SessionNoteMarkdown
+                v-if="note.text"
+                :campaignId="campaignId"
+                :text="note.text"
+                :class="(note.isHidden || pending) && 'opacity-60'" />
+            <!-- The note-level half of a loose end (§5): the author resolves it. -->
+            <button
+                v-if="tagHint"
+                type="button"
+                class="-my-2 flex min-h-11 w-fit items-center gap-1 rounded px-1 text-xs text-gold hover:underline md:min-h-0 md:py-1"
+                @click="editing = true">
+                <span aria-hidden="true">⚠</span>
+                {{ IMAGE_MESSAGES.tagHint }}
+            </button>
+        </template>
 
         <WikiPromoteDialog
             v-if="promoteOpened"
@@ -144,8 +165,11 @@
     } from "~/utils/queries/sessions";
     import { addedLaterLabel, formatNoteDateTime, formatNoteTime, formatSessionDate } from "~/utils/sessionDates";
     import { isPendingNote } from "~/utils/sessionStreamCache";
+    import { IMAGE_MESSAGES, showTagHint } from "~/utils/images";
 
     const emit = defineEmits<{
+        /** An image was tapped: the stream or timeline opens the viewer (16c). */
+        openImage: [imageId: string];
         /** A long-press: the stream opens `NoteActionSheet` with these. */
         openActions: [payload: { actions: NoteAction[]; run: (action: NoteAction, visibility?: Visibility) => Promise<void> }];
     }>();
@@ -176,6 +200,10 @@
     );
 
     const pending = computed(() => isPendingNote(props.note.id));
+    // "⚠ Tag what's in this?": the author's own image note with no mention, in the stream.
+    const tagHint = computed(
+        () => !props.timeline && !pending.value && showTagHint(props.note, props.currentMemberId)
+    );
     const noteHref = computed(
         () => `/app/campaigns/${encodeURIComponent(props.campaignId)}?${NOTE_LINK_PARAM}=${encodeURIComponent(props.note.id)}`
     );

@@ -107,6 +107,8 @@
 
     const preview = computed(() => {
         const text = props.note.text.replace(/\s+/g, " ").trim();
+        if (!text && props.note.images.length > 0)
+            return props.note.images.length === 1 ? "🖼 1 image" : `🖼 ${props.note.images.length} images`;
         return text.length > 140 ? `${text.slice(0, 140)}…` : text;
     });
 

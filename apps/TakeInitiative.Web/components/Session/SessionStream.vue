@@ -56,7 +56,8 @@
                             :currentMemberId="campaign.currentMemberId"
                             :isDm="isDm"
                             :highlighted="note.id === highlightedId"
-                            @openActions="openSheet(note, $event)" />
+                            @openActions="openSheet(note, $event)"
+                            @openImage="imageViewer.open" />
                         <SessionNoteCard
                             v-for="note in entry.notes"
                             :key="note.id"
@@ -67,7 +68,8 @@
                             :currentMemberId="campaign.currentMemberId"
                             :isDm="isDm"
                             :highlighted="note.id === highlightedId"
-                            @openActions="openSheet(note, $event)" />
+                            @openActions="openSheet(note, $event)"
+                            @openImage="imageViewer.open" />
                     </section>
 
                     <div
@@ -103,6 +105,13 @@
             :campaignId="campaignId"
             :viewer="{ memberId: campaign.currentMemberId, isDm }"
             :findNote="findNote" />
+
+        <!-- One viewer for the whole stream, following `?image=` (16c). -->
+        <ImageViewer
+            :campaignId="campaignId"
+            :items="viewerItems"
+            :authorName="authorName"
+            :ready="!!streamQuery.data.value && !streamQuery.isFetching.value" />
 
         <!-- One sheet for the whole stream, opened by a long-press on a note (14e). -->
         <SessionNoteActionSheet
@@ -161,6 +170,14 @@
     const allNotes = computed<SessionNote[]>(() => flattenSessions(streamQuery.data.value).flatMap((s) => s.notes));
     const noteCount = computed(() => allNotes.value.length);
     const findNote = (noteId: string) => allNotes.value.find((n) => n.id === noteId);
+
+    // ── The image viewer (16c) ───────────────────────────────────────────────
+    const imageViewer = useImageViewer();
+    const viewerItems = computed(() =>
+        flattenSessions(streamQuery.data.value).flatMap((s) =>
+            s.notes.filter((n) => n.images.length > 0).map((note) => ({ note, sessionNumber: s.session.number }))
+        )
+    );
     const emptyState = computed(() => filterEmptyState(props.filter));
 
     // ── The long-press action sheet ──────────────────────────────────────────
