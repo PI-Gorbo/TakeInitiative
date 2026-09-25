@@ -430,7 +430,7 @@ notifications · offline · migrating v1 data (v2 starts empty).
 
 | # | Step | Goal |
 |---|---|---|
-| 13 | v2 skeleton | New branch. Campaign, members and roles, auth, OpenAPI type generation, PWA shell with three tabs |
+| 13 | v2 skeleton | Replace v1 in place. Campaign, members and roles, auth, OpenAPI type generation, PWA shell with three tabs |
 | 14 | Sessions + session notes | Composer, markdown, visibility, filters, back-posting, gap prompt, live over SignalR |
 | 15 | Wiki + mentions | `@` composer, entries, articles, timeline, promote, secret blocks, aliases, merge, edit access |
 | 16 | Images | S3 blob store, image notes, captions, galleries |

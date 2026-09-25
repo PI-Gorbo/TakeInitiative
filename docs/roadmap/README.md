@@ -83,7 +83,7 @@ Steps 08–11 ship as one stack of PRs (`gh stack`), one PR per step.
 | # | Step | Status | Depends on | Goal |
 |---|---|---|---|---|
 | 12 | [v2 design](12-v2-design-session.md) | `done` | Stage 2 | Glossary, UX, combat simplification, architecture and invariants agreed |
-| 13 | v2 skeleton | `todo` | 12 | New branch. Campaign, members and roles, auth, OpenAPI type generation, PWA shell with three tabs |
+| 13 | v2 skeleton | `todo` | 12 | Replace v1 in place. Campaign, members and roles, auth, OpenAPI type generation, PWA shell with three tabs |
 | 14 | Sessions + session notes | `todo` | 13 | Composer, markdown, visibility, filters, back-posting, gap prompt, live over SignalR |
 | 15 | Wiki + mentions | `todo` | 14 | `@` composer, entries, articles, timeline, promote, secret blocks, aliases, merge, edit access |
 | 16 | Images | `todo` | 14 | S3 blob store, image notes, captions, galleries, share target |
@@ -100,6 +100,9 @@ Steps 08–11 ship as one stack of PRs (`gh stack`), one PR per step.
 | 22 | D&D Beyond link | `todo` | 15 | Sheet URL on player characters, manual refresh of core stats |
 | 23 | In-browser suggestions | `todo` | 15, 17 | Zero-shot extraction (GLiNER vs Laya) in the browser; suggestions, never facts |
 | 24 | Discord import | `todo` | 16, 23 | Import a Discord export into sessions, with suggested mentions to review |
+
+v2 is built **in place on `dev`**, overwriting v1, as one stack of PRs
+(`gh stack`) with one PR per step. Every PR leaves `dev` runnable as v2 so far.
 
 Step 12 is the design every later step must respect, and its
 [invariants](12-v2-design-session.md#10-invariants) are binding. Step files 13+

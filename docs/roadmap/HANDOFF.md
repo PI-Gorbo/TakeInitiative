@@ -65,7 +65,7 @@ step starts, not ahead of time.
 
 | # | Step | Depends on | Goal |
 | --- | --- | --- | --- |
-| 13 | v2 skeleton | 12 | New branch. Campaign, members and roles, auth, OpenAPI type generation, PWA shell with three tabs |
+| 13 | v2 skeleton | 12 | Replace v1 in place. Campaign, members and roles, auth, OpenAPI type generation, PWA shell with three tabs |
 | 14 | Sessions + session notes | 13 | Composer, markdown, visibility, filters, back-posting, gap prompt, live over SignalR |
 | 15 | Wiki + mentions | 14 | `@` composer, entries, articles, timeline, promote, secret blocks, aliases, merge, edit access |
 | 16 | Images | 14 | S3 blob store (MinIO in dev), image notes, captions, galleries, share target |
@@ -89,12 +89,22 @@ once 15 lands.
 Start by writing `docs/roadmap/13-v2-skeleton.md` in the house format: Goal,
 Depends on, Files touched, Steps, Verify, and Notes / gotchas.
 
-> **Decide first:** grow v2 on a long-lived `v2` branch cut from `dev` (v1 left
-> untouched on `dev`), or build it as new projects next to v1 on `dev`? The
-> checklist below assumes the `v2` branch.
+**How v2 is built: in place, on `dev`, as stacked PRs.** v2 overwrites the
+v1 code rather than living next to it or on a long-lived branch. Each step is one
+PR stacked on the previous one with `gh stack`, which is how steps 08–11 shipped.
+
+- The roadmap rule still holds: every PR in the stack leaves `dev` runnable, as
+  **v2 so far**, not as v1.
+- Step 13 therefore deletes the v1 features that its new Campaign model breaks.
+  That includes v1 combat, which comes back as Combat v2 in step 18. The app has
+  no combat between those merges. This is acceptable because v2 starts with no
+  data and there are no users to protect.
+- Keep each PR reviewable on its own. If a step is too big for one PR, split it
+  inside the stack (13a, 13b) rather than letting one PR grow.
 
 - [ ] Write the step file and add its link in the README table
-- [ ] Cut the `v2` branch from `dev`
+- [ ] Start the stack from `dev` (`gh stack`), one PR per step
+- [ ] Delete the v1 features the new Campaign model replaces or breaks: `PlannedCombat`, v1 `Combat`, `CampaignMember`, `CampaignHub` payloads, and their pages. Keep `packages/TakeInitiative.Dice` and auth
 - [ ] API: add a Campaign stream (created, member joined, role changed) with
       inline projections and Marten correlation, causation and header metadata on
 - [ ] API: add an `Actor { MemberId }` on every event and a join code. Membership
