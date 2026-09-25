@@ -64,6 +64,40 @@ public static class WebAppClientExtensions
                 return cookie;
             });
 
-    public static Task<Result<Campaign>> PostCreateCampaign(this IWebAppClient client, PostCreateCampaignRequest request)
-        => client.Post<PostCreateCampaignRequest, Campaign>(request, "/api/campaign");
+    public static Task<Result<CampaignResponse>> PostCreateCampaign(this IWebAppClient client, PostCreateCampaignRequest request)
+        => client.Post<PostCreateCampaignRequest, CampaignResponse>(request, "/api/campaigns");
+
+    public static Task<Result<CampaignResponse>> PostJoinCampaign(this IWebAppClient client, PostJoinCampaignRequest request)
+        => client.Post<PostJoinCampaignRequest, CampaignResponse>(request, "/api/campaigns/join");
+
+    public static Task<Result<CampaignResponse>> PutMemberRole(this IWebAppClient client, Guid campaignId, Guid memberId, Role role)
+        => client.Put<object, CampaignResponse>(new { role = role.ToString() }, $"/api/campaigns/{campaignId}/members/{memberId}/role");
+
+    public static Task<Result<CampaignResponse>> GetCampaign(this IWebAppClient client, Guid campaignId)
+        => client.Get<CampaignResponse>($"/api/campaigns/{campaignId}");
+
+    public static Task<Result<GetCampaignsResponse>> GetCampaigns(this IWebAppClient client)
+        => client.Get<GetCampaignsResponse>("/api/campaigns");
+
+    private static Task<Result<TResponse>> Get<TResponse>(this IWebAppClient client, string url)
+        => Result.Try(async () =>
+            {
+                var result = await client.AlbaHost.Scenario(_ =>
+                {
+                    _.Get.Url(url);
+                    _.StatusCodeShouldBe(200);
+                });
+                return await result.ReadAsJsonAsync<TResponse>() ?? throw new InvalidCastException($"Could not cast response to type of {typeof(TResponse).Name}");
+            });
+
+    /// <summary>Sends a request and only checks the status code, for the failure paths.</summary>
+    public static Task ExpectStatus(this IWebAppClient client, HttpMethod method, string url, object? body, int statusCode)
+        => client.AlbaHost.Scenario(_ =>
+        {
+            if (method == HttpMethod.Get) _.Get.Url(url);
+            else if (method == HttpMethod.Post) _.Post.Json(body ?? new { }).ToUrl(url);
+            else if (method == HttpMethod.Put) _.Put.Json(body ?? new { }).ToUrl(url);
+            else throw new NotSupportedException(method.ToString());
+            _.StatusCodeShouldBe(statusCode);
+        });
 }

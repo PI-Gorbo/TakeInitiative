@@ -1,59 +1,65 @@
-using System.Net;
 using FastEndpoints;
+using FluentValidation;
 using Marten;
 using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Campaigns;
 
-
-public class PostCreateCampaign(IDocumentStore Store) : Endpoint<PostCreateCampaignRequest, Campaign>
+public record PostCreateCampaignRequest
 {
-    public override void Configure()
+    public required string Name { get; init; }
+}
+
+public class PostCreateCampaignRequestValidator : Validator<PostCreateCampaignRequest>
+{
+    public PostCreateCampaignRequestValidator()
     {
-        Post("/api/campaign");
-    }
-    public override async Task HandleAsync(PostCreateCampaignRequest req, CancellationToken ct)
-    {
-        var userId = this.GetUserIdOrThrowUnauthorized();
-        var result = await Store.Try(async (session) =>
-        {
-            var campaign = Campaign.CreateNewCampaign(userId, req.CampaignName);
-            var alreadyCampaignWithName = await session.Query<Campaign>()
-                .Where(x => x.OwnerId == userId && x.CampaignName == req.CampaignName)
-                .AnyAsync();
-
-            if (alreadyCampaignWithName)
-            {
-                ThrowError("You already own a campaign with that name.", (int)HttpStatusCode.BadRequest);
-            }
-
-            // Add the owner as a member in the campaign, set as the dungeon master.
-            CampaignMember dungeonMaster = CampaignMember.New(
-                CampaignId: campaign.Id,
-                UserId: userId,
-                IsDungeonMaster: true
-            );
-            campaign.AddCampaignMemberReference(CampaignMemberInfo.FromMember(dungeonMaster));
-
-            session.Store(campaign);
-            session.Store(dungeonMaster);
-
-            // Add a reference to the Application User.
-            var user = await session.LoadAsync<ApplicationUser>(userId, ct);
-            user?.Campaigns.Add(campaign.Id);
-            session.Store(user!);
-
-            await session.SaveChangesAsync(ct);
-            return campaign;
-        });
-
-        if (result.IsFailure)
-        {
-            ThrowError(result.Error, (int)HttpStatusCode.ServiceUnavailable);
-        }
-        await SendAsync(result.Value);
+        RuleFor(x => x.Name).NotEmpty().MaximumLength(100);
     }
 }
 
+/// <summary>Starts a Campaign stream. The caller becomes its owner and first member, as a DM.</summary>
+public class PostCreateCampaign(IDocumentSession session) : Endpoint<PostCreateCampaignRequest, CampaignResponse>
+{
+    private const int JoinCodeAttempts = 5;
 
+    public override void Configure()
+    {
+        Post("/api/campaigns");
+    }
 
+    public override async Task HandleAsync(PostCreateCampaignRequest req, CancellationToken ct)
+    {
+        var userId = this.GetUserIdOrThrowUnauthorized();
+        var campaignId = Guid.NewGuid();
+        var ownerMemberId = Guid.NewGuid();
+        var joinCode = await UnusedJoinCode(ct);
+
+        session.Events.StartStream<Campaign>(campaignId, new CampaignCreated(
+            Actor: Actor.Member(ownerMemberId),
+            Name: req.Name.Trim(),
+            OwnerMemberId: ownerMemberId,
+            OwnerUserId: userId,
+            JoinCode: joinCode));
+        await session.SaveChangesAsync(ct);
+
+        var campaign = await session.LoadAsync<Campaign>(campaignId, ct);
+        await SendAsync(await CampaignResponse.Build(session, campaign!, userId, ct), cancellation: ct);
+    }
+
+    /// <summary>Codes are random; the unique index on JoinCode is the backstop for a race.</summary>
+    private async Task<string> UnusedJoinCode(CancellationToken ct)
+    {
+        for (var attempt = 0; attempt < JoinCodeAttempts; attempt++)
+        {
+            var code = Campaign.NewJoinCode();
+            if (!await session.Query<Campaign>().AnyAsync(c => c.JoinCode == code, ct))
+            {
+                return code;
+            }
+        }
+
+        ThrowError("Could not generate a unique join code. Try again.", StatusCodes.Status503ServiceUnavailable);
+        return default!;
+    }
+}

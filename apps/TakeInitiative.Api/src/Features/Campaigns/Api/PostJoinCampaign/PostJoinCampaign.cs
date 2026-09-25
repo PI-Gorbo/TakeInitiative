@@ -1,56 +1,57 @@
-using CSharpFunctionalExtensions;
 using FastEndpoints;
+using FluentValidation;
 using Marten;
-using TakeInitiative.Utilities;
+using Microsoft.AspNetCore.SignalR;
 using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Campaigns;
 
-public class PostJoinCampaign(IDocumentSession session) : Endpoint<JoinCampaignByJoinCodeRequest, Campaign>
+public record PostJoinCampaignRequest
+{
+    public required string JoinCode { get; init; }
+}
+
+public class PostJoinCampaignRequestValidator : Validator<PostJoinCampaignRequest>
+{
+    public PostJoinCampaignRequestValidator()
+    {
+        RuleFor(x => x.JoinCode).NotEmpty();
+    }
+}
+
+/// <summary>Joins a campaign by join code, as a Player. Joining a campaign you are already in is a no-op.</summary>
+public class PostJoinCampaign(IDocumentSession session, IHubContext<CampaignHub> hub)
+    : Endpoint<PostJoinCampaignRequest, CampaignResponse>
 {
     public override void Configure()
     {
-        Post("/api/campaign/join");
+        Post("/api/campaigns/join");
     }
 
-    public override async Task HandleAsync(JoinCampaignByJoinCodeRequest req, CancellationToken ct)
+    public override async Task HandleAsync(PostJoinCampaignRequest req, CancellationToken ct)
     {
         var userId = this.GetUserIdOrThrowUnauthorized();
+        var joinCode = Campaign.NormaliseJoinCode(req.JoinCode);
 
-        var result = await CampaignIdShortener
-            .ToId(req.JoinCode).MapError(ApiError.BadRequest)
-            .Bind<Guid, Campaign, ApiError>(async (Guid campaignId) =>
-            {
-                // Check if there is a campaign that correlates to this id.
-                var campaign = await session.LoadAsync<Campaign>(campaignId, ct);
-                if (campaign == null)
-                {
-                    return ApiError.Invalid<JoinCampaignByJoinCodeRequest>(x => x.JoinCode, "Join code is invalid");
-                }
+        var found = await session.Query<Campaign>().FirstOrDefaultAsync(c => c.JoinCode == joinCode, ct);
+        if (found is null)
+        {
+            ThrowError(r => r.JoinCode, "Join code is invalid.");
+        }
 
-                // Check if the user is already a member of the campaign.
-                if (campaign.CampaignMemberInfo.Select(x => x.UserId).Contains(userId))
-                {
-                    return campaign; // Return early if the user is already part of the campaign.
-                }
+        // FetchForWriting gives optimistic concurrency on the stream for the append.
+        var stream = await session.Events.FetchForWriting<Campaign>(found.Id, ct);
+        var campaign = stream.Aggregate!;
+        if (campaign.MemberForUser(userId) is null)
+        {
+            var memberId = Guid.NewGuid();
+            stream.AppendOne(new MemberJoined(Actor.Member(memberId), memberId, userId));
+            await session.SaveChangesAsync(ct);
 
-                // Add the user to the campaign's list, and create a CampaignMember entity.
-                CampaignMember member = CampaignMember.New(campaignId, userId);
-                session.Store(member);
+            campaign = (await session.LoadAsync<Campaign>(campaign.Id, ct))!;
+            await hub.NotifyMemberJoined(campaign.Id, memberId);
+        }
 
-                campaign.CampaignMemberInfo.Add(CampaignMemberInfo.FromMember(member));
-                session.Store(campaign);
-
-                // Add a reference to the campaign on the application user
-                var user = await session.LoadAsync<ApplicationUser>(userId);
-                user?.Campaigns.Add(campaign.Id);
-                session.Store(user!);
-
-                await session.SaveChangesAsync(ct);
-
-                return campaign;
-            });
-
-        await this.ReturnApiResult(result);
+        await SendAsync(await CampaignResponse.Build(session, campaign, userId, ct), cancellation: ct);
     }
 }

@@ -25,6 +25,7 @@ internal class Program
         builder.Services.AddHealthChecks();
         builder.Services.AddFastEndpoints();
         builder.Services.AddSignalR();
+        builder.Services.AddSingleton<CampaignConnections>();
 
         // Custom Injection
         builder.Services.AddOptionObjects(builder.Configuration);
@@ -73,6 +74,7 @@ internal class Program
 
         app
             .UseCors("MainAppCors")
+            .UseMiddleware<CorrelationMiddleware>()
             .UseFastEndpoints(cfg =>
             {
                 cfg.Endpoints.Configurator = (endpoint) =>

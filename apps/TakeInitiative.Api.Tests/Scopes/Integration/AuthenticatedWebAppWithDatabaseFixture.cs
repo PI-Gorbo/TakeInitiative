@@ -27,13 +27,16 @@ public record UserSeedData
 public enum Users
 {
     DM,
-    Player
+    Player,
+    /// <summary>A signed-up user who is not a member of the seeded campaign.</summary>
+    Outsider
 }
 
 public record AuthenticatedWebAppWithDatabaseFixtureSeededData
 {
     public required UserSeedData DMUserData { get; set; }
     public required UserSeedData PlayerUserData { get; set; }
+    public required UserSeedData OutsiderUserData { get; set; }
     public required string CampaignName { get; set; }
     public required Guid CampaignId { get; set; }
 }
@@ -87,6 +90,13 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
             Username = "TESTING2"
         });
 
+        var OutsiderCookie = await CreateUserWithData(new PostSignUpRequest()
+        {
+            Email = "testing3@testingk.com",
+            Password = "Besbing!101",
+            Username = "TESTING3"
+        });
+
         // Temporary authentication fixed to dm to create the campaign.
         AlbaHost.BeforeEach((c) =>
         {
@@ -94,12 +104,12 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
         });
 
         // Create a campaign called 'Super Testing Campaign'
-        var createResponse = await this.PostCreateCampaign(new() { CampaignName = "Super Testing Campaign" });
+        var createResponse = await this.PostCreateCampaign(new() { Name = "Super Testing Campaign" });
         createResponse.Should().Succeed();
 
         SeedData = new()
         {
-            CampaignName = createResponse.Value.CampaignName,
+            CampaignName = createResponse.Value.Name,
             CampaignId = createResponse.Value.Id,
             DMUserData = new UserSeedData()
             {
@@ -110,10 +120,17 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
             },
             PlayerUserData = new UserSeedData()
             {
-                Email = "testing@testingk.com",
-                Password = "Besbing!99",
-                Username = "TESTING",
+                Email = "testing2@testingk.com",
+                Password = "Besbing!100",
+                Username = "TESTING2",
                 Cookie = PlayerCookie
+            },
+            OutsiderUserData = new UserSeedData()
+            {
+                Email = "testing3@testingk.com",
+                Password = "Besbing!101",
+                Username = "TESTING3",
+                Cookie = OutsiderCookie
             }
         };
 
@@ -126,6 +143,7 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
             {
                 Users.DM => SeedData.DMUserData.Cookie,
                 Users.Player => SeedData.PlayerUserData.Cookie,
+                Users.Outsider => SeedData.OutsiderUserData.Cookie,
                 _ => throw new NotImplementedException(),
             };
         });
