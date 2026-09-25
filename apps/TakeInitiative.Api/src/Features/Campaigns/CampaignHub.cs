@@ -35,6 +35,10 @@ public static class CampaignHubMessages
     public const string SessionNoteUpserted = "sessionNoteUpserted";
     public const string SessionNoteRemoved = "sessionNoteRemoved";
     public const string SessionNoteHidden = "sessionNoteHidden";
+
+    // Entries (step 15a). Entry messages go only to the entry's audience.
+    public const string EntryUpserted = "entryUpserted";
+    public const string EntryRemoved = "entryRemoved";
 }
 
 /// <summary>

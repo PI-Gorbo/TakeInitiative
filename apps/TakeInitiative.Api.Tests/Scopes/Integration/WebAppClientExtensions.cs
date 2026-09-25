@@ -1,6 +1,7 @@
 using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Primitives;
 using TakeInitiative.Api.Features.Campaigns;
+using TakeInitiative.Api.Features.Entries;
 using TakeInitiative.Api.Features.Sessions;
 using TakeInitiative.Api.Features.Users;
 namespace TakeInitiative.Api.Tests.Integration;
@@ -133,6 +134,35 @@ public static class WebAppClientExtensions
 
     public static Task<Result<GetSessionNoteHistoryResponse>> GetSessionNoteHistory(this IWebAppClient client, Guid campaignId, Guid noteId)
         => client.Get<GetSessionNoteHistoryResponse>($"/api/campaigns/{campaignId}/notes/{noteId}/history");
+
+    // Entries (step 15a).
+
+    public static Task<Result<GetEntriesResponse>> GetEntries(this IWebAppClient client, Guid campaignId)
+        => client.Get<GetEntriesResponse>($"/api/campaigns/{campaignId}/entries");
+
+    public static Task<Result<EntryResponse>> PostEntry(
+        this IWebAppClient client, Guid campaignId, string name, EntryKind kind = EntryKind.Character, Visibility visibility = Visibility.Everyone)
+        => client.Post<object, EntryResponse>(
+            new { name, kind = kind.ToString(), visibility = visibility.ToString() },
+            $"/api/campaigns/{campaignId}/entries");
+
+    public static Task<Result<EntryResponse>> GetEntry(this IWebAppClient client, Guid campaignId, Guid entryId)
+        => client.Get<EntryResponse>($"/api/campaigns/{campaignId}/entries/{entryId}");
+
+    public static Task<Result<EntryResponse>> PutEntryName(this IWebAppClient client, Guid campaignId, Guid entryId, string name)
+        => client.Put<object, EntryResponse>(new { name }, $"/api/campaigns/{campaignId}/entries/{entryId}/name");
+
+    public static Task<Result<EntryResponse>> PutEntryKind(this IWebAppClient client, Guid campaignId, Guid entryId, EntryKind kind)
+        => client.Put<object, EntryResponse>(new { kind = kind.ToString() }, $"/api/campaigns/{campaignId}/entries/{entryId}/kind");
+
+    public static Task<Result<EntryResponse>> PutEntryAliases(this IWebAppClient client, Guid campaignId, Guid entryId, params string[] aliases)
+        => client.Put<object, EntryResponse>(new { aliases }, $"/api/campaigns/{campaignId}/entries/{entryId}/aliases");
+
+    public static Task<Result<EntryResponse>> PutEntryVisibility(this IWebAppClient client, Guid campaignId, Guid entryId, Visibility visibility)
+        => client.Put<object, EntryResponse>(new { visibility = visibility.ToString() }, $"/api/campaigns/{campaignId}/entries/{entryId}/visibility");
+
+    public static Task<Result<EntryResponse>> PutEntryEditAccess(this IWebAppClient client, Guid campaignId, Guid entryId, EditAccess editAccess)
+        => client.Put<object, EntryResponse>(new { editAccess = editAccess.ToString() }, $"/api/campaigns/{campaignId}/entries/{entryId}/edit-access");
 
     private static Task<Result<TResponse>> Get<TResponse>(this IWebAppClient client, string url)
         => Result.Try(async () =>
