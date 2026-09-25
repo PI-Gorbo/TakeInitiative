@@ -18,7 +18,7 @@ PR, which sits on 14e (#205). Each PR leaves the app runnable:
 
 | PR | Branch | Sub-step | Runnable state after merge | Status |
 |---|---|---|---|---|
-| 15a | `v2/15a-entry-model` | Entry model and push | 14's app unchanged in the browser. The API creates, reads and edits entries, and pushes them only to who can see them | [ ] |
+| 15a | `v2/15a-entry-model` | Entry model and push | 14's app unchanged in the browser. The API creates, reads and edits entries, and pushes them only to who can see them | [x] |
 | 15b | `v2/15b-mention-index` | Mentions and timeline (API) | The same. Notes can mention and create entries, and the API serves timelines and mention counts | [ ] |
 | 15c | `v2/15c-wiki-pages` | Wiki home and entry page | The Wiki tab lists entries. An entry page shows its header and timeline, mentions in notes are chips, and "Add a note about X" works | [ ] |
 | 15d | `v2/15d-mention-composer` | `@` in the composer | `@` links or creates entries from the composer: a popover on desktop, the mention strip on a phone | [ ] |
@@ -751,3 +751,16 @@ This PR adds the nouns the step puts into code and UI:
 - **Not in 15:** deleting entries, un-merging (history shows a merge, and there is
   no undo), images and galleries (16), the combats list (18), connections and loose
   ends (19), and real-time co-editing (§12).
+- **15a, as built** (PR on `v2/15a-entry-model`):
+  - **The rule functions for 15b onward.** Reads: `EntryVisibility.VisibleTo(member)` (a LINQ expression for every entry query) and `EntryVisibility.CanSee(entry, member)` (single loads). Pushes: `EntryAudience.Groups(entry)`, and `EntryAudience.Of(entry)` for the `Audience` itself. Edits: `EntryPermissions.CanEdit` and `CanChangeAccess`, used through `EntryAccess.RequireVisibleEntry` (404), `RequireCanEdit` and `RequireCreatorOrDm` (403). Pushes go through `hub.NotifyEntryUpserted(entry)` and `hub.NotifyEntryMoved(before, after)`.
+  - **`Audience`** is a record with a `Reach` (`Everyone`, `DmsAndOwner`, `OwnerOnly`) and an `OwnerMemberId`. `SessionNoteAudience.Of(note)` maps a hidden `Everyone` note to the `DM` audience, and `SessionNoteVisibility.CanSee` and `SessionNoteAudience.Groups` are now one-liners on top of it. `SessionNoteVisibility.VisibleTo` stays hand-written, because Marten needs an expression. 14b's `SessionNoteAudienceTests` pass unchanged. Secret blocks (15e) can use `Audience.Of(block.Visibility, block's owner)`. The merge guard (15g) can compare two `Audience`s' `Reach`.
+  - **DTOs.** `EntrySummaryResponse` (lists and `entryUpserted`) and `EntryResponse` (`GET entries/{id}` and every write) have the same fields today. **`EntryResponse` is flat, not derived from the summary.** A derived record with no fields of its own generates `Summary & Record<string, never>` in `schema.d.ts`, which makes every field `never`. 15e and 15g add their fields to it directly. `GetEntriesResponse { entries }` and `EntryRemovedMessage { entryId }` are the other shapes.
+  - **Duplicate 409.** A `POST` name equal (ignoring case) to the name or an alias of a visible entry is a 409. The body is the usual `errors` map: `errors.name[0]` is the message and `errors.existingEntryId[0]` is the id (`PostEntry.ExistingEntryIdKey`). Rename does not check duplicates.
+  - **Aliases.** They are diffed by exact string, so changing only an alias's case is a removal and an addition. Order-only changes append nothing. Removals are appended before additions. A rename to a name equal (ignoring case) to an existing alias also appends `EntryAliasRemoved` for that alias, so an alias never equals the name. The name and alias rules are `EntryNameRules` in `PostEntry.cs` (`EntryName()`, `NormalizeAliases`, `IsCalled`). 15b's matching can reuse `IsCalled`.
+  - **Seams.** `Entry.Source` is an `EntrySource(Provider, ExternalId, Url)` and `Links` is `EntryLink(Url, Label?)[]`. Neither is read, written or sent. `EntryCreated.CreatedFromNoteId` defaults to null, and 15b sets it. `GET entries` orders by name until 15b adds counts.
+  - **Verify, as run in 15a** (API only, so no browser):
+    - `dotnet test` passes 132/132, and a second run also passed. That is 74 from 14 plus 58 new: `EntryAudienceTests` 21, `EntryTests` 12, `EntryVisibilityTests` 16 and `EntryHubTests` 9.
+    - `nuxi typecheck` is clean, `vitest` passes 94/94, `nuxt build` succeeds, and `schema.d.ts` is regenerated.
+    - `entries15a.mjs` passed 30/30 against the API on 5010, with a DM and two players on a real `CampaignHub`. It checked creation per visibility, lists and 404s per viewer, the duplicate 409 against visible entries only, edits, `Only me`, three visibility moves, and that each viewer's push-fed cache equals a fresh `GET`.
+    - The earlier scripts still pass: `smoke14a`, `hub14b` 28/28, `stream14c` 111/111, `composer14d` 142/142, `filters14e` 233/233 and `pages13d`.
+    - Verify 3: every `entry_*` row in the dev database's `mt_events` has a `correlation_id` and an `Actor`.
