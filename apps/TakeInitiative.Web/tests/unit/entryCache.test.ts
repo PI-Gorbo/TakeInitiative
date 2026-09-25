@@ -47,6 +47,7 @@ function note(id: string, minute: number, text = `note ${id}`): SessionNote {
 const page = (notes: SessionNote[], hasOlder: boolean): EntryTimeline => ({
     items: notes.map((n) => ({ note: n, sessionNumber: 1 })),
     hasOlder,
+    articleMentions: [],
 });
 // Newest page first; items oldest first within a page.
 const timeline: EntryTimelineData = {
@@ -85,9 +86,12 @@ describe("the wiki list", () => {
 });
 
 describe("mergeEntrySummary", () => {
-    it("updates the loaded entry with the same id only", () => {
-        const entry: Entry = summary(GUNDREN, "Gundren");
-        expect(mergeEntrySummary(entry, summary(GUNDREN, "Renamed"))!.name).toBe("Renamed");
+    it("updates the loaded entry with the same id only, and keeps its article", () => {
+        const article = { etag: "etag", blocks: [] };
+        const entry: Entry = { ...summary(GUNDREN, "Gundren"), article };
+        const merged = mergeEntrySummary(entry, summary(GUNDREN, "Renamed"))!;
+        expect(merged.name).toBe("Renamed");
+        expect(merged.article).toBe(article);
         expect(mergeEntrySummary(entry, summary(KLARG, "Klarg"))).toBe(entry);
         expect(mergeEntrySummary(undefined, summary(KLARG, "Klarg"))).toBeUndefined();
     });
