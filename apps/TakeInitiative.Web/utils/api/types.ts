@@ -57,3 +57,10 @@ export type Quote = Schemas["QuoteResponse"];
 export type EntryQuote = Schemas["EntryQuoteResponse"];
 /** An article that mentions an entry, on that entry's timeline (15e). */
 export type ArticleMention = Schemas["EntryArticleMention"];
+/** A Character's optional stat line (15g). */
+export type Stats = Schemas["StatsResponse"];
+/** An entry's history, redacted for the viewer (15g). */
+export type EntryHistory = Schemas["EntryHistoryResponse"];
+export type EntryHistoryItem = Schemas["EntryHistoryItem"];
+export type EntryChange = Schemas["EntryChange"];
+export type EntryChangeType = Schemas["EntryChangeType"];

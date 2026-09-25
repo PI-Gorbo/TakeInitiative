@@ -35,6 +35,10 @@ import { putEntryEditAccessRequest } from "~/utils/api/entry/putEntryEditAccessR
 import { putEntryKindRequest } from "~/utils/api/entry/putEntryKindRequest";
 import { putEntryNameRequest } from "~/utils/api/entry/putEntryNameRequest";
 import { putEntryVisibilityRequest } from "~/utils/api/entry/putEntryVisibilityRequest";
+import { postEntryMergeRequest } from "~/utils/api/entry/postEntryMergeRequest";
+import { putEntryClaimRequest } from "~/utils/api/entry/putEntryClaimRequest";
+import { putEntryStatsRequest } from "~/utils/api/entry/putEntryStatsRequest";
+import { getEntryHistoryRequest } from "~/utils/api/entry/getEntryHistoryRequest";
 
 export const useApi = () => {
     const { $axios } = useNuxtApp();
@@ -84,6 +88,10 @@ export const useApi = () => {
             putEditAccess: putEntryEditAccessRequest($axios),
             putArticle: putEntryArticleRequest($axios),
             promote: postEntryQuoteRequest($axios),
+            merge: postEntryMergeRequest($axios),
+            putClaim: putEntryClaimRequest($axios),
+            putStats: putEntryStatsRequest($axios),
+            history: getEntryHistoryRequest($axios),
         },
         admin: {
             getMaintenance: getMaintenanceRequest($axios),

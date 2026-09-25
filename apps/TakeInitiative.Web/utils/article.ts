@@ -76,6 +76,39 @@ export function toEditorBlocks(blocks: readonly ArticleBlock[], newKey: () => st
     }));
 }
 
+/**
+ * An old version of the article (from the entry's history, 15g), ready to edit and save
+ * over the current one. Saving it with the current etag goes through the same merge as
+ * any edit, so the blocks the viewer cannot see survive.
+ * - A block that still exists keeps its id, owner and quote. It takes the old visibility
+ *   only when the viewer may change it (its owner and the DMs); otherwise the current one,
+ *   since anything else is a 403.
+ * - A block that no longer exists is sent without an id (an unknown id is a 400), so it
+ *   comes back as a new block the viewer owns. A quote among them comes back as its text:
+ *   a quote's source can only be set by promote.
+ */
+export function restoreEditorBlocks(
+    version: readonly ArticleBlock[],
+    current: readonly ArticleBlock[],
+    viewer: EntryViewer,
+    newKey: () => string
+): EditorBlock[] {
+    const now = new Map(current.map((b) => [b.id.toLowerCase(), b]));
+    return toEditorBlocks(version, newKey).map((block) => {
+        const existing = block.id ? now.get(block.id.toLowerCase()) : undefined;
+        if (existing) {
+            return {
+                ...block,
+                id: existing.id,
+                ownerMemberId: existing.ownerMemberId,
+                quote: existing.quote ?? null,
+                visibility: canChangeBlockVisibility(existing, viewer) ? block.visibility : existing.visibility,
+            };
+        }
+        return { ...block, id: null, ownerMemberId: viewer.memberId, quote: null };
+    });
+}
+
 /** "+ Text" and "+ 🔒 Secret": an empty block the viewer owns. */
 export function newBlock(kind: "text" | "secret", viewer: EntryViewer, newKey: () => string): EditorBlock {
     return {

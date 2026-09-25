@@ -112,6 +112,7 @@ const entry = (id: string, name: string, extra: Partial<EntrySummary> = {}): Ent
     name,
     kind: "Character",
     aliases: [],
+    mergedFromIds: [],
     visibility: "Everyone",
     editAccess: "Anyone",
     creatorMemberId: "other",

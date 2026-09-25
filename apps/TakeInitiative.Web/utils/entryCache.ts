@@ -32,8 +32,33 @@ export function removeEntry(list: EntryList | undefined, entryId: string): Entry
 }
 
 /**
+ * `entryMerged` (15g): the merged entry leaves the list, and its id (with the ids merged
+ * into it before) joins the target's `mergedFromIds`, so the directory maps an old
+ * mention to the target at once. The target's own `entryUpserted` follows with the
+ * server's list; this only makes the order not matter. Its mention count is kept
+ * until the list is read again (counts are never pushed).
+ */
+export function applyMerge(list: EntryList | undefined, fromEntryId: string, intoEntryId: string): EntryList | undefined {
+    if (!list) return list;
+    const from = list.entries.find((item) => sameId(item.entry.id, fromEntryId));
+    const moved = [fromEntryId, ...(from?.entry.mergedFromIds ?? [])];
+    const entries = list.entries
+        .filter((item) => !sameId(item.entry.id, fromEntryId))
+        .map((item) => {
+            if (!sameId(item.entry.id, intoEntryId)) return item;
+            const known = new Set(item.entry.mergedFromIds.map((id) => id.toLowerCase()));
+            const added = moved.filter((id) => !known.has(id.toLowerCase()));
+            return added.length === 0
+                ? item
+                : { ...item, entry: { ...item.entry, mergedFromIds: [...item.entry.mergedFromIds, ...added] } };
+        });
+    return { ...list, entries };
+}
+
+/**
  * A pushed summary over a loaded entry. The summary has every field an entry has in
- * 15c; from 15e the article (and in 15g the stats) stay as loaded.
+ * 15c; from 15e the article and from 15g the stats stay as loaded (`entryArticleChanged`
+ * and `entryStatsChanged` read them again).
  */
 export function mergeEntrySummary(entry: Entry | undefined, summary: EntrySummary): Entry | undefined {
     if (!entry || !sameId(entry.id, summary.id)) return entry;

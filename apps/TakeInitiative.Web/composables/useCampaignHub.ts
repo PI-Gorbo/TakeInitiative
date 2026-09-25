@@ -5,6 +5,8 @@ import type { Campaign, EntrySummary, Role, Session, SessionNote } from "~/utils
 import { getCampaignQueryKey, getCampaignsQueryKey } from "~/utils/queries/campaign";
 import {
     applyEntryArticleChanged,
+    applyEntryMerged,
+    applyEntryStatsChanged,
     applyEntryRemoved,
     applyEntrySummary,
     invalidateEntries,
@@ -33,6 +35,8 @@ type SessionNoteHiddenMessage = {
 // Payloads of the entry messages (the API's EntryHub.cs).
 type EntryRemovedMessage = { entryId: string };
 type EntryArticleChangedMessage = { entryId: string };
+type EntryMergedMessage = { fromEntryId: string; intoEntryId: string };
+type EntryStatsChangedMessage = { entryId: string };
 
 /**
  * Keeps the open campaign live over `CampaignHub`: joins the `campaign:{id}` group
@@ -131,6 +135,19 @@ export function useCampaignHub(campaignId: MaybeRefOrGetter<string | undefined>)
     connection.on("entryArticleChanged", ({ entryId }: EntryArticleChangedMessage) => {
         const id = joinedCampaignId.value;
         if (id) applyEntryArticleChanged(queryClient, id, entryId);
+    });
+
+    // Merge (15g): sent to the target's audience, who could all see the merged entry.
+    // The target's `entryUpserted` follows; a merged entry the viewer can no longer see
+    // arrives as `entryRemoved` instead.
+    connection.on("entryMerged", ({ fromEntryId, intoEntryId }: EntryMergedMessage) => {
+        const id = joinedCampaignId.value;
+        if (id) applyEntryMerged(queryClient, id, fromEntryId, intoEntryId);
+    });
+    // Sent only to members whose readable stats changed (15g), with no content.
+    connection.on("entryStatsChanged", ({ entryId }: EntryStatsChangedMessage) => {
+        const id = joinedCampaignId.value;
+        if (id) applyEntryStatsChanged(queryClient, id, entryId);
     });
 
     connection.onreconnected(async () => {

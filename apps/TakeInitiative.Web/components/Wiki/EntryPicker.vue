@@ -1,7 +1,8 @@
 <template>
     <!-- Picks the entry to promote into (15f): 15d's matching over the entries the
          viewer can edit, plus Create "…" with a kind. The new entry is created with
-         the note's visibility when the dialog promotes. -->
+         the note's visibility when the dialog promotes. Merge (15g) uses it with
+         `noCreate` and the merged entry left out. -->
     <div class="flex flex-col gap-2">
         <div
             v-if="target"
@@ -29,8 +30,8 @@
                 ref="input"
                 v-model="query"
                 type="search"
-                aria-label="Find or create an entry"
-                placeholder="Find or create an entry…"
+                :aria-label="noCreate ? 'Find an entry' : 'Find or create an entry'"
+                :placeholder="noCreate ? 'Find an entry…' : 'Find or create an entry…'"
                 :aria-controls="`${id}-list`"
                 class="h-11 w-full rounded-md border bg-background px-3 text-base outline-none focus-visible:ring-1 focus-visible:ring-ring md:h-9 md:text-sm"
                 @keydown.enter.prevent="targets[0] && choose(targets[0])" />
@@ -71,7 +72,9 @@
                     {{
                         query.trim()
                             ? "No entry you can edit is called that."
-                            : "No entries you can edit yet. Type a name to create one."
+                            : noCreate
+                              ? "No other entries you can edit."
+                              : "No entries you can edit yet. Type a name to create one."
                     }}
                 </li>
             </ul>
@@ -95,6 +98,10 @@
         viewer: EntryViewer;
         /** The entry is already picked (the timeline's Promote). */
         locked?: boolean;
+        /** No Create "…" row (merge, 15g). */
+        noCreate?: boolean;
+        /** An entry to leave out: the one being merged. */
+        excludeId?: string;
     }>();
     const target = defineModel<PromoteTarget | null>({ required: true });
     /** The kind of an entry to create. */
@@ -103,7 +110,13 @@
     const id = useId();
     const query = ref("");
     const directory = useEntryDirectory(() => props.campaignId);
-    const targets = computed(() => promoteTargets(query.value, directory.value, props.viewer));
+    const targets = computed(() =>
+        promoteTargets(query.value, directory.value, props.viewer).filter((t) =>
+            t.kind === "create"
+                ? !props.noCreate
+                : !props.excludeId || t.entry.id.toLowerCase() !== props.excludeId.toLowerCase()
+        )
+    );
     const input = useTemplateRef<HTMLInputElement>("input");
 
     function choose(option: PromoteTarget) {

@@ -10,6 +10,7 @@ import type { Entry, EntryList, EntrySummary, EntryTimeline, SessionNote } from 
 import { apiErrorStatus } from "~/utils/apiErrorParser";
 import { entryDirectory } from "~/utils/entries";
 import {
+    applyMerge,
     mergeEntrySummary,
     removeEntry,
     timelineTouchedBy,
@@ -194,11 +195,44 @@ export function applyEntryArticleChanged(queryClient: QueryClient, campaignId: s
     void queryClient.invalidateQueries({ queryKey: timelinesKey(campaignId) });
 }
 
+/** Whether a query is `["entry" | "entryTimeline" | "entryHistory", campaignId, one of ids]`. */
+const isEntryQueryFor = (queryKey: readonly unknown[], campaignId: string, ids: readonly string[]) =>
+    ["entry", "entryTimeline", "entryHistory"].includes(String(queryKey[0])) &&
+    queryKey[1] === campaignId &&
+    ids.some((id) => String(queryKey[2]).toLowerCase() === id.toLowerCase());
+
+/**
+ * `entryMerged` (15g): `fromEntryId` now resolves to `intoEntryId`. The directory maps
+ * the old id to the target at once (`applyMerge`), so chips link there. The target and
+ * the merged entry's page (whose id now redirects) are read again, as are the loaded
+ * timelines (the target's gained the merged entry's notes) and the counts.
+ */
+export function applyEntryMerged(queryClient: QueryClient, campaignId: string, fromEntryId: string, intoEntryId: string) {
+    queryClient.setQueryData<EntryList>(getEntriesQueryKey(campaignId), (list) => applyMerge(list, fromEntryId, intoEntryId));
+    void queryClient.invalidateQueries({
+        predicate: (query) => isEntryQueryFor(query.queryKey, campaignId, [fromEntryId, intoEntryId]),
+    });
+    void queryClient.invalidateQueries({ queryKey: timelinesKey(campaignId) });
+    void queryClient.invalidateQueries({ queryKey: getEntriesQueryKey(campaignId) });
+}
+
+/**
+ * `entryStatsChanged` (15g): the stats this viewer may read changed (an edit, or a claim
+ * that showed or hid them). No content, so a loaded entry and its history are read again.
+ */
+export function applyEntryStatsChanged(queryClient: QueryClient, campaignId: string, entryId: string) {
+    void queryClient.invalidateQueries({
+        predicate: (query) =>
+            (query.queryKey[0] === "entry" || query.queryKey[0] === "entryHistory") &&
+            isEntryQueryFor(query.queryKey, campaignId, [entryId]),
+    });
+}
+
 /** Everything entry-related for a campaign: after a hub join, a reconnect, or a role change. */
 export function invalidateEntries(queryClient: QueryClient, campaignId: string) {
     return queryClient.invalidateQueries({
         predicate: (query) =>
-            ["entries", "entry", "entryTimeline"].includes(String(query.queryKey[0])) && query.queryKey[1] === campaignId,
+            ["entries", "entry", "entryTimeline", "entryHistory"].includes(String(query.queryKey[0])) && query.queryKey[1] === campaignId,
     });
 }
 
@@ -207,10 +241,34 @@ export function invalidateEntries(queryClient: QueryClient, campaignId: string) 
 /** A write's response: the list, and the entry itself (it is the whole entry). */
 export function applyEntryResponse(queryClient: QueryClient, campaignId: string, entry: Entry) {
     applyEntrySummary(queryClient, campaignId, entry);
-    queryClient.setQueryData(getEntryQueryKey(campaignId, entry.id), (old: Entry | undefined) =>
-        old ? { ...old, ...entry } : entry
-    );
+    // The whole entry as the caller sees it: replaced, so a field the response leaves out
+    // (stats the caller may no longer read, 15g) does not linger.
+    queryClient.setQueryData<Entry>(getEntryQueryKey(campaignId, entry.id), entry);
+    // Every write changes the history (a no-op write is harmless to refetch).
+    void queryClient.invalidateQueries({ queryKey: getEntryHistoryQueryKey(campaignId, entry.id), exact: true });
 }
+
+// ── History (15g) ─────────────────────────────────────────────────────────────
+
+export const getEntryHistoryQueryKey = (campaignId: MaybeRefOrGetter<string>, entryId: MaybeRefOrGetter<string>) => [
+    "entryHistory",
+    campaignId,
+    entryId,
+];
+
+/** An entry's history for the viewer, oldest first. Read when the history dialog opens. */
+export const getEntryHistoryQuery = (
+    campaignId: RefOrGetter<string>,
+    entryId: RefOrGetter<string>,
+    enabled: RefOrGetter<boolean> = () => true
+) =>
+    queryOptions({
+        queryKey: getEntryHistoryQueryKey(campaignId, entryId),
+        queryFn: () => useApi().entry.history({ campaignId: toValue(campaignId), entryId: toValue(entryId) }),
+        enabled: () => !!toValue(campaignId) && !!toValue(entryId) && toValue(enabled),
+        staleTime: 0,
+        retry: retryUnless404,
+    });
 
 // Any member: create an entry. A duplicate name is a 409 with `errors.existingEntryId`.
 export const createEntryMutation = () => {
@@ -290,5 +348,35 @@ export const promoteNoteMutation = () => {
                 queryKey: timelinesKey(campaignId),
             });
         },
+    });
+};
+
+// Can edit both (15g): merge an entry into another. The response is the target.
+export const mergeEntryMutation = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: useApi().entry.merge,
+        onSuccess: (entry, { campaignId, entryId }) => {
+            applyEntryResponse(queryClient, campaignId, entry);
+            applyEntryMerged(queryClient, campaignId, entryId, entry.id);
+        },
+    });
+};
+
+// Claim or unclaim a Character as a player character (15g).
+export const putEntryClaimMutation = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: useApi().entry.putClaim,
+        onSuccess: (entry, { campaignId }) => applyEntryResponse(queryClient, campaignId, entry),
+    });
+};
+
+// The claimer and the DMs (the DMs only when unclaimed): a Character's stats (15g).
+export const putEntryStatsMutation = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: useApi().entry.putStats,
+        onSuccess: (entry, { campaignId }) => applyEntryResponse(queryClient, campaignId, entry),
     });
 };
