@@ -564,6 +564,7 @@ export function pendingEntrySummary(
         name: entry.name,
         kind: entry.kind,
         aliases: [],
+        mergedFromIds: [],
         visibility: args.visibility,
         editAccess: "Anyone",
         creatorMemberId: args.creatorMemberId,
