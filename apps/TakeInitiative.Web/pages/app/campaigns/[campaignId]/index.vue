@@ -30,7 +30,9 @@
                 :campaign="campaign"
                 :filter="filter"
                 :about="aboutEntry"
-                @aboutUsed="clearParam(ABOUT_PARAM)" />
+                :share="shareId"
+                @aboutUsed="clearParam(ABOUT_PARAM)"
+                @shareUsed="clearParam(SHARE_PARAM)" />
         </div>
 
         <CampaignMembersPanel
@@ -48,6 +50,7 @@
     import { FILTER_PARAM, filterFromQuery, filterToQuery } from "~/utils/streamFilters";
     import { getCampaignQuery } from "~/utils/queries/campaign";
     import { getEntriesQuery } from "~/utils/queries/entries";
+    import { SHARE_PARAM, validShareId } from "~/utils/shareTarget";
 
     definePageMeta({
         layout: "campaign",
@@ -102,4 +105,8 @@
         },
         { immediate: true }
     );
+
+    // A share from the phone (16e): `/app/share` sends `?share={id}`, and the composer
+    // takes the images once and drops the parameter.
+    const shareId = computed(() => validShareId(route.query[SHARE_PARAM]));
 </script>

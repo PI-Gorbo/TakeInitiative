@@ -100,6 +100,14 @@
                 multiple
                 hidden
                 @change="onFilesPicked" />
+            <!-- 📷 (16e): the same, from the camera, on touch screens only. -->
+            <input
+                ref="cameraInput"
+                type="file"
+                accept="image/*"
+                capture="environment"
+                hidden
+                @change="onFilesPicked" />
 
             <p
                 v-if="state.text.length >= NOTE_TEXT_WARN_AT"
@@ -122,7 +130,7 @@
 <script setup lang="ts">
     import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/vue-query";
     import { useElementSize, useMediaQuery, useNow } from "@vueuse/core";
-    import { AtSign, Bold, ImagePlus, Italic, List, ScrollText } from "lucide-vue-next";
+    import { AtSign, Bold, Camera, ImagePlus, Italic, List, ScrollText } from "lucide-vue-next";
     import { toast } from "vue-sonner";
     import { apiErrorMessage, apiErrorStatus } from "~/utils/apiErrorParser";
     import type { Campaign, EntrySummary, SessionStreamFilter, Visibility } from "~/utils/api/types";
@@ -176,6 +184,15 @@
         imageIdsErrorFrom,
         readyImages,
     } from "~/utils/images";
+    import {
+        SHARE_MESSAGES,
+        browserCaches,
+        captionAfterShare,
+        deleteShare,
+        readShare,
+        shareIsEmpty,
+        shareWarnings,
+    } from "~/utils/shareTarget";
 
     const props = withDefaults(
         defineProps<{
@@ -184,10 +201,12 @@
             filter?: SessionStreamFilter;
             /** "Add a note about X" (15c, `?about=`): start the text with its mention. */
             about?: Pick<EntrySummary, "id" | "name" | "visibility">;
+            /** A share from the phone's share sheet (16e, `?share=`): attach its images. */
+            share?: string;
         }>(),
-        { filter: "All", about: undefined }
+        { filter: "All", about: undefined, share: undefined }
     );
-    const emit = defineEmits<{ posted: []; aboutUsed: [] }>();
+    const emit = defineEmits<{ posted: []; aboutUsed: []; shareUsed: [] }>();
 
     const id = useId();
     const campaignId = computed(() => props.campaign.id);
@@ -420,8 +439,13 @@
     const toolbarItems = computed<ComposerToolbarItem[]>(() => [
         // First (design §3a): for keyboards where `@` is hard to reach.
         { id: "mention", label: "Mention an entry", icon: AtSign, run: () => mentions.trigger() },
-        // 🖼 (16c), on every screen size. 📷 joins it on touch screens in 16e.
+        // 🖼 (16c), on every screen size.
         { id: "gallery", label: "Attach images", icon: ImagePlus, run: pickImages },
+        // 📷 (16e), on touch screens only: on desktop `capture` is ignored, and it
+        // would be a second 🖼.
+        ...(touch.value
+            ? [{ id: "camera", label: "Take a photo", icon: Camera, run: takePhoto } satisfies ComposerToolbarItem]
+            : []),
         { id: "bold", label: "Bold", icon: Bold, shortcut: `${mod}B`, run: () => format("bold") },
         { id: "italic", label: "Italic", icon: Italic, shortcut: `${mod}I`, run: () => format("italic") },
         { id: "list", label: "List", icon: List, run: () => applyEdit(toggleList) },
@@ -442,6 +466,7 @@
     const nudging = ref(false);
     const dragging = ref(false);
     const fileInput = useTemplateRef<HTMLInputElement>("fileInput");
+    const cameraInput = useTemplateRef<HTMLInputElement>("cameraInput");
 
     // Once every upload is done, a waiting ➤ posts (or nudges); a failure stops it.
     watch(uploads.busy, (busy) => {
@@ -460,6 +485,9 @@
 
     function pickImages() {
         fileInput.value?.click();
+    }
+    function takePhoto() {
+        cameraInput.value?.click();
     }
     /** Attaches files; paste and drop pass only images, and say so when some were not. */
     function attach(files: readonly File[], { onlyImages }: { onlyImages: boolean }) {
@@ -501,6 +529,34 @@
         nudging.value = false;
         focus();
     }
+
+    // ── A share (16e) ────────────────────────────────────────────────────────
+    // Consumed once, as `?about=` is: the service worker kept the shared images and
+    // text in Cache Storage. They are attached (prepared and uploaded as usual), the
+    // text fills an empty caption, and the note targets the current session. Then the
+    // cache entry goes and the page drops `?share=`.
+    const takenShares = new Set<string>();
+    watch(
+        () => props.share,
+        async (shareId) => {
+            if (!shareId || takenShares.has(shareId)) return;
+            takenShares.add(shareId);
+            const caches = browserCaches();
+            const item = await readShare(caches, shareId).catch(() => undefined);
+            await deleteShare(caches, shareId).catch(() => undefined);
+            emit("shareUsed");
+            if (!item || shareIsEmpty(item)) {
+                toast.error(item && item.notImages > 0 ? SHARE_MESSAGES.notImages : SHARE_MESSAGES.missing);
+                return;
+            }
+            state.sessionId = null;
+            state.text = captionAfterShare(state.text, item);
+            uploads.add(item.files);
+            for (const warning of shareWarnings(item)) toast.warning(warning);
+            void nextTick(focus);
+        },
+        { immediate: true }
+    );
 
     // ── Commands (14e) ───────────────────────────────────────────────────────
     const commands = useComposerCommands({ state, sessions, textarea });
@@ -566,6 +622,6 @@
         }
     }
 
-    // `attach` takes files the way 🖼 does (16e's 📷 and share target use it).
+    // `attach` takes files the way 🖼 does (📷 and the share target go through it too).
     defineExpose({ focus, state, attach: (files: readonly File[]) => uploads.add(files) });
 </script>
