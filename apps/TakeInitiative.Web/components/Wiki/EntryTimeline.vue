@@ -51,7 +51,8 @@
                         :promoteEntryId="canEdit ? entryId : undefined"
                         :authorName="authorName(item.note.authorMemberId)"
                         :currentMemberId="campaign.currentMemberId"
-                        :isDm="isDm">
+                        :isDm="isDm"
+                        @openImage="imageViewer.open">
                         <!-- Design §4: [Promote] on each timeline note, into this entry. -->
                         <template #actions="{ actions, run }">
                             <Button
@@ -85,6 +86,13 @@
                 {{ mention.name }}
             </NuxtLink>
         </p>
+
+        <!-- The image viewer, following `?image=` (16c). -->
+        <ImageViewer
+            :campaignId="campaign.id"
+            :items="items"
+            :authorName="authorName"
+            :ready="!!timelineQuery.data.value && !timelineQuery.isFetching.value" />
 
         <!-- Desktop: "Add to wiki" by a selection inside a timeline note (15f). -->
         <WikiPromoteSelection
@@ -122,6 +130,7 @@
     );
     const items = computed(() => timelineItems(timelineQuery.data.value));
     const findNote = (noteId: string) => items.value.find((i) => i.note.id === noteId)?.note;
+    const imageViewer = useImageViewer();
 
     // Every page carries the same list; the newest is enough.
     const directory = useEntryDirectory(() => props.campaign.id);

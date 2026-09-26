@@ -21,7 +21,7 @@ which sits on 15g (#213). Each PR leaves the app runnable:
 |---|---|---|---|---|
 | 16a | `v2/16a-blob-store` | Blob store, upload and serve (API) | 15's app unchanged in the browser. `pnpm dev` also starts MinIO. The API stores an upload as two WebP variants and serves them to their uploader only | [x] |
 | 16b | `v2/16b-image-notes-api` | Image notes (API) | The same in the browser. Notes take `imageIds`, may have no text, and their images are served to exactly the note's audience. The Text and Images filters work on the server | [x] |
-| 16c | `v2/16c-image-notes-web` | Image notes in the composer and stream | 🖼, paste and drop attach images. The stream draws them, a viewer opens them full screen, the note editor adds and removes them, and the filters work | [ ] |
+| 16c | `v2/16c-image-notes-web` | Image notes in the composer and stream | 🖼, paste and drop attach images. The stream draws them, a viewer opens them full screen, the note editor adds and removes them, and the filters work | [x] |
 | 16d | `v2/16d-galleries` | Session and entry galleries | A session divider opens its session's gallery, and an entry page has a Gallery section | [ ] |
 | 16e | `v2/16e-share-target` | Camera and share target | 📷 on a phone. Sharing images to the installed PWA opens the composer with them attached. The step's Verify passes | [ ] |
 
@@ -794,3 +794,105 @@ Add each sub-step on top with `gh stack add v2/16a-blob-store` and so on.
       filters per viewer, the error keys, an edit that removes an image (gone from MinIO's
       data directory), and a delete. Every earlier script still passes, from `16a` 47/47 and
       `smoke14a` through `merge15g` 63/63 and `pages15g` 23/23.
+- **16c, as built** (PR on `v2/16c-image-notes-web`):
+  - **Names for 16d and 16e.**
+    - `ImageNoteImages` (`components/Image/NoteImages.vue`) draws a note's images, with
+      `{ campaignId, images, text, authorName, compact? }`, and emits `open(imageId)`.
+      There is no `ImageGrid` yet: that is 16d's.
+    - `ImageViewer` (`components/Image/ImageViewer.vue`) is mounted once per list, in
+      `SessionStream` and in `WikiEntryTimeline`. Its props are `{ campaignId, items:
+      { note, sessionNumber? }[], authorName, ready }`. It shows the note whose
+      `images` hold `?image=`, and swipes through that note's images only. 16d's
+      gallery-wide swipe needs a sequence prop added.
+    - `useImageViewer()` returns `{ imageId, open(id), show(id), close() }`. `open`
+      pushes `?image=` and `show` replaces it. `close` goes back when the viewer pushed,
+      and drops the parameter otherwise. `ready` drops an `?image=` that no loaded
+      note has.
+    - `imageUrl`/`useImageUrl()` build the `src`. A plain `<img>` is enough: the
+      login cookie is `samesite=lax; domain=localhost`, checked in `16c.mjs`.
+  - **The upload queue** (`composables/useImageAttachments.ts`):
+    `useImageAttachments({ attachments: Ref<Attachment[]>, campaignId })` returns
+    `{ add(files), remove(key), retry(key), move(key, ±1), release(list), discard(),
+    busy, failed, images }`.
+    - `add` takes at most 10 in all and toasts the 11th. Each file goes through
+      `prepareImage` (`utils/images.ts`, whose browser deps are `createImageBitmap` and
+      a canvas) and is uploaded at once, with progress.
+    - `remove` aborts an upload that is still running, revokes the preview, and
+      `DELETE`s a ready upload that is on no note. A failed `DELETE` is ignored.
+    - `retry` uploads again from the kept `File`. An attachment with no file (from a
+      draft) is removed instead.
+    - `release` revokes the previews of posted attachments. `discard` removes every
+      attachment that is not on the note (the editor's Cancel, and its unmount without
+      a save).
+    - The composer exposes `attach(files)` (`defineExpose`) for 16e's 📷 and share
+      target. 📷 is a `ComposerToolbarItem` after `gallery` in `Composer.vue`'s
+      `toolbarItems`.
+  - **Deviation: the draft keeps `images`, not `imageIds`.** The draft JSON gains
+    `images: { id, width, height }[]` for the ready attachments. The optimistic note
+    needs each image's size to lay out before any byte arrives, and an id alone
+    doesn't give it. `draftImages` drops malformed entries, and a draft's attachments
+    draw from `thumb`. An `<img>` error (a swept upload) drops the attachment quietly
+    through `AttachmentStrip`'s `missing` event. A plain `<img>` can't tell a 404 from
+    a network error, so a blip also drops the attachment. Its upload is swept later.
+  - **Preparing.** As planned, with one addition. A JPEG, PNG, WebP or GIF within
+    20 MB that the browser can't decode goes up unchanged, so the API has the last
+    word. The 20 MB check runs again after a redraw, before anything is sent. The file
+    picker passes every file, because a HEIC can arrive with an empty type. Paste and
+    drop keep only `image/*` files and toast the unsupported-type message for the rest.
+  - **Posting.** ➤ while an upload runs sets `waiting`: the toolbar's ➤ shows a
+    spinner (`ComposerToolbar`'s new `waiting` prop) and posts once the uploads end.
+    `buildPostBody` returns null while any attachment is `preparing`, `uploading` or
+    `failed`.
+    - The captionless nudge is `captionNudge` plus `ImageCaptionNudge`. A caption, or
+      removing the images, dismisses it.
+    - On a failed post, the attachments come back with the text when the composer is
+      still empty. `errors.imageIds` (400 or 409) turns every uploaded attachment that
+      is on no note into `failed` (`failUploads`), so retry uploads it again.
+  - **Drawing.** "+n" counts the images not drawn, so five images give "+1" on the
+    fourth tile. A single image is at most `min(100%, 70vh × ratio)` wide and `max-w-xl`.
+    The timeline's compact card uses `compact`, a row of up to four 64 px thumbnails.
+    The viewer's "S12 · Sam · 8:15pm" is a `NuxtLink` with `replace` to `?note=`.
+  - **Added.**
+    - `notePlainText` in `utils/markdown.ts`, for `alt`.
+    - An image note with no caption offers no Promote (`noteActionsFor`), since 16b
+      refuses to quote it.
+    - `NoteActionSheet`'s preview says "🖼 2 images" for a captionless note, and the edit
+      history shows each version's `imageCount`.
+    - `dropPendingCopy` also compares images, so two captionless posts don't swap
+      their optimistic copies. `sameNote` compares images, so an image-only edit
+      redraws.
+    - `noteMatchesFilter`'s argument type takes `images` as optional, so
+      `sessionStreamCache.ts` still has no runtime imports.
+  - **Touch targets.** The ✕ on a 64 px thumbnail is 32 px, because a 44 px ✕ would
+    cover most of the tile. Retry is the whole tile. The move buttons and the viewer's
+    controls are 44 px.
+  - **Verify, as run in 16c** (no browser):
+    - `dotnet test` passes 453/453, unchanged.
+    - `nuxi typecheck` is clean and `nuxt build` succeeds.
+    - `vitest` passes 305/305: 263 plus `images.test.ts` 32, `composer` 5,
+      `sessionStreamCache` 4, `noteActions` 1, and one reworded 14e test for the new
+      Images empty state.
+    - No API contract changed, so `schema.d.ts` is untouched.
+    - `16c.mjs` passed 64/64 against the API on 5010 and `nuxt dev` on 3100.
+      - Uploads from the web's origin: the CORS headers with credentials, the DELETE
+        preflight, and no bytes without the cookie. The cookie is `samesite=lax`.
+      - ✕, and the 404 a draft sees afterwards.
+      - Posting ordered `imageIds`, with a caption and without. D and Q see both notes
+        and fetch their thumb and display variants.
+      - A 🔒 DM image note: absent from the players' streams, and its URL is a 404 for them.
+      - The Text and Images filters for D and Q.
+      - The error keys `imageIds` and `text`.
+      - The editor: keep the images, then add, reorder and remove one (the removed one
+        is a 404 for all three members). History `imageCount`, and an edit to no images
+        moving the note from Images to Text.
+      - The campaign page with `?filter=images` and `?image=`, and every new or changed
+        module compiling in `nuxt dev`.
+    - The earlier scripts still pass: `16a` 47/47, `16b` 57/57, `smoke14a`, `hub14b`,
+      `stream14c` 111/111, `composer14d` 142/142, `filters14e` 233/233, `pages13d`,
+      `entries15a`, `mentions15b`, `pages15c`, `wiki15c`, `mentions15d`, `pages15d`,
+      `articles15e`, `article15f`, `pages15f`, `merge15g` and `pages15g`.
+      `filters14e`'s check of the old Images empty state ("step 16") was updated to the
+      new wording.
+    - Not checked: anything in a browser. That covers the picker, paste, drop, previews
+      and progress, the nudge, the viewer's swipe and pinch, the back gesture, and the
+      phone keyboard. Verify 3 and 4 are for 16e's full pass.

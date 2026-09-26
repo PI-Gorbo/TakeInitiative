@@ -49,16 +49,21 @@
             type="submit"
             size="icon"
             class="size-11 shrink-0 md:size-9"
-            aria-label="Post note"
+            :aria-label="waiting ? 'Post note once the images are uploaded' : 'Post note'"
             :disabled="!canPost"
             @mousedown.prevent>
-            <SendHorizontal />
+            <!-- ➤ pressed while images upload: it posts once they are up (16c). -->
+            <LoaderCircle
+                v-if="waiting"
+                class="animate-spin"
+                aria-hidden="true" />
+            <SendHorizontal v-else />
         </Button>
     </div>
 </template>
 
 <script setup lang="ts">
-    import { SendHorizontal } from "lucide-vue-next";
+    import { LoaderCircle, SendHorizontal } from "lucide-vue-next";
     import type { ComposerToolbarItem } from "~/utils/composer";
 
     withDefaults(
@@ -67,7 +72,9 @@
             canPost?: boolean;
             /** The ➤ button; off in the article editor, which saves the whole article. */
             showPost?: boolean;
+            /** ➤ was pressed and waits for uploads (16c). */
+            waiting?: boolean;
         }>(),
-        { canPost: false, showPost: true }
+        { canPost: false, showPost: true, waiting: false }
     );
 </script>

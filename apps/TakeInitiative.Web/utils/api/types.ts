@@ -64,3 +64,7 @@ export type EntryHistory = Schemas["EntryHistoryResponse"];
 export type EntryHistoryItem = Schemas["EntryHistoryItem"];
 export type EntryChange = Schemas["EntryChange"];
 export type EntryChangeType = Schemas["EntryChangeType"];
+/** An image on a session note (16b): its id and the display variant's size. */
+export type NoteImage = Schemas["NoteImageResponse"];
+/** An uploaded image, on no note yet (16a). */
+export type UploadedImage = Schemas["ImageResponse"];

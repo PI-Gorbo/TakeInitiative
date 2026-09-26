@@ -10,11 +10,20 @@
             ref="form"
             :class="[
                 'flex flex-col gap-1 border-t bg-background px-2 pb-2 pt-1',
-                pinned && 'fixed inset-x-0 z-30 px-safe',
+                pinned ? 'fixed inset-x-0 z-30 px-safe' : 'relative',
             ]"
             :style="pinned ? pinnedStyle : undefined"
             aria-label="Composer"
-            @submit.prevent="post">
+            @submit.prevent="post()"
+            @dragover="onDragOver"
+            @dragleave="onDragLeave"
+            @drop="onDrop">
+            <!-- Dropping files on the composer attaches them (16c, desktop). -->
+            <div
+                v-if="dragging"
+                class="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-md border-2 border-dashed border-gold bg-background/90 text-sm font-medium text-gold">
+                Drop images to attach them
+            </div>
             <div class="flex min-w-0 items-center gap-1">
                 <ComposerSessionPicker
                     v-model="state.sessionId"
@@ -46,6 +55,7 @@
                     class="max-h-[40dvh] min-h-11 w-full resize-none overflow-y-auto rounded-md border bg-background px-3 py-2.5 text-base leading-snug outline-none placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring md:min-h-10 md:py-2 md:text-sm"
                     @keydown="onKeydown"
                     @input="grow"
+                    @paste="onPaste"
                     @focus="onFocus"
                     @blur="onBlur" />
 
@@ -70,7 +80,26 @@
                 <slot
                     name="strip"
                     :state="state" />
+                <!-- The images (16c), above the toolbar so on a phone they stay above the
+                     keyboard, with the caption nudge under them. -->
+                <ImageAttachmentStrip
+                    :campaignId="campaignId"
+                    :attachments="state.attachments"
+                    @remove="uploads.remove"
+                    @retry="uploads.retry"
+                    @missing="uploads.remove" />
+                <ImageCaptionNudge
+                    v-if="nudging"
+                    @postAnyway="post({ confirmed: true })"
+                    @addCaption="addCaption" />
             </div>
+            <input
+                ref="fileInput"
+                type="file"
+                accept="image/*"
+                multiple
+                hidden
+                @change="onFilesPicked" />
 
             <p
                 v-if="state.text.length >= NOTE_TEXT_WARN_AT"
@@ -81,7 +110,8 @@
 
             <ComposerToolbar
                 :items="toolbarItems"
-                :canPost="canPost" />
+                :canPost="canPost"
+                :waiting="waiting" />
         </form>
         <ComposerRevealDialog
             ref="reveal"
@@ -92,7 +122,7 @@
 <script setup lang="ts">
     import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/vue-query";
     import { useElementSize, useMediaQuery, useNow } from "@vueuse/core";
-    import { AtSign, Bold, Italic, List, ScrollText } from "lucide-vue-next";
+    import { AtSign, Bold, ImagePlus, Italic, List, ScrollText } from "lucide-vue-next";
     import { toast } from "vue-sonner";
     import { apiErrorMessage, apiErrorStatus } from "~/utils/apiErrorParser";
     import type { Campaign, EntrySummary, SessionStreamFilter, Visibility } from "~/utils/api/types";
@@ -138,6 +168,14 @@
     import { invalidateEntries } from "~/utils/queries/entries";
     import { composerPinned } from "~/utils/keyboardInset";
     import { flattenSessions, newPendingNoteId } from "~/utils/sessionStreamCache";
+    import {
+        IMAGE_MESSAGES,
+        captionNudge,
+        failUploads,
+        imageFiles,
+        imageIdsErrorFrom,
+        readyImages,
+    } from "~/utils/images";
 
     const props = withDefaults(
         defineProps<{
@@ -160,10 +198,14 @@
     // write to it.
     const state = reactive<ComposerState>(initialComposerState(loadDraft(storage, campaignId.value)));
 
-    watch(campaignId, (next) => Object.assign(state, initialComposerState(loadDraft(storage, next))));
-    // The draft keeps the mentions' links and new entries too (15d).
+    watch(campaignId, (next) => {
+        uploads.release(state.attachments);
+        Object.assign(state, initialComposerState(loadDraft(storage, next)));
+    });
+    // The draft keeps the mentions' links and new entries too (15d), and the uploaded
+    // images (16c).
     watch(
-        () => [state.text, state.links, state.newEntries] as const,
+        () => [state.text, state.links, state.newEntries, state.attachments] as const,
         () => {
             saveDraft(storage, campaignId.value, state);
             void nextTick(grow);
@@ -235,7 +277,14 @@
     const queryClient = useQueryClient();
     // The limit counts the stored form (15d), which is what the API checks.
     const storedLength = computed(() => toStoredText(state.text, state.links).trim().length);
-    const canPost = computed(() => postableText(state.text) !== null && storedLength.value <= NOTE_TEXT_MAX);
+    // With images the caption may be empty (16c). ➤ waits for uploads, and is off while
+    // one has failed.
+    const canPost = computed(
+        () =>
+            !uploads.failed.value &&
+            (postableText(state.text) !== null || (state.attachments.length > 0 && state.text.trim() === "")) &&
+            storedLength.value <= NOTE_TEXT_MAX
+    );
     const overLimit = computed(() => storedLength.value > NOTE_TEXT_MAX);
     const viewer = computed(() => ({
         memberId: props.campaign.currentMemberId,
@@ -243,11 +292,25 @@
     }));
     const reveal = useTemplateRef<{ confirm: (v: Visibility, items: RevealItem[]) => Promise<boolean> }>("reveal");
     const placeholder = computed(() => {
+        if (state.attachments.length > 0) return IMAGE_MESSAGES.captionPlaceholder;
         const target = targetSession(state.sessionId, sessions.value);
         return target ? `Write a note in Session ${target.number}…` : "Write a session note…";
     });
 
-    async function post() {
+    async function post({ confirmed = false }: { confirmed?: boolean } = {}) {
+        if (uploads.failed.value) return;
+        // ➤ while images are still going up: post once they are all up.
+        if (uploads.busy.value) {
+            waiting.value = true;
+            return;
+        }
+        waiting.value = false;
+        // Images and no caption: ask first (§3, §5).
+        if (captionNudge({ text: state.text, imageCount: state.attachments.length, confirmed }) === "confirm") {
+            nudging.value = true;
+            return;
+        }
+        nudging.value = false;
         const body = buildPostBody(state, sessions.value);
         if (!body) return;
         // The reveal warning (15d): nothing is revealed without the tap.
@@ -264,6 +327,7 @@
                   session: target,
                   authorMemberId: props.campaign.currentMemberId,
                   now: new Date(),
+                  images: readyImages(state.attachments),
               })
             : undefined;
 
@@ -273,6 +337,8 @@
         focus();
         try {
             await postNote.mutateAsync({ campaignId: campaignId.value, body, optimistic });
+            // The images are on the note now: only their previews go.
+            uploads.release(sent.attachments);
             emit("posted");
         } catch (error) {
             const entryError = newEntryErrorFrom(error);
@@ -283,9 +349,18 @@
                 void invalidateEntries(queryClient, campaignId.value);
                 return;
             }
-            // Give the text back unless something new was typed meanwhile.
-            const restore = state.text.trim() === "";
+            // Give the text and images back unless something new was written or attached
+            // meanwhile. The images are still uploaded, so a retry is quick.
+            const restore = state.text.trim() === "" && state.attachments.length === 0;
             if (restore) Object.assign(state, sent);
+            else uploads.release(sent.attachments);
+            // 16b's `errors.imageIds`: an upload was swept or taken meanwhile; upload again.
+            const imagesError = imageIdsErrorFrom(error);
+            if (imagesError) {
+                if (restore) state.attachments = failUploads(state.attachments, imagesError);
+                toast.error(imagesError);
+                return;
+            }
             if (entryError?.kind === "duplicate") {
                 // Someone made an entry with that name meanwhile: link it instead.
                 const name = sent.newEntries.find((e) => e.id.toLowerCase() === entryError.newEntryId.toLowerCase())?.name;
@@ -345,6 +420,8 @@
     const toolbarItems = computed<ComposerToolbarItem[]>(() => [
         // First (design §3a): for keyboards where `@` is hard to reach.
         { id: "mention", label: "Mention an entry", icon: AtSign, run: () => mentions.trigger() },
+        // 🖼 (16c), on every screen size. 📷 joins it on touch screens in 16e.
+        { id: "gallery", label: "Attach images", icon: ImagePlus, run: pickImages },
         { id: "bold", label: "Bold", icon: Bold, shortcut: `${mod}B`, run: () => format("bold") },
         { id: "italic", label: "Italic", icon: Italic, shortcut: `${mod}I`, run: () => format("italic") },
         { id: "list", label: "List", icon: List, run: () => applyEdit(toggleList) },
@@ -358,6 +435,72 @@
             run: () => (state.isRecap = !state.isRecap),
         },
     ]);
+
+    // ── Images (16c) ─────────────────────────────────────────────────────────
+    const uploads = useImageAttachments({ attachments: toRef(state, "attachments"), campaignId });
+    const waiting = ref(false);
+    const nudging = ref(false);
+    const dragging = ref(false);
+    const fileInput = useTemplateRef<HTMLInputElement>("fileInput");
+
+    // Once every upload is done, a waiting ➤ posts (or nudges); a failure stops it.
+    watch(uploads.busy, (busy) => {
+        if (busy || !waiting.value) return;
+        waiting.value = false;
+        if (!uploads.failed.value) void post();
+    });
+    // A caption, or no images any more, answers the nudge.
+    watch(
+        () => [state.text.trim() !== "", state.attachments.length] as const,
+        ([hasCaption, count]) => {
+            if (hasCaption || count === 0) nudging.value = false;
+            if (count === 0) waiting.value = false;
+        }
+    );
+
+    function pickImages() {
+        fileInput.value?.click();
+    }
+    /** Attaches files; paste and drop pass only images, and say so when some were not. */
+    function attach(files: readonly File[], { onlyImages }: { onlyImages: boolean }) {
+        const images = onlyImages ? imageFiles(files) : [...files];
+        if (onlyImages && images.length < files.length) toast.error(IMAGE_MESSAGES.unsupported);
+        uploads.add(images);
+    }
+    function onFilesPicked(event: Event) {
+        const input = event.target as HTMLInputElement;
+        attach(Array.from(input.files ?? []), { onlyImages: false });
+        input.value = "";
+        // iOS: the picker blurred the text box; focus brings the pinned composer back.
+        focus();
+    }
+    function onPaste(event: ClipboardEvent) {
+        const files = imageFiles(event.clipboardData?.files);
+        if (files.length === 0) return;
+        event.preventDefault();
+        uploads.add(files);
+    }
+    const carriesFiles = (event: DragEvent) => !!event.dataTransfer && Array.from(event.dataTransfer.types).includes("Files");
+    function onDragOver(event: DragEvent) {
+        if (!carriesFiles(event)) return;
+        event.preventDefault();
+        dragging.value = true;
+    }
+    function onDragLeave(event: DragEvent) {
+        // Moving between the composer's own children is not leaving it.
+        if (event.relatedTarget instanceof Node && form.value?.contains(event.relatedTarget)) return;
+        dragging.value = false;
+    }
+    function onDrop(event: DragEvent) {
+        dragging.value = false;
+        if (!carriesFiles(event)) return;
+        event.preventDefault();
+        attach(Array.from(event.dataTransfer?.files ?? []), { onlyImages: true });
+    }
+    function addCaption() {
+        nudging.value = false;
+        focus();
+    }
 
     // ── Commands (14e) ───────────────────────────────────────────────────────
     const commands = useComposerCommands({ state, sessions, textarea });
@@ -423,5 +566,6 @@
         }
     }
 
-    defineExpose({ focus, state });
+    // `attach` takes files the way 🖼 does (16e's 📷 and share target use it).
+    defineExpose({ focus, state, attach: (files: readonly File[]) => uploads.add(files) });
 </script>

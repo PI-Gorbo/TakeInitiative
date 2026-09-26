@@ -202,6 +202,35 @@ describe("noteMatchesFilter", () => {
         expect(noteMatchesFilter(recap, "Images", ME)).toBe(false);
         expect(noteMatchesFilter(recap, "Combats", ME)).toBe(false);
     });
+
+    it("splits Text and Images by whether the note has images (16c)", () => {
+        const image = { id: "i1", width: 640, height: 480 };
+        const text = note("t", 1, 0);
+        const pictured = note("i", 1, 0, { images: [image] });
+        const captionless = note("c", 1, 0, { images: [image], text: "" });
+        expect(noteMatchesFilter(text, "Text", ME)).toBe(true);
+        expect(noteMatchesFilter(text, "Images", ME)).toBe(false);
+        expect(noteMatchesFilter(pictured, "Text", ME)).toBe(false);
+        expect(noteMatchesFilter(pictured, "Images", ME)).toBe(true);
+        expect(noteMatchesFilter(captionless, "Images", ME)).toBe(true);
+        expect(noteMatchesFilter(pictured, "All", ME)).toBe(true);
+    });
+
+    it("moves a note edited from text to images between the filtered streams (16c)", () => {
+        const edited = { ...note("e", 4, 30), images: [{ id: "i1", width: 10, height: 10 }] };
+        expect(ids(upsertNote(stream(), edited, "Images", ME), 4)).toContain("e");
+        const textStream = upsertNote(stream(), note("e", 4, 30), "Text", ME);
+        expect(ids(textStream, 4)).toContain("e");
+        expect(ids(upsertNote(textStream, edited, "Text", ME), 4)).not.toContain("e");
+    });
+
+    it("sees a change of images as a change", () => {
+        const before = note("e", 4, 30);
+        const data = upsertNote(stream(), before, "All", ME);
+        const after = upsertNote(data, { ...before, images: [{ id: "i1", width: 10, height: 10 }] }, "All", ME);
+        expect(after).not.toBe(data);
+        expect(upsertNote(after, { ...before, images: [{ id: "i1", width: 10, height: 10 }] }, "All", ME)).toBe(after);
+    });
 });
 
 describe("optimistic notes (14d)", () => {
@@ -238,6 +267,15 @@ describe("optimistic notes (14d)", () => {
         const shown = upsertNote(stream(), temp, "All", ME);
         expect(dropPendingCopy(shown, note("x", 4, 31, { authorMemberId: OTHER, text: "hello" }))).toBe(shown);
         expect(dropPendingCopy(shown, note("x", 4, 31, { authorMemberId: ME, text: "other" }))).toBe(shown);
+    });
+
+    it("dropPendingCopy tells two captionless image notes apart by their images (16c)", () => {
+        const temp = note(newPendingNoteId(), 4, 30, { authorMemberId: ME, text: "", images: [{ id: "i1", width: 1, height: 1 }] });
+        const shown = upsertNote(stream(), temp, "All", ME);
+        const other = note("x", 4, 31, { authorMemberId: ME, text: "", images: [{ id: "i2", width: 1, height: 1 }] });
+        expect(dropPendingCopy(shown, other)).toBe(shown);
+        const same = note("y", 4, 31, { authorMemberId: ME, text: "", images: [{ id: "i1", width: 1, height: 1 }] });
+        expect(ids(dropPendingCopy(shown, same), 4)).toEqual(["c"]);
     });
 });
 

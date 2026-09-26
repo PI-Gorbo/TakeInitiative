@@ -17,11 +17,13 @@ export type NoteActionContext = {
  * The actions for a note, in menu order (design §3a's sheet: Promote to wiki, Edit,
  * Hide, Copy link). A note still being posted has none. Promote is for anyone who can
  * see the note (15f); the entry picker then offers only entries they can edit. A DM
- * never hides a `Me` note: only its author can see it.
+ * never hides a `Me` note: only its author can see it. A note with no text (an image
+ * note with no caption, 16c) offers no Promote.
  */
 export function noteActionsFor(note: SessionNote, { isAuthor, isDm }: NoteActionContext): NoteAction[] {
     if (isPendingNote(note.id)) return [];
-    const actions: NoteAction[] = ["promote"];
+    // Promote copies text only, so an image note with no caption has nothing to promote (16b).
+    const actions: NoteAction[] = note.text.trim() ? ["promote"] : [];
     if (isAuthor) actions.push("edit", "visibility");
     if (isDm && note.visibility !== "Me") actions.push(note.isHidden ? "unhide" : "hide");
     if (note.editedAt) actions.push("history");
