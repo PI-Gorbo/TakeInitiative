@@ -14,6 +14,27 @@ export default defineNuxtConfig({
                     type: "image/png",
                     href: "/yellowDice.png",
                 },
+                {
+                    rel: "apple-touch-icon",
+                    sizes: "180x180",
+                    href: "/icons/apple-touch-icon.png",
+                },
+            ],
+            meta: [
+                // From Ripple: `viewport-fit=cover` lets the shell pad itself with
+                // the safe-area insets, and `interactive-widget=overlays-content`
+                // keeps the layout still when the on-screen keyboard opens.
+                {
+                    name: "viewport",
+                    content:
+                        "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=overlays-content",
+                },
+                { name: "theme-color", content: "#030712" },
+                { name: "apple-mobile-web-app-capable", content: "yes" },
+                {
+                    name: "apple-mobile-web-app-status-bar-style",
+                    content: "black-translucent",
+                },
             ],
             title: "Take Initiative",
         },
@@ -55,8 +76,63 @@ export default defineNuxtConfig({
         "@pinia/nuxt",
         "nuxt-typed-router",
         "v-wave/nuxt",
-        "@nuxtjs/device"
+        "@nuxtjs/device",
+        "@vite-pwa/nuxt",
     ],
+
+    // Ripple's PWA config (apps/pwa-nuxt): installable, with a hand-written
+    // service worker and no precaching or offline support (design §3a, §12).
+    pwa: {
+        strategies: "injectManifest",
+        // Ripple has "../public" because its Nuxt srcDir is `app/`; here it is the root.
+        srcDir: "public",
+        filename: "sw.js",
+        registerType: "autoUpdate",
+        injectManifest: {
+            injectionPoint: undefined,
+        },
+        manifest: {
+            id: "take-initiative",
+            name: "Take Initiative",
+            short_name: "Take Initiative",
+            description:
+                "Run your campaign: session notes, a wiki built from them, and combat.",
+            start_url: "/app",
+            scope: "/",
+            display: "standalone",
+            orientation: "portrait",
+            // `--background` in assets/index.css (hsl 224 71.4% 4.1%).
+            theme_color: "#030712",
+            background_color: "#030712",
+            icons: [
+                {
+                    src: "/icons/icon-192.png",
+                    sizes: "192x192",
+                    type: "image/png",
+                },
+                {
+                    src: "/icons/icon-512.png",
+                    sizes: "512x512",
+                    type: "image/png",
+                    purpose: "any",
+                },
+                {
+                    src: "/icons/icon-maskable-512.png",
+                    sizes: "512x512",
+                    type: "image/png",
+                    purpose: "maskable",
+                },
+            ],
+            launch_handler: {
+                client_mode: "focus-existing",
+            },
+            prefer_related_applications: false,
+        },
+        devOptions: {
+            enabled: true,
+            type: "classic",
+        },
+    },
 
     shadcn: {
         /**
