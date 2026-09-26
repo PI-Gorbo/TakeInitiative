@@ -308,6 +308,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/campaigns/{campaignId}/entries/{entryId}/timeline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetEntryTimeline"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/campaigns/{campaignId}/entries/{entryId}/aliases": {
         parameters: {
             query?: never;
@@ -578,7 +594,16 @@ export interface components {
             text: string;
             visibility: components["schemas"]["Visibility"];
             isRecap: boolean;
+            newEntries?: components["schemas"]["NewEntryRequest"][] | null;
         };
+        NewEntryRequest: {
+            /** Format: guid */
+            id: string;
+            name: string;
+            kind: components["schemas"]["EntryKind"];
+        };
+        /** @enum {string} */
+        EntryKind: "Character" | "Place" | "Faction" | "Item" | "Event" | "Other";
         PostStartSessionRequest: {
             /** Format: int32 */
             number: number;
@@ -586,6 +611,7 @@ export interface components {
         PutSessionNoteRequest: {
             text: string;
             isRecap: boolean;
+            newEntries?: components["schemas"]["NewEntryRequest"][] | null;
         };
         PutSessionNoteHiddenRequest: {
             hidden: boolean;
@@ -597,7 +623,14 @@ export interface components {
             title?: string | null;
         };
         GetEntriesResponse: {
-            entries: components["schemas"]["EntrySummaryResponse"][];
+            entries: components["schemas"]["EntryListItemResponse"][];
+        };
+        EntryListItemResponse: {
+            entry: components["schemas"]["EntrySummaryResponse"];
+            /** Format: int32 */
+            mentionCount: number;
+            /** Format: date-time */
+            lastMentionedAt?: string | null;
         };
         EntrySummaryResponse: {
             /** Format: guid */
@@ -614,8 +647,6 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
-        /** @enum {string} */
-        EntryKind: "Character" | "Place" | "Faction" | "Item" | "Event" | "Other";
         /** @enum {string} */
         EditAccess: "Anyone" | "OnlyMe";
         GetEntriesRequest: Record<string, never>;
@@ -635,6 +666,16 @@ export interface components {
             updatedAt: string;
         };
         GetEntryRequest: Record<string, never>;
+        EntryTimelineResponse: {
+            items: components["schemas"]["EntryTimelineItem"][];
+            hasOlder: boolean;
+        };
+        EntryTimelineItem: {
+            note: components["schemas"]["SessionNoteResponse"];
+            /** Format: int32 */
+            sessionNumber: number;
+        };
+        GetEntryTimelineRequest: Record<string, never>;
         PostEntryRequest: {
             name: string;
             kind: components["schemas"]["EntryKind"];
@@ -1495,6 +1536,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EntryResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GetEntryTimeline: {
+        parameters: {
+            query?: {
+                before?: string | null;
+                take?: number | null;
+            };
+            header?: never;
+            path: {
+                campaignId: string;
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryTimelineResponse"];
                 };
             };
             /** @description Unauthorized */

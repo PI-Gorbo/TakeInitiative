@@ -18,6 +18,11 @@
     </ItemGroup>
 
     <ItemGroup>
+        <!-- Case lists shared with the web's unit tests (e.g. mentions.json). -->
+        <None Include="Fixtures\**\*.json" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="Alba" Version="7.4.1" />
         <PackageReference Include="CSharpFunctionalExtensions.FluentAssertions" Version="2.0.0" />
         <PackageReference Include="FakeItEasy" Version="8.3.0" />

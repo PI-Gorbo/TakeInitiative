@@ -105,16 +105,29 @@ public static class WebAppClientExtensions
 
     public static Task<Result<SessionNoteResponse>> PostSessionNote(
         this IWebAppClient client, Guid campaignId, string text,
-        Visibility visibility = Visibility.Everyone, bool isRecap = false, Guid? sessionId = null)
+        Visibility visibility = Visibility.Everyone, bool isRecap = false, Guid? sessionId = null,
+        params NewEntry[] newEntries)
         => client.Post<object, SessionNoteResponse>(
-            new { sessionId, text, visibility = visibility.ToString(), isRecap },
+            new { sessionId, text, visibility = visibility.ToString(), isRecap, newEntries = NewEntriesBody(newEntries) },
             $"/api/campaigns/{campaignId}/notes");
+
+    /// <summary>An entry to create with a note (step 15b): the id must be mentioned in the text.</summary>
+    public record NewEntry(Guid Id, string Name, EntryKind Kind = EntryKind.Character)
+    {
+        /// <summary>The stored mention of this entry, <c>@[name](entry:id)</c>.</summary>
+        public string Mention => $"@[{Name}](entry:{Id})";
+    }
+
+    private static object[]? NewEntriesBody(NewEntry[] newEntries)
+        => newEntries.Length == 0 ? null : newEntries.Select(e => (object)new { id = e.Id, name = e.Name, kind = e.Kind.ToString() }).ToArray();
 
     public static Task<Result<GetSessionNoteResponse>> GetSessionNote(this IWebAppClient client, Guid campaignId, Guid noteId)
         => client.Get<GetSessionNoteResponse>($"/api/campaigns/{campaignId}/notes/{noteId}");
 
-    public static Task<Result<SessionNoteResponse>> PutSessionNote(this IWebAppClient client, Guid campaignId, Guid noteId, string text, bool isRecap = false)
-        => client.Put<object, SessionNoteResponse>(new { text, isRecap }, $"/api/campaigns/{campaignId}/notes/{noteId}");
+    public static Task<Result<SessionNoteResponse>> PutSessionNote(
+        this IWebAppClient client, Guid campaignId, Guid noteId, string text, bool isRecap = false, params NewEntry[] newEntries)
+        => client.Put<object, SessionNoteResponse>(
+            new { text, isRecap, newEntries = NewEntriesBody(newEntries) }, $"/api/campaigns/{campaignId}/notes/{noteId}");
 
     public static Task<Result<SessionNoteResponse>> PutSessionNoteVisibility(this IWebAppClient client, Guid campaignId, Guid noteId, Visibility visibility)
         => client.Put<object, SessionNoteResponse>(new { visibility = visibility.ToString() }, $"/api/campaigns/{campaignId}/notes/{noteId}/visibility");
@@ -163,6 +176,18 @@ public static class WebAppClientExtensions
 
     public static Task<Result<EntryResponse>> PutEntryEditAccess(this IWebAppClient client, Guid campaignId, Guid entryId, EditAccess editAccess)
         => client.Put<object, EntryResponse>(new { editAccess = editAccess.ToString() }, $"/api/campaigns/{campaignId}/entries/{entryId}/edit-access");
+
+    // Mentions and timelines (step 15b).
+
+    public static Task<Result<EntryTimelineResponse>> GetEntryTimeline(
+        this IWebAppClient client, Guid campaignId, Guid entryId, DateTimeOffset? before = null, int? take = null)
+    {
+        var query = new List<string>();
+        if (before is not null) query.Add($"before={Uri.EscapeDataString(before.Value.ToString("O"))}");
+        if (take is not null) query.Add($"take={take}");
+        var url = $"/api/campaigns/{campaignId}/entries/{entryId}/timeline" + (query.Count > 0 ? "?" + string.Join("&", query) : "");
+        return client.Get<EntryTimelineResponse>(url);
+    }
 
     private static Task<Result<TResponse>> Get<TResponse>(this IWebAppClient client, string url)
         => Result.Try(async () =>

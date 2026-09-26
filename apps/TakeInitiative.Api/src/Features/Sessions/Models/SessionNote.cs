@@ -6,6 +6,8 @@ namespace TakeInitiative.Api.Features.Sessions;
 /// Inline projection of a SessionNote stream (stream id = note id). Hidden state is
 /// three flat fields so the visibility filter (<see cref="SessionNoteVisibility"/>)
 /// stays a simple LINQ expression. <see cref="SessionNoteDeleted"/> deletes the document.
+/// <see cref="MentionedEntryIds"/> is derived from the text on every post and edit, so the
+/// events carry nothing new and replaying the stream rebuilds it (invariant 6).
 /// </summary>
 public record SessionNote
 {
@@ -22,6 +24,12 @@ public record SessionNote
     public bool IsHidden { get; init; }
     public Guid? HiddenByMemberId { get; init; }
     public DateTimeOffset? HiddenAt { get; init; }
+    /// <summary>
+    /// The entries the text mentions (<see cref="MentionParser.EntryIds"/>): distinct, in order
+    /// of first mention. Unknown ids and ids from other campaigns are kept and never match,
+    /// because <see cref="MentionIndex"/> joins them to the campaign's visible entries.
+    /// </summary>
+    public Guid[] MentionedEntryIds { get; init; } = [];
 
     public const int TextMaxLength = 10_000;
 
@@ -35,15 +43,22 @@ public record SessionNote
             SessionId = e.SessionId,
             AuthorMemberId = e.AuthorMemberId,
             Text = e.Text,
+            MentionedEntryIds = MentionParser.EntryIds(e.Text),
             Visibility = e.Visibility,
             IsRecap = e.IsRecap,
-            PostedAt = @event.Timestamp,
+            PostedAt = ToMicroseconds(@event.Timestamp),
             AddedLater = e.AddedLater,
         };
     }
 
     public SessionNote Apply(IEvent<SessionNoteEdited> @event)
-        => this with { Text = @event.Data.Text, IsRecap = @event.Data.IsRecap, EditedAt = @event.Timestamp };
+        => this with
+        {
+            Text = @event.Data.Text,
+            MentionedEntryIds = MentionParser.EntryIds(@event.Data.Text),
+            IsRecap = @event.Data.IsRecap,
+            EditedAt = @event.Timestamp,
+        };
 
     public SessionNote Apply(SessionNoteVisibilityChanged e) => this with { Visibility = e.Visibility };
 
@@ -54,4 +69,14 @@ public record SessionNote
         => this with { IsHidden = false, HiddenByMemberId = null, HiddenAt = null };
 
     public bool ShouldDelete(SessionNoteDeleted _) => true;
+
+    /// <summary>
+    /// <see cref="PostedAt"/> is kept at Postgres's precision (microseconds). Queries compare
+    /// and project it as a <c>timestamptz</c>, so a finer value (.NET ticks are 100 ns on
+    /// Linux) would differ from itself between the document and SQL: a timeline cursor could
+    /// skip a note, and a mention count's <c>lastMentionedAt</c> would not equal its note's
+    /// <c>postedAt</c>.
+    /// </summary>
+    private static DateTimeOffset ToMicroseconds(DateTimeOffset value)
+        => new(value.Ticks - value.Ticks % 10, value.Offset);
 }
