@@ -54,6 +54,9 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
     /// <summary>The gap prompt's clock. Tests move it forward to exercise the gap prompt, and must reset it.</summary>
     public ShiftableTimeProvider Clock { get; } = new();
 
+    /// <summary>Lets a derived fixture swap services in the host (for example the hub context).</summary>
+    protected virtual void ConfigureTestServices(IServiceCollection services) { }
+
     public async Task InitializeAsync()
     {
         await PostgreSqlContainer.StartAsync();
@@ -74,6 +77,7 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
                     );
                     services.AddKeyedSingleton<TimeProvider>(SessionGap.ClockKey, Clock);
                     services.AddMartenDB(context.Configuration, IsDevelopment: true);
+                    ConfigureTestServices(services);
                 })
         );
 
