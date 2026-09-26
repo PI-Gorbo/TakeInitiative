@@ -63,11 +63,13 @@ public static class Bootstrap
                 .Index(x => x.MentionedEntryIds, idx => idx.Method = IndexMethod.gin);
 
             // Entry stream -> Entry document. (CampaignId, Kind) serves the wiki's lists; the
-            // GIN index serves alias lookups.
+            // GIN indexes serve alias lookups and MentionIndex's "articles that mention this
+            // entry".
             opts.Projections.Snapshot<Entry>(SnapshotLifecycle.Inline);
             opts.Schema.For<Entry>()
                 .Index([x => x.CampaignId, x => x.Kind])
-                .Index(x => x.Aliases, idx => idx.Method = IndexMethod.gin);
+                .Index(x => x.Aliases, idx => idx.Method = IndexMethod.gin)
+                .Index(x => x.ArticleMentionIds, idx => idx.Method = IndexMethod.gin);
 
             opts.Schema.For<IAdminConfig>()
                 .AddSubClass<MaintenanceConfig>();

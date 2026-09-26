@@ -53,10 +53,10 @@ public static class NewEntries
     public const string NewEntryIdKey = "newEntryId";
 
     /// <summary>At most <see cref="MaxPerNote"/>, each valid, with distinct ids and names.</summary>
-    public static IRuleBuilderOptions<T, IEnumerable<NewEntryRequest>> NewEntriesList<T>(this IRuleBuilder<T, NewEntryRequest[]?> rule)
+    public static IRuleBuilderOptions<T, IEnumerable<NewEntryRequest>> NewEntriesList<T>(this IRuleBuilder<T, NewEntryRequest[]?> rule, string what = "A session note")
         => rule
             .Must(list => list is null || list.Length <= MaxPerNote)
-            .WithMessage($"A session note can create at most {MaxPerNote} entries.")
+            .WithMessage($"{what} can create at most {MaxPerNote} entries.")
             .Must(list => list is null || list.Select(e => e.Id).Distinct().Count() == list.Length)
             .WithMessage("Each new entry needs its own id.")
             .Must(list => list is null || list.Select(e => (e.Name ?? "").Trim()).Distinct(StringComparer.OrdinalIgnoreCase).Count() == list.Length)
@@ -76,9 +76,21 @@ public static class NewEntries
     /// The caller saves them with the note's events. Returns the new ids, for
     /// <see cref="NotifyCreated"/> after the save.
     /// </summary>
-    public static async Task<IReadOnlyList<Guid>> AppendNewEntries<TRequest, TResponse>(
+    public static Task<IReadOnlyList<Guid>> AppendNewEntries<TRequest, TResponse>(
         this Endpoint<TRequest, TResponse> endpoint, IDocumentSession session, Guid campaignId, Member author,
         Guid noteId, string text, Visibility visibility, IReadOnlyList<NewEntryRequest>? newEntries, CancellationToken ct)
+        where TRequest : notnull
+        => endpoint.AppendNewEntries(session, campaignId, author, text, "the note's text", newEntries, _ => visibility, noteId, ct);
+
+    /// <summary>
+    /// The general form, shared by notes and articles (15e): each new entry's visibility comes
+    /// from <paramref name="visibilityOf"/>, and <paramref name="where"/> names the text in the
+    /// 400's message. The checks and error keys are the same for both.
+    /// </summary>
+    public static async Task<IReadOnlyList<Guid>> AppendNewEntries<TRequest, TResponse>(
+        this Endpoint<TRequest, TResponse> endpoint, IDocumentSession session, Guid campaignId, Member author,
+        string text, string where, IReadOnlyList<NewEntryRequest>? newEntries, Func<NewEntryRequest, Visibility> visibilityOf,
+        Guid? createdFromNoteId, CancellationToken ct)
         where TRequest : notnull
     {
         if (newEntries is null || newEntries.Count == 0)
@@ -91,7 +103,7 @@ public static class NewEntries
         if (unmentioned is not null)
         {
             endpoint.ThrowError(new ValidationFailure(ErrorKey,
-                $"The new entry \"{unmentioned.Name.Trim()}\" is not mentioned in the note's text."), StatusCodes.Status400BadRequest);
+                $"The new entry \"{unmentioned.Name.Trim()}\" is not mentioned in {where}."), StatusCodes.Status400BadRequest);
         }
 
         foreach (var entry in newEntries)
@@ -128,8 +140,8 @@ public static class NewEntries
                 CreatorMemberId: author.MemberId,
                 Name: entry.Name.Trim(),
                 Kind: entry.Kind,
-                Visibility: visibility,
-                CreatedFromNoteId: noteId));
+                Visibility: visibilityOf(entry),
+                CreatedFromNoteId: createdFromNoteId));
         }
         return newEntries.Select(e => e.Id).ToList();
     }

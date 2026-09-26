@@ -18,6 +18,25 @@ public static class EntryAudience
 public record EntryRemovedMessage(Guid EntryId);
 
 /// <summary>
+/// <c>entryArticleChanged</c>: the article this member can see changed, so refetch the entry.
+/// It carries no content, and it is sent only to members whose view changed.
+/// </summary>
+public record EntryArticleChangedMessage(Guid EntryId);
+
+/// <summary>
+/// Who an article change is pushed to (15e.7): each member who can see the entry and whose
+/// view of the article (<see cref="ArticleEtag"/>) differs before and after. So an edit inside
+/// a DM secret block reaches the DMs and that block's owner, and nobody else.
+/// </summary>
+public static class ArticleAudience
+{
+    public static IReadOnlyList<Member> WhoseViewChanged(IEnumerable<Member> members, Entry before, Entry after)
+        => members
+            .Where(m => EntryVisibility.CanSee(after, m) && ArticleEtag.For(before, m) != ArticleEtag.For(after, m))
+            .ToList();
+}
+
+/// <summary>
 /// Entry pushes. Every endpoint calls these after <c>SaveChangesAsync</c>, with the entry as
 /// it is after the change, and only when something was appended. Payloads carry no
 /// per-viewer fields, so one payload goes to every allowed group.
@@ -28,6 +47,21 @@ public static class EntryHubContextExtensions
     public static Task NotifyEntryUpserted(this IHubContext<CampaignHub> hub, Entry entry)
         => hub.Clients.Groups(EntryAudience.Groups(entry))
             .SendAsync(CampaignHubMessages.EntryUpserted, EntrySummaryResponse.From(entry));
+
+    /// <summary>
+    /// An article edit or a promote: <c>entryArticleChanged</c> to <c>member:{id}</c> for each
+    /// member of <paramref name="members"/> (the campaign's) whose view changed. Nothing when
+    /// nobody's did. <c>entryUpserted</c> is not sent: the summary did not change.
+    /// </summary>
+    public static Task NotifyEntryArticleChanged(this IHubContext<CampaignHub> hub, IEnumerable<Member> members, Entry before, Entry after)
+    {
+        var groups = ArticleAudience.WhoseViewChanged(members, before, after)
+            .Select(m => CampaignGroups.Member(m.MemberId))
+            .ToList();
+        return groups.Count == 0
+            ? Task.CompletedTask
+            : hub.Clients.Groups(groups).SendAsync(CampaignHubMessages.EntryArticleChanged, new EntryArticleChangedMessage(after.Id));
+    }
 
     /// <summary>
     /// Visibility change: a removal to the groups that lose the entry, then the entry to its

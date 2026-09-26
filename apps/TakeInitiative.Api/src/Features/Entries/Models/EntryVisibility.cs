@@ -26,4 +26,15 @@ public static class EntryVisibility
     }
 
     public static bool CanSee(Entry entry, Member viewer) => EntryAudience.Of(entry).Contains(viewer);
+
+    /// <summary>
+    /// Who sees one block of an article (15e): the viewer must see the entry <b>and</b> be in
+    /// the block's own audience, <c>Audience.Of(block.Visibility, block.OwnerMemberId)</c>.
+    /// A block that fails either is absent from every read and push, with no placeholder and
+    /// no count.
+    /// </summary>
+    public static bool CanSeeBlock(Entry entry, ArticleBlock block, Member viewer)
+        => CanSee(entry, viewer) && BlockAudience(block).Contains(viewer);
+
+    public static Audience BlockAudience(ArticleBlock block) => Audience.Of(block.Visibility, block.OwnerMemberId);
 }
