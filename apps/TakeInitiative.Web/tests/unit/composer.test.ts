@@ -38,6 +38,8 @@ describe("composer state", () => {
     it("starts on the current session, Everyone, not a recap, with the draft text", () => {
         expect(initialComposerState("draft")).toEqual({
             text: "draft",
+            links: {},
+            newEntries: [],
             sessionId: null,
             visibility: "Everyone",
             isRecap: false,
@@ -68,6 +70,26 @@ describe("composer state", () => {
         expect(buildPostBody({ ...base, sessionId: "s3" }, sessions)).not.toHaveProperty("sessionId");
         expect(buildPostBody({ ...base, sessionId: "s1" }, sessions)).toMatchObject({ sessionId: "s1" });
         expect(buildPostBody({ ...base, text: " " }, sessions)).toBeNull();
+    });
+
+    it("posts the stored form and only the new entries still mentioned (15d)", () => {
+        const id = "0b7c5e1a-8f3d-4c2b-9a61-2d4e8f00a0ff";
+        const gone = "0b7c5e1a-8f3d-4c2b-9a61-2d4e8f00a0fe";
+        const state = {
+            ...initialComposerState(" Met @[Glasstaff] "),
+            links: { Glasstaff: id, Gone: gone },
+            newEntries: [
+                { id, name: "Glasstaff", kind: "Character" as const },
+                { id: gone, name: "Gone", kind: "Item" as const },
+            ],
+        };
+        expect(buildPostBody(state, sessions)).toEqual({
+            text: `Met @[Glasstaff](entry:${id})`,
+            visibility: "Everyone",
+            isRecap: false,
+            newEntries: [{ id, name: "Glasstaff", kind: "Character" }],
+        });
+        expect(buildPostBody({ ...state, newEntries: [] }, sessions)).not.toHaveProperty("newEntries");
     });
 
     it("builds an optimistic note that is added later when the session is not current", () => {
@@ -165,13 +187,13 @@ describe("draft", () => {
 
     it("keeps one draft per campaign and removes a blank one", () => {
         const storage = memory();
-        saveDraft(storage, "c1", "half a thought");
-        saveDraft(storage, "c2", "other");
-        expect(loadDraft(storage, "c1")).toBe("half a thought");
-        expect(storage.map.get(draftKey("c2"))).toBe("other");
-        saveDraft(storage, "c1", "  ");
+        saveDraft(storage, "c1", { text: "half a thought", links: {}, newEntries: [] });
+        saveDraft(storage, "c2", { text: "other", links: {}, newEntries: [] });
+        expect(loadDraft(storage, "c1").text).toBe("half a thought");
+        expect(JSON.parse(storage.map.get(draftKey("c2"))!)).toEqual({ text: "other", links: {}, newEntries: [] });
+        saveDraft(storage, "c1", { text: "  ", links: {}, newEntries: [] });
         expect(storage.map.has(draftKey("c1"))).toBe(false);
-        expect(loadDraft(storage, "c1")).toBe("");
+        expect(loadDraft(storage, "c1").text).toBe("");
     });
 
     it("survives storage that throws or is missing", () => {
@@ -186,9 +208,9 @@ describe("draft", () => {
                 throw new Error("SecurityError");
             },
         };
-        expect(loadDraft(broken, "c1")).toBe("");
-        expect(() => saveDraft(broken, "c1", "x")).not.toThrow();
-        expect(loadDraft(undefined, "c1")).toBe("");
+        expect(loadDraft(broken, "c1").text).toBe("");
+        expect(() => saveDraft(broken, "c1", { text: "x", links: {}, newEntries: [] })).not.toThrow();
+        expect(loadDraft(undefined, "c1").text).toBe("");
     });
 });
 

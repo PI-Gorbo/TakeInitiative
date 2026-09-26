@@ -78,9 +78,10 @@
         </header>
         <SessionNoteEditor
             v-if="editing"
+            :campaignId="campaignId"
             :note="note"
-            :saving="putNote.isPending.value"
-            @save="saveEdit"
+            :viewer="{ memberId: currentMemberId, isDm }"
+            @saved="editing = false"
             @cancel="editing = false" />
         <SessionNoteMarkdown
             v-else
@@ -131,7 +132,6 @@
     import {
         deleteNoteMutation,
         putNoteHiddenMutation,
-        putNoteMutation,
         putNoteVisibilityMutation,
     } from "~/utils/queries/sessions";
     import { addedLaterLabel, formatNoteDateTime, formatNoteTime, formatSessionDate } from "~/utils/sessionDates";
@@ -191,7 +191,6 @@
     const confirmDelete = ref(false);
     const deleteAsked = ref(false);
 
-    const putNote = putNoteMutation();
     const putVisibility = putNoteVisibilityMutation();
     const putHidden = putNoteHiddenMutation();
     const deleteNote = deleteNoteMutation();
@@ -228,19 +227,6 @@
             }
         } catch (error) {
             toast.error(apiErrorMessage(error, "That did not work. Try again."));
-        }
-    }
-
-    async function saveEdit(edit: { text: string; isRecap: boolean }) {
-        if (edit.text === props.note.text && edit.isRecap === props.note.isRecap) {
-            editing.value = false;
-            return;
-        }
-        try {
-            await putNote.mutateAsync({ ...ids(), ...edit });
-            editing.value = false;
-        } catch (error) {
-            toast.error(apiErrorMessage(error, "Could not save the note."));
         }
     }
 

@@ -21,7 +21,7 @@ PR, which sits on 14e (#205). Each PR leaves the app runnable:
 | 15a | `v2/15a-entry-model` | Entry model and push | 14's app unchanged in the browser. The API creates, reads and edits entries, and pushes them only to who can see them | [x] |
 | 15b | `v2/15b-mention-index` | Mentions and timeline (API) | The same. Notes can mention and create entries, and the API serves timelines and mention counts | [x] |
 | 15c | `v2/15c-wiki-pages` | Wiki home and entry page | The Wiki tab lists entries. An entry page shows its header and timeline, mentions in notes are chips, and "Add a note about X" works | [x] |
-| 15d | `v2/15d-mention-composer` | `@` in the composer | `@` links or creates entries from the composer: a popover on desktop, the mention strip on a phone | [ ] |
+| 15d | `v2/15d-mention-composer` | `@` in the composer | `@` links or creates entries from the composer: a popover on desktop, the mention strip on a phone | [x] |
 | 15e | `v2/15e-articles-api` | Articles, secret blocks, promote (API) | The same in the browser. The API stores articles as blocks, redacts secret blocks per viewer and promotes quotes | [ ] |
 | 15f | `v2/15f-article-editor` | Article editor and promote (web) | Articles are shown and edited, with 🔒 and `@`. Promote works from the stream, the timeline and the long-press sheet | [ ] |
 | 15g | `v2/15g-merge-claim-stats` | Merge, claim, stats, history | The step's Verify passes | [ ] |
@@ -84,6 +84,7 @@ Paths are relative to `apps/TakeInitiative.Api` (API), `apps/TakeInitiative.Api.
 - Web add `utils/mentions.ts`: the composer's mention text (`@[text]` plus a link map) to and from the stored form, the active `@` query, matching, and the reveal check
 - Web add `components/Composer/{MentionStrip,KindChips,RevealDialog}.vue`
 - Web modify `components/Composer/Composer.vue`, `utils/composer.ts` (state, draft, POST body), `components/Session/NoteEditor.vue`, `utils/queries/sessions.ts`
+- As built, also: add `composables/useMentionPicker.ts` and `components/Composer/MentionLinks.vue`; modify `utils/entries.ts` (`aboutPrefill` moved out), `utils/queries/entries.ts`, `components/Session/SessionNoteCard.vue`
 - Web add `tests/unit/mentions.test.ts`
 
 **15e**
@@ -826,4 +827,73 @@ This PR adds the nouns the step puts into code and UI:
     - **The directory.** It is `useEntryDirectory(campaignId)` over `getEntriesQueryKey(campaignId)` = `["entries", campaignId]`. `directory.items` carries `entry.name`, `entry.aliases` and `mentionCount` for ranking.
     - **Matching.** `entriesCalled(directory, text)` is the exact, case-insensitive name-or-alias check that decides the Create row. `mentionMarkup` writes the stored form. `applyEntrySummary(queryClient, campaignId, summary)` adds a new entry from a response.
     - **The composer.** `aboutPrefill` writes the stored form into `state.text`, so 15d's `fromStoredText` must run on it, or `aboutPrefill` must be switched to `@[Name]` plus a link. The composer's `about` prop and `aboutUsed` event are the seam.
+- **15d, as built** (PR on `v2/15d-mention-composer`):
+  - **`utils/mentions.ts`** (pure) holds every rule:
+    - **Forms.** `MentionText { text, links, newEntries }`. `links` is keyed by the raw bracket text, escapes included. A picked name is written with `escapeMentionText`, which is `mentionMarkup`'s escape set, so `toStoredText` only appends `(entry:<id>)` and `fromStoredText` only drops it. Both are lossless: every stored text round-trips, and so does a second entry under one display text, which stays in the stored form. An escaped `\@[…]` is never a mention.
+    - **`mentionBody(state)`** gives `{ text, newEntries }`. It filters `newEntries` with `mentionedEntryIds`, the web's copy of the API parser. So a deleted Create, or one inside code, is never sent, and the API's 400 cannot happen.
+    - **The query.** `activeMention(text, caret, links)` gives a `typed` or a `bracket` query. An unclosed `@[Gund` also counts as typed.
+    - **Matching.** `matchEntries` folds case, accents and runs of spaces. `mentionSuggestions(query, directory, newEntries, preferIds)` puts this text's pending new entries first, marked `isNew`. It adds Create only when no name, alias or pending name equals the query, and only up to 100 characters (the API's limit). It closes a query that ends in a space and matches nothing.
+    - **Edits.** `pickEntry`, `createEntry` and `insertMentionTrigger` (the `@` button; a selection becomes the query) each return the new text, links and caret.
+    - **Warnings and errors.** `revealCheck` and `revealMessage` do the reveal warning. `newEntryErrorFrom` sorts the three API errors, and `relinkNewEntry` handles a duplicate.
+    - **Drafts and placeholders.** `parseDraft` and `serializeDraft` store the draft as JSON. A 14d string draft still loads, even one that starts with `{`, and unused links are pruned. `pendingEntrySummary` makes the directory placeholder for a new entry.
+    - `tests/unit/mentions.test.ts` has 48 tests.
+  - **Picking the display text.** A pick writes the entry's name, even when an alias matched. **Addition:** in a bracket query, the entries this text linked before its bracket text was edited (`orphanedLinkIds`) are suggested first. Without that, the §3 override ("pick Gundren, edit the text, pick again") would search for "the old dwarf" and not find Gundren.
+  - **`useMentionPicker({ state, textarea, campaignId, enabled? })`** wires the rules to one `<textarea>`:
+    - The caret is read on input, keyup, click, select, focus and `selectionchange`.
+    - It returns `suggestions`, `highlighted`, `kind`, `creating`, `anchor`, `directory`, `onKeydown`, `choose`, `createAs`, `cycleKind` and `trigger`.
+    - Keys: ↑/↓ move and Enter picks. Tab picks an entry, and on a Create row Tab and Shift+Tab cycle the kind. Esc closes the query until another `@` starts. **Deviation:** Enter is left to the text on a touch screen, where Enter is a new line (14d).
+    - A phone tap on Create first chooses it and shows `KindChips`. A kind chip then creates the entry.
+  - **Where the suggestions show.** `MentionStrip.vue` draws them.
+    - On a phone it is chips. In the composer it sits after the `/` strip in the strip area, which the pinned composer keeps above the keyboard. The `/` strip wins while it is open (`enabled`), so the two never show together.
+    - With `docked`, it pins itself above the keyboard (`useKeyboardInset`, `bottom: inset`). The note editor uses this, since it is not pinned (invariant 11).
+    - From md it is a popover at the caret: `anchor` measures where the query starts using a hidden mirror element. `placement` is `above` for the composer, at the bottom of the screen, and `below` for editors in a scrolling list.
+    - Only the composer's toolbar gained the `@` item, first. The note editor has its own `@` button.
+  - **Deviation: the "new" chip.** The composer has no preview (14d), so the new component `MentionLinks.vue` shows what the text links to, under the text box. New entries are marked "new", and a click cycles a new entry's kind. The row is hidden while suggestions are open.
+  - **Reveal.** `RevealDialog.vue` exposes `confirm(noteVisibility, items) → Promise<boolean>`, which is true to post. "Reveal and post" does the visibility PUTs (`putEntryVisibilityMutation`), then resolves.
+    - **Refinement:** it is offered when *any* listed entry can be revealed, and a line names the others, which stay hidden. A failed PUT posts nothing.
+    - The note editor checks against the note's real audience, so a hidden `Everyone` note counts as `DM`.
+  - **Posting.**
+    - `buildPostBody` sends the stored form and `newEntries` (only when there are some).
+    - The character count and the limit use the stored length, which is what the API checks.
+    - `postNoteMutation` adds the new entries to the directory as placeholders in `onMutate` (`addPendingEntries`, which never replaces a pushed entry), so the optimistic note's chips show at once. On error it removes them (`removePendingEntries`). When the post settles it reads `["entries", id]` again. The POST response carries no entries.
+    - `putNoteMutation` adds the placeholders in `onSuccess`.
+  - **Errors.**
+    - `alreadyCreated` means the earlier try went through. The web shows "That note was already posted.", does not give the text back, and invalidates the streams and entries.
+    - `duplicate` gives the text back, relinked to the existing entry, with a toast asking to post again.
+    - Any other error keeps the 14d behaviour.
+  - **Deviation: `NoteEditor` owns its PUT.** Its props are now `{ campaignId, note, viewer }`, and it emits `saved` and `cancel`, so it can relink after a duplicate 409. `SessionNoteCard.saveEdit` is gone. An unchanged stored text with no new entries saves nothing.
+  - **Deviation: `aboutPrefill` moved** from `utils/entries.ts` to `utils/mentions.ts`. It now takes and returns `{ text, links }`, and writes `@[Name]` plus a link. If that display text already links another entry, it writes the stored form.
+  - **Verify, as run in 15d** (no browser, so the popover's position, the strip above a real keyboard and the Tab feel were not seen):
+    - `dotnet test` passes 171/171. The API is unchanged.
+    - `nuxi typecheck` is clean, `nuxt build` succeeds, and `vitest` passes 204/204: the 158 from 15c, minus 3 `aboutPrefill` tests moved out of `entries.test.ts`, plus `mentions` 48 and `composer` +1.
+    - `mentions15d.mjs` passed 56/56 against the API on 5010, with a DM and two players on a real `CampaignHub`. Every note in it is written through the web's own `mentions.ts`, `composer.ts` and `composerCommands.ts`. It covers Verify 2.1 to 2.3 and 2.6, plus:
+      - the display-text override, and re-picking after it;
+      - Reveal and post, and the Me-in-DM warning;
+      - the three error paths, with relinking;
+      - a Create inside an edit;
+      - the draft round trip;
+      - the new `aboutPrefill`;
+      - that the placeholder matches the pushed entry;
+      - that each viewer's push-fed list equals `GET entries`.
+    - `pages15d.mjs` passed 19/19 against `nuxt dev`.
+    - The earlier scripts pass: `smoke14a`, `hub14b` 28/28, `stream14c` 111/111, `composer14d` 142/142, `filters14e` 233/233, `pages13d`, `entries15a` 30/30, `mentions15b` 44/44, `wiki15c` 64/64 (updated for the moved `aboutPrefill`) and `pages15c` 24/24.
+  - **For 15e/15f: `@` outside the composer.** The pieces are independent of the composer:
+    ```ts
+    const state = reactive<MentionText>({ ...fromStoredText(block.text), newEntries: [] });
+    const picker = useMentionPicker({ state, textarea, campaignId });
+    // in the textarea's keydown: if (picker.onKeydown(e)) return;
+    ```
+    ```html
+    <div class="relative"> <!-- the popover is placed from the textarea's top-left -->
+      <textarea ref="textarea" v-model="state.text" @keydown="…" />
+      <ComposerMentionStrip :picker="picker" :listId="id" placement="below" docked />
+      <ComposerMentionLinks :state="state" :directory="picker.directory.value" />
+    </div>
+    <button @mousedown.prevent @click="picker.trigger()">@</button>
+    <ComposerRevealDialog ref="reveal" :campaignId="campaignId" />
+    ```
+    - **Saving.** `mentionBody(state)` gives `{ text, newEntries }`. Before saving, run `revealCheck(blockAudience, text, picker.directory.value, viewer)` through `reveal.confirm(...)`, where a 🔒 block's audience is its visibility. Map errors with `newEntryErrorFrom` and `relinkNewEntry`.
+    - **One picker per textarea.** Each article block keeps its own `MentionText`.
+    - **Create in articles.** The picker always offers Create. Either `PutEntryArticle` (15e) accepts `newEntries` the way the note endpoints do, or 15f adds an `allowCreate` option to `useMentionPicker`, which is a one-line filter on `suggestions`.
+    - **Promote (15f)** copies stored text. Pass it through `fromStoredText` before it is shown in a textarea.
 
