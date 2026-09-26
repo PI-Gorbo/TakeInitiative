@@ -63,7 +63,11 @@ const retryUnless404 = (failureCount: number, error: unknown) => apiErrorStatus(
 export const getEntryQuery = (campaignId: RefOrGetter<string>, entryId: RefOrGetter<string>) =>
     queryOptions({
         queryKey: getEntryQueryKey(campaignId, entryId),
-        queryFn: () => useApi().entry.get({ campaignId: toValue(campaignId), entryId: toValue(entryId) }),
+        queryFn: () =>
+            useApi().entry.get({
+                campaignId: toValue(campaignId),
+                entryId: toValue(entryId),
+            }),
         enabled: () => !!toValue(campaignId) && !!toValue(entryId),
         // Pushes keep it fresh; a reconnect or a role change invalidates it.
         staleTime: Infinity,
@@ -166,9 +170,28 @@ export function invalidateTimelinesTouchedBy(
     );
     for (const query of queries) {
         if (touched.has(String(query.queryKey[2]).toLowerCase())) {
-            void queryClient.invalidateQueries({ queryKey: query.queryKey, exact: true });
+            void queryClient.invalidateQueries({
+                queryKey: query.queryKey,
+                exact: true,
+            });
         }
     }
+}
+
+/**
+ * `entryArticleChanged` (15e): the viewer's view of an article changed. The payload
+ * has no content, so a loaded entry is read again. An open article editor keeps its
+ * own copy of the text and shows "This article changed" (`ArticleEditor`). Timelines
+ * list which articles mention their entry, so the loaded ones are read again too.
+ */
+export function applyEntryArticleChanged(queryClient: QueryClient, campaignId: string, entryId: string) {
+    void queryClient.invalidateQueries({
+        predicate: (query) =>
+            query.queryKey[0] === "entry" &&
+            query.queryKey[1] === campaignId &&
+            String(query.queryKey[2]).toLowerCase() === entryId.toLowerCase(),
+    });
+    void queryClient.invalidateQueries({ queryKey: timelinesKey(campaignId) });
 }
 
 /** Everything entry-related for a campaign: after a hub join, a reconnect, or a role change. */
@@ -182,7 +205,7 @@ export function invalidateEntries(queryClient: QueryClient, campaignId: string) 
 // ── Mutations ─────────────────────────────────────────────────────────────────
 
 /** A write's response: the list, and the entry itself (it is the whole entry). */
-function applyEntryResponse(queryClient: QueryClient, campaignId: string, entry: Entry) {
+export function applyEntryResponse(queryClient: QueryClient, campaignId: string, entry: Entry) {
     applyEntrySummary(queryClient, campaignId, entry);
     queryClient.setQueryData(getEntryQueryKey(campaignId, entry.id), (old: Entry | undefined) =>
         old ? { ...old, ...entry } : entry
@@ -234,5 +257,38 @@ export const putEntryEditAccessMutation = () => {
     return useMutation({
         mutationFn: useApi().entry.putEditAccess,
         onSuccess: (entry, { campaignId }) => applyEntryResponse(queryClient, campaignId, entry),
+    });
+};
+
+// Can edit: the article (15f). The body is the caller's whole view, in order, with the
+// etag it was loaded with; the response is the entry as the caller now sees it.
+export const putEntryArticleMutation = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: useApi().entry.putArticle,
+        onSuccess: (entry, { campaignId }) => {
+            applyEntryResponse(queryClient, campaignId, entry);
+            // Article mentions show on timelines and in the counts (15e).
+            void queryClient.invalidateQueries({
+                queryKey: timelinesKey(campaignId),
+            });
+            void queryClient.invalidateQueries({
+                queryKey: getEntriesQueryKey(campaignId),
+            });
+        },
+    });
+};
+
+// Can edit the entry, and can see the note: promote a note, or part of it (15f).
+export const promoteNoteMutation = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: useApi().entry.promote,
+        onSuccess: ({ entry }, { campaignId }) => {
+            applyEntryResponse(queryClient, campaignId, entry);
+            void queryClient.invalidateQueries({
+                queryKey: timelinesKey(campaignId),
+            });
+        },
     });
 };

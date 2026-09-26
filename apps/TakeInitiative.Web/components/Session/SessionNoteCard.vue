@@ -89,6 +89,14 @@
             :text="note.text"
             :class="(note.isHidden || pending) && 'opacity-60'" />
 
+        <WikiPromoteDialog
+            v-if="promoteOpened"
+            v-model:open="promoteOpen"
+            :campaignId="campaignId"
+            :note="note"
+            :viewer="{ memberId: currentMemberId, isDm }"
+            :entryId="promoteEntryId" />
+
         <SessionNoteHistoryDialog
             v-if="historyOpened"
             v-model:open="historyOpen"
@@ -150,9 +158,11 @@
         /**
          * The compact variant on an entry's timeline (15c): the session number links to
          * the note in the stream, the time shows its date, and the note is read-only
-         * here (15f adds Promote).
+         * here apart from Promote (15f), which the timeline draws in the actions slot.
          */
         timeline?: { sessionNumber: number };
+        /** Promote into this entry: the timeline's `[Promote]`, when the viewer can edit it (15f). */
+        promoteEntryId?: string;
         authorName: string;
         /** The viewer's member id, to tell whether they wrote the note. */
         currentMemberId: string;
@@ -169,9 +179,11 @@
     const noteHref = computed(
         () => `/app/campaigns/${encodeURIComponent(props.campaignId)}?${NOTE_LINK_PARAM}=${encodeURIComponent(props.note.id)}`
     );
-    const actions = computed(() =>
+    const actions = computed<NoteAction[]>(() =>
         props.timeline
-            ? []
+            ? props.promoteEntryId && !isPendingNote(props.note.id)
+                ? ["promote"]
+                : []
             : noteActionsFor(props.note, {
                   isAuthor: props.note.authorMemberId === props.currentMemberId,
                   isDm: props.isDm,
@@ -183,8 +195,11 @@
     useLongPress(
         useTemplateRef<HTMLElement>("card"),
         () => emit("openActions", { actions: actions.value, run }),
-        { disabled: () => editing.value || actions.value.length === 0 }
+        { disabled: () => editing.value || actions.value.length === 0 || !!props.timeline }
     );
+    const promoteOpen = ref(false);
+    // Mounted on first open only, like the history dialog.
+    const promoteOpened = ref(false);
     const historyOpen = ref(false);
     // Mounted on first open only, so the stream does not hold a dialog per note.
     const historyOpened = ref(false);
@@ -201,6 +216,10 @@
     async function run(action: NoteAction, visibility?: Visibility) {
         try {
             switch (action) {
+                case "promote":
+                    promoteOpened.value = true;
+                    promoteOpen.value = true;
+                    break;
                 case "edit":
                     editing.value = true;
                     break;

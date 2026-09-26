@@ -98,6 +98,12 @@
             </button>
         </Transition>
 
+        <!-- Desktop: "Add to wiki" by a selection inside a note (15f). -->
+        <WikiPromoteSelection
+            :campaignId="campaignId"
+            :viewer="{ memberId: campaign.currentMemberId, isDm }"
+            :findNote="findNote" />
+
         <!-- One sheet for the whole stream, opened by a long-press on a note (14e). -->
         <SessionNoteActionSheet
             v-if="sheet"
@@ -154,6 +160,7 @@
     );
     const allNotes = computed<SessionNote[]>(() => flattenSessions(streamQuery.data.value).flatMap((s) => s.notes));
     const noteCount = computed(() => allNotes.value.length);
+    const findNote = (noteId: string) => allNotes.value.find((n) => n.id === noteId);
     const emptyState = computed(() => filterEmptyState(props.filter));
 
     // ── The long-press action sheet ──────────────────────────────────────────
@@ -300,7 +307,12 @@
     async function goToNote(noteId: string) {
         let sessionNumber: number;
         try {
-            sessionNumber = (await useApi().note.get({ campaignId: props.campaignId, noteId })).sessionNumber;
+            sessionNumber = (
+                await useApi().note.get({
+                    campaignId: props.campaignId,
+                    noteId,
+                })
+            ).sessionNumber;
         } catch {
             toast.error("That note is not there, or you cannot see it.");
             emit("noteOpened", noteId);

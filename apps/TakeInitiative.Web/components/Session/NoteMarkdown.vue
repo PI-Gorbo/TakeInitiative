@@ -13,7 +13,12 @@
     import { renderNoteMarkdown } from "~/utils/markdown";
     import { useEntryDirectory } from "~/utils/queries/entries";
 
-    const props = defineProps<{ campaignId: string; text: string }>();
+    const props = defineProps<{
+        campaignId: string;
+        text: string;
+        /** An article block (15f): a document, so headings stay headings. */
+        document?: boolean;
+    }>();
 
     // Mention chips (15c): an id in the viewer's entry directory is a chip linking to
     // the entry; any other id is its plain text.
@@ -22,6 +27,7 @@
         renderNoteMarkdown(props.text, {
             campaignId: props.campaignId,
             resolve: (entryId) => resolveEntry(directory.value, entryId),
+            document: props.document,
         })
     );
 
@@ -86,6 +92,25 @@
     }
     .note-markdown :deep(.mention-icon) {
         font-size: 0.85em;
+    }
+    .note-markdown :deep(h1),
+    .note-markdown :deep(h2),
+    .note-markdown :deep(h3),
+    .note-markdown :deep(h4),
+    .note-markdown :deep(h5),
+    .note-markdown :deep(h6) {
+        margin: 0.75rem 0 0.25rem;
+        font-weight: 600;
+        line-height: 1.3;
+    }
+    .note-markdown :deep(h1) {
+        font-size: 1.25rem;
+    }
+    .note-markdown :deep(h2) {
+        font-size: 1.125rem;
+    }
+    .note-markdown :deep(h3) {
+        font-size: 1rem;
     }
     .note-markdown :deep(blockquote) {
         border-left: 3px solid hsl(var(--border));

@@ -9,13 +9,15 @@
             <DialogHeader>
                 <DialogTitle>{{ title }}</DialogTitle>
                 <DialogDescription>
-                    Readers who cannot see {{ items.length === 1 ? "it" : "them" }} get the text without a link.
+                    Readers who cannot see
+                    {{ items.length === 1 ? "it" : "them" }} get the text without a link.
                 </DialogDescription>
             </DialogHeader>
             <p
                 v-if="locked.length > 0 && revealable.length > 0"
                 class="text-sm text-muted-foreground">
-                Only its creator or a DM can reveal {{ locked.map((i) => i.entry.name).join(", ") }}. It stays hidden.
+                Only its creator or a DM can reveal
+                {{ locked.map((i) => i.entry.name).join(", ") }}. It stays hidden.
             </p>
             <DialogFooter class="gap-2">
                 <Button
@@ -30,7 +32,7 @@
                     class="h-11 md:h-9"
                     :disabled="revealing"
                     @click="settle(true)">
-                    Post without revealing
+                    {{ verb === "save" ? "Save without revealing" : "Post without revealing" }}
                 </Button>
                 <Button
                     v-if="revealable.length > 0"
@@ -41,7 +43,7 @@
                         v-if="revealing"
                         class="animate-spin"
                         aria-hidden="true" />
-                    Reveal and post
+                    {{ verb === "save" ? "Reveal and save" : "Reveal and post" }}
                 </Button>
             </DialogFooter>
         </DialogContent>
@@ -56,7 +58,14 @@
     import { revealMessage, type RevealItem } from "~/utils/mentions";
     import { putEntryVisibilityMutation } from "~/utils/queries/entries";
 
-    const props = defineProps<{ campaignId: string }>();
+    const props = withDefaults(
+        defineProps<{
+            campaignId: string;
+            /** The article editor (15f) saves rather than posts. */
+            verb?: "post" | "save";
+        }>(),
+        { verb: "post" }
+    );
 
     const open = ref(false);
     const items = ref<RevealItem[]>([]);
@@ -102,7 +111,12 @@
             }
             settle(true);
         } catch (error) {
-            toast.error(apiErrorMessage(error, "Could not reveal the entry. Nothing was posted."));
+            toast.error(
+                apiErrorMessage(
+                    error,
+                    `Could not reveal the entry. Nothing was ${props.verb === "save" ? "saved" : "posted"}.`
+                )
+            );
             settle(false);
         } finally {
             revealing.value = false;

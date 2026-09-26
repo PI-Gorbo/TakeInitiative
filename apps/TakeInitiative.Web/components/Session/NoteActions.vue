@@ -61,7 +61,7 @@
 </template>
 
 <script setup lang="ts">
-    import { Ellipsis, Eye, EyeOff, History, Link, Pencil, Trash2 } from "lucide-vue-next";
+    import { BookPlus, Ellipsis, Eye, EyeOff, History, Link, Pencil, Trash2 } from "lucide-vue-next";
     import type { Component } from "vue";
     import type { SessionNote, Visibility } from "~/utils/api/types";
     import { VISIBILITY_OPTIONS } from "~/utils/composer";
@@ -71,10 +71,13 @@
         note: SessionNote;
         actions: NoteAction[];
     }>();
-    const emit = defineEmits<{ select: [action: NoteAction, visibility?: Visibility] }>();
+    const emit = defineEmits<{
+        select: [action: NoteAction, visibility?: Visibility];
+    }>();
     const open = ref(false);
 
     const ICONS: Record<NoteAction, Component> = {
+        promote: BookPlus,
         edit: Pencil,
         visibility: Eye,
         hide: EyeOff,

@@ -4,7 +4,7 @@
 import type { SessionNote, SessionStreamSession } from "./api/types";
 import { isPendingNote } from "./sessionStreamCache";
 
-export type NoteAction = "edit" | "visibility" | "hide" | "unhide" | "history" | "copyLink" | "delete";
+export type NoteAction = "promote" | "edit" | "visibility" | "hide" | "unhide" | "history" | "copyLink" | "delete";
 
 export type NoteActionContext = {
     /** The viewer wrote the note. Only the author edits, changes visibility and deletes (invariant 4). */
@@ -14,12 +14,14 @@ export type NoteActionContext = {
 };
 
 /**
- * The actions for a note, in menu order. A note still being posted has none. A DM
+ * The actions for a note, in menu order (design §3a's sheet: Promote to wiki, Edit,
+ * Hide, Copy link). A note still being posted has none. Promote is for anyone who can
+ * see the note (15f); the entry picker then offers only entries they can edit. A DM
  * never hides a `Me` note: only its author can see it.
  */
 export function noteActionsFor(note: SessionNote, { isAuthor, isDm }: NoteActionContext): NoteAction[] {
     if (isPendingNote(note.id)) return [];
-    const actions: NoteAction[] = [];
+    const actions: NoteAction[] = ["promote"];
     if (isAuthor) actions.push("edit", "visibility");
     if (isDm && note.visibility !== "Me") actions.push(note.isHidden ? "unhide" : "hide");
     if (note.editedAt) actions.push("history");
@@ -29,6 +31,7 @@ export function noteActionsFor(note: SessionNote, { isAuthor, isDm }: NoteAction
 }
 
 export const NOTE_ACTION_LABELS: Record<NoteAction, string> = {
+    promote: "Promote to wiki",
     edit: "Edit",
     visibility: "Change visibility",
     hide: "Hide",

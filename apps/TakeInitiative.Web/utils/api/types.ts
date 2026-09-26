@@ -49,3 +49,11 @@ export type EntryListItem = Schemas["EntryListItemResponse"];
 export type EntryList = Schemas["GetEntriesResponse"];
 export type TimelineItem = Schemas["EntryTimelineItem"];
 export type EntryTimeline = Schemas["EntryTimelineResponse"];
+/** An entry's article, as the viewer sees it: only the blocks they can see (15e). */
+export type Article = Schemas["ArticleResponse"];
+export type ArticleBlock = Schemas["ArticleBlockResponse"];
+/** Where a quote came from: its session note (15e). */
+export type Quote = Schemas["QuoteResponse"];
+export type EntryQuote = Schemas["EntryQuoteResponse"];
+/** An article that mentions an entry, on that entry's timeline (15e). */
+export type ArticleMention = Schemas["EntryArticleMention"];
