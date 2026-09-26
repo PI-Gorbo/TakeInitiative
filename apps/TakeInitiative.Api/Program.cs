@@ -62,6 +62,7 @@ internal class Program
         builder.AddIdentityAuthenticationAndAuthorization();
         builder.Services.AddDiceRollers(builder.Configuration);
         builder.Services.AddSendGrid(builder.Configuration);
+        builder.Services.AddImages(builder.Configuration);
 
         // Cors
         builder.Services.AddCors(

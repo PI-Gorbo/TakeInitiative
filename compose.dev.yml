@@ -1,10 +1,12 @@
 # Full-stack compose for local development.
 #
-# `pnpm dev` starts ONLY the postgres service from this file and runs the API
-# and web natively. Use `docker compose -p takeinitiative -f compose.dev.yml
+# `pnpm dev` starts ONLY the postgres and minio services from this file and runs
+# the API and web natively. Use `docker compose -p takeinitiative -f compose.dev.yml
 # up -d --build` when you want everything in containers instead.
 #
-# Ports: postgres 7401, api 7402, web 7403.
+# Ports: postgres 7401, api 7402, web 7403, minio 7404 (S3 API) and 7405 (console).
+# `docker compose -p takeinitiative -f compose.dev.yml down -v` resets the database
+# and the images together.
 
 services:
     postgres:
@@ -32,6 +34,33 @@ services:
             retries: 5
             start_period: 10s
             timeout: 5s
+    minio:
+        # The image blob store (step 16a). MinIO stopped publishing community images in
+        # 2025, and its quay.io and Docker Hub repositories no longer pull anonymously
+        # (the tag Ripple pins, RELEASE.2025-07-18T21-56-31Z, only works where it is
+        # already cached). pgsty/minio is a community build of the same MinIO server,
+        # with the same entrypoint, environment and `mc`. The API only speaks S3, so
+        # swapping it (Garage, SeaweedFS, RustFS) is a change here and in
+        # MinioFixture.Image alone. There is no bucket-creating container: the API
+        # creates its bucket on start (Blobs:CreateBucket), and the bucket stays private.
+        image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
+        container_name: takeminio
+        command: server /data --console-address ":9001"
+        ports:
+            - "7404:9000" # S3 API
+            - "7405:9001" # console (takeinitiative / takeinitiative-dev)
+        environment:
+            - MINIO_ROOT_USER=takeinitiative
+            - MINIO_ROOT_PASSWORD=takeinitiative-dev
+        volumes:
+            - takeminio-data:/data
+        restart: always
+        healthcheck:
+            test: ["CMD", "mc", "ready", "local"]
+            interval: 10s
+            retries: 5
+            start_period: 10s
+            timeout: 5s
     api:
         # Tagged rather than anonymous, so a built image is identifiable.
         # `pnpm sync:version` writes TAKEINITIATIVE_VERSION into the root .env
@@ -45,6 +74,8 @@ services:
         depends_on:
             postgres:
                 condition: service_healthy
+            minio:
+                condition: service_healthy
         ports:
             - "7402:8080"
         environment:
@@ -55,6 +86,8 @@ services:
             - "CORS:AdminApp=http://localhost:3001;https://localhost:3001"
             - "AllowedHosts=localhost"
             - "CookieDomain=localhost"
+            # The other Blobs:* keys keep their appsettings.json dev defaults.
+            - "Blobs__ServiceUrl=http://minio:9000"
         restart: always
         healthcheck:
             test: ["CMD-SHELL", "curl --fail http://localhost:8080/healthz || exit 1"]
@@ -82,3 +115,4 @@ services:
 
 volumes:
     takedb-data:
+    takeminio-data:

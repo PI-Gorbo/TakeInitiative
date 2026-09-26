@@ -20,6 +20,8 @@
     <ItemGroup>
         <!-- Case lists shared with the web's unit tests (e.g. mentions.json). -->
         <None Include="Fixtures\**\*.json" CopyToOutputDirectory="PreserveNewest" />
+        <!-- Step 16a's image fixtures, made by Fixtures/images/generate.py. -->
+        <None Include="Fixtures\images\*" Exclude="Fixtures\images\*.py" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 
     <ItemGroup>
@@ -40,6 +42,7 @@
              pulled in transitively by Testcontainers. -->
         <PackageReference Include="SSH.NET" Version="2026.0.0" />
         <PackageReference Include="Testcontainers" Version="3.9.0" />
+        <PackageReference Include="Testcontainers.Minio" Version="3.9.0" />
         <PackageReference Include="Testcontainers.PostgreSql" Version="3.9.0" />
         <PackageReference Include="Verify" Version="26.2.0" />
         <PackageReference Include="Verify.Xunit" Version="26.2.0" />
