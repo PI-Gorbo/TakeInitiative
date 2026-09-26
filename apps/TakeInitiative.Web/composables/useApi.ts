@@ -13,6 +13,17 @@ import { putSendResetPasswordRequest } from "~/utils/api/user/putSendResetPasswo
 import { putResetPassword } from "~/utils/api/user/putResetPasswordRequest";
 import { getMaintenanceRequest } from "~/utils/api/admin/getMaintainenceRequest";
 import { putUsername } from "~/utils/api/user/putUsernameRequest";
+import { getSessionsRequest } from "~/utils/api/session/getSessionsRequest";
+import { getSessionStreamRequest } from "~/utils/api/session/getSessionStreamRequest";
+import { postStartSessionRequest } from "~/utils/api/session/postStartSessionRequest";
+import { putSessionTitleRequest } from "~/utils/api/session/putSessionTitleRequest";
+import { deleteSessionNoteRequest } from "~/utils/api/sessionNote/deleteSessionNoteRequest";
+import { getSessionNoteHistoryRequest } from "~/utils/api/sessionNote/getSessionNoteHistoryRequest";
+import { getSessionNoteRequest } from "~/utils/api/sessionNote/getSessionNoteRequest";
+import { postSessionNoteRequest } from "~/utils/api/sessionNote/postSessionNoteRequest";
+import { putSessionNoteHiddenRequest } from "~/utils/api/sessionNote/putSessionNoteHiddenRequest";
+import { putSessionNoteRequest } from "~/utils/api/sessionNote/putSessionNoteRequest";
+import { putSessionNoteVisibilityRequest } from "~/utils/api/sessionNote/putSessionNoteVisibilityRequest";
 
 export const useApi = () => {
     const { $axios } = useNuxtApp();
@@ -34,6 +45,21 @@ export const useApi = () => {
             get: getCampaignRequest($axios),
             list: getCampaignsRequest($axios),
             putMemberRole: putMemberRoleRequest($axios),
+        },
+        session: {
+            list: getSessionsRequest($axios),
+            start: postStartSessionRequest($axios),
+            putTitle: putSessionTitleRequest($axios),
+            getStream: getSessionStreamRequest($axios),
+        },
+        note: {
+            post: postSessionNoteRequest($axios),
+            get: getSessionNoteRequest($axios),
+            put: putSessionNoteRequest($axios),
+            putVisibility: putSessionNoteVisibilityRequest($axios),
+            putHidden: putSessionNoteHiddenRequest($axios),
+            delete: deleteSessionNoteRequest($axios),
+            history: getSessionNoteHistoryRequest($axios),
         },
         admin: {
             getMaintenance: getMaintenanceRequest($axios),
