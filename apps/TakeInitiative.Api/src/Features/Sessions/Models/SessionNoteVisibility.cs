@@ -25,15 +25,5 @@ public static class SessionNoteVisibility
             : n => n.AuthorMemberId == viewerId || (n.Visibility == Visibility.Everyone && !n.IsHidden);
     }
 
-    public static bool CanSee(SessionNote note, Member viewer)
-    {
-        if (note.AuthorMemberId == viewer.MemberId)
-        {
-            return true;
-        }
-
-        return viewer.Role == Role.DM
-            ? note.Visibility is Visibility.Everyone or Visibility.DM
-            : note.Visibility == Visibility.Everyone && !note.IsHidden;
-    }
+    public static bool CanSee(SessionNote note, Member viewer) => SessionNoteAudience.Of(note).Contains(viewer);
 }
