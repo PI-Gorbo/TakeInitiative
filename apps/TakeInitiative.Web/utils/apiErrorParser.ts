@@ -1,4 +1,4 @@
-import type { AxiosError, AxiosResponse } from "axios";
+import type { AxiosError } from "axios";
 import type { extendNuxtSchema } from "nuxt/kit";
 import type { Path } from "vee-validate";
 import { z } from "zod";
@@ -38,20 +38,5 @@ export function parseAsApiError<TRequest extends {}>(
             error,
             getUntypedError: (name) => null
         };
-    }
-}
-
-export function validateResponse<T extends {}>(
-    resp: AxiosResponse<T, any>,
-    schema: {
-        parse: (data: any) => T;
-    },
-): T {
-    try {
-        const data = schema.parse(resp.data);
-        return data;
-    } catch (e) {
-        console.error(`Failed to validate response. ${e}`);
-        throw e;
     }
 }

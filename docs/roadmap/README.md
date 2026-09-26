@@ -82,7 +82,7 @@ Steps 08–11 ship as one stack of PRs (`gh stack`), one PR per step.
 | # | Step | Status | Depends on | Goal |
 |---|---|---|---|---|
 | 12 | [v2 design](12-v2-design-session.md) | `done` | Stage 2 | Glossary, UX, combat simplification, architecture and invariants agreed |
-| 13 | v2 skeleton | `todo` | 12 | New branch. Campaign, members and roles, auth, OpenAPI type generation, PWA shell with three tabs |
+| 13 | [v2 skeleton](13-v2-skeleton.md) | `in progress` | 12 | New branch. Campaign, members and roles, auth, OpenAPI type generation, PWA shell with three tabs |
 | 14 | Sessions + session notes | `todo` | 13 | Composer, markdown, visibility, filters, back-posting, gap prompt, live over SignalR |
 | 15 | Wiki + mentions | `todo` | 14 | `@` composer, entries, articles, timeline, promote, secret blocks, aliases, merge, edit access |
 | 16 | Images | `todo` | 14 | S3 blob store, image notes, captions, galleries, share target |

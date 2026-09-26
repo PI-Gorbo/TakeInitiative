@@ -21,23 +21,19 @@
                         <SidebarMenuSub>
                             <SidebarMenuSubItem
                                 v-for="(campaign, index) in user.campaignList"
-                                :key="campaign.campaignId">
+                                :key="campaign.id">
                                 <SidebarMenuSubButton
                                     class="cursor-pointer select-none hover:bg-secondary">
                                     <NuxtLink
                                         :to="{
                                             name: 'app-campaigns-campaignId',
                                             params: {
-                                                campaignId: campaign.campaignId,
+                                                campaignId: campaign.id,
                                             },
                                         }"
                                         class="flex w-full items-center justify-between gap-2 truncate"
                                         @click="closeSidebar">
-                                        <span>{{ campaign.campaignName }}</span>
-                                        <FontAwesomeIcon
-                                            v-if="campaign.currentCombatName"
-                                            class="text-destructive"
-                                            :icon="faHandFist" />
+                                        <span>{{ campaign.name }}</span>
                                     </NuxtLink>
                                 </SidebarMenuSubButton>
                             </SidebarMenuSubItem>
@@ -74,7 +70,6 @@
 <script setup lang="ts">
     import {
         faArrowRightFromBracket,
-        faHandFist,
         faUserCircle,
     } from "@fortawesome/free-solid-svg-icons";
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";

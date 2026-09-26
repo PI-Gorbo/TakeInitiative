@@ -92,7 +92,7 @@
 
     const campaignNameQuery = useQuery({
         ...getCampaignQuery(() => route.params?.campaignId),
-        select: (data) => toValue(data.campaign).campaignName,
+        select: (data) => data.name,
     });
 
     const headerLink = computed(() => {

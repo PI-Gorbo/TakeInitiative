@@ -18,6 +18,8 @@ player-first experiences: **combat**, **note taking**, **⌘K search** and
 |---|---|---|
 | **Campaign** | Top-level container. Also the name of the first tab: the session stream, plus session, member and settings management for DMs. | — |
 | **Member** | A user in a campaign. **Role**: `DM` or `Player`. There can be several DMs; the **owner** promotes and demotes. | "player" when it means a user; today's three copies of membership |
+| **Actor** | Who caused an event. Today always a member (`Actor { MemberId }`); later it can also be a model (§11a). | "user" |
+| **Join code** | The short code a user enters to join a campaign as a Player. | invite code, campaign code |
 | **Session** | One real-world play session. Numbered, dated, with an optional title. | chapter, episode, journal |
 | **Session note** (UI short form: "note"; code: `SessionNote`) | One post in a session's stream: markdown text plus optional images. Only its **author** can edit it. | message, post, journal entry |
 | **Recap** | A session note flagged `/recap`. Shown under its session's divider. | summary |

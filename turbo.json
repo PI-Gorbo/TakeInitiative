@@ -13,6 +13,13 @@
         },
         "test": {
             "dependsOn": ["^build"]
+        },
+        "gen:openapi": {
+            "cache": false
+        },
+        "gen:api": {
+            "dependsOn": ["@ti/api#gen:openapi"],
+            "cache": false
         }
     }
 }

@@ -5,6 +5,8 @@ using TakeInitiative.Api.Identity;
 using Marten;
 using Marten.Events.Daemon.Resiliency;
 using Marten.Events.Projections;
+using Marten.Schema;
+using Weasel.Core;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -13,6 +15,7 @@ using Serilog;
 using TakeInitiative.Api.Features.Admin;
 using TakeInitiative.Utilities;
 using Weasel.Postgresql;
+using Weasel.Postgresql.Tables;
 
 namespace TakeInitiative.Api.Bootstrap;
 public static class Bootstrap
@@ -24,31 +27,29 @@ public static class Bootstrap
             
             opts.Connection(config.GetConnectionString("TakeDB") ?? throw new OperationCanceledException("Required Configuration 'ConnectionStrings:Marten' is missing."));
 
-            // Use system.text.json            
-            opts.UseSystemTextJsonForSerialization();
+            // Use system.text.json. Enums are stored as strings so LINQ queries and the
+            // JSON bodies agree (Role is also [JsonConverter]-annotated for the API).
+            opts.UseSystemTextJsonForSerialization(EnumStorage.AsString);
 
             // Registers the identity documents and enforces a unique index on NormalizedEmail.
             opts.RegisterIdentityModels<ApplicationUser, ApplicationUserRole>();
-            
+
+            // Provenance (design §9, invariant 9): correlation, causation and headers are
+            // stored on every event. CorrelationMiddleware fills them in per request.
+            opts.Events.MetadataConfig.CorrelationIdEnabled = true;
+            opts.Events.MetadataConfig.CausationIdEnabled = true;
+            opts.Events.MetadataConfig.HeadersEnabled = true;
+
+            // Campaign stream -> Campaign document, updated in the same transaction as the append.
+            opts.Projections.Snapshot<Campaign>(SnapshotLifecycle.Inline);
             opts.Schema.For<Campaign>()
-                .Index(x => x.CampaignName);
-
-            opts.Schema.For<CampaignMember>()
-                .ForeignKey<ApplicationUser>(x => x.UserId, fk => fk.OnDelete = CascadeAction.Cascade)
-                .ForeignKey<Campaign>(x => x.CampaignId, fk => fk.OnDelete = CascadeAction.Cascade);
-
-            opts.Schema.For<PlannedCombat>()
-                .Index(x => x.CombatName)
-                .ForeignKey<Campaign>(x => x.CampaignId, fk => fk.OnDelete = CascadeAction.Cascade);
+                .UniqueIndex(UniqueIndexType.Computed, x => x.JoinCode)
+                // Marten turns Members.Any(m => m.UserId == id) into
+                // `data -> 'Members' @> '[{"UserId": ...}]'`, which this GIN index serves.
+                .Index(x => x.Members, idx => idx.Method = IndexMethod.gin);
 
             opts.Schema.For<IAdminConfig>()
                 .AddSubClass<MaintenanceConfig>();
-
-            // Event Projections
-            opts.Projections
-                .Add(new CombatProjection(), ProjectionLifecycle.Inline, null);
-
-
         }).AddAsyncDaemon(DaemonMode.Solo);
 
         if (IsDevelopment)
@@ -164,8 +165,6 @@ public static class Bootstrap
     {
         // Random.Shared is thread-safe; a single shared `new Random()` is not.
         services.AddSingleton<IDiceRoller>(new DiceRoller(Random.Shared));
-        services.AddTransient<IInitiativeRoller, InitiativeRoller>();
-        services.AddTransient<IHealthRoller, HealthRoller>();
         return services;
     }
 

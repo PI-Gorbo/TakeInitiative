@@ -9,7 +9,7 @@
             v-else-if="error"
             class="flex flex-col items-center gap-2">
             <label class="font-NovaCut text-lg text-take-red"
-                >Failed to join Combat</label
+                >Failed to join Campaign</label
             >
             <label>{{ errorMessage }}</label>
         </div>

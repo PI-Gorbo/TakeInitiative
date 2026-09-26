@@ -3,173 +3,33 @@
         container="main"
         :isLoading="campaignQuery.isLoading.value"
         class="">
-        <template v-if="screenSize.isLargeScreen.value">
-            <div class="grid grid-cols-3 pb-2 gap-4 h-full max-h-full">
-                <div
-                    class="col-span-2 col-start-2 flex flex-col gap-4 max-h-full h-full overflow-auto">
-                    <Card
-                        v-if="
-                            campaignQuery.data.value?.userCampaignMember
-                                .isDungeonMaster ||
-                            (campaignQuery.data.value?.campaign
-                                ?.campaignDescription != '' &&
-                                campaignQuery.data.value?.campaign
-                                    ?.campaignDescription != null)
-                        "
-                        class="p-4 border-primary/50"
-                        :class="{
-                            'border-2 border-dashed':
-                                campaignQuery.data.value?.campaign
-                                    ?.campaignDescription == null ||
-                                campaignQuery.data.value?.campaign
-                                    ?.campaignDescription == '',
-                        }">
-                        <CampaignEditIntroductionForm />
-                    </Card>
-
-                    <Card class="border-primary/50 overflow-auto">
-                        <CardContent class="p-4">
-                            <CampaignCombatHistorySection
-                                :campaignId="route.params.campaignId" />
-                        </CardContent>
-                    </Card>
-                </div>
-                <div
-                    class="col-span-1 col-start-1 row-start-1 flex flex-col gap-4">
-                    <CampaignCombatJoinBanner
-                        :campaignId="route.params.campaignId"
-                        :combatInfo="
-                            campaignQuery.data.value?.currentCombatInfo ?? null
-                        " />
-                    <Card class="p-4 border-primary/50">
-                        <header>
-                            <FontAwesomeIcon :icon="faUsers" /> Players
-                        </header>
-                        <Accordion
-                            type="single"
-                            class="w-full"
-                            collapsible
-                            v-model:modelValue="openAccordionValue">
-                            <AccordionItem
-                                v-for="item in membersToDisplay"
-                                :key="item.userId"
-                                :value="item.userId">
-                                <AccordionTrigger>
-                                    <div class="flex gap-2">
-                                        <FontAwesomeIcon
-                                            :class="
-                                                item.userId ===
-                                                campaignQuery.data.value
-                                                    ?.campaign.ownerId
-                                                    ? 'text-gold'
-                                                    : 'text-primary'
-                                            "
-                                            :icon="
-                                                !(
-                                                    item.userId ===
-                                                    campaignQuery.data.value
-                                                        ?.campaign.ownerId
-                                                )
-                                                    ? faUserLarge
-                                                    : faCrown
-                                            " />
-                                        <label class="select-none">
-                                            {{ item.username }}
-                                        </label>
-                                    </div>
-                                </AccordionTrigger>
-                                <AccordionContent class="pl-4">
-                                    <CampaignPlayerResourcesSection
-                                        :userId="item.userId"
-                                        :characters="item.characters"
-                                        :resources="item.resources" />
-                                </AccordionContent>
-                            </AccordionItem>
-                        </Accordion>
-                    </Card>
-                </div>
-            </div>
-        </template>
-        <template v-else>
-            <div class="w-full flex flex-col gap-4 pb-2">
-                <CampaignCombatJoinBanner
-                    :campaignId="route.params.campaignId"
-                    :combatInfo="
-                        campaignQuery.data.value?.currentCombatInfo ?? null
-                    " />
-                <Card
-                    v-if="
-                        campaignQuery.data.value?.userCampaignMember
-                            .isDungeonMaster ||
-                        (campaignQuery.data.value?.campaign
-                            ?.campaignDescription != '' &&
-                            campaignQuery.data.value?.campaign
-                                ?.campaignDescription != null)
-                    "
-                    class="p-4 border-primary/50"
-                    :class="{
-                        'border-2 border-dashed':
-                            campaignQuery.data.value?.campaign
-                                ?.campaignDescription == null ||
-                            campaignQuery.data.value?.campaign
-                                ?.campaignDescription == '',
-                    }">
-                    <CampaignEditIntroductionForm />
-                </Card>
-
-                <Card class="p-4 border-primary/50">
-                    <header><FontAwesomeIcon :icon="faUsers" /> Players</header>
-                    <Accordion
-                        type="single"
-                        class="w-full"
-                        collapsible
-                        v-model:modelValue="openAccordionValue">
-                        <AccordionItem
-                            v-for="item in membersToDisplay"
-                            :key="item.userId"
-                            :value="item.userId">
-                            <AccordionTrigger>
-                                <div class="flex gap-2">
-                                    <FontAwesomeIcon
-                                        :class="
-                                            item.userId ===
-                                            campaignQuery.data.value?.campaign
-                                                .ownerId
-                                                ? 'text-gold'
-                                                : 'text-primary'
-                                        "
-                                        :icon="
-                                            !(
-                                                item.userId ===
-                                                campaignQuery.data.value
-                                                    ?.campaign.ownerId
-                                            )
-                                                ? faUserLarge
-                                                : faCrown
-                                        " />
-                                    <label class="select-none">
-                                        {{ item.username }}
-                                    </label>
-                                </div>
-                            </AccordionTrigger>
-                            <AccordionContent class="pl-4">
-                                <CampaignPlayerResourcesSection
-                                    :userId="item.userId"
-                                    :characters="item.characters"
-                                    :resources="item.resources" />
-                            </AccordionContent>
-                        </AccordionItem>
-                    </Accordion>
-                </Card>
-
-                <Card class="border-primary/50 overflow-auto">
-                    <CardContent class="p-4">
-                        <CampaignCombatHistorySection
-                            :campaignId="route.params.campaignId" />
-                    </CardContent>
-                </Card>
-            </div>
-        </template>
+        <div class="w-full flex flex-col gap-4 pb-2 lg:max-w-md">
+            <Card class="p-4 border-primary/50">
+                <header><FontAwesomeIcon :icon="faUsers" /> Members</header>
+                <ul class="flex flex-col gap-2 pt-2">
+                    <li
+                        v-for="member in membersToDisplay"
+                        :key="member.memberId"
+                        class="flex items-center gap-2">
+                        <FontAwesomeIcon
+                            :class="member.isOwner ? 'text-gold' : 'text-primary'"
+                            :icon="member.isOwner ? faCrown : faUserLarge" />
+                        <span class="select-none">{{ member.username }}</span>
+                        <Badge :variant="member.role === 'DM' ? 'default' : 'secondary'">
+                            {{ member.role }}
+                        </Badge>
+                        <AsyncButton
+                            v-if="callerIsOwner && !member.isOwner"
+                            class="ml-auto"
+                            size="sm"
+                            variant="outline"
+                            :label="member.role === 'DM' ? 'Make Player' : 'Make DM'"
+                            loadingLabel="Saving..."
+                            :click="() => toggleRole(member)" />
+                    </li>
+                </ul>
+            </Card>
+        </div>
     </LoadingFallback>
 </template>
 <script setup lang="ts">
@@ -180,21 +40,17 @@
     } from "@fortawesome/free-solid-svg-icons";
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
     import { useQuery } from "@tanstack/vue-query";
-    import { useLocalStorage } from "@vueuse/core";
-    import type { CampaignMemberDto } from "~/utils/api/campaign/getCampaignRequest";
-    import { getCampaignQuery } from "~/utils/queries/campaign";
-    import { getAllCombatsQuery } from "~/utils/queries/combats";
+    import { toast } from "vue-sonner";
+    import {
+        getCampaignQuery,
+        putMemberRoleMutation,
+    } from "~/utils/queries/campaign";
+    import type { CampaignMember } from "~/utils/api/types";
+    import { currentMember } from "~/utils/campaign";
 
-    const screenSize = useScreenSize();
     const route = useRoute("app-campaigns-campaignId");
-    const userStore = useUserStore();
     const campaignQuery = useQuery(
         getCampaignQuery(() => route.params.campaignId as string)
-    );
-
-    const openAccordionValue = useLocalStorage(
-        `campaigns-${route.params.campaignId}-accordion-current-user`,
-        userStore.state?.userId
     );
 
     definePageMeta({
@@ -202,51 +58,38 @@
         requiresAuth: true,
     });
 
-    // Member Details
-    const memberDtos: ComputedRef<CampaignMemberDto[]> = computed(() => {
-        if (!campaignQuery.isSuccess.value) {
+    const callerIsOwner = computed(
+        () => currentMember(campaignQuery.data.value)?.isOwner ?? false
+    );
+
+    // The caller first, then the owner, then DMs, then alphabetically.
+    const membersToDisplay = computed(() => {
+        const campaign = campaignQuery.data.value;
+        if (!campaign) {
             return [];
         }
 
-        return [
-            ...campaignQuery.data.value!.campaignMembers,
-            {
-                ...campaignQuery.data.value!.userCampaignMember,
-                username: userStore.state?.username!,
-            },
-        ] satisfies CampaignMemberDto[];
+        const rank = (m: CampaignMember) =>
+            m.memberId === campaign.currentMemberId
+                ? 0
+                : m.isOwner
+                  ? 1
+                  : m.role === "DM"
+                    ? 2
+                    : 3;
+        return [...campaign.members].sort(
+            (a, b) => rank(a) - rank(b) || a.username.localeCompare(b.username)
+        );
     });
 
-    const membersToDisplay = computed(() =>
-        memberDtos.value.sort((a, b) => {
-            // Player should be first
-            if (a.userId === userStore.state?.userId) {
-                return -1;
-            }
-
-            if (b.userId === userStore.state?.userId) {
-                return 1;
-            }
-
-            // Then dungeon master
-            const aIsDm =
-                a.userId === campaignQuery.data.value?.campaign.ownerId;
-            const bIsDm =
-                b.userId === campaignQuery.data.value?.campaign.ownerId;
-            if (aIsDm && !bIsDm) {
-                return -1;
-            }
-
-            if (!aIsDm && bIsDm) {
-                return 1;
-            }
-
-            // Then order alphabetically
-            if (a.username > b.username) {
-                return -1;
-            }
-
-            return 1;
-        })
-    );
+    const putMemberRole = putMemberRoleMutation();
+    async function toggleRole(member: CampaignMember) {
+        await putMemberRole
+            .mutateAsync({
+                campaignId: route.params.campaignId as string,
+                memberId: member.memberId,
+                role: member.role === "DM" ? "Player" : "DM",
+            })
+            .catch(() => toast.error("Could not change the member's role."));
+    }
 </script>

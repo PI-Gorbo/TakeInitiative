@@ -1,6 +1,3 @@
-# This workflow will build a .NET project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
-
 name: Test Web
 
 on:
@@ -10,22 +7,51 @@ on:
       - ".github/workflows/testWeb.yml"
       - "**.vue"
       - "**.ts"
+      - "**.cs"
+      - "**.csproj"
+      - "apps/TakeInitiative.Web/package.json"
+      - "pnpm-lock.yaml"
+      - "turbo.json"
   pull_request:
     branches: [ "dev" ]
     paths:
       - ".github/workflows/testWeb.yml"
       - "**.vue"
       - "**.ts"
+      - "**.cs"
+      - "**.csproj"
+      - "apps/TakeInitiative.Web/package.json"
+      - "pnpm-lock.yaml"
+      - "turbo.json"
+  workflow_dispatch: ~
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
       - name: Setup .NET
-        uses: oven-sh/setup-bun@v2
-      - name: Run Typecheck
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      # The API's OpenAPI document is exported without a database, then turned into
+      # utils/api/schema.d.ts. A diff means the committed types are stale.
+      - name: Regenerate API types
+        run: pnpm turbo run gen:api --filter=@ti/web
+      - name: Check generated API types are committed
         run: |
-          cd ./apps/TakeInitiative.Web
-          bun i
-          bun nuxi typecheck
+          if ! git diff --exit-code -- apps/TakeInitiative.Web/utils/api/schema.d.ts; then
+            echo "::error file=apps/TakeInitiative.Web/utils/api/schema.d.ts::schema.d.ts is stale. Run 'pnpm gen:api' and commit the result."
+            exit 1
+          fi
+      - name: Typecheck
+        run: pnpm --filter @ti/web exec nuxi typecheck

@@ -15,6 +15,7 @@
         "___ UTILITY ___": "",
         "build": "pnpm turbo run build",
         "test": "pnpm turbo run test",
+        "gen:api": "pnpm turbo run gen:api --filter=@ti/web",
         "sync:version": "node scripts/sync-version.mjs"
     },
     "devDependencies": {

@@ -2,7 +2,7 @@
     <div class="flex h-full w-full justify-center">
         <main class="w-page flex flex-col gap-4">
             <template
-                v-if="(userStore.state?.dmCampaigns ?? []).length > 0">
+                v-if="dmCampaigns.length > 0">
                 <header class="flex justify-between">
                     <span class="font-NovaCut text-xl text-gold sm:text-2xl"
                         >My Campaigns</span
@@ -45,27 +45,23 @@
                     </div>
                 </header>
                 <ul class="flex flex-col gap-4">
-                    <li v-for="campaign in userStore.state?.dmCampaigns">
+                    <li v-for="campaign in dmCampaigns" :key="campaign.id">
                         <CampaignCard
-                            :campaignId="campaign.campaignId"
-                            :campaignName="campaign.campaignName"
-                            :faCrown="faCrown"
-                            :faHandFist="faHandFist" />
+                            :campaignId="campaign.id"
+                            :campaignName="campaign.name" />
                     </li>
                 </ul>
             </template>
             <template
-                v-if="(userStore.state?.memberCampaigns ?? []).length > 0">
+                v-if="playerCampaigns.length > 0">
                 <header class="font-NovaCut text-xl text-gold sm:text-2xl">
                     Joined Campaigns
                 </header>
                 <ul>
-                    <li v-for="campaign in userStore.state?.memberCampaigns">
+                    <li v-for="campaign in playerCampaigns" :key="campaign.id">
                         <CampaignCard
-                            :campaignId="campaign.campaignId"
-                            :campaignName="campaign.campaignName"
-                            :faCrown="faCrown"
-                            :faHandFist="faHandFist" />
+                            :campaignId="campaign.id"
+                            :campaignName="campaign.name" />
                     </li>
                 </ul>
             </template>
@@ -75,8 +71,6 @@
 <script setup lang="ts">
     import {
         faChevronCircleRight,
-        faCrown,
-        faHandFist,
         faRightToBracket,
         faPerson,
         faPlusCircle,
@@ -88,16 +82,19 @@
     import CampaignCard from "../../../components/Campaign/CampaignCard.vue";
 
     const userStore = useUserStore();
+    const dmCampaigns = computed(() =>
+        userStore.campaignList.filter((c) => c.role === "DM")
+    );
+    const playerCampaigns = computed(() =>
+        userStore.campaignList.filter((c) => c.role === "Player")
+    );
     definePageMeta({
         layout: "main-app",
         requiresAuth: true,
         middleware: [
-            () => {
+            async () => {
                 const userStore = useUserStore();
-                if (
-                    userStore.state?.dmCampaigns.length === 0 &&
-                    userStore.state?.memberCampaigns.length === 0
-                ) {
+                if ((await userStore.fetchCampaigns()).length === 0) {
                     return navigateTo(helpers.path("/createOrJoinCampaign"));
                 }
             },
