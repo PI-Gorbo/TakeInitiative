@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Primitives;
 using TakeInitiative.Api.Bootstrap;
+using TakeInitiative.Api.Features.Sessions;
 using TakeInitiative.Api.Features.Users;
 using TakeInitiative.Utilities;
 using Testcontainers.PostgreSql;
@@ -50,6 +51,8 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
     private Users CurrentUser;
     public AuthenticatedWebAppWithDatabaseFixtureSeededData? SeedData { get; set; }
     public IDiceRoller DiceRoller { get; } = A.Fake<IDiceRoller>();
+    /// <summary>The gap prompt's clock. Tests move it forward to exercise the gap prompt, and must reset it.</summary>
+    public ShiftableTimeProvider Clock { get; } = new();
 
     public async Task InitializeAsync()
     {
@@ -69,6 +72,7 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
                     services.Replace(
                         new ServiceDescriptor(typeof(IDiceRoller), DiceRoller)
                     );
+                    services.AddKeyedSingleton<TimeProvider>(SessionGap.ClockKey, Clock);
                     services.AddMartenDB(context.Configuration, IsDevelopment: true);
                 })
         );
