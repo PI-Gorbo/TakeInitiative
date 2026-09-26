@@ -30,6 +30,14 @@
             </Button>
         </div>
 
+        <p
+            v-if="restore"
+            role="status"
+            class="rounded-md border px-3 py-2 text-sm text-muted-foreground">
+            Restoring the version from {{ restore.label }}. Check it, then Save. Blocks you can't see stay as
+            they are.
+        </p>
+
         <div
             v-if="changed"
             role="status"
@@ -108,7 +116,7 @@
     import { toast } from "vue-sonner";
     import type { ComponentPublicInstance } from "vue";
     import { apiErrorMessage, apiErrorStatus } from "~/utils/apiErrorParser";
-    import type { Article, Entry, Visibility } from "~/utils/api/types";
+    import type { Article, ArticleBlock, Entry, Visibility } from "~/utils/api/types";
     import {
         articleRevealCheck,
         articleSaveBody,
@@ -120,6 +128,7 @@
         relinkArticleNewEntry,
         removeBlock,
         setBlockVisibility,
+        restoreEditorBlocks,
         toEditorBlocks,
         wrapSecret,
         type EditorBlock,
@@ -142,6 +151,11 @@
         nameOf: (memberId: string) => string;
         /** A block to open at: the new quote after promoting on a phone (§3a). */
         focusBlockId?: string;
+        /**
+         * An old version to start from instead of the current article (15g, "Restore this
+         * version"). Saving it is an ordinary save with the current etag.
+         */
+        restore?: { blocks: readonly ArticleBlock[]; label: string };
     }>();
     const emit = defineEmits<{ done: [] }>();
 
@@ -151,7 +165,11 @@
     // The article as loaded: the etag the save sends, and what "changed" is measured from.
     // eslint-disable-next-line vue/no-setup-props-reactivity-loss -- a snapshot on purpose
     const base = shallowRef<Article>(props.entry.article);
-    const blocks = ref<EditorBlock[]>(toEditorBlocks(base.value.blocks, newKey));
+    const blocks = ref<EditorBlock[]>(
+        props.restore
+            ? restoreEditorBlocks(props.restore.blocks, base.value.blocks, props.viewer, newKey)
+            : toEditorBlocks(base.value.blocks, newKey)
+    );
 
     // ── Focus and the docked toolbar ─────────────────────────────────────────
     const activeKey = ref<string | null>(null);

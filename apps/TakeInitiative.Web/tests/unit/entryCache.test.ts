@@ -19,6 +19,7 @@ function summary(id: string, name: string, extra: Partial<EntrySummary> = {}): E
         name,
         kind: "Character",
         aliases: [],
+        mergedFromIds: [],
         visibility: "Everyone",
         editAccess: "Anyone",
         creatorMemberId: "m1",

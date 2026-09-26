@@ -28,17 +28,33 @@ public static class ArticleHistory
 {
     public static IReadOnlyList<ArticleVersion> For(Entry entry, IEnumerable<ArticleVersion> versions, Member viewer)
     {
-        var result = new List<ArticleVersion>();
+        var list = versions.ToList();
+        return Changed(entry, list.Select(v => v.Blocks), viewer)
+            .Select(c => list[c.Index] with { Blocks = c.Blocks })
+            .ToList();
+    }
+
+    /// <summary>
+    /// The same rule by position: for each version (whole articles, oldest first) whose visible
+    /// blocks differ from the version before, its index and those blocks. The history endpoint
+    /// uses it to keep its other events in between.
+    /// </summary>
+    public static IReadOnlyList<(int Index, IReadOnlyList<ArticleBlock> Blocks)> Changed(
+        Entry entry, IEnumerable<IReadOnlyList<ArticleBlock>> versions, Member viewer)
+    {
+        var result = new List<(int, IReadOnlyList<ArticleBlock>)>();
         var previous = ArticleEtag.Of([]);
-        foreach (var version in versions)
+        var index = 0;
+        foreach (var blocks in versions)
         {
-            var visible = ArticleView.VisibleBlocks(entry, version.Blocks, viewer);
+            var visible = ArticleView.VisibleBlocks(entry, blocks, viewer);
             var etag = ArticleEtag.Of(visible);
             if (etag != previous)
             {
-                result.Add(version with { Blocks = visible });
+                result.Add((index, visible));
                 previous = etag;
             }
+            index++;
         }
         return result;
     }

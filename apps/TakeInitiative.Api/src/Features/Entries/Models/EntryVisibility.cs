@@ -25,6 +25,16 @@ public static class EntryVisibility
             : e => e.CreatorMemberId == viewerId || e.Visibility == Visibility.Everyone;
     }
 
+    /// <summary>
+    /// The campaign's entries a viewer can see, as every list asks for them: merged entries
+    /// (15g) are left out, since their id redirects and their names are the target's aliases.
+    /// </summary>
+    public static IQueryable<Entry> Listed(this IQueryable<Entry> entries, Guid campaignId, Member viewer)
+        => entries
+            .Where(e => e.CampaignId == campaignId)
+            .Where(e => e.MergedIntoId == null)
+            .Where(VisibleTo(viewer));
+
     public static bool CanSee(Entry entry, Member viewer) => EntryAudience.Of(entry).Contains(viewer);
 
     /// <summary>

@@ -68,6 +68,7 @@ const summary = (
     name,
     kind: "Character",
     aliases: [],
+    mergedFromIds: [],
     visibility,
     editAccess: "Anyone",
     creatorMemberId: creator,

@@ -97,7 +97,7 @@ public class PutEntryArticle(IDocumentSession session, IHubContext<CampaignHub> 
         {
             try
             {
-                var (before, after, newEntryIds) = await Save(req, edits, text, member, ct);
+                var (before, after, newEntryIds) = await Save(req, entry.Id, edits, text, member, ct);
                 await hub.NotifyCreated(session, newEntryIds, ct);
                 if (!ReferenceEquals(before, after))
                 {
@@ -125,12 +125,13 @@ public class PutEntryArticle(IDocumentSession session, IHubContext<CampaignHub> 
     /// to the article.
     /// </summary>
     private async Task<(Entry Before, Entry After, IReadOnlyList<Guid> NewEntryIds)> Save(
-        PutEntryArticleRequest req, IReadOnlyList<ArticleBlockEdit> edits, string text, Member member, CancellationToken ct)
+        PutEntryArticleRequest req, Guid entryId, IReadOnlyList<ArticleBlockEdit> edits, string text, Member member, CancellationToken ct)
     {
-        var stream = await session.Events.FetchForWriting<Entry>(req.EntryId, ct);
+        // entryId, not req.EntryId: a merged entry's id redirects to its target (15g).
+        var stream = await session.Events.FetchForWriting<Entry>(entryId, ct);
         var current = stream.Aggregate;
         // The entry may have changed since it was checked: check again at this version.
-        if (current is null || current.CampaignId != req.CampaignId || !EntryVisibility.CanSee(current, member))
+        if (current is null || current.CampaignId != req.CampaignId || current.MergedIntoId is not null || !EntryVisibility.CanSee(current, member))
         {
             ThrowError("There is no entry with the given id.", StatusCodes.Status404NotFound);
         }

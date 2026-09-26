@@ -19,8 +19,18 @@ public record EntryResponse
     public required Guid CreatorMemberId { get; init; }
     public required DateTimeOffset CreatedAt { get; init; }
     public required DateTimeOffset UpdatedAt { get; init; }
+    /// <summary>The member whose player character this is, if any (15g).</summary>
+    public Guid? ClaimedByMemberId { get; init; }
+    /// <summary>Every entry merged into this one (15g): mentions of these ids mean this entry.</summary>
+    public required Guid[] MergedFromIds { get; init; }
     /// <summary>The article as the caller can see it (15e): hidden blocks are absent.</summary>
     public required ArticleResponse Article { get; init; }
+    /// <summary>
+    /// The stats, when there are some and the caller may read them (<see cref="EntryStats"/>):
+    /// on a claimed entry everyone who sees it, on an unclaimed one the DMs only. Otherwise
+    /// absent, so "none" and "not for you" look the same.
+    /// </summary>
+    public StatsResponse? Stats { get; init; }
 
     /// <summary>The entry as <paramref name="viewer"/> sees it. The article is redacted for them.</summary>
     public static EntryResponse From(Entry entry, Member viewer) => new()
@@ -34,7 +44,25 @@ public record EntryResponse
         CreatorMemberId = entry.CreatorMemberId,
         CreatedAt = entry.CreatedAt,
         UpdatedAt = entry.UpdatedAt,
+        ClaimedByMemberId = entry.ClaimedByMemberId,
+        MergedFromIds = entry.MergedFromIds,
         Article = ArticleResponse.From(entry, viewer),
+        Stats = EntryStats.For(entry, viewer) is { } stats ? StatsResponse.From(stats) : null,
+    };
+}
+
+/// <summary>A Character's stat line: two dice expressions and an armour class, each optional.</summary>
+public record StatsResponse
+{
+    public string? InitiativeRoll { get; init; }
+    public string? MaxHp { get; init; }
+    public int? Ac { get; init; }
+
+    public static StatsResponse From(Stats stats) => new()
+    {
+        InitiativeRoll = stats.InitiativeRoll,
+        MaxHp = stats.MaxHp,
+        Ac = stats.Ac,
     };
 }
 

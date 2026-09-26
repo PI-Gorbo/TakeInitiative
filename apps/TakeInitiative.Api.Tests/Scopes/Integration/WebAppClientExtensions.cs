@@ -216,6 +216,24 @@ public static class WebAppClientExtensions
     public static Task<Result<EntryQuoteResponse>> PostEntryQuote(this IWebAppClient client, Guid campaignId, Guid entryId, Guid noteId, string? text = null)
         => client.Post<object, EntryQuoteResponse>(new { noteId, text }, QuotesUrl(campaignId, entryId));
 
+    // Merge, claim, stats and history (step 15g).
+
+    public static string EntryUrl(Guid campaignId, Guid entryId, string? part = null)
+        => $"/api/campaigns/{campaignId}/entries/{entryId}" + (part is null ? "" : $"/{part}");
+
+    public static Task<Result<EntryResponse>> PostEntryMerge(this IWebAppClient client, Guid campaignId, Guid entryId, Guid intoEntryId)
+        => client.Post<object, EntryResponse>(new { intoEntryId }, EntryUrl(campaignId, entryId, "merge"));
+
+    public static Task<Result<EntryResponse>> PutEntryClaim(this IWebAppClient client, Guid campaignId, Guid entryId, Guid? memberId)
+        => client.Put<object, EntryResponse>(new { memberId }, EntryUrl(campaignId, entryId, "claim"));
+
+    public static Task<Result<EntryResponse>> PutEntryStats(
+        this IWebAppClient client, Guid campaignId, Guid entryId, string? initiativeRoll, string? maxHp, int? ac)
+        => client.Put<object, EntryResponse>(new { initiativeRoll, maxHp, ac }, EntryUrl(campaignId, entryId, "stats"));
+
+    public static Task<Result<EntryHistoryResponse>> GetEntryHistory(this IWebAppClient client, Guid campaignId, Guid entryId)
+        => client.Get<EntryHistoryResponse>(EntryUrl(campaignId, entryId, "history"));
+
     /// <summary>Sends a request that should fail and returns its status and body, to check error keys and that nothing leaks.</summary>
     public static async Task<(int Status, string Body)> Send(this IWebAppClient client, HttpMethod method, string url, object body)
     {

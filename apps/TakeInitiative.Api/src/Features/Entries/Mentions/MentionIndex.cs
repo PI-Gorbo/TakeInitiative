@@ -29,7 +29,12 @@ public record MentionedNotesPage(IReadOnlyList<SessionNote> Notes, bool HasOlder
 /// <para>
 /// Every query is scoped to one campaign and one viewer. Callers join the results to the
 /// entries that viewer can see, so unknown ids and ids from other campaigns never match.
-/// 15g adds merged ids.
+/// </para>
+/// <para>
+/// Merges (15g) never rewrite text (invariant 6). A merged entry's id stays in the notes and
+/// blocks that mention it, and resolves to the entry it was merged into: callers ask for
+/// <see cref="Entry.MentionIds"/> (the entry's id and its <see cref="Entry.MergedFromIds"/>),
+/// and <see cref="CountsFor"/> counts a merged id for its target.
 /// </para>
 /// </summary>
 public static class MentionIndex
@@ -65,12 +70,13 @@ public static class MentionIndex
     /// <summary>
     /// Per entry id: how many notes and article blocks the viewer can see mention it, and when
     /// the latest such note was posted. A note or block that mentions an entry twice counts
-    /// once, and an article's mentions of its own entry are not counted. Only the id list and
+    /// once, and an article's mentions of its own entry are not counted. A merged id counts
+    /// for the entry it was merged into, so a note that mentions both counts once. Only the id list and
     /// <c>PostedAt</c> of each note are loaded, and they are grouped in memory, which is fine at
     /// a campaign's scale. Counts are per viewer, because a count over notes or blocks the
     /// viewer cannot see would reveal that they exist.
-    /// <paramref name="visibleEntries"/> are the campaign's entries the viewer can see, when
-    /// the caller has already loaded them.
+    /// <paramref name="visibleEntries"/> are the campaign's listed entries the viewer can see
+    /// (<see cref="EntryVisibility.Listed"/>), when the caller has already loaded them.
     /// </summary>
     public static async Task<IReadOnlyDictionary<Guid, MentionCount>> CountsFor(
         IQuerySession session, Guid campaignId, Member viewer, CancellationToken ct, IReadOnlyList<Entry>? visibleEntries = null)
@@ -81,16 +87,19 @@ public static class MentionIndex
             .Select(n => new NoteMentions(n.MentionedEntryIds, n.PostedAt))
             .ToListAsync(ct);
         visibleEntries ??= await session.Query<Entry>()
-            .Where(e => e.CampaignId == campaignId)
-            .Where(EntryVisibility.VisibleTo(viewer))
+            .Listed(campaignId, viewer)
             .ToListAsync(ct);
 
+        var targets = MergeTargets(visibleEntries);
+        Guid Resolve(Guid id) => targets.GetValueOrDefault(id, id);
+
         var fromNotes = rows
-            .SelectMany(r => r.MentionedEntryIds.Select(id => (EntryId: id, PostedAt: (DateTimeOffset?)r.PostedAt)));
+            .SelectMany(r => r.MentionedEntryIds.Select(Resolve).Distinct()
+                .Select(id => (EntryId: id, PostedAt: (DateTimeOffset?)r.PostedAt)));
         var fromBlocks = visibleEntries
             .Where(e => e.ArticleMentionIds.Length > 0)
             .SelectMany(e => ArticleView.VisibleBlocks(e, viewer)
-                .SelectMany(b => MentionParser.EntryIds(b.Text))
+                .SelectMany(b => MentionParser.EntryIds(b.Text).Select(Resolve).Distinct())
                 .Where(id => id != e.Id)
                 .Select(id => (EntryId: id, PostedAt: (DateTimeOffset?)null)));
 
@@ -101,7 +110,9 @@ public static class MentionIndex
 
     /// <summary>
     /// The article blocks the viewer can see that mention any of <paramref name="entryIds"/>,
-    /// in article order, leaving out an article's mentions of its own entry. Entries are
+    /// in article order, leaving out an article's mentions of its own entry (pass
+    /// <see cref="Entry.MentionIds"/>, so its merged ids count as its own) and merged entries,
+    /// whose blocks now live in their target's article. Entries are
     /// found with the GIN index on <see cref="Entry.ArticleMentionIds"/> and the entry read
     /// rule, and blocks are filtered in memory with <see cref="EntryVisibility.CanSeeBlock"/>.
     /// The timeline lists them (by entry), and connections (step 19) build on it.
@@ -111,9 +122,8 @@ public static class MentionIndex
     {
         var ids = entryIds.ToHashSet();
         var entries = await session.Query<Entry>()
-            .Where(e => e.CampaignId == campaignId)
+            .Listed(campaignId, viewer)
             .Where(MentioningAny<Entry>(nameof(Entry.ArticleMentionIds), entryIds))
-            .Where(EntryVisibility.VisibleTo(viewer))
             .OrderBy(e => e.Name)
             .ToListAsync(ct);
 
@@ -124,6 +134,13 @@ public static class MentionIndex
                 .Select(b => new BlockMention(e, b)))
             .ToList();
     }
+
+    /// <summary>Each merged id of <paramref name="entries"/> to the entry it now resolves to.</summary>
+    public static IReadOnlyDictionary<Guid, Guid> MergeTargets(IEnumerable<Entry> entries)
+        => entries
+            .SelectMany(e => e.MergedFromIds.Select(from => (From: from, Into: e.Id)))
+            .DistinctBy(x => x.From)
+            .ToDictionary(x => x.From, x => x.Into);
 
     private record NoteMentions(Guid[] MentionedEntryIds, DateTimeOffset PostedAt);
 

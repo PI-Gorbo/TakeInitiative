@@ -1,5 +1,6 @@
 <template>
-    <!-- One row of the wiki list: kind, name, aliases and the viewer's mention count. -->
+    <!-- One row of the wiki list: kind, name, aliases and the viewer's mention count. A
+         player character (15g) is marked, in the glossary's words. -->
     <NuxtLink
         :to="`/app/campaigns/${encodeURIComponent(campaignId)}/wiki/${encodeURIComponent(item.entry.id)}`"
         class="flex min-h-14 items-center gap-3 rounded-md border px-3 py-2 transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
@@ -16,6 +17,11 @@
                     class="shrink-0 rounded border px-1 text-xs text-muted-foreground"
                     :title="item.entry.visibility === 'DM' ? 'Visible to the DMs and the creator' : 'Visible only to the creator'">
                     🔒 {{ item.entry.visibility }}
+                </span>
+                <span
+                    v-if="item.entry.claimedByMemberId"
+                    class="shrink-0 rounded border border-gold/50 px-1 text-xs text-gold">
+                    Player character
                 </span>
             </span>
             <span class="truncate text-xs text-muted-foreground">

@@ -1,5 +1,6 @@
 using FastEndpoints;
 using FluentValidation;
+using FluentValidation.Results;
 using Marten;
 using Microsoft.AspNetCore.SignalR;
 using TakeInitiative.Utilities.Extensions;
@@ -21,7 +22,10 @@ public class PutEntryKindRequestValidator : Validator<PutEntryKindRequest>
     }
 }
 
-/// <summary>Changes an entry's kind. The same kind appends nothing.</summary>
+/// <summary>
+/// Changes an entry's kind. The same kind appends nothing. A claimed entry stays a
+/// <c>Character</c> until it is unclaimed (15g: 409 with <c>errors.kind</c>).
+/// </summary>
 public class PutEntryKind(IDocumentSession session, IHubContext<CampaignHub> hub) : Endpoint<PutEntryKindRequest, EntryResponse>
 {
     public override void Configure()
@@ -35,6 +39,12 @@ public class PutEntryKind(IDocumentSession session, IHubContext<CampaignHub> hub
         var (_, member) = await this.RequireMember(session, req.CampaignId, userId, ct);
         var entry = await this.RequireVisibleEntry(session, req.CampaignId, req.EntryId, member, ct);
         this.RequireCanEdit(entry, member);
+
+        if (entry.Kind != req.Kind && entry.ClaimedByMemberId is not null)
+        {
+            ThrowError(new ValidationFailure(nameof(PutEntryKindRequest.Kind).ToLowerInvariant(),
+                "This character is someone's player character. Unclaim it first."), StatusCodes.Status409Conflict);
+        }
 
         if (entry.Kind != req.Kind)
         {
