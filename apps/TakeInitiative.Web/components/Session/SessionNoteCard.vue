@@ -1,5 +1,6 @@
 <template>
     <article
+        ref="card"
         :id="`note-${note.id}`"
         :data-note-id="note.id"
         :aria-busy="pending || undefined"
@@ -7,6 +8,9 @@
             'group relative flex flex-col gap-0.5 px-4 py-1.5 transition-colors duration-700 hover:bg-accent/30',
             note.isRecap && 'border-l-2 border-gold bg-gold/5 pl-[14px]',
             highlighted && '!bg-gold/15',
+            // A long-press opens the action sheet, not the system's selection or callout.
+            // Never while editing: iOS will not type into a field inside `user-select: none`.
+            !editing && '[-webkit-touch-callout:none] [@media(pointer:coarse)]:select-none',
         ]">
         <header class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm">
             <span
@@ -51,7 +55,8 @@
                 class="text-xs text-muted-foreground">
                 Sending…
             </span>
-            <!-- The note's menu; 14e adds the long-press sheet with the same actions. -->
+            <!-- The note's menu. A long-press on a touch screen asks the stream for the
+                 action sheet with the same actions (14e). -->
             <slot
                 name="actions"
                 :actions="actions"
@@ -123,6 +128,11 @@
     import { addedLaterLabel, formatNoteDateTime, formatNoteTime } from "~/utils/sessionDates";
     import { isPendingNote } from "~/utils/sessionStreamCache";
 
+    const emit = defineEmits<{
+        /** A long-press: the stream opens `NoteActionSheet` with these. */
+        openActions: [payload: { actions: NoteAction[]; run: (action: NoteAction, visibility?: Visibility) => Promise<void> }];
+    }>();
+
     const props = defineProps<{
         campaignId: string;
         note: SessionNote;
@@ -148,6 +158,12 @@
     );
 
     const editing = ref(false);
+
+    useLongPress(
+        useTemplateRef<HTMLElement>("card"),
+        () => emit("openActions", { actions: actions.value, run }),
+        { disabled: () => editing.value || actions.value.length === 0 }
+    );
     const historyOpen = ref(false);
     // Mounted on first open only, so the stream does not hold a dialog per note.
     const historyOpened = ref(false);

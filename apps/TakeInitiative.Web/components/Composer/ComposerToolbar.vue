@@ -41,12 +41,15 @@
 
         <div class="flex-1" />
         <slot name="end" />
+        <!-- `mousedown.prevent` here and on every item keeps the text box focused, so
+             on a phone the keyboard stays up and the pinned composer does not move. -->
         <Button
             type="submit"
             size="icon"
             class="size-11 shrink-0 md:size-9"
             aria-label="Post note"
-            :disabled="!canPost">
+            :disabled="!canPost"
+            @mousedown.prevent>
             <SendHorizontal />
         </Button>
     </div>

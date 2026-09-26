@@ -20,7 +20,7 @@ PR, which sits on 13d (#199). Each PR leaves the app runnable:
 | 14b | `v2/14b-live-notes` | Visibility-aware push | The same, and note and session changes are pushed only to the groups allowed to see them | [x] |
 | 14c | `v2/14c-session-stream` | Stream (read and live) | The Campaign tab shows the session stream, live. Members and the join code move to a panel | [x] |
 | 14d | `v2/14d-composer` | Composer and note actions | Post, edit, delete, hide, history, back-posting and the gap prompt, on every screen size | [x] |
-| 14e | `v2/14e-mobile-composer` | Mobile composer, commands, filters | The step's Verify passes | [ ] |
+| 14e | `v2/14e-mobile-composer` | Mobile composer, commands, filters | The step's Verify passes | [x] |
 
 `@` mentions are step 15 and images are step 16. This step leaves a seam for each
 (Notes) and builds neither.
@@ -707,3 +707,73 @@ This PR adds the nouns the step puts into code and UI:
       - a note link three sessions back, found by paging.
   - The earlier runtime scripts still pass: `smoke14a` 70/70, `hub14b` 28/28, `stream14c` 111/111 and `pages13d` 19/19.
   - Back-dating needs `to_jsonb(timestamptz)`, not `::text`. Postgres's text form (`… +00`) does not deserialize, so that campaign's reads return 400.
+
+### Deviations and decisions in 14e
+
+- **Extra files beyond Files touched:**
+  - Pure rules, unit tested: `utils/composerCommands.ts` (parsing, the strip's suggestions, picking one), `utils/keyboardInset.ts` (the inset and when to pin), `utils/longPress.ts` and `utils/streamFilters.ts` (URL value ↔ enum, empty states, and `visibleStreamSessions`, the divider rule moved out of `SessionStream`).
+  - `components/Composer/CommandStrip.vue`: the `/` strip.
+  - Tests: `tests/unit/{composerCommands,mobileComposer}.test.ts`.
+  - Also modified: `components/Session/{SessionNoteCard,NoteActions}.vue` and `pages/app/campaigns/[campaignId]/index.vue`.
+  - `useComposerPinned()` (in `useKeyboardInset.ts`) is a `useState` flag that the layout reads to hide the tab bar.
+  - No API change, so `schema.d.ts` is unchanged.
+- **A flaky 14a test is fixed here.** `SessionNoteTests.AnEdit_SetsEditedAt_AndTheHistoryListsBothVersions` compared a time read back from Postgres with the one the POST returned. Postgres stores microseconds and .NET keeps 100ns ticks, so the two values sometimes differed by less than 1µs. That turned CI red on #201 and #202. It now uses `BeCloseTo(…, 1µs)`. The fix belongs in 14a, but earlier PRs are not changed, so it is made here.
+- **Pinning.** The composer is pinned while its text box has focus and either the screen is a phone (below `md`) or a keyboard is covering the page (a tablet).
+  - `inset` is 0 without `visualViewport`, and also while pinch-zoomed (`scale ≠ 1`), when the visual viewport shrinks for another reason.
+  - While pinned, the composer's wrapper keeps its height plus `inset`, so the stream ends where the composer starts. The stream also watches its own size, so a reader at the bottom stays at the bottom when it shrinks.
+  - There is no transition on `bottom`. With no keyboard up, the pinned composer keeps clear of the home-indicator safe area.
+  - Unpinning waits 120ms after a blur, so focus passing through a button does not flicker. Every toolbar button, the ➤ button and the strip's chips use `mousedown.prevent`, so tapping them keeps the text box focused and the keyboard up.
+  - Opening a picker moves focus into its menu, so the keyboard closes and the composer unpins. The pickers open upwards (`side="top"`), as in 14d.
+- **The strip sits below the text box**, between it and the toolbar, as §3a draws it. 14d had put the `strip` slot above the text box. Step 15's `@` slot moved with it.
+  - From `md` the strip is a popover just above the text box's left edge, not at the caret itself. A command only counts at the start of the text, so the caret is on that first line.
+- **Commands.**
+  - Pasted runs apply in order (`/dm /recap text`). A bad `/session` stops the run and leaves its text alone. `/session x` explains that it needs a number.
+  - Unknown commands (`/roll`) stay as text. Commands are case-insensitive.
+  - The strip lists the commands that match what has been typed. After `/session ` it lists the matching sessions, newest first, up to 8. So `/session N` can be done entirely by touch (tap `/session N`, then tap a session), as well as through the picker.
+  - On desktop, ↑/↓ move through the strip, Tab or Enter picks, and Esc dismisses it until the text changes. Enter also picks on a phone while the strip is open.
+- **Long-press** works with touch and pen only; a mouse has the ⋯ menu.
+  - Moving more than 10px cancels it, and so does `pointercancel` (the stream starting to scroll).
+  - It never starts on a link, a button or the editor.
+  - It suppresses the system's context menu and the click that follows, and buzzes for 10ms where `navigator.vibrate` exists.
+  - On touch screens the card has `user-select: none` and no callout, except while editing: iOS will not type into a field inside `user-select: none`.
+- **⋯ on touch screens** is now screen-reader-only (`sr-only` under `pointer: coarse`), so VoiceOver and TalkBack still reach the menu. 14d had shown it at 44px until long-press existed.
+- **`NoteActionSheet`.** There is one per stream, not one per card. The card emits `openActions` with its `{ actions, run }`.
+  - Edit, Edit history and Delete run after the sheet has closed and released focus, so the editor or dialog keeps focus.
+  - Copy link, Hide, Unhide and visibility changes run inside the tap. iOS only allows clipboard writes during a user gesture.
+  - The sheet closes if its note leaves the stream (deleted, hidden, or filtered out).
+- **Filters.**
+  - `?filter=` holds the lower-case name. `All` is written as no parameter, and an unknown value reads as `All`. Changing the filter uses `router.replace`, so it adds no history entry.
+  - The chip row is the slim row above the stream's scroller, outside it. It stays put without `position: sticky`.
+  - Each filter has its own empty text. Images and Combats name steps 16 and 18.
+- **Verify, as run in 14e** (no browser; the UI was not looked at on a device):
+  - `nuxi typecheck` is clean and `nuxt build` succeeds.
+  - `vitest` passes 94/94: 71 from 14d and 23 new (12 for commands, 11 for the inset, pinning, long-press and filters).
+  - `dotnet test` passes 74/74. The API is unchanged; only the flaky test above changed.
+  - `filters14e.mjs` passed 233/233 against the API on 5010 and `nuxt dev` on 3100:
+    - Vite compiled every new or changed module, and `/app/campaigns/x?filter=…` served for every filter.
+    - A DM and two players posted by typing text through `applyCommands` into the composer state and `buildPostBody`. This covered `/dm`, `/me`, `/recap`, chained commands, a command that is not at the start, `/session 1` (added later) and `/session 3`. `/session 9` was refused inline with its text kept.
+    - For all six filters, for each viewer, three things were checked after posting, after a hide, and after an un-recap, a visibility change and a delete:
+      - the notes shown matched a model of who sees what;
+      - the dividers matched the "only sessions with a match, plus the current one" rule;
+      - the per-filter live cache, fed by hub pushes, equalled a fresh `GET`.
+  - The earlier scripts still pass: `smoke14a` 70/70, `hub14b` 28/28, `stream14c` 111/111, `composer14d` 142/142 and `pages13d` 19/19.
+  - Verify 4, re-checked: all 332 session and note events in the dev database have a `correlation_id` and an `Actor`. `smoke14a`'s deleted note has no `mt_doc_sessionnote` row, and its `session_note_posted` and `session_note_deleted` events remain.
+- **Step 14 stays `in progress`.** Verify 1 asks for green CI on every PR in the stack, and #201 and #202 are red with the flaky test above (it failed again when re-run). The fix is here in #205, and #203–#205 are green. Once the user accepts that, or the stack merges with the fix, and the hand checks below pass, step 14 can be marked `done`.
+- **Left to check by hand** (Verify 2 needs browsers, and 2.10 needs a real phone):
+  - **Phone** (iOS Safari and Android Chrome, installed as a PWA and in the browser):
+    - Focus the composer. The tab bar hides, and the composer (pickers, text box, toolbar) sits directly on the keyboard, with no gap and no jitter while the keyboard animates.
+    - Blur it. The composer and tab bar return.
+    - Tapping B, I, •, 📜 Recap, ➤ and a strip chip keeps the keyboard up.
+    - Type `/`. The chips show above the keyboard. Tap `/session N`, then a session.
+    - `/dm ` and `/recap ` change the pickers and toggle, and vanish from the text.
+    - `/session 9 ` shows the inline error.
+    - Long-press a note. The sheet opens after about half a second, and scrolling the stream does not open it. Each action works, including Delete's dialog, Edit (the keyboard must not cover the editor) and Copy link.
+    - The filter chips scroll sideways.
+    - Rotating the phone and pinch-zooming do not strand the composer.
+  - **Desktop:**
+    - Verify 2.1–2.9 in three browser profiles.
+    - Type `/`. The popover appears above the text box, ↑/↓/Tab/Enter/Esc work, and Enter posts once it is closed.
+    - Filters change the URL, survive a reload, and show the Images and Combats empty states.
+    - The ⋯ menu shows on hover.
+    - The composer never pins at desktop widths, even when the window is short.
+

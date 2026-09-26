@@ -1,60 +1,83 @@
 <template>
     <!-- The composer (glossary §1, design §3). It sits below the stream, outside its
-         scroller. 14e pins it above the on-screen keyboard on a phone. -->
-    <form
-        class="flex shrink-0 flex-col gap-1 border-t bg-background px-2 pb-2 pt-1"
-        aria-label="Composer"
-        @submit.prevent="post">
-        <div class="flex min-w-0 items-center gap-1">
-            <ComposerSessionPicker
-                v-model="state.sessionId"
-                :sessions="sessions"
-                :loaded="sessionsQuery.isSuccess.value"
+         scroller. While its text box has focus on a phone it is pinned directly above
+         the on-screen keyboard (design §3a, invariant 11), and this wrapper keeps its
+         place, plus the keyboard's height, so the stream ends where the composer starts. -->
+    <div
+        class="shrink-0"
+        :style="pinned ? { height: `${formHeight + inset}px` } : undefined">
+        <form
+            ref="form"
+            :class="[
+                'flex flex-col gap-1 border-t bg-background px-2 pb-2 pt-1',
+                pinned && 'fixed inset-x-0 z-30 px-safe',
+            ]"
+            :style="pinned ? pinnedStyle : undefined"
+            aria-label="Composer"
+            @submit.prevent="post">
+            <div class="flex min-w-0 items-center gap-1">
+                <ComposerSessionPicker
+                    v-model="state.sessionId"
+                    :sessions="sessions"
+                    :loaded="sessionsQuery.isSuccess.value"
+                    :starting="startSession.isPending.value"
+                    @start="start" />
+                <ComposerVisibilityPicker v-model="state.visibility" />
+            </div>
+
+            <ComposerGapPrompt
+                v-if="gapVisible"
+                :text="gapText"
+                :nextNumber="nextNumber"
                 :starting="startSession.isPending.value"
-                @start="start" />
-            <ComposerVisibilityPicker v-model="state.visibility" />
-        </div>
+                @accept="start" />
 
-        <ComposerGapPrompt
-            v-if="gapVisible"
-            :text="gapText"
-            :nextNumber="nextNumber"
-            :starting="startSession.isPending.value"
-            @accept="start" />
+            <div class="relative flex flex-col gap-1">
+                <textarea
+                    ref="textarea"
+                    v-model="state.text"
+                    rows="1"
+                    :enterkeyhint="touch ? 'enter' : 'send'"
+                    :placeholder="placeholder"
+                    aria-label="Session note"
+                    :aria-describedby="overLimit ? `${id}-count` : undefined"
+                    class="max-h-[40dvh] min-h-11 w-full resize-none overflow-y-auto rounded-md border bg-background px-3 py-2.5 text-base leading-snug outline-none placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring md:min-h-10 md:py-2 md:text-sm"
+                    @keydown="onKeydown"
+                    @input="grow"
+                    @focus="onFocus"
+                    @blur="onBlur" />
 
-        <!-- The strip slot: 14e's `/` command strip and step 15's `@` suggestions. -->
-        <slot
-            name="strip"
-            :state="state" />
+                <!-- Between the text box and the toolbar on a phone, so it sits above the
+                     keyboard (design §3a); a popover above the text box from md. -->
+                <ComposerCommandStrip
+                    :suggestions="commands.suggestions.value"
+                    :active="commands.active.value"
+                    :error="commands.error.value"
+                    :listId="`${id}-commands`"
+                    @pick="commands.pick" />
+                <!-- The strip slot: step 15's `@` suggestions go in the same place. -->
+                <slot
+                    name="strip"
+                    :state="state" />
+            </div>
 
-        <textarea
-            ref="textarea"
-            v-model="state.text"
-            rows="1"
-            :enterkeyhint="touch ? 'enter' : 'send'"
-            :placeholder="placeholder"
-            aria-label="Session note"
-            :aria-describedby="overLimit ? `${id}-count` : undefined"
-            class="max-h-[40dvh] min-h-11 w-full resize-none overflow-y-auto rounded-md border bg-background px-3 py-2.5 text-base leading-snug outline-none placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring md:min-h-10 md:py-2 md:text-sm"
-            @keydown="onKeydown"
-            @input="grow" />
+            <p
+                v-if="state.text.length >= NOTE_TEXT_WARN_AT"
+                :id="`${id}-count`"
+                :class="['text-right text-xs', overLimit ? 'text-destructive-tint' : 'text-muted-foreground']">
+                {{ state.text.trim().length.toLocaleString() }} / {{ NOTE_TEXT_MAX.toLocaleString() }}
+            </p>
 
-        <p
-            v-if="state.text.length >= NOTE_TEXT_WARN_AT"
-            :id="`${id}-count`"
-            :class="['text-right text-xs', overLimit ? 'text-destructive-tint' : 'text-muted-foreground']">
-            {{ state.text.trim().length.toLocaleString() }} / {{ NOTE_TEXT_MAX.toLocaleString() }}
-        </p>
-
-        <ComposerToolbar
-            :items="toolbarItems"
-            :canPost="canPost" />
-    </form>
+            <ComposerToolbar
+                :items="toolbarItems"
+                :canPost="canPost" />
+        </form>
+    </div>
 </template>
 
 <script setup lang="ts">
     import { useInfiniteQuery, useQuery } from "@tanstack/vue-query";
-    import { useMediaQuery, useNow } from "@vueuse/core";
+    import { useElementSize, useMediaQuery, useNow } from "@vueuse/core";
     import { Bold, Italic, List, ScrollText } from "lucide-vue-next";
     import { toast } from "vue-sonner";
     import { apiErrorMessage, apiErrorStatus } from "~/utils/apiErrorParser";
@@ -88,6 +111,7 @@
         postNoteMutation,
         startSessionMutation,
     } from "~/utils/queries/sessions";
+    import { composerPinned } from "~/utils/keyboardInset";
     import { flattenSessions, newPendingNoteId } from "~/utils/sessionStreamCache";
 
     const props = withDefaults(
@@ -201,6 +225,8 @@
     const mod = isMac ? "⌘" : "Ctrl+";
 
     function onKeydown(event: KeyboardEvent) {
+        // The `/` strip takes the arrows, Tab, Enter and Esc while it is open.
+        if (commands.onKeydown(event)) return;
         const action = enterAction(event, touch.value);
         if (action === "post") {
             event.preventDefault();
@@ -246,6 +272,40 @@
             run: () => (state.isRecap = !state.isRecap),
         },
     ]);
+
+    // ── Commands (14e) ───────────────────────────────────────────────────────
+    const commands = useComposerCommands({ state, sessions, textarea });
+
+    // ── Pinned above the keyboard (14e) ──────────────────────────────────────
+    const phone = useMediaQuery("(max-width: 767.98px)");
+    const inset = useKeyboardInset();
+    const focused = ref(false);
+    // A short grace period, so focus moving to a toolbar button and back does not
+    // unpin and re-pin the composer.
+    let blurTimer: ReturnType<typeof setTimeout> | undefined;
+    function onFocus() {
+        clearTimeout(blurTimer);
+        focused.value = true;
+    }
+    function onBlur() {
+        clearTimeout(blurTimer);
+        blurTimer = setTimeout(() => (focused.value = false), 120);
+    }
+    const pinned = computed(() => composerPinned({ focused: focused.value, phone: phone.value, inset: inset.value }));
+    const form = useTemplateRef<HTMLFormElement>("form");
+    const { height: formHeight } = useElementSize(form, undefined, { box: "border-box" });
+    // No transition on `bottom`: iOS moves the keyboard in steps and a transition lags
+    // behind it. With no keyboard up, the home indicator's safe area is kept clear.
+    const pinnedStyle = computed(() => ({
+        bottom: `${inset.value}px`,
+        paddingBottom: inset.value > 0 ? undefined : "calc(0.5rem + env(safe-area-inset-bottom))",
+    }));
+    const pinnedState = useComposerPinned();
+    watch(pinned, (value) => (pinnedState.value = value), { immediate: true });
+    onBeforeUnmount(() => {
+        clearTimeout(blurTimer);
+        pinnedState.value = false;
+    });
 
     // ── The text box ─────────────────────────────────────────────────────────
     // Grows with its content up to 40% of the screen, then scrolls.

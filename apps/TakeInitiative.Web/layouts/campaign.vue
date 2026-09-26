@@ -43,9 +43,14 @@
                 </main>
             </div>
 
+            <!-- On a phone the tab bar hides while the composer is pinned above the
+                 keyboard, so nothing sits between them (14e, invariant 11). -->
             <nav
                 aria-label="Campaign sections"
-                class="order-last shrink-0 border-t bg-background pb-safe px-safe md:order-first md:w-56 md:border-r md:border-t-0 md:pr-0 md:pt-safe">
+                :class="[
+                    'order-last shrink-0 border-t bg-background pb-safe px-safe md:order-first md:w-56 md:border-r md:border-t-0 md:pr-0 md:pt-safe',
+                    hideTabBar && 'max-md:hidden',
+                ]">
                 <NuxtLink
                     to="/app/campaigns"
                     class="hidden h-14 items-center gap-2 px-4 font-NovaCut text-lg text-gold md:flex">
@@ -110,6 +115,8 @@
         { name: "app-campaigns-campaignId-wiki", label: "Wiki", icon: BookOpen },
         { name: "app-campaigns-campaignId-combat", label: "Combat", icon: Swords },
     ] as const;
+
+    const hideTabBar = useComposerPinned();
 
     // Live updates for every tab.
     useCampaignHub(campaignId);
