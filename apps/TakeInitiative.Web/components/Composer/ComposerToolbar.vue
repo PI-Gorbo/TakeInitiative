@@ -1,0 +1,63 @@
+<template>
+    <!-- The composer's toolbar (design §3a). It draws whatever items it is given, so
+         step 15 adds @ and step 16 adds 📷 and 🖼 without reshaping it. -->
+    <div
+        role="toolbar"
+        aria-label="Formatting"
+        class="flex items-center gap-0.5">
+        <template
+            v-for="item in items"
+            :key="item.id">
+            <span
+                v-if="item.separatorBefore"
+                class="mx-1 h-6 w-px bg-border"
+                aria-hidden="true" />
+            <button
+                type="button"
+                :title="item.shortcut ? `${item.label} (${item.shortcut})` : item.label"
+                :aria-label="item.label"
+                :aria-pressed="item.pressed === undefined ? undefined : item.pressed"
+                :disabled="item.disabled"
+                :class="[
+                    'flex h-11 min-w-11 items-center justify-center gap-1 rounded-md px-2 text-sm transition-colors disabled:opacity-50 md:h-8 md:min-w-8',
+                    item.pressed
+                        ? 'bg-gold/15 text-gold'
+                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                ]"
+                @mousedown.prevent
+                @click="item.run()">
+                <component
+                    :is="item.icon"
+                    v-if="item.icon"
+                    class="size-4"
+                    aria-hidden="true" />
+                <span
+                    v-if="item.text"
+                    aria-hidden="true"
+                    >{{ item.text }}</span
+                >
+            </button>
+        </template>
+
+        <div class="flex-1" />
+        <slot name="end" />
+        <Button
+            type="submit"
+            size="icon"
+            class="size-11 shrink-0 md:size-9"
+            aria-label="Post note"
+            :disabled="!canPost">
+            <SendHorizontal />
+        </Button>
+    </div>
+</template>
+
+<script setup lang="ts">
+    import { SendHorizontal } from "lucide-vue-next";
+    import type { ComposerToolbarItem } from "~/utils/composer";
+
+    defineProps<{
+        items: ComposerToolbarItem[];
+        canPost: boolean;
+    }>();
+</script>

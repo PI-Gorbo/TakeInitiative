@@ -3,8 +3,13 @@ import { useQueryClient } from "@tanstack/vue-query";
 import { toast } from "vue-sonner";
 import type { Campaign, Role, Session, SessionNote } from "~/utils/api/types";
 import { getCampaignQueryKey, getCampaignsQueryKey } from "~/utils/queries/campaign";
-import { invalidateSessionStreams, updateSessionStreams } from "~/utils/queries/sessions";
-import { removeNote, upsertNote, upsertSession } from "~/utils/sessionStreamCache";
+import {
+    applySession,
+    invalidateSessions,
+    invalidateSessionStreams,
+    updateSessionStreams,
+} from "~/utils/queries/sessions";
+import { dropPendingCopy, removeNote, upsertNote } from "~/utils/sessionStreamCache";
 
 // Payloads of `CampaignHubMessages` (the API's CampaignHub.cs and SessionHub.cs).
 type MemberRoleChangedMessage = { campaignId: string; memberId: string; role: Role };
@@ -46,7 +51,10 @@ export function useCampaignHub(campaignId: MaybeRefOrGetter<string | undefined>)
         // The caller's own role may have changed; the campaign list shows it.
         void queryClient.invalidateQueries({ queryKey: getCampaignsQueryKey() });
         // A new role changes which notes the caller can see (DM notes, hidden notes).
-        if (id && message?.memberId === me) void invalidateSessionStreams(queryClient, id);
+        if (id && message?.memberId === me) {
+            void invalidateSessionStreams(queryClient, id);
+            void invalidateSessions(queryClient, id);
+        }
     });
 
     // Session stream pushes (14b). They are sent after the save and are idempotent:
@@ -55,14 +63,20 @@ export function useCampaignHub(campaignId: MaybeRefOrGetter<string | undefined>)
         const id = joinedCampaignId.value;
         if (id) updateSessionStreams(queryClient, id, update);
     };
+    // A session change also updates the composer's session picker (14d).
+    const updateSession = (session: Session) => {
+        const id = joinedCampaignId.value;
+        if (id) applySession(queryClient, id, session);
+    };
     connection.on("sessionStarted", (session: Session) => {
-        updateStreams((data) => upsertSession(data, session));
+        updateSession(session);
     });
     connection.on("sessionTitleChanged", (session: Session) => {
-        updateStreams((data) => upsertSession(data, session));
+        updateSession(session);
     });
     connection.on("sessionNoteUpserted", (note: SessionNote) => {
-        updateStreams((data, filter, me) => upsertNote(data, note, filter, me));
+        // The caller's own post can arrive before its POST answers: drop the optimistic copy.
+        updateStreams((data, filter, me) => upsertNote(dropPendingCopy(data, note), note, filter, me));
     });
     connection.on("sessionNoteRemoved", ({ noteId }: SessionNoteRemovedMessage) => {
         updateStreams((data) => removeNote(data, noteId));
@@ -79,6 +93,7 @@ export function useCampaignHub(campaignId: MaybeRefOrGetter<string | undefined>)
         if (id) {
             await connection.invoke("Join", id);
             void invalidateSessionStreams(queryClient, id);
+            void invalidateSessions(queryClient, id);
         }
         await refreshCampaign();
     });
@@ -91,6 +106,7 @@ export function useCampaignHub(campaignId: MaybeRefOrGetter<string | undefined>)
         joinedCampaignId.value = id;
         // A stream fetched before the join finished can miss a note pushed in between.
         void invalidateSessionStreams(queryClient, id);
+        void invalidateSessions(queryClient, id);
     }
 
     async function leave() {

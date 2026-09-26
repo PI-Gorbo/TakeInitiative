@@ -38,3 +38,5 @@ export type SessionNote = Schemas["SessionNoteResponse"];
 export type SessionStream = Schemas["SessionStreamResponse"];
 export type SessionStreamSession = Schemas["SessionStreamSession"];
 export type SessionStreamFilter = Schemas["SessionStreamFilter"];
+export type SessionList = Schemas["GetSessionsResponse"];
+export type SessionNoteVersion = Schemas["SessionNoteVersion"];
