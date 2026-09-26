@@ -50,6 +50,16 @@
                     · <span class="text-foreground">{{ session.title }}</span>
                 </template>
             </h2>
+            <!-- 16d: the session's gallery. The count is from the loaded notes, so the
+                 stream passes it only under the All and Images filters. -->
+            <button
+                v-if="imageCount"
+                type="button"
+                class="flex h-11 shrink-0 items-center gap-1 rounded-md px-2 tabular-nums text-muted-foreground hover:bg-accent hover:text-accent-foreground md:h-8"
+                :aria-label="`Open the gallery of Session ${session.number}, ${imageCountLabel(imageCount)}`"
+                @click="emit('openGallery')">
+                <span aria-hidden="true">🖼 {{ imageCount }}</span>
+            </button>
             <button
                 v-if="canEditTitle"
                 type="button"
@@ -71,13 +81,17 @@
     import type { Session } from "~/utils/api/types";
     import { putSessionTitleMutation } from "~/utils/queries/sessions";
     import { formatSessionDate } from "~/utils/sessionDates";
+    import { imageCountLabel } from "~/utils/gallery";
 
     const props = defineProps<{
         campaignId: string;
         session: Session;
         /** DMs set and clear session titles. */
         canEditTitle: boolean;
+        /** "🖼 n" (16d): the images on the session's loaded notes, when they are all loaded. */
+        imageCount?: number;
     }>();
+    const emit = defineEmits<{ openGallery: [] }>();
 
     const label = computed(() =>
         [`Session ${props.session.number}`, formatSessionDate(props.session.startedAt), props.session.title]

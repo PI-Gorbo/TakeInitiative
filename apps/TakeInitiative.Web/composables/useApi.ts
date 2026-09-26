@@ -41,6 +41,8 @@ import { putEntryStatsRequest } from "~/utils/api/entry/putEntryStatsRequest";
 import { getEntryHistoryRequest } from "~/utils/api/entry/getEntryHistoryRequest";
 import { postImageRequest } from "~/utils/api/image/postImageRequest";
 import { deleteImageRequest } from "~/utils/api/image/deleteImageRequest";
+import { getSessionImagesRequest } from "~/utils/api/image/getSessionImagesRequest";
+import { getEntryImagesRequest } from "~/utils/api/image/getEntryImagesRequest";
 
 export const useApi = () => {
     const { $axios } = useNuxtApp();
@@ -98,6 +100,8 @@ export const useApi = () => {
         image: {
             post: postImageRequest($axios),
             delete: deleteImageRequest($axios),
+            sessionGallery: getSessionImagesRequest($axios),
+            entryGallery: getEntryImagesRequest($axios),
         },
         admin: {
             getMaintenance: getMaintenanceRequest($axios),

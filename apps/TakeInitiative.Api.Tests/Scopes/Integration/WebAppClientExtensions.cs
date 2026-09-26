@@ -305,6 +305,35 @@ public static class WebAppClientExtensions
         this IWebAppClient client, Guid campaignId, Guid noteId, string text, Guid[]? imageIds, bool isRecap = false)
         => client.Put<object, SessionNoteResponse>(new { text, isRecap, imageIds }, $"/api/campaigns/{campaignId}/notes/{noteId}");
 
+    // Galleries (step 16d).
+
+    public static string GalleryUrl(Guid campaignId, string owner, Guid ownerId, DateTimeOffset? before = null, int? take = null)
+    {
+        var query = new List<string>();
+        if (before is not null) query.Add($"before={Uri.EscapeDataString(before.Value.ToString("O"))}");
+        if (take is not null) query.Add($"take={take}");
+        return $"/api/campaigns/{campaignId}/{owner}/{ownerId}/images" + (query.Count > 0 ? "?" + string.Join("&", query) : "");
+    }
+
+    public static Task<Result<GalleryResponse>> GetSessionImages(
+        this IWebAppClient client, Guid campaignId, Guid sessionId, DateTimeOffset? before = null, int? take = null)
+        => client.Get<GalleryResponse>(GalleryUrl(campaignId, "sessions", sessionId, before, take));
+
+    public static Task<Result<GalleryResponse>> GetEntryImages(
+        this IWebAppClient client, Guid campaignId, Guid entryId, DateTimeOffset? before = null, int? take = null)
+        => client.Get<GalleryResponse>(GalleryUrl(campaignId, "entries", entryId, before, take));
+
+    /// <summary>GETs a URL, never asserting the status, and returns the status.</summary>
+    public static async Task<int> GetStatus(this IWebAppClient client, string url)
+    {
+        var result = await client.AlbaHost.Scenario(_ =>
+        {
+            _.Get.Url(url);
+            _.IgnoreStatusCode();
+        });
+        return result.Context.Response.StatusCode;
+    }
+
     /// <summary>Sends a request that should fail and returns its status and body, to check error keys and that nothing leaks.</summary>
     public static async Task<(int Status, string Body)> Send(this IWebAppClient client, HttpMethod method, string url, object body)
     {
