@@ -18,6 +18,12 @@ public record SessionNoteResponse
     public DateTimeOffset? EditedAt { get; init; }
     public required bool IsHidden { get; init; }
     public Guid? HiddenByMemberId { get; init; }
+    /// <summary>
+    /// The note's images, in order (step 16b); <see cref="Text"/> is their caption and may be
+    /// empty. Their bytes are at <c>GET images/{id}/{display|thumb}</c>, served to exactly the
+    /// note's audience.
+    /// </summary>
+    public required NoteImageResponse[] Images { get; init; }
 
     public static SessionNoteResponse From(SessionNote note) => new()
     {
@@ -32,5 +38,16 @@ public record SessionNoteResponse
         EditedAt = note.EditedAt,
         IsHidden = note.IsHidden,
         HiddenByMemberId = note.HiddenByMemberId,
+        Images = [.. note.Images.Select(NoteImageResponse.From)],
     };
+}
+
+/// <summary>An image on a note. The size is the display variant's, for laying the note out before the bytes arrive.</summary>
+public record NoteImageResponse
+{
+    public required Guid Id { get; init; }
+    public required int Width { get; init; }
+    public required int Height { get; init; }
+
+    public static NoteImageResponse From(NoteImage image) => new() { Id = image.ImageId, Width = image.Width, Height = image.Height };
 }

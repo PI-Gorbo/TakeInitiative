@@ -1,4 +1,6 @@
 using FluentAssertions;
+using Marten;
+using Microsoft.Extensions.DependencyInjection;
 using TakeInitiative.Api.Features.Campaigns;
 using TakeInitiative.Api.Features.Sessions;
 
@@ -265,5 +267,59 @@ public class SessionTests(AuthenticatedWebAppWithDatabaseFixture fixture)
         (await fixture.GetSessionStream(campaign.Id, before: 5, take: 1)).Value.Sessions.Single().Session.Number.Should().Be(4);
         await fixture.ExpectStatus(HttpMethod.Get, $"/api/campaigns/{campaign.Id}/stream?take=11", null, 400);
         await fixture.ExpectStatus(HttpMethod.Get, $"/api/campaigns/{campaign.Id}/stream?take=0", null, 400);
+    }
+
+    [Fact]
+    public async Task TheTextAndImagesFilters_SplitTheNotes_UnderVisibility()
+    {
+        var campaign = await TestCampaign.Create(fixture, "Text and images");
+        fixture.LoginAsUser(Users.Player);
+        var text = (await fixture.PostSessionNote(campaign.Id, "Words")).Value;
+        var picture = (await fixture.PostImageNote(campaign.Id, "",
+            [(await fixture.UploadFixture(campaign.Id, ImageFixtures.Webp)).Id])).Value;
+        var secretPicture = (await fixture.PostImageNote(campaign.Id, "For the DM",
+            [(await fixture.UploadFixture(campaign.Id, ImageFixtures.Webp)).Id], Visibility.DM)).Value;
+        fixture.LoginAsUser(Users.DM);
+        var dmText = (await fixture.PostSessionNote(campaign.Id, "DM words", Visibility.DM)).Value;
+
+        async Task<Guid[]> Ids(Users user, SessionStreamFilter filter)
+        {
+            fixture.LoginAsUser(user);
+            return [.. (await fixture.GetSessionStream(campaign.Id, filter)).Value.Sessions.SelectMany(s => s.Notes).Select(n => n.Id)];
+        }
+
+        (await Ids(Users.Player, SessionStreamFilter.Text)).Should().Equal(text.Id);
+        (await Ids(Users.Player, SessionStreamFilter.Images)).Should().Equal(picture.Id, secretPicture.Id);
+        (await Ids(Users.DM, SessionStreamFilter.Text)).Should().Equal(text.Id, dmText.Id);
+        (await Ids(Users.DM, SessionStreamFilter.Images)).Should().Equal(picture.Id, secretPicture.Id);
+        (await Ids(Users.Outsider, SessionStreamFilter.Text)).Should().Equal(text.Id);
+        (await Ids(Users.Outsider, SessionStreamFilter.Images)).Should().Equal(picture.Id);
+        (await Ids(Users.Outsider, SessionStreamFilter.All)).Should().Equal(text.Id, picture.Id);
+
+        // Removing a note's images moves it to Text.
+        fixture.LoginAsUser(Users.Player);
+        (await fixture.PutImageNote(campaign.Id, secretPicture.Id, "For the DM", [])).Should().Succeed();
+        (await Ids(Users.DM, SessionStreamFilter.Images)).Should().Equal(picture.Id);
+        (await Ids(Users.DM, SessionStreamFilter.Text)).Should().Equal(text.Id, secretPicture.Id, dmText.Id);
+    }
+
+    [Fact]
+    public async Task ANoteProjectedBeforeImages_IsText_WithNoDatabaseReset()
+    {
+        var campaign = await TestCampaign.Create(fixture, "Old note", withSecondPlayer: false);
+        fixture.LoginAsUser(Users.Player);
+        var note = (await fixture.PostSessionNote(campaign.Id, "From step 15")).Value;
+
+        // A document written before step 16 has neither field in its JSON.
+        var store = fixture.AlbaHost.Services.GetRequiredService<IDocumentStore>();
+        await using (var session = store.LightweightSession())
+        {
+            session.QueueSqlCommand("update mt_doc_sessionnote set data = data - 'Images' - 'HasImages' where id = ?", note.Id);
+            await session.SaveChangesAsync();
+        }
+
+        (await fixture.GetSessionStream(campaign.Id, SessionStreamFilter.Text)).Value.Sessions.Single().Notes.Select(n => n.Id).Should().Equal(note.Id);
+        (await fixture.GetSessionStream(campaign.Id, SessionStreamFilter.Images)).Value.Sessions.Single().Notes.Should().BeEmpty();
+        (await fixture.GetSessionNote(campaign.Id, note.Id)).Value.Note.Images.Should().BeEmpty();
     }
 }
