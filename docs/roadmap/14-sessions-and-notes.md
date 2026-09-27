@@ -181,6 +181,11 @@ This PR adds the nouns the step puts into code and UI:
    make a campaign. A member starts Session 1 with `POST sessions { number: 1 }`
    like any other session. Until then the reads return no sessions and a null
    `currentSessionId`, and posting a note is a 404.
+
+   This supersedes one line of the design session: §3's stream rules say "A new
+   campaign starts with Session 1", which is left as written, since
+   [12-v2-design-session.md](12-v2-design-session.md) is the record of what was
+   agreed that day rather than a description of the code.
 6. **Gap prompt rule** (`SessionGap`, one constant of 3 days, reused by the
    Discord import in step 24). `SuggestNextSession` is true when the current
    session has at least one note the caller can see and the newest such note in

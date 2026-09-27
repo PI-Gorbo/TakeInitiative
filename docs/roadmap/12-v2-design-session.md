@@ -131,7 +131,7 @@ dividers. It opens at the latest session. Filters: `All · Text · Images · Rec
   "Start Session 14?". One tap accepts. Ignoring it posts to the current session.
 - Picking an older session posts back in time, with an "added 3 days later" marker.
 - Every session note and every combat belongs to exactly one session. A new
-  campaign has no sessions: a member starts Session 1 when they sit down to play.
+  campaign starts with Session 1.
 
 **Editing and moderation:** only the author edits or deletes a session note, and
 edits show "(edited)" with history. A DM can **hide** any note (for example an
