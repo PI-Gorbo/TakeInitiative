@@ -7,16 +7,16 @@ namespace TakeInitiative.Api.Features.Search;
 /// The Entries section (17a.10): entry names and aliases through <see cref="EntryMatcher"/>, plus
 /// the entries whose article text matches. Wiki results come first (§11).
 /// <para>
-/// An article hit is found in two steps. The GIN index over <b>every</b> block of an article,
+/// An article hit is found in two steps. A stored vector over <b>every</b> block of an article,
 /// secret ones included, narrows the candidates; then each candidate's blocks are matched one by
 /// one, on the blocks the viewer can see. A word that appears only in a 🔒 block therefore yields no
 /// hit for anyone outside that block, and the snippet comes from the best-ranked block they can see.
 /// </para>
 /// <para>
 /// The prefilter is a superset in every case but one, which
-/// <see cref="SearchSql.EntryArticleText"/> writes out: it holds each block's raw lexemes, so a
-/// block that only matches through a lexeme <see cref="SearchSql.PlainText"/> joined together is
-/// missed. That is a false negative and never a leak, and the visibility of what <i>is</i> returned
+/// <see cref="SearchSql.EntryArticleText"/> writes out: the vector holds each block's raw lexemes,
+/// so a block that only matches through a lexeme <see cref="SearchSql.PlainText"/> joined together
+/// is missed. That is a false negative and never a leak, and the visibility of what <i>is</i> returned
 /// does not depend on it.
 /// </para>
 /// </summary>
@@ -185,14 +185,16 @@ public class WikiSearchProvider(EntryMatcher matcher, ILogger<WikiSearchProvider
     /// <b>How little it reads.</b> The entries the names already matched are excluded (<c>@named</c>),
     /// because a name match always wins, which makes <c>LIMIT @take + 1</c> exactly enough: an
     /// article hit is the last rung of the ladder, so one more than <c>take</c> is all that can ever
-    /// be shown or change <c>hasMore</c>. Each block is then filtered on the <b>raw</b> block vector
-    /// — the cheap one, the same expression the entry index is built on — before the
+    /// be shown or change <c>hasMore</c>. The prefilter is the entry's stored vector
+    /// (<see cref="SearchSql.EntryArticleVector"/>), so it costs a column read per row and the GIN
+    /// index on it is usable. Each block is then filtered on the <b>raw</b> block vector — the cheap
+    /// one, the same expression the stored one is built from — before the
     /// <see cref="SearchSql.PlainText"/> vector is computed for it at all, which is what keeps the
-    /// regexps off the blocks that cannot match. The two conjuncts are the same test the index is
-    /// (<see cref="SearchSql.EntryArticleText"/>): raw holds every lexeme of the text except the ones
-    /// <c>PlainText</c> joins together, so a block whose only match relies on a joined lexeme is
-    /// missed here as it is missed by the index — a false negative, never a leak, and the same one
-    /// either way.
+    /// regexps off the blocks that cannot match. The two conjuncts are the same test the stored
+    /// vector is (<see cref="SearchSql.EntryArticleText"/>): raw holds every lexeme of the text
+    /// except the ones <c>PlainText</c> joins together, so a block whose only match relies on a
+    /// joined lexeme is missed here as it is missed by the prefilter — a false negative, never a
+    /// leak, and the same one either way.
     /// </para>
     /// </summary>
     private static string ArticlesSql(SearchContext context) => $"""

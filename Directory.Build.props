@@ -11,9 +11,13 @@
             GHSA-vmw2-qwm8-x84c - Marten <= 8.36: SQL injection through the
             full-text search `regConfig` parameter.
 
-            Not exploitable here: this codebase uses no full-text search at all
-            (no FullTextIndex, PlainTextSearch, SearchTsQuery, PhraseSearch or
-            NgramSearch call sites), so the vulnerable code path is unreachable.
+            Not exploitable here. Step 17a's ⌘K search added the only FullTextIndex
+            call sites (Bootstrap.cs, the note index and the article vector), and
+            both pass the compile-time constant 'simple' as regConfig. The
+            vulnerable parameter never takes a value from a request: a search's
+            own text reaches Postgres only as a to_tsquery parameter, built in
+            SearchQuery from letters and digits. There are no PlainTextSearch,
+            SearchTsQuery, PhraseSearch or NgramSearch call sites.
 
             The fix ships in Marten 8.37.0, and Marten 8 reworked the projection
             APIs. docs/roadmap/03-retarget-net10.md deliberately holds Marten at

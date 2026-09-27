@@ -95,18 +95,19 @@ public static class Bootstrap
             opts.Schema.For<Entry>()
                 .Index([x => x.CampaignId, x => x.Kind])
                 .Index(x => x.Aliases, idx => idx.Method = IndexMethod.gin)
-                .Index(x => x.ArticleMentionIds, idx => idx.Method = IndexMethod.gin)
-                // The article prefilter (17a.3). It covers every block, secret ones too, so it is
-                // only a prefilter: a candidate entry is re-matched block by block on the blocks
-                // the viewer can see, and a hit on a secret block alone yields nothing. Names,
-                // aliases and session titles have no index; they are scanned per campaign through
-                // the (CampaignId, Kind) index above, which is a few thousand short strings.
-                .FullTextIndex(idx =>
-                {
-                    idx.Name = SearchSql.EntryIndexName;
-                    idx.RegConfig = SearchSql.Config;
-                    idx.DocumentConfig = SearchSql.EntryArticleText;
-                });
+                .Index(x => x.ArticleMentionIds, idx => idx.Method = IndexMethod.gin);
+
+            // The article prefilter (17a.3): a stored generated tsvector column and a GIN index on
+            // it, rather than an expression index. The planner will not choose a GIN index for a
+            // prefix tsquery at a campaign's size, so an expression index still left Postgres
+            // computing to_tsvector(jsonb_path_query_array(…)) for every entry on every search;
+            // stored, Postgres computes it once, in the statement that writes the entry document.
+            // It covers every block, secret ones too, so it is still only a prefilter: a candidate
+            // entry is re-matched block by block on the blocks the viewer can see, and a hit on a
+            // secret block alone yields nothing. Names, aliases and session titles have no index;
+            // they are scanned per campaign through the (CampaignId, Kind) index above, which is a
+            // few thousand short strings.
+            SearchSchema.AddEntryArticleVector(opts);
 
             // Image documents (step 16a): storage bookkeeping, not an aggregate. Optimistic
             // concurrency makes two writers racing on one image (attaching it to two notes,

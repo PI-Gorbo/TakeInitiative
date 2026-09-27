@@ -4,14 +4,18 @@ using Npgsql;
 namespace TakeInitiative.Api.Features.Search;
 
 /// <summary>
-/// The SQL the search is built from: the two index expressions, the text expressions the
+/// The SQL the search is built from: the two indexed vectors, the text expressions the
 /// queries share with them, the match ladder, and one small runner.
 /// <para>
-/// The index expressions are constants here and the queries use the same constants, which is
-/// what lets Postgres recognise the expression and use the index. Postgres rewrites an
-/// expression when it stores it (<c>'simple'::regconfig</c>, <c>'Text'::text</c>, its own
-/// bracketing), so the constants are written in the form <c>pg_get_indexdef</c> gives back,
-/// and <c>SearchSchemaTests</c> fails if Weasel ever sees a difference.
+/// The note vector is an <b>index expression</b>: it is a constant here and the note query uses
+/// the same constant, which is what lets Postgres recognise the expression and use the index.
+/// Postgres rewrites an expression when it stores it (<c>'simple'::regconfig</c>,
+/// <c>'Text'::text</c>, its own bracketing), so the constants are written in the form
+/// <c>pg_get_indexdef</c> gives back, and <c>SearchSchemaTests</c> fails if Weasel ever sees a
+/// difference. The article vector is a <b>stored generated column</b>
+/// (<see cref="EntryArticleVectorColumn"/>) instead, so the article query names the column and
+/// there is no expression to match: Postgres computes it once per write rather than once per row
+/// per search.
 /// </para>
 /// <para>
 /// <b>simple, not english.</b> Fantasy names dominate the text. The English stemmer turns
@@ -51,23 +55,45 @@ public static class SearchSql
     /// nothing.
     /// <para>
     /// <b>It is a superset, with one exception.</b> <c>to_tsvector(regconfig, jsonb)</c> vectorises
-    /// the string <i>values</i> of the document, so the index holds each block's <b>raw</b> text
+    /// the string <i>values</i> of the document, so the vector holds each block's <b>raw</b> text
     /// while a block is matched on <see cref="PlainText"/> of it. Every lexeme of the raw text is
-    /// therefore indexed, but <see cref="PlainText"/> can <b>join</b> two raw lexemes into one by
+    /// therefore there, but <see cref="PlainText"/> can <b>join</b> two raw lexemes into one by
     /// taking a separator out of the middle of a word (<c>wo\rd</c> reads as <c>word</c>, and so do
-    /// a deleted marker and a rewritten mention). That joined lexeme is in no index, so such a block
+    /// a deleted marker and a rewritten mention). That joined lexeme is in no vector, so such a block
     /// is missed: a false negative, never a leak. It cannot be fixed on the index side, because
     /// <c>to_tsvector(regconfig, jsonb)</c> gives no hook to transform each string value, and a
     /// regexp over the array's JSON encoding is not <see cref="PlainText"/> (JSON doubles a
-    /// backslash and writes a newline as <c>\n</c>). The note index has no such gap: <c>-&gt;&gt;</c>
-    /// hands <see cref="PlainText"/> the string itself, so <see cref="NoteText"/> is exact.
+    /// backslash and writes a newline as <c>\n</c>). Storing the vector in a column rather than
+    /// computing it per row changes nothing about that: it is the same expression, evaluated once
+    /// when the entry document is written. The note index has no such gap: <c>-&gt;&gt;</c> hands
+    /// <see cref="PlainText"/> the string itself, so <see cref="NoteText"/> is exact.
     /// </para>
     /// </summary>
     public const string EntryArticleText =
         @"jsonb_path_query_array(data, '$.""Article"".""Blocks""[*].""Text""'::jsonpath)";
 
-    /// <summary>The indexed vector, and the prefilter the article query uses.</summary>
-    public const string EntryArticleVector = $"to_tsvector('{Config}', {EntryArticleText})";
+    /// <summary>
+    /// The stored generated column the article prefilter reads (17a.3). Postgres computes
+    /// <see cref="EntryArticleGeneration"/> once, in the same statement that writes the entry
+    /// document, so a search never pays for it: an entry edit maintains it exactly as it maintains
+    /// the row, with nothing to backfill and no lag (<c>SearchConsistencyTests</c>).
+    /// </summary>
+    public const string EntryArticleVectorColumn = "search_vector";
+
+    /// <summary>
+    /// What the column stores, written in the form <c>information_schema.columns</c>
+    /// (<c>generation_expression</c>) gives back, so Weasel compares like with like and
+    /// <c>SearchSchemaTests</c> sees no churn across restarts.
+    /// </summary>
+    public const string EntryArticleGeneration = $"to_tsvector('{Config}'::regconfig, {EntryArticleText})";
+
+    /// <summary>
+    /// The prefilter the article query uses: the column, not the expression, so the GIN index on it
+    /// is usable and a sequential scan costs one column read per row instead of one
+    /// <c>to_tsvector(jsonb_path_query_array(…))</c>. The alias is the one every search statement
+    /// gives the document table.
+    /// </summary>
+    public const string EntryArticleVector = $"d.{EntryArticleVectorColumn}";
 
     /// <summary>The parsed query, from the <c>@q</c> parameter. <c>to_tsquery</c> is stable, so Postgres can still use the GIN index.</summary>
     public const string TsQuery = $"to_tsquery('{Config}', @q)";
