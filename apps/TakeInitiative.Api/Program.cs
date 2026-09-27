@@ -63,6 +63,7 @@ internal class Program
         builder.Services.AddDiceRollers(builder.Configuration);
         builder.Services.AddSendGrid(builder.Configuration);
         builder.Services.AddImages(builder.Configuration);
+        builder.Services.AddSearch();
 
         // Cors
         builder.Services.AddCors(

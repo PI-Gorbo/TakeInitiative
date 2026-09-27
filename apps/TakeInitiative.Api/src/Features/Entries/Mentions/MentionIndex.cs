@@ -103,17 +103,67 @@ public static class MentionIndex
             .Listed(campaignId, viewer)
             .ToListAsync(ct);
 
-        var targets = MergeTargets(visibleEntries);
-        Guid Resolve(Guid id) => targets.GetValueOrDefault(id, id);
+        return Aggregate(rows, visibleEntries, viewer, MergeTargets(visibleEntries), only: null);
+    }
 
-        var fromNotes = rows
-            .SelectMany(r => r.MentionedEntryIds.Select(Resolve).Distinct()
+    /// <summary>
+    /// <see cref="CountsFor"/> restricted to <paramref name="entries"/>: the same rule, the same
+    /// per-viewer counts, over only the entries the caller has in hand. ⌘K's Entries section uses
+    /// it to order at most 50 candidates, where counting the whole campaign would read every note
+    /// and article for nothing.
+    /// <para>
+    /// Both sides are narrowed through the GIN <c>?|</c> fragment on the source's id list, so
+    /// Postgres reads only the notes and articles that mention one of these entries — including the
+    /// ids merged into them, because a mention of a merged entry means its target (15g).
+    /// </para>
+    /// </summary>
+    public static async Task<IReadOnlyDictionary<Guid, MentionCount>> CountsForEntries(
+        IQuerySession session, Guid campaignId, Member viewer, IReadOnlyList<Entry> entries, CancellationToken ct)
+    {
+        var mentionIds = entries.SelectMany(e => e.MentionIds()).Distinct().ToArray();
+        if (mentionIds.Length == 0)
+        {
+            return new Dictionary<Guid, MentionCount>();
+        }
+
+        var rows = await session.Query<SessionNote>()
+            .Where(n => n.CampaignId == campaignId)
+            .Where(SessionNoteVisibility.VisibleTo(viewer))
+            .Where(MentioningAny<SessionNote>(nameof(SessionNote.MentionedEntryIds), mentionIds))
+            .Select(n => new NoteMentions(n.MentionedEntryIds, n.PostedAt))
+            .ToListAsync(ct);
+
+        // The entries whose articles mention one of these, which are not the same entries: a
+        // block in someone else's article counts for the entry it mentions.
+        var mentioningEntries = await session.Query<Entry>()
+            .Listed(campaignId, viewer)
+            .Where(MentioningAny<Entry>(nameof(Entry.ArticleMentionIds), mentionIds))
+            .ToListAsync(ct);
+
+        return Aggregate(rows, mentioningEntries, viewer, MergeTargets(entries), entries.Select(e => e.Id).ToHashSet());
+    }
+
+    /// <summary>
+    /// The counting rule, over notes the viewer can see and the visible blocks of the articles that
+    /// mention them. <paramref name="only"/> keeps the result to a given set of entries; null counts
+    /// everything the sources mention.
+    /// </summary>
+    private static IReadOnlyDictionary<Guid, MentionCount> Aggregate(
+        IReadOnlyList<NoteMentions> notes, IReadOnlyList<Entry> mentioningEntries, Member viewer,
+        IReadOnlyDictionary<Guid, Guid> targets, IReadOnlySet<Guid>? only)
+    {
+        Guid Resolve(Guid id) => targets.GetValueOrDefault(id, id);
+        bool Counted(Guid id) => only is null || only.Contains(id);
+
+        var fromNotes = notes
+            .SelectMany(r => r.MentionedEntryIds.Select(Resolve).Distinct().Where(Counted)
                 .Select(id => (EntryId: id, PostedAt: (DateTimeOffset?)r.PostedAt)));
-        var fromBlocks = visibleEntries
+        var fromBlocks = mentioningEntries
             .Where(e => e.ArticleMentionIds.Length > 0)
             .SelectMany(e => ArticleView.VisibleBlocks(e, viewer)
                 .SelectMany(b => MentionParser.EntryIds(b.Text).Select(Resolve).Distinct())
                 .Where(id => id != e.Id)
+                .Where(Counted)
                 .Select(id => (EntryId: id, PostedAt: (DateTimeOffset?)null)));
 
         return fromNotes.Concat(fromBlocks)
