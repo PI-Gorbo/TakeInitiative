@@ -35,6 +35,17 @@ public static class CampaignHubMessages
     public const string SessionNoteUpserted = "sessionNoteUpserted";
     public const string SessionNoteRemoved = "sessionNoteRemoved";
     public const string SessionNoteHidden = "sessionNoteHidden";
+
+    // Entries (step 15a). Entry messages go only to the entry's audience.
+    public const string EntryUpserted = "entryUpserted";
+    public const string EntryRemoved = "entryRemoved";
+
+    // Articles (step 15e): only to the members whose view of the article changed.
+    public const string EntryArticleChanged = "entryArticleChanged";
+
+    // Merge, claim and stats (step 15g).
+    public const string EntryMerged = "entryMerged";
+    public const string EntryStatsChanged = "entryStatsChanged";
 }
 
 /// <summary>

@@ -8,7 +8,8 @@
         "generate": "nuxt generate",
         "preview": "nuxt preview",
         "postinstall": "nuxt prepare",
-        "gen:api": "openapi-typescript openapi.json -o utils/api/schema.d.ts"
+        "gen:api": "openapi-typescript openapi.json -o utils/api/schema.d.ts",
+        "test": "vitest run"
     },
     "dependencies": {
         "@fortawesome/fontawesome-svg-core": "^6.7.2",
@@ -31,6 +32,7 @@
         "clsx": "^2.1.1",
         "expr-eval": "^2.0.2",
         "lucide-vue-next": "^0.479.0",
+        "markdown-it": "^15.0.2",
         "nuxt": "^3.16.0",
         "nuxt-typed-router": "^3.7.3",
         "reka-ui": "^2.2.0",
@@ -46,10 +48,12 @@
         "zod": "^3.24.2"
     },
     "devDependencies": {
+        "@types/markdown-it": "^14.2.0",
         "@types/node": "^22.20.4",
         "openapi-typescript": "^7.13.0",
         "prettier": "^3.5.3",
         "tailwindcss": "3.4.19",
-        "typescript": "^5.8.2"
+        "typescript": "^5.8.2",
+        "vitest": "^5.0.1"
     }
 }

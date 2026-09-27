@@ -43,9 +43,14 @@
                 </main>
             </div>
 
+            <!-- On a phone the tab bar hides while the composer is pinned above the
+                 keyboard, so nothing sits between them (14e, invariant 11). -->
             <nav
                 aria-label="Campaign sections"
-                class="order-last shrink-0 border-t bg-background pb-safe px-safe md:order-first md:w-56 md:border-r md:border-t-0 md:pr-0 md:pt-safe">
+                :class="[
+                    'order-last shrink-0 border-t bg-background pb-safe px-safe md:order-first md:w-56 md:border-r md:border-t-0 md:pr-0 md:pt-safe',
+                    hideTabBar && 'max-md:hidden',
+                ]">
                 <NuxtLink
                     to="/app/campaigns"
                     class="hidden h-14 items-center gap-2 px-4 font-NovaCut text-lg text-gold md:flex">
@@ -61,10 +66,10 @@
                         :key="tab.name">
                         <NuxtLink
                             :to="{ name: tab.name, params: { campaignId } }"
-                            :aria-current="route.name === tab.name ? 'page' : undefined"
+                            :aria-current="isCurrentTab(tab) ? 'page' : undefined"
                             :class="[
                                 'flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs transition-colors md:min-h-11 md:flex-row md:justify-start md:gap-3 md:rounded-md md:px-3 md:text-sm',
-                                route.name === tab.name
+                                isCurrentTab(tab)
                                     ? 'text-gold md:bg-accent'
                                     : 'text-muted-foreground hover:text-foreground md:hover:bg-accent/60',
                             ]">
@@ -87,6 +92,7 @@
     import { useQuery } from "@tanstack/vue-query";
     import { BookOpen, Castle, ChevronLeft, Search, Swords } from "lucide-vue-next";
     import { getCampaignQuery } from "~/utils/queries/campaign";
+    import { rememberCampaign } from "~/utils/shareTarget";
 
     const route = useRoute();
     const campaignId = computed(
@@ -110,6 +116,29 @@
         { name: "app-campaigns-campaignId-wiki", label: "Wiki", icon: BookOpen },
         { name: "app-campaigns-campaignId-combat", label: "Combat", icon: Swords },
     ] as const;
+
+    // The Wiki and Combat tabs stay current on their child pages (an entry page is
+    // `app-campaigns-campaignId-wiki-entryId`). The Campaign tab matches exactly, since
+    // every campaign route name starts with its own.
+    const isCurrentTab = (tab: (typeof tabs)[number]) => {
+        const name = String(route.name ?? "");
+        return name === tab.name || (tab.name !== tabs[0].name && name.startsWith(`${tab.name}-`));
+    };
+
+    const hideTabBar = useComposerPinned();
+
+    // The share page (16e) goes straight to the last opened campaign.
+    watch(
+        campaignId,
+        (id) => {
+            try {
+                rememberCampaign(window.localStorage, id);
+            } catch {
+                // No storage: the share page lists the campaigns instead.
+            }
+        },
+        { immediate: true }
+    );
 
     // Live updates for every tab.
     useCampaignHub(campaignId);

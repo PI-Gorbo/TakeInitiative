@@ -40,3 +40,14 @@ export function parseAsApiError<TRequest extends {}>(
         };
     }
 }
+
+/** The first validation or general error the API sent, for a toast; `fallback` otherwise. */
+export function apiErrorMessage(error: unknown, fallback: string): string {
+    const parsed = apiErrorSchema.safeParse((error as AxiosError<any> | undefined)?.response?.data);
+    if (!parsed.success) return fallback;
+    return Object.values(parsed.data.errors).flat()[0] ?? fallback;
+}
+
+/** The HTTP status of a failed request, if it got an answer. */
+export const apiErrorStatus = (error: unknown): number | undefined =>
+    (error as AxiosError | undefined)?.response?.status;

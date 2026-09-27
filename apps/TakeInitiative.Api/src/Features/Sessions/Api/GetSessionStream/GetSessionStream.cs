@@ -7,8 +7,8 @@ namespace TakeInitiative.Api.Features.Sessions;
 
 /// <summary>
 /// A filter on the session stream (glossary: Filter). Applied on the server so paging
-/// stays correct. <c>Text</c> is every note until images arrive (step 16); <c>Images</c>
-/// matches nothing until step 16 and <c>Combats</c> nothing until step 18.
+/// stays correct. <c>Text</c> is the notes with no images and <c>Images</c> the notes with
+/// some (step 16b); <c>Combats</c> matches nothing until step 18.
 /// </summary>
 public enum SessionStreamFilter
 {
@@ -89,8 +89,8 @@ public class GetSessionStream(IDocumentSession session, [FromKeyedServices(Sessi
         var sessionIds = page.Select(s => s.Id).ToArray();
         var filter = req.Filter ?? SessionStreamFilter.All;
 
-        // Nothing matches Images until step 16 or Combats until step 18.
-        var notes = sessionIds.Length == 0 || filter is SessionStreamFilter.Images or SessionStreamFilter.Combats
+        // Nothing matches Combats until step 18.
+        var notes = sessionIds.Length == 0 || filter is SessionStreamFilter.Combats
             ? []
             : await ApplyFilter(
                     session.Query<SessionNote>()
@@ -124,7 +124,8 @@ public class GetSessionStream(IDocumentSession session, [FromKeyedServices(Sessi
         {
             SessionStreamFilter.Recaps => notes.Where(n => n.IsRecap),
             SessionStreamFilter.Mine => notes.Where(n => n.AuthorMemberId == callerId),
-            // Text is "no images", which is every note until step 16.
+            SessionStreamFilter.Text => notes.Where(SessionNote.WithoutImages),
+            SessionStreamFilter.Images => notes.Where(SessionNote.WithImages),
             _ => notes,
         };
     }

@@ -276,6 +276,310 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/campaigns/{campaignId}/images/{imageId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["DeleteImage"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/campaigns/{campaignId}/entries/{entryId}/images": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetEntryImages"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/campaigns/{campaignId}/images/{imageId}/{variant}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetImageVariant"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/campaigns/{campaignId}/sessions/{sessionId}/images": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetSessionImages"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/campaigns/{campaignId}/images": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["PostImage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/campaigns/{campaignId}/entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetEntries"];
+        put?: never;
+        post: operations["PostEntry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/campaigns/{campaignId}/entries/{entryId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetEntry"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/campaigns/{campaignId}/entries/{entryId}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetEntryHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/campaigns/{campaignId}/entries/{entryId}/timeline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetEntryTimeline"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/campaigns/{campaignId}/entries/{entryId}/merge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["PostEntryMerge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/campaigns/{campaignId}/entries/{entryId}/quotes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["PostEntryQuote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/campaigns/{campaignId}/entries/{entryId}/aliases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["PutEntryAliases"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/campaigns/{campaignId}/entries/{entryId}/article": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["PutEntryArticle"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/campaigns/{campaignId}/entries/{entryId}/claim": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["PutEntryClaim"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/campaigns/{campaignId}/entries/{entryId}/edit-access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["PutEntryEditAccess"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/campaigns/{campaignId}/entries/{entryId}/kind": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["PutEntryKind"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/campaigns/{campaignId}/entries/{entryId}/name": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["PutEntryName"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/campaigns/{campaignId}/entries/{entryId}/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["PutEntryStats"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/campaigns/{campaignId}/entries/{entryId}/visibility": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["PutEntryVisibility"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/campaigns/{campaignId}": {
         parameters: {
             query?: never;
@@ -413,9 +717,18 @@ export interface components {
             isHidden: boolean;
             /** Format: guid */
             hiddenByMemberId?: string | null;
+            images: components["schemas"]["NoteImageResponse"][];
         };
         /** @enum {string} */
         Visibility: "Everyone" | "DM" | "Me";
+        NoteImageResponse: {
+            /** Format: guid */
+            id: string;
+            /** Format: int32 */
+            width: number;
+            /** Format: int32 */
+            height: number;
+        };
         GetSessionNoteRequest: Record<string, never>;
         GetSessionNoteHistoryResponse: {
             versions: components["schemas"]["SessionNoteVersion"][];
@@ -425,6 +738,8 @@ export interface components {
             isRecap: boolean;
             /** Format: date-time */
             at: string;
+            /** Format: int32 */
+            imageCount: number;
         };
         GetSessionNoteHistoryRequest: Record<string, never>;
         GetSessionsResponse: {
@@ -466,7 +781,17 @@ export interface components {
             text: string;
             visibility: components["schemas"]["Visibility"];
             isRecap: boolean;
+            newEntries?: components["schemas"]["NewEntryRequest"][] | null;
+            imageIds?: string[] | null;
         };
+        NewEntryRequest: {
+            /** Format: guid */
+            id: string;
+            name: string;
+            kind: components["schemas"]["EntryKind"];
+        };
+        /** @enum {string} */
+        EntryKind: "Character" | "Place" | "Faction" | "Item" | "Event" | "Other";
         PostStartSessionRequest: {
             /** Format: int32 */
             number: number;
@@ -474,6 +799,8 @@ export interface components {
         PutSessionNoteRequest: {
             text: string;
             isRecap: boolean;
+            newEntries?: components["schemas"]["NewEntryRequest"][] | null;
+            imageIds?: string[] | null;
         };
         PutSessionNoteHiddenRequest: {
             hidden: boolean;
@@ -483,6 +810,218 @@ export interface components {
         };
         PutSessionTitleRequest: {
             title?: string | null;
+        };
+        DeleteImageRequest: Record<string, never>;
+        GalleryResponse: {
+            items: components["schemas"]["GalleryItem"][];
+            hasOlder: boolean;
+            /** Format: int32 */
+            imageCount: number;
+        };
+        GalleryItem: {
+            note: components["schemas"]["SessionNoteResponse"];
+            /** Format: int32 */
+            sessionNumber: number;
+        };
+        GetEntryImagesRequest: Record<string, never>;
+        GetImageVariantRequest: Record<string, never>;
+        GetSessionImagesRequest: Record<string, never>;
+        ImageResponse: {
+            /** Format: guid */
+            id: string;
+            /** Format: int32 */
+            width: number;
+            /** Format: int32 */
+            height: number;
+            /** Format: date-time */
+            uploadedAt: string;
+        };
+        PostImageRequest: {
+            /** Format: binary */
+            file?: string | null;
+        };
+        GetEntriesResponse: {
+            entries: components["schemas"]["EntryListItemResponse"][];
+        };
+        EntryListItemResponse: {
+            entry: components["schemas"]["EntrySummaryResponse"];
+            /** Format: int32 */
+            mentionCount: number;
+            /** Format: date-time */
+            lastMentionedAt?: string | null;
+        };
+        EntrySummaryResponse: {
+            /** Format: guid */
+            id: string;
+            name: string;
+            kind: components["schemas"]["EntryKind"];
+            aliases: string[];
+            visibility: components["schemas"]["Visibility"];
+            editAccess: components["schemas"]["EditAccess"];
+            /** Format: guid */
+            creatorMemberId: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            /** Format: guid */
+            claimedByMemberId?: string | null;
+            mergedFromIds: string[];
+        };
+        /** @enum {string} */
+        EditAccess: "Anyone" | "OnlyMe";
+        GetEntriesRequest: Record<string, never>;
+        EntryResponse: {
+            /** Format: guid */
+            id: string;
+            name: string;
+            kind: components["schemas"]["EntryKind"];
+            aliases: string[];
+            visibility: components["schemas"]["Visibility"];
+            editAccess: components["schemas"]["EditAccess"];
+            /** Format: guid */
+            creatorMemberId: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            /** Format: guid */
+            claimedByMemberId?: string | null;
+            mergedFromIds: string[];
+            article: components["schemas"]["ArticleResponse"];
+            stats?: components["schemas"]["StatsResponse"] | null;
+        };
+        ArticleResponse: {
+            etag: string;
+            blocks: components["schemas"]["ArticleBlockResponse"][];
+        };
+        ArticleBlockResponse: {
+            /** Format: guid */
+            id: string;
+            text: string;
+            visibility: components["schemas"]["Visibility"];
+            /** Format: guid */
+            ownerMemberId: string;
+            quote?: components["schemas"]["QuoteResponse"] | null;
+        };
+        QuoteResponse: {
+            /** Format: guid */
+            noteId: string;
+            /** Format: guid */
+            sessionId: string;
+            /** Format: int32 */
+            sessionNumber: number;
+            /** Format: guid */
+            authorMemberId: string;
+            /** Format: guid */
+            promotedByMemberId: string;
+            /** Format: date-time */
+            promotedAt: string;
+        };
+        StatsResponse: {
+            initiativeRoll?: string | null;
+            maxHp?: string | null;
+            /** Format: int32 */
+            ac?: number | null;
+        };
+        GetEntryRequest: Record<string, never>;
+        EntryHistoryResponse: {
+            items: components["schemas"]["EntryHistoryItem"][];
+        };
+        EntryHistoryItem: {
+            /** Format: date-time */
+            at: string;
+            /** Format: guid */
+            actorMemberId: string;
+            change: components["schemas"]["EntryChange"];
+        };
+        EntryChange: {
+            type: components["schemas"]["EntryChangeType"];
+            name?: string | null;
+            kind?: components["schemas"]["EntryKind"] | null;
+            alias?: string | null;
+            visibility?: components["schemas"]["Visibility"] | null;
+            editAccess?: components["schemas"]["EditAccess"] | null;
+            blocks?: components["schemas"]["ArticleBlockResponse"][] | null;
+            /** Format: guid */
+            mergedEntryId?: string | null;
+            /** Format: guid */
+            memberId?: string | null;
+            stats?: components["schemas"]["StatsResponse"] | null;
+        };
+        /** @enum {string} */
+        EntryChangeType: "Created" | "Renamed" | "KindChanged" | "AliasAdded" | "AliasRemoved" | "VisibilityChanged" | "EditAccessChanged" | "ArticleEdited" | "QuotePromoted" | "Merged" | "Claimed" | "Unclaimed" | "StatsChanged";
+        GetEntryHistoryRequest: Record<string, never>;
+        EntryTimelineResponse: {
+            items: components["schemas"]["EntryTimelineItem"][];
+            hasOlder: boolean;
+            articleMentions: components["schemas"]["EntryArticleMention"][];
+        };
+        EntryTimelineItem: {
+            note: components["schemas"]["SessionNoteResponse"];
+            /** Format: int32 */
+            sessionNumber: number;
+        };
+        EntryArticleMention: {
+            /** Format: guid */
+            entryId: string;
+            blockIds: string[];
+        };
+        GetEntryTimelineRequest: Record<string, never>;
+        PostEntryRequest: {
+            name: string;
+            kind: components["schemas"]["EntryKind"];
+            visibility: components["schemas"]["Visibility"];
+        };
+        PostEntryMergeRequest: {
+            /** Format: guid */
+            intoEntryId: string;
+        };
+        EntryQuoteResponse: {
+            entry: components["schemas"]["EntryResponse"];
+            /** Format: guid */
+            blockId: string;
+        };
+        PostEntryQuoteRequest: {
+            /** Format: guid */
+            noteId: string;
+            text?: string | null;
+        };
+        PutEntryAliasesRequest: {
+            aliases: string[];
+        };
+        PutEntryArticleRequest: {
+            etag: string;
+            blocks: components["schemas"]["ArticleBlockRequest"][];
+            newEntries?: components["schemas"]["NewEntryRequest"][] | null;
+        };
+        ArticleBlockRequest: {
+            /** Format: guid */
+            id?: string | null;
+            text: string;
+            visibility: components["schemas"]["Visibility"];
+        };
+        PutEntryClaimRequest: {
+            /** Format: guid */
+            memberId?: string | null;
+        };
+        PutEntryEditAccessRequest: {
+            editAccess: components["schemas"]["EditAccess"];
+        };
+        PutEntryKindRequest: {
+            kind: components["schemas"]["EntryKind"];
+        };
+        PutEntryNameRequest: {
+            name: string;
+        };
+        PutEntryStatsRequest: {
+            initiativeRoll?: string | null;
+            maxHp?: string | null;
+            /** Format: int32 */
+            ac?: number | null;
+        };
+        PutEntryVisibilityRequest: {
+            visibility: components["schemas"]["Visibility"];
         };
         CampaignResponse: {
             /** Format: guid */
@@ -1211,6 +1750,805 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SessionResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DeleteImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+                imageId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GetEntryImages: {
+        parameters: {
+            query?: {
+                before?: string | null;
+                take?: number | null;
+            };
+            header?: never;
+            path: {
+                campaignId: string;
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GalleryResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GetImageVariant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+                imageId: string;
+                variant: string | null;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/webp": string;
+                };
+            };
+            304: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GetSessionImages: {
+        parameters: {
+            query?: {
+                before?: string | null;
+                take?: number | null;
+            };
+            header?: never;
+            path: {
+                campaignId: string;
+                sessionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GalleryResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PostImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["PostImageRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImageResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GetEntries: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetEntriesResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PostEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostEntryRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GetEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GetEntryHistory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryHistoryResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GetEntryTimeline: {
+        parameters: {
+            query?: {
+                before?: string | null;
+                take?: number | null;
+            };
+            header?: never;
+            path: {
+                campaignId: string;
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryTimelineResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PostEntryMerge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostEntryMergeRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PostEntryQuote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostEntryQuoteRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryQuoteResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PutEntryAliases: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PutEntryAliasesRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PutEntryArticle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PutEntryArticleRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PutEntryClaim: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PutEntryClaimRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PutEntryEditAccess: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PutEntryEditAccessRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PutEntryKind: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PutEntryKindRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PutEntryName: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PutEntryNameRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PutEntryStats: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PutEntryStatsRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PutEntryVisibility: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PutEntryVisibilityRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryResponse"];
                 };
             };
             /** @description Unauthorized */

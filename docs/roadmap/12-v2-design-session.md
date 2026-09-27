@@ -32,21 +32,42 @@ player-first experiences: **combat**, **note taking**, **⌘K search** and
 | **Hide** | A DM hides a session note from everyone except its author and the DMs. It is not a delete. | moderate, remove |
 | **Edit history** | The earlier versions of an edited session note. | revisions |
 | **Filter** | One of `All · Text · Images · Recaps · Combats · Mine` on the session stream. | channel |
+| **Image** (code: `Image`; on a note, `NoteImage`) | A picture on a session note, stored as two variants (`display` and `thumb`). It has its note's visibility. Until its note is posted only its uploader can see it, and one never posted is deleted after 24 hours. | attachment, photo, file |
+| **Image note** | A session note with at least one image. | photo post |
+| **Caption** | An image note's text. It can contain mentions, and can be empty. | description, alt |
+| **Gallery** | The images of one session, or the images whose caption mentions an entry. | album, media |
+| **Share target** | The PWA as a destination in the phone's share sheet. Sharing images there opens the composer with them attached. | — |
+| **Blob store** (code: `IBlobStore`) | Where image bytes live, behind the S3 API. Only the API talks to it. | CDN, bucket (in UI) |
 | **Wiki** | The campaign's knowledge base: all entries. Built by integrating session notes. | knowledge base, codex |
 | **Entry** | One named thing in the wiki. | entity, page, topic, tag |
+| **Creator** | The member who created an entry. An entry's `DM` and `Me` visibility and its `Only me` edit access are relative to them. | owner (that is the campaign's), author (that is a note's) |
 | **Kind** | An entry's category, from a closed set: `Character`, `Place`, `Faction`, `Item`, `Event`, `Other`. | type |
 | **Article** | An entry's editable content (markdown, can contain mentions). | description, body |
+| **Block** | One part of an article: ordinary text, a secret block or a quote. Ordinary text stays one block until a secret block or a quote splits it. | paragraph, section |
+| **Quote** | A block made by promote: text from a session note that links back to it and has that note's visibility. | citation, excerpt |
 | **Timeline** | The read-only list on an entry of every session note that mentions it. | backlinks (in UI) |
 | **Promote** | "Add to wiki": copies a selection of a session note into an entry's article as a quote that links back to the note. | integrate, pin |
 | **Secret block** | A block in an article with its own visibility (🔒 DM / 🔒 Me). | — |
 | **Mention** | An `@` link to an entry, in a session note or an article. | tag, reference |
+| **Mention chip** | How a mention is drawn: its text, linking to the entry. A viewer who cannot see the entry gets plain text. | tag, pill |
+| **Mention strip** | On mobile, the `@` suggestions docked above the keyboard (§3a). It replaces the desktop popover. | popup |
+| **Mention index** (code: `MentionIndex`) | Which session notes and blocks mention which entry, each with its source's visibility (§9). | backlinks |
 | **Alias** | An alternative name that resolves to an entry. | — |
+| **Merge** | Folding one entry into another: its name becomes an alias, its mentions resolve to the other, its article is appended, and its id redirects. | combine, dedupe |
 | **Connection** | Two entries mentioned together. It is explained by **evidence**, the snippets where they co-occur. | relation, edge |
 | **Visibility** | Who can see something: `Everyone`, `DM` (all DMs plus the author), `Me`. Applies to session notes, entries and secret blocks. | audience, privacy |
 | **Edit access** | Who can edit an entry: `Anyone` (who can see it) or `Only me`. DMs can always edit. | — |
 | **Loose ends** | Unidentified things that are waiting to be linked (§5). | inbox, triage |
 | **Player character** | A Character entry claimed by a member. A member can claim several. | PC in the UI |
+| **Claim** | A member marking a Character entry as their player character. That member is its **claimer**. | own, assign |
 | **Stats** | An optional stat line on a Character entry: initiative roll, max HP, AC. | — |
+| **⌘K search** (code: `Search`) | Campaign-wide search, opened with ⌘K / Ctrl+K or the 🔍 button. It shows results in search sections, then actions, and finds only what the viewer can see. | command palette, omnibox, global search |
+| **Search section** | One heading of ⌘K results: `Entries`, `Notes`, `Images`, `Sessions` or `Actions` (later `Combats` and `Reference`). | category, group, tab |
+| **Snippet** | The words of a matching session note or block shown under a ⌘K result, with the match highlighted. It is cut from exactly one note or block that the viewer can see. | excerpt, preview |
+| **Action** | Something ⌘K does, where a hit is something it finds: create an entry, start the next session, post a note about an entry, go to a tab. `>` searches actions only. | command (that is the composer's `/`), shortcut |
+| **Search provider** (code: `ISearchProvider`) | A source of ⌘K results. Each fills one or more search sections (§11). | plugin, backend |
+| **Search doc** (code: `SearchDoc`) | One searchable unit with exactly one audience: an entry's names, one article block, one session note or one session. It is the row shape of the search query, built from the projected documents and never stored (§9). | search record, index row |
+| **Entry matcher** (code: `EntryMatcher`) | Trigram matching of a piece of text against entry names and aliases, under the viewer's visibility. ⌘K, loose ends and suggestions share it (§11a). | fuzzy finder, resolver |
 | **Reference** | Rules content from outside the campaign (SRD, 5eTools) that ⌘K can find. It is never part of the wiki until it is added. | compendium, bestiary |
 | **Source** | Where an entry or session note came from: a reference item, a D&D Beyond sheet, or an imported Discord message. | origin |
 | **Suggestion** | A mention or entry proposed by a model. It has no effect until a member accepts it. | auto-tag, prediction |
