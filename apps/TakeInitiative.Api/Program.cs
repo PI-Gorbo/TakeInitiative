@@ -50,6 +50,10 @@ internal class Program
         builder.Services.AddFastEndpoints();
         builder.Services.AddSignalR();
         builder.Services.AddSingleton<CampaignConnections>();
+        // The gap prompt's clock. Keyed so tests can move it without also moving the
+        // clock cookie authentication reads (an unkeyed TimeProvider), which would expire
+        // the test users' cookies.
+        builder.Services.AddKeyedSingleton(SessionGap.ClockKey, TimeProvider.System);
 
         // Custom Injection
         builder.Services.AddOptionObjects(builder.Configuration);

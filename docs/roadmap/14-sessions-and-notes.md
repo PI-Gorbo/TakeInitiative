@@ -16,7 +16,7 @@ PR, which sits on 13d (#199). Each PR leaves the app runnable:
 
 | PR | Branch | Sub-step | Runnable state after merge | Status |
 |---|---|---|---|---|
-| 14a | `v2/14a-session-model` | Session and note model | 13's app unchanged in the browser. The API has sessions and notes, and a new campaign has Session 1 | [ ] |
+| 14a | `v2/14a-session-model` | Session and note model | 13's app unchanged in the browser. The API has sessions and notes, and a new campaign has Session 1 | [x] |
 | 14b | `v2/14b-live-notes` | Visibility-aware push | The same, and note and session changes are pushed only to the groups allowed to see them | [ ] |
 | 14c | `v2/14c-session-stream` | Stream (read and live) | The Campaign tab shows the session stream, live. Members and the join code move to a panel | [ ] |
 | 14d | `v2/14d-composer` | Composer and note actions | Post, edit, delete, hide, history, back-posting and the gap prompt, on every screen size | [ ] |
@@ -481,3 +481,56 @@ This PR adds the nouns the step puts into code and UI:
   `visualViewport` `scroll` as well as `resize` while it animates; listen to both
   and avoid CSS transitions on `bottom`. Test on a real device before calling 14e
   done; Chrome's device mode does not show a keyboard.
+
+### Deviations and decisions in 14a
+
+- **The gap prompt's clock is a keyed `TimeProvider`** (`SessionGap.ClockKey`, registered
+  in `Program.cs`), not the unkeyed one. Cookie authentication reads the unkeyed
+  `TimeProvider` from DI, so moving that one 4 days expired the test users' 24-hour
+  cookies and every call returned 401. `GetSessions` and `GetSessionStream` take it with
+  `[FromKeyedServices]`, which FastEndpoints 5.22 honours.
+- **`ShiftableTimeProvider`, not `FakeTimeProvider`.** The test clock is the real clock
+  plus an offset, and `Clock.Advance(4 days)` returns a scope that moves it back. The
+  fixture is shared by every test in a class; `FakeTimeProvider` is frozen and cannot go
+  backwards, so one gap test would leak its time into the others. No new package.
+- **`RequireMember` is an endpoint extension**, `this.RequireMember(session, campaignId,
+  userId, ct)`, because `ThrowError` lives on the endpoint. The 13b endpoints are unchanged.
+- **Extra files** beyond Files touched: `Sessions/SessionAccess.cs` (`RequireCurrentSession`,
+  `RequireSession`, `RequireVisibleNote`, `RequireAuthor`, `RequireDm`), the response DTOs
+  in `Api/GetSessions/SessionResponse.cs` and `Api/GetSessionNote/SessionNoteResponse.cs`,
+  `Program.cs` and `GlobalUsings.cs` (the keyed clock, the `Sessions` namespace), and the
+  test helpers `Features/Sessions/TestCampaign.cs` and `ShiftableTimeProvider.cs`.
+- **`ShouldDelete(SessionNoteDeleted)` works** on the self-aggregating `SessionNote` under
+  `Snapshot<T>` in Marten 7.31, so no `SingleStreamProjection` was needed. The document
+  goes and the stream keeps both events (checked in tests and in Postgres).
+- **Starting a session.** `number` must be the current number (returned as-is, nothing
+  appended) or current + 1; anything else, older numbers included, is a 409, and a
+  number below 1 is a 400. When two requests race past the read, the unique index
+  rejects the loser's `SaveChangesAsync` (`23505`); the endpoint catches that and returns
+  the winner, so both callers get the same session. A test fires six at once.
+- **A campaign without sessions** (created before 14a) gets a 404 "This campaign has no
+  sessions" from the reads and from posting a note. `POST sessions { number: 1 }` starts
+  its Session 1. v2 has no such campaigns once the dev database is reset.
+- **Shapes.** `GET notes/{id}` returns `{ note, sessionNumber }`. `DELETE notes/{id}` is a
+  204 with no body, declared in the OpenAPI document. A title is trimmed and blank clears
+  it. `filter` takes the enum names `All | Text | Images | Recaps | Combats | Mine`; the
+  web maps its lower-case URL value (14e) to them. `take` outside 1–10 is a 400. `Images`
+  and `Combats` skip the note query. Every write returns the note or session as it is
+  after the change, or unchanged when nothing was appended.
+- **Hide and permissions.** Every note check loads the note, then applies the read rule
+  (404 when the caller cannot see it), then the role or author check (403). So a DM
+  hiding a `Me` note gets a 404, and a Player hiding a note they can see gets a 403. A
+  DM can hide a `DM` note too; it changes nothing for players, who never see it.
+- **Dev database name.** `takedb` is the compose container's name. The database inside it
+  is `postgres` (`docker exec takedb psql -U postgres -d postgres`).
+- **Verify, as run in 14a** (no browser, no UI change): `dotnet test` 52/52 (20 from step 13,
+  32 new: `SessionTests` 10, `SessionNoteTests` 7, `SessionNoteVisibilityTests` 15, of which
+  12 are the visibility table cells), `nuxi typecheck` clean with the regenerated
+  `schema.d.ts`. Against the API on 5010, `smoke14a.mjs` (three users, every new endpoint,
+  every visibility case, hide/unhide, back-posting, paging, filters, delete, validation)
+  passed 70/70 checks. Verify 3: back-dating a note's `PostedAt` by 4 days in
+  `mt_doc_sessionnote` turned `suggestNextSession` on for `GET sessions` and `GET stream`,
+  and starting the next session turned it off. Verify 4: all 13 session and note events
+  that run wrote have a `correlation_id` and an `Actor`, Session 1 shares its
+  `CampaignCreated` correlation id, and the deleted note's row is gone while its
+  `session_note_posted` and `session_note_deleted` events remain.
