@@ -6,6 +6,6 @@
 <script setup lang="ts">
     definePageMeta({
         requiresAuth: true,
-        layout: "main-app",
+        layout: "app",
     });
 </script>

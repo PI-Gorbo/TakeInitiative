@@ -1,95 +1,209 @@
 <template>
-    <LoadingFallback
-        container="main"
-        :isLoading="campaignQuery.isLoading.value"
-        class="">
-        <div class="w-full flex flex-col gap-4 pb-2 lg:max-w-md">
-            <Card class="p-4 border-primary/50">
-                <header><FontAwesomeIcon :icon="faUsers" /> Members</header>
-                <ul class="flex flex-col gap-2 pt-2">
-                    <li
-                        v-for="member in membersToDisplay"
-                        :key="member.memberId"
-                        class="flex items-center gap-2">
-                        <FontAwesomeIcon
-                            :class="member.isOwner ? 'text-gold' : 'text-primary'"
-                            :icon="member.isOwner ? faCrown : faUserLarge" />
-                        <span class="select-none">{{ member.username }}</span>
-                        <Badge :variant="member.role === 'DM' ? 'default' : 'secondary'">
-                            {{ member.role }}
-                        </Badge>
-                        <AsyncButton
-                            v-if="callerIsOwner && !member.isOwner"
-                            class="ml-auto"
-                            size="sm"
-                            variant="outline"
-                            :label="member.role === 'DM' ? 'Make Player' : 'Make DM'"
-                            loadingLabel="Saving..."
-                            :click="() => toggleRole(member)" />
-                    </li>
-                </ul>
-            </Card>
-        </div>
-    </LoadingFallback>
+    <div
+        v-if="campaign"
+        class="mx-auto flex w-full max-w-2xl flex-col gap-6 p-4">
+        <!-- Join code -->
+        <section
+            aria-labelledby="join-code-heading"
+            class="flex flex-col gap-3 rounded-lg border p-4">
+            <header class="flex flex-col gap-1">
+                <h2
+                    id="join-code-heading"
+                    class="font-semibold">
+                    Join code
+                </h2>
+                <p class="text-sm text-muted-foreground">
+                    Anyone with this code can join as a Player.
+                </p>
+            </header>
+            <div class="flex flex-wrap items-center gap-2">
+                <output
+                    class="flex-1 select-all font-mono text-2xl tracking-[0.2em] text-gold"
+                    aria-label="Join code">
+                    {{ campaign.joinCode }}
+                </output>
+                <Button
+                    variant="outline"
+                    class="h-11 min-w-11"
+                    aria-label="Copy join code"
+                    @click="copyCode">
+                    <Check
+                        v-if="codeCopied"
+                        class="text-success-tint" />
+                    <Copy v-else />
+                    <span class="hidden sm:inline">Copy</span>
+                </Button>
+                <Button
+                    class="h-11 min-w-11"
+                    @click="shareJoinLink">
+                    <Share2 />
+                    Share
+                </Button>
+            </div>
+        </section>
+
+        <!-- Members -->
+        <section
+            aria-labelledby="members-heading"
+            class="flex flex-col gap-2">
+            <h2
+                id="members-heading"
+                class="px-1 font-semibold">
+                Members
+                <span class="text-muted-foreground">{{ campaign.members.length }}</span>
+            </h2>
+            <ul class="flex flex-col divide-y rounded-lg border">
+                <li
+                    v-for="member in members"
+                    :key="member.memberId"
+                    class="flex min-h-14 items-center gap-3 px-4 py-2">
+                    <div class="flex min-w-0 flex-1 flex-col">
+                        <span class="flex items-center gap-2 truncate">
+                            <span class="truncate">{{ member.username }}</span>
+                            <span
+                                v-if="member.memberId === campaign.currentMemberId"
+                                class="text-xs text-muted-foreground"
+                                >(you)</span
+                            >
+                        </span>
+                        <span
+                            v-if="member.isOwner"
+                            class="flex items-center gap-1 text-xs text-gold">
+                            <Crown class="size-3" /> Owner
+                        </span>
+                    </div>
+
+                    <!-- The owner changes roles; the owner stays a DM. -->
+                    <div
+                        v-if="callerIsOwner && !member.isOwner"
+                        role="radiogroup"
+                        :aria-label="`${member.username}'s role`"
+                        class="flex shrink-0 rounded-md border p-0.5">
+                        <button
+                            v-for="role in roles"
+                            :key="role"
+                            type="button"
+                            role="radio"
+                            :aria-checked="member.role === role"
+                            :disabled="savingMemberId === member.memberId"
+                            :class="[
+                                'h-11 min-w-16 rounded px-3 text-sm font-medium transition-colors disabled:opacity-50',
+                                member.role === role
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'text-muted-foreground hover:bg-accent',
+                            ]"
+                            @click="setRole(member, role)">
+                            {{ role }}
+                        </button>
+                    </div>
+                    <Badge
+                        v-else
+                        :variant="member.role === 'DM' ? 'default' : 'secondary'">
+                        {{ member.role }}
+                    </Badge>
+                </li>
+            </ul>
+        </section>
+
+        <p class="px-1 text-sm text-muted-foreground">
+            Sessions and session notes arrive in step 14.
+        </p>
+    </div>
 </template>
+
 <script setup lang="ts">
-    import {
-        faCrown,
-        faUserLarge,
-        faUsers,
-    } from "@fortawesome/free-solid-svg-icons";
-    import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
     import { useQuery } from "@tanstack/vue-query";
+    import { Check, Copy, Crown, Share2 } from "lucide-vue-next";
     import { toast } from "vue-sonner";
     import {
         getCampaignQuery,
         putMemberRoleMutation,
     } from "~/utils/queries/campaign";
-    import type { CampaignMember } from "~/utils/api/types";
+    import type { CampaignMember, Role } from "~/utils/api/types";
     import { currentMember } from "~/utils/campaign";
-
-    const route = useRoute("app-campaigns-campaignId");
-    const campaignQuery = useQuery(
-        getCampaignQuery(() => route.params.campaignId as string)
-    );
 
     definePageMeta({
         layout: "campaign",
         requiresAuth: true,
     });
 
+    const route = useRoute("app-campaigns-campaignId");
+    const campaignQuery = useQuery(
+        getCampaignQuery(() => route.params.campaignId as string)
+    );
+    const campaign = computed(() => campaignQuery.data.value);
+
+    const roles: Role[] = ["DM", "Player"];
+
     const callerIsOwner = computed(
-        () => currentMember(campaignQuery.data.value)?.isOwner ?? false
+        () => currentMember(campaign.value)?.isOwner ?? false
     );
 
     // The caller first, then the owner, then DMs, then alphabetically.
-    const membersToDisplay = computed(() => {
-        const campaign = campaignQuery.data.value;
-        if (!campaign) {
-            return [];
-        }
-
+    const members = computed(() => {
+        const c = campaign.value;
+        if (!c) return [];
         const rank = (m: CampaignMember) =>
-            m.memberId === campaign.currentMemberId
-                ? 0
-                : m.isOwner
-                  ? 1
-                  : m.role === "DM"
-                    ? 2
-                    : 3;
-        return [...campaign.members].sort(
+            m.memberId === c.currentMemberId ? 0 : m.isOwner ? 1 : m.role === "DM" ? 2 : 3;
+        return [...c.members].sort(
             (a, b) => rank(a) - rank(b) || a.username.localeCompare(b.username)
         );
     });
 
+    // Role changes (owner only).
     const putMemberRole = putMemberRoleMutation();
-    async function toggleRole(member: CampaignMember) {
+    const savingMemberId = ref<string | null>(null);
+    async function setRole(member: CampaignMember, role: Role) {
+        if (member.role === role || savingMemberId.value) return;
+        savingMemberId.value = member.memberId;
         await putMemberRole
             .mutateAsync({
                 campaignId: route.params.campaignId as string,
                 memberId: member.memberId,
-                role: member.role === "DM" ? "Player" : "DM",
+                role,
             })
-            .catch(() => toast.error("Could not change the member's role."));
+            .catch(() => toast.error("Could not change the member's role."))
+            .finally(() => (savingMemberId.value = null));
+    }
+
+    // Join code: share the join link, or copy it where sharing is unavailable.
+    const joinLink = computed(
+        () => `${window.location.origin}/app/campaigns/join/${campaign.value?.joinCode ?? ""}`
+    );
+
+    const codeCopied = ref(false);
+    async function copyCode() {
+        if (!campaign.value) return;
+        await copy(campaign.value.joinCode, "Join code copied");
+        codeCopied.value = true;
+        setTimeout(() => (codeCopied.value = false), 2000);
+    }
+
+    async function shareJoinLink() {
+        if (!campaign.value) return;
+        const data: ShareData = {
+            title: `Join ${campaign.value.name}`,
+            text: `Join ${campaign.value.name} on Take Initiative with the code ${campaign.value.joinCode}.`,
+            url: joinLink.value,
+        };
+        if (navigator.share && (navigator.canShare?.(data) ?? true)) {
+            try {
+                await navigator.share(data);
+                return;
+            } catch (err) {
+                // The user closed the share sheet.
+                if (err instanceof DOMException && err.name === "AbortError") return;
+            }
+        }
+        await copy(joinLink.value, "Join link copied");
+    }
+
+    async function copy(text: string, message: string) {
+        try {
+            await navigator.clipboard.writeText(text);
+            toast.success(message);
+        } catch {
+            toast.error("Could not copy. Select the code and copy it by hand.");
+        }
     }
 </script>

@@ -26,7 +26,7 @@
     definePageMeta({
         middleware: [],
         requiresAuth: true,
-        layout: "main-app",
+        layout: "app",
     });
 
     const {

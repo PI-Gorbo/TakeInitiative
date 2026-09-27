@@ -1,10 +1,7 @@
 <template>
-  <NuxtLoadingIndicator />
-  <NuxtLayout>
-    <NuxtPage />
-  </NuxtLayout>
+    <VitePwaManifest />
+    <NuxtLoadingIndicator />
+    <NuxtLayout>
+        <NuxtPage />
+    </NuxtLayout>
 </template>
-<script setup lang="ts">
-
-
-</script>
