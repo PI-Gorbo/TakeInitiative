@@ -276,6 +276,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/campaigns/{campaignId}/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetSearch"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/campaigns/{campaignId}/images/{imageId}": {
         parameters: {
             query?: never;
@@ -811,6 +827,88 @@ export interface components {
         PutSessionTitleRequest: {
             title?: string | null;
         };
+        SearchResponse: {
+            query: string;
+            sections: components["schemas"]["SearchSection"][];
+        };
+        SearchSection: {
+            key: components["schemas"]["SearchSectionKey"];
+            hasMore: boolean;
+            hits: components["schemas"]["SearchHit"][];
+        };
+        /** @enum {string} */
+        SearchSectionKey: "Entries" | "Notes" | "Images" | "Sessions";
+        SearchHit: {
+            kind: components["schemas"]["SearchHitKind"];
+            entry?: components["schemas"]["SearchEntryHit"] | null;
+            note?: components["schemas"]["SearchNoteHit"] | null;
+            session?: components["schemas"]["SearchSessionHit"] | null;
+        };
+        /** @enum {string} */
+        SearchHitKind: "Entry" | "Note" | "Session";
+        SearchEntryHit: {
+            entry: components["schemas"]["EntrySummaryResponse"];
+            /** Format: int32 */
+            mentionCount: number;
+            matchedOn: components["schemas"]["SearchMatchedOn"];
+            alias?: string | null;
+            /** Format: guid */
+            blockId?: string | null;
+            snippet?: components["schemas"]["Snippet"] | null;
+        };
+        EntrySummaryResponse: {
+            /** Format: guid */
+            id: string;
+            name: string;
+            kind: components["schemas"]["EntryKind"];
+            aliases: string[];
+            visibility: components["schemas"]["Visibility"];
+            editAccess: components["schemas"]["EditAccess"];
+            /** Format: guid */
+            creatorMemberId: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            /** Format: guid */
+            claimedByMemberId?: string | null;
+            mergedFromIds: string[];
+        };
+        /** @enum {string} */
+        EditAccess: "Anyone" | "OnlyMe";
+        /** @enum {string} */
+        SearchMatchedOn: "Name" | "Alias" | "Article";
+        Snippet: {
+            text: string;
+            highlights: components["schemas"]["SnippetHighlight"][];
+        };
+        SnippetHighlight: {
+            /** Format: int32 */
+            start: number;
+            /** Format: int32 */
+            length: number;
+        };
+        SearchNoteHit: {
+            /** Format: guid */
+            id: string;
+            /** Format: guid */
+            sessionId: string;
+            /** Format: int32 */
+            sessionNumber: number;
+            /** Format: guid */
+            authorMemberId: string;
+            /** Format: date-time */
+            postedAt: string;
+            visibility: components["schemas"]["Visibility"];
+            isRecap: boolean;
+            images: components["schemas"]["NoteImageResponse"][];
+            snippet: components["schemas"]["Snippet"];
+        };
+        SearchSessionHit: {
+            session: components["schemas"]["SessionResponse"];
+            snippet?: components["schemas"]["Snippet"] | null;
+        };
+        GetSearchRequest: Record<string, never>;
         DeleteImageRequest: Record<string, never>;
         GalleryResponse: {
             items: components["schemas"]["GalleryItem"][];
@@ -850,26 +948,6 @@ export interface components {
             /** Format: date-time */
             lastMentionedAt?: string | null;
         };
-        EntrySummaryResponse: {
-            /** Format: guid */
-            id: string;
-            name: string;
-            kind: components["schemas"]["EntryKind"];
-            aliases: string[];
-            visibility: components["schemas"]["Visibility"];
-            editAccess: components["schemas"]["EditAccess"];
-            /** Format: guid */
-            creatorMemberId: string;
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: date-time */
-            updatedAt: string;
-            /** Format: guid */
-            claimedByMemberId?: string | null;
-            mergedFromIds: string[];
-        };
-        /** @enum {string} */
-        EditAccess: "Anyone" | "OnlyMe";
         GetEntriesRequest: Record<string, never>;
         EntryResponse: {
             /** Format: guid */
@@ -1750,6 +1828,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SessionResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GetSearch: {
+        parameters: {
+            query?: {
+                q?: string | null;
+                sections?: string | null;
+                take?: number | null;
+            };
+            header?: never;
+            path: {
+                campaignId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchResponse"];
                 };
             };
             /** @description Unauthorized */
