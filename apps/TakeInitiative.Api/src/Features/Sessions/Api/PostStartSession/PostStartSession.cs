@@ -40,17 +40,20 @@ public class PostStartSession(IDocumentSession session, IHubContext<CampaignHub>
         var (_, member) = await this.RequireMember(session, req.CampaignId, userId, ct);
 
         var current = await session.CurrentSession(req.CampaignId, ct);
-        var currentNumber = current?.Number ?? 0;
 
-        if (current is not null && req.Number == currentNumber)
+        if (current is not null && req.Number == current.Number)
         {
             await SendAsync(SessionResponse.From(current, current.Id), cancellation: ct);
             return;
         }
-        if (req.Number != currentNumber + 1)
+        if (req.Number != (current?.Number ?? 0) + 1)
         {
+            // Shown to the member as it is written, so a campaign that has never had a
+            // session says so rather than naming a Session 0 that never existed.
             ThrowError(
-                $"Session {req.Number} cannot be started: the current session is Session {currentNumber}.",
+                current is null
+                    ? "No session has been started yet. Start Session 1 first."
+                    : $"Session {req.Number} cannot be started: the current session is Session {current.Number}.",
                 StatusCodes.Status409Conflict);
         }
 

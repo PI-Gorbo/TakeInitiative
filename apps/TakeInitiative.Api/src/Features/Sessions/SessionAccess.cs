@@ -7,7 +7,10 @@ namespace TakeInitiative.Api.Features.Sessions;
 /// <summary>Loads for the session endpoints, after <see cref="CampaignAccess.RequireMember"/>.</summary>
 public static class SessionAccess
 {
-    /// <summary>The campaign's current session. Only a campaign from before step 14 has none.</summary>
+    /// <summary>
+    /// The campaign's current session. A campaign has none until a member starts Session 1,
+    /// so a write that needs one is a 404 until then.
+    /// </summary>
     public static async Task<Session> RequireCurrentSession<TRequest, TResponse>(
         this Endpoint<TRequest, TResponse> endpoint, IQuerySession session, Guid campaignId, CancellationToken ct)
         where TRequest : notnull

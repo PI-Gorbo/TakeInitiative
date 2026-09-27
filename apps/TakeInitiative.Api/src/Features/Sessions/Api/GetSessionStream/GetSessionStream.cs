@@ -43,7 +43,8 @@ public record SessionStreamResponse
 {
     /// <summary>The page's sessions, oldest first, each with the notes the caller can see that match the filter.</summary>
     public required SessionStreamSession[] Sessions { get; init; }
-    public required Guid CurrentSessionId { get; init; }
+    /// <summary>The current session, or null when the campaign has none yet.</summary>
+    public required Guid? CurrentSessionId { get; init; }
     public required bool SuggestNextSession { get; init; }
     /// <summary>Whether there are sessions older than this page.</summary>
     public required bool HasOlder { get; init; }
@@ -60,6 +61,7 @@ public record SessionStreamSession
 /// A page of the session stream, paged by session. Assembled per request from the
 /// Session and SessionNote projections with the visibility rule in the SQL. Sessions
 /// come back even when no note matches; the web decides whether to draw their dividers.
+/// A campaign with no sessions is an empty page, not a 404.
 /// </summary>
 public class GetSessionStream(IDocumentSession session, [FromKeyedServices(SessionGap.ClockKey)] TimeProvider clock)
     : Endpoint<GetSessionStreamRequest, SessionStreamResponse>
@@ -76,7 +78,7 @@ public class GetSessionStream(IDocumentSession session, [FromKeyedServices(Sessi
     {
         var userId = this.GetUserIdOrThrowUnauthorized();
         var (_, member) = await this.RequireMember(session, req.CampaignId, userId, ct);
-        var current = await this.RequireCurrentSession(session, req.CampaignId, ct);
+        var current = await session.CurrentSession(req.CampaignId, ct);
         var take = req.Take ?? DefaultTake;
         var before = req.Before ?? int.MaxValue;
 
@@ -107,11 +109,11 @@ public class GetSessionStream(IDocumentSession session, [FromKeyedServices(Sessi
             Sessions = page
                 .Select(s => new SessionStreamSession
                 {
-                    Session = SessionResponse.From(s, current.Id),
+                    Session = SessionResponse.From(s, current?.Id),
                     Notes = notesBySession[s.Id].Select(SessionNoteResponse.From).ToArray(),
                 })
                 .ToArray(),
-            CurrentSessionId = current.Id,
+            CurrentSessionId = current?.Id,
             SuggestNextSession = await SessionGap.SuggestNextSession(session, current, member, clock, ct),
             HasOlder = newestFirst.Count > take,
         }, cancellation: ct);

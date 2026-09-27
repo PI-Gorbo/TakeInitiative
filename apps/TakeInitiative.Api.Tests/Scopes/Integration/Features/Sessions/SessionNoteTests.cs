@@ -28,7 +28,7 @@ public class SessionNoteTests(AuthenticatedWebAppWithDatabaseFixture fixture)
 
         posted.Should().Succeed();
         var note = posted.Value;
-        note.SessionId.Should().Be(sessions.CurrentSessionId);
+        note.SessionId.Should().Be(sessions.CurrentSessionId!.Value);
         note.AuthorMemberId.Should().Be(campaign.PlayerMemberId);
         note.Text.Should().Be("We met **Gundren** on the road.");
         note.Visibility.Should().Be(Visibility.Everyone);
@@ -72,6 +72,7 @@ public class SessionNoteTests(AuthenticatedWebAppWithDatabaseFixture fixture)
 
         // A session of another campaign is a 404.
         var other = (await fixture.PostCreateCampaign(new() { Name = "Other campaign" })).Value;
+        (await fixture.PostStartSession(other.Id, 1)).Should().Succeed();
         var otherSession = (await fixture.GetSessions(other.Id)).Value.CurrentSessionId;
         await fixture.ExpectStatus(HttpMethod.Post, $"/api/campaigns/{campaign.Id}/notes",
             new { sessionId = otherSession, text = "Wrong campaign", visibility = "Everyone", isRecap = false }, 404);

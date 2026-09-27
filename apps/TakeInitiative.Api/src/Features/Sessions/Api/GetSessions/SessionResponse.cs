@@ -11,7 +11,7 @@ public record SessionResponse
     /// <summary>Whether this is the campaign's latest session.</summary>
     public required bool IsCurrent { get; init; }
 
-    public static SessionResponse From(Session session, Guid currentSessionId) => new()
+    public static SessionResponse From(Session session, Guid? currentSessionId) => new()
     {
         Id = session.Id,
         Number = session.Number,
