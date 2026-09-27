@@ -7,13 +7,16 @@ using TakeInitiative.Api.Features.Search;
 namespace TakeInitiative.Api.Tests.Integration.Features.Search;
 
 /// <summary>
-/// The schema ⌘K needs (17a.1 and 17a.3): the two extensions, no churn on the two expression
-/// indexes, and Postgres actually using them.
+/// The schema ⌘K needs (17a.1 and 17a.3): the two extensions, the article vector column, no churn
+/// on either index or the column, and Postgres actually using both indexes.
 /// <para>
-/// The index check is the one that protects the design. Postgres rewrites an expression when it
-/// stores it (<c>'simple'::regconfig</c>, <c>'Text'::text</c>, its own bracketing), so a constant
-/// written in the wrong form would leave Weasel seeing a difference on every start and dropping
-/// and recreating a GIN index over the whole table each time.
+/// The churn checks are the ones that protect the design. Postgres rewrites an expression when it
+/// stores it (<c>'simple'::regconfig</c>, <c>'Text'::text</c>, its own bracketing), so a note index
+/// constant written in the wrong form would leave Weasel seeing a difference on every start and
+/// dropping and recreating a GIN index over the whole table each time. The article vector is a
+/// stored generated column instead, and a column Weasel did not know about would be <b>dropped</b>
+/// on every start: <see cref="TheDatabase_MatchesTheConfiguration_AfterStartup"/> applies the
+/// configuration a second time, as a restart would, and asserts there is nothing left to do.
 /// </para>
 /// </summary>
 public class SearchSchemaTests(WebAppWithDatabaseFixture fixture) : IClassFixture<WebAppWithDatabaseFixture>
@@ -42,10 +45,70 @@ public class SearchSchemaTests(WebAppWithDatabaseFixture fixture) : IClassFixtur
     [Fact]
     public async Task TheDatabase_MatchesTheConfiguration_AfterStartup()
     {
-        // ApplyAllDatabaseChangesOnStartup has already run. If either index expression were
-        // written in a form Weasel cannot match against what Postgres stored, this would fail
-        // with the two DDL strings, and a second start would recreate the index.
+        // ApplyAllDatabaseChangesOnStartup has already run. If the note index expression were
+        // written in a form Weasel cannot match against what Postgres stored, or the article
+        // vector column were not part of the document table Weasel compares, this would fail with
+        // the DDL strings, and a second start would recreate the index or drop the column.
         await Store.Storage.Database.AssertDatabaseMatchesConfigurationAsync();
+
+        // And the restart itself: applying the configuration again changes nothing, and the
+        // database still matches afterwards.
+        await Store.Storage.ApplyAllConfiguredChangesToDatabaseAsync();
+        await Store.Storage.Database.AssertDatabaseMatchesConfigurationAsync();
+    }
+
+    [Fact]
+    public async Task TheArticleVector_IsAStoredGeneratedColumn_OfExactlyTheDeclaredExpression()
+    {
+        // The whole point of the column: Postgres computes the vector when the entry document is
+        // written, so a search reads it. `is_generated = ALWAYS` is what makes it maintained in the
+        // same statement as the row (SearchConsistencyTests depends on that), and the expression is
+        // compared as Postgres gives it back, so the constant stays in canonical form.
+        await using var connection = await Open();
+        await using var command = connection.CreateCommand();
+        command.CommandText =
+            "select data_type, is_generated, generation_expression from information_schema.columns "
+            + "where table_schema = @schema and table_name = @table and column_name = @column";
+        command.Parameters.AddWithValue("schema", Store.Options.DatabaseSchemaName);
+        command.Parameters.AddWithValue("table", SearchSql.EntryTable);
+        command.Parameters.AddWithValue("column", SearchSql.EntryArticleVectorColumn);
+
+        await using var reader = await command.ExecuteReaderAsync();
+        (await reader.ReadAsync()).Should().BeTrue($"{SearchSql.EntryArticleVectorColumn} is part of the document table");
+        reader.GetString(0).Should().Be("tsvector");
+        reader.GetString(1).Should().Be("ALWAYS", "the column is maintained by Postgres, not by the API");
+        reader.GetString(2).Should().Be(SearchSql.EntryArticleGeneration);
+    }
+
+    [Fact]
+    public async Task TheArticleIndex_IsAGinIndexOnTheColumn()
+    {
+        await using var connection = await Open();
+        await using var command = connection.CreateCommand();
+        command.CommandText = "select pg_get_indexdef(@index::regclass)";
+        command.Parameters.AddWithValue(
+            "index", SearchSql.Table(Store.Options.DatabaseSchemaName, SearchSql.EntryIndexName));
+
+        (await command.ExecuteScalarAsync()).Should().Be(
+            $"CREATE INDEX {SearchSql.EntryIndexName} ON "
+            + $"{SearchSql.Table(Store.Options.DatabaseSchemaName, SearchSql.EntryTable)} "
+            + $"USING gin ({SearchSql.EntryArticleVectorColumn})");
+    }
+
+    [Fact]
+    public async Task TheEntryTable_KeepsItsRowsInline_SoTheVectorDoesNotToastTheDocument()
+    {
+        // Without this, adding the vector pushes `data` out of line and every name match pays for
+        // detoasting it (see EntryRowFitsInline). It is set by a schema object of its own, after the
+        // table exists.
+        await using var connection = await Open();
+        await using var command = connection.CreateCommand();
+        command.CommandText = "select reloptions from pg_class where oid = @table::regclass";
+        command.Parameters.AddWithValue(
+            "table", SearchSql.Table(Store.Options.DatabaseSchemaName, SearchSql.EntryTable));
+
+        ((string[]?)await command.ExecuteScalarAsync())
+            .Should().Contain($"toast_tuple_target={EntryRowFitsInline.ToastTupleTarget}");
     }
 
     [Theory]

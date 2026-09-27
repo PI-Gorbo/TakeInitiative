@@ -21,34 +21,29 @@ namespace TakeInitiative.Api.Tests.Integration.Features.Search;
 /// real event appends is not something to do three times.
 /// </para>
 /// <para>
-/// <b>As measured</b> (Apple Silicon, Postgres 15 in Docker, 2026-09): one character p50 20 ms /
-/// p95 24 ms, response at <c>take=5</c> at most 11.4 KB — both inside budget. All sections at
-/// <c>take=5</c> came to <b>p50 52 ms / p95 101 ms</b>, over <b>both</b> budgets: p50 ≤ 40 ms and
-/// p95 ≤ 100 ms. The p50 assertion throws first, which is why the p95 one looks like it holds —
-/// it does not, and both assertions are left as the step wrote them rather than relaxed.
+/// <b>As measured</b> (Apple Silicon, Postgres 15 in Docker, 2026-09), with the article vector
+/// stored (17a.3): all sections at <c>take=5</c> <b>p50 17.6 ms / p95 62.4 ms</b>, one character
+/// p50 10.8 ms / p95 13.6 ms, largest response at <c>take=5</c> 11.4 KB. Every budget holds.
+/// Before the stored column, on the same machine and seed, all sections came to p50 51.9 ms /
+/// p95 101.6 ms — over both — and one character to p50 20.2 ms / p95 24.2 ms.
 /// </para>
 /// <para>
-/// <b>Where the milliseconds are</b>, from <c>EXPLAIN (ANALYZE, BUFFERS)</c> on this seed: the
-/// framework and the round trip are 1.5 ms, the Notes, Images and Sessions queries a few
-/// milliseconds together, the entry loads 1 ms and the mention counts 2.4 ms. The rest is the
-/// Entries section reading every entry document of the table twice.
-/// <list type="bullet">
-/// <item><see cref="EntryMatcher"/>, 16 ms: one scan of 1,000 entry documents (5 ms of heap) and
-/// then <c>lower(unaccent(…))</c> and one <c>word_similarity</c> over 2,739 names and aliases.</item>
-/// <item>The article query, 33 ms, of which 30 ms is the prefilter: the planner costs a sequential
-/// scan below a GIN partial-match scan and <b>never uses <c>mt_doc_entry_idx_search</c></b> for a
-/// prefix <c>tsquery</c> at this size, so it computes <c>to_tsvector(jsonb_path_query_array(…))</c>
-/// for every entry in the table instead. Forcing the planner's hand does not help: with
-/// <c>enable_seqscan = off</c> it picks the <c>(CampaignId, Kind)</c> btree and still filters
-/// (27 ms), and isolating the prefilter in a <c>MATERIALIZED</c> CTE is worse again (40 ms).
-/// The per-block work either way is small — the raw block filter drops four blocks in five before
-/// any <c>PlainText</c> regexp runs, leaving 117 of them.</item>
-/// </list>
-/// Both of those want a schema object this pass deliberately does not add (a stored tsvector
-/// column, a Marten duplicated column for the name, or <c>btree_gin</c> on
-/// <c>(CampaignId, vector)</c> so the index is selective enough to be chosen). The cost is linear
-/// in the number of entries, so the budget holds for an ordinary campaign and is exceeded
-/// somewhere under 1,000 entries.
+/// <b>Where the milliseconds went.</b> The article query was 33 ms of the old p50, and 30 ms of that
+/// was the prefilter: the planner costs a sequential scan below a GIN partial-match scan and never
+/// used an expression index for a prefix <c>tsquery</c> at this size, so Postgres computed
+/// <c>to_tsvector(jsonb_path_query_array(…))</c> for every entry in the table. Stored in a column it
+/// is 0.3 ms, whichever plan is chosen. The entry matcher's scan of 1,000 entry documents came down
+/// with it, 4.9 ms to 2.0 ms, because <c>EntryRowFitsInline</c> keeps an entry's row in its page:
+/// <c>data</c> is no longer compressed, so a name match no longer decompresses every row it reads.
+/// What is left is the framework and the round trip (1.5 ms), the entry matcher's
+/// <c>lower(unaccent(…))</c> and <c>word_similarity</c> over 2,739 names and aliases, the Notes,
+/// Images and Sessions queries, the entry loads and the mention counts.
+/// </para>
+/// <para>
+/// The cost is still <b>linear in the number of entries</b> — names and aliases are scanned per
+/// campaign, by design (17a.3) — so the budget holds with room at 1,000 entries and would be
+/// reached again somewhere well above it. Keeping the row inline costs disk: <c>mt_doc_entry</c> is
+/// 4.0 MB for 1,000 entries where it was 1.6 MB compressed.
 /// </para>
 /// </summary>
 public class SearchPerfTests(AuthenticatedWebAppWithDatabaseFixture fixture, ITestOutputHelper output)
