@@ -23,6 +23,15 @@ player-first experiences: **combat**, **note taking**, **⌘K search** and
 | **Session** | One real-world play session. Numbered, dated, with an optional title. | chapter, episode, journal |
 | **Session note** (UI short form: "note"; code: `SessionNote`) | One post in a session's stream: markdown text plus optional images. Only its **author** can edit it. | message, post, journal entry |
 | **Recap** | A session note flagged `/recap`. Shown under its session's divider. | summary |
+| **Current session** | The latest session. The composer posts to it unless another session is picked. | active session, open session |
+| **Session stream** | The Campaign tab's list of every session's notes, split by session dividers. | feed, timeline, journal |
+| **Session divider** | The line that starts a session in the session stream: number, date and title. | header, separator |
+| **Composer** | Where a session note is written: the text, the session and visibility pickers, and the toolbar. | editor, input box |
+| **Gap prompt** | The composer's "Start Session N?" suggestion, shown when the last note is more than 3 days old. | — |
+| **Added later** | The marker on a session note posted to a session that was no longer current. | back-dated, late |
+| **Hide** | A DM hides a session note from everyone except its author and the DMs. It is not a delete. | moderate, remove |
+| **Edit history** | The earlier versions of an edited session note. | revisions |
+| **Filter** | One of `All · Text · Images · Recaps · Combats · Mine` on the session stream. | channel |
 | **Wiki** | The campaign's knowledge base: all entries. Built by integrating session notes. | knowledge base, codex |
 | **Entry** | One named thing in the wiki. | entity, page, topic, tag |
 | **Kind** | An entry's category, from a closed set: `Character`, `Place`, `Faction`, `Item`, `Event`, `Other`. | type |
