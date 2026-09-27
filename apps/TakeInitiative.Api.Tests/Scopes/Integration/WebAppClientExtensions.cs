@@ -1,8 +1,10 @@
 using CSharpFunctionalExtensions;
+using FluentAssertions;
 using Microsoft.Extensions.Primitives;
 using TakeInitiative.Api.Features.Campaigns;
 using TakeInitiative.Api.Features.Entries;
 using TakeInitiative.Api.Features.Images;
+using TakeInitiative.Api.Features.Search;
 using TakeInitiative.Api.Features.Sessions;
 using TakeInitiative.Api.Features.Users;
 namespace TakeInitiative.Api.Tests.Integration;
@@ -322,6 +324,39 @@ public static class WebAppClientExtensions
     public static Task<Result<GalleryResponse>> GetEntryImages(
         this IWebAppClient client, Guid campaignId, Guid entryId, DateTimeOffset? before = null, int? take = null)
         => client.Get<GalleryResponse>(GalleryUrl(campaignId, "entries", entryId, before, take));
+
+    // ⌘K search (step 17a).
+
+    public static string SearchUrl(Guid campaignId, string q, string? sections = null, int? take = null)
+    {
+        var query = new List<string> { $"q={Uri.EscapeDataString(q)}" };
+        if (sections is not null) query.Add($"sections={Uri.EscapeDataString(sections)}");
+        if (take is not null) query.Add($"take={take}");
+        return $"/api/campaigns/{campaignId}/search?" + string.Join("&", query);
+    }
+
+    public static Task<Result<SearchResponse>> GetSearch(
+        this IWebAppClient client, Guid campaignId, string q, string? sections = null, int? take = null)
+        => client.Get<SearchResponse>(SearchUrl(campaignId, q, sections, take));
+
+    /// <summary>One section's hits, or an empty list when the section is absent (it had nothing).</summary>
+    public static SearchHit[] Section(this SearchResponse response, SearchSectionKey key)
+        => response.Sections.FirstOrDefault(s => s.Key == key)?.Hits ?? [];
+
+    /// <summary>
+    /// Asserts the answer has no such section. That is the only shape "nothing found" takes, because
+    /// the endpoint leaves an empty section out — which is why <c>Section(key).Should().BeEmpty()</c>
+    /// says nothing on its own: it passes for a section that was filtered, for one that found
+    /// nothing, and for one that was never queried. A test that means one of those says which here,
+    /// and pairs it with <see cref="ShouldHaveSection"/> on a query that does find something, so an
+    /// empty answer is a decision and not an accident.
+    /// </summary>
+    public static void ShouldHaveNoSection(this SearchResponse response, SearchSectionKey key, string because)
+        => response.Sections.Should().NotContain(section => section.Key == key, because);
+
+    /// <summary>Asserts the section is there, and answers its hits: the control for <see cref="ShouldHaveNoSection"/>.</summary>
+    public static SearchHit[] ShouldHaveSection(this SearchResponse response, SearchSectionKey key, string because)
+        => response.Sections.Should().ContainSingle(section => section.Key == key, because).Subject.Hits;
 
     /// <summary>GETs a URL, never asserting the status, and returns the status.</summary>
     public static async Task<int> GetStatus(this IWebAppClient client, string url)
