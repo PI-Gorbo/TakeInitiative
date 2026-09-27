@@ -20,7 +20,7 @@ which sits on 16e (#219). Each PR leaves the app runnable:
 
 | PR | Branch | Sub-step | Runnable state after merge | Status |
 |---|---|---|---|---|
-| 17a | `v2/17a-search-api` | Search index and query API | 16's app unchanged in the browser. `GET search` answers sections with snippets, per viewer, and the leak tests pass | [ ] |
+| 17a | `v2/17a-search-api` | Search index and query API | 16's app unchanged in the browser. `GET search` answers sections with snippets, per viewer, and the leak tests pass | [x] |
 | 17b | `v2/17b-search-sheet` | The search sheet | ⌘K and 🔍 search for real: sections, highlighted snippets, keyboard navigation, tappable rows on a phone, and every hit opens where it lives | [ ] |
 | 17c | `v2/17c-search-actions` | Actions | The Actions section and `>`: create an entry, start the next session, post a note about X, go to. The step's Verify passes | [ ] |
 
@@ -53,12 +53,12 @@ Paths are relative to `apps/TakeInitiative.Api` (API), `apps/TakeInitiative.Api.
 - `docs/roadmap/README.md`: link step 17, `in progress`
 
 **17a**
-- API add `src/Features/Search/{SearchQuery,SearchDoc,Snippet,SearchService,ISearchProvider}.cs`
-- API add `src/Features/Search/Sql/{SearchSql,SearchVisibilitySql}.cs`
+- API add `src/Features/Search/{SearchQuery,SearchDoc,Snippet,SearchService,SearchDrift,ISearchProvider}.cs`
+- API add `src/Features/Search/Sql/{SearchSql,SearchSchema,SearchVisibilitySql,SearchConnection}.cs`
 - API add `src/Features/Search/Providers/{WikiSearchProvider,SessionSearchProvider}.cs`
 - API add `src/Features/Search/Matching/{EntryMatcher,EntryMatch}.cs`
 - API add `src/Features/Search/Api/GetSearch/{GetSearch,SearchResponse}.cs`
-- API modify `src/boostrap/Bootstrap.cs` (the two extensions and the two text indexes), `Program.cs` (`AddSearch`), `GlobalUsings.cs`
+- API modify `src/boostrap/Bootstrap.cs` (the two extensions, the note index and the article vector column), `Program.cs` (`AddSearch`), `GlobalUsings.cs`
 - API modify `src/Features/Entries/Mentions/MentionIndex.cs` (`CountsForEntries`)
 - Tests add `Scopes/Unit/{SearchQueryTests,SnippetTests}.cs`
 - Tests add `Scopes/Integration/Features/Search/{SearchSeed,SearchTests,SearchLeakTests,SearchVisibilityParityTests,SearchConsistencyTests,EntryMatcherTests,SearchSchemaTests,SearchPerfTests}.cs`
@@ -136,26 +136,56 @@ nouns the step puts into code and UI:
    record SearchDoc(SearchDocKind Kind, Guid SourceId, Guid? BlockId, double Rank, int Category, string? Headline);
    ```
 
+   `SearchDocKind` has three cases — `ArticleBlock`, `SessionNote` and `Session` — and
+   **no `EntryName`**. A name or alias hit never becomes a `SearchDoc`: it is the entry
+   matcher's answer (step 9), and it comes back as an `EntryMatch`, which carries the
+   name that matched and whether it was an alias.
+
    The rows come from SQL over the inline-projected documents. There is **no search
    table** (Notes, "Why no stored search table"). Every source is an inline projection
    that is updated in the same transaction as its event (§9), and Postgres maintains the
-   expression indexes in that same transaction. So a search sees each post, edit, hide,
+   note index and the article column in that same transaction — a stored generated column is
+   computed by the statement that writes the row. So a search sees each post, edit, hide,
    visibility change, article edit, merge and delete **as soon as it commits**, with no
    lag and no rebuild. There is nothing to backfill, because the indexes are built over
    existing rows when 17a first starts.
-3. **Indexes** (step 1's objects, plus expression indexes added to the document
-   mappings). Each expression is a constant in `SearchSql`. The query uses the same
-   constant, which is what makes Postgres use the index.
+3. **Indexes** (step 1's objects, plus what is added to the document mappings). Each
+   vector is a constant in `SearchSql`, and the query uses the same constant: for the
+   note index, because that is what makes Postgres recognise the expression and use the
+   index; for the article column, because the column is the thing the query names.
 
-   | Index | On | Expression | Serves |
+   | Index | On | Vector | Serves |
    |---|---|---|---|
-   | `mt_doc_sessionnote_idx_search` | `mt_doc_sessionnote` (GIN) | `to_tsvector('simple', regexp_replace(data ->> 'Text', '\(entry:[0-9a-fA-F-]{36}\)', ' ', 'g'))` | Notes and Images |
-   | `mt_doc_entry_idx_search` | `mt_doc_entry` (GIN) | `to_tsvector('simple', jsonb_path_query_array(data, '$.Article.Blocks[*].Text'))` | article prefilter |
+   | `mt_doc_sessionnote_idx_search` | `mt_doc_sessionnote` (GIN) | the expression `to_tsvector('simple', PlainText(data ->> 'Text'))` (step 5) | Notes and Images |
+   | `mt_doc_entry_idx_search` | `mt_doc_entry` (GIN) | the **stored generated column** `search_vector`, `to_tsvector('simple'::regconfig, jsonb_path_query_array(data, '$."Article"."Blocks"[*]."Text"'::jsonpath))` | article prefilter |
 
-   - Both expressions use only built-in immutable functions, so they depend on nothing
-     step 1 creates, whatever order Marten applies schema objects in. Both were
-     created by hand on `postgres:15-alpine` while this file was written.
-   - The article index covers **every** block, secret ones too. It is only a
+   - The note index is an expression index: the expression uses only built-in immutable
+     functions, so it depends on nothing step 1 creates, whatever order Marten applies
+     schema objects in.
+   - The article vector is a **column**, not an expression, because the planner does not
+     choose a GIN index for a prefix `tsquery` at a campaign's size: a partial-match scan
+     of the index costs more than the sequential scan it has to do anyway, so an
+     expression index left Postgres computing
+     `to_tsvector(jsonb_path_query_array(…))` for every entry in the table on every
+     search — 30 ms of the 33 ms the article query took (step 12). Stored, Postgres
+     computes it once, in the same statement that writes the entry document, and the
+     query names the column, so the filter is one column read per row whichever plan is
+     chosen and the GIN index on it is a plain column index.
+   - Weasel drops a column it does not know about, so the column is declared on the
+     document table Marten builds from the mapping (`SearchSchema`), not beside it, and
+     the `GENERATED ALWAYS AS (…) STORED` clause rides on the column as a Weasel
+     `ColumnCheck`. A check is not part of a column's identity, and Weasel reads only a
+     name and a type back from `information_schema`, so the diff sees
+     `search_vector tsvector` either way and there is no churn.
+   - `mt_doc_entry` also gets `toast_tuple_target = 8160` (`EntryRowFitsInline`, a schema
+     object of its own, ordered after the table). Without it the 1.2 KB vector plus the
+     1.4 KB document is over the default 2 KB target and Postgres moves `data` out of
+     line, which costs every name match more than the prefilter wins: 4.9 ms became
+     17.4 ms, 200 buffers became 9,179. It applies to rows written after it, so on a
+     database that already has entries — the `ADD COLUMN` rewrites the table just before
+     it runs — each entry settles on its next edit, and `VACUUM FULL public.mt_doc_entry`
+     settles them all at once.
+   - The article vector covers **every** block, secret ones too. It is only a
      **prefilter** that narrows the candidate entries. Each candidate is then re-checked
      block by block, on the blocks the viewer can see (step 6). A hit on a secret block
      alone therefore yields nothing.
@@ -177,12 +207,18 @@ nouns the step puts into code and UI:
    - **Length rule.** One character searches Entries (names only, prefix) and Sessions
      (number) only. Two or more search everything.
 5. **Text for matching and for snippets** (`SearchSql.PlainText`). This expression
-   turns stored text into what a reader sees:
+   turns stored text into what a reader sees. There are four steps, and the order
+   matters:
+   - backslash escapes are removed **first**, so an escaped `\(entry:…\)` cannot hide
+     from the two steps that follow;
    - `@[text](entry:<id>)` becomes `text`, so an entry id never appears in a snippet or
      matches a query;
-   - backslash escapes are removed;
+   - any bare `entry:<36 characters>` still there is taken out **unconditionally**, with
+     its brackets or without them. Note and block text is length-validated and nothing
+     more, so a member can type a destination by hand, or leave the tail of a malformed
+     or unclosed mention behind, and it would otherwise reach a snippet;
    - the two private-use characters that snippets use as markers (U+E000, U+E001) are
-     deleted from the source.
+     deleted from the source, so no member can forge a highlight.
 
    Markdown markers (`*`, `_`, `` ` ``, and a leading `#` or `>`) are dropped in C# while
    the snippet is converted (step 7).
@@ -211,8 +247,13 @@ nouns the step puts into code and UI:
      for every case (step 12), the way 14b's `SessionNoteAudienceTests` did for pushes.
    - **Belt and braces.** The providers load the returned documents (at most `take` + 1
      per section) to build responses. They re-run `SessionNoteVisibility.CanSee` or
-     `EntryVisibility.CanSeeBlock` on each one. A row that fails is dropped and logged
-     as an error, because it means the SQL and C# rules have drifted.
+     `EntryVisibility.CanSeeBlock` on each one. A row that fails is logged as an error
+     **and thrown** (`SearchDrift`), so the endpoint 500s. It is not dropped: the drop
+     would happen after Postgres had already applied `LIMIT take + 1`, so it would turn
+     a would-be leak into a lost visible hit and a `hasMore` that counted it — a wrong
+     answer, quietly. A 500 says the SQL and C# rules have drifted, which is a bug to
+     fix and not a case to degrade through. `SearchVisibilityParityTests` is what keeps
+     the throw unreachable.
 7. **Snippets** (`Snippet`). How they avoid leaking (Notes, "Why snippets cannot
    leak"):
    - A snippet is `ts_headline('simple', PlainText(text), query, 'StartSel=U+E000,
@@ -225,6 +266,11 @@ nouns the step puts into code and UI:
    - An article hit takes its snippet from the best-ranked **visible** matching block.
      A name or alias hit has no snippet, and shows "aka Rockseeker" when an alias
      matched.
+   - A snippet may legitimately have **no** highlights, and that is not drift: a row is
+     matched on an indexed vector and its headline is cut from what a reader sees, and the
+     two can differ (step 5). A session title matched down the trigram ladder has no
+     `tsquery` lexeme for `ts_headline` to mark at all. The hit is real either way, so it
+     is shown with the words and no highlights, and it never costs the viewer the hit.
 8. **Ranking**, per section. No section has a total, only `hasMore` (from `take` + 1
    visible rows).
    - **Entries.** The category comes first, and it is the web's `matchRank` (15d),
@@ -240,22 +286,31 @@ nouns the step puts into code and UI:
      Names and aliases are compared folded (`lower(unaccent(…))`, like `foldForMatch`).
      Within a category, entries are ordered by the viewer's mention count, then the
      block's `ts_rank_cd` for article hits, then the name A–Z. SQL returns up to 50
-     candidates by category and name. `MentionIndex.CountsForEntries` (new: the
-     `CountsFor` rule, restricted to those ids through the GIN `?|` fragment) counts
-     them for this viewer, and C# sorts them and takes `take`.
+     candidates by category and name **for names and aliases**; the article query returns
+     at most `take` + 1, and it excludes the entries the names have already matched,
+     because a name match always wins and an article hit is the last rung of the ladder.
+     `MentionIndex.CountsForEntries` (new: the `CountsFor` rule, restricted to those ids
+     through the GIN `?|` fragment) counts them for this viewer, and C# sorts them and
+     takes `take`.
    - **Notes / Images.** `ts_rank_cd(vector, query)` descending, then `PostedAt`
      descending. Images is `HasImages`, and Notes is the rest, so an image note appears
      once.
-   - **Sessions.** A number match first, then title (prefix, then `similarity`), then
-     `Number` descending.
+   - **Sessions.** A number match first, then the title down the same ladder names use
+     (exact, prefix, word prefix, substring, fuzzy). `word_similarity` is the tie-break
+     **within** a rung of that ladder — without it two fuzzy title matches would come
+     back in session order rather than best first — and `Number` descending breaks the
+     tie after it.
    - `ts_rank_cd` and `similarity` read only the row they score. Postgres keeps no
      corpus statistics for them, so adding a hidden row cannot move a visible one.
-9. **Entry matcher** (`EntryMatcher`, registered scoped, §11a).
+9. **Entry matcher** (`EntryMatcher`, registered a **singleton**, §11a). It holds
+   nothing between calls — the session, the campaign and the viewer are all arguments — so
+   there is nothing for a scope to own.
 
    ```csharp
    Task<IReadOnlyList<IReadOnlyList<EntryMatch>>> MatchAsync(
        IQuerySession session, Guid campaignId, Member viewer,
-       IReadOnlyList<string> spans, EntryMatchOptions options, CancellationToken ct);
+       IReadOnlyList<string> spans, EntryMatchOptions options, CancellationToken ct,
+       SearchConnection? connection = null);
    record EntryMatch(Guid EntryId, string MatchedName, bool IsAlias, int Category, double Similarity);
    record EntryMatchOptions(int Take = 5, double MinSimilarity = 0.5, bool FuzzyOnly = false);
    ```
@@ -267,6 +322,9 @@ nouns the step puts into code and UI:
    - The Entries section calls it with one span. Loose ends (19: "this note says
      Gundren, link it?") and suggestions (23: "match before creating") call it with
      many.
+   - The trailing `connection` is the search's own (step 10). A caller outside a search —
+     loose ends (19), suggestions (23), a test — passes nothing and gets a connection for
+     that one statement.
 10. **Providers** (§11).
 
     ```csharp
@@ -275,7 +333,10 @@ nouns the step puts into code and UI:
         IReadOnlyList<SearchSectionKey> Sections { get; }
         Task<IReadOnlyList<SearchSection>> SearchAsync(SearchQuery query, SearchContext context, CancellationToken ct);
     }
-    record SearchContext(IQuerySession Session, Guid CampaignId, Member Viewer, IReadOnlySet<SearchSectionKey> Wanted, int Take);
+    record SearchContext(IQuerySession Session, Guid CampaignId, Member Viewer, IReadOnlySet<SearchSectionKey> Wanted, int Take)
+    {
+        public SearchConnection? Connection { get; init; }
+    }
     ```
 
     - `WikiSearchProvider` fills Entries, through `EntryMatcher` plus the article query.
@@ -284,6 +345,11 @@ nouns the step puts into code and UI:
     - `SearchService` runs the providers in registration order, one after another on
       one session (a Marten session is not thread-safe). It keeps the wanted sections,
       in the order Entries, Notes, Images, Sessions, and leaves empty sections out.
+    - It also opens **one** pooled connection for the whole search (`SearchConnection`,
+      the context's init-only `Connection`) and disposes it at the end, rather than one
+      per statement: the four or five statements run one after another anyway, and a
+      connection each is a pool round trip for nothing. It is opened lazily, so a search
+      that asks Postgres nothing opens nothing.
     - Step 18 adds a combat provider, and 20 and 21 add reference providers, as more
       registrations.
 11. **Endpoint.** It takes `{campaignId}` and resolves the caller's member with
@@ -295,9 +361,9 @@ nouns the step puts into code and UI:
 
     ```
     SearchResponse { query: string, sections: SearchSection[] }
-    SearchSection  { key: "entries" | "notes" | "images" | "sessions", hasMore: bool, hits: SearchHit[] }
-    SearchHit      { kind: "entry" | "note" | "session",
-                     entry?:   { entry: EntrySummaryResponse, mentionCount, matchedOn: "name" | "alias" | "article",
+    SearchSection  { key: "Entries" | "Notes" | "Images" | "Sessions", hasMore: bool, hits: SearchHit[] }
+    SearchHit      { kind: "Entry" | "Note" | "Session",
+                     entry?:   { entry: EntrySummaryResponse, mentionCount, matchedOn: "Name" | "Alias" | "Article",
                                  alias?, blockId?, snippet?: Snippet },
                      note?:    { id, sessionId, sessionNumber, authorMemberId, postedAt, visibility, isRecap,
                                  images: NoteImageResponse[] /* first 4, Images only */, snippet: Snippet },
@@ -305,21 +371,39 @@ nouns the step puts into code and UI:
     Snippet        { text: string, highlights: { start: int, length: int }[] }
     ```
 
+    - **The enum values are PascalCase**, as every enum in this API is: the response goes
+      through `JsonStringEnumConverter<T>`, which takes no naming policy. The `?sections=`
+      query string is parsed case-insensitively, so `entries` and `Entries` both work.
     - Unknown section names, `take` outside 1–20, and an empty or overlong `q` are
-      400s with `errors.q`, `errors.sections` and `errors.take`.
+      400s with `errors.q`, `errors.sections` and `errors.take`. An unknown name is a 400
+      **including a numeric one**: `sections=0` is not a way to say `entries`, and it is
+      rejected rather than silently read as the first section.
     - A note hit carries what a result row needs, not the whole note. The viewer can
       open the note anyway.
     - The query string is never stored. The web does not put it in the URL.
-    - Step 20's REFERENCE adds `kind: "reference"` and `reference?`, without changing
+    - Step 20's REFERENCE adds `kind: "Reference"` and `reference?`, without changing
       the others.
 12. **Performance budgets.**
 
-    | What | Budget | How it is held |
-    |---|---|---|
-    | `GET search`, all sections, `take=5`, on the large seed (below) | p50 ≤ 40 ms, p95 ≤ 100 ms at the API | GIN on note text; the article prefilter; names scanned per campaign; headlines and counts only for returned rows |
-    | A one-character query | p95 ≤ 60 ms | Entries by prefix and Sessions by number only |
-    | Response size, `take=5` | ≤ 15 KB | trimmed note hits, snippets of at most 24 words |
-    | Postgres plans | the note query uses `mt_doc_sessionnote_idx_search`, and the article query uses `mt_doc_entry_idx_search` | `SearchSchemaTests` checks with `EXPLAIN` under `SET LOCAL enable_seqscan = off`, so a mismatch between the index expression and the query expression fails CI |
+    | What | Budget | As built | How it is held |
+    |---|---|---|---|
+    | `GET search`, all sections, `take=5`, on the large seed (below) | p50 ≤ 40 ms, p95 ≤ 100 ms at the API | **p50 17.6 ms, p95 62.4 ms** | GIN on note text; the article prefilter, stored (step 3); names scanned per campaign; headlines and counts only for returned rows |
+    | A one-character query | p95 ≤ 60 ms | p50 10.8 ms, **p95 13.6 ms** | Entries by prefix and Sessions by number only: no article query and no `tsquery` at all |
+    | Response size, `take=5` | ≤ 15 KB | largest **11.4 KB**, mean 5.7 KB over 120 queries | trimmed note hits, snippets of at most 24 words |
+    | Postgres plans | the note query's expression is the one its index was built on, and the article query names the stored column | both | `SearchSchemaTests` checks with `EXPLAIN` under `SET LOCAL enable_seqscan = off`. That proves the query's expression **matches the stored index expression**, so a mismatch fails CI. It does **not** prove the planner chooses the index on real data — for a prefix `tsquery` at this size it does not, which is why step 3's article vector is a column: the filter is a column read whichever plan is chosen |
+
+    Measured on an Apple Silicon Mac against `postgres:15-alpine` in Docker, 2026-09.
+    Every budget holds. Before the article vector was stored, on the same machine and
+    seed, all sections came to p50 51.9 ms / p95 101.6 ms — over both — and one character
+    to p50 20.2 ms / p95 24.2 ms. The article query was 33 ms of that p50, 30 ms of it the
+    prefilter; it is 0.3 ms now, and the entry matcher's scan of 1,000 entry documents
+    came down with it (4.9 ms to 2.0 ms), because keeping the row inline (step 3) leaves
+    `data` uncompressed and a name match no longer decompresses every row it reads.
+
+    The cost is **linear in the number of entries**: names and aliases are scanned per
+    campaign, by design (step 3), so the budget holds with room at 1,000 entries and
+    would be reached again somewhere well above it. Keeping the row inline costs disk —
+    `mt_doc_entry` is 4.0 MB for 1,000 entries where it was 1.6 MB compressed.
 
     The **large seed** (`SearchSeed`, appending events straight to streams, so the real
     projections run) is one campaign with 3 DMs and 5 players, 150 sessions, 5,000 notes
@@ -384,8 +468,14 @@ nouns the step puts into code and UI:
       merged entries.
     - `SearchSchemaTests`:
       - both extensions exist;
-      - `AssertDatabaseMatchesConfigurationAsync()` passes after startup, so the
-        expression indexes cause no schema churn;
+      - `AssertDatabaseMatchesConfigurationAsync()` passes after startup **and after the
+        configuration is applied a second time**, as a restart would, so neither the note
+        index expression nor the article vector column causes schema churn — a column
+        Weasel did not know about would be dropped on every start;
+      - the article vector is a stored generated column of exactly the declared
+        expression (`information_schema.columns`), its index is a GIN index on the column
+        (`pg_get_indexdef`), and `mt_doc_entry` has the `toast_tuple_target` that keeps an
+        entry's row in its page;
       - the `EXPLAIN` checks from step 12.
     - Unit tests:
       - `SearchQueryTests`: prefixes, tokens, the built tsquery, and session numbers;
@@ -607,9 +697,20 @@ nouns the step puts into code and UI:
      secret text could slip in.
   2. **Filter before text work.** The visibility predicate is in the same `WHERE` as
      the match. `ts_rank_cd` and `ts_headline` only ever run on rows that passed.
-  3. **The prefilter is a superset.** The article index includes secret blocks, but a
-     hit must be re-matched on a visible block. So the result set equals the one
-     without the index.
+  3. **The prefilter is a superset.** The article vector includes secret blocks, but a
+     hit must be re-matched on a visible block, so a secret block can add no hit and no
+     snippet. For notes and images the result set equals the one without the index: the
+     index expression is `PlainText` of the note's text, exactly what the query matches
+     on. For the article prefilter it does **not**: the vector holds each block's **raw**
+     text, because `to_tsvector(regconfig, jsonb)` vectorises the document's string values
+     and gives no hook to transform each one, while a block is matched on `PlainText` of
+     it. Every lexeme of the raw text is therefore in the vector, except where `PlainText`
+     **joins two raw lexemes into one** by taking a separator out of the middle of a word
+     (`wo\rd` reads as `word`, and so do a deleted marker and a rewritten mention). A
+     block whose only match is such a joined lexeme is missed. That is the known
+     false-negative class: it cannot be closed on the index side, and it is never a leak,
+     because the prefilter only ever removes candidates. Storing the vector in a column
+     rather than computing it per row does not change it — it is the same expression.
   4. **Rank without the corpus.** `ts_rank_cd`, `similarity` and `word_similarity`
      score one row alone, and Postgres keeps no IDF. Mention counts are per viewer
      (`CountsForEntries`), and there are no totals, only `hasMore` over visible rows.
@@ -639,7 +740,10 @@ nouns the step puts into code and UI:
   expression), not through `Schema.For<T>().Index(x => …)`, which only takes members.
   Postgres rewrites expressions when it stores them (casts, spacing). If Weasel's
   diff sees churn on every start, write the constant in Postgres's canonical form
-  (`pg_get_indexdef`). `SearchSchemaTests` catches it.
+  (`pg_get_indexdef`). `SearchSchemaTests` catches it. The note index is one of these.
+  The article vector is a **column** instead (17a.3), which has to go on the document
+  table Marten builds from the mapping: Weasel drops a column it does not know about, so
+  a column added beside Marten leaves the table permanently "Update" in the diff.
 - **Production Postgres.** `pg_trgm` and `unaccent` are contrib modules shipped by every
   common host. They are trusted, so the app's database owner creates them. A host
   that refuses fails startup loudly on `CREATE EXTENSION`, not at the first search.
@@ -649,7 +753,7 @@ nouns the step puts into code and UI:
   - **Loose ends (19):** `EntryMatcher.MatchAsync` with a note's text split into
     spans suggests links for "a session note with no mentions". A "Loose ends (n)"
     action joins the registry.
-  - **Reference (20, 21):** providers registered after the wiki's, a `reference`
+  - **Reference (20, 21):** providers registered after the wiki's, a `Reference`
     hit kind, and "+ wiki" as a row action (§11).
   - **Suggestions (23):** the model's spans go through `EntryMatcher` before a new
     entry is proposed (§11a). They can go in one batch call.
