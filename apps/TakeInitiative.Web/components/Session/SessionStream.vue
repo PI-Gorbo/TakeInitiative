@@ -34,7 +34,8 @@
                             @click="loadOlder">
                             Load older sessions
                         </Button>
-                        <span v-else>The start of the campaign</span>
+                        <!-- Nothing to head a campaign whose first session has not started. -->
+                        <span v-else-if="sessionCount > 0">The start of the campaign</span>
                     </div>
 
                     <section
@@ -180,6 +181,7 @@
     );
     const allNotes = computed<SessionNote[]>(() => flattenSessions(streamQuery.data.value).flatMap((s) => s.notes));
     const noteCount = computed(() => allNotes.value.length);
+    const sessionCount = computed(() => flattenSessions(streamQuery.data.value).length);
     const findNote = (noteId: string) => allNotes.value.find((n) => n.id === noteId);
 
     // ── The image viewer (16c) ───────────────────────────────────────────────
@@ -189,7 +191,7 @@
             s.notes.filter((n) => n.images.length > 0).map((note) => ({ note, sessionNumber: s.session.number }))
         )
     );
-    const emptyState = computed(() => filterEmptyState(props.filter));
+    const emptyState = computed(() => filterEmptyState(props.filter, sessionCount.value > 0));
 
     // ── A session's gallery (16d) ────────────────────────────────────────────
     const galleryOpen = ref(false);

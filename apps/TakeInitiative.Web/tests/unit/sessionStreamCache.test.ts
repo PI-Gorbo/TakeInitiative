@@ -69,6 +69,17 @@ function stream(): SessionStreamData {
     return { pages: [page0, page1], pageParams: [undefined, 3] };
 }
 
+/** A campaign whose first session has not started: one empty page, no current session. */
+function empty(): SessionStreamData {
+    const page: SessionStream = {
+        sessions: [],
+        currentSessionId: null,
+        suggestNextSession: false,
+        hasOlder: false,
+    };
+    return { pages: [page], pageParams: [undefined] };
+}
+
 const ids = (data: SessionStreamData | undefined, sessionNumber: number) =>
     flattenSessions(data)
         .find((s) => s.session.number === sessionNumber)!
@@ -179,6 +190,14 @@ describe("upsertSession", () => {
         const data = stream();
         data.pages.pop();
         expect(upsertSession(data, session(1, { title: "x" }))).toBe(data);
+    });
+
+    // A campaign has no session until a member starts Session 1.
+    it("takes Session 1 into an empty stream and makes it current", () => {
+        const next = upsertSession(empty(), session(1, { isCurrent: true }))!;
+        expect(flattenSessions(next).map((s) => s.session.number)).toEqual([1]);
+        expect(next.pages[0].currentSessionId).toBe("s1");
+        expect(next.pages[0].suggestNextSession).toBe(false);
     });
 });
 
@@ -307,5 +326,14 @@ describe("upsertSessionInList", () => {
         const data = list();
         expect(upsertSessionInList(data, session(2, { isCurrent: true }))).toBe(data);
         expect(upsertSessionInList(undefined, session(3))).toBeUndefined();
+    });
+
+    it("takes Session 1 into a list with no session yet", () => {
+        const next = upsertSessionInList(
+            { sessions: [], currentSessionId: null, suggestNextSession: false },
+            session(1, { isCurrent: true })
+        )!;
+        expect(next.sessions.map((s) => s.number)).toEqual([1]);
+        expect(next.currentSessionId).toBe("s1");
     });
 });
