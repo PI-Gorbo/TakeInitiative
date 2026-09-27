@@ -17,7 +17,7 @@ PR, which sits on 13d (#199). Each PR leaves the app runnable:
 | PR | Branch | Sub-step | Runnable state after merge | Status |
 |---|---|---|---|---|
 | 14a | `v2/14a-session-model` | Session and note model | 13's app unchanged in the browser. The API has sessions and notes, and a new campaign has Session 1 | [x] |
-| 14b | `v2/14b-live-notes` | Visibility-aware push | The same, and note and session changes are pushed only to the groups allowed to see them | [ ] |
+| 14b | `v2/14b-live-notes` | Visibility-aware push | The same, and note and session changes are pushed only to the groups allowed to see them | [x] |
 | 14c | `v2/14c-session-stream` | Stream (read and live) | The Campaign tab shows the session stream, live. Members and the join code move to a panel | [ ] |
 | 14d | `v2/14d-composer` | Composer and note actions | Post, edit, delete, hide, history, back-posting and the gap prompt, on every screen size | [ ] |
 | 14e | `v2/14e-mobile-composer` | Mobile composer, commands, filters | The step's Verify passes | [ ] |
@@ -534,3 +534,50 @@ This PR adds the nouns the step puts into code and UI:
   that run wrote have a `correlation_id` and an `Actor`, Session 1 shares its
   `CampaignCreated` correlation id, and the deleted note's row is gone while its
   `session_note_posted` and `session_note_deleted` events remain.
+
+### Deviations and decisions in 14b
+
+- **The removal goes to the groups that lose the note, not to the whole "before" audience.**
+  `NotifySessionNoteMoved(before, after)` sends `sessionNoteRemoved` to the "before" groups
+  that are not in the "after" groups, and to none when the note is now `Everyone` and not
+  hidden (every connection is in `campaign:{id}`, so nobody loses it). Then it sends
+  `sessionNoteUpserted` to the "after" audience. So a hidden `DM` note being hidden, or
+  `Me` becoming `DM`, is a plain upsert, with no remove-then-add flicker. The removal still
+  reaches only groups that could see the note. Hide uses the same call.
+- **`sessionNoteHidden` is not sent when a DM hides their own note.** Nobody needs to be
+  told about something they just did.
+- **Nothing is pushed when nothing was appended.** That covers an unchanged edit, the same
+  visibility, hiding a hidden note, the same title, asking to start the current session
+  number, and losing the start race. The request that appended is the one that pushes.
+  A rejected write (403 or 404) pushes nothing.
+- **`CampaignGroups.Of(campaignId, member)`** is new in `CampaignHub.cs`. It returns the
+  groups `Join` puts a connection in, and `Join` now uses it. The unit test checks
+  `SessionNoteAudience` against it, so the hub's group membership is part of the checked rule.
+- **Extra files beyond Files touched:** the payload records `SessionNoteRemovedMessage` and
+  `SessionNoteHiddenMessage` live in `SessionHub.cs`. The tests add
+  `Scopes/Integration/RecordingHubContext.cs`, which holds the recorder and a
+  `RecordingHubFixture`, and a `ConfigureTestServices` hook on
+  `AuthenticatedWebAppWithDatabaseFixture`. The recorder is registered as a closed
+  `IHubContext<CampaignHub>`, which wins over SignalR's open-generic registration.
+- **No real SignalR client in `dotnet test`.** That would need the
+  `Microsoft.AspNetCore.SignalR.Client` package, so the end-to-end case is the runtime
+  script below instead.
+- **Verify, as run in 14b:** `dotnet test` passed 74/74. That is 52 from 14a plus 22 new:
+  - `SessionNoteAudienceTests` (9): the 6 table rows; the every-case check that the push
+    rule, `CanSee` and the compiled `VisibleTo` agree; a replay of all 36 before/after
+    moves for every viewer; and "never `campaign:{id}` unless `Everyone` and not hidden".
+    Changing the rule so hidden `Everyone` notes go to `campaign:{id}` failed 4 of the 9.
+  - `SessionHubTests` (13).
+
+  Against the API on 5010, `hub14b.mjs` connected a DM, the author (a player) and a second
+  player, built each one's note cache only from pushes, and passed 28/28 checks:
+  - Each visibility reached only its audience.
+  - Hide removed the note from the other player, kept it (marked) for the DM and the author,
+    and sent `sessionNoteHidden` to the author only.
+  - Unhide restored it for everyone.
+  - Visibility changes DM → Everyone → Me → DM moved the note correctly each time.
+  - An edit or delete of a DM note sent nothing to the other player.
+  - `sessionStarted` and `sessionTitleChanged` reached all three.
+  - Each viewer's pushed cache matched a fresh `GET stream`.
+
+  `schema.d.ts` did not change, because no HTTP contract changed.

@@ -1,6 +1,7 @@
 using FastEndpoints;
 using FluentValidation;
 using Marten;
+using Microsoft.AspNetCore.SignalR;
 using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Sessions;
@@ -24,7 +25,7 @@ public class PutSessionTitleRequestValidator : Validator<PutSessionTitleRequest>
 }
 
 /// <summary>A DM sets or clears a session's title. An unchanged title appends nothing.</summary>
-public class PutSessionTitle(IDocumentSession session) : Endpoint<PutSessionTitleRequest, SessionResponse>
+public class PutSessionTitle(IDocumentSession session, IHubContext<CampaignHub> hub) : Endpoint<PutSessionTitleRequest, SessionResponse>
 {
     public override void Configure()
     {
@@ -39,7 +40,8 @@ public class PutSessionTitle(IDocumentSession session) : Endpoint<PutSessionTitl
 
         var target = await this.RequireSession(session, req.CampaignId, req.SessionId, ct);
         var title = Session.NormaliseTitle(req.Title);
-        if (target.Title != title)
+        var changed = target.Title != title;
+        if (changed)
         {
             session.Events.Append(target.Id, new SessionTitleChanged(Actor.Member(member.MemberId), title));
             await session.SaveChangesAsync(ct);
@@ -47,6 +49,11 @@ public class PutSessionTitle(IDocumentSession session) : Endpoint<PutSessionTitl
         }
 
         var current = await this.RequireCurrentSession(session, req.CampaignId, ct);
-        await SendAsync(SessionResponse.From(target, current.Id), cancellation: ct);
+        var response = SessionResponse.From(target, current.Id);
+        if (changed)
+        {
+            await hub.NotifySessionTitleChanged(req.CampaignId, response);
+        }
+        await SendAsync(response, cancellation: ct);
     }
 }
