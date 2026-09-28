@@ -42,6 +42,10 @@
         </AssemblyAttribute>
         <EmbeddedResource Include="Embedded/ConfirmationEmail.mjml" />
         <EmbeddedResource Include="Embedded/ResetPasswordEmail.mjml" />
+        <!-- SRD 5.2's monsters (step 20a), written by scripts/srd/build-srd52.mjs. Embedded, not
+             copied as content: the API reads them from its own assembly. -->
+        <Content Remove="Reference/**/*.json" />
+        <EmbeddedResource Include="Reference/Srd52/*.json" LogicalName="TakeInitiative.Api.Reference.Srd52.%(Filename)%(Extension)" />
     </ItemGroup>
 
     <ItemGroup>

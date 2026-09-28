@@ -70,6 +70,7 @@ internal class Program
         builder.Services.AddSendGrid(builder.Configuration);
         builder.Services.AddImages(builder.Configuration);
         builder.Services.AddSearch();
+        builder.Services.AddReference();
 
         // Cors
         builder.Services.AddCors(
@@ -97,6 +98,9 @@ internal class Program
             });
         
         var app = builder.Build();
+
+        // The SRD data is embedded in this assembly: fail startup, not the first search, if it is missing.
+        app.Services.GetRequiredService<SrdCatalog>().EnsureLoaded();
 
         // Map SignalR Hubs
         app.MapHub<CampaignHub>("/campaignHub");

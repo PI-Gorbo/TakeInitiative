@@ -5,6 +5,7 @@ global using TakeInitiative.Api.Features.Connections;
 global using TakeInitiative.Api.Features.Entries;
 global using TakeInitiative.Api.Features.Images;
 global using TakeInitiative.Api.Features.LooseEnds;
+global using TakeInitiative.Api.Features.Reference;
 global using TakeInitiative.Api.Features.Search;
 global using TakeInitiative.Api.Features.Sessions;
 global using TakeInitiative.Api.Features.Users;

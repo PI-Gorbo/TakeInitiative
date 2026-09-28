@@ -281,6 +281,20 @@ public static class Bootstrap
         return services;
     }
 
+    /// <summary>
+    /// Reference content (step 20a): the providers, registered in the order the Reference section
+    /// merges them (SRD 5.2 first; step 21 adds the 5eTools index after it), and the catalog that
+    /// lists them. The SRD's data is read once and held, so its catalog and provider are singletons.
+    /// </summary>
+    public static IServiceCollection AddReference(this IServiceCollection services)
+    {
+        services.AddSingleton<SrdCatalog>();
+        services.AddSingleton<SrdReferenceProvider>();
+        services.AddSingleton<IReferenceProvider>(sp => sp.GetRequiredService<SrdReferenceProvider>());
+        services.AddScoped<ReferenceCatalog>();
+        return services;
+    }
+
     public static IServiceCollection AddDiceRollers(this IServiceCollection services, IConfiguration configuration)
     {
         // Random.Shared is thread-safe; a single shared `new Random()` is not.
