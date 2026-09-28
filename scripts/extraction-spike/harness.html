@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>23a extraction spike</title>
+<style>
+    body { font: 14px/1.4 system-ui, sans-serif; margin: 16px; max-width: 900px; }
+    select, button, input { font: inherit; padding: 6px 10px; margin: 4px 4px 4px 0; }
+    pre { background: #f4f4f4; padding: 8px; overflow-x: auto; white-space: pre-wrap; }
+    @media (prefers-color-scheme: dark) { body { background: #111; color: #eee; } pre { background: #222; } }
+</style>
+</head>
+<body>
+<h1>23a: extraction spike</h1>
+<p>Runs one candidate in a Web Worker on onnxruntime-web over the 40 invented notes. The first run
+downloads the weights from this server into the Cache API (cold); reload the page and run again for
+warm. Record the numbers in <code>docs/roadmap/23-suggestions.md</code>.</p>
+<label>Candidate <select id="id"></select></label>
+<label>Backend <select id="backend"><option>wasm</option><option>webgpu</option></select></label>
+<label>Threshold <input id="threshold" type="number" step="0.05" min="0.2" max="0.95" value="0.5" style="width:5em"></label>
+<label>Notes <select id="subset"><option value="all">all 40</option><option value="quick">6 (quick, for a phone)</option></select></label>
+<br>
+<button id="run">Run</button> <button id="clear">Clear model cache</button>
+<pre id="out"></pre>
+<script type="module">
+import { candidates } from "/models.mjs";
+import { scoreRun, latencyBySize } from "/lib/extract.mjs";
+import { scoreNotes } from "/score.js";
+
+const $ = (id) => document.getElementById(id);
+for (const c of candidates) $("id").append(new Option(c.id, c.id));
+const notes = await (await fetch("/notes.json")).json();
+const log = (s) => ($("out").textContent += s + "\n");
+let peakMemory = 0;
+
+async function sampleMemory() {
+    if (!self.crossOriginIsolated || !performance.measureUserAgentSpecificMemory) return null;
+    const m = await performance.measureUserAgentSpecificMemory();
+    peakMemory = Math.max(peakMemory, m.bytes);
+    return m.bytes;
+}
+
+$("clear").onclick = () => {
+    const w = new Worker("/worker.mjs", { type: "module" });
+    w.onmessage = (e) => log(e.data.text);
+    w.postMessage({ type: "clear" });
+};
+
+$("run").onclick = async () => {
+    $("out").textContent = "";
+    peakMemory = 0;
+    const id = $("id").value;
+    const backend = $("backend").value;
+    const subset = $("subset").value === "quick" ? notes.filter((n) => ["s1", "s2", "s4", "t1", "t2", "t5"].includes(n.id)) : notes;
+    log(`${id} on ${backend}, ${subset.length} notes, crossOriginIsolated=${self.crossOriginIsolated}, UA ${navigator.userAgent}`);
+    const w = new Worker("/worker.mjs", { type: "module" });
+    const timer = setInterval(sampleMemory, 2000);
+    let lastProgress = 0;
+    w.onmessage = async ({ data }) => {
+        if (data.type === "progress" && performance.now() - lastProgress > 1000) {
+            lastProgress = performance.now();
+            log(`downloading ${data.url.split("/").pop()} ${(data.got / 1e6).toFixed(0)} of ${(data.total / 1e6).toFixed(0)} MB`);
+        } else if (data.type === "loaded") {
+            log(`load ${data.fromCache ? "WARM (Cache API)" : "COLD (network)"}: ${(data.loadMs / 1000).toFixed(2)} s = fetch/read ${(data.fetchMs / 1000).toFixed(2)} s + session ${(data.createMs / 1000).toFixed(2)} s, ${(data.bytes / 1e6).toFixed(0)} MB`);
+        } else if (data.type === "note") {
+            if (data.done % 10 === 0 || data.done === data.of) log(`${data.done}/${data.of} notes`);
+        } else if (data.type === "error") {
+            clearInterval(timer);
+            log("ERROR " + data.text);
+        } else if (data.type === "done") {
+            clearInterval(timer);
+            await sampleMemory();
+            const s = scoreRun(scoreNotes, notes, data.perNote, Number($("threshold").value));
+            const lat = latencyBySize(data.perNote);
+            const f = (x) => (x == null ? "-" : x.toFixed(3));
+            log(Object.entries(lat).map(([k, v]) => `${k}: p50 ${v.p50.toFixed(0)} ms, p95 ${v.p95.toFixed(0)} ms (n=${v.n})`).join("\n"));
+            log(`span F1 exact ${f(s.exact.f1)} (P ${f(s.exact.precision)} R ${f(s.exact.recall)}), overlap ${f(s.overlap.f1)}, kind ${f(s.kindAccuracy)}, top-3 precision ${f(s.top3.precision)} at threshold ${s.threshold}`);
+            log(peakMemory ? `peak measureUserAgentSpecificMemory: ${(peakMemory / 2 ** 20).toFixed(0)} MB` : "memory: not available here; read the worker's heap in DevTools > Memory");
+            w.terminate();
+        }
+    };
+    w.postMessage({ type: "run", id, backend, notes: subset });
+};
+</script>
+</body>
+</html>

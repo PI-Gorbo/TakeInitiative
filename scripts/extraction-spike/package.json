@@ -1,0 +1,18 @@
+{
+    "name": "@ti/extraction-spike",
+    "version": "0.0.0",
+    "private": true,
+    "type": "module",
+    "description": "Step 23a: which GLiNER variant, measured in Node and (by hand) in a browser. Not part of the workspace; install with `pnpm install --ignore-workspace` in this folder.",
+    "scripts": {
+        "fetch": "node fetch-models.mjs",
+        "fixture": "node build-fixture.mjs",
+        "run": "node run.mjs",
+        "serve": "node serve.mjs"
+    },
+    "dependencies": {
+        "@huggingface/tokenizers": "0.2.0",
+        "onnxruntime-node": "1.30.0",
+        "onnxruntime-web": "1.30.0"
+    }
+}
