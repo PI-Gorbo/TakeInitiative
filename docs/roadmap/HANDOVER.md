@@ -88,6 +88,10 @@ Stack #224. Everything is on top of `dev` and still open:
 | #243 | `v2/19d-graph-page` | 19d: the graph page (`/wiki/graph`), plus a fix for 19c's evidence snippets |
 | #244 | `v2/19e-loose-ends-ui` | 19e: loose ends in the Wiki, on dividers and in ⌘K, resolved in place; closes step 19 |
 | #245 | `v2/20-srd-plan` | Step 20's step file |
+| #246 | `v2/20a-srd-data` | 20a: the SRD 5.2 data (331 monsters from Open5e's fixtures), its catalog and `IReferenceProvider` |
+| #247 | `v2/20b-reference-api` | 20b: the Reference section in `GET search`, `GET reference/{provider}/{id}`, `POST entries/from-reference` and `Entry.Source` (API) |
+| #248 | `v2/20c-stat-block-card` | 20c: the stat-block card page and REFERENCE rows in ⌘K |
+| #249 | `v2/20d-add-to-wiki` | 20d: + Wiki (⌘K row, ⌘Enter, the card), the entry's source line and "Use SRD stats"; closes step 20 |
 
 The local branches `pr/PI-Gorbo/222`, `pr/PI-Gorbo/222-1` and `pr/PI-Gorbo/222-2` are stale
 checkouts of #222. Ignore them.
@@ -117,7 +121,7 @@ checkouts of #222. Ignore them.
 
 ## Next work
 
-1. **Get #222–#244 checked in a browser.** No agent has run them in a real browser,
+1. **Get #222–#249 checked in a browser.** No agent has run them in a real browser,
    and each PR body has a checklist. The biggest outstanding checks:
    - **Combat, 18c–18f (#235–#238):** step 18's Verify (three profiles, a whole fight)
      has not been run. In particular: drag to reorder, heal, the player's view, and
@@ -126,18 +130,21 @@ checkouts of #222. Ignore them.
      player, phone and desktop): the panel, the evidence sheet, the graph's pan, pinch and
      edge taps, and linking a note from its loose end with the divider and Wiki counts
      dropping live.
+   - **SRD reference, 20c–20d (#248–#249):** step 20's Verify 4 (a DM at 1280×800, a
+     player at 390×844): REFERENCE rows in ⌘K, the card, + Wiki with its 409, the source
+     line, `@Goblin Warrior ×4` in a combat, and "Use SRD stats".
+   - **Restart the API first:** 20b (#247) added endpoints and `Entry.Source`, and a
+     running API from before it answers 404 for them. Restarting logs everyone out (see
+     the follow-ups).
 
    Fix what the user reports on top of the stack.
-2. Steps 17, 18 and 19 are closed (PR tables ticked, README `done`). Step 19 closes
-   the MVP line.
-3. **Step 20 is next: [20-srd-reference.md](20-srd-reference.md).** Run 20a–20d
-   stacked on `v2/20-srd-plan`. Before 20a merges, the user should confirm two things
-   (the step's Notes, "Why Open5e's fixtures"):
-   - the data source, Open5e's SRD 5.2 fixtures at a pinned sha;
-   - the attribution text.
-
-   Then run 21–24 in README order, writing each step file first as its own docs PR at
-   the bottom of that step's stack.
+2. Steps 17 to 20 are closed (PR tables ticked, README `done`). Step 19 closed the MVP
+   line. Before 20a merges, the user should confirm the data source (Open5e's SRD 5.2
+   fixtures at a pinned sha, whose licence 20a checked) and the attribution text (step
+   20's Notes, "Why Open5e's fixtures" and "As built, 20a").
+3. **Step 21 is next: the 5eTools index** (README). Write its step file first as its own
+   docs PR at the bottom of its stack, on top of `v2/20d-add-to-wiki`. Step 20's Notes,
+   "Seams for step 21", list what it plugs into. Then run 22–24 in README order.
 
 ## Follow-ups found this round
 
@@ -164,3 +171,11 @@ checkouts of #222. Ignore them.
   `<SessionNoteMarkdown>` renders as an empty unknown element (19c shipped one). A CI
   check that every PascalCase tag in `.vue` templates resolves in
   `.nuxt/components.d.ts` (or is imported) would catch it.
+- **SRD sizes are wrong for 84 creatures.** Open5e's fixtures have one size per creature
+  and no "tiny", so 84 show "small": SRD 5.2's Tiny ones (Bat, Cat, Imp, Sprite…) and its
+  "Medium or Small" ones (the Vampire, Bandit, Mage, Priest, the were-creatures). Fix it
+  with a hand-checked size table in `scripts/srd/build-srd52.mjs`, checked against the SRD
+  5.2 PDF, with `size` as a string like "Medium or Small" (step 20, "As built, 20c").
+- **CR 0 XP in 20a was invented:** 10 when the creature has a damaging action, else 0
+  (Giant Fly, Seahorse and Shrieker Fungus get 0). Check each CR 0 creature against the
+  SRD 5.2 PDF and put the real numbers in the build script.

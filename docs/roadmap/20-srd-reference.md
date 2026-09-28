@@ -31,8 +31,8 @@ which sits on 19e (#244). Each PR leaves the app runnable:
 |---|---|---|---|---|
 | 20a | `v2/20a-srd-data` | The SRD 5.2 data, its catalog and the provider abstraction | 19's app unchanged. The API embeds 331 SRD monsters, and unit tests prove each one loads, matches and derives Stats that roll | [x] |
 | 20b | `v2/20b-reference-api` | Reference search, the item endpoint and + Wiki (API) | The same in the browser. `GET search` has a `Reference` section, `GET reference/srd52/{id}` answers a stat block, and `POST entries/from-reference` creates an entry with `Source` and Stats | [x] |
-| 20c | `v2/20c-stat-block-card` | The stat-block card and REFERENCE in ⌘K | ⌘K shows REFERENCE rows. [view] opens the card page with its attribution | [[x] |
-| 20d | `v2/20d-add-to-wiki` | + Wiki, the entry's source line and "Use SRD stats" | + Wiki from ⌘K and from the card, the source line on the entry page, and filling Stats from the source. The step's Verify passes | [ ] |
+| 20c | `v2/20c-stat-block-card` | The stat-block card and REFERENCE in ⌘K | ⌘K shows REFERENCE rows. [view] opens the card page with its attribution | [x] |
+| 20d | `v2/20d-add-to-wiki` | + Wiki, the entry's source line and "Use SRD stats" | + Wiki from ⌘K and from the card, the source line on the entry page, and filling Stats from the source. The step's Verify passes | [x] |
 
 The 5eTools index (21), spells, magic items, rules text and linking an existing entry
 to a reference item are not in 20 (Notes, "Not in 20").
@@ -714,3 +714,30 @@ step puts into code and UI:
     Mage, Priest, the lycanthropes…). The data was left as the source gives it. Fixing it needs a
     hand-checked size table against the SRD PDF in `build-srd52.mjs` (and `size` as a list or a
     string like "Medium or Small"); that is a follow-up.
+- **As built, 20d.** Where it differs from 20d above:
+  - **One dialog for ⌘K, one on the card.** `SearchSheet` emits `addToWiki(hit)` and closes (it does
+    not hand the focus back to its trigger); `layouts/campaign.vue` hosts
+    `<ReferenceAddToWikiDialog>` and opens it on the next tick. The card page has its own instance.
+    The row's button is a sibling of `SearchHitRow` inside the option (44 px, "+" alone on a phone,
+    "+ Wiki" from `md`), with `@click.stop`, so a tap on it is not [view]. ⌘Enter (Ctrl+Enter) on
+    the active reference row does the same.
+  - **The dialog's Stats line for a DM** comes from the item's `summary.stats`. A ⌘K hit has no
+    Stats, so the dialog reads `getReferenceItemQuery` for a DM (cached for good); the card passes
+    its summary, which has them. `addToWikiItemFromHit` builds the item from a hit.
+  - **The 409** keeps "There's already an entry called Goblin." with **Open it** while the name
+    field still holds the name that clashed (case and spaces ignored); Add is disabled until it is
+    renamed. `addToWikiConflict` / `conflictMessage` in `utils/reference.ts` are the pure state.
+    The visibility default follows the role if the campaign loads after the dialog opened, until
+    the viewer picks one.
+  - **Add** toasts "Goblin added to the wiki" with **Open** (6 s, since the layout's default is
+    1 s) and stays where it was. `createEntryFromReferenceMutation` applies the answer like
+    `createEntryMutation` and also invalidates the entry list.
+  - **The source line** (`sourceLink`, `sourceName`): the card when `hasStatBlock`, `url` in a new
+    tab for a search-only provider, and no [view] (the stored id as the name) when `name` is null.
+    It sits above the claim control and Stats.
+  - **"Use SRD stats"** shows next to Edit when `canUseSourceStats` (in `utils/entries.ts`: the
+    source has a stat block and `canWriteStats`). It `fetchQuery`s the item and opens the form
+    filled (`statsForm`, now shared with Edit); Save is the normal `PUT stats`. The label is fixed
+    ("SRD"), since only SRD 5.2 has stat blocks. The header row wraps on a phone.
+  - **Not built:** no API change. The ⌘K row's button sits inside a `role="option"`, which ARIA
+    frowns on; it has its own aria-label and is reachable with Tab.
