@@ -60,6 +60,15 @@
                 @click="emit('openGallery')">
                 <span aria-hidden="true">🖼 {{ imageCount }}</span>
             </button>
+            <!-- 19e: the viewer's own loose ends in this session, from the counts query,
+                 so it shows under every filter. -->
+            <NuxtLink
+                v-if="looseEndCount"
+                :to="looseEndsHref(campaignId, { session: session.number })"
+                class="flex h-11 shrink-0 items-center gap-1 rounded-md px-2 tabular-nums text-muted-foreground hover:bg-accent hover:text-accent-foreground md:h-8"
+                :aria-label="dividerLooseEndsLabel(looseEndCount, session.number)">
+                <span aria-hidden="true">🧵 {{ looseEndCount }}</span>
+            </NuxtLink>
             <button
                 v-if="canEditTitle"
                 type="button"
@@ -82,6 +91,7 @@
     import { putSessionTitleMutation } from "~/utils/queries/sessions";
     import { formatSessionDate } from "~/utils/sessionDates";
     import { imageCountLabel } from "~/utils/gallery";
+    import { dividerLooseEndsLabel, looseEndsHref } from "~/utils/looseEnds";
 
     const props = defineProps<{
         campaignId: string;
@@ -90,6 +100,8 @@
         canEditTitle: boolean;
         /** "🖼 n" (16d): the images on the session's loaded notes, when they are all loaded. */
         imageCount?: number;
+        /** "🧵 n" (19e): the viewer's loose ends in this session. */
+        looseEndCount?: number;
     }>();
     const emit = defineEmits<{ openGallery: [] }>();
 

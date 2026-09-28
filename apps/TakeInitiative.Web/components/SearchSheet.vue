@@ -128,6 +128,7 @@
     import { existingEntryIdFrom, resolveEntry } from "~/utils/entries";
     import { getCampaignQuery } from "~/utils/queries/campaign";
     import { createEntryMutation, useEntryDirectory } from "~/utils/queries/entries";
+    import { getLooseEndCountsQuery } from "~/utils/queries/looseEnds";
     import { getSearchQuery, getSearchSectionQuery } from "~/utils/queries/search";
     import { getSessionsQuery, startSessionMutation } from "~/utils/queries/sessions";
     import {
@@ -240,6 +241,8 @@
 
     // ── Actions (17c) ────────────────────────────────────────────────────────
     const sessionsQuery = useQuery(getSessionsQuery(() => props.campaignId));
+    // "🧵 Loose ends (n)" (19e): the same counts as the Wiki and the dividers.
+    const looseEndCountsQuery = useQuery(getLooseEndCountsQuery(() => props.campaignId));
     // "Post a note about X" is about the highlighted entry hit, else the top one. It
     // keeps the last one highlighted, so moving onto the action does not change it.
     const lastEntryHit = shallowRef<EntrySummary | null>(null);
@@ -258,6 +261,7 @@
             text: typed.value.text,
             directory: directory.value,
             entryHit: lastEntryHit.value ?? topEntryHit.value,
+            looseEndCount: looseEndCountsQuery.data.value?.total ?? 0,
         };
     });
     const actions = computed(() =>

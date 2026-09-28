@@ -47,6 +47,7 @@
                             :session="entry.session"
                             :canEditTitle="isDm"
                             :imageCount="entry.imageCount"
+                            :looseEndCount="sessionLooseEndCount(looseEndCounts, entry.session.id)"
                             @openGallery="openGallery(entry.session, entry.imageCount)" />
                         <!-- Recaps sit directly under their divider. -->
                         <SessionNoteCard
@@ -144,12 +145,14 @@
 </template>
 
 <script setup lang="ts">
-    import { useInfiniteQuery } from "@tanstack/vue-query";
+    import { useInfiniteQuery, useQuery } from "@tanstack/vue-query";
     import { useResizeObserver } from "@vueuse/core";
     import { ArrowDown, LoaderCircle } from "lucide-vue-next";
     import { toast } from "vue-sonner";
     import type { Campaign, Session, SessionNote, SessionStreamFilter, Visibility } from "~/utils/api/types";
     import { dividerImageCount } from "~/utils/gallery";
+    import { sessionLooseEndCount } from "~/utils/looseEnds";
+    import { getLooseEndCountsQuery } from "~/utils/queries/looseEnds";
     import { currentMember } from "~/utils/campaign";
     import { getSessionStreamQuery } from "~/utils/queries/sessions";
     import { noteLinkProgress, type NoteAction } from "~/utils/noteActions";
@@ -177,6 +180,10 @@
             () => props.filter
         )
     );
+
+    // The dividers' 🧵 n (19e): the viewer's loose ends per session, whatever the filter.
+    const looseEndCountsQuery = useQuery(getLooseEndCountsQuery(() => props.campaignId));
+    const looseEndCounts = computed(() => looseEndCountsQuery.data.value);
 
     const isDm = computed(() => currentMember(props.campaign)?.role === "DM");
     const usernames = computed(() => new Map(props.campaign.members.map((m) => [m.memberId, m.username])));

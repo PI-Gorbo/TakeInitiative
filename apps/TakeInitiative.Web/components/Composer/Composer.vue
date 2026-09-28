@@ -624,7 +624,7 @@
     }
 
     // ── Editing a note (step 17) ────────────────────────────────────────────
-    // The card's "Edit" (or its "⚠ Tag what's in this?") brings the note up here. The
+    // The card's "Edit" (or a loose end's, 19e) brings the note up here. The
     // edit has its own state and upload queue beside the draft's (`utils/noteEdit.ts`),
     // so the draft, its saved copy and its uploads carry on untouched, and it is simply
     // back when the edit ends. `active` is whichever the text box, the images and the

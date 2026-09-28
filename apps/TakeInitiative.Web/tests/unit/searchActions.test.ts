@@ -47,6 +47,7 @@ const context = (extra: Partial<SearchActionContext> = {}): SearchActionContext 
     text: "",
     directory: entryDirectory(list),
     entryHit: null,
+    looseEndCount: 0,
     ...extra,
 });
 
@@ -140,6 +141,20 @@ describe("searchActions in the > scope", () => {
         expect(ids(context({ scope: "actions", text: "places" }))).toEqual(["wiki-place"]);
         expect(ids(context({ scope: "actions", text: "recaps" }))).toEqual(["filter-recaps"]);
         expect(ids(context({ scope: "actions", text: "graph" }))).toEqual(["wiki-graph"]);
+    });
+
+    it("offers Loose ends (n) only while the viewer has some, by its keywords", () => {
+        expect(ids(context({ scope: "actions", text: "loose" }))).toEqual([]);
+        const c = context({ scope: "actions", text: "loose", looseEndCount: 3 });
+        expect(ids(c)).toEqual(["loose-ends"]);
+        expect(action("loose-ends").label(c)).toBe("Loose ends (3)");
+        for (const text of ["untagged", "unlinked", "todo"]) {
+            expect(ids(context({ scope: "actions", text, looseEndCount: 1 }))).toContain("loose-ends");
+        }
+        expect(action("loose-ends").run(c)).toEqual({
+            kind: "navigate",
+            target: { path: "/app/campaigns/c1/wiki/loose-ends", query: {} },
+        });
     });
 
     it("finds nothing for text no action has", () => {

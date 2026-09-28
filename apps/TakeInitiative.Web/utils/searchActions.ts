@@ -31,6 +31,8 @@ export type SearchActionContext = {
     directory: EntryDirectory;
     /** The highlighted entry hit, else the top one; null when there is none. */
     entryHit: Pick<EntrySummary, "id" | "name"> | null;
+    /** The viewer's loose ends (19e); "Loose ends (n)" shows when there are any. */
+    looseEndCount: number;
 };
 
 /** What choosing an action does. `composer` hands the focus to the composer. */
@@ -71,6 +73,7 @@ const to = (path: string, query: Record<string, string> = {}): SearchActionRun =
 export const CREATE_ENTRY_ACTION_ID = "create-entry";
 export const START_SESSION_ACTION_ID = "start-session";
 export const START_COMBAT_ACTION_ID = "start-combat";
+export const LOOSE_ENDS_ACTION_ID = "loose-ends";
 export const COMPOSE_PARAM = "compose";
 /** `combat?new=Goblin Ambush`: the Combat tab opens New combat with that name (18f). */
 export const NEW_COMBAT_PARAM = "new";
@@ -180,6 +183,14 @@ export const SEARCH_ACTIONS: readonly SearchAction[] = [
         keywords: () => ["graph", "connections"],
         available: () => true,
         run: ({ campaignId }) => to(`${campaignPath(campaignId)}/wiki/graph`),
+    },
+    {
+        id: LOOSE_ENDS_ACTION_ID,
+        icon: "🧵",
+        label: ({ looseEndCount }) => `Loose ends (${looseEndCount})`,
+        keywords: () => ["loose", "untagged", "unlinked", "todo"],
+        available: ({ looseEndCount }) => looseEndCount > 0,
+        run: ({ campaignId }) => to(`${campaignPath(campaignId)}/wiki/loose-ends`),
     },
     ...FILTERS.map(
         (filter): SearchAction => ({

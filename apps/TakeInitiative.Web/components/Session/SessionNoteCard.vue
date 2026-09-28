@@ -102,15 +102,15 @@
             :campaignId="campaignId"
             :text="note.text"
             :class="(note.isHidden || pending) && 'opacity-60'" />
-        <!-- The note-level half of a loose end (§5): the author resolves it. -->
-        <button
+        <!-- The note-level half of a loose end (§5): the author resolves it on the
+             loose-ends page, which has the link suggestions and Edit (19e). -->
+        <NuxtLink
             v-if="tagHint && !editing"
-            type="button"
-            class="-my-2 flex min-h-11 w-fit items-center gap-1 rounded px-1 text-xs text-gold hover:underline md:min-h-0 md:py-1"
-            @click="startEdit">
+            :to="looseEndsHref(campaignId, { session: session?.number, note: note.id })"
+            class="-my-2 flex min-h-11 w-fit items-center gap-1 rounded px-1 text-xs text-gold hover:underline md:min-h-0 md:py-1">
             <span aria-hidden="true">⚠</span>
             {{ IMAGE_MESSAGES.tagHint }}
-        </button>
+        </NuxtLink>
 
         <WikiPromoteDialog
             v-if="promoteOpened"
@@ -168,6 +168,7 @@
     import { addedLaterLabel, formatNoteDateTime, formatNoteTime, formatSessionDate } from "~/utils/sessionDates";
     import { isPendingNote } from "~/utils/sessionStreamCache";
     import { IMAGE_MESSAGES, showTagHint } from "~/utils/images";
+    import { looseEndsHref } from "~/utils/looseEnds";
 
     const emit = defineEmits<{
         /** An image was tapped: the stream or timeline opens the viewer (16c). */

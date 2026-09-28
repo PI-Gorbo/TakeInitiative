@@ -89,6 +89,8 @@
                 :aboutHref="aboutLink" />
 
             <WikiEntryTimeline
+                :id="ENTRY_TIMELINE_ANCHOR"
+                class="scroll-mt-4"
                 :campaign="campaign"
                 :entryId="entry.id"
                 :entryName="entry.name"
@@ -142,7 +144,7 @@
     import { apiErrorStatus } from "~/utils/apiErrorParser";
     import { currentMember } from "~/utils/campaign";
     import type { ArticleBlock } from "~/utils/api/types";
-    import { EDIT_BLOCK_PARAM, entryHref } from "~/utils/article";
+    import { EDIT_BLOCK_PARAM, ENTRY_TIMELINE_ANCHOR, entryHref } from "~/utils/article";
     import { ABOUT_PARAM, canChangeEntryAccess, canEditEntry } from "~/utils/entries";
     import { BLOCK_LINK_PARAM } from "~/utils/search";
     import { getCampaignQuery } from "~/utils/queries/campaign";
@@ -236,6 +238,18 @@
             if (edit) openArticleEditor(blockId);
             const { [EDIT_BLOCK_PARAM]: _, ...query } = route.query;
             void navigateTo({ query }, { replace: true });
+        },
+        { immediate: true }
+    );
+
+    // `#timeline` (a loose end's "Promote from timeline", 19e): once the entry has loaded,
+    // the page scrolls to its timeline, where each note has Promote.
+    watch(
+        [() => route.hash, entry],
+        async ([hash, loaded]) => {
+            if (hash !== `#${ENTRY_TIMELINE_ANCHOR}` || !loaded) return;
+            await nextTick();
+            document.getElementById(ENTRY_TIMELINE_ANCHOR)?.scrollIntoView({ block: "start" });
         },
         { immediate: true }
     );

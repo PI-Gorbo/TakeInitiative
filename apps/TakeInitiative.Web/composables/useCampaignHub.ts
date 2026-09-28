@@ -5,6 +5,7 @@ import type { Campaign, Combat, CombatSummary, EntrySummary, Role, Session, Sess
 import { getCampaignQueryKey, getCampaignsQueryKey } from "~/utils/queries/campaign";
 import { applyCombatChanged, invalidateCombats } from "~/utils/queries/combats";
 import { invalidateConnections } from "~/utils/queries/connections";
+import { invalidateLooseEnds } from "~/utils/queries/looseEnds";
 import {
     applyEntryArticleChanged,
     applyEntryMerged,
@@ -61,11 +62,14 @@ export function useCampaignHub(campaignId: MaybeRefOrGetter<string | undefined>)
         .configureLogging(signalR.LogLevel.Warning)
         .build();
 
-    // Connections (19c) are derived per viewer and never pushed: any push that can move
-    // one (a note, an entry, an article, a merge, a combat) refetches the ones on screen.
+    // Connections (19c) and loose ends (19e) are derived per viewer and never pushed:
+    // any push that can move one (a note, an entry, an article, a merge, a combat)
+    // refetches the ones on screen.
     const touchConnections = () => {
         const id = joinedCampaignId.value;
-        if (id) void invalidateConnections(queryClient, id);
+        if (!id) return;
+        void invalidateConnections(queryClient, id);
+        void invalidateLooseEnds(queryClient, id);
     };
 
     const refreshCampaign = () =>
@@ -94,6 +98,7 @@ export function useCampaignHub(campaignId: MaybeRefOrGetter<string | undefined>)
             // And which combats (Drafts), and how much of each (18c.2).
             invalidateCombats(queryClient, id);
             void invalidateConnections(queryClient, id);
+            void invalidateLooseEnds(queryClient, id);
         }
     });
 
@@ -191,6 +196,7 @@ export function useCampaignHub(campaignId: MaybeRefOrGetter<string | undefined>)
             void invalidateEntries(queryClient, id);
             invalidateCombats(queryClient, id);
             void invalidateConnections(queryClient, id);
+            void invalidateLooseEnds(queryClient, id);
         }
         await refreshCampaign();
     });
@@ -208,6 +214,7 @@ export function useCampaignHub(campaignId: MaybeRefOrGetter<string | undefined>)
         void invalidateEntries(queryClient, id);
         invalidateCombats(queryClient, id);
         void invalidateConnections(queryClient, id);
+        void invalidateLooseEnds(queryClient, id);
     }
 
     async function leave() {

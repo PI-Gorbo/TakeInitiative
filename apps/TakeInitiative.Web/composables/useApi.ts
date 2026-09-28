@@ -59,6 +59,8 @@ import { getCombatHistoryRequest } from "~/utils/api/combat/getCombatHistoryRequ
 import { getEntryConnectionsRequest } from "~/utils/api/connection/getEntryConnectionsRequest";
 import { getConnectionEvidenceRequest } from "~/utils/api/connection/getConnectionEvidenceRequest";
 import { getConnectionGraphRequest } from "~/utils/api/connection/getConnectionGraphRequest";
+import { getLooseEndsRequest } from "~/utils/api/looseEnd/getLooseEndsRequest";
+import { getLooseEndCountsRequest } from "~/utils/api/looseEnd/getLooseEndCountsRequest";
 
 export const useApi = () => {
     const { $axios } = useNuxtApp();
@@ -140,6 +142,10 @@ export const useApi = () => {
             forEntry: getEntryConnectionsRequest($axios),
             evidence: getConnectionEvidenceRequest($axios),
             graph: getConnectionGraphRequest($axios),
+        },
+        looseEnd: {
+            list: getLooseEndsRequest($axios),
+            counts: getLooseEndCountsRequest($axios),
         },
         admin: {
             getMaintenance: getMaintenanceRequest($axios),

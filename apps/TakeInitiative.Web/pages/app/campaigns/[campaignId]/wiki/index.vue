@@ -1,7 +1,18 @@
 <template>
     <div class="flex h-full w-full flex-col">
         <!-- The Wiki tab (design §4, 15c): every entry the viewer can see, by kind, sorted
-             by how often or how recently it is mentioned. -->
+             by how often or how recently it is mentioned. "Loose ends (n)" sits at the
+             top while the viewer has any (19e). -->
+        <NuxtLink
+            v-if="looseEndCount > 0"
+            :to="looseEndsHref(campaignId)"
+            class="flex min-h-11 shrink-0 items-center gap-2 border-b bg-gold/5 px-4 text-sm hover:bg-gold/10 md:min-h-9">
+            <span aria-hidden="true">🧵</span>
+            <span class="flex-1 font-medium">Loose ends ({{ looseEndCount }})</span>
+            <ChevronRight
+                class="size-4 text-muted-foreground"
+                aria-hidden="true" />
+        </NuxtLink>
         <div class="flex shrink-0 items-center gap-2 border-b px-2">
             <WikiKindFilter v-model="kind" />
         </div>
@@ -102,7 +113,7 @@
 
 <script setup lang="ts">
     import { useQuery } from "@tanstack/vue-query";
-    import { ArrowDownWideNarrow, BookOpen, ChevronDown, Plus, Search, Waypoints } from "lucide-vue-next";
+    import { ArrowDownWideNarrow, BookOpen, ChevronDown, ChevronRight, Plus, Search, Waypoints } from "lucide-vue-next";
     import type { EntryKind } from "~/utils/api/types";
     import {
         KIND_PARAM,
@@ -117,7 +128,9 @@
         type WikiSort,
     } from "~/utils/entries";
     import { graphHref } from "~/utils/graph";
+    import { looseEndsHref } from "~/utils/looseEnds";
     import { getEntriesQuery } from "~/utils/queries/entries";
+    import { getLooseEndCountsQuery } from "~/utils/queries/looseEnds";
 
     definePageMeta({
         layout: "campaign",
@@ -129,9 +142,14 @@
     const campaignId = computed(() => route.params.campaignId as string);
 
     const entriesQuery = useQuery(getEntriesQuery(campaignId));
-    // Mention counts are never pushed (15b): read them again whenever the tab opens.
+    // Loose ends (19e) are the viewer's own and derived; the hub refetches them on pushes.
+    const looseEndCountsQuery = useQuery(getLooseEndCountsQuery(campaignId));
+    const looseEndCount = computed(() => looseEndCountsQuery.data.value?.total ?? 0);
+    // Mention counts and loose ends are never pushed (15b, 19): read them again whenever
+    // the tab opens.
     onMounted(() => {
         if (entriesQuery.data.value) void entriesQuery.refetch();
+        if (looseEndCountsQuery.data.value) void looseEndCountsQuery.refetch();
     });
 
     // The kind and the sort live in the URL (`?kind=place&sort=recent`), so a reload

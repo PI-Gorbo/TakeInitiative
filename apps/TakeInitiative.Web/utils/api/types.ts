@@ -110,3 +110,9 @@ export type CombatEvidence = Schemas["CombatEvidence"];
 export type ConnectionGraph = Schemas["ConnectionGraphResponse"];
 export type GraphNode = Schemas["GraphNodeResponse"];
 export type GraphEdge = Schemas["GraphEdgeResponse"];
+/** Loose ends (19b, 19e): the viewer's own to-dos, and their counts per session. */
+export type LooseEnds = Schemas["LooseEndsResponse"];
+export type LooseEnd = Schemas["LooseEndResponse"];
+export type LooseEndKind = Schemas["LooseEndKind"];
+export type LooseEndCounts = Schemas["LooseEndCountsResponse"];
+export type LinkSuggestion = Schemas["LinkSuggestionResponse"];
