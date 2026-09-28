@@ -98,6 +98,7 @@ Stack #224. Everything is on top of `dev` and still open:
 | #250 | `v2/21-5etools-plan` | Step 21's step file |
 | #251 | `v2/21a-5etools-script` | 21a: the 5eTools index script (`pnpm 5etools:build`), its synthetic fixture and tests |
 | #252 | `v2/21b-5etools-provider` | 21b: the search-only 5eTools provider in the API, off without an index |
+| #253 | `v2/21c-5etools-web` | 21c: 5eTools rows link out in ⌘K, with + Wiki, the source line ("↗ From 5eTools · Beholder (MM p. 28)", its tooltip the book's title) and "Use 5eTools stats". Also sends book titles from the API. Closes step 21 apart from 21d |
 
 The local branches `pr/PI-Gorbo/222`, `pr/PI-Gorbo/222-1` and `pr/PI-Gorbo/222-2` are stale
 checkouts of #222. Ignore them.
@@ -127,7 +128,7 @@ checkouts of #222. Ignore them.
 
 ## Next work
 
-1. **Get #222–#249 checked in a browser.** No agent has run them in a real browser,
+1. **Get #222–#253 checked in a browser.** No agent has run them in a real browser,
    and each PR body has a checklist. The biggest outstanding checks:
    - **Combat, 18c–18f (#235–#238):** step 18's Verify (three profiles, a whole fight)
      has not been run. In particular: drag to reorder, heal, the player's view, and
@@ -139,23 +140,56 @@ checkouts of #222. Ignore them.
    - **SRD reference, 20c–20d (#248–#249):** step 20's Verify 4 (a DM at 1280×800, a
      player at 390×844): REFERENCE rows in ⌘K, the card, + Wiki with its 409, the source
      line, `@Goblin Warrior ×4` in a combat, and "Use SRD stats".
+   - **5eTools, 21b–21c (#252–#253):** step 21's Verify 5 and 6 (a DM at 1280×800, a
+     player at 390×844), with a local index. To build one, get a copy of the 5etools source
+     data yourself (e.g. a checkout of its source repository next to this repo, as
+     `5etools-src/`, which is git-ignored). Run `pnpm 5etools:build --from <that folder>`,
+     which writes `.data/5etools/index.json`, then start the API with
+     `Reference__FiveETools__IndexPath=../../.data/5etools/index.json` (`pnpm dev`'s launch
+     profile sets it). Check:
+     - ⌘K "goblin": SRD rows first, then 5eTools rows reading "Monster · CR … · MM
+       (5eTools)" with ↗.
+     - Enter on "beholder" opens 5etools in a new tab, and ⌘K stays open.
+     - + Wiki as "The Eye": the dialog shows the Stats line, then the source line and its
+       tooltip.
+     - `@The Eye` in a Draft combat.
+     - On a phone, "fireball" and "Bag of Holding".
+     - "Use 5eTools stats".
+     - `/reference/5etools/<id>` typed by hand shows the "Open on 5eTools" page.
+     - Renaming the index turns it all off.
+
+     The first real build may fail loudly on a shape the invented fixture lacks (21a's
+     "Not checked against real data"). Add the mapping on top of the stack.
    - **Restart the API first:** 20b (#247) added endpoints and `Entry.Source`, and a
-     running API from before it answers 404 for them. Restarting logs everyone out (see
-     the follow-ups).
+     running API from before it answers 404 for them. 21c (#253) added `bookTitle`, which
+     an older API leaves out: the tooltip is missing, and nothing else breaks. Restarting
+     logs everyone out (see the follow-ups).
 
    Fix what the user reports on top of the stack.
-2. Steps 17 to 20 are closed (PR tables ticked, README `done`). Step 19 closed the MVP
+2. Steps 17 to 21 are closed (PR tables ticked, README `done`; step 21 except 21d). Step 19 closed the MVP
    line. Before 20a merges, the user should confirm the data source (Open5e's SRD 5.2
    fixtures at a pinned sha, whose licence 20a checked) and the attribution text (step
    20's Notes, "Why Open5e's fixtures" and "As built, 20a").
-3. **Step 21 is next: the 5eTools index.** Its step file is
-   [21-5etools-index.md](21-5etools-index.md) (#250, on top of `v2/20d-add-to-wiki`). Run
-   21a–21c as stacked PRs on top of it. 21d, deleting the four Bestiary branches, is the
-   user's to run, not an agent's. Before 21a starts, the user should answer the step's
-   "Decisions for the user" (Stats in the index, no download, off in production, SRD
-   duplicates, purging the 5eTools data already in the public repo's
-   `Bestiary_2025_CopyParsing` history); the plan's defaults stand until they do. Then run
-   22–24 in README order.
+3. **Step 21 is done apart from 21d, which is the user's.** 21a–21c are #251–#253. These
+   need the user; the plan's defaults stand until they answer (step 21's "Decisions for
+   the user"):
+   - **21d: delete the four Bestiary branches** (`git push origin --delete bestiary
+     Bestiary_2025 Bestiary_2025_CopyParsing Bestiary_2025_project_refactor`). No agent runs
+     this.
+   - **Non-SRD Stats in the index** (decision 1): AC, HP dice and initiative from non-SRD
+     books are in the index by default, and `--no-stats` drops them. Keep them or make
+     `--no-stats` the default?
+   - **Production** (decision 3): off by default (no `IndexPath`). Turning it on shows
+     non-SRD names to everyone signed in.
+   - **The real 5eTools data in the public repo's history** (decision 5):
+     `Bestiary_2025_CopyParsing` has about 286 real `bestiary-*.json` files in its earlier
+     commits. After deleting the branch, ask GitHub Support to purge the cached commits,
+     or accept that they stay reachable by sha until GitHub garbage-collects them (forks
+     keep them).
+4. **Step 22 is next: the D&D Beyond link** (README: a sheet URL on player characters,
+   and a manual refresh of core stats). Its step file isn't written yet. Write
+   `22-dndbeyond-link.md` first as its own docs PR on top of `v2/21c-5etools-web`, then
+   run 23–24 in README order.
 
 ## Follow-ups found this round
 
@@ -190,3 +224,10 @@ checkouts of #222. Ignore them.
 - **CR 0 XP in 20a was invented:** 10 when the creature has a damaging action, else 0
   (Giant Fly, Seahorse and Shrieker Fungus get 0). Check each CR 0 creature against the
   SRD 5.2 PDF and put the real numbers in the build script.
+- **Fixed in 21c:** the stat-block card header read "AC 15 ·Initiative", with the space
+  before the dot and none after it. The spaces are now inside the dot's span.
+- The ⌘K row's 5eTools line is parsed on the web from the API's `detail` ("{label} ·
+  {book}"). It would be sturdier to send `book` on `SearchReferenceHit` too (the item
+  endpoint already has it) and stop splitting strings.
+- The source line's tooltip is a `title` attribute, so touch screens never show it. A
+  popover would work on phones, if the book's title turns out to matter there.

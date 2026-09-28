@@ -36,7 +36,7 @@ manual step for the user, not a PR:
 |---|---|---|---|---|
 | 21a | `v2/21a-5etools-script` | The preprocessing script, its index schema and its tests | 20's app unchanged. `pnpm 5etools:build --from <5etools-src>` writes a git-ignored `.data/5etools/index.json`, and the script's tests pass on a synthetic fixture | [x] |
 | 21b | `v2/21b-5etools-provider` | The search-only provider (API) | With an index configured, `GET search` has 5eTools rows with a `url`, + Wiki creates entries from them, and `GET reference/5etools/{id}` answers a summary with no stat block. Without one, nothing changes | [x] |
-| 21c | `v2/21c-5etools-web` | Rows, + Wiki and the source line for a search-only provider (web) | 5eTools rows in ⌘K link out; + Wiki, the source line and "Use 5eTools stats" work for them. The step's Verify passes | [ ] |
+| 21c | `v2/21c-5etools-web` | Rows, + Wiki and the source line for a search-only provider (web) | 5eTools rows in ⌘K link out; + Wiki, the source line and "Use 5eTools stats" work for them. The step's Verify passes | [x] |
 | 21d | — (the user) | Delete the Bestiary branches | `origin/bestiary`, `origin/Bestiary_2025`, `origin/Bestiary_2025_CopyParsing` and `origin/Bestiary_2025_project_refactor` are gone | [ ] |
 
 Stat blocks or rules text from 5eTools, backgrounds, feats, classes and races, and any
@@ -580,3 +580,43 @@ What they taught, all of it now in 21a:
     it at the fixture.
   - **Web.** Only `schema.d.ts` and a guard on the reference page: an item with no stat
     block shows "Not found" until 21c links it out.
+- **As built, 21c.** Where it differs from 21c above:
+  - **Book titles reach the web (API change).** The tooltip needs the book's full title,
+    which 21b read but did not send. `ReferenceSummary` gains `BookTitle` (from the index's
+    `sources`), the item endpoint's summary gains `book` and `bookTitle`, and
+    `EntrySourceResponse` gains `bookTitle`. All are null for the SRD. The 21b tests
+    assert them, and the leak test adds the fixture's book title to its secrets.
+    `schema.d.ts` is regenerated.
+  - **The ⌘K row's line** is built on the web from the API's `detail` ("{label} ·
+    {book}"): the last part is the book and the label is shortened per category. Monsters
+    keep the CR, spells "Level 3" or "Cantrip", and items the whole label ("Item ·
+    Uncommon Wondrous Item · XDMG (5eTools)"). A row with no label is "Item · XPHB
+    (5eTools)". `referenceHitLine` takes `hasStatBlock` to tell the two shapes apart, so
+    SRD rows are unchanged. If `detail`'s shape changes in the API, this parse has to
+    change with it.
+  - **Enter or a tap on a 5eTools row** calls `window.open(url, "_blank",
+    "noopener,noreferrer")` and leaves the sheet open, as planned. Before this, it closed
+    the sheet.
+  - **The source line** is "↗ From 5eTools · Beholder (MM p. 28) ↗". The name and the
+    book together are one link, with a 44px target on a phone. It opens in a new tab with
+    `rel="noopener noreferrer"`, and its `title` is the book's full title. It has no
+    "[view]". An item that has gone from the index (or an index that is off) shows 📖, the
+    stored id, no book and no link. SRD sources are unchanged apart from the helper
+    (`sourceLineParts`).
+  - **"Use … stats".** The label is `Use {providerLabel} stats`, so the SRD's button
+    now reads "Use SRD 5.2 stats". `wantsSourceStats` (the source item is still in the
+    data, and the viewer writes Stats) makes the Stats editor read the item up front, and
+    the item stays cached. `canUseSourceStats(entry, viewer, itemStats)` shows the button
+    only when the item has Stats. So a 5eTools monster without Stats (special HP) gets no
+    button, rather than a button that fails, and a spell never gets one (an `Other`
+    entry has no Stats). The cost is one cached item request when a DM opens an entry
+    that came from the reference. Before, that request waited for the button's click.
+  - **+ Wiki** reads the item's Stats for any `Character` suggestion, not only for
+    stat-block items, so a DM sees a 5eTools monster's Stats line.
+  - **The reference page** for a search-only item shows the name, the row's line and an
+    "Open on 5eTools ↗" button (`rel="noopener noreferrer"`), with no card, no
+    attribution and no + Wiki. A 404's text is now "That isn't in the reference." rather
+    than "…in the SRD".
+  - **Also fixed:** the stat-block card header read "AC 15 ·Initiative". Vue dropped the
+    newline after the dot's span, so the spaces are now inside the span.
+  - **Not checked in a browser.** Verify 6 is for the user (see HANDOVER).
