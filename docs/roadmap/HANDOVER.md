@@ -51,6 +51,9 @@ source of truth), then the step file you are about to run.
 
 - Port 3000 is Ripple's `nuxt dev`. Don't kill it; run this web app on 3100.
 - Start the API with `CORS__MainApp=http://localhost:3100 ASPNETCORE_URLS=http://localhost:5010 dotnet run --no-launch-profile`.
+  Add `Reference__FiveETools__IndexPath=../../.data/5etools/index.json` to turn on the
+  5eTools provider once `pnpm 5etools:build --from <5etools-src>` has written the index
+  (21b); without it the provider is off.
 - Dev Postgres is the `takedb` container on port 7401. Port 5432 is Ripple's.
 - A context-mode hook blocks `curl` and inline `node -e` fetches. Write a `.mjs`
   script to the scratchpad and run that instead.
@@ -93,6 +96,8 @@ Stack #224. Everything is on top of `dev` and still open:
 | #248 | `v2/20c-stat-block-card` | 20c: the stat-block card page and REFERENCE rows in ⌘K |
 | #249 | `v2/20d-add-to-wiki` | 20d: + Wiki (⌘K row, ⌘Enter, the card), the entry's source line and "Use SRD stats"; closes step 20 |
 | #250 | `v2/21-5etools-plan` | Step 21's step file |
+| #251 | `v2/21a-5etools-script` | 21a: the 5eTools index script (`pnpm 5etools:build`), its synthetic fixture and tests |
+| #252 | `v2/21b-5etools-provider` | 21b: the search-only 5eTools provider in the API, off without an index |
 
 The local branches `pr/PI-Gorbo/222`, `pr/PI-Gorbo/222-1` and `pr/PI-Gorbo/222-2` are stale
 checkouts of #222. Ignore them.

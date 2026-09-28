@@ -35,7 +35,7 @@ manual step for the user, not a PR:
 | PR | Branch | Sub-step | Runnable state after merge | Status |
 |---|---|---|---|---|
 | 21a | `v2/21a-5etools-script` | The preprocessing script, its index schema and its tests | 20's app unchanged. `pnpm 5etools:build --from <5etools-src>` writes a git-ignored `.data/5etools/index.json`, and the script's tests pass on a synthetic fixture | [x] |
-| 21b | `v2/21b-5etools-provider` | The search-only provider (API) | With an index configured, `GET search` has 5eTools rows with a `url`, + Wiki creates entries from them, and `GET reference/5etools/{id}` answers a summary with no stat block. Without one, nothing changes | [ ] |
+| 21b | `v2/21b-5etools-provider` | The search-only provider (API) | With an index configured, `GET search` has 5eTools rows with a `url`, + Wiki creates entries from them, and `GET reference/5etools/{id}` answers a summary with no stat block. Without one, nothing changes | [x] |
 | 21c | `v2/21c-5etools-web` | Rows, + Wiki and the source line for a search-only provider (web) | 5eTools rows in ⌘K link out; + Wiki, the source line and "Use 5eTools stats" work for them. The step's Verify passes | [ ] |
 | 21d | — (the user) | Delete the Bestiary branches | `origin/bestiary`, `origin/Bestiary_2025`, `origin/Bestiary_2025_CopyParsing` and `origin/Bestiary_2025_project_refactor` are gone | [ ] |
 
@@ -542,3 +542,41 @@ What they taught, all of it now in 21a:
     id collision) that fail loudly and need a mapping.
   - **Verify 2 amended**: the fixture itself has `"_copy"` and `bestiary-*.json` files, so
     the grep excludes `scripts/5etools/fixture/`.
+- **As built, 21b.** Where it differs from 21b above:
+  - **The provider is always registered; with no index it answers nothing.** Registering
+    it only when rows loaded would mean reading the configuration inside
+    `AddReference()`, before `Build()`, where a test host's settings don't apply yet. So
+    `FiveEToolsCatalog` reads `Reference:FiveETools:IndexPath` when DI builds it (a
+    factory in `AddReference()`, which keeps its step 20 signature), `Program` builds it
+    right after `Build()`, and `FiveEToolsReferenceProvider` returns no matches and no
+    summaries while the catalog is empty. `ReferenceCatalog` is unchanged but lists
+    `5etools` second. The only visible difference from "not registered" is that an old
+    entry's source line reads "5eTools" instead of the raw key when the index is gone.
+  - **Missing is off, bad is fatal**, as planned: no path or no file logs one
+    information line; unreadable JSON, a `format` other than 1, an unknown `category`, a
+    row without `id`/`name`/`source`/`url`, or a duplicate id throws at startup with the
+    path in the message. A loaded index logs "5eTools index loaded from … : N items (…
+    monsters, … spells, … items)".
+  - **Dev config lives in `Properties/launchSettings.json`**, not
+    `appsettings.Development.json`, which is git-ignored.
+    The `https` profile (`pnpm dev` → `dotnet watch run`) sets
+    `Reference__FiveETools__IndexPath=../../.data/5etools/index.json`, resolved from the
+    content root (`apps/TakeInitiative.Api`). `dotnet run --no-launch-profile` (the
+    HANDOVER's start command) needs that variable set by hand.
+  - **`IReferenceProvider` gains `Attribution`**, so the item endpoint can answer a
+    search-only item without `Get`. `ReferenceItemResponse.StatBlock` is nullable (the
+    JSON has `"statBlock": null`); `ReferenceSummary` gains an optional `Book` ("TST p.
+    12", or just the source when there is no page), which `EntrySourceResponse.Detail`
+    carries. `sources` (book titles) is read but not exposed yet; 21c can add it if the
+    source line's tooltip wants it.
+  - **The attribution's `sourceUrl`** is the scheme and host of the rows' links
+    (`https://5e.tools/`), so a `--base-url` rebuild moves it too.
+  - **Test fixture path.** The synthetic index is
+    `apps/TakeInitiative.Api.Tests/Fixtures/5etools-index.json` (the test project has
+    `Fixtures/`, not `Resources/`): the 21a fixture's output plus two invented TST
+    goblins ("Goblin Boss", "Goblin Tinkerer") so the SRD-first merge can be tested.
+    `AuthenticatedWebAppWithDatabaseFixture` pins the path to empty, so every other test
+    runs with the provider off whatever the machine has built; `FiveEToolsFixture` points
+    it at the fixture.
+  - **Web.** Only `schema.d.ts` and a guard on the reference page: an item with no stat
+    block shows "Not found" until 21c links it out.
