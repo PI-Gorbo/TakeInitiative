@@ -6,11 +6,13 @@ import type {
     Combat,
     Combatant,
     CombatantRequest,
+    CombatCondition,
     CombatList,
     CombatStatus,
     CombatSummary,
     EntrySummary,
     HpBand,
+    PlayersSee,
 } from "./api/types";
 import { resolveEntry, type EntryDirectory, type EntryViewer } from "./entries";
 
@@ -422,5 +424,305 @@ export function summaryFromCombat(
         createdAt: combat.createdAt,
         startedAt: combat.startedAt,
         finishedAt: combat.finishedAt,
+    };
+}
+
+// ── The combatant sheet (18d) ────────────────────────────────────────────────
+
+/** The API's limits on a combatant's edits (18a.1). */
+export const COMBAT_HP_MIN = -999;
+export const COMBAT_HP_MAX = 9999;
+export const COMBAT_MAX_HP_MIN = 1;
+export const COMBAT_INITIATIVE_MIN = -99;
+export const COMBAT_INITIATIVE_MAX = 99;
+export const CONDITIONS_MAX = 20;
+export const CONDITION_LABEL_MAX = 40;
+export const CONDITION_NOTE_MAX = 200;
+
+/** The 5e conditions, plus Concentrating, offered by ＋ Condition (18d.3). */
+export const CONDITIONS_5E = [
+    "Blinded",
+    "Charmed",
+    "Concentrating",
+    "Deafened",
+    "Exhaustion",
+    "Frightened",
+    "Grappled",
+    "Incapacitated",
+    "Invisible",
+    "Paralyzed",
+    "Petrified",
+    "Poisoned",
+    "Prone",
+    "Restrained",
+    "Stunned",
+    "Unconscious",
+] as const;
+
+/** A `PUT combatants/{id}` body: the combatant's whole editable state (18a.6). */
+export type CombatantEdit = {
+    name: string;
+    initiative: number | null;
+    hp: number | null;
+    maxHp: number | null;
+    ac: number | null;
+    hidden: boolean;
+    playersSee: PlayersSee;
+    conditions: CombatCondition[];
+};
+
+/** The state a sheet edits, from the combatant the viewer holds. */
+export const combatantEdit = (c: Combatant): CombatantEdit => ({
+    name: c.name,
+    initiative: c.initiative ?? null,
+    hp: c.hp ?? null,
+    maxHp: c.maxHp ?? null,
+    ac: c.ac ?? null,
+    hidden: c.hidden,
+    playersSee: c.playersSee,
+    conditions: c.conditions.map((x) => ({
+        label: x.label,
+        note: x.note ?? null,
+    })),
+});
+
+/** An edit laid over a combatant, so the row changes before the server answers. */
+export function withCombatantEdit(
+    combat: Combat,
+    combatantId: string,
+    edit: CombatantEdit
+): Combat {
+    return {
+        ...combat,
+        combatants: combat.combatants.map((c) =>
+            sameId(c.id, combatantId)
+                ? {
+                      ...c,
+                      ...edit,
+                      waiting: edit.initiative == null,
+                      band:
+                          edit.hp != null
+                              ? hpBand(edit.hp, edit.maxHp)
+                              : c.band,
+                  }
+                : c
+        ),
+    };
+}
+
+const clamp = (n: number, min: number, max: number) =>
+    Math.min(max, Math.max(min, n));
+
+/**
+ * Damage or heal (18d.2). Heal stops at `MaxHp` when there is one (a combatant already
+ * above it stays where it is), damage goes as low as −999. With no HP yet, the change
+ * starts from `MaxHp`, or 0.
+ */
+export function applyHpDelta(
+    hp: number | null | undefined,
+    maxHp: number | null | undefined,
+    amount: number,
+    kind: "damage" | "heal"
+): number {
+    const from = hp ?? maxHp ?? 0;
+    const by = Math.abs(Math.trunc(amount));
+    if (kind === "damage")
+        return clamp(from - by, COMBAT_HP_MIN, COMBAT_HP_MAX);
+    const healed = from + by;
+    const cap = maxHp != null ? Math.max(maxHp, from) : COMBAT_HP_MAX;
+    return clamp(Math.min(healed, cap), COMBAT_HP_MIN, COMBAT_HP_MAX);
+}
+
+/**
+ * A whole number typed into a sheet field, or null when blank. `error` says why the
+ * text is not one; the field keeps the old value then.
+ */
+export function parseWholeNumber(
+    text: string,
+    min: number,
+    max: number
+): { value: number | null; error: string | null } {
+    const t = text.trim().replace(/^\+/, "").replace(/^[−–]/, "-");
+    if (t === "") return { value: null, error: null };
+    if (!/^-?\d{1,5}$/.test(t))
+        return { value: null, error: "Type a whole number." };
+    const n = Number(t);
+    if (n < min || n > max)
+        return { value: null, error: `Between ${min} and ${max}.` };
+    return { value: n, error: null };
+}
+
+/** A new Max HP. A combatant with no HP yet starts at full. */
+export function withMaxHp(edit: CombatantEdit, maxHp: number | null) {
+    return { ...edit, maxHp, hp: edit.hp ?? maxHp };
+}
+
+/** Adds a condition (18d.3): trimmed, within the limits, not twice with the same label. */
+export function addCondition(
+    conditions: readonly CombatCondition[],
+    label: string,
+    note?: string | null
+): { conditions: CombatCondition[]; error: string | null } {
+    const l = label.trim();
+    const n = note?.trim() || null;
+    const same = conditions.map((c) => ({ ...c }));
+    if (!l) return { conditions: same, error: "Name the condition." };
+    if (l.length > CONDITION_LABEL_MAX)
+        return {
+            conditions: same,
+            error: `At most ${CONDITION_LABEL_MAX} characters.`,
+        };
+    if (n && n.length > CONDITION_NOTE_MAX)
+        return {
+            conditions: same,
+            error: `A note is at most ${CONDITION_NOTE_MAX} characters.`,
+        };
+    const index = conditions.findIndex(
+        (c) => c.label.toLowerCase() === l.toLowerCase()
+    );
+    if (index >= 0) {
+        // The same label again replaces its note, when one was given.
+        if (n) same[index] = { label: same[index]!.label, note: n };
+        return { conditions: same, error: null };
+    }
+    if (conditions.length >= CONDITIONS_MAX)
+        return {
+            conditions: same,
+            error: `At most ${CONDITIONS_MAX} conditions.`,
+        };
+    return { conditions: [...same, { label: l, note: n }], error: null };
+}
+
+export const removeCondition = (
+    conditions: readonly CombatCondition[],
+    index: number
+): CombatCondition[] => conditions.filter((_, i) => i !== index);
+
+/** The 5e list, less what the combatant has, narrowed by what was typed. */
+export function conditionSuggestions(
+    typed: string,
+    current: readonly CombatCondition[]
+): string[] {
+    const t = typed.trim().toLowerCase();
+    const has = new Set(current.map((c) => c.label.toLowerCase()));
+    return CONDITIONS_5E.filter(
+        (c) => !has.has(c.toLowerCase()) && c.toLowerCase().includes(t)
+    );
+}
+
+/** What players see, as the picker offers it (18d.4). */
+export const PLAYERS_SEE_OPTIONS: readonly {
+    value: PlayersSee;
+    label: string;
+    hint: string;
+}[] = [
+    { value: "Exact", label: "Exact", hint: "HP and AC" },
+    { value: "Band", label: "Band", hint: "Healthy / Bloodied / Down" },
+    { value: "Nothing", label: "Nothing", hint: "No HP" },
+];
+
+export type CombatantSheetFields = {
+    /** HP: damage, heal, Max HP and HP. */
+    hp: boolean;
+    conditions: boolean;
+    /** Name, AC, PlayersSee and Hidden. */
+    dmFields: boolean;
+    /** Initiative: a DM always, the owner while it waits. */
+    initiative: boolean;
+    /** Move up / Move down: a DM, on a placed combatant. */
+    move: boolean;
+    remove: boolean;
+};
+
+/**
+ * Whether the viewer may open a combatant's sheet (18d.1): a DM any, a player their
+ * own, and nobody once the combat has finished (it is read-only).
+ */
+export function canOpenSheet(
+    combat: Pick<Combat, "status">,
+    combatant: Pick<Combatant, "ownerMemberId">,
+    viewer: EntryViewer
+): boolean {
+    if (combat.status === "Finished") return false;
+    return viewer.isDm || sameId(combatant.ownerMemberId, viewer.memberId);
+}
+
+/** What the sheet shows the viewer (18d.4). */
+export function combatantSheetFields(
+    combat: Pick<Combat, "status">,
+    combatant: Pick<Combatant, "ownerMemberId" | "waiting">,
+    viewer: EntryViewer
+): CombatantSheetFields | null {
+    if (!canOpenSheet(combat, combatant, viewer)) return null;
+    const dm = viewer.isDm;
+    return {
+        hp: true,
+        conditions: true,
+        dmFields: dm,
+        initiative: dm || combatant.waiting,
+        move: dm && !combatant.waiting,
+        remove: dm,
+    };
+}
+
+// ── Reordering (18d.6) ───────────────────────────────────────────────────────
+
+/**
+ * Where a dragged combatant lands, as `position`'s body: after the combatant above
+ * the drop, or at the top (`afterId: null`). `index` counts the order without the
+ * dragged one. Null when the drop leaves it where it was.
+ */
+export function dropPosition(
+    orderedIds: readonly string[],
+    draggedId: string,
+    index: number
+): { afterId: string | null } | null {
+    const from = orderedIds.findIndex((id) => sameId(id, draggedId));
+    if (from < 0) return null;
+    const others = orderedIds.filter((_, i) => i !== from);
+    const to = clamp(Math.trunc(index), 0, others.length);
+    if (to === from) return null;
+    return { afterId: to === 0 ? null : others[to - 1]! };
+}
+
+/** Move up (−1) or down (+1) one place, as `position`'s body, or null at the ends. */
+export function moveByOne(
+    orderedIds: readonly string[],
+    id: string,
+    by: -1 | 1
+): { afterId: string | null } | null {
+    const from = orderedIds.findIndex((x) => sameId(x, id));
+    if (from < 0) return null;
+    const to = from + by;
+    if (to < 0 || to >= orderedIds.length) return null;
+    return dropPosition(orderedIds, id, to);
+}
+
+/**
+ * The drop index for a pointer at `y`, from the middles of the other rows (top to
+ * bottom): it goes before the first row whose middle is below the pointer.
+ */
+export function dropIndexAt(middles: readonly number[], y: number): number {
+    const i = middles.findIndex((m) => y < m);
+    return i < 0 ? middles.length : i;
+}
+
+/**
+ * A reorder laid over the combat, so the row stays where it was dropped until the
+ * server answers with its new initiative and tiebreak.
+ */
+export function withMovedCombatant(
+    combat: Combat,
+    combatantId: string,
+    afterId: string | null
+): Combat {
+    const moving = combat.combatants.find((c) => sameId(c.id, combatantId));
+    if (!moving) return combat;
+    const rest = combat.combatants.filter((c) => !sameId(c.id, combatantId));
+    const at = afterId ? rest.findIndex((c) => sameId(c.id, afterId)) + 1 : 0;
+    if (afterId && at === 0) return combat;
+    return {
+        ...combat,
+        combatants: [...rest.slice(0, at), moving, ...rest.slice(at)],
     };
 }

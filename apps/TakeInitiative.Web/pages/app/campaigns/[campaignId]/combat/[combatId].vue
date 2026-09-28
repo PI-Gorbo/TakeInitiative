@@ -2,7 +2,8 @@
     <div class="flex min-h-full w-full flex-col">
         <!-- A combat (18c.4, design §8, mobile first): the header with the DM's actions,
              the initiative order, the waiting combatants, and the End turn bar at the
-             bottom. Every write and push lands in the cache (18c.6). -->
+             bottom. Every write and push lands in the cache (18c.6). Tapping a combatant
+             opens its sheet (18d), and a DM drags rows to reorder and opens the history. -->
         <div
             class="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 px-3 py-3 md:px-4">
             <NuxtLink
@@ -59,7 +60,7 @@
                                 }}</span>
                             </p>
                         </div>
-                        <DropdownMenu v-if="actions.finish">
+                        <DropdownMenu v-if="viewer.isDm">
                             <DropdownMenuTrigger
                                 aria-label="More combat actions"
                                 class="flex size-11 shrink-0 items-center justify-center rounded-md border hover:bg-accent hover:text-accent-foreground md:size-9">
@@ -71,6 +72,15 @@
                                 align="end"
                                 class="w-48">
                                 <DropdownMenuItem
+                                    class="min-h-11 gap-2 md:min-h-8"
+                                    @select="historyOpen = true">
+                                    <History
+                                        class="size-4"
+                                        aria-hidden="true" />
+                                    History
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    v-if="actions.finish"
                                     class="min-h-11 gap-2 md:min-h-8"
                                     @select="finishOpen = true">
                                     <Flag
@@ -137,7 +147,11 @@
                     :combatants="split.ordered"
                     :turnCombatantId="combat.turnCombatantId"
                     :isDm="viewer.isDm"
-                    :viewerMemberId="viewer.memberId">
+                    :viewerMemberId="viewer.memberId"
+                    :canOpen="canOpen"
+                    :reorderable="viewer.isDm && combat.status !== 'Finished'"
+                    @open="(id) => (sheetCombatantId = id)"
+                    @reorder="reorderCombatant">
                     <template #empty>
                         {{ emptyOrderText }}
                     </template>
@@ -145,7 +159,9 @@
 
                 <CombatWaitingList
                     :campaignId="campaignId"
-                    :combatants="split.waiting">
+                    :combatants="split.waiting"
+                    :canOpen="canOpen"
+                    @open="(id) => (sheetCombatantId = id)">
                     <template #action>
                         <Button
                             v-if="actions.roll || actions.rollMine"
@@ -174,6 +190,21 @@
             v-model:open="addOpen"
             :campaignId="campaignId"
             :combatId="combatId" />
+
+        <CombatCombatantSheet
+            v-if="combat"
+            v-model:combatantId="sheetCombatantId"
+            :campaignId="campaignId"
+            :combat="combat"
+            :viewer="viewer"
+            @reorder="reorderCombatant" />
+
+        <CombatHistorySheet
+            v-if="combat && campaign && viewer.isDm"
+            v-model:open="historyOpen"
+            :campaign="campaign"
+            :combatId="combat.id"
+            :combatName="combat.name" />
 
         <Dialog v-model:open="finishOpen">
             <DialogContent class="max-w-sm">
@@ -212,11 +243,12 @@
 </template>
 
 <script setup lang="ts">
-    import { useQuery } from "@tanstack/vue-query";
+    import { useQuery, useQueryClient } from "@tanstack/vue-query";
     import {
         ChevronLeft,
         Dices,
         Flag,
+        History,
         MoreHorizontal,
         Swords,
         UserPlus,
@@ -224,17 +256,22 @@
     import { toast } from "vue-sonner";
     import { apiErrorMessage, apiErrorStatus } from "~/utils/apiErrorParser";
     import { currentMember } from "~/utils/campaign";
+    import type { Combat, Combatant } from "~/utils/api/types";
     import {
+        canOpenSheet,
         combatActions,
         combatStatusLabel,
         combatantCountLabel,
         splitCombatants,
+        withMovedCombatant,
     } from "~/utils/combat";
     import { getCampaignQuery } from "~/utils/queries/campaign";
     import {
         endTurnMutation,
         finishCombatMutation,
         getCombatQuery,
+        getCombatQueryKey,
+        putCombatantPositionMutation,
         rollCombatMutation,
     } from "~/utils/queries/combats";
 
@@ -293,6 +330,11 @@
 
     const addOpen = ref(false);
     const finishOpen = ref(false);
+    const historyOpen = ref(false);
+    /** The combatant whose sheet is open (18d). */
+    const sheetCombatantId = ref<string | null>(null);
+    const canOpen = (combatant: Combatant) =>
+        !!combat.value && canOpenSheet(combat.value, combatant, viewer.value);
     // A role change (a push, then a refetch) takes the DM's dialogs away.
     watch(
         () => viewer.value.isDm,
@@ -300,6 +342,7 @@
             if (!isDm) {
                 addOpen.value = false;
                 finishOpen.value = false;
+                historyOpen.value = false;
             }
         }
     );
@@ -330,6 +373,32 @@
             });
         } catch (err) {
             toast.error(apiErrorMessage(err, "Could not end the turn."));
+        }
+    }
+
+    // Drag, the handle's arrow keys, or Move up / Move down (18d.6). The row stays where
+    // it was dropped while the server places it.
+    const queryClient = useQueryClient();
+    const position = putCombatantPositionMutation();
+    async function reorderCombatant(
+        combatantId: string,
+        afterId: string | null
+    ) {
+        const key = getCombatQueryKey(campaignId.value, combatId.value);
+        queryClient.setQueryData<Combat>(
+            key,
+            (old) => old && withMovedCombatant(old, combatantId, afterId)
+        );
+        try {
+            await position.mutateAsync({
+                campaignId: campaignId.value,
+                combatId: combatId.value,
+                combatantId,
+                afterId,
+            });
+        } catch (err) {
+            toast.error(apiErrorMessage(err, "Could not move the combatant."));
+            void queryClient.invalidateQueries({ queryKey: key });
         }
     }
 
