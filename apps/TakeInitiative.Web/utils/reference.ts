@@ -201,11 +201,40 @@ export function textBlocks(text: string): TextBlock[] {
 export const referencePath = (campaignId: string, provider: string, itemId: string) =>
     `/app/campaigns/${encodeURIComponent(campaignId)}/reference/${encodeURIComponent(provider)}/${encodeURIComponent(itemId)}`;
 
-/** A ⌘K reference row's line: "Monster · CR 1/4 · SRD 5.2". */
-export function referenceHitLine(hit: Pick<SearchReferenceHit, "category" | "detail" | "providerLabel">): string {
-    // The API's detail is "CR 1/4 · Small Fey"; the row keeps only the CR.
-    const cr = hit.detail.split(" · ").find((part) => part.startsWith("CR "));
-    return [hit.category, cr, hit.providerLabel].filter(Boolean).join(" · ");
+/**
+ * A ⌘K reference row's line: "Monster · CR 1/4 · SRD 5.2" for a provider with stat blocks,
+ * and for a search-only one (21) the book too: "Monster · CR 13 · MM (5eTools)",
+ * "Spell · Level 3 · XPHB (5eTools)", "Item · Uncommon Wondrous Item · XDMG (5eTools)".
+ */
+export function referenceHitLine(
+    hit: Pick<SearchReferenceHit, "category" | "detail" | "providerLabel"> & { hasStatBlock?: boolean }
+): string {
+    const parts = hit.detail.split(" · ").filter(Boolean);
+    // The SRD's detail is "CR 1/4 · Small Fey"; the row keeps only the CR.
+    if (hit.hasStatBlock !== false) {
+        const cr = parts.find((part) => part.startsWith("CR "));
+        return [hit.category, cr, hit.providerLabel].filter(Boolean).join(" · ");
+    }
+    // 5eTools' detail is "{label} · {book}" (21b), where the label is "CR 13 · Large
+    // Aberration", "Level 3 Evocation", "Illusion Cantrip" or "Uncommon Wondrous Item", and
+    // may be missing.
+    const book = parts.pop();
+    return [hit.category, shortLabel(hit.category, parts), book ? `${book} (${hit.providerLabel})` : hit.providerLabel]
+        .filter(Boolean)
+        .join(" · ");
+}
+
+function shortLabel(category: SearchReferenceHit["category"], label: string[]): string | undefined {
+    switch (category) {
+        case "Monster":
+            return label.find((part) => part.startsWith("CR "));
+        case "Spell": {
+            const text = label.join(" ");
+            return /^Level \d+/.exec(text)?.[0] ?? (/\bCantrip\b/.test(text) ? "Cantrip" : undefined);
+        }
+        default:
+            return label.join(" · ") || undefined;
+    }
 }
 
 // ── Attribution ──────────────────────────────────────────────────────────────
@@ -294,8 +323,9 @@ export type SourceLink = { to: string } | { href: string } | null;
 
 /**
  * Where "📖 From SRD 5.2 · Goblin Warrior [view]" goes: our card for a provider with stat
- * blocks, the item's `url` for a search-only one (21), and nowhere when the item has gone
- * from the data (`name` is null).
+ * blocks, the item's `url` for a search-only one (21; the sheet and the source line open it
+ * in a new tab with `rel="noopener noreferrer"`), and nowhere when the item has gone from
+ * the data (`name` is null).
  */
 export function sourceLink(campaignId: string, source: EntrySource): SourceLink {
     if (!source.name) return null;
@@ -305,3 +335,23 @@ export function sourceLink(campaignId: string, source: EntrySource): SourceLink 
 
 /** The source's item name, or its stored id when the item has gone from the data. */
 export const sourceName = (source: EntrySource) => source.name || source.externalId;
+
+export type SourceLineParts = { icon: string; from: string; name: string; book: string | null; bookTitle: string | null };
+
+/**
+ * The source line's words: "📖 From SRD 5.2 · Goblin Warrior", or for a search-only
+ * provider (21) "↗ From 5eTools · Beholder (MM p. 28)", with the book's full title as the
+ * tooltip. The book only shows while the item is still in the data.
+ */
+export function sourceLineParts(source: EntrySource): SourceLineParts {
+    return {
+        icon: source.hasStatBlock || !source.url || !source.name ? "📖" : "↗",
+        from: `From ${source.providerLabel}`,
+        name: sourceName(source),
+        book: source.name && source.detail ? `(${source.detail})` : null,
+        bookTitle: (source.name && source.bookTitle) || null,
+    };
+}
+
+/** "Use SRD 5.2 stats", "Use 5eTools stats": the Stats editor's button (20d, 21c). */
+export const sourceStatsLabel = (source: Pick<EntrySource, "providerLabel">) => `Use ${source.providerLabel} stats`;

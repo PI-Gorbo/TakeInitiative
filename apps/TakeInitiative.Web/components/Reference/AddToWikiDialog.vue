@@ -147,10 +147,11 @@
         if (open.value && !picked) visibility.value = defaultAddVisibility(dm);
     });
 
-    // A DM sees the Stats the entry will get. A ⌘K hit has none, so the card's item is read
-    // (it is cached for good once read).
+    // A DM sees the Stats the entry will get. A ⌘K hit has none, so the item is read (it is
+    // cached for good once read). A search-only item (5eTools, 21) answers too, with no stat
+    // block; only a Character can have Stats, so a spell or an item is never read.
     const needsItem = computed(
-        () => open.value && isDm.value && !!props.item?.hasStatBlock && props.item.stats === undefined
+        () => open.value && isDm.value && props.item?.suggestedKind === "Character" && props.item.stats === undefined
     );
     const itemQuery = useQuery(
         getReferenceItemQuery(

@@ -8,8 +8,10 @@ import {
     conflictMessage,
     defaultAddVisibility,
     shortStatsLine,
+    sourceLineParts,
     sourceLink,
     sourceName,
+    sourceStatsLabel,
     attributionParts,
     crLine,
     detailLines,
@@ -217,6 +219,18 @@ describe("routes and rows", () => {
             referenceHitLine({ category: "Monster", detail: "CR 1/4 · Small Fey", providerLabel: "SRD 5.2" })
         ).toBe("Monster · CR 1/4 · SRD 5.2");
     });
+
+    it("writes a 5eTools row's line with its book (21c)", () => {
+        const row = (category: SearchReferenceHit["category"], detail: string) =>
+            referenceHitLine({ category, detail, providerLabel: "5eTools", hasStatBlock: false });
+        expect(row("Monster", "CR 13 · Large Aberration · MM")).toBe("Monster · CR 13 · MM (5eTools)");
+        expect(row("Monster", "Large Aberration · MM")).toBe("Monster · MM (5eTools)");
+        expect(row("Spell", "Level 3 Evocation · XPHB")).toBe("Spell · Level 3 · XPHB (5eTools)");
+        expect(row("Spell", "Illusion Cantrip · PHB")).toBe("Spell · Cantrip · PHB (5eTools)");
+        expect(row("Item", "Uncommon Wondrous Item · XDMG")).toBe("Item · Uncommon Wondrous Item · XDMG (5eTools)");
+        // A row with no label: the index's detail is just the book.
+        expect(row("Item", "XPHB")).toBe("Item · XPHB (5eTools)");
+    });
 });
 
 describe("attributionParts", () => {
@@ -268,6 +282,17 @@ describe("+ Wiki", () => {
         expect(shortStatsLine({ ac: 0 })).toBe("AC 0");
     });
 
+    it("gives a 5eTools item the kind and Stats line of its category (21c)", () => {
+        const fiveETools = { ...hit, provider: "5etools", providerLabel: "5eTools", hasStatBlock: false };
+        const monster = addToWikiItemFromHit({ ...fiveETools, id: "monster_beholder_mm" });
+        const spell = addToWikiItemFromHit({ ...fiveETools, id: "spell_fireball_xphb", category: "Spell", suggestedKind: "Other" });
+        const item = addToWikiItemFromHit({ ...fiveETools, id: "item_bag_xdmg", category: "Item", suggestedKind: "Item" });
+        expect([monster, spell, item].map((i) => i.suggestedKind)).toEqual(["Character", "Other", "Item"]);
+        expect(addToWikiStatsLine(monster.suggestedKind, stats, true)).toBe("Stats: 1d20+2 · 3d6 · AC 15");
+        expect(addToWikiStatsLine(spell.suggestedKind, stats, true)).toBeNull();
+        expect(addToWikiStatsLine(item.suggestedKind, null, false)).toBeNull();
+    });
+
     it("keeps a 409 while the name is the one that clashed", () => {
         const conflict = addToWikiConflict(409, " Goblin ", "e1");
         expect(conflict).toEqual({ name: "Goblin", existingId: "e1" });
@@ -304,5 +329,38 @@ describe("the source line", () => {
         const gone = { ...source, name: null, hasStatBlock: false };
         expect(sourceLink("c1", gone)).toBeNull();
         expect(sourceName(gone)).toBe("goblin-warrior");
+    });
+
+    it("reads \"↗ From 5eTools · Beholder (MM p. 28)\" for a search-only provider, titled with the book (21c)", () => {
+        const url = "https://5e.tools/bestiary.html#beholder_mm";
+        const beholder: EntrySource = {
+            provider: "5etools",
+            providerLabel: "5eTools",
+            externalId: "monster_beholder_mm",
+            name: "Beholder",
+            url,
+            detail: "MM p. 28",
+            bookTitle: "Monster Manual (2014)",
+            hasStatBlock: false,
+        };
+        expect(sourceLineParts(beholder)).toEqual({
+            icon: "↗",
+            from: "From 5eTools",
+            name: "Beholder",
+            book: "(MM p. 28)",
+            bookTitle: "Monster Manual (2014)",
+        });
+        expect(sourceLink("c1", beholder)).toEqual({ href: url });
+        // Gone from the index (or the index is off): the stored id, no book, no link.
+        const gone = { ...beholder, name: null, detail: null, bookTitle: null };
+        expect(sourceLineParts(gone)).toMatchObject({ icon: "📖", name: "monster_beholder_mm", book: null, bookTitle: null });
+        expect(sourceLink("c1", gone)).toBeNull();
+        // The SRD has no book.
+        expect(sourceLineParts(source)).toMatchObject({ icon: "📖", from: "From SRD 5.2", book: null });
+    });
+
+    it("names the Stats button after the provider (21c)", () => {
+        expect(sourceStatsLabel(source)).toBe("Use SRD 5.2 stats");
+        expect(sourceStatsLabel({ providerLabel: "5eTools" })).toBe("Use 5eTools stats");
     });
 });

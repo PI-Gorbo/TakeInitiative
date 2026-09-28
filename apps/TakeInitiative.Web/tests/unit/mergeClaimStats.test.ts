@@ -7,6 +7,7 @@ import {
     canReadStats,
     canUnclaimEntry,
     canUseSourceStats,
+    wantsSourceStats,
     canWriteStats,
     currentVersionIndex,
     describeChange,
@@ -166,7 +167,7 @@ describe("claims and stats", () => {
         expect(parseStatsForm({ initiativeRoll: "", maxHp: "", ac: "1.5" }).body).toBeNull();
     });
 
-    it("offers \"Use SRD stats\" to whoever writes the stats of an entry from a stat block (20d)", () => {
+    it("offers \"Use … stats\" to whoever writes the stats, when the source's item has Stats (20d, 21c)", () => {
         const source = {
             provider: "srd52",
             providerLabel: "SRD 5.2",
@@ -175,15 +176,43 @@ describe("claims and stats", () => {
             url: "https://www.dndbeyond.com/srd",
             hasStatBlock: true,
         };
+        const itemStats = { initiativeRoll: "1d20+1", maxHp: "7d10+21", ac: 13 };
         const owlbear = { ...npc, source };
-        expect(canUseSourceStats(owlbear, dm)).toBe(true);
+        expect(canUseSourceStats(owlbear, dm, itemStats)).toBe(true);
         // A player is never sent an NPC's source, and could not write its stats anyway.
-        expect(canUseSourceStats(owlbear, sam)).toBe(false);
-        expect(canUseSourceStats({ ...owlbear, claimedByMemberId: "sam" }, sam)).toBe(true);
-        expect(canUseSourceStats({ ...owlbear, claimedByMemberId: "sam" }, priya)).toBe(false);
-        expect(canUseSourceStats(npc, dm)).toBe(false);
-        expect(canUseSourceStats({ ...owlbear, source: { ...source, hasStatBlock: false } }, dm)).toBe(false);
-        expect(canUseSourceStats({ ...owlbear, kind: "Item" }, dm)).toBe(false);
+        expect(canUseSourceStats(owlbear, sam, itemStats)).toBe(false);
+        expect(canUseSourceStats({ ...owlbear, claimedByMemberId: "sam" }, sam, itemStats)).toBe(true);
+        expect(canUseSourceStats({ ...owlbear, claimedByMemberId: "sam" }, priya, itemStats)).toBe(false);
+        expect(canUseSourceStats(npc, dm, itemStats)).toBe(false);
+        expect(canUseSourceStats({ ...owlbear, kind: "Item" }, dm, itemStats)).toBe(false);
+        // Not until the item is read, and never for an item without Stats.
+        expect(canUseSourceStats(owlbear, dm, undefined)).toBe(false);
+        expect(canUseSourceStats(owlbear, dm, null)).toBe(false);
+        expect(wantsSourceStats(owlbear, dm)).toBe(true);
+        expect(wantsSourceStats({ ...owlbear, source: { ...source, name: null } }, dm)).toBe(false);
+
+        // 5eTools (21c): no stat block, but a monster with Stats in the index offers them.
+        const fiveETools = {
+            provider: "5etools",
+            providerLabel: "5eTools",
+            externalId: "monster_beholder_mm",
+            name: "Beholder",
+            url: "https://5e.tools/bestiary.html#beholder_mm",
+            detail: "MM p. 28",
+            hasStatBlock: false,
+        };
+        const eye = { ...npc, source: fiveETools };
+        expect(wantsSourceStats(eye, dm)).toBe(true);
+        expect(canUseSourceStats(eye, dm, { initiativeRoll: "1d20+2", maxHp: "19d10+76", ac: 18 })).toBe(true);
+        // A monster whose index row has no Stats (special HP), and a spell (an Other entry).
+        expect(canUseSourceStats(eye, dm, null)).toBe(false);
+        const fireball = {
+            ...npc,
+            kind: "Other" as const,
+            source: { ...fiveETools, externalId: "spell_fireball_xphb", name: "Fireball" },
+        };
+        expect(wantsSourceStats(fireball, dm)).toBe(false);
+        expect(canUseSourceStats(fireball, dm, itemStats)).toBe(false);
     });
 
     it("fills the form from a stat line", () => {

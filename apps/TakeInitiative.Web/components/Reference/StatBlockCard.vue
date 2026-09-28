@@ -21,9 +21,11 @@
         <div class="flex flex-col gap-0.5 text-sm">
             <p>
                 <strong class="font-semibold text-gold">AC</strong> {{ block.ac }}
+                <!-- The spaces are inside the span: Vue drops the newline between it and
+                     <strong>, which left "AC 15 ·Initiative". -->
                 <span
-                    class="px-1 text-muted-foreground"
-                    aria-hidden="true">·</span>
+                    class="text-muted-foreground"
+                    aria-hidden="true"> · </span>
                 <strong class="font-semibold text-gold">Initiative</strong> {{ initiativeLine(block.initiativeBonus) }}
             </p>
             <p><strong class="font-semibold text-gold">HP</strong> {{ hpLine(block) }}</p>

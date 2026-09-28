@@ -326,6 +326,22 @@ describe("hitTarget", () => {
         expect(hitTarget("c1", external)).toMatchObject({ external: "https://5e.tools/x" });
     });
 
+    it("links every 5eTools row out, whatever its category, and never to a card (21c)", () => {
+        const fiveETools = { provider: "5etools", providerLabel: "5eTools", hasStatBlock: false, url: null };
+        const rows = [
+            referenceHit({ ...fiveETools, id: "monster_beholder_mm", url: "https://5e.tools/bestiary.html#beholder_mm" }),
+            referenceHit({ ...fiveETools, id: "spell_fireball_xphb", category: "Spell", url: "https://5e.tools/spells.html#fireball_xphb" }),
+            referenceHit({ ...fiveETools, id: "item_bag-of-holding_xdmg", category: "Item", url: "https://5e.tools/items.html#bag%20of%20holding_xdmg" }),
+        ];
+        expect(rows.map((row) => hitTarget("c1", row).external)).toEqual([
+            "https://5e.tools/bestiary.html#beholder_mm",
+            "https://5e.tools/spells.html#fireball_xphb",
+            "https://5e.tools/items.html#bag%20of%20holding_xdmg",
+        ]);
+        // A search-only row with no link has nowhere else to go but the page that says so.
+        expect(hitTarget("c1", referenceHit(fiveETools)).external).toBeUndefined();
+    });
+
     it("writes a combat's line: live with its round, else its session and status", () => {
         expect(combatHitLine({ status: "Active", round: 3 }, 12)).toBe("Live · Round 3");
         expect(combatHitLine({ status: "Finished", round: 5 }, 12)).toBe("S12 · Finished");

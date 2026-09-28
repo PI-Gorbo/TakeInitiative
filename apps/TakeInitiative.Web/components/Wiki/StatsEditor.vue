@@ -4,7 +4,8 @@
          DMs edit them; on an unclaimed one (an NPC, a monster) only the DMs do, and
          nobody else is sent them. Initiative and HP are dice expressions: the server
          checks them, and its message shows under the field. An entry from a reference
-         item (20d) offers "Use SRD stats" to whoever writes them. -->
+         item offers "Use SRD 5.2 stats" (20d) or "Use 5eTools stats" (21c) to whoever writes
+         them, when that item has Stats. -->
     <section
         v-if="readable && (entry.stats || writable)"
         aria-label="Stats"
@@ -18,19 +19,14 @@
                 >
             </h3>
             <div class="flex-1" />
-            <!-- "Use SRD stats" (20d): the source item's Stats into the form, to review and Save. -->
+            <!-- "Use … stats" (20d, 21c): the source item's Stats into the form, to review and Save. -->
             <Button
-                v-if="useSource"
+                v-if="useSource && entry.source"
                 variant="ghost"
                 size="sm"
                 class="h-11 md:h-7"
-                :disabled="loadingSource"
                 @click="fillFromSource">
-                <LoaderCircle
-                    v-if="loadingSource"
-                    class="animate-spin"
-                    aria-hidden="true" />
-                Use SRD stats
+                {{ sourceStatsLabel(entry.source) }}
             </Button>
             <Button
                 v-if="writable && !editing"
@@ -122,7 +118,7 @@
 </template>
 
 <script setup lang="ts">
-    import { useQueryClient } from "@tanstack/vue-query";
+    import { useQuery } from "@tanstack/vue-query";
     import { LoaderCircle } from "lucide-vue-next";
     import { toast } from "vue-sonner";
     import { apiErrorMessage, apiErrorStatus } from "~/utils/apiErrorParser";
@@ -138,9 +134,11 @@
         statsLabel,
         type EntryViewer,
         type StatsForm,
+        wantsSourceStats,
     } from "~/utils/entries";
     import { putEntryStatsMutation } from "~/utils/queries/entries";
     import { getReferenceItemQuery } from "~/utils/queries/reference";
+    import { sourceStatsLabel } from "~/utils/reference";
 
     const props = defineProps<{
         campaignId: string;
@@ -165,39 +163,23 @@
         editing.value = true;
     }
 
-    // "Use SRD stats" (20d): the API derives the item's Stats (`summary.stats`), so the web
-    // never does. It fills the form; the normal Save writes them.
-    const queryClient = useQueryClient();
-    const useSource = computed(() => canUseSourceStats(props.entry, props.viewer));
-    const loadingSource = ref(false);
-    async function fillFromSource() {
-        const source = props.entry.source;
-        if (!source || loadingSource.value) return;
-        loadingSource.value = true;
-        try {
-            const item = await queryClient.fetchQuery(
-                getReferenceItemQuery(
-                    () => source.provider,
-                    () => source.externalId
-                )
-            );
-            const stats = item.summary.stats;
-            if (!stats) {
-                toast.error(`${source.providerLabel} has no stats for ${item.summary.name}.`);
-                return;
-            }
-            Object.assign(form, statsForm(stats));
-            errors.value = {};
-            editing.value = true;
-        } catch (error) {
-            toast.error(
-                apiErrorStatus(error) === 404
-                    ? "That isn't in the reference any more."
-                    : apiErrorMessage(error, "Could not read the stats.")
-            );
-        } finally {
-            loadingSource.value = false;
-        }
+    // "Use … stats" (20d, 21c): the API derives the item's Stats (`summary.stats`), so the web
+    // never does. The item is read once for whoever writes the Stats (it is cached for good),
+    // and the button shows only when it has Stats: an SRD monster, or a 5eTools monster whose
+    // index row has them. It fills the form; the normal Save writes them.
+    const sourceItemQuery = useQuery(
+        getReferenceItemQuery(
+            () => (wantsSourceStats(props.entry, props.viewer) ? (props.entry.source?.provider ?? "") : ""),
+            () => (wantsSourceStats(props.entry, props.viewer) ? (props.entry.source?.externalId ?? "") : "")
+        )
+    );
+    const sourceStats = computed(() => sourceItemQuery.data.value?.summary.stats);
+    const useSource = computed(() => canUseSourceStats(props.entry, props.viewer, sourceStats.value));
+    function fillFromSource() {
+        if (!sourceStats.value) return;
+        Object.assign(form, statsForm(sourceStats.value));
+        errors.value = {};
+        editing.value = true;
     }
 
     const mutation = putEntryStatsMutation();

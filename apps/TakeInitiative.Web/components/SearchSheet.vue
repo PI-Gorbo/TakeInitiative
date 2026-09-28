@@ -365,11 +365,15 @@
             return;
         }
         if (row.hit.entry) recentIds.value = rememberRecentEntry(storage(), props.campaignId, row.hit.entry.entry.id);
-        open.value = false;
         const target = hitTarget(props.campaignId, row.hit);
         // Step 21's search-only reference rows link out; the app never shows their content.
-        if (target.external) window.open(target.external, "_blank", "noopener");
-        else void navigateTo(target);
+        // The sheet stays open behind the new tab, so the same results are there on return.
+        if (target.external) {
+            window.open(target.external, "_blank", "noopener,noreferrer");
+            return;
+        }
+        open.value = false;
+        void navigateTo(target);
     }
 
     function addToWiki(hit: SearchReferenceHit) {
