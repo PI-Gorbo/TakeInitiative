@@ -22,7 +22,7 @@ which sits on 16e (#219). Each PR leaves the app runnable:
 |---|---|---|---|---|
 | 17a | `v2/17a-search-api` | Search index and query API | 16's app unchanged in the browser. `GET search` answers sections with snippets, per viewer, and the leak tests pass | [x] |
 | 17b | `v2/17b-search-sheet` | The search sheet | ⌘K and 🔍 search for real: sections, highlighted snippets, keyboard navigation, tappable rows on a phone, and every hit opens where it lives | [x] |
-| 17c | `v2/17c-search-actions` | Actions | The Actions section and `>`: create an entry, start the next session, post a note about X, go to. The step's Verify passes | [ ] |
+| 17c | `v2/17c-search-actions` | Actions | The Actions section and `>`: create an entry, start the next session, post a note about X, go to. The step's Verify passes | [x] |
 
 Combats (the COMBATS section and "⚔ Start combat") are step 18. Loose ends, as an
 action and as the entry matcher's second user, are step 19. The REFERENCE section is
@@ -73,7 +73,7 @@ Paths are relative to `apps/TakeInitiative.Api` (API), `apps/TakeInitiative.Api.
 
 **17c**
 - Web add `utils/searchActions.ts`, `components/Search/{SearchActionRow,CreateEntryRow}.vue`
-- Web modify `components/SearchSheet.vue`, `components/Search/SearchResults.vue`, `utils/search.ts` (the `>` scope)
+- Web modify `components/SearchSheet.vue`, `components/Search/SearchResults.vue` (an `action` slot), `utils/search.ts` (`action` rows, `actionRows`)
 - Web modify `components/Composer/Composer.vue` and `pages/app/campaigns/[campaignId]/index.vue` (`?compose=`)
 - Web add `tests/unit/searchActions.test.ts`
 
@@ -533,7 +533,7 @@ nouns the step puts into code and UI:
      read through the entry directory, so an entry now hidden or merged drops out). They
      are ordinary rows, so the arrows and Enter reach them. Under them, the hint "Search
      entries, notes, images and sessions. @ for entries, > for actions." 17c adds
-     actions here; until then `>` says "Actions arrive soon."
+     the default actions under the recents.
    - **Loading.** A thin bar under the input. The previous results stay, so the sheet
      never flashes empty.
    - **No results.** "Nothing found for "zanthor"."
@@ -583,57 +583,88 @@ nouns the step puts into code and UI:
 ### 17c. Actions
 
 1. **The registry** (`utils/searchActions.ts`, pure). Each action has an `id`, an
-   `icon`, a `label(context)`, `keywords`, `available(context)` and `run(context)`.
-   The context holds the campaign, the viewer's role, the current session's number
-   (from `GET sessions`), the query text, the entry directory, and the highlighted
-   entry hit.
+   `icon`, a `label(context)`, `keywords(context)`, `available(context)` and
+   `run(context)`. `run` does nothing itself: it answers what to do (`navigate` to a
+   target, `startSession` with a number, or `createEntry` with a name), and
+   `SearchSheet` does it. The context holds the campaign, the viewer's role, the next
+   session's number (current + 1 from `GET sessions`, or null until it loads), the
+   scope and the query text, the entry directory, and the entry hit.
 
    | Action | Shown when | Does |
    |---|---|---|
-   | ＋ Create entry "X" | the query is not the exact name or alias of an entry in the viewer's directory | 2 below |
-   | ✎ Post a note about Gundren | an entry hit is in the results (the top one, or the highlighted one) | `/app/campaigns/{cid}?about={entryId}` (15c) |
-   | ✎ New note mentioning "X" | the query has text | `?compose=@X`: the composer opens with `@X` and the caret at the end, so the `@` picker offers matches or Create (§7's "New note mentioning 'gund'") |
-   | ▶ Start Session N+1 | always (any member may, §3) | 3 below |
-   | Go to Campaign / Wiki / Combat | always | the tab |
+   | ＋ Create entry "X" | the query has text that is not the exact name or alias (ignoring case) of an entry in the viewer's directory | 2 below |
+   | ✎ Post a note about Gundren | an entry hit is in the results: the last one the cursor was on, else the top one | `/app/campaigns/{cid}?about={entryId}` (15c) |
+   | ✎ New note mentioning "X" | the query has text | `?compose=@X` (4 below): the composer opens with `@X`, the caret at the end and the `@` picker showing matches or Create (§7's "New note mentioning 'gund'") |
+   | ▶ Start Session N+1 | the sessions are loaded (any member may start one, §3) | 3 below |
+   | → Go to Campaign / Wiki / Combat | always | the tab |
    | Wiki: Characters (…Places, Factions, Items, Events, Other) | always | `wiki?kind=` (15c) |
    | Show recaps / images / my notes | always | `?filter=recaps`, `images` or `mine` (14e) |
 
-   - **Matching.** Labels and keywords are matched with `matchRank` and
-     `foldForMatch` (15d), so "start", "new session" and "s14" all find ▶ Start
-     Session 14.
-   - **Placement.** In `all` scope, Actions is the last section, with at most 4 rows
-     (§7's sketch). An empty input shows the defaults, with no Create row: Start
-     Session N+1, then the Go to actions. In `>` scope, every available action is listed, matched by the
-     rest of the input.
+   - The first three are the query's own (`fromQuery`): they are built from the text,
+     so they are not matched against it, and they are offered in the `all` and `@`
+     scopes only.
+   - **Matching.** The others' labels and keywords are matched with `matchRank` and
+     `foldForMatch` (15d), best rank first and registry order among equals, so "start",
+     "new session", "s14" and "session 14" all find ▶ Start Session 14.
+   - **Placement.** Actions is always the last section (`actionRows`, under an
+     ACTIONS header).
+     - `all`, empty input: Start Session N+1 and the three Go to actions, under the
+       recent entries. No Create row.
+     - `all` with text: Create, Post a note about, New note mentioning, then the
+       matched actions, **at most 4 rows** (§7's sketch). They show as soon as the
+       text is typed, before the hits arrive, and the cursor moves to the first hit when
+       they do.
+     - `@`: only the query's own actions (at most 3). The other actions are not about
+       entries.
+     - `>`: every available action except the query's own, matched by the rest of the
+       input, with no cap. None matching says "No actions match "x"."
+   - **Choosing.** A navigating action closes the sheet and goes there. The two ✎
+     actions hand the focus to the composer, so the sheet does not put it back on 🔍
+     as it closes.
 2. **Create entry** (`CreateEntryRow`).
    - The row shows the name, a kind chip and a visibility chip. The kind defaults to
-     Character, and the visibility to `Everyone`, as in the composer. On desktop, Tab
-     cycles the kind and Shift+Tab the visibility. On a phone, tapping the row shows
-     15d's `KindChips` and the visibility picker under it, and **Create** confirms.
-     Nothing is created by a single tap.
-   - It sends 15a's `POST entries { name, kind, visibility }`. Then it adds the entry
-     to the directory cache and opens its page.
+     Character, and the visibility to `Everyone`, as in the composer; both reset each
+     time the sheet opens. With the cursor on the row, Tab cycles the kind and
+     Shift+Tab the visibility (`cycleEntryKind`, `cycleEntryVisibility`), and Enter
+     creates. Desktop shows that as a hint under the row.
+   - A tap or a click only opens the row: 15d's `KindChips`, three visibility chips
+     and **Create** under it. Nothing is created by a single tap.
+   - Enter pressed while the search is still loading does nothing on the Create row, so
+     typing fast and pressing Enter never creates an entry that was not seen offered.
+   - It sends 15a's `POST entries { name, kind, visibility }`. The mutation adds the
+     entry to the directory cache, the entry goes into the recents, and its page opens.
    - 15a's 409 ("There is already an entry called …") names an entry the viewer can
-     see. The row shows it with a link to that entry. A hidden entry of the same name
-     does not block creation, and 15g's merge handles that later, so the action
-     reveals nothing.
+     see. The row shows the message with "Open {name}" linking to that entry (when the
+     directory has it). A hidden entry of the same name does not block creation, and
+     15g's merge handles that later, so the action reveals nothing.
 3. **Start Session N+1.** It sends 14's `POST sessions { number }` with the current
-   number + 1, then goes to the Campaign tab with the toast "Session 14 started". A
-   409 (another member was first) refetches the sessions and shows the server's
-   message. The gap prompt (14c) is unchanged.
-4. **`?compose=`** (on the Campaign page). The composer consumes it once, as it does
-   `about` (15c) and `share` (16e): with an empty composer, the text becomes the value
-   (at most 200 characters), the caret goes to the end, and the parameter is dropped.
-   A non-empty draft is never overwritten, and the value is dropped.
+   number + 1 (1 in a campaign with none), closes the sheet, goes to the Campaign tab
+   and toasts "Session 14 started". A 409 (another member was first) keeps the sheet
+   open and toasts the server's message; the mutation refetches the sessions, so the
+   row then offers the next number. The gap prompt (14c) is unchanged.
+4. **`?compose=`** (on the Campaign page; `composeFromQuery`, `composeFits`). The
+   composer consumes it once, as it does `about` (15c) and `share` (16e), and the page
+   drops the parameter. With an **empty** composer (no text, no images, no note being
+   edited) the text becomes the draft (at most 200 characters), and the TipTap editor
+   (`ComposerEditor`) is focused at the end. The focus is a transaction with the caret
+   right after `@X`, so TipTap's suggestion plugin opens the `@` picker on it, as if
+   `@X` had been typed: the matches, or Create "X". Otherwise the value is dropped with
+   a toast ("Your draft was kept." or "Finish editing the note first."). With no
+   session yet the composer is only its call to action, so the text waits in the
+   draft.
 5. **Mobile.** Actions are ordinary rows of at least 44 px. The Create row's chips
-   wrap, and the whole row stays above the keyboard (17b's padding).
+   wrap, and the whole row stays above the keyboard (17b's padding). iOS raises the
+   keyboard only for a focus made in the tap itself, so ✎ focuses the composer but the
+   keyboard may stay down until the text box is tapped.
 6. **Tests** (`tests/unit/searchActions.test.ts`):
-   - which actions are available for each query, role and state;
+   - which actions are available for each query, scope and state;
    - Create hidden on an exact name or alias match, and shown on a partial one;
-   - the Start Session number, with none loaded yet (hidden);
-   - `>` scope listing and matching;
+   - the Start Session number, and none while the sessions are not loaded (hidden);
+   - `>` scope listing and matching ("start", "new session", "s14", "session 14");
    - the ordering and the four-row cap;
-   - the `?compose=` rule: an empty composer only, 200 characters, dropped after use;
+   - the targets of Post a note about, New note mentioning, the tabs, kinds and
+     filters;
+   - the `?compose=` rule: an empty composer only, 200 characters;
    - kind and visibility cycling on the Create row.
 
 ## Verify
