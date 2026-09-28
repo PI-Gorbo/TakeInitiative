@@ -46,6 +46,10 @@ public static class CampaignHubMessages
     // Merge, claim and stats (step 15g).
     public const string EntryMerged = "entryMerged";
     public const string EntryStatsChanged = "entryStatsChanged";
+
+    // Combat (step 18a): each receiver's own redacted view, to the DM group and to each
+    // player's member group once the combat has started.
+    public const string CombatChanged = "combatChanged";
 }
 
 /// <summary>

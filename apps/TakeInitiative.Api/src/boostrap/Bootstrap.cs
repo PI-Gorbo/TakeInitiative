@@ -109,6 +109,16 @@ public static class Bootstrap
             // few thousand short strings.
             SearchSchema.AddEntryArticleVector(opts);
 
+            // Combat stream -> Combat document (step 18a). (CampaignId, Status) serves the Combat
+            // tab's list and the live banner, SessionId the combat cards in the stream, and the
+            // GIN index on EntryIds an entry's combats (18e), the way ArticleMentionIds is served.
+            opts.Projections.Snapshot<Combat>(SnapshotLifecycle.Inline);
+            opts.Schema.For<Combat>()
+                .Index(x => x.CampaignId)
+                .Index([x => x.CampaignId, x => x.Status])
+                .Index(x => x.SessionId)
+                .Index(x => x.EntryIds, idx => idx.Method = IndexMethod.gin);
+
             // Image documents (step 16a): storage bookkeeping, not an aggregate. Optimistic
             // concurrency makes two writers racing on one image (attaching it to two notes,
             // or attaching it while it is swept) a conflict for the loser. The correlation id

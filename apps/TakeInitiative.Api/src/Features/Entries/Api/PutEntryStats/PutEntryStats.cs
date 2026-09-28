@@ -38,6 +38,13 @@ public static class DiceExpressionRules
 {
     public static IRuleBuilderOptionsConditions<T, string?> DiceExpression<T>(this IRuleBuilder<T, string?> rule, Validator<T> validator)
         where T : class
+        => rule.DiceExpression(() => validator.Resolve<IDiceRoller>());
+
+    /// <summary>
+    /// The same check where there is no <see cref="Validator{T}"/> to resolve from, such as a
+    /// child rule (step 18a's combatants). <paramref name="dice"/> is called at validation time.
+    /// </summary>
+    public static IRuleBuilderOptionsConditions<T, string?> DiceExpression<T>(this IRuleBuilder<T, string?> rule, Func<IDiceRoller> dice)
         => rule.Custom((value, context) =>
         {
             if (string.IsNullOrWhiteSpace(value))
@@ -50,7 +57,7 @@ public static class DiceExpressionRules
                 context.AddFailure($"A dice expression can be at most {Stats.ExpressionMaxLength} characters long.");
                 return;
             }
-            var check = validator.Resolve<IDiceRoller>().Check(trimmed);
+            var check = dice().Check(trimmed);
             if (check.IsFailure)
             {
                 context.AddFailure(check.Error);

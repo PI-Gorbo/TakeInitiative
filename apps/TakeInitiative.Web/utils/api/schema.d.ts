@@ -596,6 +596,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/campaigns/{campaignId}/combats/{combatId}/combatants/{combatantId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["PutCombatant"];
+        post?: never;
+        delete: operations["DeleteCombatant"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/campaigns/{campaignId}/combats/{combatId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetCombat"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/campaigns/{campaignId}/combats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetCombats"];
+        put?: never;
+        post: operations["PostCombat"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/campaigns/{campaignId}/combats/{combatId}/combatants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["PostCombatants"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/campaigns/{campaignId}": {
         parameters: {
             query?: never;
@@ -1100,6 +1164,123 @@ export interface components {
         };
         PutEntryVisibilityRequest: {
             visibility: components["schemas"]["Visibility"];
+        };
+        CombatResponse: {
+            /** Format: guid */
+            id: string;
+            /** Format: guid */
+            campaignId: string;
+            /** Format: guid */
+            sessionId: string;
+            name: string;
+            status: components["schemas"]["CombatStatus"];
+            /** Format: int32 */
+            round: number;
+            /** Format: guid */
+            turnCombatantId?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            startedAt?: string | null;
+            /** Format: date-time */
+            finishedAt?: string | null;
+            combatants: components["schemas"]["CombatantResponse"][];
+        };
+        /** @enum {string} */
+        CombatStatus: "Draft" | "Active" | "Finished";
+        CombatantResponse: {
+            /** Format: guid */
+            id: string;
+            name: string;
+            /** Format: guid */
+            entryId?: string | null;
+            /** Format: guid */
+            ownerMemberId?: string | null;
+            /** Format: int32 */
+            initiative?: number | null;
+            waiting: boolean;
+            /** Format: int32 */
+            hp?: number | null;
+            /** Format: int32 */
+            maxHp?: number | null;
+            band?: components["schemas"]["HpBand"] | null;
+            /** Format: int32 */
+            ac?: number | null;
+            hidden: boolean;
+            playersSee: components["schemas"]["PlayersSee"];
+            conditions: components["schemas"]["Condition"][];
+            initiativeRoll?: string | null;
+        };
+        /** @enum {string} */
+        HpBand: "Healthy" | "Bloodied" | "Down";
+        /** @enum {string} */
+        PlayersSee: "Exact" | "Band" | "Nothing";
+        Condition: {
+            label: string;
+            note?: string | null;
+        };
+        DeleteCombatantRequest: Record<string, never>;
+        GetCombatRequest: Record<string, never>;
+        GetCombatsResponse: {
+            combats: components["schemas"]["CombatSummaryResponse"][];
+        };
+        CombatSummaryResponse: {
+            /** Format: guid */
+            id: string;
+            name: string;
+            status: components["schemas"]["CombatStatus"];
+            /** Format: int32 */
+            round: number;
+            /** Format: guid */
+            sessionId: string;
+            /** Format: int32 */
+            sessionNumber: number;
+            /** Format: int32 */
+            combatantCount: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            startedAt?: string | null;
+            /** Format: date-time */
+            finishedAt?: string | null;
+        };
+        GetCombatsRequest: Record<string, never>;
+        PostCombatRequest: {
+            name: string;
+        };
+        PostCombatantsRequest: {
+            combatants: components["schemas"]["CombatantRequest"][];
+        };
+        CombatantRequest: {
+            /** Format: guid */
+            entryId?: string | null;
+            name?: string | null;
+            /** Format: int32 */
+            count?: number | null;
+            initiativeRoll?: string | null;
+            maxHp?: string | null;
+            /** Format: int32 */
+            ac?: number | null;
+            hidden?: boolean | null;
+            playersSee?: components["schemas"]["PlayersSee"] | null;
+        };
+        PutCombatantRequest: {
+            name: string;
+            /** Format: int32 */
+            initiative?: number | null;
+            /** Format: int32 */
+            hp?: number | null;
+            /** Format: int32 */
+            maxHp?: number | null;
+            /** Format: int32 */
+            ac?: number | null;
+            hidden: boolean;
+            playersSee: components["schemas"]["PlayersSee"];
+            conditions: components["schemas"]["ConditionRequest"][];
+        };
+        ConditionRequest: {
+            label: string;
+            note?: string | null;
         };
         CampaignResponse: {
             /** Format: guid */
@@ -2667,6 +2848,242 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EntryResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PutCombatant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+                combatId: string;
+                combatantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PutCombatantRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CombatResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DeleteCombatant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+                combatId: string;
+                combatantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CombatResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GetCombat: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+                combatId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CombatResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GetCombats: {
+        parameters: {
+            query?: {
+                status?: string | null;
+            };
+            header?: never;
+            path: {
+                campaignId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetCombatsResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PostCombat: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostCombatRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CombatResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PostCombatants: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+                combatId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostCombatantsRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CombatResponse"];
                 };
             };
             /** @description Unauthorized */
