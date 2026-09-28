@@ -660,6 +660,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/campaigns/{campaignId}/entries/{entryId}/combats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetEntryCombats"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/campaigns/{campaignId}/combats/{combatId}/combatants": {
         parameters: {
             query?: never;
@@ -931,6 +947,33 @@ export interface components {
         SessionStreamSession: {
             session: components["schemas"]["SessionResponse"];
             notes: components["schemas"]["SessionNoteResponse"][];
+            combats: components["schemas"]["CombatCard"][];
+        };
+        CombatCard: {
+            /** Format: guid */
+            id: string;
+            /** Format: guid */
+            sessionId: string;
+            name: string;
+            status: components["schemas"]["CombatStatus"];
+            /** Format: int32 */
+            round: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            startedAt?: string | null;
+            /** Format: date-time */
+            finishedAt?: string | null;
+            combatants: components["schemas"]["CombatCardCombatant"][];
+        };
+        /** @enum {string} */
+        CombatStatus: "Draft" | "Active" | "Finished";
+        CombatCardCombatant: {
+            name: string;
+            /** Format: guid */
+            entryId?: string | null;
+            /** Format: int32 */
+            count: number;
         };
         GetSessionStreamRequest: Record<string, never>;
         /** @enum {string} */
@@ -1266,8 +1309,6 @@ export interface components {
             finishedAt?: string | null;
             combatants: components["schemas"]["CombatantResponse"][];
         };
-        /** @enum {string} */
-        CombatStatus: "Draft" | "Active" | "Finished";
         CombatantResponse: {
             /** Format: guid */
             id: string;
@@ -1341,6 +1382,15 @@ export interface components {
             finishedAt?: string | null;
         };
         GetCombatsRequest: Record<string, never>;
+        EntryCombatsResponse: {
+            combats: components["schemas"]["EntryCombat"][];
+        };
+        EntryCombat: {
+            combat: components["schemas"]["CombatCard"];
+            /** Format: int32 */
+            sessionNumber: number;
+        };
+        GetEntryCombatsRequest: Record<string, never>;
         PostCombatRequest: {
             name: string;
         };
@@ -3188,6 +3238,43 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CombatResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GetEntryCombats: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryCombatsResponse"];
                 };
             };
             /** @description Unauthorized */

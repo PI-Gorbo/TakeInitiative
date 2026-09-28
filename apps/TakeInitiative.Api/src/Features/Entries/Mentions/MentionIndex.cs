@@ -210,11 +210,11 @@ public static class MentionIndex
     /// <summary>
     /// "Mentions at least one of these ids": jsonb's <c>?|</c> ("has any of these strings as
     /// an element") on the same expression as the GIN index on the id list
-    /// (<see cref="SessionNote.MentionedEntryIds"/> or <see cref="Entry.ArticleMentionIds"/>),
-    /// so Postgres can use it. Marten's own translation of <c>Any(id =&gt; ids.Contains(id))</c>
+    /// (<see cref="SessionNote.MentionedEntryIds"/>, <see cref="Entry.ArticleMentionIds"/> or
+    /// <see cref="Combat.EntryIds"/>), so Postgres can use it. Marten's own translation of <c>Any(id =&gt; ids.Contains(id))</c>
     /// unnests every row in the table instead, so this is a raw SQL fragment.
     /// </summary>
-    private static Expression<Func<T, bool>> MentioningAny<T>(string field, IReadOnlyCollection<Guid> entryIds) where T : notnull
+    public static Expression<Func<T, bool>> MentioningAny<T>(string field, IReadOnlyCollection<Guid> entryIds) where T : notnull
     {
         var fragment = new MentionsAnyFragment(field, entryIds.Distinct().Select(id => id.ToString()).ToArray());
         return x => x.MatchesSql(fragment);
