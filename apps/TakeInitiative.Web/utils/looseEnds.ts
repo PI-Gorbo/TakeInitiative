@@ -68,6 +68,16 @@ export const LOOSE_END_KIND_LABELS: Record<LooseEndKind, string> = {
     EmptyArticle: "No summary",
 };
 
+/** "1 suggestion", "2 suggestions" (23d). */
+export const suggestionCountLabel = (count: number) => `${count} ${count === 1 ? "suggestion" : "suggestions"}`;
+
+/**
+ * A row's label: "Unlinked note", or "Unlinked note · 2 suggestions" once the suggestion model
+ * has found some (23d.7, §11a). Suggestions are not loose ends, so no count changes with them.
+ */
+export const looseEndRowLabel = (kind: LooseEndKind, suggestions = 0) =>
+    suggestions > 0 ? `${LOOSE_END_KIND_LABELS[kind]} · ${suggestionCountLabel(suggestions)}` : LOOSE_END_KIND_LABELS[kind];
+
 export const isNoteLooseEnd = (kind: LooseEndKind) => kind === "UnlinkedNote" || kind === "UntaggedImageNote";
 
 /** "1 mention", "7 mentions". */

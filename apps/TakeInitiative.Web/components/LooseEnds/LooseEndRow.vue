@@ -15,7 +15,7 @@
             <span
                 :id="`${rowId}-kind`"
                 class="font-semibold uppercase tracking-wide">
-                {{ LOOSE_END_KIND_LABELS[item.kind] }}
+                {{ looseEndRowLabel(item.kind, suggestions?.count ?? 0) }}
             </span>
             <NuxtLink
                 v-if="note && item.sessionNumber"
@@ -69,9 +69,16 @@
                 v-if="!resolved"
                 class="flex flex-wrap items-center gap-1.5">
                 <LooseEndsLinkSuggestions
-                    :suggestions="item.suggestions"
+                    :suggestions="suggestions?.links ?? item.suggestions"
                     :disabled="busy"
                     @link="link" />
+                <LooseEndsModelSuggestions
+                    v-if="suggestions"
+                    :suggestions="suggestions.model"
+                    :disabled="busy"
+                    @link="acceptMatch"
+                    @create="startCreate"
+                    @dismiss="(s) => modelSuggestions?.dismiss(s)" />
                 <Button
                     variant="ghost"
                     class="h-11 gap-1 px-2 text-muted-foreground md:h-8"
@@ -84,6 +91,14 @@
                     Edit
                 </Button>
             </div>
+            <SuggestionsCreateFromSuggestion
+                v-if="modelSuggestions"
+                v-model:open="creating"
+                :campaignId="campaignId"
+                :note="note"
+                :suggestion="createFrom"
+                :model="modelSuggestions.model"
+                @done="emit('resolved')" />
         </template>
 
         <!-- An entry of kind Other: the kind chips, one tap sets it. -->
@@ -147,11 +162,13 @@
     import { apiErrorMessage } from "~/utils/apiErrorParser";
     import { ENTRY_TIMELINE_ANCHOR, WRITE_ARTICLE, entryHref } from "~/utils/article";
     import { ENTRY_KINDS, ENTRY_KIND_ICONS } from "~/utils/entries";
-    import { LOOSE_END_KIND_LABELS, linkSpan, looseEndKey, mentionCountLabel } from "~/utils/looseEnds";
+    import { LOOSE_END_SUGGESTIONS } from "~/composables/useLooseEndSuggestions";
+    import { linkSpan, looseEndKey, looseEndRowLabel, mentionCountLabel } from "~/utils/looseEnds";
     import { NOTE_LINK_PARAM } from "~/utils/noteActions";
     import { putEntryKindMutation } from "~/utils/queries/entries";
     import { putNoteMutation } from "~/utils/queries/sessions";
     import { formatNoteTime } from "~/utils/sessionDates";
+    import { acceptBody, type LinkChip, type ModelSuggestion } from "~/utils/suggestions";
 
     const props = defineProps<{
         campaignId: string;
@@ -176,14 +193,27 @@
         query: { [NOTE_LINK_PARAM]: note.value?.id ?? "" },
     }));
 
+    // ✨ model suggestions (23d), from the page; none elsewhere or with the setting Off.
+    const modelSuggestions = inject(LOOSE_END_SUGGESTIONS, null);
+    const suggestions = computed(() => modelSuggestions?.forItem(props.item) ?? null);
+    const creating = ref(false);
+    const createFrom = ref<ModelSuggestion | null>(null);
+
     const putNote = putNoteMutation();
     const putKind = putEntryKindMutation();
     const busy = computed(() => putNote.isPending.value || putKind.isPending.value);
 
-    /** One tap: the span becomes a mention, the rest of the note is sent unchanged. */
-    async function link(suggestion: LinkSuggestion) {
+    /**
+     * One tap: the span becomes a mention, the rest of the note is sent unchanged. A chip the
+     * model also proposed for the same span records the model (23c), as its ✨ says.
+     */
+    async function link(suggestion: LinkSuggestion & Partial<Pick<LinkChip, "model">>) {
         const current = note.value;
         if (!current || busy.value) return;
+        const model = suggestion.model;
+        if (model && modelSuggestions && model.start === suggestion.start && model.length === suggestion.length) {
+            return accept({ start: suggestion.start, text: suggestion.text, confidence: model.confidence }, suggestion.entry.id);
+        }
         const text = linkSpan(current.text, suggestion, suggestion.entry.id);
         if (text === null) {
             toast.error(`“${suggestion.text}” is no longer in the note. Edit it to link it.`);
@@ -200,6 +230,33 @@
         } catch (error) {
             toast.error(apiErrorMessage(error, "Could not link the note."));
         }
+    }
+
+    /** "✨ Rellan → @Rellan Ashvale?": one tap links it, with the model on the edit (23c). */
+    function acceptMatch(s: ModelSuggestion) {
+        if (s.match) void accept(s, s.match.entry.id);
+    }
+
+    async function accept(s: Pick<ModelSuggestion, "start" | "text" | "confidence">, entryId: string) {
+        const current = note.value;
+        if (!current || busy.value || !modelSuggestions) return;
+        const body = acceptBody(current, s, entryId, modelSuggestions.model);
+        if (!body) {
+            toast.error(`“${s.text}” is no longer in the note. Edit it to link it.`);
+            return;
+        }
+        try {
+            await putNote.mutateAsync({ campaignId: props.campaignId, noteId: current.id, ...body });
+            emit("resolved");
+        } catch (error) {
+            toast.error(apiErrorMessage(error, "Could not link the note."));
+        }
+    }
+
+    /** "✨ Greyhollow Keep looks like a Place · + Create": nothing is created until the dialog's tap. */
+    function startCreate(s: ModelSuggestion) {
+        createFrom.value = s;
+        creating.value = true;
     }
 
     async function setKind(kind: EntryKind) {

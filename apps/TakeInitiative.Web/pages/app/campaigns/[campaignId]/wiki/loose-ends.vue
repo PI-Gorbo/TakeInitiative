@@ -2,7 +2,8 @@
     <PageContainer class="flex flex-col gap-3 px-4 py-4 pb-safe">
         <!-- Loose ends (design §5, 19e): the viewer's own to-dos, derived on every read.
              `?session={number}` narrows it to one session (a divider's 🧵 n), and
-             `?note={id}` marks one note's row (the 16c hint). Each row is resolved in place. -->
+             `?note={id}` marks one note's row (the 16c hint). Each row is resolved in place.
+             ✨ model suggestions (23d) join 19's link suggestions on the note rows. -->
         <NuxtLink
             :to="`/app/campaigns/${encodeURIComponent(campaignId)}/wiki`"
             class="-ml-2 flex h-11 w-fit items-center gap-1 rounded-md px-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground md:h-9">
@@ -25,6 +26,13 @@
                 <NuxtLink :to="looseEndsHref(campaignId)">All</NuxtLink>
             </Button>
         </div>
+
+        <SuggestionsFindSuggestionsButton
+            v-if="looseEndsQuery.data.value && suggestions.noteCount.value > 0"
+            :phase="suggestions.phase.value"
+            :noteCount="suggestions.noteCount.value"
+            :total="suggestions.total.value"
+            @retry="suggestions.retry" />
 
         <LoadingFallback
             v-if="!looseEndsQuery.data.value"
@@ -86,6 +94,8 @@
     const session = computed(() => sessionFromQuery(route.query[LOOSE_END_SESSION_PARAM]));
     const items = computed(() => itemsInSession(looseEndsQuery.data.value?.items ?? [], session.value));
     const heading = computed(() => looseEndsHeading(items.value.length, session.value));
+    // ✨ Suggestions (23d): as the device setting allows; the rows read them by `inject`.
+    const suggestions = useLooseEndSuggestions(campaignId, items);
     // The list keeps a just-resolved row for its ✓, so the empty state waits for it.
     const list = useTemplateRef<{ holding: boolean }>("list");
     const listHasHeld = computed(() => !!list.value?.holding);
