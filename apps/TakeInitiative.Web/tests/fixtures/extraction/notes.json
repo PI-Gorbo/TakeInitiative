@@ -1,0 +1,1706 @@
+[
+  {
+    "id": "s1",
+    "size": "short",
+    "text": "met rellan at the gates of Greyhollow Keep, and the Ember Court's spies watched from the wall.",
+    "gold": [
+      {
+        "start": 4,
+        "length": 6,
+        "text": "rellan",
+        "kind": "Character"
+      },
+      {
+        "start": 27,
+        "length": 15,
+        "text": "Greyhollow Keep",
+        "kind": "Place"
+      },
+      {
+        "start": 52,
+        "length": 11,
+        "text": "Ember Court",
+        "kind": "Faction"
+      }
+    ]
+  },
+  {
+    "id": "s2",
+    "size": "short",
+    "text": "Mara rolled 2d6+3 on the lock. Nothing. We camp on the Salt Road tonight and try again at dawn.",
+    "gold": [
+      {
+        "start": 0,
+        "length": 4,
+        "text": "Mara",
+        "kind": "Character"
+      },
+      {
+        "start": 55,
+        "length": 9,
+        "text": "Salt Road",
+        "kind": "Place"
+      }
+    ]
+  },
+  {
+    "id": "s3",
+    "size": "short",
+    "text": "pizza's here, break for 20 min. Everyone owes the DM a slice for that TPK joke. Back at quarter past.",
+    "gold": []
+  },
+  {
+    "id": "s4",
+    "size": "short",
+    "text": "Ash growled at the ash drifting over the field. Something burned here, and not that long ago either.",
+    "gold": [
+      {
+        "start": 0,
+        "length": 3,
+        "text": "Ash",
+        "kind": "Character"
+      }
+    ]
+  },
+  {
+    "id": "s5",
+    "size": "short",
+    "text": "**Loot:** the Moonfall Blade, 40 gp, a bent spoon. Vessa wants the blade. Nobody argued with her.",
+    "gold": [
+      {
+        "start": 14,
+        "length": 14,
+        "text": "Moonfall Blade",
+        "kind": "Item"
+      },
+      {
+        "start": 51,
+        "length": 5,
+        "text": "Vessa",
+        "kind": "Character"
+      }
+    ]
+  },
+  {
+    "id": "s6",
+    "size": "short",
+    "text": "Rolled initiative: 17, 12, 9, 4. Two goblins down in round one, one ran for the trees. We let it go.",
+    "gold": []
+  },
+  {
+    "id": "s7",
+    "size": "short",
+    "text": "@[Rellan Ashvale](entry:e1) paid the toll at Tollan Bridge with Stonejaw Clan coin. Suspicious, honestly.",
+    "gold": [
+      {
+        "start": 45,
+        "length": 13,
+        "text": "Tollan Bridge",
+        "kind": "Place"
+      },
+      {
+        "start": 64,
+        "length": 13,
+        "text": "Stonejaw Clan",
+        "kind": "Faction"
+      }
+    ]
+  },
+  {
+    "id": "s8",
+    "size": "short",
+    "text": "Brother Odo says the Night of Ash was no accident. He would not say more in front of Irzel.",
+    "gold": [
+      {
+        "start": 0,
+        "length": 11,
+        "text": "Brother Odo",
+        "kind": "Character"
+      },
+      {
+        "start": 21,
+        "length": 12,
+        "text": "Night of Ash",
+        "kind": "Event"
+      },
+      {
+        "start": 85,
+        "length": 5,
+        "text": "Irzel",
+        "kind": "Character"
+      }
+    ]
+  },
+  {
+    "id": "s9",
+    "size": "short",
+    "text": "- bought rope\n- sold the Orb of Whispers to a fence in Harrowmere\n- Sefa hates us now, fair enough",
+    "gold": [
+      {
+        "start": 25,
+        "length": 15,
+        "text": "Orb of Whispers",
+        "kind": "Item"
+      },
+      {
+        "start": 55,
+        "length": 10,
+        "text": "Harrowmere",
+        "kind": "Place"
+      },
+      {
+        "start": 68,
+        "length": 4,
+        "text": "Sefa",
+        "kind": "Character"
+      }
+    ]
+  },
+  {
+    "id": "s10",
+    "size": "short",
+    "text": "Remember to ask the DM about the long rest rules. Also bring dice next week, mine are cursed. Again.",
+    "gold": []
+  },
+  {
+    "id": "s11",
+    "size": "short",
+    "text": "Kettlewick is empty. Doors open, bread on the tables, no one home. Mara thinks it's the Gilded Hand.",
+    "gold": [
+      {
+        "start": 0,
+        "length": 10,
+        "text": "Kettlewick",
+        "kind": "Place"
+      },
+      {
+        "start": 67,
+        "length": 4,
+        "text": "Mara",
+        "kind": "Character"
+      },
+      {
+        "start": 88,
+        "length": 11,
+        "text": "Gilded Hand",
+        "kind": "Faction"
+      }
+    ]
+  },
+  {
+    "id": "s12",
+    "size": "short",
+    "text": "Captain Dunmore gave us a writ for the Drowned Library. We leave at first light, weather permitting.",
+    "gold": [
+      {
+        "start": 0,
+        "length": 15,
+        "text": "Captain Dunmore",
+        "kind": "Character"
+      },
+      {
+        "start": 39,
+        "length": 15,
+        "text": "Drowned Library",
+        "kind": "Place"
+      }
+    ]
+  },
+  {
+    "id": "s13",
+    "size": "short",
+    "text": "the Cinder Crown is real. Odo saw it in a dream and woke up with burned palms. Creepy stuff.",
+    "gold": [
+      {
+        "start": 4,
+        "length": 12,
+        "text": "Cinder Crown",
+        "kind": "Item"
+      },
+      {
+        "start": 26,
+        "length": 3,
+        "text": "Odo",
+        "kind": "Character"
+      }
+    ]
+  },
+  {
+    "id": "s14",
+    "size": "short",
+    "text": "Varn still has scars from the Siege of Varn. Walls patched with cart wood and old doors.",
+    "gold": [
+      {
+        "start": 0,
+        "length": 4,
+        "text": "Varn",
+        "kind": "Place"
+      },
+      {
+        "start": 30,
+        "length": 13,
+        "text": "Siege of Varn",
+        "kind": "Event"
+      }
+    ]
+  },
+  {
+    "id": "s15",
+    "size": "short",
+    "text": "we owe the Pale Lantern a favour now. vessa is not happy about it. Neither am I, honestly.",
+    "gold": [
+      {
+        "start": 11,
+        "length": 12,
+        "text": "Pale Lantern",
+        "kind": "Faction"
+      },
+      {
+        "start": 38,
+        "length": 5,
+        "text": "vessa",
+        "kind": "Character"
+      }
+    ]
+  },
+  {
+    "id": "t1",
+    "size": "typical",
+    "text": "Session opened in Harrowmere. Rellan met us at the docks with a crate he wouldn't open, and Captain Irzel Dunmore had the harbour watch looking the other way. The crate ticked. **Nobody** asked. We rowed out to the Drowned Library at dusk and found the east stair flooded to the knee. Mara found a door marked with the Gilded Hand's sigil and refused to go near it. Good instinct.",
+    "gold": [
+      {
+        "start": 18,
+        "length": 10,
+        "text": "Harrowmere",
+        "kind": "Place"
+      },
+      {
+        "start": 30,
+        "length": 6,
+        "text": "Rellan",
+        "kind": "Character"
+      },
+      {
+        "start": 92,
+        "length": 21,
+        "text": "Captain Irzel Dunmore",
+        "kind": "Character"
+      },
+      {
+        "start": 215,
+        "length": 15,
+        "text": "Drowned Library",
+        "kind": "Place"
+      },
+      {
+        "start": 285,
+        "length": 4,
+        "text": "Mara",
+        "kind": "Character"
+      },
+      {
+        "start": 319,
+        "length": 11,
+        "text": "Gilded Hand",
+        "kind": "Faction"
+      }
+    ]
+  },
+  {
+    "id": "t2",
+    "size": "typical",
+    "text": "Long talk with Lady Sefa Morrow about the Long Winter. She was a girl in Kettlewick when the snow came and didn't leave for three years. Her father sold the family's Skyglass Compass for grain, and she has been trying to buy it back ever since. She thinks the Stonejaw Clan has it now. We promised to ask around. Vessa rolled a 3 on insight, so who knows if any of it is true.",
+    "gold": [
+      {
+        "start": 15,
+        "length": 16,
+        "text": "Lady Sefa Morrow",
+        "kind": "Character"
+      },
+      {
+        "start": 42,
+        "length": 11,
+        "text": "Long Winter",
+        "kind": "Event"
+      },
+      {
+        "start": 73,
+        "length": 10,
+        "text": "Kettlewick",
+        "kind": "Place"
+      },
+      {
+        "start": 166,
+        "length": 16,
+        "text": "Skyglass Compass",
+        "kind": "Item"
+      },
+      {
+        "start": 260,
+        "length": 13,
+        "text": "Stonejaw Clan",
+        "kind": "Faction"
+      },
+      {
+        "start": 313,
+        "length": 5,
+        "text": "Vessa",
+        "kind": "Character"
+      }
+    ]
+  },
+  {
+    "id": "t3",
+    "size": "typical",
+    "text": "Combat notes: the wight hit Odo twice (14 and 9 damage), then Ash dragged it off him. Mara cast bless, I missed everything. 1d8+2, 1d8+2, 1d8+2, all under 5. The wight dropped a ring of black iron with a tiny lantern stamped inside it. Probably Pale Lantern work? Keep it, don't wear it. Loot split: 60 gp each, the ring stays with Odo.",
+    "gold": [
+      {
+        "start": 28,
+        "length": 3,
+        "text": "Odo",
+        "kind": "Character"
+      },
+      {
+        "start": 62,
+        "length": 3,
+        "text": "Ash",
+        "kind": "Character"
+      },
+      {
+        "start": 86,
+        "length": 4,
+        "text": "Mara",
+        "kind": "Character"
+      },
+      {
+        "start": 245,
+        "length": 12,
+        "text": "Pale Lantern",
+        "kind": "Faction"
+      },
+      {
+        "start": 332,
+        "length": 3,
+        "text": "Odo",
+        "kind": "Character"
+      }
+    ]
+  },
+  {
+    "id": "t4",
+    "size": "typical",
+    "text": "Quiet day. Shopping in town, argued about whether to buy a cart, ended up buying a mule instead. We named her Biscuit after a long vote. Next week we head north along the Salt Road if the weather holds. Everyone is level 4 now, so remember to update hit points and pick new spells before we start. The mule already bit the paladin twice, which everyone agrees is a good sign.",
+    "gold": [
+      {
+        "start": 110,
+        "length": 7,
+        "text": "Biscuit",
+        "kind": "Character"
+      },
+      {
+        "start": 171,
+        "length": 9,
+        "text": "Salt Road",
+        "kind": "Place"
+      }
+    ]
+  },
+  {
+    "id": "t5",
+    "size": "typical",
+    "text": "The Ember Court sent a letter. Wax seal, red ribbon, very polite, very threatening. They want the Moonfall Blade back by the new moon or they will 'consider Greyhollow Keep forfeit'. Rellan laughed, then stopped laughing when he read the second page. Apparently the blade was stolen on the Night of Ash, and they think we know who did it. We do. It was Vessa.",
+    "gold": [
+      {
+        "start": 4,
+        "length": 11,
+        "text": "Ember Court",
+        "kind": "Faction"
+      },
+      {
+        "start": 98,
+        "length": 14,
+        "text": "Moonfall Blade",
+        "kind": "Item"
+      },
+      {
+        "start": 157,
+        "length": 15,
+        "text": "Greyhollow Keep",
+        "kind": "Place"
+      },
+      {
+        "start": 183,
+        "length": 6,
+        "text": "Rellan",
+        "kind": "Character"
+      },
+      {
+        "start": 290,
+        "length": 12,
+        "text": "Night of Ash",
+        "kind": "Event"
+      },
+      {
+        "start": 353,
+        "length": 5,
+        "text": "Vessa",
+        "kind": "Character"
+      }
+    ]
+  },
+  {
+    "id": "t6",
+    "size": "typical",
+    "text": "## Recap\n\nWe crossed Tollan Bridge at noon. The toll keeper, a dwarf called Hobb, charged us double because Mara insulted his beard in session 12. Fair. On the far side the road splits: west to Varn, north to the Stonejaw Clan holds. We went west. Rain the whole way. Brother Odo prayed for dry socks and got a nat 20, so now his socks are dry and ours are not.",
+    "gold": [
+      {
+        "start": 21,
+        "length": 13,
+        "text": "Tollan Bridge",
+        "kind": "Place"
+      },
+      {
+        "start": 76,
+        "length": 4,
+        "text": "Hobb",
+        "kind": "Character"
+      },
+      {
+        "start": 108,
+        "length": 4,
+        "text": "Mara",
+        "kind": "Character"
+      },
+      {
+        "start": 194,
+        "length": 4,
+        "text": "Varn",
+        "kind": "Place"
+      },
+      {
+        "start": 213,
+        "length": 13,
+        "text": "Stonejaw Clan",
+        "kind": "Faction"
+      },
+      {
+        "start": 268,
+        "length": 11,
+        "text": "Brother Odo",
+        "kind": "Character"
+      }
+    ]
+  },
+  {
+    "id": "t7",
+    "size": "typical",
+    "text": "met with @[Lady Sefa Morrow](entry:e24) and @[Rellan Ashvale](entry:e1) at the inn. Sefa wants us to find the Skyglass Compass before the Harvest Moot, when the Stonejaw Clan trades in Kettlewick. rellan will come along. He says he knows a shortcut through the old mines under Greyhollow Keep. He does not. We got lost for six hours.",
+    "gold": [
+      {
+        "start": 84,
+        "length": 4,
+        "text": "Sefa",
+        "kind": "Character"
+      },
+      {
+        "start": 110,
+        "length": 16,
+        "text": "Skyglass Compass",
+        "kind": "Item"
+      },
+      {
+        "start": 138,
+        "length": 12,
+        "text": "Harvest Moot",
+        "kind": "Event"
+      },
+      {
+        "start": 161,
+        "length": 13,
+        "text": "Stonejaw Clan",
+        "kind": "Faction"
+      },
+      {
+        "start": 185,
+        "length": 10,
+        "text": "Kettlewick",
+        "kind": "Place"
+      },
+      {
+        "start": 197,
+        "length": 6,
+        "text": "rellan",
+        "kind": "Character"
+      },
+      {
+        "start": 277,
+        "length": 15,
+        "text": "Greyhollow Keep",
+        "kind": "Place"
+      }
+    ]
+  },
+  {
+    "id": "t8",
+    "size": "typical",
+    "text": "Irzel is lying to us. Three things don't add up:\n1. The watch log says the gate was locked all night.\n2. Ash tracked the thief to the harbour, not the gate.\n3. The Gilded Hand paid Irzel's bar tab the next morning.\nWe are going to confront her tomorrow, carefully. Vessa wants to just stab someone. Outvoted 3 to 1.",
+    "gold": [
+      {
+        "start": 0,
+        "length": 5,
+        "text": "Irzel",
+        "kind": "Character"
+      },
+      {
+        "start": 105,
+        "length": 3,
+        "text": "Ash",
+        "kind": "Character"
+      },
+      {
+        "start": 164,
+        "length": 11,
+        "text": "Gilded Hand",
+        "kind": "Faction"
+      },
+      {
+        "start": 181,
+        "length": 5,
+        "text": "Irzel",
+        "kind": "Character"
+      },
+      {
+        "start": 265,
+        "length": 5,
+        "text": "Vessa",
+        "kind": "Character"
+      }
+    ]
+  },
+  {
+    "id": "t9",
+    "size": "typical",
+    "text": "The Order of the Pale Lantern holds a chapel in the ruins east of Harrowmere. Six knights, one old priest, lots of candles. They say the Cinder Crown was forged during the Siege of Varn and carried out of the city by a knight named Aldous Venn, who never came back. The priest gave Odo a map. The map is mostly blank. Priest says 'the blank parts are the important parts'. Great.",
+    "gold": [
+      {
+        "start": 4,
+        "length": 25,
+        "text": "Order of the Pale Lantern",
+        "kind": "Faction"
+      },
+      {
+        "start": 66,
+        "length": 10,
+        "text": "Harrowmere",
+        "kind": "Place"
+      },
+      {
+        "start": 137,
+        "length": 12,
+        "text": "Cinder Crown",
+        "kind": "Item"
+      },
+      {
+        "start": 172,
+        "length": 13,
+        "text": "Siege of Varn",
+        "kind": "Event"
+      },
+      {
+        "start": 232,
+        "length": 11,
+        "text": "Aldous Venn",
+        "kind": "Character"
+      },
+      {
+        "start": 282,
+        "length": 3,
+        "text": "Odo",
+        "kind": "Character"
+      }
+    ]
+  },
+  {
+    "id": "t10",
+    "size": "typical",
+    "text": "Short session, two players out. The rest of us did downtime in Kettlewick. Mara brewed potions (2 successes, 1 fail that smells like feet). I trained with the smith's daughter, Tilly, who is better with a hammer than I am with a sword. Ash slept by the fire all day. Honestly the best session in a while. No one died, no one got cursed, and the bread was fresh.",
+    "gold": [
+      {
+        "start": 63,
+        "length": 10,
+        "text": "Kettlewick",
+        "kind": "Place"
+      },
+      {
+        "start": 75,
+        "length": 4,
+        "text": "Mara",
+        "kind": "Character"
+      },
+      {
+        "start": 177,
+        "length": 5,
+        "text": "Tilly",
+        "kind": "Character"
+      },
+      {
+        "start": 236,
+        "length": 3,
+        "text": "Ash",
+        "kind": "Character"
+      }
+    ]
+  },
+  {
+    "id": "t11",
+    "size": "typical",
+    "text": "Things we know about the Night of Ash:\n- it happened eleven years ago\n- Greyhollow Keep burned for three days\n- the Ember Court blamed the Stonejaw Clan\n- the Stonejaw Clan blamed the Ember Court\n- Rellan was there, and won't talk about it\nOdd that both sides blame each other and neither has proof. Somebody else lit that fire.",
+    "gold": [
+      {
+        "start": 25,
+        "length": 12,
+        "text": "Night of Ash",
+        "kind": "Event"
+      },
+      {
+        "start": 72,
+        "length": 15,
+        "text": "Greyhollow Keep",
+        "kind": "Place"
+      },
+      {
+        "start": 116,
+        "length": 11,
+        "text": "Ember Court",
+        "kind": "Faction"
+      },
+      {
+        "start": 139,
+        "length": 13,
+        "text": "Stonejaw Clan",
+        "kind": "Faction"
+      },
+      {
+        "start": 159,
+        "length": 13,
+        "text": "Stonejaw Clan",
+        "kind": "Faction"
+      },
+      {
+        "start": 184,
+        "length": 11,
+        "text": "Ember Court",
+        "kind": "Faction"
+      },
+      {
+        "start": 198,
+        "length": 6,
+        "text": "Rellan",
+        "kind": "Character"
+      }
+    ]
+  },
+  {
+    "id": "t12",
+    "size": "typical",
+    "text": "Dice were cold tonight. I rolled four 1s in a row and Vessa's player rolled a 20 on a 1d20+7 stealth check, which was wasted because we were already hiding. The fight at the mill was ugly: two cultists, one ogre, one very angry miller. We saved the miller. The ogre's name was Grumm, according to the tattoo on its arm. RIP Grumm.",
+    "gold": [
+      {
+        "start": 54,
+        "length": 5,
+        "text": "Vessa",
+        "kind": "Character"
+      },
+      {
+        "start": 277,
+        "length": 5,
+        "text": "Grumm",
+        "kind": "Character"
+      },
+      {
+        "start": 324,
+        "length": 5,
+        "text": "Grumm",
+        "kind": "Character"
+      }
+    ]
+  },
+  {
+    "id": "t13",
+    "size": "typical",
+    "text": "The Drowned Library, level two. Water to the waist. Mara found a shelf of dry books behind a glass wall, including a ledger from the Long Winter listing grain sold to Harrowmere. One entry says: '40 sacks, paid with a compass'. The Skyglass Compass? Has to be. Brother Odo copied the page. We left before the tide came back in.",
+    "gold": [
+      {
+        "start": 4,
+        "length": 15,
+        "text": "Drowned Library",
+        "kind": "Place"
+      },
+      {
+        "start": 52,
+        "length": 4,
+        "text": "Mara",
+        "kind": "Character"
+      },
+      {
+        "start": 133,
+        "length": 11,
+        "text": "Long Winter",
+        "kind": "Event"
+      },
+      {
+        "start": 167,
+        "length": 10,
+        "text": "Harrowmere",
+        "kind": "Place"
+      },
+      {
+        "start": 232,
+        "length": 16,
+        "text": "Skyglass Compass",
+        "kind": "Item"
+      },
+      {
+        "start": 261,
+        "length": 11,
+        "text": "Brother Odo",
+        "kind": "Character"
+      }
+    ]
+  },
+  {
+    "id": "t14",
+    "size": "typical",
+    "text": "Captain Irzel Dunmore confessed. She did take money from the Gilded Hand, but only to keep her brother out of prison. She gave us the name of their contact: a fence called Moss who works out of the fish market. Moss is also a common word so write it with a capital M. We let Irzel go. Vessa sulked for the rest of the night.",
+    "gold": [
+      {
+        "start": 0,
+        "length": 21,
+        "text": "Captain Irzel Dunmore",
+        "kind": "Character"
+      },
+      {
+        "start": 61,
+        "length": 11,
+        "text": "Gilded Hand",
+        "kind": "Faction"
+      },
+      {
+        "start": 172,
+        "length": 4,
+        "text": "Moss",
+        "kind": "Character"
+      },
+      {
+        "start": 211,
+        "length": 4,
+        "text": "Moss",
+        "kind": "Character"
+      },
+      {
+        "start": 275,
+        "length": 5,
+        "text": "Irzel",
+        "kind": "Character"
+      },
+      {
+        "start": 285,
+        "length": 5,
+        "text": "Vessa",
+        "kind": "Character"
+      }
+    ]
+  },
+  {
+    "id": "t15",
+    "size": "typical",
+    "text": "Travel day on the Salt Road. Random encounter: a merchant caravan from Varn with a broken axle. We helped fix it (DC 12, success) and they gave us a cask of wine and a rumour. The rumour: the Ember Court is hiring sellswords in Varn. Lots of them, and paying in advance. The wine was bad. Odo drank it anyway and regretted it by morning.",
+    "gold": [
+      {
+        "start": 18,
+        "length": 9,
+        "text": "Salt Road",
+        "kind": "Place"
+      },
+      {
+        "start": 71,
+        "length": 4,
+        "text": "Varn",
+        "kind": "Place"
+      },
+      {
+        "start": 192,
+        "length": 11,
+        "text": "Ember Court",
+        "kind": "Faction"
+      },
+      {
+        "start": 228,
+        "length": 4,
+        "text": "Varn",
+        "kind": "Place"
+      },
+      {
+        "start": 289,
+        "length": 3,
+        "text": "Odo",
+        "kind": "Character"
+      }
+    ]
+  },
+  {
+    "id": "t16",
+    "size": "typical",
+    "text": "OOC: next session is on the 14th, not the 7th, because of the holiday. Bring snacks, it's Priya's turn for drinks. Josh is doing the battle map for the library dungeon and asked for more time. Also a reminder that we agreed on no phones at the table during combat. It slows everything down. Last week's fight took almost two hours for four rounds. Let's keep it snappy.",
+    "gold": []
+  },
+  {
+    "id": "t17",
+    "size": "typical",
+    "text": "Rellan Ashvale told us the truth tonight. He was a squire at Greyhollow Keep on the Night of Ash, and he opened the postern gate for someone in a red cloak. He never saw a face. He thinks it was someone from the Ember Court, and he has spent eleven years trying to prove it. Mara believes him. I'm not sure. The Moonfall Blade was his lord's sword.",
+    "gold": [
+      {
+        "start": 0,
+        "length": 14,
+        "text": "Rellan Ashvale",
+        "kind": "Character"
+      },
+      {
+        "start": 61,
+        "length": 15,
+        "text": "Greyhollow Keep",
+        "kind": "Place"
+      },
+      {
+        "start": 84,
+        "length": 12,
+        "text": "Night of Ash",
+        "kind": "Event"
+      },
+      {
+        "start": 212,
+        "length": 11,
+        "text": "Ember Court",
+        "kind": "Faction"
+      },
+      {
+        "start": 275,
+        "length": 4,
+        "text": "Mara",
+        "kind": "Character"
+      },
+      {
+        "start": 312,
+        "length": 14,
+        "text": "Moonfall Blade",
+        "kind": "Item"
+      }
+    ]
+  },
+  {
+    "id": "t18",
+    "size": "typical",
+    "text": "Loot, finally:\n- **Orb of Whispers** (whispers secrets, DM says roll a d6 every dawn)\n- 3 potions of healing\n- a deed to a farm near Kettlewick\n- a silver key with the Pale Lantern mark\nWe sold nothing. Odo wants the orb destroyed; Vessa wants to sell it; I want to hear what it says first.",
+    "gold": [
+      {
+        "start": 19,
+        "length": 15,
+        "text": "Orb of Whispers",
+        "kind": "Item"
+      },
+      {
+        "start": 133,
+        "length": 10,
+        "text": "Kettlewick",
+        "kind": "Place"
+      },
+      {
+        "start": 168,
+        "length": 12,
+        "text": "Pale Lantern",
+        "kind": "Faction"
+      },
+      {
+        "start": 203,
+        "length": 3,
+        "text": "Odo",
+        "kind": "Character"
+      },
+      {
+        "start": 232,
+        "length": 5,
+        "text": "Vessa",
+        "kind": "Character"
+      }
+    ]
+  },
+  {
+    "id": "t19",
+    "size": "typical",
+    "text": "Went to the Harvest Moot in Kettlewick. Pie contest, caber toss, a bard who only knew two songs. Biscuit the mule won a ribbon for 'most stubborn'. The Stonejaw Clan traders brought iron and furs and asked, very casually, whether anyone had seen a compass with a glass face. Lady Sefa went pale. We now think the traders do not have it either.",
+    "gold": [
+      {
+        "start": 12,
+        "length": 12,
+        "text": "Harvest Moot",
+        "kind": "Event"
+      },
+      {
+        "start": 28,
+        "length": 10,
+        "text": "Kettlewick",
+        "kind": "Place"
+      },
+      {
+        "start": 97,
+        "length": 7,
+        "text": "Biscuit",
+        "kind": "Character"
+      },
+      {
+        "start": 152,
+        "length": 13,
+        "text": "Stonejaw Clan",
+        "kind": "Faction"
+      },
+      {
+        "start": 275,
+        "length": 9,
+        "text": "Lady Sefa",
+        "kind": "Character"
+      }
+    ]
+  },
+  {
+    "id": "t20",
+    "size": "typical",
+    "text": "the siege tunnels under varn are older than the city. ash found a way in by following the rats. Inside: old murals of a crowned figure holding fire, which must be the Cinder Crown, and a wall of names. One of them was Aldous Venn. Brother Odo recognised the handwriting from the priest's map. So the map was drawn down here, by him.",
+    "gold": [
+      {
+        "start": 24,
+        "length": 4,
+        "text": "varn",
+        "kind": "Place"
+      },
+      {
+        "start": 54,
+        "length": 3,
+        "text": "ash",
+        "kind": "Character"
+      },
+      {
+        "start": 167,
+        "length": 12,
+        "text": "Cinder Crown",
+        "kind": "Item"
+      },
+      {
+        "start": 218,
+        "length": 11,
+        "text": "Aldous Venn",
+        "kind": "Character"
+      },
+      {
+        "start": 231,
+        "length": 11,
+        "text": "Brother Odo",
+        "kind": "Character"
+      }
+    ]
+  },
+  {
+    "id": "l1",
+    "size": "long",
+    "text": "# Session 14 recap\n\nWe started in Harrowmere, where Captain Irzel Dunmore was waiting at the docks with bad news: the Drowned Library had flooded again, and the Gilded Hand had been seen rowing out to it at night. Rellan insisted we go immediately. Mara insisted we eat first. We ate first.\n\nThe row out took an hour. The water around the library was black and very still, and Ash would not stop growling at it. Inside, level one was as we left it, but level two had a new door, freshly cut, with the Hand's sigil burned into the frame. Behind it: three of their agents, a crate of stolen ledgers and a very surprised clerk named Pim.\n\nCombat went fine. Vessa took one out before initiative (surprise round, 3d6 sneak attack, 14 damage), Brother Odo held the door, and I missed twice before landing a hit that ended it. Pim surrendered on the spot and offered to tell us everything in exchange for a boat home.\n\nWhat Pim told us:\n- the Hand is buying every ledger from the Long Winter they can find\n- they are looking for one sale in particular: the Skyglass Compass\n- their buyer is someone in the Ember Court, but Pim doesn't know who\n\nWe took the ledgers. Mara thinks the compass is the key to finding the Cinder Crown, because the priest's blank map only makes sense if you read it with something that points at more than north. Rellan went quiet at the mention of the Court. We rowed back after midnight, soaked, and slept in the harbour master's loft.\n\nNext time: read the ledgers, find the compass, and figure out what the Court wants with it.",
+    "gold": [
+      {
+        "start": 34,
+        "length": 10,
+        "text": "Harrowmere",
+        "kind": "Place"
+      },
+      {
+        "start": 52,
+        "length": 21,
+        "text": "Captain Irzel Dunmore",
+        "kind": "Character"
+      },
+      {
+        "start": 118,
+        "length": 15,
+        "text": "Drowned Library",
+        "kind": "Place"
+      },
+      {
+        "start": 161,
+        "length": 11,
+        "text": "Gilded Hand",
+        "kind": "Faction"
+      },
+      {
+        "start": 214,
+        "length": 6,
+        "text": "Rellan",
+        "kind": "Character"
+      },
+      {
+        "start": 249,
+        "length": 4,
+        "text": "Mara",
+        "kind": "Character"
+      },
+      {
+        "start": 377,
+        "length": 3,
+        "text": "Ash",
+        "kind": "Character"
+      },
+      {
+        "start": 630,
+        "length": 3,
+        "text": "Pim",
+        "kind": "Character"
+      },
+      {
+        "start": 654,
+        "length": 5,
+        "text": "Vessa",
+        "kind": "Character"
+      },
+      {
+        "start": 738,
+        "length": 11,
+        "text": "Brother Odo",
+        "kind": "Character"
+      },
+      {
+        "start": 820,
+        "length": 3,
+        "text": "Pim",
+        "kind": "Character"
+      },
+      {
+        "start": 917,
+        "length": 3,
+        "text": "Pim",
+        "kind": "Character"
+      },
+      {
+        "start": 973,
+        "length": 11,
+        "text": "Long Winter",
+        "kind": "Event"
+      },
+      {
+        "start": 1050,
+        "length": 16,
+        "text": "Skyglass Compass",
+        "kind": "Item"
+      },
+      {
+        "start": 1099,
+        "length": 11,
+        "text": "Ember Court",
+        "kind": "Faction"
+      },
+      {
+        "start": 1116,
+        "length": 3,
+        "text": "Pim",
+        "kind": "Character"
+      },
+      {
+        "start": 1159,
+        "length": 4,
+        "text": "Mara",
+        "kind": "Character"
+      },
+      {
+        "start": 1209,
+        "length": 12,
+        "text": "Cinder Crown",
+        "kind": "Item"
+      },
+      {
+        "start": 1333,
+        "length": 6,
+        "text": "Rellan",
+        "kind": "Character"
+      }
+    ]
+  },
+  {
+    "id": "l2",
+    "size": "long",
+    "text": "## What we know about the Cinder Crown\n\nCollected from @[Brother Odo](entry:e9)'s notes, the priest at the chapel and the murals under Varn.\n\n1. It was made during the Siege of Varn, by smiths who were paid in grain, not coin. That was the year before the Long Winter.\n2. A knight of the Order of the Pale Lantern, Aldous Venn, carried it out of the city through the tunnels. His name is on the wall of names.\n3. The Ember Court claims the crown belongs to them, because the Court's founder, Queen Maelis, paid for the siege. Nobody outside the Court believes this.\n4. It burns anyone who wears it without the right to. Odo's dream suggests that 'right' is about blood, not about claims.\n5. The Moonfall Blade and the crown were forged in the same week. The blade is the crown's opposite: it cools, the crown burns.\n\n**Open questions**\n\n- Where did Aldous Venn go after the tunnels? The murals stop at a bridge. Maybe Tollan Bridge?\n- Why does the Gilded Hand care? They are merchants, not kings.\n- Does Rellan know more than he is saying? He flinched when Mara said 'the crown burns'.\n- Is the Skyglass Compass really needed to read the map, or is that just Mara's theory?\n\nThe DM smiled when we asked question 4. That's never good.\n\nTable note: next session starts at 6, not 7. Bring the dice bag you keep forgetting.",
+    "gold": [
+      {
+        "start": 26,
+        "length": 12,
+        "text": "Cinder Crown",
+        "kind": "Item"
+      },
+      {
+        "start": 135,
+        "length": 4,
+        "text": "Varn",
+        "kind": "Place"
+      },
+      {
+        "start": 168,
+        "length": 13,
+        "text": "Siege of Varn",
+        "kind": "Event"
+      },
+      {
+        "start": 256,
+        "length": 11,
+        "text": "Long Winter",
+        "kind": "Event"
+      },
+      {
+        "start": 288,
+        "length": 25,
+        "text": "Order of the Pale Lantern",
+        "kind": "Faction"
+      },
+      {
+        "start": 315,
+        "length": 11,
+        "text": "Aldous Venn",
+        "kind": "Character"
+      },
+      {
+        "start": 417,
+        "length": 11,
+        "text": "Ember Court",
+        "kind": "Faction"
+      },
+      {
+        "start": 492,
+        "length": 12,
+        "text": "Queen Maelis",
+        "kind": "Character"
+      },
+      {
+        "start": 620,
+        "length": 3,
+        "text": "Odo",
+        "kind": "Character"
+      },
+      {
+        "start": 695,
+        "length": 14,
+        "text": "Moonfall Blade",
+        "kind": "Item"
+      },
+      {
+        "start": 849,
+        "length": 11,
+        "text": "Aldous Venn",
+        "kind": "Character"
+      },
+      {
+        "start": 918,
+        "length": 13,
+        "text": "Tollan Bridge",
+        "kind": "Place"
+      },
+      {
+        "start": 948,
+        "length": 11,
+        "text": "Gilded Hand",
+        "kind": "Faction"
+      },
+      {
+        "start": 1004,
+        "length": 6,
+        "text": "Rellan",
+        "kind": "Character"
+      },
+      {
+        "start": 1057,
+        "length": 4,
+        "text": "Mara",
+        "kind": "Character"
+      },
+      {
+        "start": 1095,
+        "length": 16,
+        "text": "Skyglass Compass",
+        "kind": "Item"
+      },
+      {
+        "start": 1159,
+        "length": 4,
+        "text": "Mara",
+        "kind": "Character"
+      }
+    ]
+  },
+  {
+    "id": "l3",
+    "size": "long",
+    "text": "Big fight at Tollan Bridge. Long one, so notes in order.\n\nRound 1: the Stonejaw Clan raiders came up both ends of the bridge at once. Eight of them, plus a war chief called Korrag Stonejaw riding a bear. Initiative: Vessa 21, Korrag 19, me 15, Mara 11, Odo 8, raiders 6. Vessa shot the bear (1d8+4 = 9), which made the bear angry and Korrag angrier.\n\nRound 2: Korrag charged. 2d12+5 on Odo, who went down to 3 hp. Mara cast hold person on the chief, he saved on a 17. I dropped two raiders with a lucky 20 and a follow-up 18. Ash bit a raider's leg and would not let go.\n\nRound 3: Odo healed himself (1d8+3 = 10), then got knocked off the bridge into the river. Hobb the toll keeper threw him a rope, which is the first nice thing Hobb has ever done. The raiders at the far end started to break.\n\nRound 4: Vessa climbed onto the bear. Nobody at the table believed it would work. It worked (athletics 24). She put a dagger to Korrag's throat and he called the retreat.\n\nAfter: Korrag says the Clan was paid to hold the bridge by someone from the Gilded Hand, and that they were told to look for a woman carrying a glass compass. We don't have the compass. So who does the Hand think has it? Lady Sefa Morrow, maybe.\n\nXP: 1,800 each. Loot: 140 gp, a bear-claw necklace, and Korrag's horn, which Vessa wants to keep as a trophy. The bear went home. We did not follow it.",
+    "gold": [
+      {
+        "start": 13,
+        "length": 13,
+        "text": "Tollan Bridge",
+        "kind": "Place"
+      },
+      {
+        "start": 71,
+        "length": 13,
+        "text": "Stonejaw Clan",
+        "kind": "Faction"
+      },
+      {
+        "start": 173,
+        "length": 15,
+        "text": "Korrag Stonejaw",
+        "kind": "Character"
+      },
+      {
+        "start": 216,
+        "length": 5,
+        "text": "Vessa",
+        "kind": "Character"
+      },
+      {
+        "start": 226,
+        "length": 6,
+        "text": "Korrag",
+        "kind": "Character"
+      },
+      {
+        "start": 244,
+        "length": 4,
+        "text": "Mara",
+        "kind": "Character"
+      },
+      {
+        "start": 253,
+        "length": 3,
+        "text": "Odo",
+        "kind": "Character"
+      },
+      {
+        "start": 271,
+        "length": 5,
+        "text": "Vessa",
+        "kind": "Character"
+      },
+      {
+        "start": 334,
+        "length": 6,
+        "text": "Korrag",
+        "kind": "Character"
+      },
+      {
+        "start": 360,
+        "length": 6,
+        "text": "Korrag",
+        "kind": "Character"
+      },
+      {
+        "start": 386,
+        "length": 3,
+        "text": "Odo",
+        "kind": "Character"
+      },
+      {
+        "start": 414,
+        "length": 4,
+        "text": "Mara",
+        "kind": "Character"
+      },
+      {
+        "start": 526,
+        "length": 3,
+        "text": "Ash",
+        "kind": "Character"
+      },
+      {
+        "start": 581,
+        "length": 3,
+        "text": "Odo",
+        "kind": "Character"
+      },
+      {
+        "start": 662,
+        "length": 4,
+        "text": "Hobb",
+        "kind": "Character"
+      },
+      {
+        "start": 731,
+        "length": 4,
+        "text": "Hobb",
+        "kind": "Character"
+      },
+      {
+        "start": 806,
+        "length": 5,
+        "text": "Vessa",
+        "kind": "Character"
+      },
+      {
+        "start": 925,
+        "length": 6,
+        "text": "Korrag",
+        "kind": "Character"
+      },
+      {
+        "start": 976,
+        "length": 6,
+        "text": "Korrag",
+        "kind": "Character"
+      },
+      {
+        "start": 1045,
+        "length": 11,
+        "text": "Gilded Hand",
+        "kind": "Faction"
+      },
+      {
+        "start": 1190,
+        "length": 16,
+        "text": "Lady Sefa Morrow",
+        "kind": "Character"
+      },
+      {
+        "start": 1272,
+        "length": 6,
+        "text": "Korrag",
+        "kind": "Character"
+      },
+      {
+        "start": 1293,
+        "length": 5,
+        "text": "Vessa",
+        "kind": "Character"
+      }
+    ]
+  },
+  {
+    "id": "l4",
+    "size": "long",
+    "text": "Travel journal, week three.\n\nLeft Kettlewick early with Biscuit loaded up. The road north joins the Salt Road at a shrine to a saint nobody remembers, and we stopped there to eat. mara left an offering of bread. ash ate the offering. Bad omen, or just a hungry wolf, depending on who you ask.\n\nTwo days on the Salt Road after that. Flat, white, dusty, and full of traders. We passed a caravan from Varn (the same one we helped last month; they waved) and a patrol of the Pale Lantern, who asked where we were going and did not like the answer. Their captain, a stern woman called Dame Oriel, warned us that the road past Harrowmere is watched by the Ember Court's scouts.\n\nOn the third night we camped by the salt pans and rellan finally talked about his lord. Lord Castellan Vey held Greyhollow Keep until the Night of Ash, and died in the fire. Rellan's voice broke when he said the name. He still has the lord's signet ring. He showed it to us: a crescent moon over a tower, the same mark that's on the Moonfall Blade's pommel.\n\nSo the blade isn't just a sword we stole back from the Court. It's Rellan's inheritance, in a way. Vessa offered to give it to him. He said not yet.\n\nWe reach Harrowmere tomorrow. Plan: find Captain Dunmore, ask about the scouts, keep a low profile. Brother Odo says we are bad at low profiles. He is right.",
+    "gold": [
+      {
+        "start": 34,
+        "length": 10,
+        "text": "Kettlewick",
+        "kind": "Place"
+      },
+      {
+        "start": 56,
+        "length": 7,
+        "text": "Biscuit",
+        "kind": "Character"
+      },
+      {
+        "start": 100,
+        "length": 9,
+        "text": "Salt Road",
+        "kind": "Place"
+      },
+      {
+        "start": 180,
+        "length": 4,
+        "text": "mara",
+        "kind": "Character"
+      },
+      {
+        "start": 212,
+        "length": 3,
+        "text": "ash",
+        "kind": "Character"
+      },
+      {
+        "start": 310,
+        "length": 9,
+        "text": "Salt Road",
+        "kind": "Place"
+      },
+      {
+        "start": 398,
+        "length": 4,
+        "text": "Varn",
+        "kind": "Place"
+      },
+      {
+        "start": 471,
+        "length": 12,
+        "text": "Pale Lantern",
+        "kind": "Faction"
+      },
+      {
+        "start": 580,
+        "length": 10,
+        "text": "Dame Oriel",
+        "kind": "Character"
+      },
+      {
+        "start": 621,
+        "length": 10,
+        "text": "Harrowmere",
+        "kind": "Place"
+      },
+      {
+        "start": 650,
+        "length": 11,
+        "text": "Ember Court",
+        "kind": "Faction"
+      },
+      {
+        "start": 723,
+        "length": 6,
+        "text": "rellan",
+        "kind": "Character"
+      },
+      {
+        "start": 761,
+        "length": 18,
+        "text": "Lord Castellan Vey",
+        "kind": "Character"
+      },
+      {
+        "start": 785,
+        "length": 15,
+        "text": "Greyhollow Keep",
+        "kind": "Place"
+      },
+      {
+        "start": 811,
+        "length": 12,
+        "text": "Night of Ash",
+        "kind": "Event"
+      },
+      {
+        "start": 847,
+        "length": 6,
+        "text": "Rellan",
+        "kind": "Character"
+      },
+      {
+        "start": 1006,
+        "length": 14,
+        "text": "Moonfall Blade",
+        "kind": "Item"
+      },
+      {
+        "start": 1099,
+        "length": 6,
+        "text": "Rellan",
+        "kind": "Character"
+      },
+      {
+        "start": 1131,
+        "length": 5,
+        "text": "Vessa",
+        "kind": "Character"
+      },
+      {
+        "start": 1191,
+        "length": 10,
+        "text": "Harrowmere",
+        "kind": "Place"
+      },
+      {
+        "start": 1223,
+        "length": 15,
+        "text": "Captain Dunmore",
+        "kind": "Character"
+      },
+      {
+        "start": 1282,
+        "length": 11,
+        "text": "Brother Odo",
+        "kind": "Character"
+      }
+    ]
+  },
+  {
+    "id": "l5",
+    "size": "long",
+    "text": "**Politics catch-up**, because I keep forgetting who hates who.\n\nThe Ember Court: nobles of Varn and the lands around it. Led by a council of five, whose names we mostly don't know. Only one we've met is Lord Aurel Crane, who is charming and a liar. They want the Cinder Crown, the Moonfall Blade and, as of last week, us, preferably in chains.\n\nThe Gilded Hand: merchant guild. Runs the fish market in Harrowmere and half the boats on the lake. Their contact with us is Moss, the fence. They're buying up old ledgers and looking for the Skyglass Compass, and they paid off Irzel and the Stonejaw Clan. Nobody knows who they are working for. My guess: the Court.\n\nThe Stonejaw Clan: mountain folk north of Tollan Bridge. Proud, poor since the Long Winter, and willing to take coin from anyone. Korrag Stonejaw owes Vessa his life now, which might matter later.\n\nThe Order of the Pale Lantern: knights and priests, based in the chapel east of Harrowmere. Old enemies of the Court since the Siege of Varn. Dame Oriel leads their patrols. They seem honest but they keep secrets about Aldous Venn.\n\nWho we trust, in order: Mara, Ash, Brother Odo, Rellan (mostly), Lady Sefa (sort of), everybody else not at all.\n\n(Snack break here. Somebody spilled soda on the character sheets. Session resumed after 15 min.)\n\nWhat we want: the crown destroyed or hidden, Rellan cleared of the Night of Ash, and a quiet week in Kettlewick. What we will get: probably none of that.",
+    "gold": [
+      {
+        "start": 69,
+        "length": 11,
+        "text": "Ember Court",
+        "kind": "Faction"
+      },
+      {
+        "start": 92,
+        "length": 4,
+        "text": "Varn",
+        "kind": "Place"
+      },
+      {
+        "start": 204,
+        "length": 16,
+        "text": "Lord Aurel Crane",
+        "kind": "Character"
+      },
+      {
+        "start": 264,
+        "length": 12,
+        "text": "Cinder Crown",
+        "kind": "Item"
+      },
+      {
+        "start": 282,
+        "length": 14,
+        "text": "Moonfall Blade",
+        "kind": "Item"
+      },
+      {
+        "start": 350,
+        "length": 11,
+        "text": "Gilded Hand",
+        "kind": "Faction"
+      },
+      {
+        "start": 403,
+        "length": 10,
+        "text": "Harrowmere",
+        "kind": "Place"
+      },
+      {
+        "start": 471,
+        "length": 4,
+        "text": "Moss",
+        "kind": "Character"
+      },
+      {
+        "start": 538,
+        "length": 16,
+        "text": "Skyglass Compass",
+        "kind": "Item"
+      },
+      {
+        "start": 574,
+        "length": 5,
+        "text": "Irzel",
+        "kind": "Character"
+      },
+      {
+        "start": 588,
+        "length": 13,
+        "text": "Stonejaw Clan",
+        "kind": "Faction"
+      },
+      {
+        "start": 668,
+        "length": 13,
+        "text": "Stonejaw Clan",
+        "kind": "Faction"
+      },
+      {
+        "start": 706,
+        "length": 13,
+        "text": "Tollan Bridge",
+        "kind": "Place"
+      },
+      {
+        "start": 743,
+        "length": 11,
+        "text": "Long Winter",
+        "kind": "Event"
+      },
+      {
+        "start": 794,
+        "length": 15,
+        "text": "Korrag Stonejaw",
+        "kind": "Character"
+      },
+      {
+        "start": 815,
+        "length": 5,
+        "text": "Vessa",
+        "kind": "Character"
+      },
+      {
+        "start": 866,
+        "length": 25,
+        "text": "Order of the Pale Lantern",
+        "kind": "Faction"
+      },
+      {
+        "start": 942,
+        "length": 10,
+        "text": "Harrowmere",
+        "kind": "Place"
+      },
+      {
+        "start": 989,
+        "length": 13,
+        "text": "Siege of Varn",
+        "kind": "Event"
+      },
+      {
+        "start": 1004,
+        "length": 10,
+        "text": "Dame Oriel",
+        "kind": "Character"
+      },
+      {
+        "start": 1081,
+        "length": 11,
+        "text": "Aldous Venn",
+        "kind": "Character"
+      },
+      {
+        "start": 1119,
+        "length": 4,
+        "text": "Mara",
+        "kind": "Character"
+      },
+      {
+        "start": 1125,
+        "length": 3,
+        "text": "Ash",
+        "kind": "Character"
+      },
+      {
+        "start": 1130,
+        "length": 11,
+        "text": "Brother Odo",
+        "kind": "Character"
+      },
+      {
+        "start": 1143,
+        "length": 6,
+        "text": "Rellan",
+        "kind": "Character"
+      },
+      {
+        "start": 1160,
+        "length": 9,
+        "text": "Lady Sefa",
+        "kind": "Character"
+      },
+      {
+        "start": 1352,
+        "length": 6,
+        "text": "Rellan",
+        "kind": "Character"
+      },
+      {
+        "start": 1374,
+        "length": 12,
+        "text": "Night of Ash",
+        "kind": "Event"
+      },
+      {
+        "start": 1408,
+        "length": 10,
+        "text": "Kettlewick",
+        "kind": "Place"
+      }
+    ]
+  }
+]

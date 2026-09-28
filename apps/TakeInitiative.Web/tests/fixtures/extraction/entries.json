@@ -1,0 +1,200 @@
+[
+  {
+    "id": "e1",
+    "name": "Rellan Ashvale",
+    "kind": "Character",
+    "aliases": [
+      "Rellan"
+    ]
+  },
+  {
+    "id": "e2",
+    "name": "Greyhollow Keep",
+    "kind": "Place",
+    "aliases": []
+  },
+  {
+    "id": "e3",
+    "name": "The Ember Court",
+    "kind": "Faction",
+    "aliases": [
+      "Ember Court"
+    ]
+  },
+  {
+    "id": "e4",
+    "name": "The Salt Road",
+    "kind": "Place",
+    "aliases": [
+      "Salt Road"
+    ]
+  },
+  {
+    "id": "e5",
+    "name": "The Moonfall Blade",
+    "kind": "Item",
+    "aliases": [
+      "Moonfall Blade"
+    ]
+  },
+  {
+    "id": "e6",
+    "name": "The Night of Ash",
+    "kind": "Event",
+    "aliases": [
+      "Night of Ash"
+    ]
+  },
+  {
+    "id": "e7",
+    "name": "Mara Quillfeather",
+    "kind": "Character",
+    "aliases": [
+      "Mara"
+    ]
+  },
+  {
+    "id": "e8",
+    "name": "Ash",
+    "kind": "Character",
+    "aliases": []
+  },
+  {
+    "id": "e9",
+    "name": "Brother Odo",
+    "kind": "Character",
+    "aliases": [
+      "Odo"
+    ]
+  },
+  {
+    "id": "e10",
+    "name": "Vessa Thornwick",
+    "kind": "Character",
+    "aliases": [
+      "Vessa"
+    ]
+  },
+  {
+    "id": "e11",
+    "name": "Captain Irzel Dunmore",
+    "kind": "Character",
+    "aliases": [
+      "Irzel",
+      "Captain Dunmore"
+    ]
+  },
+  {
+    "id": "e12",
+    "name": "Kettlewick",
+    "kind": "Place",
+    "aliases": []
+  },
+  {
+    "id": "e13",
+    "name": "The Drowned Library",
+    "kind": "Place",
+    "aliases": [
+      "Drowned Library"
+    ]
+  },
+  {
+    "id": "e14",
+    "name": "Harrowmere",
+    "kind": "Place",
+    "aliases": []
+  },
+  {
+    "id": "e15",
+    "name": "The Gilded Hand",
+    "kind": "Faction",
+    "aliases": [
+      "Gilded Hand"
+    ]
+  },
+  {
+    "id": "e16",
+    "name": "The Order of the Pale Lantern",
+    "kind": "Faction",
+    "aliases": [
+      "Pale Lantern"
+    ]
+  },
+  {
+    "id": "e17",
+    "name": "Stonejaw Clan",
+    "kind": "Faction",
+    "aliases": []
+  },
+  {
+    "id": "e18",
+    "name": "The Cinder Crown",
+    "kind": "Item",
+    "aliases": [
+      "Cinder Crown"
+    ]
+  },
+  {
+    "id": "e19",
+    "name": "Orb of Whispers",
+    "kind": "Item",
+    "aliases": []
+  },
+  {
+    "id": "e20",
+    "name": "Skyglass Compass",
+    "kind": "Item",
+    "aliases": []
+  },
+  {
+    "id": "e21",
+    "name": "The Siege of Varn",
+    "kind": "Event",
+    "aliases": [
+      "Siege of Varn"
+    ]
+  },
+  {
+    "id": "e22",
+    "name": "The Long Winter",
+    "kind": "Event",
+    "aliases": [
+      "Long Winter"
+    ]
+  },
+  {
+    "id": "e23",
+    "name": "Varn",
+    "kind": "Place",
+    "aliases": []
+  },
+  {
+    "id": "e24",
+    "name": "Lady Sefa Morrow",
+    "kind": "Character",
+    "aliases": [
+      "Sefa",
+      "Lady Sefa"
+    ]
+  },
+  {
+    "id": "e25",
+    "name": "Tollan Bridge",
+    "kind": "Place",
+    "aliases": []
+  },
+  {
+    "id": "e26",
+    "name": "Aldous Venn",
+    "kind": "Character",
+    "aliases": []
+  },
+  {
+    "id": "e27",
+    "name": "The Harvest Moot",
+    "kind": "Event",
+    "aliases": [
+      "Harvest Moot"
+    ]
+  }
+]
