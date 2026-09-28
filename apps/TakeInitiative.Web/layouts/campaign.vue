@@ -24,7 +24,7 @@
                             class="flex h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-md px-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                             aria-label="Search"
                             aria-keyshortcuts="Meta+K Control+K"
-                            @click="searchOpen = true">
+                            @click="openSearch($event.currentTarget as HTMLElement)">
                             <Search class="size-5" />
                             <kbd
                                 class="hidden rounded border px-1.5 text-xs md:inline"
@@ -85,7 +85,18 @@
             </nav>
         </div>
 
-        <SearchSheet v-model:open="searchOpen" />
+        <SearchSheet
+            v-model:open="searchOpen"
+            :campaignId="campaignId"
+            :returnFocus="returnFocus" />
+        <!-- iOS raises the keyboard only for a focus made during the tap, and the sheet's
+             input mounts after it: this holds the focus (and the keyboard) until then. -->
+        <input
+            ref="focusProxy"
+            type="text"
+            tabindex="-1"
+            aria-hidden="true"
+            class="pointer-events-none fixed left-0 top-0 size-px opacity-0 text-base" />
         <ClientOnly>
             <Toaster :position="'top-right'" :duration="1000" />
         </ClientOnly>
@@ -150,13 +161,26 @@
 
     // Search: the 🔍 button, or ⌘K / Ctrl+K.
     const searchOpen = ref(false);
+    const returnFocus = shallowRef<HTMLElement | null>(null);
+    const focusProxy = useTemplateRef<HTMLInputElement>("focusProxy");
+    function openSearch(trigger: HTMLElement | null) {
+        returnFocus.value = trigger;
+        focusProxy.value?.focus({ preventScroll: true });
+        searchOpen.value = true;
+    }
     const shortcutLabel = computed(() =>
         /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘K" : "Ctrl K"
     );
     useEventListener(window, "keydown", (event: KeyboardEvent) => {
+        // In the composer, ⌘K is its `@` picker, and the editor has taken the key.
+        if (event.defaultPrevented) return;
         if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
             event.preventDefault();
-            searchOpen.value = !searchOpen.value;
+            if (searchOpen.value) searchOpen.value = false;
+            else {
+                returnFocus.value = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+                searchOpen.value = true;
+            }
         }
     });
 </script>
