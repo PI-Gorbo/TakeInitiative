@@ -19,11 +19,6 @@
             side="top"
             class="max-h-[50dvh] w-64 overflow-y-auto">
             <DropdownMenuLabel>Post to session</DropdownMenuLabel>
-            <div
-                v-if="noSession"
-                class="px-2 py-2 text-sm text-muted-foreground">
-                No sessions yet.
-            </div>
             <DropdownMenuRadioGroup
                 :modelValue="target?.id"
                 @update:modelValue="pick">
@@ -69,8 +64,6 @@
         sessions: Session[];
         /** Loaded yet; "Start Session N" waits for it. */
         loaded: boolean;
-        /** The composer's one "this campaign has no session" value, so the two agree. */
-        noSession: boolean;
         starting: boolean;
     }>();
     /** The picked session id, or null for the current session. */
@@ -81,22 +74,16 @@
     const target = computed(() => targetSession(sessionId.value, props.sessions));
     const nextNumber = computed(() => nextSessionNumber(props.sessions));
 
-    // Three states, and none of the labels may claim more than is known: a session to
-    // post to, no session at all, or the list still loading. "Current session" while
-    // loading would name a session that may not exist, and would flash before "No
-    // session" on an ordinary load.
-    const shortLabel = computed(() => (target.value ? `S${target.value.number}` : props.noSession ? "None" : "…"));
-    const longLabel = computed(() =>
-        target.value ? `Session ${target.value.number}` : props.noSession ? "No session" : "Loading…"
-    );
+    // Two states, and neither label may claim more than is known: a session to post
+    // to, or the list still loading. "Current session" while loading would name a
+    // session that may not exist. The third, no session at all, never reaches the
+    // picker: the composer shows only its call to action then (step 17).
+    const shortLabel = computed(() => (target.value ? `S${target.value.number}` : "…"));
+    const longLabel = computed(() => (target.value ? `Session ${target.value.number}` : "Loading…"));
     // Spelled out rather than built from the label, so the screen reader is told which
-    // of the three states it is, never a session that does not exist.
+    // state it is, never a session that does not exist.
     const ariaLabel = computed(() =>
-        target.value
-            ? `Posting to Session ${target.value.number}. Change session`
-            : props.noSession
-              ? "No session to post to. Change session"
-              : "Loading sessions. Change session"
+        target.value ? `Posting to Session ${target.value.number}. Change session` : "Loading sessions. Change session"
     );
 
     // Picking the current session stores null, so the post follows the current session.

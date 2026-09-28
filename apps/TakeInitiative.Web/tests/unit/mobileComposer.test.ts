@@ -79,9 +79,14 @@ describe("stream filters", () => {
         expect(filterEmptyState("All", true).title).toBe("No session notes yet.");
     });
 
-    it("asks for Session 1 when the campaign has no session, whatever the filter", () => {
-        expect(filterEmptyState("All", false).title).toBe("No sessions yet.");
-        expect(filterEmptyState("Recaps", false).detail).toContain("Start Session 1");
+    it("points at the composer's call to action when the campaign has no session, whatever the filter", () => {
+        expect(filterEmptyState("All", false)).toEqual({
+            title: "Session notes will show here.",
+            detail: "Start your first session below.",
+        });
+        expect(filterEmptyState("Recaps", false).detail).toBe("Start your first session below.");
+        // "No sessions yet" is the composer's line (step 17), never said twice.
+        expect(filterEmptyState("All", false).title).not.toContain("No sessions yet");
     });
 
     it("drops the divider of a session with no matching note, except the current one", () => {

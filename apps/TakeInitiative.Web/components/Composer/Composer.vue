@@ -6,7 +6,38 @@
     <div
         class="shrink-0"
         :style="pinned ? { height: `${formHeight + inset}px` } : undefined">
+        <!-- No session yet (step 17): a campaign has none until a member starts Session
+             1, and a note needs one, so the composer is only this call to action until
+             then. No text box, toolbar, pickers or images: there is nothing to post to,
+             and a composer that cannot post only invites a note that goes nowhere. Its
+             button is the gap prompt's, so the session starts the same way, and the full
+             composer takes its place as soon as the session list has one. This is the
+             one place that says "No sessions yet"; the stream's empty state above only
+             points here. Shown only once the list has *answered* with none, so an
+             ordinary load never flashes it. -->
+        <section
+            v-if="noSession"
+            class="flex flex-col items-center gap-3 border-t bg-background px-4 py-6 text-center"
+            aria-label="Start a session">
+            <p class="text-sm font-medium">No sessions yet.</p>
+            <Button
+                type="button"
+                size="lg"
+                class="h-11"
+                :disabled="startSession.isPending.value"
+                @click="start">
+                <LoaderCircle
+                    v-if="startSession.isPending.value"
+                    class="animate-spin"
+                    aria-hidden="true" />
+                <CalendarPlus
+                    v-else
+                    aria-hidden="true" />
+                Start Session {{ nextNumber }}
+            </Button>
+        </section>
         <form
+            v-else
             ref="form"
             :class="[
                 'flex flex-col gap-1 border-t bg-background px-2 pb-2 pt-1',
@@ -29,24 +60,13 @@
                     v-model="state.sessionId"
                     :sessions="sessions"
                     :loaded="sessionsQuery.isSuccess.value"
-                    :noSession="noSession"
                     :starting="startSession.isPending.value"
                     @start="start" />
                 <ComposerVisibilityPicker v-model="state.visibility" />
             </div>
 
-            <!-- Why the composer cannot post, in the gap prompt's slot: the placeholder
-                 alone is not enough, because a caption or `?about=` text takes its place
-                 and then nothing states the reason. Its wording matches the stream's
-                 empty state, which promises this button. -->
             <ComposerGapPrompt
-                v-if="noSession"
-                text="No sessions yet."
-                :nextNumber="nextNumber"
-                :starting="startSession.isPending.value"
-                @accept="start" />
-            <ComposerGapPrompt
-                v-else-if="gapVisible"
+                v-if="gapVisible"
                 :text="gapText"
                 :nextNumber="nextNumber"
                 :starting="startSession.isPending.value"
@@ -141,7 +161,7 @@
 <script setup lang="ts">
     import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/vue-query";
     import { useElementSize, useMediaQuery, useNow } from "@vueuse/core";
-    import { AtSign, Bold, Camera, ImagePlus, Italic, List, ScrollText } from "lucide-vue-next";
+    import { AtSign, Bold, CalendarPlus, Camera, ImagePlus, Italic, List, LoaderCircle, ScrollText } from "lucide-vue-next";
     import { toast } from "vue-sonner";
     import { apiErrorMessage, apiErrorStatus } from "~/utils/apiErrorParser";
     import type { Campaign, EntrySummary, SessionStreamFilter, Visibility } from "~/utils/api/types";
@@ -277,8 +297,8 @@
     const nextNumber = computed(() => nextSessionNumber(sessions.value));
     // A campaign has no session until a member starts Session 1, and a note needs one.
     // Blocking on this asks whether we *know* there is none, not whether we know of one
-    // yet: the picker, the placeholder, the notice and the post guard all read the same
-    // value, so they never disagree about it.
+    // yet: the call to action in the composer's place (step 17) and the post guard both
+    // read the same value, so they never disagree about it.
     const sessionsKnown = computed(() => ({
         hasSession: sessions.value.length > 0,
         sessionsLoaded: sessionsQuery.isSuccess.value,
@@ -300,9 +320,10 @@
                 campaignId: campaignId.value,
                 number: nextNumber.value,
             });
-            // The new session is the current one; target it.
+            // The new session is the current one; target it. From the call to action the
+            // text box only renders on the next tick, once the list has the session.
             state.sessionId = session.isCurrent ? null : session.id;
-            focus();
+            void nextTick(focus);
         } catch (error) {
             toast.error(
                 apiErrorStatus(error) === 409
@@ -336,20 +357,14 @@
     const reveal = useTemplateRef<{ confirm: (v: Visibility, items: RevealItem[]) => Promise<boolean> }>("reveal");
     const placeholder = computed(() => {
         if (state.attachments.length > 0) return IMAGE_MESSAGES.captionPlaceholder;
-        if (noSession.value) return `Start Session ${nextNumber.value} to write a note…`;
         const target = targetSession(state.sessionId, sessions.value);
         return target ? `Write a note in Session ${target.number}…` : "Write a session note…";
     });
 
     async function post({ confirmed = false }: { confirmed?: boolean } = {}) {
         if (uploads.failed.value) return;
-        // Enter posts without going through ➤, so the "no session yet" guard is here too,
-        // and it says why: the note the member just typed or photographed is still in the
-        // composer and nothing else would explain the silence.
-        if (noSession.value) {
-            toast.error(`No sessions yet. Start Session ${nextNumber.value} first.`);
-            return;
-        }
+        // No "no session yet" guard: with none the composer is only its call to action
+        // (step 17), so nothing can post. canPostNote still refuses, for ➤.
         // ➤ while images are still going up: post once they are all up.
         if (uploads.busy.value) {
             waiting.value = true;
@@ -641,6 +656,9 @@
         el.style.height = `${el.scrollHeight + (el.offsetHeight - el.clientHeight)}px`;
     }
     onMounted(grow);
+    // The text box also appears later, when the first session replaces the call to
+    // action (step 17), with a draft that may already be long.
+    watch(textarea, (el) => el && grow());
 
     function focus() {
         textarea.value?.focus();
