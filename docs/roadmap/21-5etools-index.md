@@ -34,7 +34,7 @@ manual step for the user, not a PR:
 
 | PR | Branch | Sub-step | Runnable state after merge | Status |
 |---|---|---|---|---|
-| 21a | `v2/21a-5etools-script` | The preprocessing script, its index schema and its tests | 20's app unchanged. `pnpm 5etools:build --from <5etools-src>` writes a git-ignored `.data/5etools/index.json`, and the script's tests pass on a synthetic fixture | [ ] |
+| 21a | `v2/21a-5etools-script` | The preprocessing script, its index schema and its tests | 20's app unchanged. `pnpm 5etools:build --from <5etools-src>` writes a git-ignored `.data/5etools/index.json`, and the script's tests pass on a synthetic fixture | [x] |
 | 21b | `v2/21b-5etools-provider` | The search-only provider (API) | With an index configured, `GET search` has 5eTools rows with a `url`, + Wiki creates entries from them, and `GET reference/5etools/{id}` answers a summary with no stat block. Without one, nothing changes | [ ] |
 | 21c | `v2/21c-5etools-web` | Rows, + Wiki and the source line for a search-only provider (web) | 5eTools rows in ⌘K link out; + Wiki, the source line and "Use 5eTools stats" work for them. The step's Verify passes | [ ] |
 | 21d | — (the user) | Delete the Bestiary branches | `origin/bestiary`, `origin/Bestiary_2025`, `origin/Bestiary_2025_CopyParsing` and `origin/Bestiary_2025_project_refactor` are gone | [ ] |
@@ -343,8 +343,9 @@ public repo".
    pass, `schema.d.ts` is fresh, and CI is green on every PR. CI never has a 5eTools
    index, so it also proves the app runs with the provider off.
 2. `git status` after `pnpm 5etools:build --from <5etools-src>` shows **no new tracked or
-   untracked files** outside `.data/` (which is ignored). `git grep -il '"_copy"'` and a
-   search for any `bestiary-*.json` in the tree find nothing.
+   untracked files** outside `.data/` (which is ignored). `git grep -il '"_copy"' -- ':!scripts/5etools/fixture'`
+   and a search for any `bestiary-*.json` outside `scripts/5etools/fixture/` (the invented
+   `TST` fixture, 21a) find nothing.
 3. A rebuild from the same 5eTools checkout is byte for byte the same.
 4. Spot-check the index: pick five rows and confirm each has only the allowlisted keys,
    and that each `url` opens the right page on 5etools (a name with a space, one with an
@@ -502,3 +503,42 @@ What they taught, all of it now in 21a:
   - SRD spells and items in the SRD provider (step 20's "Not in 20");
   - a UI or admin page for uploading an index; it is a file on the server;
   - rewriting old entries' `Source.Url` when 5etools moves.
+
+### As built
+
+- **As built, 21a.** Where it differs from 21a above:
+  - **Shape.** One script, `scripts/5etools/build-5etools-index.mjs`, that exports its
+    helpers (`buildIndex`, `encodeHash`, `makeId`, `acOf`, `hpDiceOf`, `initiativeOf`,
+    `crOf`, `serialize` and the `TOP_KEYS` / `ITEM_KEYS` / `STATS_KEYS` allowlists) and
+    runs `main` only when called directly, so the tests import it. It also takes
+    `--out <file>` (default `.data/5etools/index.json`), which the tests use to write to
+    a temp folder. `pnpm 5etools:test` is `node --test "scripts/5etools/*.test.mjs"`
+    (23 tests); there was no root test runner to reuse.
+  - **The allowlist is enforced twice.** `pick()` builds each row from named fields
+    only, and `check()` fails the build if a row's keys (or its stats' keys) are not
+    exactly `ITEM_KEYS` / `STATS_KEYS`, in order. A test asserts a fixture monster's
+    whole object and key list, and another that none of the fixture's trait, action,
+    entry, fluff, `_mod`, type-tag or `{@…}` words reach the output.
+  - **Copies take only what the index needs.** A `_copy` takes `size`, `type`, `ac`,
+    `hp`, `cr`, `dex` and `initiative` from its base (resolved recursively, across files),
+    never `srd52` or `page`. A copy of an `srd52` monster is kept.
+  - **HP dice that don't parse give `stats: null`, not a failure.** Step 6 said to fail
+    on a `stats.hp` that is not `NdM[+-K]`; the output check still does, but a formula
+    such as `"2d8 + 3 + 1"` now just leaves that monster without Stats and is counted in
+    the summary's "without stats", so one odd row in real data doesn't stop the build.
+    Same for special AC (`{ special }`), a missing DEX, and proficiency with an unknown CR.
+  - **Labels.** Monsters: `CR x · Size Type`, with multiple sizes as "Large or Huge",
+    `{ type: { choose } }` as "Beast or Plant", and swarms as their type. Spells: `Level
+    3 Evocation` or `Illusion Cantrip`. Items: rarity (none/unknown dropped), then
+    "Wondrous Item" or the type code's name (`M|XPHB` → "Melee Weapon"). An unknown type or
+    item code is dropped from the label rather than failing; an unknown size or school
+    letter fails, as planned. A row with nothing to say has `label: null`.
+  - **`sources`** holds only the abbreviations the index uses, mapped to the book or
+    adventure title (or to the abbreviation if neither file names it).
+  - **`fiveEToolsVersion`** is null when the checkout has no `package.json` (e.g. `--from`
+    a bare `data/` copy).
+  - **Not checked against real data.** No 5eTools copy was used; the fixture is
+    invented. The first real build may surface new shapes (a size letter, a school, an
+    id collision) that fail loudly and need a mapping.
+  - **Verify 2 amended**: the fixture itself has `"_copy"` and `bestiary-*.json` files, so
+    the grep excludes `scripts/5etools/fixture/`.
