@@ -41,7 +41,7 @@ step 22's plan (#254); this file is #255. Each PR leaves the app runnable:
 | PR | Branch | Sub-step | Runnable state after merge | Status |
 |---|---|---|---|---|
 | 23a | `v2/23a-extraction-spike` | The spike: which GLiNER variant, measured, and its weights pinned | The app unchanged for users. A Node runner and a static browser harness (`scripts/extraction-spike/`) run each variant over the invented test set and print size, load, latency and F1. The decision is written into this file | [x] |
-| 23b | `v2/23b-extractor-runtime` | The extractor: worker, lazy load, weights, cache, device setting (web) | Nothing visible except "Suggestions on this device" on the Me page. The model is fetched only on request, cached, and run in a worker; the normal bundle does not grow by more than a few KB | [ ] |
+| 23b | `v2/23b-extractor-runtime` | The extractor: worker, lazy load, weights, cache, device setting (web) | Nothing visible except "Suggestions on this device" on the Me page. The model is fetched only on request, cached, and run in a worker; the normal bundle does not grow by more than a few KB | [x] |
 | 23c | `v2/23c-suggestions-api` | Match, provenance and revert (API) | 22's app unchanged in the browser. `POST suggestions/match` matches spans; `PUT notes/{id}` accepts a `suggestion` and records `Actor.Model`; the note history shows it; `POST suggestions/revert` unlinks one model version's mentions for their author | [ ] |
 | 23d | `v2/23d-suggestions-loose-ends` | Suggestions in Loose ends (web) | Unlinked notes on the loose-ends page offer ✨ suggestions beside 19's link suggestions; accepting links or creates-and-links | [ ] |
 | 23e | `v2/23e-suggestions-inline` | Inline on the author's notes, history, revert (web) | "✨ 3" on the author's own note cards, the ✨ line in note history, and "Accepted suggestions" with Revert on the Me page. The step's Verify passes | [ ] |
@@ -335,7 +335,7 @@ Built for the model 23a picked. Names below say "the model".
    ```jsonc
    { "text": "…@[Rellan](entry:…)…", "isRecap": false,
      "newEntries": [ /* only when creating */ ],
-     "suggestion": { "model": "gliner_small-v2.5", "version": "GG-QandV/gliner_small-v2.5-onnx@<sha>+int8",
+     "suggestion": { "model": "gliner_small-v2.5", "version": "gliner-community/gliner_small-v2.5@<sha>+onnx-int8",
                      "confidence": 0.87, "start": 12, "length": 6, "entryId": "…" } }
    ```
 
@@ -536,6 +536,75 @@ upstream `urchade/gliner_small-v2.1`, Apache-2.0 (upstream model card). Threshol
 
 All weights live in the git-ignored `.data/models/` (`node fetch-models.mjs` fetches and
 checks them); none are committed.
+
+### As built, 23b
+
+- **Weights: our own export of the official upstream, which reproduces the community file
+  byte for byte.** `scripts/gliner/export.py` (run with `uv run`, or `pnpm models:export`;
+  Python 3.12 with gliner 0.2.28, torch 2.14.0, transformers 5.13.1, onnx 1.23.0, onnxruntime
+  1.30.0 pinned inline) downloads `gliner-community/gliner_small-v2.5` (Apache-2.0) at
+  `f227d3cd637bd4e6757ae143935316d062393341`, exports it with the GLiNER package's own
+  `export_to_onnx` (opset 19) and quantises it with `quantize_dynamic` (QUInt8). On the
+  user's Mac it produced `model_quantized.onnx` with sha256 `60f2f4da…2930` (196,786,385
+  bytes), `tokenizer.json` `08bb5853…1ba6` and `tokenizer_config.json` `54121ac6…1566`:
+  **exactly the bytes of the 23a community export** (`GG-QandV`, made on Linux with torch
+  2.13), and two runs gave the same bytes. Only `gliner_config.json` differs (the
+  transformers version string), and the runtime does not read it: `maxWidth` 12,
+  `maxWords` 768 and `maxTokens` 512 are in the manifest. So 23a's measurements stand for
+  the pinned file, and the v2.1 fallback was not needed.
+- **The pins** are in `apps/TakeInitiative.Web/suggestion-model.json` (model id
+  `gliner_small-v2.5`, provenance version
+  `gliner-community/gliner_small-v2.5@f227d3cd…+onnx-int8`, threshold 0.4, the three files
+  with bytes and sha256). `nuxt.config.ts` reads it into `runtimeConfig.public.suggestions`.
+- **Getting the files.** `pnpm models:fetch` (`scripts/models/fetch-model.mjs`) writes them
+  to `apps/TakeInitiative.Web/public/models/gliner_small-v2.5/{revision}/` (git-ignored),
+  with `LICENSE` and `NOTICE` from `scripts/models/gliner_small-v2.5/` (committed), and
+  refuses any file whose size or sha256 differs. Its source is, in order: `--from <dir|url>`
+  or `SUGGESTIONS_MODEL_FROM`; the local export in `.data/models/export/…` if
+  `pnpm models:export` was run; else the manifest's `mirror`, the `GG-QandV` repo at its
+  pinned revision, because its bytes are proven identical to our export. So the weights
+  that ship are the ones our script builds from upstream, whichever host the bytes came
+  through. To stop depending on that repo, upload the export's three files somewhere the
+  deployer controls (e.g. a GitHub release) and pass it as `SUGGESTIONS_MODEL_FROM` or
+  change `mirror`.
+- **Dev**: the web `dev` script runs `fetch-model.mjs --if-missing --soft` first, so the first
+  `pnpm dev` downloads ~205 MB once, and never fails the dev server (offline it warns).
+- **Deploy**: the web `Dockerfile` copies the manifest and `scripts/models/`, fetches into
+  `/models` in its own layer (cached until the manifest changes), then copies them into
+  `public/models/` before `nuxt build`; `.output/public/models/` is served by Nitro with
+  `cache-control: immutable` (route rule `/models/**`). `--build-arg SUGGESTIONS_MODEL=skip`
+  leaves them out. A root `.dockerignore` keeps a local `public/models/` and `.data/` out of
+  the build context. CI never fetches: `testWeb.yml` runs typecheck and vitest only.
+- **Hugging Face directly**: `NUXT_PUBLIC_SUGGESTIONS_BASE_URL=https://huggingface.co/GG-QandV/gliner_small-v2.5-onnx/resolve/a748820c906f7af707a25bb52411b21b999f8de9`
+  (the file names match). The browser still checks every sha256.
+- **The runtime WASM** is imported by URL in the worker
+  (`onnxruntime-web/ort-wasm-simd-threaded.wasm?url`), so Vite emits it as a hashed build
+  asset (14.2 MB) served by the app; there is no `runtimeWasmBaseUrl` setting. The worker
+  imports `onnxruntime-web/wasm` (the WASM-only bundle), single-threaded, `executionProviders:
+  ["wasm"]` (WebGPU not tried).
+- **Worker and composable.** `useExtractor()` holds tab-wide state (`off | idle | needsConsent |
+  downloading | loading | ready | error`), `ensure({ consent })`, `extract(noteId, text)`,
+  `cancel()`, `remove()`, `setSetting()`. The queue is in the composable (one note in the
+  worker at a time; a newer request for a queued note replaces its text). Cancel terminates
+  the worker, which drops the download; files are cached only after the sha256 check, so a
+  partial file is never stored. After a load, other revisions' cache keys are deleted and
+  `navigator.storage.persist()` is asked for. Messages are in `utils/extraction/messages.ts`.
+- **Spans.** `utils/extraction/spans.ts` (mask, tidy, distinct, the stop list) and
+  `extractor.ts` (the span decoder) are the spike's `lib/text.mjs` and `lib/gliner.mjs` in
+  TypeScript. `finalSpans` keeps the longest of overlapping spans, one per folded text, the
+  ten most confident. A check run on the fixture with the real weights (not committed; it
+  needs the model) gave top-3 precision 0.881, the spike's number, and span F1 0.75 exact
+  after `distinct` and the cap (the spike's 0.87–0.90 counts every occurrence).
+- **Bundle.** `pnpm build` before (23a) and after: the entry chunk grew by 0.25 KB; the Me
+  page gained one 12 KB chunk (the setting, the composable and the pure helpers); the
+  runtime and tokenizer are only in `extractor.worker-*.js` (115 KB) with the 14.2 MB WASM.
+- **The Me page** has "This device" with "✨ Suggestions on this device": Off / Ask /
+  Automatic, the model, its licence and attribution, where the files come from, the space
+  used, Download (with progress and Cancel; Retry on an error), Remove from this device,
+  and "Try it on a sample sentence" (an invented line) once the model is ready, so the
+  runtime can be checked in a browser before 23d.
+- **Not done**: no phone or real-browser numbers yet (23a's harness is still the user's).
+  The phone default stays "Ask" until they exist.
 
 ### Where the weights come from
 
