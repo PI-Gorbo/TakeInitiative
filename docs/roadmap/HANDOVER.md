@@ -100,7 +100,7 @@ Stack #224. Everything is on top of `dev` and still open:
 | #252 | `v2/21b-5etools-provider` | 21b: the search-only 5eTools provider in the API, off without an index |
 | #253 | `v2/21c-5etools-web` | 21c: 5eTools rows link out in ⌘K, with + Wiki, the source line ("↗ From 5eTools · Beholder (MM p. 28)", its tooltip the book's title) and "Use 5eTools stats". Also sends book titles from the API. Closes step 21 apart from 21d |
 | #254 | `v2/22-ddb-plan` | Step 22's step file (D&D Beyond link). Merged as a plan only: step 22 is deferred, with no code |
-| (new) | `v2/23-suggestions-plan` | Step 23's step file (in-browser suggestions), on top of #254 |
+| #255 | `v2/23-suggestions-plan` | Step 23's step file (in-browser suggestions), on top of #254 |
 
 The local branches `pr/PI-Gorbo/222`, `pr/PI-Gorbo/222-1` and `pr/PI-Gorbo/222-2` are stale
 checkouts of #222. Ignore them.

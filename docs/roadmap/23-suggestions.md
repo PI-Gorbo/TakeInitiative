@@ -36,7 +36,7 @@ mobile data nothing downloads until they say so. A DM who dislikes a model versi
 their own accepted suggestions from it in one action, and the mentions go back to plain text.
 
 The step ships as five PRs stacked with `gh stack` on top of this file's docs PR, which sits on
-step 22's plan (#254). Each PR leaves the app runnable:
+step 22's plan (#254); this file is #255. Each PR leaves the app runnable:
 
 | PR | Branch | Sub-step | Runnable state after merge | Status |
 |---|---|---|---|---|
