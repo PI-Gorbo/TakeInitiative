@@ -44,7 +44,7 @@ step 22's plan (#254); this file is #255. Each PR leaves the app runnable:
 | 23b | `v2/23b-extractor-runtime` | The extractor: worker, lazy load, weights, cache, device setting (web) | Nothing visible except "Suggestions on this device" on the Me page. The model is fetched only on request, cached, and run in a worker; the normal bundle does not grow by more than a few KB | [x] |
 | 23c | `v2/23c-suggestions-api` | Match, provenance and revert (API) | 22's app unchanged in the browser. `POST suggestions/match` matches spans; `PUT notes/{id}` accepts a `suggestion` and records `Actor.Model`; the note history shows it; `POST suggestions/revert` unlinks one model version's mentions for their author | [x] |
 | 23d | `v2/23d-suggestions-loose-ends` | Suggestions in Loose ends (web) | Unlinked notes on the loose-ends page offer ✨ suggestions beside 19's link suggestions; accepting links or creates-and-links | [x] |
-| 23e | `v2/23e-suggestions-inline` | Inline on the author's notes, history, revert (web) | "✨ 3" on the author's own note cards, the ✨ line in note history, and "Accepted suggestions" with Revert on the Me page. The step's Verify passes | [ ] |
+| 23e | `v2/23e-suggestions-inline` | Inline on the author's notes, history, revert (web) | "✨ 3" on the author's own note cards, the ✨ line in note history, and "Accepted suggestions" with Revert on the Me page. The step's Verify passes | [x] |
 
 Suggestions in the composer while typing, on other members' notes, on article blocks and on
 images, a server-side model, fine-tuning, and the Discord import (24) are not in 23 (Notes,
@@ -700,6 +700,43 @@ checks them); none are committed.
   labels, the dismiss key, cap and storage, the create defaults, the accept body); 700 web tests
   pass. Nothing here was run against the real model or in a browser.
 
+### As built, 23e
+
+- **The chip** (`Suggestions/NoteSuggestionsChip.vue`) sits in `Session/SessionNoteCard.vue`'s
+  header, before the menu, on the viewer's own notes with text in the stream (not on an
+  entry's timeline, not while the note is sending or being edited). It shows "✨ 3" only when
+  the model is `ready` in this tab and has read the note. It never starts a download: when a
+  card mounts and the model is already on this device, `ensure()` is called once per tab
+  without consent, so 23b's `decideLoad` decides (Off never, Ask and Automatic not on mobile
+  data), as on the loose-ends page.
+- **Reading notes lazily** (`composables/useNoteSuggestions.ts`, tab-wide like the extractor):
+  one `IntersectionObserver` (200 px margin) over the author's cards; a card in view is queued
+  (at most 12, `INLINE_QUEUE_MAX`; the last to come into view goes first), one note at a time
+  in the worker after `requestIdleCallback`; a card scrolled away before its turn is skipped.
+  Spans go to `match` in batches of up to 50 when the queue drains. Results are kept in memory
+  for the tab, keyed by note id and text: an edit or an accepted suggestion reads the note
+  again. `inlineSuggestions` (pure) drops a match for an entry the note already mentions (by
+  entry, not only at that span, which is stricter than the plan) and a span no longer in the
+  note's prose, then applies 23d's merge (three per note, matches first, dismissals out; the
+  dismiss list is 23d's).
+- **The sheet** (`Suggestions/NoteSuggestionsSheet.vue`, reka-ui like `EvidenceSheet`): the
+  note, 23d's `LooseEnds/ModelSuggestions.vue` chips, and Edit (`useComposerEdit().start`).
+  A match links in one tap (`composables/useAcceptSuggestion.ts`, now shared with
+  `LooseEndRow`); "+ Create" closes the sheet and opens 23d's `CreateFromSuggestion`.
+- **History**: `Session/NoteHistoryDialog.vue` shows "✨ suggested by gliner_small-v2.5 (0.87)"
+  on a version with a `model`, the provenance version in its tooltip. The plan's "Linked
+  @Rellan Ashvale ·" prefix is not shown: the version's text already has the mention.
+- **Accepted suggestions** (`Suggestions/AcceptedSuggestions.vue`) is on the Me page in its own
+  "Your notes" section under "This device" (it is about the account, not the device): per
+  campaign with any, "gliner_small-v2.5 · 14 mentions in 9 notes" with the provenance version
+  under it and **Revert**. Revert asks the plan's question, then says "Unlinked … " and lists
+  `createdEntries` as links ("These entries were created from its suggestions and stay").
+  `GET suggestions/models` is one `useQueries` per campaign; it re-reads on any
+  `sessionNoteUpserted` push (`useCampaignHub`) and after a revert, which also refreshes the
+  streams, loose ends, connections and note histories.
+- **Tests**: `tests/unit/suggestions.test.ts` gains the inline rules (already mentioned, no
+  longer in the prose, the cap and dismissals), the queue, and the labels; 705 web tests
+  pass. **Not run against the real model or in a browser**, like 23b–23d.
 ### Where the weights come from
 
 - **Self-hosted by default.** The weights are served from the app's own origin, fetched at
