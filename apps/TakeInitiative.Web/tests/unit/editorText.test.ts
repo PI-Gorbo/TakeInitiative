@@ -1,5 +1,6 @@
-import type { JSONContent } from "@tiptap/core";
+import { getSchema, type JSONContent } from "@tiptap/core";
 import { describe, expect, it } from "vitest";
+import { composerExtensions } from "~/utils/editorExtensions";
 import { docToText, textToDoc } from "~/utils/editorText";
 import { renderNoteMarkdown } from "~/utils/markdown";
 import { fromStoredText, toStoredText } from "~/utils/mentions";
@@ -205,5 +206,22 @@ describe("round trips", () => {
             const out = roundTrip(value, LINKS);
             expect(render(toStoredText(out.text, out.links))).toBe(render(toStoredText(value, LINKS)));
         }
+    });
+});
+
+describe("the editor's schema", () => {
+    const schema = getSchema(composerExtensions());
+
+    it("accepts every document the text becomes, and writes it back the same", () => {
+        for (const value of [...EXACT, "- a\n    - b\n      - c\n- d", "text\n- item\ntext"]) {
+            const node = schema.nodeFromJSON(textToDoc({ text: value, links: LINKS, newEntries: [{ id: NEW_ID }] }));
+            expect(() => node.check()).not.toThrow();
+            expect(docToText(node.toJSON())).toEqual(roundTrip(value, LINKS));
+        }
+    });
+
+    it("keeps a mention's attributes", () => {
+        const node = schema.nodeFromJSON(textToDoc({ text: "@[Wolf]", links: LINKS, newEntries: [{ id: NEW_ID }] }));
+        expect(node.firstChild!.firstChild!.attrs).toMatchObject({ id: NEW_ID, label: "Wolf", raw: "Wolf", isNew: true });
     });
 });

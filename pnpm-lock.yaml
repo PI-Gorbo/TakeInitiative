@@ -151,6 +151,9 @@ importers:
       '@types/node':
         specifier: ^22.20.4
         version: 22.20.4
+      happy-dom:
+        specifier: ^20.14.5
+        version: 20.14.5
       openapi-typescript:
         specifier: ^7.13.0
         version: 7.13.0(typescript@5.9.3)
@@ -165,7 +168,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^5.0.1
-        version: 5.0.1(@types/node@22.20.4)(@vitest/ui@5.0.1)(vite@7.3.6(@types/node@22.20.4)(jiti@2.7.0)(stylus@0.57.0)(terser@5.51.2)(yaml@2.9.0))
+        version: 5.0.1(@types/node@22.20.4)(@vitest/ui@5.0.1)(happy-dom@20.14.5)(vite@7.3.6(@types/node@22.20.4)(jiti@2.7.0)(stylus@0.57.0)(terser@5.51.2)(yaml@2.9.0))
 
   packages/TakeInitiative.Dice: {}
 
@@ -2093,6 +2096,12 @@ packages:
   '@types/web-bluetooth@0.0.21':
     resolution: {integrity: sha512-oIQLCGWtcFZy2JW77j9k8nHzAOpqMHLQejDA48XXMWH6tjCQHz5RCFz1bzsmROyL6PUm+LLnUiI4BCn221inxA==}
 
+  '@types/whatwg-mimetype@3.0.2':
+    resolution: {integrity: sha512-c2AKvDT8ToxLIOUlN51gTiHXflsfIFisS4pO7pDPoKouJCESkhZnEy623gwP9laCy5lnLDAw1vAzu2vM2YLOrA==}
+
+  '@types/ws@8.18.1':
+    resolution: {integrity: sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg==}
+
   '@unhead/vue@2.1.17':
     resolution: {integrity: sha512-pnC8x9HLV3qQXdvWfylUEU25uhfCAy3ly9nmpQz84j9py818DRfU8jOsQ5wjdWtxyU1vX/fW2udfm4jtxUK8Bg==}
     peerDependencies:
@@ -2576,6 +2585,10 @@ packages:
 
   buffer-from@1.1.2:
     resolution: {integrity: sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ==}
+
+  buffer-image-size@0.6.4:
+    resolution: {integrity: sha512-nEh+kZOPY1w+gcCMobZ6ETUp9WfibndnosbpwB1iJk/8Gt5ZF2bhS6+B6bPYz424KtwsR6Rflc3tCz1/ghX2dQ==}
+    engines: {node: '>=4.0'}
 
   buffer@6.0.3:
     resolution: {integrity: sha512-FTiCpNxtwiZZHEZbcbTIcZjERVICn9yq/pDFkTl95/AxzD1naBctN7YO68riM/gLSDY7sdrMby8hofADYuuqOA==}
@@ -3571,6 +3584,10 @@ packages:
 
   h3@1.15.11:
     resolution: {integrity: sha512-L3THSe2MPeBwgIZVSH5zLdBBU90TOxarvhK9d04IDY2AmVS8j2Jz2LIWtwsGOU3lu2I5jCN7FNvVfY2+XyF+mg==}
+
+  happy-dom@20.14.5:
+    resolution: {integrity: sha512-x/RzkpWO40bTjIoT30iQtt64FLLmH/iRcUCN2X//bLx7H3ifkdfPXyqsro/OYtqzIAhiLMMA7mmiOR9C3NOKjQ==}
+    engines: {node: '>=20.0.0'}
 
   has-bigints@1.1.0:
     resolution: {integrity: sha512-R3pbpkcIqv2Pm3dUwgjclDRVmWpTJW2DcMzcIhEXEx1oh/CEMObMm3KLmRJOdvhM7o4uQBnwr8pzRK2sJWIqfg==}
@@ -6081,6 +6098,10 @@ packages:
   webpack-virtual-modules@0.6.2:
     resolution: {integrity: sha512-66/V2i5hQanC51vBQKPH4aI8NMAcBW59FVBs+rC7eGHupMyfn34q7rZIE+ETlJ+XTevqfUhVVBgSUNSW2flEUQ==}
 
+  whatwg-mimetype@3.0.0:
+    resolution: {integrity: sha512-nt+N2dzIutVRxARx1nghPKGv1xHikU7HKdfafKkLNLindmPU/ch3U31NOCGGA/dmPcmb1VlofO0vnKAcsm0o/Q==}
+    engines: {node: '>=12'}
+
   whatwg-url@5.0.0:
     resolution: {integrity: sha512-saE57nupxk6v3HY35+jzBwYa0rKSy0XR8JSxZPwgLr7ys0IBzhGviA1/TUGJLmSVqs8pb9AnvICXEuOHLprYTw==}
 
@@ -8376,6 +8397,12 @@ snapshots:
 
   '@types/web-bluetooth@0.0.21': {}
 
+  '@types/whatwg-mimetype@3.0.2': {}
+
+  '@types/ws@8.18.1':
+    dependencies:
+      '@types/node': 22.20.4
+
   '@unhead/vue@2.1.17(vue@3.5.42(typescript@5.9.3))':
     dependencies:
       hookable: 6.1.1
@@ -8476,7 +8503,7 @@ snapshots:
       pathe: 2.0.3
       sirv: 3.0.2
       tinyrainbow: 3.1.1
-      vitest: 5.0.1(@types/node@22.20.4)(@vitest/ui@5.0.1)(vite@7.3.6(@types/node@22.20.4)(jiti@2.7.0)(stylus@0.57.0)(terser@5.51.2)(yaml@2.9.0))
+      vitest: 5.0.1(@types/node@22.20.4)(@vitest/ui@5.0.1)(happy-dom@20.14.5)(vite@7.3.6(@types/node@22.20.4)(jiti@2.7.0)(stylus@0.57.0)(terser@5.51.2)(yaml@2.9.0))
 
   '@vitest/utils@5.0.1':
     dependencies:
@@ -8965,6 +8992,10 @@ snapshots:
   buffer-crc32@1.0.0: {}
 
   buffer-from@1.1.2: {}
+
+  buffer-image-size@0.6.4:
+    dependencies:
+      '@types/node': 22.20.4
 
   buffer@6.0.3:
     dependencies:
@@ -10030,6 +10061,19 @@ snapshots:
       radix3: 1.1.2
       ufo: 1.6.4
       uncrypto: 0.1.3
+
+  happy-dom@20.14.5:
+    dependencies:
+      '@types/node': 22.20.4
+      '@types/whatwg-mimetype': 3.0.2
+      '@types/ws': 8.18.1
+      buffer-image-size: 0.6.4
+      entities: 7.0.1
+      whatwg-mimetype: 3.0.0
+      ws: 8.21.3
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
 
   has-bigints@1.1.0: {}
 
@@ -11979,7 +12023,7 @@ snapshots:
       tinyglobby: 0.2.17
       ts-morph: 24.0.0
       undici: 7.29.0
-      vitest: 5.0.1(@types/node@22.20.4)(@vitest/ui@5.0.1)(vite@7.3.6(@types/node@22.20.4)(jiti@2.7.0)(stylus@0.57.0)(terser@5.51.2)(yaml@2.9.0))
+      vitest: 5.0.1(@types/node@22.20.4)(@vitest/ui@5.0.1)(happy-dom@20.14.5)(vite@7.3.6(@types/node@22.20.4)(jiti@2.7.0)(stylus@0.57.0)(terser@5.51.2)(yaml@2.9.0))
       vue-metamorph: 3.2.0(eslint@10.9.1(jiti@2.7.0))
       zod: 3.25.76
     transitivePeerDependencies:
@@ -12810,7 +12854,7 @@ snapshots:
       terser: 5.51.2
       yaml: 2.9.0
 
-  vitest@5.0.1(@types/node@22.20.4)(@vitest/ui@5.0.1)(vite@7.3.6(@types/node@22.20.4)(jiti@2.7.0)(stylus@0.57.0)(terser@5.51.2)(yaml@2.9.0)):
+  vitest@5.0.1(@types/node@22.20.4)(@vitest/ui@5.0.1)(happy-dom@20.14.5)(vite@7.3.6(@types/node@22.20.4)(jiti@2.7.0)(stylus@0.57.0)(terser@5.51.2)(yaml@2.9.0)):
     dependencies:
       '@types/chai': 5.2.3
       '@vitest/mocker': 5.0.1(vite@7.3.6(@types/node@22.20.4)(jiti@2.7.0)(stylus@0.57.0)(terser@5.51.2)(yaml@2.9.0))
@@ -12829,6 +12873,7 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.20.4
       '@vitest/ui': 5.0.1(vitest@5.0.1)
+      happy-dom: 20.14.5
     transitivePeerDependencies:
       - msw
 
@@ -12911,6 +12956,8 @@ snapshots:
   webidl-conversions@3.0.1: {}
 
   webpack-virtual-modules@0.6.2: {}
+
+  whatwg-mimetype@3.0.0: {}
 
   whatwg-url@5.0.0:
     dependencies:
