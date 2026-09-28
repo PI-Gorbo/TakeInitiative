@@ -154,6 +154,8 @@
             filter?: SessionStreamFilter;
             /** A note to open at (`?note=` from a copied link, 14d). */
             focusNoteId?: string;
+            /** A session to open at, by number (`?session=` from ⌘K, 17b). */
+            focusSessionNumber?: number;
         }>(),
         { filter: "All" }
     );
@@ -345,24 +347,12 @@
     // ── Note links ───────────────────────────────────────────────────────────
     // `?note={id}`: load older pages until the note's session is loaded, then scroll
     // to the note and highlight it. A note the viewer cannot see is a 404.
-    const emit = defineEmits<{ noteOpened: [noteId: string] }>();
+    const emit = defineEmits<{ noteOpened: [noteId: string]; sessionOpened: [sessionNumber: number] }>();
     const highlightedId = ref<string | null>(null);
     let highlightTimer: ReturnType<typeof setTimeout> | undefined;
 
-    async function goToNote(noteId: string) {
-        let sessionNumber: number;
-        try {
-            sessionNumber = (
-                await useApi().note.get({
-                    campaignId: props.campaignId,
-                    noteId,
-                })
-            ).sessionNumber;
-        } catch {
-            toast.error("That note is not there, or you cannot see it.");
-            emit("noteOpened", noteId);
-            return;
-        }
+    /** Loads older pages until the session is loaded, or there is nothing older. */
+    async function loadUntilSession(sessionNumber: number) {
         // Bounded, in case the server keeps answering `hasOlder` without older sessions.
         for (let pages = 0; pages < 500; pages++) {
             const progress = noteLinkProgress(
@@ -379,6 +369,23 @@
             await loadOlder();
         }
         await nextTick();
+    }
+
+    async function goToNote(noteId: string) {
+        let sessionNumber: number;
+        try {
+            sessionNumber = (
+                await useApi().note.get({
+                    campaignId: props.campaignId,
+                    noteId,
+                })
+            ).sessionNumber;
+        } catch {
+            toast.error("That note is not there, or you cannot see it.");
+            emit("noteOpened", noteId);
+            return;
+        }
+        await loadUntilSession(sessionNumber);
         const el = document.getElementById(`note-${noteId}`);
         if (el) {
             atBottom.value = false;
@@ -400,7 +407,27 @@
         },
         { immediate: true }
     );
+
+    // `?session={number}` (17b): the same walk, to the session's divider.
+    async function goToSession(sessionNumber: number) {
+        await loadUntilSession(sessionNumber);
+        const el = document.getElementById(`session-${sessionNumber}`);
+        if (el) {
+            atBottom.value = false;
+            el.scrollIntoView({ block: "start" });
+        } else {
+            toast.info(`Session ${sessionNumber} is not there.`);
+        }
+        emit("sessionOpened", sessionNumber);
+    }
+    watch(
+        () => [opened.value, props.focusSessionNumber] as const,
+        ([isOpen, sessionNumber]) => {
+            if (isOpen && sessionNumber) void goToSession(sessionNumber);
+        },
+        { immediate: true }
+    );
     onBeforeUnmount(() => clearTimeout(highlightTimer));
 
-    defineExpose({ scrollToBottom, goToNote });
+    defineExpose({ scrollToBottom, goToNote, goToSession });
 </script>

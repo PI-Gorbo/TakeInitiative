@@ -24,7 +24,9 @@
                     :campaign="campaign"
                     :filter="filter"
                     :focusNoteId="focusNoteId"
-                    @noteOpened="clearNoteLink" />
+                    :focusSessionNumber="focusSessionNumber"
+                    @noteOpened="clearNoteLink"
+                    @sessionOpened="clearParam(SESSION_LINK_PARAM)" />
                 <Composer
                     :key="campaign.id"
                     :campaign="campaign"
@@ -51,6 +53,7 @@
     import { FILTER_PARAM, filterFromQuery, filterToQuery } from "~/utils/streamFilters";
     import { getCampaignQuery } from "~/utils/queries/campaign";
     import { getEntriesQuery } from "~/utils/queries/entries";
+    import { SESSION_LINK_PARAM, sessionFromQuery } from "~/utils/search";
     import { SHARE_PARAM, validShareId } from "~/utils/shareTarget";
 
     definePageMeta({
@@ -87,6 +90,17 @@
         void router.replace({ query });
     }
     const clearNoteLink = () => clearParam(NOTE_LINK_PARAM);
+
+    // A session from ⌘K: `?session={number}` (17b). The stream opens at its divider,
+    // then the parameter is dropped, as `?note=` is.
+    const focusSessionNumber = computed(() => sessionFromQuery(route.query[SESSION_LINK_PARAM]));
+    watch(
+        () => route.query[SESSION_LINK_PARAM],
+        (value) => {
+            if (value !== undefined && !sessionFromQuery(value)) clearParam(SESSION_LINK_PARAM);
+        },
+        { immediate: true }
+    );
 
     // "Add a note about X" from an entry page: `?about={entryId}` (15c). The composer
     // uses it once and the page drops it. An id the viewer's directory does not hold

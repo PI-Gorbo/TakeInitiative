@@ -77,6 +77,7 @@
                 :viewerMemberId="viewer.memberId"
                 :canEdit="canEdit"
                 :nameOf="memberName"
+                :highlightedBlockId="highlightedBlockId"
                 @edit="openArticleEditor()" />
 
             <WikiEntryTimeline
@@ -131,6 +132,7 @@
     import type { ArticleBlock } from "~/utils/api/types";
     import { EDIT_BLOCK_PARAM, entryHref } from "~/utils/article";
     import { ABOUT_PARAM, canChangeEntryAccess, canEditEntry } from "~/utils/entries";
+    import { BLOCK_LINK_PARAM } from "~/utils/search";
     import { getCampaignQuery } from "~/utils/queries/campaign";
     import { getEntryQuery } from "~/utils/queries/entries";
 
@@ -225,6 +227,29 @@
         },
         { immediate: true }
     );
+
+    // `?block={blockId}` from ⌘K (17b) is used once, when the entry has loaded: the read
+    // article scrolls to the block and marks it for a moment, then the parameter is
+    // dropped. A block the viewer cannot see is simply not there.
+    const highlightedBlockId = ref<string | null>(null);
+    let blockTimer: ReturnType<typeof setTimeout> | undefined;
+    watch(
+        [() => route.query[BLOCK_LINK_PARAM], entry],
+        async ([blockId, loaded]) => {
+            if (typeof blockId !== "string" || !loaded) return;
+            const { [BLOCK_LINK_PARAM]: _, ...query } = route.query;
+            void navigateTo({ query }, { replace: true });
+            await nextTick();
+            const el = document.getElementById(`block-${blockId}`);
+            if (!el) return;
+            el.scrollIntoView({ block: "center" });
+            highlightedBlockId.value = blockId;
+            clearTimeout(blockTimer);
+            blockTimer = setTimeout(() => (highlightedBlockId.value = null), 2500);
+        },
+        { immediate: true }
+    );
+    onBeforeUnmount(() => clearTimeout(blockTimer));
 
     const aboutLink = computed(
         () => `/app/campaigns/${encodeURIComponent(campaignId.value)}?${ABOUT_PARAM}=${encodeURIComponent(entryId.value)}`
