@@ -29,7 +29,7 @@ which sits on 18f (#238). Each PR leaves the app runnable:
 | 19a | `v2/19a-connections-api` | Connections, evidence and the graph (API) | 18's app unchanged in the browser. The API answers an entry's connections, a pair's evidence and a campaign graph, per viewer, and the leak tests pass | [x] |
 | 19b | `v2/19b-loose-ends-api` | Loose ends and link suggestions (API) | The same in the browser. The API lists loose ends per viewer with suggested links for unlinked notes, and counts them for the Wiki and per session | [x] |
 | 19c | `v2/19c-connections-panel` | The Connections panel and evidence sheet | An entry page shows CONNECTIONS, grouped with "Seen at", and a tap opens the evidence. It refreshes live | [x] |
-| 19d | `v2/19d-graph-page` | The graph page | `/wiki/graph` draws the force graph, with kind chips, depth 1–2, pan and pinch zoom, and edges that open the evidence | [ ] |
+| 19d | `v2/19d-graph-page` | The graph page | `/wiki/graph` draws the force graph, with kind chips, depth 1–2, pan and pinch zoom, and edges that open the evidence | [x] |
 | 19e | `v2/19e-loose-ends-ui` | Loose ends in the Wiki and on sessions | "Loose ends (n)" in the Wiki and ⌘K, 🧵 counts on dividers, and resolving in place. The step's Verify passes | [ ] |
 
 Typed relations, a stored edge table and model suggestions (step 23) are not in 19
@@ -610,3 +610,29 @@ PR adds the nouns the step puts into code and UI:
   - The hub invalidates `["connections", campaignId]` on the eight pushes listed, and
     also on joining, reconnecting and a change to the viewer's own role, like the
     other campaign queries.
+- **As built, 19d.** Where it differs from 19d above:
+  - The view is `utils/graph.ts`'s `GraphView` (`graphViewFromQuery` / `graphViewToQuery`).
+    Defaults are left out of the URL: no `?depth=` without a focus or at 1, no `?kinds=`
+    with every kind on. The last kind chip that is on stays on. A new focus (Centre here,
+    Clear focus) pushes a history entry; chips and depth replace it.
+  - The graph query is `["connections", campaignId, "graph", focus, depth, kinds]`, so the
+    hub's existing invalidation refetches it. It keeps the previous graph while a new view
+    loads, and the simulation keeps the positions of nodes that stay (a gentle reheat).
+  - Labels also show for every node in a graph of 20 or fewer, and, without a focus, for
+    the selected node and its neighbours.
+  - Node drag is hand-rolled on pointer events (no `d3-drag`); d3-zoom's filter ignores a
+    press that starts on a node, unless it is a second finger (pinch). Double-click zoom is
+    off, so a double tap on a node does not zoom. Every node has an invisible hit circle at
+    least 44px across on screen, whatever the zoom. The edge hit line is 12px on screen
+    (`vector-effect: non-scaling-stroke`).
+  - The focus is pinned at the centre until dragged. The view fits the graph once it
+    settles and again after a focus change, and a Fit button redoes it.
+  - Kind colours are HSL values in `KIND_COLOURS` (`utils/graph.ts`), chosen for the app's
+    one dark theme; the kind chips carry a dot of the same colour as a legend.
+  - An edge's evidence reads from the selected node (or the focus) when it is one end, so
+    the sheet's title starts with the entry you were looking at. The edge is turned into
+    the sheet's `connection` with `lastAt: null`.
+  - An unknown or hidden focus (404) shows "That entry is not in the Wiki, or you cannot
+    see it." with "Show the whole Wiki".
+  - Also in this PR: `fix(web)` for 19c, where `EvidenceRow.vue` used `<NoteMarkdown>` (it
+    is auto-imported as `<SessionNoteMarkdown>`), so evidence snippets did not render.
