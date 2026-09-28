@@ -5,8 +5,10 @@
          undo. A merge that would show the entry to someone who cannot see it now is
          refused: "Change visibility first". -->
     <Dialog v-model:open="open">
+        <!-- One shrinkable grid column and shrinkable children, as Promote's: the base
+             dialog's grid otherwise grows to a long entry name's min-content. -->
         <DialogContent
-            class="max-h-[90dvh] max-w-md overflow-y-auto max-md:top-4 max-md:translate-y-0"
+            class="max-h-[90dvh] max-w-lg grid-cols-[minmax(0,1fr)] overflow-y-auto max-md:top-4 max-md:translate-y-0 [&>*]:min-w-0"
             :style="phone ? { maxHeight: `calc(100dvh - ${inset}px - 2rem)` } : undefined">
             <DialogHeader>
                 <DialogTitle>Merge {{ entry.name }}</DialogTitle>
@@ -14,7 +16,7 @@
             </DialogHeader>
 
             <form
-                class="flex flex-col gap-3"
+                class="flex min-w-0 flex-col gap-3"
                 @submit.prevent="merge">
                 <WikiEntryPicker
                     v-model="target"
@@ -24,7 +26,7 @@
                     noCreate />
 
                 <template v-if="into">
-                    <ul class="flex flex-col gap-1 rounded-md bg-muted px-3 py-2 text-sm">
+                    <ul class="flex flex-col gap-1 break-words rounded-md bg-muted px-3 py-2 text-sm [overflow-wrap:anywhere]">
                         <li>
                             "{{ entry.name }}"<template v-if="entry.aliases.length > 0">
                                 and {{ entry.aliases.length === 1 ? "its alias" : `its ${entry.aliases.length} aliases` }}</template

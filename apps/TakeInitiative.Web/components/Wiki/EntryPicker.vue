@@ -2,25 +2,28 @@
     <!-- Picks the entry to promote into (15f): 15d's matching over the entries the
          viewer can edit, plus Create "…" with a kind. The new entry is created with
          the note's visibility when the dialog promotes. Merge (15g) uses it with
-         `noCreate` and the merged entry left out. -->
-    <div class="flex flex-col gap-2">
+         `noCreate` and the merged entry left out. Every row may be narrower than its
+         content (`min-w-0`), so a long name truncates instead of widening the dialog. -->
+    <div class="flex min-w-0 flex-col gap-2">
         <div
             v-if="target"
-            class="flex min-h-11 items-center gap-2 rounded-md border px-3 py-1.5 text-sm">
-            <span aria-hidden="true">{{ ENTRY_KIND_ICONS[target.kind === "entry" ? target.entry.kind : kind] }}</span>
+            class="flex min-h-11 min-w-0 items-center gap-2 rounded-md border px-3 py-1.5 text-sm">
+            <span
+                class="shrink-0"
+                aria-hidden="true">{{ ENTRY_KIND_ICONS[target.kind === "entry" ? target.entry.kind : kind] }}</span>
             <span class="min-w-0 flex-1 truncate font-medium">
                 {{ target.kind === "entry" ? target.entry.name : target.name }}
             </span>
             <span
                 v-if="target.kind === 'create'"
-                class="rounded bg-gold/15 px-1 text-xs text-gold"
+                class="shrink-0 rounded bg-gold/15 px-1 text-xs text-gold"
                 >new</span
             >
             <Button
                 v-if="!locked"
                 variant="ghost"
                 size="sm"
-                class="h-11 md:h-7"
+                class="h-11 shrink-0 md:h-7"
                 @click="clear">
                 Change
             </Button>
@@ -39,7 +42,7 @@
                 :id="`${id}-list`"
                 role="listbox"
                 aria-label="Entries"
-                class="flex max-h-56 flex-col overflow-y-auto">
+                class="flex max-h-56 min-w-0 flex-col overflow-y-auto">
                 <li
                     v-for="option in targets"
                     :key="option.kind === 'entry' ? option.entry.id : 'create'"
@@ -47,14 +50,18 @@
                     :aria-selected="false">
                     <button
                         type="button"
-                        class="flex min-h-11 w-full items-center gap-2 rounded-md px-2 text-left text-sm hover:bg-accent md:min-h-9"
+                        class="flex min-h-11 w-full min-w-0 items-center gap-2 rounded-md px-2 text-left text-sm hover:bg-accent md:min-h-9"
                         @click="choose(option)">
                         <template v-if="option.kind === 'entry'">
-                            <span aria-hidden="true">{{ ENTRY_KIND_ICONS[option.entry.kind] }}</span>
-                            <span class="truncate font-medium">{{ option.entry.name }}</span>
+                            <span
+                                class="shrink-0"
+                                aria-hidden="true"
+                                >{{ ENTRY_KIND_ICONS[option.entry.kind] }}</span
+                            >
+                            <span class="min-w-0 truncate font-medium">{{ option.entry.name }}</span>
                             <span
                                 v-if="option.alias"
-                                class="truncate text-xs text-muted-foreground"
+                                class="min-w-0 truncate text-xs text-muted-foreground"
                                 >· aka {{ option.alias }}</span
                             >
                         </template>
@@ -62,7 +69,7 @@
                             <Plus
                                 class="size-4 shrink-0"
                                 aria-hidden="true" />
-                            <span class="truncate">Create "{{ option.name }}"</span>
+                            <span class="min-w-0 truncate">Create "{{ option.name }}"</span>
                         </template>
                     </button>
                 </li>
@@ -81,6 +88,7 @@
         </template>
         <ComposerKindChips
             v-if="target?.kind === 'create'"
+            class="min-w-0"
             :modelValue="kind"
             @pick="(k) => (kind = k)" />
     </div>

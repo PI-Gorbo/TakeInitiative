@@ -5,9 +5,14 @@
          that is not text from the note. On a phone the whole note goes in, and the
          article editor opens at the new quote to trim it there. -->
     <Dialog v-model:open="open">
-        <!-- On a phone it sits at the top and stops above the keyboard (invariant 11). -->
+        <!-- On a phone it sits at the top and stops above the keyboard (invariant 11).
+             The base dialog is a grid, and a grid track and its items grow to their
+             min-content by default: the kind chips' scroll row, a truncated entry name or
+             a long unbroken token in the excerpt (`@[Name](entry:…)`) would push the
+             dialog wider than the screen. One shrinkable column, children that may be
+             narrower than their content, and wrapping anywhere keep it inside. -->
         <DialogContent
-            class="max-h-[90dvh] max-w-md overflow-y-auto max-md:top-4 max-md:translate-y-0"
+            class="max-h-[90dvh] max-w-lg grid-cols-[minmax(0,1fr)] overflow-y-auto max-md:top-4 max-md:translate-y-0 [&>*]:min-w-0"
             :style="phone ? { maxHeight: `calc(100dvh - ${inset}px - 2rem)` } : undefined">
             <DialogHeader>
                 <DialogTitle>Promote to wiki</DialogTitle>
@@ -19,7 +24,7 @@
             </DialogHeader>
 
             <form
-                class="flex flex-col gap-3"
+                class="flex min-w-0 flex-col gap-3"
                 @submit.prevent="promote">
                 <WikiEntryPicker
                     v-model="target"
@@ -44,7 +49,7 @@
                 </label>
                 <p
                     v-else
-                    class="line-clamp-4 whitespace-pre-wrap rounded-md border-l-2 border-gold/60 pl-3 text-sm text-muted-foreground">
+                    class="line-clamp-4 whitespace-pre-wrap break-words rounded-md [overflow-wrap:anywhere] border-l-2 border-gold/60 pl-3 text-sm text-muted-foreground">
                     {{ state.text }}
                 </p>
                 <p
