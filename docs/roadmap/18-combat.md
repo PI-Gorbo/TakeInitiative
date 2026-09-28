@@ -25,7 +25,7 @@ sits on 17c (#229). Each PR leaves the app runnable:
 | PR | Branch | Sub-step | Runnable state after merge | Status |
 |---|---|---|---|---|
 | 18a | `v2/18a-combat-api` | Combat model, redaction and combatants (API) | 17's app unchanged in the browser. The API creates Draft combats, adds, edits and removes combatants, answers a redacted view per viewer and pushes it live. The leak tests pass | [x] |
-| 18b | `v2/18b-combat-turns-api` | Initiative, turns, finish and history (API) | The same in the browser. Roll starts a combat and slots in late joiners, end turn advances turns and rounds, a DM reorders and finishes, and a DM reads the history | [ ] |
+| 18b | `v2/18b-combat-turns-api` | Initiative, turns, finish and history (API) | The same in the browser. Roll starts a combat and slots in late joiners, end turn advances turns and rounds, a DM reorders and finishes, and a DM reads the history | [[x] |
 | 18c | `v2/18c-combat-tab` | The Combat tab and the combat page | The Combat tab lists combats. A DM creates one, adds combatants with `@Goblin ×4`, rolls and finishes, a player adds their character and ends their turn, all live | [ ] |
 | 18d | `v2/18d-combatant-sheet` | The combatant sheet | Tapping a combatant opens its sheet: damage and heal, conditions, PlayersSee, hidden, AC, initiative, remove, and drag to reorder. A DM opens the history | [ ] |
 | 18e | `v2/18e-combat-card` | Combat cards, the banner and entries' combats | The session stream shows combat cards and the Combats filter works. A live combat shows the Join combat banner and pulses the Combat tab. An entry page lists its combats. The combat page has the slim composer | [ ] |
@@ -82,7 +82,9 @@ matches nothing, and comments naming step 18 (`Stats.cs`, `PutEntryStats.cs`,
 **18b**
 - API add `src/Features/Combats/Api/{PostCombatRoll,PostCombatEndTurn,PostCombatFinish,PutCombatantPosition,GetCombatHistory}/*.cs`
 - API modify `src/Features/Combats/Models/Combat.cs` (the three `Apply`s), `CombatOrder.cs` (placing and respacing)
+- API modify `src/Features/Combats/CombatWrite.cs` (the retrying `Write`), `Models/Events/CombatantEdited.cs` (`Tiebreak`), `Api/{PostCombatants,PutCombatant,DeleteCombatant}` (onto `Write`)
 - Tests add `Scopes/Integration/Features/Combats/{InitiativeTests,TurnTests,CombatHistoryTests}.cs`, `Scopes/Unit/CombatTurnTests.cs`
+- Tests modify `Scopes/Integration/Features/Combats/{CombatTests,CombatLeakTests,CombatTestKit}.cs`
 - Web `utils/api/schema.d.ts`: regenerated
 
 **18c**
@@ -630,6 +632,31 @@ This PR adds the nouns the step puts into code and UI:
     entries. A combatant from a DM's own `Me` entry is plain text in the push and a link
     in that DM's reads.
   - `GET combats` filters `status` in memory, after the `CampaignId` query.
+- **As built, 18b.** Where it differs from 18b above:
+  - Every write goes through `CombatWrite.Write`, which loads with `FetchForWriting`, asks
+    the endpoint for its events, and on a concurrency error decides again on the fresh
+    state, up to 3 attempts (not "edits retry once"). So a stale end turn becomes its 409,
+    a roll with nothing left waiting appends nothing, and edits, adds and removes land over
+    the other write. Marten raises `EventStreamUnexpectedMaxEventIdException` here, which
+    18a's `catch (ConcurrencyException)` did not catch. After 3 attempts it is still 409
+    "The combat changed while you were saving."
+  - Reorder's tiebreak needs an event field: `CombatantEdited` gained an optional
+    `Tiebreak` (null keeps the combatant's own), since `CombatantState` is the `PUT`'s
+    shape and carries none. A combatant placed after `afterId` takes that combatant's
+    initiative; one dropped on top takes the initiative of the one below. Dropping a
+    combatant where it already is, or after itself, appends nothing. A waiting combatant,
+    moved or as `afterId`, is a 400.
+  - End turn: a player sending the id of a combatant they cannot see gets the stale 409,
+    not a 403, so a hidden combatant's turn does not leak. A Draft is a 409 "This combat
+    hasn't started yet.". A lone combatant's end turn gives it the next round's turn.
+  - A roll clamps each total to −99…99. Its `SessionId` is set only on the first roll.
+  - History is `GET combats/{id}/history` → `{ items: [{ version, timestamp,
+    actorMemberId, kind, text }] }`, oldest first, where `kind` is `Created`,
+    `CombatantsAdded`, `CombatantEdited`, `CombatantRemoved`, `InitiativeRolled`,
+    `TurnEnded` or `Finished`. The text replays the stream, so names are the ones in use
+    at the time. A member who has left is "A former member".
+  - Finish checks Finished (409) before the DM rule, so a player finishing a finished
+    combat gets 409 rather than 403.
 - **Not in 18:** temporary HP, death saves, concentration checks, legendary actions,
   lair turns, ready or delay, combat-scoped notes, a combat log for players, deleting
   combats, and v1's Paused, stages, Quantity and CopyNumber (§8: gone).
