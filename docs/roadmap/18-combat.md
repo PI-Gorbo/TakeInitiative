@@ -24,7 +24,7 @@ sits on 17c (#229). Each PR leaves the app runnable:
 
 | PR | Branch | Sub-step | Runnable state after merge | Status |
 |---|---|---|---|---|
-| 18a | `v2/18a-combat-api` | Combat model, redaction and combatants (API) | 17's app unchanged in the browser. The API creates Draft combats, adds, edits and removes combatants, answers a redacted view per viewer and pushes it live. The leak tests pass | [ ] |
+| 18a | `v2/18a-combat-api` | Combat model, redaction and combatants (API) | 17's app unchanged in the browser. The API creates Draft combats, adds, edits and removes combatants, answers a redacted view per viewer and pushes it live. The leak tests pass | [x] |
 | 18b | `v2/18b-combat-turns-api` | Initiative, turns, finish and history (API) | The same in the browser. Roll starts a combat and slots in late joiners, end turn advances turns and rounds, a DM reorders and finishes, and a DM reads the history | [ ] |
 | 18c | `v2/18c-combat-tab` | The Combat tab and the combat page | The Combat tab lists combats. A DM creates one, adds combatants with `@Goblin ×4`, rolls and finishes, a player adds their character and ends their turn, all live | [ ] |
 | 18d | `v2/18d-combatant-sheet` | The combatant sheet | Tapping a combatant opens its sheet: damage and heal, conditions, PlayersSee, hidden, AC, initiative, remove, and drag to reorder. A DM opens the history | [ ] |
@@ -71,11 +71,12 @@ matches nothing, and comments naming step 18 (`Stats.cs`, `PutEntryStats.cs`,
 **18a**
 - API add `src/Features/Combats/Models/{Combat,Combatant,Condition,PlayersSee,HpBand,CombatStatus,CombatOrder}.cs`
 - API add `src/Features/Combats/Models/Events/{CombatCreated,CombatantsAdded,CombatantEdited,CombatantRemoved,InitiativeRolled,TurnEnded,CombatFinished}.cs` (all seven now, so the projection is whole; 18b appends the last three)
-- API add `src/Features/Combats/{CombatAccess,CombatView,CombatHub,CombatantDefaults}.cs`
+- API add `src/Features/Combats/{CombatAccess,CombatView,CombatHub,CombatantDefaults,CombatWrite}.cs`
+- API modify `src/Features/Entries/Api/PutEntryStats/PutEntryStats.cs` (a `DiceExpression` overload for child rules)
 - API add `src/Features/Combats/Api/{PostCombat,GetCombats,GetCombat,PostCombatants,PutCombatant,DeleteCombatant}/*.cs`, `Api/CombatResponse.cs`
 - API modify `src/boostrap/Bootstrap.cs` (the `Combat` snapshot projection and its indexes), `src/Features/Campaigns/CampaignHub.cs` (`CampaignHubMessages.CombatChanged`), `GlobalUsings.cs`
 - Tests add `Scopes/Unit/{CombatOrderTests,CombatViewTests,CombatantDefaultsTests}.cs`
-- Tests add `Scopes/Integration/Features/Combats/{CombatTests,CombatantTests,CombatLeakTests,CombatHubTests}.cs`
+- Tests add `Scopes/Integration/Features/Combats/{CombatTests,CombatantTests,CombatLeakTests,CombatHubTests,CombatTestKit}.cs`
 - Web `utils/api/schema.d.ts`: regenerated
 
 **18b**
@@ -610,6 +611,25 @@ This PR adds the nouns the step puts into code and UI:
     from an SRD monster.
   - **D&D Beyond (22):** refreshed max HP, AC and initiative bonus land in Stats, and
     the next combatant added from that character takes them.
+- **As built, 18a.** Where it differs from 18a above:
+  - `Combat.Apply(InitiativeRolled)` is in 18a, not 18b, so a started combat can be read
+    and redacted in 18a's tests. They append the event directly (`CombatTestKit.Start`).
+    18b adds the roll endpoint and the `TurnEnded` and `CombatFinished` applies.
+  - Removing the turn's combatant already passes the turn on (`CombatOrder.After`, wrapping
+    and counting the round), and so does clearing its initiative.
+  - Redacted fields are left out of the JSON rather than sent as `null`, so a player's
+    payload has no `hp`, `maxHp`, `ac` or `band` key at all. `CombatResponse` and the
+    summary also carry `createdAt`.
+  - A player's own combatant shows to them even when hidden, with its real `hidden`, so
+    their `PUT` can echo it back.
+  - A player's `POST combatants` may carry only `entryId`. Any other field is a 403.
+  - A rolled max HP is clamped to 1…9,999.
+  - Writes use `FetchForWriting`. A concurrent write is a 409 "The combat changed while you
+    were saving." for now, with no retry; 18b.7 adds the retries.
+  - The push to the DM group is one payload, redacted for a DM who created none of the
+    entries. A combatant from a DM's own `Me` entry is plain text in the push and a link
+    in that DM's reads.
+  - `GET combats` filters `status` in memory, after the `CampaignId` query.
 - **Not in 18:** temporary HP, death saves, concentration checks, legendary actions,
   lair turns, ready or delay, combat-scoped notes, a combat log for players, deleting
   combats, and v1's Paused, stages, Quantity and CopyNumber (§8: gone).
