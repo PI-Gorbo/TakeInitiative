@@ -1,0 +1,5 @@
+{
+    "monster": [
+        { "name": "Test Draft Horror", "source": "UATest", "page": 3, "size": ["L"], "type": "aberration", "ac": [13], "hp": { "average": 22, "formula": "4d10" }, "cr": "2", "dex": 12 }
+    ]
+}

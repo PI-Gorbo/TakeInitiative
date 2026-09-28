@@ -1,0 +1,5 @@
+{
+    "book": [
+        { "name": "Test Book of Beasts", "id": "TST", "source": "TST", "group": "core", "author": "Nobody" }
+    ]
+}

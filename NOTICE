@@ -32,3 +32,18 @@ The machine-readable transcription the script reads is Open5e's
 commit named in apps/TakeInitiative.Api/Reference/Srd52/source.json. Thanks to the
 Open5e project. Only the SRD's text and numbers are taken from it: none of Open5e's code,
 identifiers or artwork is included in TakeInitiative.
+
+5eTools
+-------
+
+TakeInitiative can link out to 5etools (https://5e.tools). A deployment may also hold an
+index, built on the deployer's own machine by scripts/5etools/build-5etools-index.mjs from
+a copy of the 5etools data the deployer supplies. The index holds only item names,
+categories, source-book abbreviations and titles, page numbers, short labels (challenge
+rating, size and type; spell level and school; item rarity and type), a link to the item's
+5etools page, and for monsters their armor class, hit dice and initiative bonus. It is
+git-ignored (.data/) and is not part of this repository, its builds or its images.
+
+No 5eTools or Wizards of the Coast content is distributed with TakeInitiative. The
+script's test fixtures (scripts/5etools/fixture/) are invented. TakeInitiative is not
+affiliated with, endorsed, sponsored or approved by 5etools or by Wizards of the Coast.
