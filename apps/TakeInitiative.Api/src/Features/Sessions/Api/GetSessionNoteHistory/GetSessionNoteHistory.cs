@@ -26,6 +26,11 @@ public record SessionNoteVersion
     /// real, so a past version names a count rather than showing them.
     /// </summary>
     public required int ImageCount { get; init; }
+    /// <summary>
+    /// The model whose suggestion this version accepted (step 23c): its name, version and
+    /// confidence. Null for a version the author wrote themselves, and for the first.
+    /// </summary>
+    public ModelSuggestion? Model { get; init; }
 }
 
 /// <summary>A note's edit history, read from its stream. Whoever can see the note can read it.</summary>
@@ -57,7 +62,10 @@ public class GetSessionNoteHistory(IDocumentSession session)
                     break;
                 case SessionNoteEdited edited:
                     imageCount = edited.Images?.Length ?? imageCount;
-                    versions.Add(new SessionNoteVersion { Text = edited.Text, IsRecap = edited.IsRecap, At = e.Timestamp, ImageCount = imageCount });
+                    versions.Add(new SessionNoteVersion
+                    {
+                        Text = edited.Text, IsRecap = edited.IsRecap, At = e.Timestamp, ImageCount = imageCount, Model = edited.Actor.Model,
+                    });
                     break;
             }
         }

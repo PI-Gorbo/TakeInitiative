@@ -8,5 +8,6 @@ global using TakeInitiative.Api.Features.LooseEnds;
 global using TakeInitiative.Api.Features.Reference;
 global using TakeInitiative.Api.Features.Search;
 global using TakeInitiative.Api.Features.Sessions;
+global using TakeInitiative.Api.Features.Suggestions;
 global using TakeInitiative.Api.Features.Users;
 global using TakeInitiative.Dice;
