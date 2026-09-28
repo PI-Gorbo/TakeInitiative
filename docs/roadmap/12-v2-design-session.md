@@ -75,6 +75,11 @@ player-first experiences: **combat**, **note taking**, **⌘K search** and
 | **Combat** | One encounter. Status: `Draft`, `Active` or `Finished`. | planned/draft combat as a separate thing |
 | **Combatant** | One row in a combat. It can link to an entry. | Staged/Initiative/Planned character |
 | **Round / Turn / Condition** | As in 5e. A condition is a text label with an optional note. | — |
+| **Initiative order** | A combat's rolled combatants, highest initiative first, ties broken by a hidden random `Tiebreak`. | turn order list, tracker |
+| **Waiting** | A combatant with no initiative yet. The next roll places it. | staged, pending |
+| **PlayersSee** | Per combatant, what players see of its HP: `Exact`, `Band` or `Nothing`. AC shows only with `Exact`. | display settings |
+| **HP band** | `Healthy`, `Bloodied` (half HP or less) or `Down` (0 or less), shown for `Band`. | health status |
+| **Combat card** | A combat drawn in its session in the session stream. | combat message, combat post |
 
 Rule: a new noun gets added to this table before it appears in code.
 

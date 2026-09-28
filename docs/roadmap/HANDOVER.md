@@ -70,6 +70,9 @@ Stack #224. Everything is on top of `dev` and still open:
 | #225 | `v2/17-composer-tiptap` | The composer on TipTap: ⌘B, ⌘I, ⌘⇧8, ⌘K for the `@` picker, `@` mentions as nodes. The stored markdown format is unchanged |
 | #226 | `v2/17-composer-edit-mode` | Editing a note happens in the composer, with Cancel and Save. `Session/NoteEditor.vue` is deleted |
 | (this) | `v2/17-handover` | This file |
+| #228 | `v2/17b-search-sheet` | 17b: the search sheet |
+| #229 | `v2/17c-search-actions` | 17c: actions; closes step 17 |
+| — | `v2/18-combat-plan` | Step 18's step file |
 
 The local branches `pr/PI-Gorbo/222`, `pr/PI-Gorbo/222-1` and `pr/PI-Gorbo/222-2` are stale
 checkouts of #222. Ignore them.
@@ -102,15 +105,15 @@ checkouts of #222. Ignore them.
 1. **Get #222–#226 checked in a browser.** No agent has run them in a real browser
    yet, and each PR body has a checklist. Fix what the user reports on top of the
    stack.
-2. **17b, the search sheet** (`17-search.md` § 17b, branch `v2/17b-search-sheet`).
-   Some rows open a note. Where that means editing, use `useComposerEdit(campaignId).start(note)`,
-   not a separate editor.
-3. **17c, actions** (§ 17c). Its `?compose=@X` must open the **TipTap** composer
-   with the `@` picker showing (`triggerMention()` / seeding the editor), not
-   textarea caret maths as the step file assumes. Update the step file's text to
-   match when you get there.
-4. **Close step 17:** tick the step file's PR table and the README status.
-5. **Then steps 18–24** in README order. Write each step file first.
+2. ~~17b, the search sheet~~ (#228) and ~~17c, actions~~ (#229) are done, and
+   step 17 is closed (PR table ticked, README `done`). Both need the same browser
+   check as 1.
+3. **Step 18, Combat v2** ([18-combat.md](18-combat.md)). Its step file is the docs
+   PR `v2/18-combat-plan` on top of 17c. Run 18a–18f in order, one subagent each.
+   Read the step file's "Decisions this file made where the design was open" first:
+   several deviate from §8 on purpose (`TurnCombatantId`, the first roll starts a
+   combat, no per-combat SignalR groups).
+4. **Then steps 19–24** in README order. Write each step file first.
 
 ## Follow-ups found this round
 
