@@ -32,6 +32,7 @@ public class FiveEToolsCatalog
     {
         logger ??= NullLogger.Instance;
         IReadOnlyList<FiveEToolsRow> rows = [];
+        IReadOnlyDictionary<string, string> sources = new Dictionary<string, string>();
         if (string.IsNullOrWhiteSpace(path))
         {
             logger.LogInformation("5eTools index not configured; the 5eTools provider is off");
@@ -42,7 +43,7 @@ public class FiveEToolsCatalog
         }
         else
         {
-            rows = Read(path);
+            (rows, sources) = Read(path);
             logger.LogInformation(
                 "5eTools index loaded from {Path}: {Count} items ({Monsters} monsters, {Spells} spells, {Items} items)",
                 path, rows.Count,
@@ -52,7 +53,7 @@ public class FiveEToolsCatalog
         }
 
         Rows = rows;
-        var summaries = rows.Select(Summarise).ToList();
+        var summaries = rows.Select(row => Summarise(row, sources)).ToList();
         byId = summaries.ToDictionary(s => s.Id, StringComparer.Ordinal);
         Candidates = summaries.Select(s => new ReferenceMatcher.Candidate<ReferenceSummary>(s, s.Name, ReferenceMatcher.Fold(s.Name))).ToList();
         var first = rows.FirstOrDefault(r => Uri.TryCreate(r.Url, UriKind.Absolute, out _));
@@ -87,7 +88,7 @@ public class FiveEToolsCatalog
     /// <summary>The summary with this id ("monster_beholder_mm"), or null.</summary>
     public ReferenceSummary? Find(string id) => byId.GetValueOrDefault(id);
 
-    private static IReadOnlyList<FiveEToolsRow> Read(string path)
+    private static (IReadOnlyList<FiveEToolsRow> Rows, IReadOnlyDictionary<string, string> Sources) Read(string path)
     {
         FiveEToolsIndex index;
         try
@@ -124,15 +125,15 @@ public class FiveEToolsCatalog
         {
             throw new InvalidOperationException($"The 5eTools index at {path} has the id {duplicate.Key} twice.");
         }
-        return rows;
+        return (rows, index.Sources ?? new Dictionary<string, string>());
     }
 
     /// <summary>
     /// What a search row and + Wiki show of a row: "CR 13 · Large Aberration · MM", the link, the
-    /// kind of entry + Wiki makes, the Stats for a monster that has them, and the book ("MM p. 28").
-    /// Only index fields.
+    /// kind of entry + Wiki makes, the Stats for a monster that has them, and the book ("MM p. 28")
+    /// with its title from the index's <c>sources</c> ("Monster Manual (2014)"). Only index fields.
     /// </summary>
-    public static ReferenceSummary Summarise(FiveEToolsRow row) => new(
+    public static ReferenceSummary Summarise(FiveEToolsRow row, IReadOnlyDictionary<string, string>? sources = null) => new(
         Provider: ProviderKey,
         Id: row.Id,
         Name: row.Name,
@@ -148,5 +149,6 @@ public class FiveEToolsCatalog
         Stats: row.Stats is { } stats
             ? Stats.Of(stats.InitiativeBonus is { } bonus ? ReferenceStats.Initiative(bonus) : null, stats.Hp, stats.Ac)
             : null,
-        Book: row.Page is { } page ? $"{row.Source} p. {page}" : row.Source);
+        Book: row.Page is { } page ? $"{row.Source} p. {page}" : row.Source,
+        BookTitle: sources?.GetValueOrDefault(row.Source) is { Length: > 0 } title ? title : null);
 }

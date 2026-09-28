@@ -109,6 +109,8 @@ public class FiveEToolsReferenceTests : IClassFixture<FiveEToolsFixture>
             HasStatBlock = false,
             SuggestedKind = EntryKind.Character,
             Stats = new StatsResponse { InitiativeRoll = "1d20+2", MaxHp = "3d6+3", Ac = 15 },
+            Book = "TST p. 12",
+            BookTitle = "Test Book of Beasts",
         });
         item.Attribution.Should().BeEquivalentTo(new ReferenceAttributionResponse
         {
@@ -140,6 +142,7 @@ public class FiveEToolsReferenceTests : IClassFixture<FiveEToolsFixture>
             Name = "Test Gremlin",
             Url = GremlinUrl,
             Detail = "TST p. 12",
+            BookTitle = "Test Book of Beasts",
             HasStatBlock = false,
         });
 
@@ -195,7 +198,7 @@ public class FiveEToolsReferenceTests : IClassFixture<FiveEToolsFixture>
         stranger.Source!.ExternalId.Should().Be(Gremlin, "the DM who made it reads it");
         var pushed = fixture.Hub.Messages.Skip(mark).ToList();
 
-        string[] secrets = ["5etools", "5eTools", "5e.tools", "gremlin", "Gremlin", "TST p."];
+        string[] secrets = ["5etools", "5eTools", "5e.tools", "gremlin", "Gremlin", "TST p.", "Test Book of Beasts"];
         void ShouldNotLeak(string json, string what)
         {
             foreach (var secret in secrets)

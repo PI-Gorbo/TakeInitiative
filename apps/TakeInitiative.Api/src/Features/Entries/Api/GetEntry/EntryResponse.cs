@@ -79,6 +79,8 @@ public record EntrySourceResponse
     public required string Url { get; init; }
     /// <summary>Where the item is printed, "MM p. 28", while it is still in the data. Null for the SRD.</summary>
     public string? Detail { get; init; }
+    /// <summary>The book's full title, "Monster Manual (2014)", for the source line's tooltip. Null for the SRD.</summary>
+    public string? BookTitle { get; init; }
     /// <summary>Whether the web can link to the item's stat-block card: its provider draws them, and the item is still in the data.</summary>
     public required bool HasStatBlock { get; init; }
 
@@ -94,6 +96,7 @@ public record EntrySourceResponse
             Name = item?.Name,
             Url = source.Url,
             Detail = item?.Book,
+            BookTitle = item?.BookTitle,
             HasStatBlock = item is not null && provider!.HasStatBlocks,
         };
     }

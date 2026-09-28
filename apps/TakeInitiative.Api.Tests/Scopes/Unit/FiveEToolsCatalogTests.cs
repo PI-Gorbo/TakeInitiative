@@ -71,7 +71,10 @@ public class FiveEToolsCatalogTests : IDisposable
             Url: "https://5e.tools/bestiary.html#test%20gremlin_tst",
             SuggestedKind: EntryKind.Character,
             Stats: Stats.Of("1d20+2", "3d6+3", 15),
-            Book: "TST p. 12"));
+            Book: "TST p. 12",
+            BookTitle: "Test Book of Beasts"));
+        Catalog.Find("monster_test-gremlin-zombie_tsta")!.BookTitle.Should().Be("Test Adventure in the Lint Caves", "the title comes from the index's sources");
+        FiveEToolsCatalog.Summarise(Catalog.Rows[0]).BookTitle.Should().BeNull("a source the index does not name has no title");
 
         Catalog.Find("monster_goblin-tinkerer_tst")!.Stats!.InitiativeRoll.Should().Be("1d20-1");
         Catalog.Find("monster_test-mossback_tst")!.Should().Match<ReferenceSummary>(s => s.Stats == null && s.Book == "TST");

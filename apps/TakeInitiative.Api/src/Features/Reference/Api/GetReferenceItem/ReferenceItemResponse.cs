@@ -42,6 +42,10 @@ public record ReferenceSummaryResponse
     public required bool HasStatBlock { get; init; }
     public required EntryKind SuggestedKind { get; init; }
     public StatsResponse? Stats { get; init; }
+    /// <summary>Where the item is printed, "MM p. 28". Null for the SRD.</summary>
+    public string? Book { get; init; }
+    /// <summary>The book's full title, "Monster Manual (2014)". Null for the SRD.</summary>
+    public string? BookTitle { get; init; }
 
     public static ReferenceSummaryResponse From(IReferenceProvider provider, ReferenceSummary summary) => new()
     {
@@ -55,6 +59,8 @@ public record ReferenceSummaryResponse
         HasStatBlock = provider.HasStatBlocks,
         SuggestedKind = summary.SuggestedKind,
         Stats = summary.Stats is { } stats ? StatsResponse.From(stats) : null,
+        Book = summary.Book,
+        BookTitle = summary.BookTitle,
     };
 }
 

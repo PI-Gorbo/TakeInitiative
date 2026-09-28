@@ -24,6 +24,7 @@ public enum ReferenceCategory
 /// search-only provider, which has no stat block, can still offer them.
 /// </param>
 /// <param name="Book">Where the item is printed, "MM p. 28", for an entry's source line. Null for the SRD.</param>
+/// <param name="BookTitle">The book's full title, "Monster Manual (2014)", for the source line's tooltip. Null for the SRD.</param>
 public record ReferenceSummary(
     string Provider,
     string Id,
@@ -33,7 +34,8 @@ public record ReferenceSummary(
     string? Url,
     EntryKind SuggestedKind,
     Stats? Stats,
-    string? Book = null);
+    string? Book = null,
+    string? BookTitle = null);
 
 /// <summary>
 /// One search result: the item, and how well its name matched, on the same ladder as
