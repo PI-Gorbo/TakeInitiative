@@ -28,7 +28,7 @@ sits on 17c (#229). Each PR leaves the app runnable:
 | 18b | `v2/18b-combat-turns-api` | Initiative, turns, finish and history (API) | The same in the browser. Roll starts a combat and slots in late joiners, end turn advances turns and rounds, a DM reorders and finishes, and a DM reads the history | [[x] |
 | 18c | `v2/18c-combat-tab` | The Combat tab and the combat page | The Combat tab lists combats. A DM creates one, adds combatants with `@Goblin ×4`, rolls and finishes, a player adds their character and ends their turn, all live | [x] |
 | 18d | `v2/18d-combatant-sheet` | The combatant sheet | Tapping a combatant opens its sheet: damage and heal, conditions, PlayersSee, hidden, AC, initiative, remove, and drag to reorder. A DM opens the history | [x] |
-| 18e | `v2/18e-combat-card` | Combat cards, the banner and entries' combats | The session stream shows combat cards and the Combats filter works. A live combat shows the Join combat banner and pulses the Combat tab. An entry page lists its combats. The combat page has the slim composer | [ ] |
+| 18e | `v2/18e-combat-card` | Combat cards, the banner and entries' combats | The session stream shows combat cards and the Combats filter works. A live combat shows the Join combat banner and pulses the Combat tab. An entry page lists its combats. The combat page has the slim composer | [x] |
 | 18f | `v2/18f-combat-search` | Combats in ⌘K | ⌘K has a COMBATS section and "⚔ Start combat". The step's Verify passes | [ ] |
 
 Connections' "Fought together" (§6) is step 19, which reads the combatant links this
@@ -700,6 +700,29 @@ This PR adds the nouns the step puts into code and UI:
   - On a phone the sheet ends at the keyboard (`useKeyboardInset`), and nothing takes
     focus when it opens; with a mouse, the damage box does. Remove confirms inline in
     the sheet rather than in a second dialog.
+- **As built, 18e.** Where it differs from 18e above:
+  - `CombatCard` also carries `sessionId`, so a push can move a card, and a combatant line
+    of several copies is named after the first without its copy number ("Goblin 1" →
+    "Goblin"). The web names a linked entry as the directory names it now, and an entry it
+    has not loaded is plain text. The web builds the same card from a `combatChanged` push
+    or a write's response (`cardFromCombat` in `utils/combatCard.ts`, the API's grouping
+    mirrored), so a card updates with no request.
+  - `GET entries/{entryId}/combats` answers `{ combats: [{ combat: CombatCard,
+    sessionNumber }] }`, newest first, and a player never gets a Draft through it. It
+    reuses `MentionIndex.MentioningAny` (made public) for the `?|` on `EntryIds`, then
+    checks the caller's view, so a hidden combatant brings nothing. Entry pages read it
+    again on every combat push or write (an invalidate, not an in-place update).
+  - The entry page's COMBATS section is left out altogether when there are none, since
+    most entries never fight. Each card there shows its session ("S12").
+  - The banner links to the newest live combat and, from `sm`, to all combats when more
+    than one is live. The Combat tab's icon turns gold as well as pulsing, with a
+    screen-reader "(a combat is live)".
+  - The slim composer keeps its own draft (`{campaignId}:slim`), so the Campaign tab's
+    draft and its images never turn up in a fight. Pasted images get a toast. It opens
+    above the bar from ✎ (which becomes ✕), closes after a post with a toast, and shows
+    on every combat, finished ones too. On iOS the keyboard may need a second tap, since
+    the text box mounts after the tap.
+  - The bar shows on every combat now (for ✎), with End turn only while there is a turn.
 - **Not in 18:** temporary HP, death saves, concentration checks, legendary actions,
   lair turns, ready or delay, combat-scoped notes, a combat log for players, deleting
   combats, and v1's Paused, stages, Quantity and CopyNumber (§8: gone).
