@@ -29,7 +29,7 @@ which sits on 19e (#244). Each PR leaves the app runnable:
 
 | PR | Branch | Sub-step | Runnable state after merge | Status |
 |---|---|---|---|---|
-| 20a | `v2/20a-srd-data` | The SRD 5.2 data, its catalog and the provider abstraction | 19's app unchanged. The API embeds 331 SRD monsters, and unit tests prove each one loads, matches and derives Stats that roll | [ ] |
+| 20a | `v2/20a-srd-data` | The SRD 5.2 data, its catalog and the provider abstraction | 19's app unchanged. The API embeds 331 SRD monsters, and unit tests prove each one loads, matches and derives Stats that roll | [x] |
 | 20b | `v2/20b-reference-api` | Reference search, the item endpoint and + Wiki (API) | The same in the browser. `GET search` has a `Reference` section, `GET reference/srd52/{id}` answers a stat block, and `POST entries/from-reference` creates an entry with `Source` and Stats | [ ] |
 | 20c | `v2/20c-stat-block-card` | The stat-block card and REFERENCE in ⌘K | ⌘K shows REFERENCE rows. [view] opens the card page with its attribution | [ ] |
 | 20d | `v2/20d-add-to-wiki` | + Wiki, the entry's source line and "Use SRD stats" | + Wiki from ⌘K and from the card, the source line on the entry page, and filling Stats from the source. The step's Verify passes | [ ] |
@@ -603,3 +603,53 @@ step puts into code and UI:
   - reference items in connections, the graph or loose ends (they are not entries);
   - adding a reference monster straight to a combat without an entry (§11 goes through
     + Wiki).
+- **As built, 20a.** Where it differs from 20a above:
+  - **Open5e's licence, checked.** open5e-api's LICENSE.md is a modified MIT that
+    excludes "SRD content provided by 3rd-parties" and puts Open5e's own artwork under
+    CC-BY-NC-4.0. So the SRD text is governed by Wizards' CC-BY-4.0 alone; the script
+    reads only the creature fixtures' text and numbers, takes no images and copies no
+    Open5e code. `NOTICE` gives SRD 5.2's attribution, the changes made (CC-BY's
+    "indicate if changes were made"), a no-endorsement line, and credits Open5e.
+  - **The data is messier than planned.** Besides the missing "Hit:" (restored on all
+    423 attack rolls, including the Roper's non-damage "Hit: The target has…"), the
+    script also: strips 5eTools link residue (`Sphere [Area of Effect]|XPHB|Sphere` →
+    `Sphere`, `Cover|XPHB|Total Cover` → `Total Cover`, 23 fixes); turns the Vampire's
+    `[hover]` into `(hover)`; rewrites two "+17 to hit," as "+17," and four "reach 5
+    feet." as "ft."; writes "Recharge 4-6" with an en dash. Its summary prints each count.
+  - **Markup is wider than `_…_`.** 58 texts (Vampire weaknesses, spellcasting lists,
+    the Gibbering Mouther's table) have `**bold**` run-ins, blank-line paragraphs and
+    `- ` list items. They are kept, and the script fails on anything else (brackets,
+    `<`, `>`, `#`, backticks, `|`, braces, a stray `*` or `_`). **20c must render `**…**` as bold, split
+    paragraphs on blank lines and draw `- ` lines as a list**, still as text nodes.
+  - **Usage limits go in the name**, as the SRD prints them: Open5e's `uses_type` and
+    `limited_to_form` become "Fire Breath (Recharge 5–6)", "Dominate Mind (2/Day)",
+    "Bite (Bear or Hybrid Form Only)", unless the name already has a parenthesis.
+    Traits have no order field and keep the fixtures' order.
+  - **CR 0 XP** is 10 when an action deals damage and 0 otherwise (the SRD's "0 or 10");
+    Giant Fly, Seahorse and Shrieker Fungus get 0. Lair XP/CR, creature subtypes
+    ("Fey (Goblinoid)"), Gear and the legendary-action preamble ("Legendary Action Uses:
+    3") are not in Open5e's data, so the card cannot show them.
+  - **Schema extras:** `category` is `Monster` or `Animal` (the SRD's Animals appendix;
+    Open5e's one `Beast`, the Octopus, is an Animal). `immunities` and
+    `conditionImmunities` are title-cased lists. `source.json` also has `changes`, the
+    CC-BY "changes made" sentence.
+  - **Size:** `monsters.json` is 479 KB (72 KB gzipped), not 380 KB. A rebuild from the
+    network and from `--from <dir>` (local copies) is byte for byte the same.
+  - **Types.** `StatBlock` is the JSON schema (enums `StatBlockCategory` and
+    `StatBlockActionKind`, records `StatBlockSpeed`, `AbilityScores`, `StatBlockTrait`,
+    `StatBlockAction`). `SrdMonster` is `(StatBlock, FoldedName, Summary)` rather than a
+    second copy of the schema; `SrdSource` is `source.json`. Everything is in the one
+    namespace `TakeInitiative.Api.Features.Reference` (a global using).
+  - **`IReferenceProvider.Find(id)`** was added: the summary from any provider,
+    search-only ones included, which 20b's + Wiki needs (`Get` is null for those).
+    `ReferenceCatalog.GetItem` / `FindItem` look an item up by provider key
+    (case-insensitive).
+  - **`ReferenceMatcher.WordSimilarity`** tries every run of the candidate's trigrams
+    rather than pg_trgm's greedy narrowing, so it can score a hair higher on odd names,
+    never lower. It matches the pg_trgm docs' `word` / `two words` = 0.8.
+  - **Ranking "goblin":** the three prefix hits tie on similarity, so the shorter name
+    wins: Goblin Boss, Goblin Minion, Goblin Warrior. 20b's test should expect that
+    order (or check them as a set).
+  - The csproj embeds `Reference/Srd52/*.json` with an explicit `LogicalName` and removes
+    them from `Content`, so they are not copied next to the DLL. `Program` calls
+    `SrdCatalog.EnsureLoaded()` right after `Build()`.
