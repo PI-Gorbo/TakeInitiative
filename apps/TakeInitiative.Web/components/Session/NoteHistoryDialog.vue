@@ -38,6 +38,14 @@
                             current
                         </span>
                     </div>
+                    <!-- An accepted suggestion (23c, 23e): the edit is the author's, and the
+                         model that proposed it is recorded with it. -->
+                    <p
+                        v-if="version.model"
+                        class="mb-1 text-xs text-gold"
+                        :title="version.model.version">
+                        {{ suggestedByLabel(version.model) }}
+                    </p>
                     <!-- Removed images are deleted, so a version shows how many it had (16b). -->
                     <p
                         v-if="version.imageCount > 0"
@@ -58,6 +66,7 @@
     import { useQuery } from "@tanstack/vue-query";
     import { getNoteHistoryQuery } from "~/utils/queries/sessions";
     import { formatNoteDateTime } from "~/utils/sessionDates";
+    import { suggestedByLabel } from "~/utils/suggestions";
 
     const props = defineProps<{
         campaignId: string;

@@ -18,6 +18,13 @@ import {
     mergeSuggestions,
     readDismissed,
     toModelSuggestions,
+    inlineChipAriaLabel,
+    inlineSuggestions,
+    INLINE_QUEUE_MAX,
+    mentionsInNotesLabel,
+    revertQuestion,
+    suggestedByLabel,
+    withQueued,
     withDismissed,
     writeDismissed,
     type ModelSuggestion,
@@ -332,5 +339,67 @@ describe("acceptBody", () => {
                 m
             )
         ).toBeNull();
+    });
+});
+
+describe("inline suggestions (23e)", () => {
+    const rellanId = "11111111-1111-1111-1111-111111111111";
+    const rellan = match(rellanId, "Rellan Ashvale");
+
+    it("skips a match for an entry the note already mentions", () => {
+        const text = `@[Rellan](entry:${rellanId.toUpperCase()}) met rellan at Greyhollow Keep`;
+        const out = inlineSuggestions(text, [
+            model(span("rellan", 35), rellan),
+            model(span("Greyhollow Keep", 45), null),
+        ]);
+        expect(out.map((s) => s.text)).toEqual(["Greyhollow Keep"]);
+    });
+
+    it("drops a span that is no longer in the note's prose", () => {
+        // Read before the author linked it: the span is now inside a mention.
+        const text = `met @[Greyhollow Keep](entry:${rellanId})`;
+        expect(
+            inlineSuggestions(text, [model(span("Greyhollow Keep", 4), null)])
+        ).toEqual([]);
+    });
+
+    it("keeps 23d's cap, order and dismissals", () => {
+        const text = "Ash, Bree, Cole and Dunmore met rellan";
+        const out = inlineSuggestions(
+            text,
+            [
+                model(span("Ash", 0, 0.99), null),
+                model(span("Bree", 5, 0.7), null),
+                model(span("Cole", 11, 0.6), null),
+                model(span("Dunmore", 20, 0.95), null),
+                model(span("rellan", 32, 0.5), rellan),
+            ],
+            (s) => s.text === "Ash"
+        );
+        expect(out.map((s) => s.text)).toEqual(["rellan", "Dunmore", "Bree"]);
+    });
+
+    it("queues the newest request last, once, capped", () => {
+        expect(withQueued(["a", "b"], "a")).toEqual(["b", "a"]);
+        const full = Array.from({ length: INLINE_QUEUE_MAX }, (_, i) => `n${i}`);
+        const out = withQueued(full, "new");
+        expect(out).toHaveLength(INLINE_QUEUE_MAX);
+        expect(out[0]).toBe("n1");
+        expect(out.at(-1)).toBe("new");
+    });
+
+    it("labels the chip, the history line and the Me page", () => {
+        expect(inlineChipAriaLabel(1)).toMatch(/^1 suggestion from/);
+        expect(inlineChipAriaLabel(3)).toMatch(/^3 suggestions from/);
+        expect(suggestedByLabel({ name: "gliner_small-v2.5", confidence: 0.871 })).toBe(
+            "✨ suggested by gliner_small-v2.5 (0.87)"
+        );
+        expect(suggestedByLabel({ name: "m", confidence: 1.4 })).toBe("✨ suggested by m (1.00)");
+        expect(mentionsInNotesLabel(14, 9)).toBe("14 mentions in 9 notes");
+        expect(mentionsInNotesLabel(1, 1)).toBe("1 mention in 1 note");
+        expect(revertQuestion(14)).toBe(
+            "Unlink the 14 mentions this model suggested in your notes? Mentions you typed yourself stay."
+        );
+        expect(revertQuestion(1)).toMatch(/^Unlink the mention this model/);
     });
 });

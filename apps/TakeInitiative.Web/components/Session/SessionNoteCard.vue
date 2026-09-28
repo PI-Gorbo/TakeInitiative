@@ -72,6 +72,14 @@
                     aria-hidden="true" />
                 Editing
             </span>
+            <!-- "✨ 3" (23e): the suggestion model's suggestions, on the viewer's own notes only. -->
+            <SuggestionsNoteSuggestionsChip
+                v-if="ownInStream"
+                :campaignId="campaignId"
+                :note="note"
+                :target="cardEl"
+                :enabled="!editing && !pending"
+                :sessionNumber="session?.number ?? null" />
             <!-- The note's menu. A long-press on a touch screen asks the stream for the
                  action sheet with the same actions (14e). -->
             <slot
@@ -226,8 +234,14 @@
     const editing = computed(() => composerEdit.isEditing(props.note.id));
     const startEdit = () => composerEdit.start(props.note, props.session?.number ?? null);
 
+    // Only the author can accept a suggestion (invariant 4), so only they see ✨ (23e).
+    const cardEl = useTemplateRef<HTMLElement>("card");
+    const ownInStream = computed(
+        () => !props.timeline && !!props.note.text && props.note.authorMemberId === props.currentMemberId
+    );
+
     useLongPress(
-        useTemplateRef<HTMLElement>("card"),
+        cardEl,
         () => emit("openActions", { actions: actions.value, run }),
         { disabled: () => editing.value || actions.value.length === 0 || !!props.timeline }
     );

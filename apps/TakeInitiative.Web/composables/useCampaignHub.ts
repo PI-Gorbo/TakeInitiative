@@ -6,6 +6,7 @@ import { getCampaignQueryKey, getCampaignsQueryKey } from "~/utils/queries/campa
 import { applyCombatChanged, invalidateCombats } from "~/utils/queries/combats";
 import { invalidateConnections } from "~/utils/queries/connections";
 import { invalidateLooseEnds } from "~/utils/queries/looseEnds";
+import { invalidateSuggestionModels } from "~/utils/queries/suggestions";
 import {
     applyEntryArticleChanged,
     applyEntryMerged,
@@ -130,6 +131,8 @@ export function useCampaignHub(campaignId: MaybeRefOrGetter<string | undefined>)
         updateStreams((data, filter, me) => upsertNote(dropPendingCopy(data, note), note, filter, me));
         touchNoteViews(note);
         touchConnections();
+        // An edit can add or drop an accepted suggestion (23e): the Me page's counts re-read.
+        if (joinedCampaignId.value) void invalidateSuggestionModels(queryClient, joinedCampaignId.value);
     });
     connection.on("sessionNoteRemoved", ({ noteId, sessionId }: SessionNoteRemovedMessage) => {
         updateStreams((data) => removeNote(data, noteId));

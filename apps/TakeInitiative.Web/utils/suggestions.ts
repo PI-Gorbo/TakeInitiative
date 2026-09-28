@@ -13,8 +13,9 @@ import type {
     Visibility,
 } from "./api/types";
 import type { StorageLike } from "./extraction/modelCache";
-import { fold, type ModelSpan } from "./extraction/spans";
+import { fold, mask, type ModelSpan } from "./extraction/spans";
 import { findSpan, linkSpan } from "./looseEnds";
+import { mentionedEntryIds } from "./markdown";
 
 /** A span the model found in one note, with the entry the matcher found for it (or none). */
 export interface ModelSuggestion extends ModelSpan {
@@ -277,3 +278,61 @@ export function acceptBody(
             : {}),
     };
 }
+
+// ── Inline on the author's own notes (23e) ───────────────────────────────────
+
+/**
+ * One stream note's ✨ chips (23e.1): the model's suggestions merged as on the loose-ends page
+ * (no link suggestions there), without a match for an entry the note already mentions, and
+ * without a span that is no longer in the note's prose (outside mentions, links and code).
+ */
+export function inlineSuggestions(
+    text: string,
+    model: readonly ModelSuggestion[],
+    isDismissed: (s: ModelSuggestion) => boolean = () => false
+): ModelSuggestion[] {
+    const mentioned = new Set(mentionedEntryIds(text).map((id) => id.toLowerCase()));
+    // Read from an older text (the author just linked one): keep only spans still in the prose.
+    const prose = mask(text);
+    return mergeSuggestions(
+        [],
+        model.filter(
+            (s) =>
+                prose.includes(s.text) &&
+                (!s.match || !mentioned.has(s.match.entry.id.toLowerCase()))
+        ),
+        isDismissed
+    ).model;
+}
+
+/** How many own notes in view the stream reads at most, newest in view first (23e.1). */
+export const INLINE_QUEUE_MAX = 12;
+
+/** The queue of notes to read, with `noteId` added last, at most `max` (the oldest request goes). */
+export function withQueued(
+    queue: readonly string[],
+    noteId: string,
+    max = INLINE_QUEUE_MAX
+): string[] {
+    const out = [...queue.filter((id) => id !== noteId), noteId];
+    return out.length > max ? out.slice(out.length - max) : out;
+}
+
+/** "✨ 3" chip's accessible name. */
+export const inlineChipAriaLabel = (count: number) =>
+    `${count} ${count === 1 ? "suggestion" : "suggestions"} from the suggestion model for this note`;
+
+/** "gliner_small-v2.5 (0.87)": the ✨ line on a note version (23e.3). */
+export const suggestedByLabel = (model: {
+    name: string;
+    confidence: number;
+}) =>
+    `✨ suggested by ${model.name} (${Math.min(1, Math.max(0, model.confidence)).toFixed(2)})`;
+
+/** "14 mentions in 9 notes", "1 mention in 1 note". */
+export const mentionsInNotesLabel = (mentions: number, notes: number) =>
+    `${mentions} ${mentions === 1 ? "mention" : "mentions"} in ${notes} ${notes === 1 ? "note" : "notes"}`;
+
+/** Revert's question (23e.4). */
+export const revertQuestion = (mentions: number) =>
+    `Unlink the ${mentions === 1 ? "mention" : `${mentions} mentions`} this model suggested in your notes? Mentions you typed yourself stay.`;

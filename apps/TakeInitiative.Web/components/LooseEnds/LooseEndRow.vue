@@ -166,9 +166,8 @@
     import { linkSpan, looseEndKey, looseEndRowLabel, mentionCountLabel } from "~/utils/looseEnds";
     import { NOTE_LINK_PARAM } from "~/utils/noteActions";
     import { putEntryKindMutation } from "~/utils/queries/entries";
-    import { putNoteMutation } from "~/utils/queries/sessions";
     import { formatNoteTime } from "~/utils/sessionDates";
-    import { acceptBody, type LinkChip, type ModelSuggestion } from "~/utils/suggestions";
+    import type { LinkChip, ModelSuggestion } from "~/utils/suggestions";
 
     const props = defineProps<{
         campaignId: string;
@@ -199,7 +198,7 @@
     const creating = ref(false);
     const createFrom = ref<ModelSuggestion | null>(null);
 
-    const putNote = putNoteMutation();
+    const { accept: acceptSuggestion, putNote } = useAcceptSuggestion(() => props.campaignId);
     const putKind = putEntryKindMutation();
     const busy = computed(() => putNote.isPending.value || putKind.isPending.value);
 
@@ -240,17 +239,7 @@
     async function accept(s: Pick<ModelSuggestion, "start" | "text" | "confidence">, entryId: string) {
         const current = note.value;
         if (!current || busy.value || !modelSuggestions) return;
-        const body = acceptBody(current, s, entryId, modelSuggestions.model);
-        if (!body) {
-            toast.error(`“${s.text}” is no longer in the note. Edit it to link it.`);
-            return;
-        }
-        try {
-            await putNote.mutateAsync({ campaignId: props.campaignId, noteId: current.id, ...body });
-            emit("resolved");
-        } catch (error) {
-            toast.error(apiErrorMessage(error, "Could not link the note."));
-        }
+        if (await acceptSuggestion(current, s, entryId, modelSuggestions.model)) emit("resolved");
     }
 
     /** "✨ Greyhollow Keep looks like a Place · + Create": nothing is created until the dialog's tap. */
