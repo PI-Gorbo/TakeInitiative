@@ -56,6 +56,8 @@ import { postCombatEndTurnRequest } from "~/utils/api/combat/postCombatEndTurnRe
 import { postCombatFinishRequest } from "~/utils/api/combat/postCombatFinishRequest";
 import { putCombatantPositionRequest } from "~/utils/api/combat/putCombatantPositionRequest";
 import { getCombatHistoryRequest } from "~/utils/api/combat/getCombatHistoryRequest";
+import { getEntryConnectionsRequest } from "~/utils/api/connection/getEntryConnectionsRequest";
+import { getConnectionEvidenceRequest } from "~/utils/api/connection/getConnectionEvidenceRequest";
 
 export const useApi = () => {
     const { $axios } = useNuxtApp();
@@ -132,6 +134,10 @@ export const useApi = () => {
             putPosition: putCombatantPositionRequest($axios),
             history: getCombatHistoryRequest($axios),
             forEntry: getEntryCombatsRequest($axios),
+        },
+        connection: {
+            forEntry: getEntryConnectionsRequest($axios),
+            evidence: getConnectionEvidenceRequest($axios),
         },
         admin: {
             getMaintenance: getMaintenanceRequest($axios),

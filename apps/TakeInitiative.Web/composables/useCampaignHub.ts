@@ -4,6 +4,7 @@ import { toast } from "vue-sonner";
 import type { Campaign, Combat, CombatSummary, EntrySummary, Role, Session, SessionNote } from "~/utils/api/types";
 import { getCampaignQueryKey, getCampaignsQueryKey } from "~/utils/queries/campaign";
 import { applyCombatChanged, invalidateCombats } from "~/utils/queries/combats";
+import { invalidateConnections } from "~/utils/queries/connections";
 import {
     applyEntryArticleChanged,
     applyEntryMerged,
@@ -60,6 +61,13 @@ export function useCampaignHub(campaignId: MaybeRefOrGetter<string | undefined>)
         .configureLogging(signalR.LogLevel.Warning)
         .build();
 
+    // Connections (19c) are derived per viewer and never pushed: any push that can move
+    // one (a note, an entry, an article, a merge, a combat) refetches the ones on screen.
+    const touchConnections = () => {
+        const id = joinedCampaignId.value;
+        if (id) void invalidateConnections(queryClient, id);
+    };
+
     const refreshCampaign = () =>
         queryClient.invalidateQueries({
             queryKey: getCampaignQueryKey(joinedCampaignId.value),
@@ -85,6 +93,7 @@ export function useCampaignHub(campaignId: MaybeRefOrGetter<string | undefined>)
             void invalidateEntries(queryClient, id);
             // And which combats (Drafts), and how much of each (18c.2).
             invalidateCombats(queryClient, id);
+            void invalidateConnections(queryClient, id);
         }
     });
 
@@ -115,16 +124,19 @@ export function useCampaignHub(campaignId: MaybeRefOrGetter<string | undefined>)
         // The caller's own post can arrive before its POST answers: drop the optimistic copy.
         updateStreams((data, filter, me) => upsertNote(dropPendingCopy(data, note), note, filter, me));
         touchNoteViews(note);
+        touchConnections();
     });
     connection.on("sessionNoteRemoved", ({ noteId, sessionId }: SessionNoteRemovedMessage) => {
         updateStreams((data) => removeNote(data, noteId));
         touchNoteViews({ id: noteId, sessionId });
+        touchConnections();
     });
     connection.on("sessionNoteHidden", (_message: SessionNoteHiddenMessage) => {
         // Sent to the author only. The note itself arrives as an upsert with `isHidden`.
         toast.info("A DM hid your note. You can still see it.", {
             duration: 6000,
         });
+        touchConnections();
     });
 
     // Entry pushes (15a). `entryUpserted` is a bare summary: mention counts are per
@@ -132,16 +144,19 @@ export function useCampaignHub(campaignId: MaybeRefOrGetter<string | undefined>)
     connection.on("entryUpserted", (entry: EntrySummary) => {
         const id = joinedCampaignId.value;
         if (id) applyEntrySummary(queryClient, id, entry);
+        touchConnections();
     });
     connection.on("entryRemoved", ({ entryId }: EntryRemovedMessage) => {
         const id = joinedCampaignId.value;
         if (id) applyEntryRemoved(queryClient, id, entryId);
+        touchConnections();
     });
 
     // Sent only to members whose view of the article changed (15e), with no content.
     connection.on("entryArticleChanged", ({ entryId }: EntryArticleChangedMessage) => {
         const id = joinedCampaignId.value;
         if (id) applyEntryArticleChanged(queryClient, id, entryId);
+        touchConnections();
     });
 
     // Merge (15g): sent to the target's audience, who could all see the merged entry.
@@ -150,6 +165,7 @@ export function useCampaignHub(campaignId: MaybeRefOrGetter<string | undefined>)
     connection.on("entryMerged", ({ fromEntryId, intoEntryId }: EntryMergedMessage) => {
         const id = joinedCampaignId.value;
         if (id) applyEntryMerged(queryClient, id, fromEntryId, intoEntryId);
+        touchConnections();
     });
     // Sent only to members whose readable stats changed (15g), with no content.
     connection.on("entryStatsChanged", ({ entryId }: EntryStatsChangedMessage) => {
@@ -161,6 +177,7 @@ export function useCampaignHub(campaignId: MaybeRefOrGetter<string | undefined>)
     connection.on("combatChanged", (message: CombatChangedMessage) => {
         const id = joinedCampaignId.value;
         if (id && message?.combat) applyCombatChanged(queryClient, id, message);
+        touchConnections();
     });
 
     connection.onreconnected(async () => {
@@ -173,6 +190,7 @@ export function useCampaignHub(campaignId: MaybeRefOrGetter<string | undefined>)
             void invalidateSessions(queryClient, id);
             void invalidateEntries(queryClient, id);
             invalidateCombats(queryClient, id);
+            void invalidateConnections(queryClient, id);
         }
         await refreshCampaign();
     });
@@ -189,6 +207,7 @@ export function useCampaignHub(campaignId: MaybeRefOrGetter<string | undefined>)
         // The wiki list too, and with it the mention counts, which are never pushed.
         void invalidateEntries(queryClient, id);
         invalidateCombats(queryClient, id);
+        void invalidateConnections(queryClient, id);
     }
 
     async function leave() {

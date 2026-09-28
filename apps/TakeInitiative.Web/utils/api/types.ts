@@ -97,3 +97,12 @@ export type CombatCardCombatant = Schemas["CombatCardCombatant"];
 /** An entry's COMBATS (18e.4): cards with their session numbers, newest first. */
 export type EntryCombats = Schemas["EntryCombatsResponse"];
 export type EntryCombat = Schemas["EntryCombat"];
+/** Connections (19a): an entry's connections, and the evidence for one pair. */
+export type EntryConnections = Schemas["EntryConnectionsResponse"];
+export type EntryConnection = Schemas["EntryConnectionResponse"];
+export type ConnectionEvidence = Schemas["ConnectionEvidenceResponse"];
+export type Evidence = Schemas["EvidenceResponse"];
+export type EvidenceKind = Schemas["EvidenceKind"];
+export type BlockEvidence = Schemas["BlockEvidence"];
+export type NoteEvidence = Schemas["NoteEvidence"];
+export type CombatEvidence = Schemas["CombatEvidence"];
