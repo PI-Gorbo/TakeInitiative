@@ -31,7 +31,7 @@ which sits on 19e (#244). Each PR leaves the app runnable:
 |---|---|---|---|---|
 | 20a | `v2/20a-srd-data` | The SRD 5.2 data, its catalog and the provider abstraction | 19's app unchanged. The API embeds 331 SRD monsters, and unit tests prove each one loads, matches and derives Stats that roll | [x] |
 | 20b | `v2/20b-reference-api` | Reference search, the item endpoint and + Wiki (API) | The same in the browser. `GET search` has a `Reference` section, `GET reference/srd52/{id}` answers a stat block, and `POST entries/from-reference` creates an entry with `Source` and Stats | [x] |
-| 20c | `v2/20c-stat-block-card` | The stat-block card and REFERENCE in ⌘K | ⌘K shows REFERENCE rows. [view] opens the card page with its attribution | [ ] |
+| 20c | `v2/20c-stat-block-card` | The stat-block card and REFERENCE in ⌘K | ⌘K shows REFERENCE rows. [view] opens the card page with its attribution | [[x] |
 | 20d | `v2/20d-add-to-wiki` | + Wiki, the entry's source line and "Use SRD stats" | + Wiki from ⌘K and from the card, the source line on the entry page, and filling Stats from the source. The step's Verify passes | [ ] |
 
 The 5eTools index (21), spells, magic items, rules text and linking an existing entry
@@ -687,3 +687,30 @@ step puts into code and UI:
     the raw JSON for `source` and search it for `srd52`, `vampire` and `dndbeyond`, for two
     players, over `GET entry`, `GET entries`, history, `GET search` and the `entryUpserted` push;
     claiming shows the source to the table, and unclaiming hides it again.
+- **As built, 20c.** Where it differs from 20c above:
+  - **The text is split, not markdown-rendered.** `utils/markdown.ts` is the notes' renderer
+    (mentions, linkify, `v-html`), so the card does not reuse it. `textBlocks` / `textRuns` in
+    `utils/reference.ts` read the four things the build script lets through (`**bold**`,
+    `_italic_`, blank-line paragraphs and `- ` lists, including a list straight after a line, as
+    in the Adult Green Dragon's Spellcasting) into blocks of runs, and `StatBlockTraits.vue` draws
+    them as text nodes. A test run over all 331 monsters left no stray `*`, `_` or newline in a run.
+  - **`HIDDEN_SECTIONS` is deleted**, not left empty.
+  - **Languages always shows**, "None" when empty (131 monsters), the way the SRD prints it. The
+    other detail lines show only when set; Immunities joins damage and condition immunities with
+    "; " as 5.2 does. The AC note ("natural armor") is left off, as 5.2 prints only the number.
+  - **Numbers use a real minus** (`−1`). Skills are A–Z with their names ("Sleight of Hand").
+    Speed is walking, then Burrow, Climb, Fly (with "(hover)") and Swim.
+  - **The ability table** is a grid of cells (label, score, MOD and SAVE), three across on a
+    phone and six from `md`; each cell has an aria-label ("Dexterity 15, modifier +2, save +2").
+  - **The card has an `actions` slot under the name** for 20d's + Wiki.
+  - **"That isn't in the SRD."** offers "Search with ⌘K": the campaign layout now provides
+    `OPEN_SEARCH` (`utils/search.ts`) so a page can open the sheet.
+  - **The ⌘K row's line** keeps only the CR from the API's `detail` ("Monster · CR 1/4 · SRD 5.2").
+    A row with no stat block and a `url` shows an external-link icon, and the sheet opens it with
+    `window.open(…, "_blank", "noopener")`.
+  - **Sizes are the source's.** Open5e's fixtures (at the pin, and on `staging` and `main` too)
+    have one size per creature and no "tiny": 84 are "small", which covers SRD 5.2's Tiny
+    creatures (Bat, Cat, Imp, Sprite…) and its "Medium or Small" ones (the Vampire, Bandit,
+    Mage, Priest, the lycanthropes…). The data was left as the source gives it. Fixing it needs a
+    hand-checked size table against the SRD PDF in `build-srd52.mjs` (and `size` as a list or a
+    string like "Medium or Small"); that is a follow-up.
