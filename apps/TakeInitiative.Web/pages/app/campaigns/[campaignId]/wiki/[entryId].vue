@@ -1,10 +1,10 @@
 <template>
-    <!-- An entry (design §4): its header (15c), its claim and stats (15g), its article
-         (15f), its timeline (15c) and its gallery (16d). Connections (19) and combats
-         (18) arrive with their steps. `?edit={blockId}` opens the article editor at a block
-         (a phone's promote, §3a). A merged entry's id loads its target (15g), and the
-         URL is replaced with the target's. -->
     <div class="mx-auto flex w-full max-w-3xl flex-col gap-5 px-4 py-4 pb-safe">
+        <!-- An entry (design §4): its header (15c), its claim and stats (15g), its article
+             (15f), its timeline (15c) and its gallery (16d). Connections (19) and combats
+             (18) arrive with their steps. `?edit={blockId}` opens the article editor at a block
+             (a phone's promote, §3a). A merged entry's id loads its target (15g), and the
+             URL is replaced with the target's. -->
         <NuxtLink
             :to="`/app/campaigns/${encodeURIComponent(campaignId)}/wiki`"
             class="-ml-2 flex h-11 w-fit items-center gap-1 rounded-md px-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground md:h-9">

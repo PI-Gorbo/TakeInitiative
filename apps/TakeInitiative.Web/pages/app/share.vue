@@ -1,7 +1,7 @@
 <template>
-    <!-- The share target's landing page (16e). The service worker kept the shared
-         images; this page picks the campaign and hands them to its composer. -->
     <div class="flex flex-col gap-4">
+        <!-- The share target's landing page (16e). The service worker kept the shared
+             images; this page picks the campaign and hands them to its composer. -->
         <h1 class="font-NovaCut text-2xl text-gold">{{ SHARE_MESSAGES.pick }}</h1>
 
         <LoadingFallback

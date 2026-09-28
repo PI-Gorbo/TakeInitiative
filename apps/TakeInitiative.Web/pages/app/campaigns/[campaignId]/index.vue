@@ -1,43 +1,44 @@
 <template>
-    <!-- The Campaign tab is the session stream (design §3). -->
-    <div
-        v-if="campaign"
-        class="flex h-full w-full flex-col">
-        <!-- The filter chips and the members button. -->
-        <div class="flex shrink-0 items-center gap-2 border-b px-2">
-            <SessionStreamFilters v-model="filter" />
-            <button
-                type="button"
-                class="flex h-11 min-w-11 items-center justify-center gap-2 rounded-md px-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                :aria-label="`Members (${campaign.members.length})`"
-                @click="membersOpen = true">
-                <Users class="size-5" />
-                <span>{{ campaign.members.length }}</span>
-                <span class="hidden sm:inline">Members</span>
-            </button>
-        </div>
+    <div class="flex h-full w-full flex-col">
+        <!-- The Campaign tab is the session stream (design §3). The root stays one
+             element while the campaign loads: the page transition animates it. -->
+        <template v-if="campaign">
+            <!-- The filter chips and the members button. -->
+            <div class="flex shrink-0 items-center gap-2 border-b px-2">
+                <SessionStreamFilters v-model="filter" />
+                <button
+                    type="button"
+                    class="flex h-11 min-w-11 items-center justify-center gap-2 rounded-md px-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    :aria-label="`Members (${campaign.members.length})`"
+                    @click="membersOpen = true">
+                    <Users class="size-5" />
+                    <span>{{ campaign.members.length }}</span>
+                    <span class="hidden sm:inline">Members</span>
+                </button>
+            </div>
 
-        <div class="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col">
-            <SessionStream
-                ref="stream"
-                :campaignId="campaign.id"
-                :campaign="campaign"
-                :filter="filter"
-                :focusNoteId="focusNoteId"
-                @noteOpened="clearNoteLink" />
-            <Composer
-                :key="campaign.id"
-                :campaign="campaign"
-                :filter="filter"
-                :about="aboutEntry"
-                :share="shareId"
-                @aboutUsed="clearParam(ABOUT_PARAM)"
-                @shareUsed="clearParam(SHARE_PARAM)" />
-        </div>
+            <div class="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col">
+                <SessionStream
+                    ref="stream"
+                    :campaignId="campaign.id"
+                    :campaign="campaign"
+                    :filter="filter"
+                    :focusNoteId="focusNoteId"
+                    @noteOpened="clearNoteLink" />
+                <Composer
+                    :key="campaign.id"
+                    :campaign="campaign"
+                    :filter="filter"
+                    :about="aboutEntry"
+                    :share="shareId"
+                    @aboutUsed="clearParam(ABOUT_PARAM)"
+                    @shareUsed="clearParam(SHARE_PARAM)" />
+            </div>
 
-        <CampaignMembersPanel
-            v-model:open="membersOpen"
-            :campaign="campaign" />
+            <CampaignMembersPanel
+                v-model:open="membersOpen"
+                :campaign="campaign" />
+        </template>
     </div>
 </template>
 

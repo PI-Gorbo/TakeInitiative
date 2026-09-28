@@ -1,7 +1,7 @@
 <template>
-    <!-- The Wiki tab (design §4, 15c): every entry the viewer can see, by kind, sorted
-         by how often or how recently it is mentioned. -->
     <div class="flex h-full w-full flex-col">
+        <!-- The Wiki tab (design §4, 15c): every entry the viewer can see, by kind, sorted
+             by how often or how recently it is mentioned. -->
         <div class="flex shrink-0 items-center gap-2 border-b px-2">
             <WikiKindFilter v-model="kind" />
         </div>

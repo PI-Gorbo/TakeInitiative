@@ -1,5 +1,7 @@
 <template>
-    <NuxtLayout name="default">
+    <div class="flex h-full w-full flex-col">
+        <!-- Not wrapped in the default layout: the layout transition can only animate an
+             element root, not a nested <NuxtLayout>. So its Toaster is repeated below. -->
         <!-- One responsive shell: tabs sit at the bottom on a phone and move to a
              side rail on desktop. The same <nav> does both. -->
         <div class="flex h-full w-full flex-col bg-background md:flex-row">
@@ -84,7 +86,10 @@
         </div>
 
         <SearchSheet v-model:open="searchOpen" />
-    </NuxtLayout>
+        <ClientOnly>
+            <Toaster :position="'top-right'" :duration="1000" />
+        </ClientOnly>
+    </div>
 </template>
 
 <script setup lang="ts">
