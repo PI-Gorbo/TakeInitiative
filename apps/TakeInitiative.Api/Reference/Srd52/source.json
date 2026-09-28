@@ -1,0 +1,11 @@
+{
+    "document": "SRD 5.2",
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/legalcode",
+    "sourceUrl": "https://www.dndbeyond.com/srd",
+    "sourceRepo": "https://github.com/open5e/open5e-api",
+    "sha": "644ef5c4ebe1c996ee9ced0b42a6d8a2aad861bc",
+    "count": 331,
+    "attribution": "This work includes material from the System Reference Document 5.2 (\"SRD 5.2\") by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. The SRD 5.2 is licensed under the Creative Commons Attribution 4.0 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode.",
+    "changes": "Converted from Open5e's transcription into TakeInitiative's JSON format, and edited: the \"Hit:\" labels of attack rolls restored, stray markup removed, usage limits moved into the names, and CR, XP and proficiency bonus written the SRD's way."
+}

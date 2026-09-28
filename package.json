@@ -16,7 +16,8 @@
         "build": "pnpm turbo run build",
         "test": "pnpm turbo run test",
         "gen:api": "pnpm turbo run gen:api --filter=@ti/web",
-        "sync:version": "node scripts/sync-version.mjs"
+        "sync:version": "node scripts/sync-version.mjs",
+        "srd:build": "node scripts/srd/build-srd52.mjs"
     },
     "devDependencies": {
         "husky": "^9.1.7",
