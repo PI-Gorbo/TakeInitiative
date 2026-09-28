@@ -42,7 +42,7 @@ step 22's plan (#254); this file is #255. Each PR leaves the app runnable:
 |---|---|---|---|---|
 | 23a | `v2/23a-extraction-spike` | The spike: which GLiNER variant, measured, and its weights pinned | The app unchanged for users. A Node runner and a static browser harness (`scripts/extraction-spike/`) run each variant over the invented test set and print size, load, latency and F1. The decision is written into this file | [x] |
 | 23b | `v2/23b-extractor-runtime` | The extractor: worker, lazy load, weights, cache, device setting (web) | Nothing visible except "Suggestions on this device" on the Me page. The model is fetched only on request, cached, and run in a worker; the normal bundle does not grow by more than a few KB | [x] |
-| 23c | `v2/23c-suggestions-api` | Match, provenance and revert (API) | 22's app unchanged in the browser. `POST suggestions/match` matches spans; `PUT notes/{id}` accepts a `suggestion` and records `Actor.Model`; the note history shows it; `POST suggestions/revert` unlinks one model version's mentions for their author | [ ] |
+| 23c | `v2/23c-suggestions-api` | Match, provenance and revert (API) | 22's app unchanged in the browser. `POST suggestions/match` matches spans; `PUT notes/{id}` accepts a `suggestion` and records `Actor.Model`; the note history shows it; `POST suggestions/revert` unlinks one model version's mentions for their author | [x] |
 | 23d | `v2/23d-suggestions-loose-ends` | Suggestions in Loose ends (web) | Unlinked notes on the loose-ends page offer ✨ suggestions beside 19's link suggestions; accepting links or creates-and-links | [ ] |
 | 23e | `v2/23e-suggestions-inline` | Inline on the author's notes, history, revert (web) | "✨ 3" on the author's own note cards, the ✨ line in note history, and "Accepted suggestions" with Revert on the Me page. The step's Verify passes | [ ] |
 
@@ -605,6 +605,47 @@ checks them); none are committed.
   runtime can be checked in a browser before 23d.
 - **Not done**: no phone or real-browser numbers yet (23a's harness is still the user's).
   The phone default stays "Ask" until they exist.
+
+### As built, 23c
+
+- **Endpoints**: `POST suggestions/match`, `GET suggestions/models`, `POST suggestions/revert`
+  (`src/Features/Suggestions/Api/`), and `PUT notes/{id}`'s optional `suggestion`
+  (`{ model, version, confidence, start, length, entryId }`). Shapes as in 23c above.
+- **Matching** is 19b's: one `EntryMatcher.MatchAsync` call with `LooseEnds.MatchOptions`
+  (`Take = 2`, `MinSimilarity = 0.6`), then `LinkSpans.Accepts`. The matcher folds case and
+  accents (`lower(unaccent(…))`), so "rellan" matches and the answer carries the entry's own
+  name ("Rellan Ashvale"). 23b's "Try it" printed "rellan" because the invented sample sentence
+  itself says "met rellan": the web slices spans from the note's text and loses no case.
+  The model's `kind` is accepted but not used.
+- **The event**: `Actor(MemberId, ModelSuggestion? Model)` as planned (`Actor.Suggested(…)`).
+  **Deviation:** `SessionNoteEdited` gained one optional field, `Suggestion`
+  (`SuggestedSpan(Start, Length, EntryId)`), rather than a doc comment only, so the projection
+  knows which mention the edit added without guessing from a diff. Old events read it as null.
+- **The one-span rule** (`SuggestionEdit.Check`): the new text must equal the old with exactly
+  `@[span](entry:id)` at `start`, and `MentionParser` must see the old mentions plus that one
+  (so a span inside a mention, a link or code is a 400). A span with `[`, `]`, `\`, a backtick
+  or a newline, with outer spaces, or splitting a surrogate pair is refused. The recap flag and
+  images must not change. The entry must be one the author can see (unknown, hidden and merged
+  look the same) or the single `newEntries` entry; a created entry's `EntryCreated` carries the
+  same Actor. All of it is 400 with `errors.suggestion`.
+- **`SessionNote.SuggestedMentions`** rows are `{ entryId, start, text, model, version,
+  confidence }` (`text` added so revert can check the literal `@[text](entry:id)` is still
+  there). They are carried through each edit by its common prefix and suffix: rows outside the
+  changed stretch stay or shift; rows inside it follow their literal in order only when the
+  stretch has as many of that literal before and after, else they are dropped (the mention then
+  counts as hand-typed). Not `MentionParser` offsets: Markdig's parse was not needed for this.
+- **History**: each version has `model` (`{ name, version, confidence }` or null), flat on
+  the version rather than under `actor`. The entry history does not show the model (not asked
+  for; `EntryCreated` has it).
+- **Revert** appends one plain `SessionNoteEdited` per note it changes and pushes
+  `sessionNoteUpserted`. `createdEntries` are read from the caller's listed entries created
+  from a note whose `EntryCreated` carries that model and version.
+- **Caveats**: `models` and `revert` load the caller's notes in the campaign and filter in
+  memory (one member's notes; no index on the new field). A revert that also touches another
+  version's identical mention in the same changed stretch drops that row too (it would take
+  two mentions with the same entry and text in one note from two versions).
+- **Tests**: `SuggestionEditTests` (unit, 10), `SuggestionMatchTests`, `SuggestionAcceptTests`,
+  `SuggestionRevertTests`, `SuggestionLeakTests`; 939 API tests pass.
 
 ### Where the weights come from
 
