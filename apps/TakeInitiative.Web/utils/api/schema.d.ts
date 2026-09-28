@@ -1227,11 +1227,11 @@ export interface components {
             suggestedKind: components["schemas"]["EntryKind"];
         };
         /** @enum {string} */
-        ReferenceCategory: "Monster";
+        ReferenceCategory: "Monster" | "Spell" | "Item";
         GetSearchRequest: Record<string, never>;
         ReferenceItemResponse: {
             summary: components["schemas"]["ReferenceSummaryResponse"];
-            statBlock: components["schemas"]["StatBlock"];
+            statBlock?: components["schemas"]["StatBlock"] | null;
             attribution: components["schemas"]["ReferenceAttributionResponse"];
         };
         ReferenceSummaryResponse: {
@@ -1464,6 +1464,7 @@ export interface components {
             externalId: string;
             name?: string | null;
             url: string;
+            detail?: string | null;
             hasStatBlock: boolean;
         };
         GetEntryRequest: Record<string, never>;

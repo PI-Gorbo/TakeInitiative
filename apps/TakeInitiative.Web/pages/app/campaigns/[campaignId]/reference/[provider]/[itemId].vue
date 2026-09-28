@@ -32,7 +32,8 @@
             :isError="itemQuery.isError.value"
             iconSize="2x"
             class="pt-8" />
-        <template v-else>
+        <!-- A search-only item (5eTools, 21b) has no stat block; 21c links it out instead. -->
+        <template v-else-if="item.statBlock">
             <ReferenceStatBlockCard :block="item.statBlock">
                 <template #actions>
                     <Button
@@ -76,7 +77,7 @@
 
     const itemQuery = useQuery(getReferenceItemQuery(provider, itemId));
     const item = computed(() => itemQuery.data.value);
-    const notFound = computed(() => apiErrorStatus(itemQuery.error.value) === 404);
+    const notFound = computed(() => apiErrorStatus(itemQuery.error.value) === 404 || (item.value != null && !item.value.statBlock));
 
     // + Wiki (20d), with the item's own Stats for the dialog's line.
     const addOpen = ref(false);
