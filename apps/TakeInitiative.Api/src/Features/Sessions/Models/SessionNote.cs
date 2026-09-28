@@ -62,6 +62,17 @@ public record SessionNote
     public static Expression<Func<SessionNote, bool>> UntaggedImageNote
         => n => n.HasImages == true && !n.MentionedEntryIds.Any();
 
+    /// <summary>
+    /// The text twin of <see cref="UntaggedImageNote"/> (loose ends, 19b): a note with no images
+    /// that mentions no entry. A document projected before step 16 has no <c>HasImages</c>, which
+    /// <see cref="WithoutImages"/>'s rule already covers.
+    /// </summary>
+    public static Expression<Func<SessionNote, bool>> Unlinked
+        => n => (!n.HasImages || n.Images == null) && !n.MentionedEntryIds.Any();
+
+    /// <summary>A note that mentions no entry: <see cref="Unlinked"/> or <see cref="UntaggedImageNote"/>, read in one query.</summary>
+    public static Expression<Func<SessionNote, bool>> MentionsNothing => n => !n.MentionedEntryIds.Any();
+
     public static SessionNote Create(IEvent<SessionNotePosted> @event)
     {
         var e = @event.Data;

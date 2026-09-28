@@ -13,6 +13,14 @@ public static class ArticleView
     /// <summary>The blocks of <paramref name="blocks"/> (any version of the entry's article) that the viewer can see.</summary>
     public static IReadOnlyList<ArticleBlock> VisibleBlocks(Entry entry, IEnumerable<ArticleBlock> blocks, Member viewer)
         => blocks.Where(b => EntryVisibility.CanSeeBlock(entry, b, viewer)).ToList();
+
+    /// <summary>
+    /// Whether the article has no block with text that the viewer can see: loose ends' "empty
+    /// article" (19b). Per viewer, so an article whose only block is a DM secret is empty to a
+    /// player (filling it is useful to them) and not to the DM.
+    /// </summary>
+    public static bool IsEmptyFor(Entry entry, Member viewer)
+        => !VisibleBlocks(entry, viewer).Any(b => !string.IsNullOrWhiteSpace(b.Text));
 }
 
 /// <summary>One version of an article, for history: when, who, and the whole article after it.</summary>

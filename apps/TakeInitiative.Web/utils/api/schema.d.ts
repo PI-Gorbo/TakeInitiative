@@ -292,6 +292,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/campaigns/{campaignId}/loose-ends/counts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetLooseEndCounts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/campaigns/{campaignId}/loose-ends": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetLooseEnds"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/campaigns/{campaignId}/images/{imageId}": {
         parameters: {
             query?: never;
@@ -1151,6 +1183,42 @@ export interface components {
             matchedCombatant?: string | null;
         };
         GetSearchRequest: Record<string, never>;
+        LooseEndCountsResponse: {
+            /** Format: int32 */
+            total: number;
+            bySession: {
+                [key: string]: number;
+            };
+        };
+        GetLooseEndCountsRequest: Record<string, never>;
+        LooseEndsResponse: {
+            items: components["schemas"]["LooseEndResponse"][];
+        };
+        LooseEndResponse: {
+            kind: components["schemas"]["LooseEndKind"];
+            /** Format: guid */
+            sessionId?: string | null;
+            /** Format: int32 */
+            sessionNumber?: number | null;
+            note?: components["schemas"]["SessionNoteResponse"] | null;
+            suggestions: components["schemas"]["LinkSuggestionResponse"][];
+            entry?: components["schemas"]["EntrySummaryResponse"] | null;
+            /** Format: int32 */
+            mentionCount?: number | null;
+        };
+        /** @enum {string} */
+        LooseEndKind: "UntaggedImageNote" | "UnlinkedNote" | "OtherKind" | "EmptyArticle";
+        LinkSuggestionResponse: {
+            /** Format: int32 */
+            start: number;
+            /** Format: int32 */
+            length: number;
+            text: string;
+            entry: components["schemas"]["EntrySummaryResponse"];
+            /** Format: double */
+            similarity: number;
+        };
+        GetLooseEndsRequest: Record<string, never>;
         DeleteImageRequest: Record<string, never>;
         GalleryResponse: {
             items: components["schemas"]["GalleryItem"][];
@@ -2350,6 +2418,80 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SearchResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GetLooseEndCounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LooseEndCountsResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GetLooseEnds: {
+        parameters: {
+            query?: {
+                sessionId?: string | null;
+            };
+            header?: never;
+            path: {
+                campaignId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LooseEndsResponse"];
                 };
             };
             /** @description Unauthorized */

@@ -31,7 +31,7 @@ public class EntryMatcher
     /// The search's connection, when this call is part of one (17a's Entries section). A caller with
     /// none — loose ends (19), suggestions (23) — gets a connection for this statement alone.
     /// </param>
-    public async Task<IReadOnlyList<IReadOnlyList<EntryMatch>>> MatchAsync(
+    public virtual async Task<IReadOnlyList<IReadOnlyList<EntryMatch>>> MatchAsync(
         IQuerySession session, Guid campaignId, Member viewer,
         IReadOnlyList<string> spans, EntryMatchOptions options, CancellationToken ct,
         SearchConnection? connection = null)
