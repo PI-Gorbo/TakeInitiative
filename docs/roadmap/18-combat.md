@@ -26,7 +26,7 @@ sits on 17c (#229). Each PR leaves the app runnable:
 |---|---|---|---|---|
 | 18a | `v2/18a-combat-api` | Combat model, redaction and combatants (API) | 17's app unchanged in the browser. The API creates Draft combats, adds, edits and removes combatants, answers a redacted view per viewer and pushes it live. The leak tests pass | [x] |
 | 18b | `v2/18b-combat-turns-api` | Initiative, turns, finish and history (API) | The same in the browser. Roll starts a combat and slots in late joiners, end turn advances turns and rounds, a DM reorders and finishes, and a DM reads the history | [[x] |
-| 18c | `v2/18c-combat-tab` | The Combat tab and the combat page | The Combat tab lists combats. A DM creates one, adds combatants with `@Goblin ×4`, rolls and finishes, a player adds their character and ends their turn, all live | [ ] |
+| 18c | `v2/18c-combat-tab` | The Combat tab and the combat page | The Combat tab lists combats. A DM creates one, adds combatants with `@Goblin ×4`, rolls and finishes, a player adds their character and ends their turn, all live | [x] |
 | 18d | `v2/18d-combatant-sheet` | The combatant sheet | Tapping a combatant opens its sheet: damage and heal, conditions, PlayersSee, hidden, AC, initiative, remove, and drag to reorder. A DM opens the history | [ ] |
 | 18e | `v2/18e-combat-card` | Combat cards, the banner and entries' combats | The session stream shows combat cards and the Combats filter works. A live combat shows the Join combat banner and pulses the Combat tab. An entry page lists its combats. The combat page has the slim composer | [ ] |
 | 18f | `v2/18f-combat-search` | Combats in ⌘K | ⌘K has a COMBATS section and "⚔ Start combat". The step's Verify passes | [ ] |
@@ -657,6 +657,29 @@ This PR adds the nouns the step puts into code and UI:
     at the time. A member who has left is "A former member".
   - Finish checks Finished (409) before the DM rule, so a player finishing a finished
     combat gets 409 rather than 403.
+- **As built, 18c.** Where it differs from 18c above:
+  - Every endpoint has a request in `utils/api/combat/` and a mutation in
+    `utils/queries/combats.ts`, so 18d only draws the sheet. `getCombatsQuery` takes an
+    optional `status` list (18e's banner), kept in the key as `"Active"` or `"all"`; a push
+    updates every loaded list and drops a summary a filtered list does not want.
+  - A write's response has no session number, so the lists take a summary built from the
+    one they hold (`summaryFromCombat`), and are read again for a new combat or a first
+    roll that moved it to another session. The push's own summary lands too.
+  - End turn sends `{ combatantId: turnCombatantId, round }`; its 409 is treated as done
+    and the combat is read again.
+  - The add dialog matches with 15d's `matchEntries` over the whole entry directory rather
+    than through `EntryPicker`, which lists only entries the viewer can edit and draws its
+    own Create row. The suggestions sit under the box, not in the mention strip: on a
+    phone the sheet ends at the keyboard (`useKeyboardInset`), so the box, the
+    suggestions and the Add button all stay above it. An entry that is not `Everyone` says
+    "starts hidden". Staged fields are blank-means-default; each entry row reads the
+    entry (`getEntryQuery`) to show its Stats.
+  - Players get no Add dialog. "Add my character" is one button with one claimed
+    character and a menu with several.
+  - A DM's Finish on a Draft reads "Discard draft". The DM's overflow menu has only
+    Finish until 18d adds History.
+  - The End turn bar says "Waiting for the turn" to a player while a hidden combatant
+    has it.
 - **Not in 18:** temporary HP, death saves, concentration checks, legendary actions,
   lair turns, ready or delay, combat-scoped notes, a combat log for players, deleting
   combats, and v1's Paused, stages, Quantity and CopyNumber (§8: gone).
