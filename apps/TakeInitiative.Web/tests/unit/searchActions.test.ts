@@ -139,6 +139,7 @@ describe("searchActions in the > scope", () => {
         expect(ids(context({ scope: "actions", text: "wiki" }))[0]).toBe("go-wiki");
         expect(ids(context({ scope: "actions", text: "places" }))).toEqual(["wiki-place"]);
         expect(ids(context({ scope: "actions", text: "recaps" }))).toEqual(["filter-recaps"]);
+        expect(ids(context({ scope: "actions", text: "graph" }))).toEqual(["wiki-graph"]);
     });
 
     it("finds nothing for text no action has", () => {
@@ -151,6 +152,10 @@ describe("searchActions in the > scope", () => {
         expect(action("wiki-faction").run(c)).toEqual({
             kind: "navigate",
             target: { path: "/app/campaigns/c1/wiki", query: { kind: "faction" } },
+        });
+        expect(action("wiki-graph").run(c)).toEqual({
+            kind: "navigate",
+            target: { path: "/app/campaigns/c1/wiki/graph", query: {} },
         });
         expect(action("filter-mine").run(c)).toEqual({
             kind: "navigate",

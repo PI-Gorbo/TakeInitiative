@@ -50,6 +50,17 @@
                     </DropdownMenuContent>
                 </DropdownMenu>
                 <Button
+                    as-child
+                    variant="ghost"
+                    class="h-11 gap-1 px-2 md:h-9">
+                    <NuxtLink :to="graphHref(campaignId)">
+                        <Waypoints
+                            class="size-4 text-muted-foreground"
+                            aria-hidden="true" />
+                        Graph
+                    </NuxtLink>
+                </Button>
+                <Button
                     class="h-11 gap-1 md:h-9"
                     @click="newOpen = true">
                     <Plus
@@ -91,7 +102,7 @@
 
 <script setup lang="ts">
     import { useQuery } from "@tanstack/vue-query";
-    import { ArrowDownWideNarrow, BookOpen, ChevronDown, Plus, Search } from "lucide-vue-next";
+    import { ArrowDownWideNarrow, BookOpen, ChevronDown, Plus, Search, Waypoints } from "lucide-vue-next";
     import type { EntryKind } from "~/utils/api/types";
     import {
         KIND_PARAM,
@@ -105,6 +116,7 @@
         sortToQuery,
         type WikiSort,
     } from "~/utils/entries";
+    import { graphHref } from "~/utils/graph";
     import { getEntriesQuery } from "~/utils/queries/entries";
 
     definePageMeta({

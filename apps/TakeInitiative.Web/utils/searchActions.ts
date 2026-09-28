@@ -173,6 +173,14 @@ export const SEARCH_ACTIONS: readonly SearchAction[] = [
             run: ({ campaignId }) => to(`${campaignPath(campaignId)}/wiki`, { [KIND_PARAM]: kind.value.toLowerCase() }),
         })
     ),
+    {
+        id: "wiki-graph",
+        icon: "🕸️",
+        label: () => "Wiki: Graph",
+        keywords: () => ["graph", "connections"],
+        available: () => true,
+        run: ({ campaignId }) => to(`${campaignPath(campaignId)}/wiki/graph`),
+    },
     ...FILTERS.map(
         (filter): SearchAction => ({
             id: `filter-${filter.id}`,

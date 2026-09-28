@@ -106,3 +106,7 @@ export type EvidenceKind = Schemas["EvidenceKind"];
 export type BlockEvidence = Schemas["BlockEvidence"];
 export type NoteEvidence = Schemas["NoteEvidence"];
 export type CombatEvidence = Schemas["CombatEvidence"];
+/** The graph (19a, 19d): nodes around an optional focus, and the edges among them. */
+export type ConnectionGraph = Schemas["ConnectionGraphResponse"];
+export type GraphNode = Schemas["GraphNodeResponse"];
+export type GraphEdge = Schemas["GraphEdgeResponse"];

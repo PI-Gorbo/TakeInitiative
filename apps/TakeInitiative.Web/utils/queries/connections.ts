@@ -1,4 +1,9 @@
-import { queryOptions, type QueryClient } from "@tanstack/vue-query";
+import {
+    keepPreviousData,
+    queryOptions,
+    type QueryClient,
+} from "@tanstack/vue-query";
+import { allKinds, type GraphView } from "~/utils/graph";
 import { apiErrorStatus } from "~/utils/apiErrorParser";
 import type { RefOrGetter } from "./utils";
 
@@ -59,6 +64,38 @@ export const getConnectionEvidenceQuery = (
             !!toValue(campaignId) &&
             !!toValue(entryId) &&
             !!toValue(otherEntryId),
+        retry: retryUnless404,
+    });
+
+/**
+ * The graph page's nodes and edges (19d) for one view (focus, depth, kinds). Keyed
+ * under the same prefix, so the pushes that refetch the panel refetch the graph. The
+ * last graph stays drawn while a new view loads, so a chip does not blank the page.
+ */
+export const getConnectionGraphQuery = (
+    campaignId: RefOrGetter<string>,
+    view: RefOrGetter<GraphView>
+) =>
+    queryOptions({
+        queryKey: [
+            "connections",
+            campaignId,
+            "graph",
+            () => toValue(view).focus,
+            () => (toValue(view).focus ? toValue(view).depth : null),
+            () => toValue(view).kinds.join(","),
+        ],
+        queryFn: () => {
+            const { focus, depth, kinds } = toValue(view);
+            return useApi().connection.graph({
+                campaignId: toValue(campaignId),
+                focus,
+                depth,
+                kinds: allKinds(kinds) ? undefined : kinds,
+            });
+        },
+        enabled: () => !!toValue(campaignId),
+        placeholderData: keepPreviousData,
         retry: retryUnless404,
     });
 

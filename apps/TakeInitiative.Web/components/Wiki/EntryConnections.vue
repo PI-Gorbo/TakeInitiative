@@ -3,15 +3,23 @@
          as the viewer sees them, heaviest first, each a chip `@Tharden (3)` that opens the
          evidence. On a Character its Places come first under "Seen at"; on a Place its
          Characters under "Seen here". Derived on every read and refetched on the pushes
-         that can move one (`useCampaignHub`). `[graph ↗]` arrives with the graph (19d). -->
+         that can move one (`useCampaignHub`). `[graph ↗]` opens the graph around it (19d). -->
     <section
         :aria-labelledby="`${id}-title`"
         class="flex flex-col gap-1">
-        <h3
-            :id="`${id}-title`"
-            class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Connections
-        </h3>
+        <div class="flex items-center justify-between gap-2">
+            <h3
+                :id="`${id}-title`"
+                class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Connections
+            </h3>
+            <NuxtLink
+                :to="graphHref(campaignId, entryId)"
+                class="inline-flex min-h-11 items-center px-1 text-xs font-medium text-gold hover:underline md:min-h-0"
+                :aria-label="`Graph around ${entryName}`">
+                [graph ↗]
+            </NuxtLink>
+        </div>
         <LoadingFallback
             v-if="!connectionsQuery.data.value"
             :isLoading="connectionsQuery.isLoading.value"
@@ -103,6 +111,7 @@
         noConnectionsLabel,
     } from "~/utils/connections";
     import { ENTRY_KIND_ICONS } from "~/utils/entries";
+    import { graphHref } from "~/utils/graph";
     import { getEntryConnectionsQuery } from "~/utils/queries/connections";
 
     const props = defineProps<{

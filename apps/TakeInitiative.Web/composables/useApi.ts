@@ -58,6 +58,7 @@ import { putCombatantPositionRequest } from "~/utils/api/combat/putCombatantPosi
 import { getCombatHistoryRequest } from "~/utils/api/combat/getCombatHistoryRequest";
 import { getEntryConnectionsRequest } from "~/utils/api/connection/getEntryConnectionsRequest";
 import { getConnectionEvidenceRequest } from "~/utils/api/connection/getConnectionEvidenceRequest";
+import { getConnectionGraphRequest } from "~/utils/api/connection/getConnectionGraphRequest";
 
 export const useApi = () => {
     const { $axios } = useNuxtApp();
@@ -138,6 +139,7 @@ export const useApi = () => {
         connection: {
             forEntry: getEntryConnectionsRequest($axios),
             evidence: getConnectionEvidenceRequest($axios),
+            graph: getConnectionGraphRequest($axios),
         },
         admin: {
             getMaintenance: getMaintenanceRequest($axios),
