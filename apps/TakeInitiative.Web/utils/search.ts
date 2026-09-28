@@ -40,10 +40,32 @@ export const SECTION_LABELS: Record<SearchSectionKey, { header: string; more: st
 /** The most a section shows after "Show more": the server's largest `take`. */
 export const SEARCH_MORE_TAKE = 20;
 
+/** The server's sections, then the web's own Actions (17c). */
+export type SearchRowSection = SearchSectionKey | "Actions";
+
 export type SearchRow =
-    | { type: "header"; id: string; section: SearchSectionKey; label: string }
+    | { type: "header"; id: string; section: SearchRowSection; label: string }
     | { type: "hit"; id: string; section: SearchSectionKey; hit: SearchHit }
-    | { type: "more"; id: string; section: SearchSectionKey; label: string };
+    | { type: "more"; id: string; section: SearchSectionKey; label: string }
+    | { type: "action"; id: string; section: "Actions"; actionId: string; icon: string; label: string };
+
+/** The Actions section's rows (17c), after every other section. */
+export function actionRows(actions: readonly { id: string; icon: string; label: string }[]): SearchRow[] {
+    if (actions.length === 0) return [];
+    return [
+        { type: "header", id: "header-Actions", section: "Actions", label: "Actions" },
+        ...actions.map(
+            (a): SearchRow => ({
+                type: "action",
+                id: `action-${a.id}`,
+                section: "Actions",
+                actionId: a.id,
+                icon: a.icon,
+                label: a.label,
+            })
+        ),
+    ];
+}
 
 /** A hit's stable id, for keys and `aria-activedescendant`. */
 export function hitKey(hit: SearchHit): string {
