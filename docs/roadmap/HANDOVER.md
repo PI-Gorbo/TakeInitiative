@@ -202,10 +202,12 @@ checkouts of #222. Ignore them.
    - When it resumes: **no agent calls D&D Beyond**, in tests or by hand (step 22's Notes).
 5. **Step 23 is next: in-browser suggestions.** Its step file is
    [23-suggestions.md](23-suggestions.md) (branch `v2/23-suggestions-plan`, on top of
-   `v2/22-ddb-plan`). Run 23a (the GLiNER vs Laya spike, which writes its decision into the
-   step file), then 23b–23e on top of it.
-   - 23a's measurements on a phone and in a real browser are the user's; an agent builds
-     the dev page and the scorer and fills in what it can run.
+   `v2/22-ddb-plan`). 23a is done: the user chose GLiNER (Laya dropped), and the spike
+   picked **GLiNER small v2.5** (small v2.1 pinned as the fallback); both are pinned in the
+   step file's "Decision, 23a". Next is 23b, then 23c–23e on top of it.
+   - 23a's measurements on a phone and in a real browser are the user's: run
+     `scripts/extraction-spike/` (`node serve.mjs`, http://localhost:3190) and fill in the
+     table. Only Node on the Mac was measured.
    - No agent commits model weights. `public/models/` is git-ignored.
    - The user's decisions are in step 23's Notes, "Decisions for the user".
 6. **Then step 24** (Discord import), whose step file is written just before it starts.

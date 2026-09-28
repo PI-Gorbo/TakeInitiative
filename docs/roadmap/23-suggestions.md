@@ -22,16 +22,16 @@ by default) and the **span strings** the model found, sent to the app's own API 
 matcher can answer "is this an existing entry?" under the viewer's visibility. Those spans come
 from notes the API already stores.
 
-**Which model** is decided by a spike (23a) between **GLiNER** and **Laya** (Notes, "What
-Laya is"). 23a measures download size, load time, inference latency on a typical note and
-quality on a small invented test set, and records the choice in this file before 23b builds on
-it.
+**The model is GLiNER** (the user's decision, 2026-09-28: "I'm interested in using GLiNER. It
+is specialised for the task."). 23a picked the GLiNER variant by download size, load time,
+inference latency and quality on a small invented test set, and pinned its weights (Notes,
+"Decision, 23a") before 23b builds on it.
 
 "Running" at the end: a player on a desktop opens Loose ends, taps "✨ Find suggestions", accepts
 the one-time download, and within seconds sees "✨ **Rellan** → @Rellan Ashvale?" and "✨
 **Greyhollow Keep** looks like a Place · + Create" on their unlinked notes. One tap links the
 first; the second opens a confirm with the name and the Place chip already picked. The note's
-history reads "Linked @Rellan Ashvale · ✨ suggested by gliner_small-v2.1 (0.87)". On a phone on
+history reads "Linked @Rellan Ashvale · ✨ suggested by gliner_small-v2.5 (0.87)". On a phone on
 mobile data nothing downloads until they say so. A DM who dislikes a model version reverts
 their own accepted suggestions from it in one action, and the mentions go back to plain text.
 
@@ -40,7 +40,7 @@ step 22's plan (#254); this file is #255. Each PR leaves the app runnable:
 
 | PR | Branch | Sub-step | Runnable state after merge | Status |
 |---|---|---|---|---|
-| 23a | `v2/23a-extraction-spike` | The spike: GLiNER vs Laya, measured, and the decision | The app unchanged for users. A dev-only page runs each candidate over the invented test set and prints size, load, latency and F1. The decision is written into this file | [ ] |
+| 23a | `v2/23a-extraction-spike` | The spike: which GLiNER variant, measured, and its weights pinned | The app unchanged for users. A Node runner and a static browser harness (`scripts/extraction-spike/`) run each variant over the invented test set and print size, load, latency and F1. The decision is written into this file | [x] |
 | 23b | `v2/23b-extractor-runtime` | The extractor: worker, lazy load, weights, cache, device setting (web) | Nothing visible except "Suggestions on this device" on the Me page. The model is fetched only on request, cached, and run in a worker; the normal bundle does not grow by more than a few KB | [ ] |
 | 23c | `v2/23c-suggestions-api` | Match, provenance and revert (API) | 22's app unchanged in the browser. `POST suggestions/match` matches spans; `PUT notes/{id}` accepts a `suggestion` and records `Actor.Model`; the note history shows it; `POST suggestions/revert` unlinks one model version's mentions for their author | [ ] |
 | 23d | `v2/23d-suggestions-loose-ends` | Suggestions in Loose ends (web) | Unlinked notes on the loose-ends page offer ✨ suggestions beside 19's link suggestions; accepting links or creates-and-links | [ ] |
@@ -90,10 +90,13 @@ way (offline is out of scope, §12).
   and step 22, **deferred**
 - `docs/roadmap/HANDOVER.md`: the deferrals, the stash, and "Next work" pointing here
 
-**23a**
-- Web add `pages/dev/extraction.vue` (dev only: 404 unless `import.meta.dev`), `utils/extraction/spike/{runGliner,runLaya,score}.ts`
+**23a** (as built: the runner lives in `scripts/`, not a dev page, so the web app gains no
+dependency)
+- Root add `scripts/extraction-spike/` (its own `package.json`, outside the workspace:
+  `fetch-models.mjs`, `build-fixture.mjs`, `run.mjs`, `models.mjs`, `lib/{gliner,text,extract}.mjs`,
+  and the browser harness `harness.html`, `harness-worker.mjs`, `serve.mjs`)
+- Web add `utils/extraction/spike/score.ts` (the scorer, kept for 23b)
 - Web add `tests/fixtures/extraction/{notes.json,entries.json,README.md}` (the invented test set), `tests/unit/extractionScore.test.ts`
-- Web modify `package.json` (the candidates' runtime packages as `devDependencies` for now)
 - `docs/roadmap/23-suggestions.md`: the measurements table and "Decision, 23a" in Notes
 
 **23b**
@@ -140,74 +143,87 @@ the code keeps the two names apart (`ModelSuggestion` vs `LinkSuggestion`). No n
 model is "the suggestion model" in the UI, never "AI", "auto-tag" or "prediction" (§1's
 rejected words).
 
-### 23a. The spike: GLiNER vs Laya
+### 23a. The spike: which GLiNER variant
 
-Measure, then pick. The spike's code is a dev page and a scorer; only the fixture and the scorer
-survive into 23b.
+GLiNER is the user's choice (2026-09-28). 23a only picks the variant and pins its weights.
+The spike's code is a Node runner, a static browser harness and a scorer in
+`scripts/extraction-spike/`; only the fixture and the scorer survive into 23b.
 
 1. **The invented test set** (`tests/fixtures/extraction/`). Invented, so no module text or
    real campaign notes are committed:
-   - `entries.json`: about 25 entries with kinds and aliases (Rellan Ashvale, alias "Rellan";
+   - `entries.json`: 27 entries with kinds and aliases (Rellan Ashvale, alias "Rellan";
      Greyhollow Keep; the Ember Court; the Salt Road; the Moonfall Blade; the Night of Ash…).
-   - `notes.json`: 40 notes of three lengths (15 short, ~120 characters; 20 typical, ~400; 5
-     long, ~1,500) with **gold spans**: start, length, kind (`Character`, `Place`, `Faction`,
-     `Item`, `Event`). They include the hard cases: lower-case names ("met rellan"),
-     possessives ("Rellan's map"), multi-word names, names at a sentence start, an existing
-     `@[…](entry:…)` mention (never a span), markdown (`**bold**`, lists), dice (`2d6+3`),
-     numbers, "the" before a name, a name that is also a common word ("Ash"), table talk
-     ("pizza's here"), and three notes with no names at all.
-   - `README.md`: how the set was made and that it is invented.
-2. **The candidates.** Each runs in a Web Worker in the dev page, WASM backend first, WebGPU
-   where the browser has it. Only checkpoints whose licence allows redistribution are
-   candidates (Apache-2.0 or MIT; `gliner_base` and other CC-BY-NC GLiNER checkpoints are
-   out):
-   - **GLiNER small** (`urchade/gliner_small-v2.1`, Apache-2.0), ONNX int8. Labels are the
-     kinds in lower case ("character", "place", "faction", "item", "event") passed at
-     inference; threshold 0.5 to start, tuned on the set. Run with the `gliner` npm package
-     (GLiNER.js, on `onnxruntime-web`) or, if it lags, a hand-written span decoder over
-     `@huggingface/transformers`' tokenizer and `onnxruntime-web`. Record which, and its licence.
-   - **GLiNER multi** (`onnx-community/gliner_multi-v2.1`, Apache-2.0), ONNX int8, the same
-     way. It is bigger; it is here for tables that write in other languages.
-   - **Laya** (`convaiinnovations/laya`, Apache-2.0; 421M parameters; ModernBERT-large), int8
-     ONNX, through `onnxruntime-web`. Laya answers typed questions and does not find spans
-     (Notes, "What Laya is"), so it is run in the only way it can serve: **candidate spans**
-     from a TypeScript port of 19's `LinkSpans.From` rules (capitalised runs, words of four
-     letters or more, the stop list), then one `choice` question per candidate: "What is
-     '{span}' in this note?" with options Character, Place, Faction, Item, Event and "not a
-     name". Keep answers whose best option is a kind and whose probability is ≥ 0.5.
-   - If a GLiNER v2.5 or GLiNER2 checkpoint with ONNX weights and a permissive licence exists
-     when 23a runs, add it as a fourth row. Do not go looking for more.
-3. **What is measured**, for each candidate, on the user's desktop (1280×800, Chrome) and on a
-   mid-range phone (the user's, in Safari or Chrome), written into the table below:
-   - **Download**: bytes over the wire for weights, tokenizer and runtime WASM, compressed
-     and not.
-   - **Load**: cold (empty cache: fetch + compile + session create) and warm (from Cache
-     API: read + compile + session create), in seconds.
-   - **Latency**: p50 and p95 per note for the short, typical and long notes, in the worker,
-     after one warm-up run. Long notes are chunked on sentence boundaries to the model's token
-     limit (GLiNER: 384 tokens) and the spans shifted back.
-   - **Memory**: peak `performance.measureUserAgentSpecificMemory()` where available, else the
-     worker's heap from DevTools by hand. On the phone, note whether the tab reloads.
-   - **Quality** (`score.ts`, unit-tested): span precision, recall and F1 against the gold
-     spans (exact offsets; a second number with ±1-word overlap), kind accuracy on matched
-     spans, and **top-3 precision per note** (the UI shows at most three, 19's cap).
+   - `notes.json`: 40 notes of three lengths (15 short, ~100 characters; 20 typical, 300–400;
+     5 long, 1,300–1,550) with **gold spans**: start, length, kind (`Character`, `Place`,
+     `Faction`, `Item`, `Event`). They include the hard cases: lower-case names ("met
+     rellan"), possessives ("Rellan's map"), multi-word names, names at a sentence start, an
+     existing `@[…](entry:…)` mention (never a span), markdown (`**bold**`, lists), dice
+     (`2d6+3`), numbers, "the" before a name, a name that is also a common word ("Ash"), table
+     talk ("pizza's here"), and three notes with no names at all.
+   - `README.md`: how the set was made and that it is invented. The JSON is generated by
+     `scripts/extraction-spike/build-fixture.mjs`, never edited by hand.
+2. **The candidates.** Only checkpoints whose licence allows redistribution (Apache-2.0 or MIT;
+   `gliner_base` and other CC-BY-NC GLiNER checkpoints are out). Labels are the kinds in lower
+   case ("character", "place", "faction", "item", "event") passed at inference. All run through
+   a hand-written span decoder (`lib/gliner.mjs`) over `@huggingface/tokenizers` 0.2.0 and
+   `onnxruntime-web` 1.30.0 (WASM, one thread); the `gliner` npm package was not used (0.0.19
+   pins onnxruntime-web 1.19.2 and @xenova/transformers 2.17.2, and its span mask is a no-op).
+   - **GLiNER small v2.1** (`onnx-community/gliner_small-v2.1`, `onnx/model_int8.onnx`).
+   - **GLiNER multi v2.1** (`onnx-community/gliner_multi-v2.1`, `onnx/model_int8.onnx`), for
+     tables that write in other languages.
+   - The same two as `onnx/model_uint8.onnx`, to test whether the WASM quality loss (below) is
+     the int8 kernels.
+   - **GLiNER small v2.5** (`GG-QandV/gliner_small-v2.5-onnx`, `model_quantized.onnx`): the
+     optional fourth row, a community int8 export of `gliner-community/gliner_small-v2.5`.
+   - Laya (Convai) was considered and dropped by the user on 2026-09-28.
+3. **What was measured**, in Node 24 on the user's Mac (Apple silicon), `node run.mjs`: the
+   same ONNX files the browser would load, on `onnxruntime-web` WASM with one thread (what the
+   browser worker runs) and, for comparison, `onnxruntime-node` CPU with one thread.
+   - **Download**: weights + tokenizer + config + `ort-wasm-simd-threaded.wasm` (14.2 MB),
+     raw and gzip.
+   - **Load**: read + session create, cold (first in the process) / warm (second), from local
+     disk. The network is not in it.
+   - **Latency**: p50 and p95 per note by size, after one warm-up. Long notes are chunked on
+     sentence boundaries to 384 words and the spans shifted back.
+   - **Memory**: the Node process's peak RSS (not the browser's).
+   - **Quality** (`score.ts`, unit-tested): span precision, recall and F1 (exact offsets, and
+     ±1-word overlap), kind accuracy on matched spans, and top-3 precision per note, at 0.5 and
+     at the best threshold of a 0.30–0.95 sweep.
+   - **Not measured: a real browser, WebGPU and the phone.** The user runs the harness
+     (`pnpm install --ignore-workspace && node fetch-models.mjs && node serve.mjs` in
+     `scripts/extraction-spike/`, then http://localhost:3190 on the desktop, or the Mac's LAN
+     address from the phone) and adds those columns.
 4. **The gates.** A candidate is eligible only if, on the desktop: download ≤ 250 MB
    uncompressed, warm load ≤ 5 s, typical-note p50 ≤ 1.5 s; on the phone: warm load ≤ 10 s,
    typical-note p50 ≤ 4 s, no tab reload; and top-3 precision ≥ 0.6. **Pick** the eligible
-   candidate with the highest span F1, and the smaller download on a tie within 0.03. If none
-   is eligible, pick the best and set the phone default to "Off" (23b), and write that down.
-5. **Record the decision** in Notes, "Decision, 23a": the table, the pick, the threshold, the
-   runtime package and version, the exact Hugging Face repo and **revision sha**, the files
-   used, their sha256, and the licence text's location. README's step 23 goal line changes
-   from "GLiNER vs Laya" to the pick.
+   candidate with the highest span F1 **on WASM** (what the browser runs), and the smaller
+   download on a tie within 0.03. If none is eligible on the phone, set the phone default to
+   "Off" (23b).
+5. **Recorded** in Notes, "Decision, 23a".
 6. **Tests.** `extractionScore.test.ts`: exact and overlap matching, kind accuracy, top-3,
-   empty gold sets. The dev page itself is not tested.
+   empty gold sets. The runner and harness are not tested.
 
-| Candidate | Download | Load cold / warm (desktop) | Typical note p50 (desktop / phone) | Span F1 | Top-3 precision | Eligible |
-|---|---|---|---|---|---|---|
-| GLiNER small v2.1 | _23a_ | | | | | |
-| GLiNER multi v2.1 | _23a_ | | | | | |
-| Laya (EN) + candidate spans | _23a_ | | | | | |
+Results (2026-09-28, Node 24.15 on the user's Mac; WASM = `onnxruntime-web` 1.30.0, one
+thread). F1 and top-3 are on WASM at the best threshold, native F1 in brackets.
+
+| Candidate | Download raw / gzip | Load cold / warm (WASM, Node) | Typical p50 / p95 (WASM, Node) | Long p50 | Peak RSS | Span F1 exact (native) | Top-3 precision | Kind acc. | Eligible (desktop, Node) |
+|---|---|---|---|---|---|---|---|---|---|
+| **GLiNER small v2.5**, `model_quantized` | 219 / 144 MB | 0.7 / 0.5 s | 479 / 533 ms | 1.95 s | 1.25 GB | **0.896** @0.35 (0.902); 0.873 @0.5 | 0.881 | 0.88 | **yes** |
+| GLiNER small v2.1, `model_int8` | 206 / 127 MB | 0.9 / 0.5 s | 330 / 372 ms | 1.32 s | 1.15 GB | 0.719 @0.3 (0.791); 0.601 @0.5 | 0.817 | 0.93 | yes |
+| GLiNER small v2.1, `model_uint8` | 206 / 132 MB | 0.6 / 0.3 s | 314 / 374 ms | 1.28 s | 1.41 GB | 0.707 @0.3 (0.709) | 0.784 | 0.94 | yes |
+| GLiNER multi v2.1, `model_int8` | 380 / 257 MB | 1.4 / 1.2 s | 654 / 737 ms | 2.69 s | 1.60 GB | **0.033** @0.3 (0.766) | 0.8 (5 shown) | – | no: download, and broken on WASM |
+| GLiNER multi v2.1, `model_uint8` | 380 / 265 MB | 1.5 / 0.7 s | 651 / 720 ms | 2.64 s | 1.75 GB | 0.000 (0.008) | – | – | no |
+
+What the table says:
+
+- **Multi v2.1 is out.** It is 380 MB, over the 250 MB gate, and its int8 weights find almost
+  nothing on `onnxruntime-web` WASM (F1 0.03) although the same file scores 0.77 on
+  `onnxruntime-node`. Its uint8 export finds nothing on either.
+- **Small v2.1 loses quality on WASM**: F1 0.79 on native, 0.72 on WASM with the same file
+  (recall drops most). The uint8 export does not help. So v2.1's dynamic quantisation and the
+  WASM integer kernels do not agree; v2.5's export does not have the problem (0.90 / 0.90).
+- **Small v2.5 is best on quality** (+0.18 F1 over small v2.1 on WASM) for 13 MB more, and
+  ~45% slower per note, still well inside the desktop gate.
 
 ### 23b. The extractor runtime (web)
 
@@ -319,7 +335,7 @@ Built for the model 23a picked. Names below say "the model".
    ```jsonc
    { "text": "…@[Rellan](entry:…)…", "isRecap": false,
      "newEntries": [ /* only when creating */ ],
-     "suggestion": { "model": "gliner_small-v2.1", "version": "urchade/gliner_small-v2.1@<sha>+int8",
+     "suggestion": { "model": "gliner_small-v2.5", "version": "GG-QandV/gliner_small-v2.5-onnx@<sha>+int8",
                      "confidence": 0.87, "start": 12, "length": 6, "entryId": "…" } }
    ```
 
@@ -416,7 +432,7 @@ Built for the model 23a picked. Names below say "the model".
 3. **History.** The note history view shows "✨ suggested by {name} ({confidence})" on a
    version whose actor has a model.
 4. **Accepted suggestions** (`Suggestions/AcceptedSuggestions.vue`, on `me.vue` under the
-   device setting, per campaign the member is in): "gliner_small-v2.1 · 14 mentions in 9
+   device setting, per campaign the member is in): "gliner_small-v2.5 · 14 mentions in 9
    notes · **Revert**". Revert asks "Unlink the 14 mentions this model suggested in your
    notes? Mentions you typed yourself stay." and then lists `createdEntries` with links
    ("These entries were created from its suggestions and stay: …").
@@ -462,34 +478,64 @@ Built for the model 23a picked. Names below say "the model".
 
 ## Notes / gotchas
 
-### What Laya is
+### Why GLiNER
 
-- **The design doc only says** "Laya: named by the user as a second small in-browser
-  candidate" (§11a). Nothing else in the repo names it.
-- **The likely match** is **Laya** by Convai Innovations (`convaiinnovations/laya` on Hugging
-  Face, source on GitHub): an open, Apache-2.0 **typed-decision model**, 421M parameters on
-  ModernBERT-large, with a 322M multilingual checkpoint on mmBERT-base. It takes a "state"
-  (a text or JSON) and typed questions (`choice` among options you define at request time,
-  `score` on an ordinal rubric, `noul` for a boolean probability) and returns calibrated
-  probabilities in one forward pass. It never generates text. Community ports run it in the
-  browser on ONNX Runtime Web (WebGPU with a WASM fallback), and one reports an int8 pack of
-  about 479 MB and 2–5 s for a three-question call on WASM on two cores.
-- **What that means here.** Laya **does not extract spans**: it can say which kind a given
-  span is, but something else must find the spans. So in 23a it runs behind a candidate
-  generator (19's `LinkSpans` rules, ported), one `choice` question per candidate. It is also
-  documented as weak zero-shot (its base checkpoint scores about 0.36 on its own typed-decision
-  benchmark, near random, and about 0.77 only after fine-tuning), and its `choice` questions
-  degrade with many options. GLiNER is built for exactly this task (zero-shot NER with labels
-  given at inference, character offsets out). **The expected pick is GLiNER small**, but 23a
-  measures rather than assumes.
-- **If this is not the Laya the user meant**, 23a still runs with GLiNER and whatever the user
-  names, under the same gates. This identification came from a web search on 2026-09-28, not
-  from the user.
+- **The user chose GLiNER** on 2026-09-28: "I'm interested in using GLiNER. It is
+  specialised for the task." It is zero-shot NER with labels given at inference and
+  character offsets out, which is exactly what suggestions need.
+- Laya (Convai's typed-decision model) was considered as a second candidate and dropped by the
+  user; it does not find spans on its own.
 
 ### Decision, 23a
 
-_Written by 23a: the measurements table (23a step 3), the pick, threshold, runtime package and
-version, repo, revision sha, files and their sha256, and licence._
+- **Pick: GLiNER small v2.5**, the int8 ONNX export, at **threshold 0.4** (the WASM sweep's
+  best is 0.35 at F1 0.896, 0.4 is within 0.01 of it with better precision; 23b may retune on
+  the fixture). It passes every desktop gate measured in Node and has the best F1 by 0.18.
+  Model id in provenance: `gliner_small-v2.5`.
+- **The user framed the choice as small vs multi v2.1.** Between those two, **small v2.1**
+  wins (multi is too big and broken on WASM). v2.5 is here because the plan's step 2 asked for
+  a v2.5 row if one existed; if the user prefers the `onnx-community` v2.1 export for its
+  provenance, the fallback pins are below and nothing else in 23 changes.
+- **Provenance caveat.** The v2.5 ONNX is a community export (`GG-QandV`, published
+  2026-09-18, no other users yet) of the Apache-2.0 upstream
+  `gliner-community/gliner_small-v2.5@f227d3cd637bd4e6757ae143935316d062393341`, recorded in
+  its `NOTICE`. The weights are pinned by revision and sha256 and self-hosted (below), so the
+  repo changing cannot change what ships. 23b may instead re-export upstream itself with the
+  GLiNER Python package; if so, re-run `run.mjs` and re-pin.
+- **Runtime**: `onnxruntime-web` 1.30.0 (WASM, single-threaded; WebGPU untested),
+  `@huggingface/tokenizers` 0.2.0, and a hand-written span decoder (the spike's
+  `scripts/extraction-spike/lib/gliner.mjs`, which 23b ports to TypeScript). Chunking: 384
+  words, on sentence boundaries.
+- **Browser and phone numbers are not measured.** The Node WASM numbers are a floor for the
+  desktop; the user runs `scripts/extraction-spike/harness.html` (above) on the desktop and on
+  the phone, and fills in: warm load, typical p50, peak memory and whether the tab reloads.
+  If the phone misses its gates, 23b's phone default is "Off". Node's peak RSS for v2.5 was
+  1.25 GB, which is a risk on phones.
+
+**Pinned (chosen): `GG-QandV/gliner_small-v2.5-onnx` @ `a748820c906f7af707a25bb52411b21b999f8de9`**,
+licence Apache-2.0 (`LICENSE` and `NOTICE` in the repo, shipped alongside the weights):
+
+| File | Bytes | sha256 |
+|---|---|---|
+| `model_quantized.onnx` | 196,786,385 | `60f2f4da1ccad2230626ecc00cbbb18474b5415d3a9fddfca8078f52c2ab2930` |
+| `tokenizer.json` | 8,332,739 | `08bb5853718f4a829fa9ce773d7984f7f3f6a7073fdc82a07a382675c5061ba6` |
+| `tokenizer_config.json` | 531 | `54121ac6feec6b4d5bf85245a54c3c5b1ff05ef2318cf83e45340849b8981566` |
+| `gliner_config.json` | 2,274 | `b327b6b5fe3cbefc4583e8cc50ecce3442f5c42855d0f5362dd51d8fa620d84f` |
+| `LICENSE` | 11,358 | `cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30` |
+| `NOTICE` | 1,110 | `c0aa9762a278e5328ff4e24be3a7ef9e003706e8b9a10bbacfbe6e8476f30d2e` |
+
+**Pinned (fallback): `onnx-community/gliner_small-v2.1` @ `8142fb00740ccea973e64b1272949ff48653df5e`**,
+upstream `urchade/gliner_small-v2.1`, Apache-2.0 (upstream model card). Threshold 0.3 on WASM.
+
+| File | Bytes | sha256 |
+|---|---|---|
+| `onnx/model_int8.onnx` | 183,403,734 | `c76c90920547fd937aaf505e7f2de5ec73168bf1c25abbb55a298104cb061400` |
+| `tokenizer.json` | 8,657,198 | `677203884d026e721115cf0daccf70ec4239545a13d6619e3e66d7151e0c9ce3` |
+| `tokenizer_config.json` | 1,806 | `cef106fb5c03d234f0af80f7577f1fc90b4317f26c26888d625abba11331dc89` |
+| `gliner_config.json` | 731 | `8e8b59de124a256a3f3de67879d0da686fe3f73ecc05093506ba525e451b920d` |
+
+All weights live in the git-ignored `.data/models/` (`node fetch-models.mjs` fetches and
+checks them); none are committed.
 
 ### Where the weights come from
 
@@ -560,8 +606,9 @@ version, repo, revision sha, files and their sha256, and licence._
 
 Each has the default this plan uses.
 
-1. **Is Convai's Laya the one you meant?** *Default: yes, as described above; GLiNER is
-   expected to win the spike.*
+1. **GLiNER small v2.5 (community ONNX export) or small v2.1 (`onnx-community`)?** *Default:
+   v2.5, on quality; v2.1 is pinned as the fallback (Notes, "Decision, 23a"). GLiNER itself is
+   the user's decision (2026-09-28).*
 2. **Where the weights are served from.** *Default: self-hosted from the web app, fetched and
    checksum-checked at build time; Hugging Face only when an environment variable says so.*
 3. **The default device setting.** *Default: "Ask" everywhere, and never a first download on a
