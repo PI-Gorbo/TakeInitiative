@@ -186,4 +186,54 @@ public class CombatLeakTests : IClassFixture<RecordingHubFixture>
         var got = string.Join("\n", mine.Body, edited.Body, await WhatThePlayerGot(campaign, combat.Id, mark));
         got.Should().NotContainEquivalentOf("tiebreak");
     }
+
+    // 18b: the roll and the turn, through the real endpoints.
+
+    [Fact]
+    public async Task TheRollsPush_CarriesNoHiddenCombatantsRoll()
+    {
+        var campaign = await TestCampaign.Create(fixture, "Leak roll");
+        var combat = await fixture.CreateCombat(campaign.Id);
+        var added = await fixture.AddAsDm(campaign.Id, combat.Id,
+            new { name = "Goblin", initiativeRoll = "5" },
+            new { name = "zanthor", hidden = true, initiativeRoll = "1d4+71" });
+        var zanthor = added.Combatants.Single(c => c.Name == "zanthor");
+        var mark = fixture.Hub.Messages.Count;
+
+        fixture.LoginAsUser(Users.DM);
+        var started = (await fixture.Roll(campaign.Id, combat.Id)).Combat;
+        started.Combatants.Single(c => c.Id == zanthor.Id).Initiative.Should().BeInRange(72, 75, "the DM sees it rolled");
+
+        var got = await WhatThePlayerGot(campaign, combat.Id, mark);
+        got.Should().NotContainEquivalentOf("zanthor").And.NotContain(zanthor.Id.ToString())
+            .And.NotContain("1d4+71").And.NotContainAny("\":72", "\":73", "\":74", "\":75");
+        got.Should().Contain("Goblin", "the push did reach the player");
+    }
+
+    [Fact]
+    public async Task TheTurnMovingOntoAHiddenCombatant_ShowsAsNoTurn()
+    {
+        var campaign = await TestCampaign.Create(fixture, "Leak end turn");
+        var combat = await fixture.CreateCombat(campaign.Id);
+        var added = await fixture.AddAsDm(campaign.Id, combat.Id,
+            new { name = "Goblin", initiativeRoll = "20" },
+            new { name = "zanthor", hidden = true, initiativeRoll = "10" });
+        var zanthor = added.Combatants.Single(c => c.Name == "zanthor");
+        fixture.LoginAsUser(Users.DM);
+        var started = (await fixture.Roll(campaign.Id, combat.Id)).Combat;
+        var mark = fixture.Hub.Messages.Count;
+
+        fixture.LoginAsUser(Users.DM);
+        var ended = await fixture.EndCurrentTurn(campaign.Id, started);
+        ended.TurnCombatantId.Should().Be(zanthor.Id);
+
+        var got = await WhatThePlayerGot(campaign, combat.Id, mark);
+        got.Should().NotContain(zanthor.Id.ToString()).And.NotContainEquivalentOf("zanthor");
+        var pushes = fixture.Hub.Messages.Skip(mark)
+            .Where(m => m.Groups.Contains(CampaignGroups.Member(campaign.PlayerMemberId)))
+            .Select(m => (CombatChangedMessage)m.Payload!).ToList();
+        pushes.Should().NotBeEmpty().And.OnlyContain(m => m.Combat.TurnCombatantId == null);
+        fixture.LoginAsUser(Users.Player);
+        (await fixture.GetCombat(campaign.Id, combat.Id)).Combat.TurnCombatantId.Should().BeNull();
+    }
 }

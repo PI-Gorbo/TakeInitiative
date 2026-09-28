@@ -27,10 +27,10 @@ public class DeleteCombatant(IDocumentSession session, IHubContext<CampaignHub> 
     {
         var userId = this.GetUserIdOrThrowUnauthorized();
         var (campaign, member) = await this.RequireMember(session, req.CampaignId, userId, ct);
-        var (stream, combat) = await this.Open(session, req.CampaignId, req.CombatId, member, ct);
-        var combatant = this.RequireChangeableCombatant(combat, req.CombatantId, member);
-
-        stream.AppendOne(new CombatantRemoved(Actor.Member(member.MemberId), combatant.Id));
-        await this.Commit(session, hub, campaign, combat.Id, member, ct);
+        await this.Write(session, hub, campaign, req.CombatId, member, combat =>
+        {
+            var combatant = this.RequireChangeableCombatant(combat, req.CombatantId, member);
+            return [new CombatantRemoved(Actor.Member(member.MemberId), combatant.Id)];
+        }, ct);
     }
 }

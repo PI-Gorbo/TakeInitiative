@@ -84,27 +84,28 @@ public class PostCombatants(IDocumentSession session, IHubContext<CampaignHub> h
     {
         var userId = this.GetUserIdOrThrowUnauthorized();
         var (campaign, member) = await this.RequireMember(session, req.CampaignId, userId, ct);
-        var (stream, combat) = await this.Open(session, req.CampaignId, req.CombatId, member, ct);
+        // A DM's entries do not depend on the combat, so they are loaded once, not per attempt.
+        var dmPicks = member.Role == Role.DM ? await DmPicks(req, member, ct) : null;
 
-        var picks = member.Role == Role.DM
-            ? await DmPicks(req, member, ct)
-            : [await PlayerPick(req, combat, member, ct)];
-
-        if (combat.Combatants.Count + picks.Sum(p => p.Count) > Combat.MaxCombatants)
+        await this.Write(session, hub, campaign, req.CombatId, member, async combat =>
         {
-            ThrowError(new ValidationFailure(CombatantsErrorKey, $"A combat can have at most {Combat.MaxCombatants} combatants."));
-        }
+            var picks = dmPicks ?? [await PlayerPick(req, combat, member, ct)];
 
-        var added = CombatantDefaults.Build(picks, member, combat.Combatants, dice, Random.Shared);
-        if (added.IsFailure)
-        {
-            // The validator checked every expression, so a roll cannot fail here; if one does,
-            // it is the request's fault, not the server's.
-            ThrowError(new ValidationFailure(CombatantsErrorKey, added.Error));
-        }
+            if (combat.Combatants.Count + picks.Sum(p => p.Count) > Combat.MaxCombatants)
+            {
+                ThrowError(new ValidationFailure(CombatantsErrorKey, $"A combat can have at most {Combat.MaxCombatants} combatants."));
+            }
 
-        stream.AppendOne(new CombatantsAdded(Actor.Member(member.MemberId), [.. added.Value]));
-        await this.Commit(session, hub, campaign, combat.Id, member, ct);
+            var added = CombatantDefaults.Build(picks, member, combat.Combatants, dice, Random.Shared);
+            if (added.IsFailure)
+            {
+                // The validator checked every expression, so a roll cannot fail here; if one does,
+                // it is the request's fault, not the server's.
+                ThrowError(new ValidationFailure(CombatantsErrorKey, added.Error));
+            }
+
+            return [new CombatantsAdded(Actor.Member(member.MemberId), [.. added.Value])];
+        }, ct);
     }
 
     private async Task<IReadOnlyList<CombatantPick>> DmPicks(PostCombatantsRequest req, Member member, CancellationToken ct)

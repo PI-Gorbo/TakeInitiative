@@ -56,7 +56,7 @@ public static class CombatTestKit
         return new Reply(result.Context.Response.StatusCode, await result.ReadAsTextAsync());
     }
 
-    private static async Task<Reply> Ok(this Task<Reply> call)
+    public static async Task<Reply> Ok(this Task<Reply> call)
     {
         var reply = await call;
         reply.Status.Should().Be(200, reply.Body);
@@ -107,6 +107,32 @@ public static class CombatTestKit
         change?.Invoke(body);
         return body;
     }
+
+    // 18b: roll, end turn, reorder, finish and history.
+
+    public static Task<Reply> Roll(this IWebAppClient client, Guid campaignId, Guid combatId)
+        => client.Call(HttpMethod.Post, CombatUrl(campaignId, combatId, "roll"));
+
+    public static Task<Reply> EndTurn(this IWebAppClient client, Guid campaignId, Guid combatId, Guid combatantId, int round)
+        => client.Call(HttpMethod.Post, CombatUrl(campaignId, combatId, "end-turn"), new { combatantId, round });
+
+    /// <summary>Ends whoever's turn it is, as the caller, and answers the combat after it.</summary>
+    public static async Task<CombatResponse> EndCurrentTurn(this IWebAppClient client, Guid campaignId, CombatResponse combat)
+        => (await client.EndTurn(campaignId, combat.Id, combat.TurnCombatantId!.Value, combat.Round).Ok()).Combat;
+
+    public static Task<Reply> Finish(this IWebAppClient client, Guid campaignId, Guid combatId)
+        => client.Call(HttpMethod.Post, CombatUrl(campaignId, combatId, "finish"));
+
+    public static Task<Reply> Position(this IWebAppClient client, Guid campaignId, Guid combatId, Guid combatantId, Guid? afterId)
+        => client.Call(HttpMethod.Put, CombatantUrl(campaignId, combatId, combatantId) + "/position", new { afterId });
+
+    public static Task<Reply> History(this IWebAppClient client, Guid campaignId, Guid combatId)
+        => client.Call(HttpMethod.Get, CombatUrl(campaignId, combatId, "history"));
+
+    /// <summary>Names in the order, then the waiting ones, as the response lists them.</summary>
+    public static string[] Names(this CombatResponse combat) => combat.Combatants.Select(c => c.Name).ToArray();
+
+    public static CombatantResponse Named(this CombatResponse combat, string name) => combat.Combatants.Single(c => c.Name == name);
 
     /// <summary>
     /// Starts a combat the way 18b's first roll will: one <see cref="InitiativeRolled"/> giving

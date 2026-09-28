@@ -78,29 +78,29 @@ public class PutCombatant(IDocumentSession session, IHubContext<CampaignHub> hub
     {
         var userId = this.GetUserIdOrThrowUnauthorized();
         var (campaign, member) = await this.RequireMember(session, req.CampaignId, userId, ct);
-        var (stream, combat) = await this.Open(session, req.CampaignId, req.CombatId, member, ct);
-        var combatant = this.RequireChangeableCombatant(combat, req.CombatantId, member);
-
-        var state = new CombatantState(
-            Name: req.Name.Trim(),
-            Initiative: req.Initiative,
-            Hp: req.Hp,
-            MaxHp: req.MaxHp,
-            Ac: req.Ac,
-            Hidden: req.Hidden,
-            PlayersSee: req.PlayersSee,
-            Conditions: req.Conditions.Select(c => Condition.Of(c.Label, c.Note)).ToList());
-
-        var forbidden = CombatAccess.ForbiddenChanges(combatant.State, state, member);
-        if (forbidden.Count > 0)
+        await this.Write(session, hub, campaign, req.CombatId, member, combat =>
         {
-            ThrowError($"Players can't change these on their combatant: {string.Join(", ", forbidden)}.", StatusCodes.Status403Forbidden);
-        }
+            var combatant = this.RequireChangeableCombatant(combat, req.CombatantId, member);
 
-        if (!state.SameAs(combatant.State))
-        {
-            stream.AppendOne(new CombatantEdited(Actor.Member(member.MemberId), combatant.Id, state));
-        }
-        await this.Commit(session, hub, campaign, combat.Id, member, ct);
+            var state = new CombatantState(
+                Name: req.Name.Trim(),
+                Initiative: req.Initiative,
+                Hp: req.Hp,
+                MaxHp: req.MaxHp,
+                Ac: req.Ac,
+                Hidden: req.Hidden,
+                PlayersSee: req.PlayersSee,
+                Conditions: req.Conditions.Select(c => Condition.Of(c.Label, c.Note)).ToList());
+
+            var forbidden = CombatAccess.ForbiddenChanges(combatant.State, state, member);
+            if (forbidden.Count > 0)
+            {
+                ThrowError($"Players can't change these on their combatant: {string.Join(", ", forbidden)}.", StatusCodes.Status403Forbidden);
+            }
+
+            return state.SameAs(combatant.State)
+                ? []
+                : [new CombatantEdited(Actor.Member(member.MemberId), combatant.Id, state)];
+        }, ct);
     }
 }

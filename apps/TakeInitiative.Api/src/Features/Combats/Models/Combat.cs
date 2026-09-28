@@ -61,7 +61,10 @@ public record Combat
         // Clearing the initiative of the combatant whose turn it is makes it wait, so the turn
         // passes on as if it had ended.
         var passed = TurnCombatantId == e.CombatantId && e.State.Initiative is null ? PassTurnFrom(e.CombatantId) : this;
-        return passed.WithCombatants(Combatants.Select(c => c.Id == e.CombatantId ? c.With(e.State) : c).ToList()).WithTurnOnTop();
+        return passed.WithCombatants(Combatants
+                .Select(c => c.Id == e.CombatantId ? c.With(e.State) with { Tiebreak = e.Tiebreak ?? c.Tiebreak } : c)
+                .ToList())
+            .WithTurnOnTop();
     }
 
     public Combat Apply(CombatantRemoved e)
@@ -93,7 +96,16 @@ public record Combat
         return rolled.WithTurnOnTop();
     }
 
-    // TurnEnded and CombatFinished are applied from 18b.
+    /// <summary>End turn (18b.2): the event says where the turn went and in which round.</summary>
+    public Combat Apply(TurnEnded e) => this with { TurnCombatantId = e.ToCombatantId, Round = e.Round };
+
+    /// <summary>Finish (18b.5): read-only from here, with no turn. A Draft finished this way was discarded.</summary>
+    public Combat Apply(IEvent<CombatFinished> @event) => this with
+    {
+        Status = CombatStatus.Finished,
+        FinishedAt = @event.Timestamp,
+        TurnCombatantId = null,
+    };
 
     /// <summary>The turn moves to the combatant after <paramref name="combatantId"/>, counting a round on the wrap.</summary>
     private Combat PassTurnFrom(Guid combatantId)
