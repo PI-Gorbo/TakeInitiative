@@ -99,6 +99,7 @@ Stack #224. Everything is on top of `dev` and still open:
 | #251 | `v2/21a-5etools-script` | 21a: the 5eTools index script (`pnpm 5etools:build`), its synthetic fixture and tests |
 | #252 | `v2/21b-5etools-provider` | 21b: the search-only 5eTools provider in the API, off without an index |
 | #253 | `v2/21c-5etools-web` | 21c: 5eTools rows link out in ⌘K, with + Wiki, the source line ("↗ From 5eTools · Beholder (MM p. 28)", its tooltip the book's title) and "Use 5eTools stats". Also sends book titles from the API. Closes step 21 apart from 21d |
+| TBD | `v2/22-ddb-plan` | Step 22's step file (D&D Beyond link) |
 
 The local branches `pr/PI-Gorbo/222`, `pr/PI-Gorbo/222-1` and `pr/PI-Gorbo/222-2` are stale
 checkouts of #222. Ignore them.
@@ -186,10 +187,17 @@ checkouts of #222. Ignore them.
      commits. After deleting the branch, ask GitHub Support to purge the cached commits,
      or accept that they stay reachable by sha until GitHub garbage-collects them (forks
      keep them).
-4. **Step 22 is next: the D&D Beyond link** (README: a sheet URL on player characters,
-   and a manual refresh of core stats). Its step file isn't written yet. Write
-   `22-dndbeyond-link.md` first as its own docs PR on top of `v2/21c-5etools-web`, then
-   run 23–24 in README order.
+4. **Step 22 is next: the D&D Beyond link.** Its step file is
+   [22-ddb-link.md](22-ddb-link.md) (branch `v2/22-ddb-plan`, on top of
+   `v2/21c-5etools-web`). Run 22a (the sheet link, API), 22b (the manual refresh behind
+   `DndBeyond:Refresh:Enabled`, off by default, API) and 22c (web) on top of it, then
+   23–24 in README order.
+   - **No agent calls D&D Beyond**, in tests or by hand. Tests use invented fixtures and a
+     fake handler that fails on any other host. Verify 5 (flag on, a real public sheet) is
+     the user's.
+   - The user's decisions are in step 22's Notes, "Decisions for the user". The big one is
+     whether to turn the refresh on at all, given D&D Beyond's Terms of Service; until
+     they answer, it is built and left off.
 
 ## Follow-ups found this round
 
