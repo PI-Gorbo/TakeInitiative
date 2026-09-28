@@ -118,6 +118,7 @@
     import { BookOpen, Castle, ChevronLeft, Search, Swords } from "lucide-vue-next";
     import { getCampaignQuery } from "~/utils/queries/campaign";
     import { getCombatsQuery } from "~/utils/queries/combats";
+    import { OPEN_SEARCH } from "~/utils/search";
     import { rememberCampaign } from "~/utils/shareTarget";
 
     const route = useRoute();
@@ -184,6 +185,7 @@
         focusProxy.value?.focus({ preventScroll: true });
         searchOpen.value = true;
     }
+    provide(OPEN_SEARCH, openSearch);
     const shortcutLabel = computed(() =>
         /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘K" : "Ctrl K"
     );

@@ -88,6 +88,22 @@ const combatHit = (id: string, status: "Draft" | "Active" | "Finished" = "Active
     },
 });
 
+const referenceHit = (extra: Partial<NonNullable<SearchHit["reference"]>> = {}): SearchHit => ({
+    kind: "Reference",
+    reference: {
+        provider: "srd52",
+        providerLabel: "SRD 5.2",
+        id: "goblin-warrior",
+        name: "Goblin Warrior",
+        category: "Monster",
+        detail: "CR 1/4 · Small Fey",
+        url: null,
+        hasStatBlock: true,
+        suggestedKind: "Character",
+        ...extra,
+    },
+});
+
 const response = (...sections: SearchSection[]): SearchResponse => ({ query: "q", sections });
 
 // ── parseSearchInput ─────────────────────────────────────────────────────────
@@ -161,31 +177,25 @@ describe("searchRows", () => {
         expect(rows.at(-1)).toMatchObject({ type: "more", label: "Show more combats" });
     });
 
-    it("leaves out Reference until 20c draws its rows", () => {
-        const reference: SearchSection = {
-            key: "Reference",
-            hasMore: true,
-            hits: [
-                {
-                    kind: "Reference",
-                    reference: {
-                        provider: "srd52",
-                        providerLabel: "SRD 5.2",
-                        id: "goblin-warrior",
-                        name: "Goblin Warrior",
-                        category: "Monster",
-                        detail: "CR 1/4 · Small Fey",
-                        url: null,
-                        hasStatBlock: true,
-                        suggestedKind: "Character",
-                    },
-                },
-            ],
-        };
-        const rows = searchRows(response({ key: "Entries", hasMore: false, hits: [entryHit("e1")] }, reference));
-        expect(rows.map((r) => r.id)).toEqual(["header-Entries", "Entries-entry-e1"]);
-        expect(isEmptyResponse(response(reference))).toBe(true);
-        expect(hitKey(reference.hits[0]!)).toBe("reference-srd52-goblin-warrior");
+    it("puts Reference after Combats, under its own header and Show more", () => {
+        const rows = searchRows(
+            response(
+                { key: "Entries", hasMore: false, hits: [entryHit("e1")] },
+                { key: "Combats", hasMore: false, hits: [combatHit("k1")] },
+                { key: "Reference", hasMore: true, hits: [referenceHit()] }
+            )
+        );
+        expect(rows.map((r) => r.id)).toEqual([
+            "header-Entries",
+            "Entries-entry-e1",
+            "header-Combats",
+            "Combats-combat-k1",
+            "header-Reference",
+            "Reference-reference-srd52-goblin-warrior",
+            "more-Reference",
+        ]);
+        expect(rows.at(-1)).toMatchObject({ type: "more", label: "Show more reference" });
+        expect(isEmptyResponse(response({ key: "Reference", hasMore: false, hits: [referenceHit()] }))).toBe(false);
     });
 
     it("leaves out empty sections", () => {
@@ -304,6 +314,16 @@ describe("hitTarget", () => {
 
     it("opens a combat's page", () => {
         expect(hitTarget("c1", combatHit("k1"))).toEqual({ path: "/app/campaigns/c1/combat/k1", query: {} });
+    });
+
+    it("opens a reference item's card, or links out when it has none (step 21)", () => {
+        expect(hitTarget("c1", referenceHit())).toEqual({
+            path: "/app/campaigns/c1/reference/srd52/goblin-warrior",
+            query: {},
+        });
+        expect(hitKey(referenceHit())).toBe("reference-srd52-goblin-warrior");
+        const external = referenceHit({ provider: "5etools", hasStatBlock: false, url: "https://5e.tools/x" });
+        expect(hitTarget("c1", external)).toMatchObject({ external: "https://5e.tools/x" });
     });
 
     it("writes a combat's line: live with its round, else its session and status", () => {

@@ -116,3 +116,12 @@ export type LooseEnd = Schemas["LooseEndResponse"];
 export type LooseEndKind = Schemas["LooseEndKind"];
 export type LooseEndCounts = Schemas["LooseEndCountsResponse"];
 export type LinkSuggestion = Schemas["LinkSuggestionResponse"];
+/** Reference (20b, 20c): a ⌘K reference hit, and an item with its stat block and attribution. */
+export type SearchReferenceHit = Schemas["SearchReferenceHit"];
+export type ReferenceItem = Schemas["ReferenceItemResponse"];
+export type ReferenceSummary = Schemas["ReferenceSummaryResponse"];
+export type ReferenceAttribution = Schemas["ReferenceAttributionResponse"];
+export type StatBlock = Schemas["StatBlock"];
+export type StatBlockSpeed = Schemas["StatBlockSpeed"];
+export type StatBlockTrait = Schemas["StatBlockTrait"];
+export type StatBlockAction = Schemas["StatBlockAction"];

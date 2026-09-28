@@ -356,7 +356,10 @@
         }
         if (row.hit.entry) recentIds.value = rememberRecentEntry(storage(), props.campaignId, row.hit.entry.entry.id);
         open.value = false;
-        void navigateTo(hitTarget(props.campaignId, row.hit));
+        const target = hitTarget(props.campaignId, row.hit);
+        // Step 21's search-only reference rows link out; the app never shows their content.
+        if (target.external) window.open(target.external, "_blank", "noopener");
+        else void navigateTo(target);
     }
 
     function runAction(actionId: string, via: "key" | "pointer") {

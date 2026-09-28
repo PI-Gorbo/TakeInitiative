@@ -1,5 +1,6 @@
 <template>
-    <!-- One ⌘K hit (17b): an entry, a note, an image note, a session or a combat (18f). -->
+    <!-- One ⌘K hit (17b): an entry, a note, an image note, a session, a combat (18f) or a
+         reference item (20c). -->
     <div class="flex min-w-0 flex-1 items-start gap-3">
         <template v-if="hit.entry">
             <span
@@ -103,13 +104,34 @@
                 </span>
             </span>
         </template>
+
+        <template v-else-if="hit.reference">
+            <span
+                class="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-lg"
+                aria-hidden="true">
+                📖
+            </span>
+            <span class="flex min-w-0 flex-1 flex-col">
+                <span class="flex min-w-0 items-center gap-1.5">
+                    <span class="truncate font-medium">{{ hit.reference.name }}</span>
+                    <ExternalLink
+                        v-if="!hit.reference.hasStatBlock && hit.reference.url"
+                        class="size-3.5 shrink-0 text-muted-foreground"
+                        aria-label="Opens in a new tab" />
+                </span>
+                <span class="truncate text-xs text-muted-foreground">
+                    {{ referenceHitLine(hit.reference) }}
+                </span>
+            </span>
+        </template>
     </div>
 </template>
 
 <script setup lang="ts">
-    import { CalendarDays, ImageIcon, MessageSquare, ScrollText, Swords } from "lucide-vue-next";
+    import { CalendarDays, ExternalLink, ImageIcon, MessageSquare, ScrollText, Swords } from "lucide-vue-next";
     import type { SearchHit, SearchSectionKey } from "~/utils/api/types";
     import { ENTRY_KIND_ICONS, mentionCountLabel } from "~/utils/entries";
+    import { referenceHitLine } from "~/utils/reference";
     import { combatHitLine, lockLabel, sessionLine } from "~/utils/search";
     import { formatSessionDate } from "~/utils/sessionDates";
 

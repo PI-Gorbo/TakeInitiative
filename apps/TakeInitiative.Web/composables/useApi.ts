@@ -44,6 +44,7 @@ import { deleteImageRequest } from "~/utils/api/image/deleteImageRequest";
 import { getSessionImagesRequest } from "~/utils/api/image/getSessionImagesRequest";
 import { getEntryImagesRequest } from "~/utils/api/image/getEntryImagesRequest";
 import { getSearchRequest } from "~/utils/api/search/getSearchRequest";
+import { getReferenceItemRequest } from "~/utils/api/reference/getReferenceItemRequest";
 import { getCombatsRequest } from "~/utils/api/combat/getCombatsRequest";
 import { getEntryCombatsRequest } from "~/utils/api/combat/getEntryCombatsRequest";
 import { getCombatRequest } from "~/utils/api/combat/getCombatRequest";
@@ -123,6 +124,9 @@ export const useApi = () => {
         },
         search: {
             get: getSearchRequest($axios),
+        },
+        reference: {
+            get: getReferenceItemRequest($axios),
         },
         combat: {
             list: getCombatsRequest($axios),

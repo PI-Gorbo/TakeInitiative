@@ -1,6 +1,7 @@
 // ⌘K search's pure rules (17b): reading the input, flattening the server's sections
 // into rows, the keyboard cursor, snippet highlights, where a hit goes, and the
 // recent entries kept in `localStorage`. `SearchSheet` only wires these to the DOM.
+import type { InjectionKey } from "vue";
 import type {
     CombatCard,
     EntryListItem,
@@ -13,6 +14,7 @@ import type {
 } from "./api/types";
 import type { EntryDirectory } from "./entries";
 import { NOTE_LINK_PARAM } from "./noteActions";
+import { referencePath } from "./reference";
 
 // ── Input ────────────────────────────────────────────────────────────────────
 
@@ -47,12 +49,6 @@ export const SECTION_LABELS: Record<SearchSectionKey, { header: string; more: st
     Combats: { header: "Combats", more: "Show more combats" },
     Reference: { header: "Reference", more: "Show more reference" },
 };
-
-/**
- * Sections the API sends that the sheet cannot draw yet. The API answers Reference from 20b; its
- * rows come in 20c, which empties this.
- */
-export const HIDDEN_SECTIONS: ReadonlySet<SearchSectionKey> = new Set<SearchSectionKey>(["Reference"]);
 
 /** The most a section shows after "Show more": the server's largest `take`. */
 export const SEARCH_MORE_TAKE = 20;
@@ -104,7 +100,7 @@ export function searchRows(
 ): SearchRow[] {
     const rows: SearchRow[] = [];
     for (const section of response?.sections ?? []) {
-        if (section.hits.length === 0 || HIDDEN_SECTIONS.has(section.key)) continue;
+        if (section.hits.length === 0) continue;
         const key = section.key;
         rows.push({ type: "header", id: `header-${key}`, section: key, label: SECTION_LABELS[key].header });
         for (const hit of section.hits) {
@@ -143,7 +139,7 @@ export function replaceSection<R extends Pick<SearchResponse, "sections">>(respo
 
 /** Whether a response found nothing at all. */
 export const isEmptyResponse = (response: Pick<SearchResponse, "sections">) =>
-    response.sections.every((s) => s.hits.length === 0 || HIDDEN_SECTIONS.has(s.key));
+    response.sections.every((s) => s.hits.length === 0);
 
 // ── The cursor ───────────────────────────────────────────────────────────────
 
@@ -222,12 +218,17 @@ export function combatHitLine(card: Pick<CombatCard, "status" | "round">, sessio
 export const SESSION_LINK_PARAM = "session";
 export const BLOCK_LINK_PARAM = "block";
 
-export type SearchTarget = { path: string; query: Record<string, string> };
+/**
+ * Where a row goes: a route in the app, or (`external`, step 21's search-only reference
+ * rows) a link out that the sheet opens in a new tab instead.
+ */
+export type SearchTarget = { path: string; query: Record<string, string>; external?: string };
 
 /**
  * An entry opens its page (at the matching block for an article hit); a note or an
  * image opens the stream at the note, a session at its divider, and a combat its
- * page. The stream's filter is left out, so the target is never hidden by one.
+ * page. The stream's filter is left out, so the target is never hidden by one. A
+ * reference item opens its stat-block card (20c), or its `url` when it has none.
  */
 export function hitTarget(campaignId: string, hit: SearchHit): SearchTarget {
     const campaign = `/app/campaigns/${encodeURIComponent(campaignId)}`;
@@ -238,8 +239,19 @@ export function hitTarget(campaignId: string, hit: SearchHit): SearchTarget {
     if (hit.note) return { path: campaign, query: { [NOTE_LINK_PARAM]: hit.note.id } };
     if (hit.session) return { path: campaign, query: { [SESSION_LINK_PARAM]: String(hit.session.session.number) } };
     if (hit.combat) return { path: `${campaign}/combat/${encodeURIComponent(hit.combat.combat.id)}`, query: {} };
+    if (hit.reference) {
+        const item = hit.reference;
+        if (!item.hasStatBlock && item.url) return { path: campaign, query: {}, external: item.url };
+        return { path: referencePath(campaignId, item.provider, item.id), query: {} };
+    }
     return { path: campaign, query: {} };
 }
+
+/**
+ * The campaign layout's "open ⌘K" (20c), for pages that offer a way into search, such
+ * as the reference card's "not in the SRD". The trigger gets the focus back on close.
+ */
+export const OPEN_SEARCH: InjectionKey<(trigger: HTMLElement | null) => void> = Symbol("openSearch");
 
 /** `?session=12` as a session number, or undefined. */
 export function sessionFromQuery(value: unknown): number | undefined {
