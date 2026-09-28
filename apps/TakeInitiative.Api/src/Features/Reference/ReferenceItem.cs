@@ -1,6 +1,9 @@
+using System.Text.Json.Serialization;
+
 namespace TakeInitiative.Api.Features.Reference;
 
 /// <summary>What kind of thing a reference item is. Step 20 has monsters only; step 21 adds spells, items and so on.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<ReferenceCategory>))]
 public enum ReferenceCategory
 {
     Monster,

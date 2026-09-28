@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace TakeInitiative.Api.Features.Entries;
 
 /// <summary>
@@ -31,9 +33,19 @@ public record EntryResponse
     /// absent, so "none" and "not for you" look the same.
     /// </summary>
     public StatsResponse? Stats { get; init; }
+    /// <summary>
+    /// The reference item the entry was made from (20b), when there is one and the caller may read
+    /// it (<see cref="EntrySources"/>, the same rule as <see cref="Stats"/>). Otherwise the key is left out, so
+    /// a player's JSON does not even say that sources exist.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public EntrySourceResponse? Source { get; init; }
 
-    /// <summary>The entry as <paramref name="viewer"/> sees it. The article is redacted for them.</summary>
-    public static EntryResponse From(Entry entry, Member viewer) => new()
+    /// <summary>
+    /// The entry as <paramref name="viewer"/> sees it. The article, the stats and the source are
+    /// redacted for them; <paramref name="reference"/> names the source's provider and item.
+    /// </summary>
+    public static EntryResponse From(Entry entry, Member viewer, ReferenceCatalog reference) => new()
     {
         Id = entry.Id,
         Name = entry.Name,
@@ -48,7 +60,40 @@ public record EntryResponse
         MergedFromIds = entry.MergedFromIds,
         Article = ArticleResponse.From(entry, viewer),
         Stats = EntryStats.For(entry, viewer) is { } stats ? StatsResponse.From(stats) : null,
+        Source = EntrySources.For(entry, viewer) is { } source ? EntrySourceResponse.From(source, reference) : null,
     };
+}
+
+/// <summary>
+/// Where an entry came from (20b): a reference item. <see cref="Name"/> and
+/// <see cref="ProviderLabel"/> are read from the reference data now, so a rebuild's spelling
+/// shows; <see cref="Name"/> is null when the item has gone from the data, and the label falls
+/// back to the provider's key when the provider has.
+/// </summary>
+public record EntrySourceResponse
+{
+    public required string Provider { get; init; }
+    public required string ProviderLabel { get; init; }
+    public required string ExternalId { get; init; }
+    public string? Name { get; init; }
+    public required string Url { get; init; }
+    /// <summary>Whether the web can link to the item's stat-block card: its provider draws them, and the item is still in the data.</summary>
+    public required bool HasStatBlock { get; init; }
+
+    public static EntrySourceResponse From(EntrySource source, ReferenceCatalog reference)
+    {
+        var provider = reference.Get(source.Provider);
+        var item = provider?.Find(source.ExternalId);
+        return new EntrySourceResponse
+        {
+            Provider = source.Provider,
+            ProviderLabel = provider?.Label ?? source.Provider,
+            ExternalId = source.ExternalId,
+            Name = item?.Name,
+            Url = source.Url,
+            HasStatBlock = item is not null && provider!.HasStatBlocks,
+        };
+    }
 }
 
 /// <summary>A Character's stat line: two dice expressions and an armour class, each optional.</summary>

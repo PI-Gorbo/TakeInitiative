@@ -277,6 +277,9 @@ public static class Bootstrap
         services.AddScoped<ISearchProvider, WikiSearchProvider>();
         services.AddScoped<ISearchProvider, SessionSearchProvider>();
         services.AddScoped<ISearchProvider, CombatSearchProvider>();
+        // Last: the Reference section comes after every campaign section (§11). It reads the
+        // ReferenceCatalog that AddReference() registers.
+        services.AddScoped<ISearchProvider, ReferenceSearchProvider>();
         services.AddScoped<SearchService>();
         return services;
     }

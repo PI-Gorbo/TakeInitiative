@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace TakeInitiative.Api.Features.Reference;
 
 /// <summary>
@@ -76,6 +78,7 @@ public record StatBlock
     public required IReadOnlyList<StatBlockAction> Actions { get; init; }
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter<StatBlockCategory>))]
 public enum StatBlockCategory
 {
     Monster,
@@ -113,6 +116,7 @@ public record StatBlockTrait
     public required string Text { get; init; }
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter<StatBlockActionKind>))]
 public enum StatBlockActionKind
 {
     Action,

@@ -4,7 +4,8 @@ namespace TakeInitiative.Api.Features.Entries;
 /// Starts an Entry stream (stream id = entry id). <see cref="CreatorMemberId"/> is stored
 /// rather than read from <see cref="Actor"/>, so the creator stays a member when Actor gains
 /// a model case (design §11a). <see cref="CreatedFromNoteId"/> is provenance only: the note
-/// the entry was created from (step 15b), not the §11 <c>Source</c>.
+/// the entry was created from (step 15b), not the §11 <c>Source</c>. <see cref="Source"/> is the
+/// reference item the entry was made from by + Wiki (20b); events from before it read as null.
 /// </summary>
 public sealed record EntryCreated(
     Actor Actor,
@@ -13,4 +14,5 @@ public sealed record EntryCreated(
     string Name,
     EntryKind Kind,
     Visibility Visibility,
-    Guid? CreatedFromNoteId = null) : IActorEvent;
+    Guid? CreatedFromNoteId = null,
+    EntrySource? Source = null) : IActorEvent;

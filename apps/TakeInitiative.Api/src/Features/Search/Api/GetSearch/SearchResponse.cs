@@ -3,8 +3,8 @@ using System.Text.Json.Serialization;
 namespace TakeInitiative.Api.Features.Search;
 
 /// <summary>
-/// One heading of ⌘K results (glossary: Search section). Step 18 added <c>Combats</c>;
-/// steps 20 and 21 add <c>Reference</c> without changing the others.
+/// One heading of ⌘K results (glossary: Search section). Step 18 added <c>Combats</c> and step
+/// 20 <c>Reference</c>, each without changing the others.
 /// </summary>
 [JsonConverter(typeof(JsonStringEnumConverter<SearchSectionKey>))]
 public enum SearchSectionKey
@@ -14,9 +14,11 @@ public enum SearchSectionKey
     Images,
     Sessions,
     Combats,
+    /// <summary>Reference items (step 20): the SRD, and in step 21 the 5eTools index. Always last (§11).</summary>
+    Reference,
 }
 
-/// <summary>Which of a hit's payloads is filled. Step 20's REFERENCE adds a case.</summary>
+/// <summary>Which of a hit's payloads is filled.</summary>
 [JsonConverter(typeof(JsonStringEnumConverter<SearchHitKind>))]
 public enum SearchHitKind
 {
@@ -24,6 +26,7 @@ public enum SearchHitKind
     Note,
     Session,
     Combat,
+    Reference,
 }
 
 /// <summary>What matched on an entry: its name, one of its aliases, or a block of its article.</summary>
@@ -36,7 +39,8 @@ public enum SearchMatchedOn
 }
 
 /// <summary>
-/// The sections a search answers with, in the order Entries, Notes, Images, Sessions, Combats. A section
+/// The sections a search answers with, in the order Entries, Notes, Images, Sessions, Combats,
+/// Reference. A section
 /// with no hits is left out, and the query string is never stored.
 /// </summary>
 public record SearchResponse
@@ -67,6 +71,7 @@ public record SearchHit
     public SearchNoteHit? Note { get; init; }
     public SearchSessionHit? Session { get; init; }
     public SearchCombatHit? Combat { get; init; }
+    public SearchReferenceHit? Reference { get; init; }
 }
 
 /// <summary>
@@ -121,4 +126,29 @@ public record SearchCombatHit
     public required int SessionNumber { get; init; }
     /// <summary>The name of the combatant that matched, as the viewer sees it. Null when the combat's name matched.</summary>
     public string? MatchedCombatant { get; init; }
+}
+
+/// <summary>
+/// A reference item (step 20b): what the row shows and what [view] and + Wiki need. Nothing about
+/// a reference item is secret, but the hit stays small: the stat block is fetched on [view], and
+/// the Stats + Wiki fills are read on the server.
+/// </summary>
+public record SearchReferenceHit
+{
+    /// <summary>The provider's key: <c>srd52</c>.</summary>
+    public required string Provider { get; init; }
+    /// <summary>What the row calls the provider: "SRD 5.2".</summary>
+    public required string ProviderLabel { get; init; }
+    /// <summary>The item's id within its provider: <c>goblin-warrior</c>.</summary>
+    public required string Id { get; init; }
+    public required string Name { get; init; }
+    public required ReferenceCategory Category { get; init; }
+    /// <summary>The muted line: "CR 1/4 · Small Fey".</summary>
+    public required string Detail { get; init; }
+    /// <summary>A link out, for a search-only provider (step 21). Null for the SRD.</summary>
+    public string? Url { get; init; }
+    /// <summary>Whether [view] opens the app's own stat-block card.</summary>
+    public required bool HasStatBlock { get; init; }
+    /// <summary>The kind of entry + Wiki creates.</summary>
+    public required EntryKind SuggestedKind { get; init; }
 }

@@ -112,6 +112,6 @@ public class PutEntryStats(IDocumentSession session, IHubContext<CampaignHub> hu
             await hub.NotifyEntryStatsChanged(campaign.Members, before, entry);
         }
 
-        await SendAsync(EntryResponse.From(entry, member), cancellation: ct);
+        await SendAsync(EntryResponse.From(entry, member, Resolve<ReferenceCatalog>()), cancellation: ct);
     }
 }
