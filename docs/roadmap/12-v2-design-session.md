@@ -76,6 +76,10 @@ player-first experiences: **combat**, **note taking**, **⌘K search** and
 | **Entry matcher** (code: `EntryMatcher`) | Trigram matching of a piece of text against entry names and aliases, under the viewer's visibility. ⌘K, loose ends and suggestions share it (§11a). | fuzzy finder, resolver |
 | **Reference** | Rules content from outside the campaign (SRD, 5eTools) that ⌘K can find. It is never part of the wiki until it is added. | compendium, bestiary |
 | **Source** | Where an entry or session note came from: a reference item, a D&D Beyond sheet, or an imported Discord message. | origin |
+| **Reference item** (code: `ReferenceItem`) | One thing a reference source offers, such as the SRD's Goblin Warrior. It is not in the wiki until it is added. | compendium entry, monster (as a type) |
+| **Reference provider** (code: `IReferenceProvider`) | A source of reference items: SRD 5.2, bundled (step 20), and the 5eTools index, search-only (21). One ⌘K search provider asks each of them. | bestiary |
+| **Stat block** | A reference monster's rules text, laid out as the SRD lays it out and drawn read-only by the stat-block card. | Stats (that is an entry's three-field stat line) |
+| **+ Wiki** (code: `EntryFromReference`) | Creating an entry from a reference item: the right kind, its `Source`, and Stats for a DM. | Promote ("Add to wiki", which copies note text), import |
 | **Suggestion** | A mention or entry proposed by a model. It has no effect until a member accepts it. | auto-tag, prediction |
 | **Import** | Bringing outside notes (e.g. a Discord export) in as session notes. | sync, migration |
 | **Combat** | One encounter. Status: `Draft`, `Active` or `Finished`. | planned/draft combat as a separate thing |

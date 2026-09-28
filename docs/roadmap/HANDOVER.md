@@ -23,8 +23,8 @@ source of truth), then the step file you are about to run.
     `gh pr create --base <previous branch>`.
 - **Write the step file first.** Step files 13+ are written one at a time, just
   before a step starts, and each has its own docs PR at the bottom of the stack.
-  README's Conventions section gives the six sections; `17-search.md` is the
-  latest example.
+  README's Conventions section gives the six sections; `19-connections.md` and
+  `20-srd-reference.md` are the latest examples.
 - **When a step lands,** tick its PR table in the step file and update README's
   status column, so both describe what was actually built.
 
@@ -87,6 +87,7 @@ Stack #224. Everything is on top of `dev` and still open:
 | #242 | `v2/19c-connections-panel` | 19c: the Connections panel on an entry and the evidence sheet |
 | #243 | `v2/19d-graph-page` | 19d: the graph page (`/wiki/graph`), plus a fix for 19c's evidence snippets |
 | #244 | `v2/19e-loose-ends-ui` | 19e: loose ends in the Wiki, on dividers and in ⌘K, resolved in place; closes step 19 |
+| #245 | `v2/20-srd-plan` | Step 20's step file |
 
 The local branches `pr/PI-Gorbo/222`, `pr/PI-Gorbo/222-1` and `pr/PI-Gorbo/222-2` are stale
 checkouts of #222. Ignore them.
@@ -129,8 +130,14 @@ checkouts of #222. Ignore them.
    Fix what the user reports on top of the stack.
 2. Steps 17, 18 and 19 are closed (PR tables ticked, README `done`). Step 19 closes
    the MVP line.
-3. **Step 20 is next**, then 21–24 in README order. Write each step file first, as its
-   own docs PR at the bottom of that step's stack.
+3. **Step 20 is next: [20-srd-reference.md](20-srd-reference.md).** Run 20a–20d
+   stacked on `v2/20-srd-plan`. Before 20a merges, the user should confirm two things
+   (the step's Notes, "Why Open5e's fixtures"):
+   - the data source, Open5e's SRD 5.2 fixtures at a pinned sha;
+   - the attribution text.
+
+   Then run 21–24 in README order, writing each step file first as its own docs PR at
+   the bottom of that step's stack.
 
 ## Follow-ups found this round
 

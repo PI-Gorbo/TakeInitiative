@@ -95,7 +95,7 @@ Steps 08–11 ship as one stack of PRs (`gh stack`), one PR per step.
 
 | # | Step | Status | Depends on | Goal |
 |---|---|---|---|---|
-| 20 | SRD reference | `todo` | 17 | Bundled SRD 5.2 provider, stat-block card, + wiki with Stats |
+| 20 | [SRD reference](20-srd-reference.md) | `in progress` | 17 | Bundled SRD 5.2 provider, stat-block card, + wiki with Stats |
 | 21 | 5eTools index | `todo` | 20 | Preprocessing script, search-only provider, deep links; delete the Bestiary branches |
 | 22 | D&D Beyond link | `todo` | 15 | Sheet URL on player characters, manual refresh of core stats |
 | 23 | In-browser suggestions | `todo` | 15, 17 | Zero-shot extraction (GLiNER vs Laya) in the browser; suggestions, never facts |
