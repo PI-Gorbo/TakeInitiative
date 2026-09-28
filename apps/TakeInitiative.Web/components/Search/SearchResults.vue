@@ -1,5 +1,6 @@
 <template>
-    <!-- ⌘K's results (17b): one listbox, a group per section under a sticky header.
+    <!-- ⌘K's results (17b): one listbox, a group per section under a sticky header,
+         Actions last (17c).
          The cursor is the input's `aria-activedescendant`; hovering moves it. -->
     <div
         :id="listboxId"
@@ -44,6 +45,11 @@
                         aria-hidden="true" />
                     {{ row.label }}
                 </span>
+                <!-- An action (17c): the sheet draws it, since it runs it. -->
+                <slot
+                    v-else-if="row.type === 'action'"
+                    name="action"
+                    :row="row" />
             </div>
         </div>
     </div>
@@ -64,6 +70,7 @@
         loadingMore?: SearchSectionKey | null;
     }>();
     const emit = defineEmits<{ "update:cursor": [index: number]; choose: [row: SearchRow] }>();
+    defineSlots<{ action(props: { row: Extract<SearchRow, { type: "action" }> }): unknown }>();
 
     type Selectable = Exclude<SearchRow, { type: "header" }>;
     const groups = computed(() => {
