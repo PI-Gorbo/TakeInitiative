@@ -1,8 +1,8 @@
 <template>
     <!-- The images being attached (16c): 64px thumbnails with progress, ✕ and retry,
          scrolling sideways. In the composer it sits in the strip area above the
-         toolbar, so on a phone it stays above the keyboard. The note editor also moves
-         them left and right. -->
+         toolbar, so on a phone it stays above the keyboard. A note being edited in
+         the composer (step 17) also moves them left and right. -->
     <div
         v-if="attachments.length > 0"
         class="flex flex-col gap-1">
@@ -128,7 +128,7 @@
     const props = defineProps<{
         campaignId: string;
         attachments: Attachment[];
-        /** The note editor: move left and right buttons (16c). */
+        /** Editing a note: move left and right buttons (16c). */
         movable?: boolean;
     }>();
     const emit = defineEmits<{

@@ -48,6 +48,12 @@ internal class Program
         });
         builder.Services.AddHealthChecks();
         builder.Services.AddFastEndpoints();
+        // Role and friends go over the wire as strings. Set here rather than in UseFastEndpoints'
+        // config: FastEndpoints copies these options into a process-wide static and only then runs
+        // its config, so a converter added there is missing for a moment. That moment matters when
+        // several hosts share the process (the integration tests), and costs nothing here.
+        builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(
+            o => o.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
         builder.Services.AddSignalR();
         builder.Services.AddSingleton<CampaignConnections>();
         // The gap prompt's clock. Keyed so tests can move it without also moving the
@@ -63,6 +69,8 @@ internal class Program
         builder.Services.AddDiceRollers(builder.Configuration);
         builder.Services.AddSendGrid(builder.Configuration);
         builder.Services.AddImages(builder.Configuration);
+        builder.Services.AddSearch();
+        builder.Services.AddReference();
 
         // Cors
         builder.Services.AddCors(
@@ -91,6 +99,11 @@ internal class Program
         
         var app = builder.Build();
 
+        // The SRD data is embedded in this assembly: fail startup, not the first search, if it is missing.
+        app.Services.GetRequiredService<SrdCatalog>().EnsureLoaded();
+        // The 5eTools index is optional: none is logged and the provider is off, but a bad file fails startup.
+        app.Services.GetRequiredService<FiveEToolsCatalog>();
+
         // Map SignalR Hubs
         app.MapHub<CampaignHub>("/campaignHub");
 
@@ -102,7 +115,6 @@ internal class Program
                 // Operation ids are the endpoint class names (GetCampaign, not
                 // TakeInitiativeApiFeaturesCampaignsGetCampaign).
                 cfg.Endpoints.ShortNames = true;
-                cfg.Serializer.Options.Converters.Add(new JsonStringEnumConverter());
                 cfg.Endpoints.Configurator = (endpoint) =>
                 {
                     if (endpoint.Routes?.Any(route => route.StartsWith("/api/admin")) ?? false)

@@ -8,7 +8,8 @@ namespace TakeInitiative.Api.Features.Sessions;
 /// <summary>
 /// A filter on the session stream (glossary: Filter). Applied on the server so paging
 /// stays correct. <c>Text</c> is the notes with no images and <c>Images</c> the notes with
-/// some (step 16b); <c>Combats</c> matches nothing until step 18.
+/// some (step 16b). <c>Combats</c> is the combat cards and no notes (18e); <c>All</c> is both,
+/// and the others are notes only.
 /// </summary>
 public enum SessionStreamFilter
 {
@@ -55,6 +56,12 @@ public record SessionStreamSession
     public required SessionResponse Session { get; init; }
     /// <summary>Ordered by <c>postedAt</c>, so a note added later sits at the end of its session.</summary>
     public required SessionNoteResponse[] Notes { get; init; }
+    /// <summary>
+    /// The combats in this session the caller can see, as cards, ordered by <c>startedAt ??
+    /// createdAt</c> (18e). A DM sees their Drafts' cards; a player only started combats. Only
+    /// the <c>All</c> and <c>Combats</c> filters return any.
+    /// </summary>
+    public required CombatCard[] Combats { get; init; }
 }
 
 /// <summary>
@@ -91,7 +98,6 @@ public class GetSessionStream(IDocumentSession session, [FromKeyedServices(Sessi
         var sessionIds = page.Select(s => s.Id).ToArray();
         var filter = req.Filter ?? SessionStreamFilter.All;
 
-        // Nothing matches Combats until step 18.
         var notes = sessionIds.Length == 0 || filter is SessionStreamFilter.Combats
             ? []
             : await ApplyFilter(
@@ -104,6 +110,15 @@ public class GetSessionStream(IDocumentSession session, [FromKeyedServices(Sessi
                 .ToListAsync(ct);
         var notesBySession = notes.ToLookup(n => n.SessionId);
 
+        var combats = sessionIds.Length == 0 || filter is not (SessionStreamFilter.All or SessionStreamFilter.Combats)
+            ? []
+            : await session.Query<Combat>()
+                .Where(c => c.CampaignId == req.CampaignId && c.SessionId.IsOneOf(sessionIds))
+                .ToListAsync(ct);
+        var cardsBySession = (await CombatCard.For(session, combats, member, ct))
+            .OrderBy(c => c.StartedAt ?? c.CreatedAt)
+            .ToLookup(c => c.SessionId);
+
         await SendAsync(new SessionStreamResponse
         {
             Sessions = page
@@ -111,6 +126,7 @@ public class GetSessionStream(IDocumentSession session, [FromKeyedServices(Sessi
                 {
                     Session = SessionResponse.From(s, current?.Id),
                     Notes = notesBySession[s.Id].Select(SessionNoteResponse.From).ToArray(),
+                    Combats = cardsBySession[s.Id].ToArray(),
                 })
                 .ToArray(),
             CurrentSessionId = current?.Id,

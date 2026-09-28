@@ -1,43 +1,50 @@
 <template>
-    <!-- The Campaign tab is the session stream (design §3). -->
-    <div
-        v-if="campaign"
-        class="flex h-full w-full flex-col">
-        <!-- The filter chips and the members button. -->
-        <div class="flex shrink-0 items-center gap-2 border-b px-2">
-            <SessionStreamFilters v-model="filter" />
-            <button
-                type="button"
-                class="flex h-11 min-w-11 items-center justify-center gap-2 rounded-md px-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                :aria-label="`Members (${campaign.members.length})`"
-                @click="membersOpen = true">
-                <Users class="size-5" />
-                <span>{{ campaign.members.length }}</span>
-                <span class="hidden sm:inline">Members</span>
-            </button>
-        </div>
+    <div class="flex h-full w-full flex-col">
+        <!-- The Campaign tab is the session stream (design §3). The root stays one
+             element while the campaign loads: the page transition animates it. -->
+        <template v-if="campaign">
+            <!-- The filter chips and the members button. -->
+            <div class="flex shrink-0 items-center gap-2 border-b px-2">
+                <SessionStreamFilters v-model="filter" />
+                <button
+                    type="button"
+                    class="flex h-11 min-w-11 items-center justify-center gap-2 rounded-md px-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    :aria-label="`Members (${campaign.members.length})`"
+                    @click="membersOpen = true">
+                    <Users class="size-5" />
+                    <span>{{ campaign.members.length }}</span>
+                    <span class="hidden sm:inline">Members</span>
+                </button>
+            </div>
+            <!-- While a combat is live (18e.3). -->
+            <CombatJoinCombatBanner :campaignId="campaign.id" />
 
-        <div class="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col">
-            <SessionStream
-                ref="stream"
-                :campaignId="campaign.id"
-                :campaign="campaign"
-                :filter="filter"
-                :focusNoteId="focusNoteId"
-                @noteOpened="clearNoteLink" />
-            <Composer
-                :key="campaign.id"
-                :campaign="campaign"
-                :filter="filter"
-                :about="aboutEntry"
-                :share="shareId"
-                @aboutUsed="clearParam(ABOUT_PARAM)"
-                @shareUsed="clearParam(SHARE_PARAM)" />
-        </div>
+            <div class="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col">
+                <SessionStream
+                    ref="stream"
+                    :campaignId="campaign.id"
+                    :campaign="campaign"
+                    :filter="filter"
+                    :focusNoteId="focusNoteId"
+                    :focusSessionNumber="focusSessionNumber"
+                    @noteOpened="clearNoteLink"
+                    @sessionOpened="clearParam(SESSION_LINK_PARAM)" />
+                <Composer
+                    :key="campaign.id"
+                    :campaign="campaign"
+                    :filter="filter"
+                    :about="aboutEntry"
+                    :share="shareId"
+                    :compose="composeText"
+                    @aboutUsed="clearParam(ABOUT_PARAM)"
+                    @shareUsed="clearParam(SHARE_PARAM)"
+                    @composeUsed="clearParam(COMPOSE_PARAM)" />
+            </div>
 
-        <CampaignMembersPanel
-            v-model:open="membersOpen"
-            :campaign="campaign" />
+            <CampaignMembersPanel
+                v-model:open="membersOpen"
+                :campaign="campaign" />
+        </template>
     </div>
 </template>
 
@@ -50,6 +57,8 @@
     import { FILTER_PARAM, filterFromQuery, filterToQuery } from "~/utils/streamFilters";
     import { getCampaignQuery } from "~/utils/queries/campaign";
     import { getEntriesQuery } from "~/utils/queries/entries";
+    import { SESSION_LINK_PARAM, sessionFromQuery } from "~/utils/search";
+    import { COMPOSE_PARAM, composeFromQuery } from "~/utils/searchActions";
     import { SHARE_PARAM, validShareId } from "~/utils/shareTarget";
 
     definePageMeta({
@@ -87,6 +96,17 @@
     }
     const clearNoteLink = () => clearParam(NOTE_LINK_PARAM);
 
+    // A session from ⌘K: `?session={number}` (17b). The stream opens at its divider,
+    // then the parameter is dropped, as `?note=` is.
+    const focusSessionNumber = computed(() => sessionFromQuery(route.query[SESSION_LINK_PARAM]));
+    watch(
+        () => route.query[SESSION_LINK_PARAM],
+        (value) => {
+            if (value !== undefined && !sessionFromQuery(value)) clearParam(SESSION_LINK_PARAM);
+        },
+        { immediate: true }
+    );
+
     // "Add a note about X" from an entry page: `?about={entryId}` (15c). The composer
     // uses it once and the page drops it. An id the viewer's directory does not hold
     // (unknown, or hidden from them) is dropped without a word.
@@ -109,4 +129,15 @@
     // A share from the phone (16e): `/app/share` sends `?share={id}`, and the composer
     // takes the images once and drops the parameter.
     const shareId = computed(() => validShareId(route.query[SHARE_PARAM]));
+
+    // "New note mentioning X" from ⌘K: `?compose=@X` (17c). The composer takes it once,
+    // into an empty draft only, and the page drops it. A blank value is dropped here.
+    const composeText = computed(() => composeFromQuery(route.query[COMPOSE_PARAM]));
+    watch(
+        () => route.query[COMPOSE_PARAM],
+        (value) => {
+            if (value !== undefined && composeFromQuery(value) === undefined) clearParam(COMPOSE_PARAM);
+        },
+        { immediate: true }
+    );
 </script>

@@ -71,3 +71,59 @@ export type UploadedImage = Schemas["ImageResponse"];
 /** A page of a gallery (16d): image notes, oldest first, each with its session number. */
 export type Gallery = Schemas["GalleryResponse"];
 export type GalleryItem = Schemas["GalleryItem"];
+/** ⌘K search (17a): sections of hits, each with an optional snippet. */
+export type SearchResponse = Schemas["SearchResponse"];
+export type SearchSection = Schemas["SearchSection"];
+export type SearchSectionKey = Schemas["SearchSectionKey"];
+export type SearchHit = Schemas["SearchHit"];
+export type Snippet = Schemas["Snippet"];
+/** Combat v2 (18a): one combat, redacted for the viewer, and its combatants. */
+export type Combat = Schemas["CombatResponse"];
+export type Combatant = Schemas["CombatantResponse"];
+export type CombatStatus = Schemas["CombatStatus"];
+export type CombatSummary = Schemas["CombatSummaryResponse"];
+export type CombatList = Schemas["GetCombatsResponse"];
+/** What players see of a combatant's HP: `Exact`, `Band` or `Nothing`. */
+export type PlayersSee = Schemas["PlayersSee"];
+export type HpBand = Schemas["HpBand"];
+export type CombatCondition = Schemas["Condition"];
+/** One combatant, or several copies of an entry, for `POST combatants`. */
+export type CombatantRequest = Schemas["CombatantRequest"];
+export type CombatHistory = Schemas["CombatHistoryResponse"];
+export type CombatHistoryItem = Schemas["CombatHistoryItem"];
+/** A combat drawn in its session in the stream (18e), and one line of it (`4× @Goblin`). */
+export type CombatCard = Schemas["CombatCard"];
+export type CombatCardCombatant = Schemas["CombatCardCombatant"];
+/** An entry's COMBATS (18e.4): cards with their session numbers, newest first. */
+export type EntryCombats = Schemas["EntryCombatsResponse"];
+export type EntryCombat = Schemas["EntryCombat"];
+/** Connections (19a): an entry's connections, and the evidence for one pair. */
+export type EntryConnections = Schemas["EntryConnectionsResponse"];
+export type EntryConnection = Schemas["EntryConnectionResponse"];
+export type ConnectionEvidence = Schemas["ConnectionEvidenceResponse"];
+export type Evidence = Schemas["EvidenceResponse"];
+export type EvidenceKind = Schemas["EvidenceKind"];
+export type BlockEvidence = Schemas["BlockEvidence"];
+export type NoteEvidence = Schemas["NoteEvidence"];
+export type CombatEvidence = Schemas["CombatEvidence"];
+/** The graph (19a, 19d): nodes around an optional focus, and the edges among them. */
+export type ConnectionGraph = Schemas["ConnectionGraphResponse"];
+export type GraphNode = Schemas["GraphNodeResponse"];
+export type GraphEdge = Schemas["GraphEdgeResponse"];
+/** Loose ends (19b, 19e): the viewer's own to-dos, and their counts per session. */
+export type LooseEnds = Schemas["LooseEndsResponse"];
+export type LooseEnd = Schemas["LooseEndResponse"];
+export type LooseEndKind = Schemas["LooseEndKind"];
+export type LooseEndCounts = Schemas["LooseEndCountsResponse"];
+export type LinkSuggestion = Schemas["LinkSuggestionResponse"];
+/** Reference (20b, 20c): a ⌘K reference hit, and an item with its stat block and attribution. */
+export type SearchReferenceHit = Schemas["SearchReferenceHit"];
+export type ReferenceItem = Schemas["ReferenceItemResponse"];
+export type ReferenceSummary = Schemas["ReferenceSummaryResponse"];
+export type ReferenceAttribution = Schemas["ReferenceAttributionResponse"];
+export type StatBlock = Schemas["StatBlock"];
+/** An entry's source (20b, 20d): left out of the JSON when the viewer cannot read it. */
+export type EntrySource = Schemas["EntrySourceResponse"];
+export type StatBlockSpeed = Schemas["StatBlockSpeed"];
+export type StatBlockTrait = Schemas["StatBlockTrait"];
+export type StatBlockAction = Schemas["StatBlockAction"];

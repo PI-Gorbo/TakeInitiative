@@ -3,7 +3,12 @@
          secret block framed "🔒 DM" or "🔒 Me"; a quote as a blockquote with
          "— Sam, Session 12 ↗" linking back to its note. A quote of a 🔒 note is both. -->
     <div
-        :class="[secret && 'rounded-md border border-dashed border-gold/50 bg-gold/5 px-3 pb-2 pt-1']"
+        :id="`block-${block.id}`"
+        :class="[
+            'scroll-mt-4 transition-shadow duration-700',
+            secret && 'rounded-md border border-dashed border-gold/50 bg-gold/5 px-3 pb-2 pt-1',
+            highlighted && 'rounded-md ring-2 ring-gold/60 ring-offset-4 ring-offset-background',
+        ]"
         :data-block-id="block.id">
         <p
             v-if="secret"
@@ -49,6 +54,8 @@
         block: ArticleBlock;
         viewerMemberId: string;
         nameOf: (memberId: string) => string;
+        /** Opened from ⌘K (`?block=`, 17b): marked for a moment. */
+        highlighted?: boolean;
     }>();
 
     const secret = computed(() => secretLabel(props.block.visibility));

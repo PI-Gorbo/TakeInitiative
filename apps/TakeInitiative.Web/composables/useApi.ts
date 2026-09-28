@@ -27,6 +27,7 @@ import { putSessionNoteVisibilityRequest } from "~/utils/api/sessionNote/putSess
 import { getEntriesRequest } from "~/utils/api/entry/getEntriesRequest";
 import { getEntryRequest } from "~/utils/api/entry/getEntryRequest";
 import { getEntryTimelineRequest } from "~/utils/api/entry/getEntryTimelineRequest";
+import { postEntryFromReferenceRequest } from "~/utils/api/entry/postEntryFromReferenceRequest";
 import { postEntryRequest } from "~/utils/api/entry/postEntryRequest";
 import { postEntryQuoteRequest } from "~/utils/api/entry/postEntryQuoteRequest";
 import { putEntryAliasesRequest } from "~/utils/api/entry/putEntryAliasesRequest";
@@ -43,6 +44,25 @@ import { postImageRequest } from "~/utils/api/image/postImageRequest";
 import { deleteImageRequest } from "~/utils/api/image/deleteImageRequest";
 import { getSessionImagesRequest } from "~/utils/api/image/getSessionImagesRequest";
 import { getEntryImagesRequest } from "~/utils/api/image/getEntryImagesRequest";
+import { getSearchRequest } from "~/utils/api/search/getSearchRequest";
+import { getReferenceItemRequest } from "~/utils/api/reference/getReferenceItemRequest";
+import { getCombatsRequest } from "~/utils/api/combat/getCombatsRequest";
+import { getEntryCombatsRequest } from "~/utils/api/combat/getEntryCombatsRequest";
+import { getCombatRequest } from "~/utils/api/combat/getCombatRequest";
+import { postCombatRequest } from "~/utils/api/combat/postCombatRequest";
+import { postCombatantsRequest } from "~/utils/api/combat/postCombatantsRequest";
+import { putCombatantRequest } from "~/utils/api/combat/putCombatantRequest";
+import { deleteCombatantRequest } from "~/utils/api/combat/deleteCombatantRequest";
+import { postCombatRollRequest } from "~/utils/api/combat/postCombatRollRequest";
+import { postCombatEndTurnRequest } from "~/utils/api/combat/postCombatEndTurnRequest";
+import { postCombatFinishRequest } from "~/utils/api/combat/postCombatFinishRequest";
+import { putCombatantPositionRequest } from "~/utils/api/combat/putCombatantPositionRequest";
+import { getCombatHistoryRequest } from "~/utils/api/combat/getCombatHistoryRequest";
+import { getEntryConnectionsRequest } from "~/utils/api/connection/getEntryConnectionsRequest";
+import { getConnectionEvidenceRequest } from "~/utils/api/connection/getConnectionEvidenceRequest";
+import { getConnectionGraphRequest } from "~/utils/api/connection/getConnectionGraphRequest";
+import { getLooseEndsRequest } from "~/utils/api/looseEnd/getLooseEndsRequest";
+import { getLooseEndCountsRequest } from "~/utils/api/looseEnd/getLooseEndCountsRequest";
 
 export const useApi = () => {
     const { $axios } = useNuxtApp();
@@ -84,6 +104,7 @@ export const useApi = () => {
             list: getEntriesRequest($axios),
             get: getEntryRequest($axios),
             create: postEntryRequest($axios),
+            createFromReference: postEntryFromReferenceRequest($axios),
             timeline: getEntryTimelineRequest($axios),
             putName: putEntryNameRequest($axios),
             putKind: putEntryKindRequest($axios),
@@ -102,6 +123,35 @@ export const useApi = () => {
             delete: deleteImageRequest($axios),
             sessionGallery: getSessionImagesRequest($axios),
             entryGallery: getEntryImagesRequest($axios),
+        },
+        search: {
+            get: getSearchRequest($axios),
+        },
+        reference: {
+            get: getReferenceItemRequest($axios),
+        },
+        combat: {
+            list: getCombatsRequest($axios),
+            get: getCombatRequest($axios),
+            create: postCombatRequest($axios),
+            addCombatants: postCombatantsRequest($axios),
+            putCombatant: putCombatantRequest($axios),
+            deleteCombatant: deleteCombatantRequest($axios),
+            roll: postCombatRollRequest($axios),
+            endTurn: postCombatEndTurnRequest($axios),
+            finish: postCombatFinishRequest($axios),
+            putPosition: putCombatantPositionRequest($axios),
+            history: getCombatHistoryRequest($axios),
+            forEntry: getEntryCombatsRequest($axios),
+        },
+        connection: {
+            forEntry: getEntryConnectionsRequest($axios),
+            evidence: getConnectionEvidenceRequest($axios),
+            graph: getConnectionGraphRequest($axios),
+        },
+        looseEnd: {
+            list: getLooseEndsRequest($axios),
+            counts: getLooseEndCountsRequest($axios),
         },
         admin: {
             getMaintenance: getMaintenanceRequest($axios),

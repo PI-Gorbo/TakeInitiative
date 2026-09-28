@@ -494,3 +494,7 @@ nuget.config
 
 # Verify snapshot artifacts - only *.verified.* belongs in the repo
 *.received.*
+
+# 5eTools index (step 21): built locally from data the deployer supplies, never committed
+/.data/
+5etools-src/

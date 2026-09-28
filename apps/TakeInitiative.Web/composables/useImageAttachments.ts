@@ -66,8 +66,8 @@ const newKey = () =>
 const isObjectUrl = (url: string) => url.startsWith("blob:");
 
 /**
- * The upload queue behind the composer's and the note editor's `AttachmentStrip`
- * (16c). `attachments` is the caller's list (the composer's state, or the editor's);
+ * The upload queue behind the composer's `AttachmentStrip` (16c), one for the
+ * draft and one for a note being edited (step 17). `attachments` is the caller's list;
  * every change replaces it through the pure functions in `utils/images.ts`.
  *
  * - `add(files)` attaches up to 10 in all. Each is prepared (`prepareImage`) and
@@ -77,7 +77,7 @@ const isObjectUrl = (url: string) => url.startsWith("blob:");
  * - `retry(key)` uploads a failed one again from its file; one with no file (a
  *   draft's) is removed instead.
  * - `release(list)` forgets attachments that were posted: revokes their previews.
- * - `discard()` removes every attachment that is not on the note (the editor's Cancel).
+ * - `discard()` removes every attachment that is not on the note (an edit's Cancel).
  */
 export function useImageAttachments(options: {
     attachments: Ref<Attachment[]>;

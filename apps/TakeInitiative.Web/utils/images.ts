@@ -195,7 +195,7 @@ export function imageIdsErrorFrom(error: unknown): string | undefined {
 
 export type AttachmentStatus = "preparing" | "uploading" | "ready" | "failed";
 
-/** One image in the composer or the note editor. */
+/** One image in the composer, posting or editing a note. */
 export type Attachment = {
     /** Local. */
     key: string;

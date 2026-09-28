@@ -1,7 +1,8 @@
 # TakeInitiative Revival Roadmap
 
 Open this file at the start of every session. It is the single source of truth for
-what is done, what is next, and what blocks what.
+what is done, what is next, and what blocks what. An orchestrator picking the build up should read
+[HANDOVER.md](HANDOVER.md) first.
 
 ## The rule
 
@@ -86,16 +87,16 @@ Steps 08–11 ship as one stack of PRs (`gh stack`), one PR per step.
 | 14 | [Sessions + session notes](14-sessions-and-notes.md) | `in progress` | 13 | Composer, markdown, visibility, filters, back-posting, gap prompt, live over SignalR |
 | 15 | [Wiki + mentions](15-wiki-and-mentions.md) | `done` | 14 | `@` composer, entries, articles, timeline, promote, secret blocks, aliases, merge, edit access |
 | 16 | [Images](16-images.md) | `done` | 14, 15 | S3 blob store, image notes, captions, galleries, share target |
-| 17 | [⌘K search](17-search.md) | `in progress` | 15 | FTS plus trigram, visibility-aware, actions |
-| 18 | Combat v2 | `todo` | 15 | Simplified model, combatants from entries, per-combatant PlayersSee, combat card |
-| 19 | Connections + loose ends | `todo` | 15, 18 | Evidence panel, graph page, loose ends in the wiki and on sessions |
+| 17 | [⌘K search](17-search.md) | `done` | 15 | FTS plus trigram, visibility-aware, actions |
+| 18 | [Combat v2](18-combat.md) | `done` | 15 | Simplified model, combatants from entries, per-combatant PlayersSee, combat card |
+| 19 | [Connections + loose ends](19-connections.md) | `done` | 15, 18 | Evidence panel, graph page, loose ends in the wiki and on sessions |
 
 **MVP line.** Everything below is post-MVP (design §11 and §11a).
 
 | # | Step | Status | Depends on | Goal |
 |---|---|---|---|---|
-| 20 | SRD reference | `todo` | 17 | Bundled SRD 5.2 provider, stat-block card, + wiki with Stats |
-| 21 | 5eTools index | `todo` | 20 | Preprocessing script, search-only provider, deep links; delete the Bestiary branches |
+| 20 | [SRD reference](20-srd-reference.md) | `done` | 17 | Bundled SRD 5.2 provider, stat-block card, + wiki with Stats |
+| 21 | [5eTools index](21-5etools-index.md) | `done` (21a–21c) | 20 | Preprocessing script, search-only provider, deep links. **21d is still the user's to run: deleting the four Bestiary branches is not an agent's job** |
 | 22 | D&D Beyond link | `todo` | 15 | Sheet URL on player characters, manual refresh of core stats |
 | 23 | In-browser suggestions | `todo` | 15, 17 | Zero-shot extraction (GLiNER vs Laya) in the browser; suggestions, never facts |
 | 24 | Discord import | `todo` | 16, 23 | Import a Discord export into sessions, with suggested mentions to review |

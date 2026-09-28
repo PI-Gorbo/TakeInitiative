@@ -1,10 +1,10 @@
 <template>
-    <!-- An entry (design §4): its header (15c), its claim and stats (15g), its article
-         (15f), its timeline (15c) and its gallery (16d). Connections (19) and combats
-         (18) arrive with their steps. `?edit={blockId}` opens the article editor at a block
-         (a phone's promote, §3a). A merged entry's id loads its target (15g), and the
-         URL is replaced with the target's. -->
     <div class="mx-auto flex w-full max-w-3xl flex-col gap-5 px-4 py-4 pb-safe">
+        <!-- An entry (design §4): its header (15c), its source (20d), its claim and stats (15g), its article
+             (15f), its connections (19c), its timeline (15c), its gallery (16d) and its combats
+             (18e). `?edit={blockId}` opens the article editor at a block
+             (a phone's promote, §3a). A merged entry's id loads its target (15g), and the
+             URL is replaced with the target's. -->
         <NuxtLink
             :to="`/app/campaigns/${encodeURIComponent(campaignId)}/wiki`"
             class="-ml-2 flex h-11 w-fit items-center gap-1 rounded-md px-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground md:h-9">
@@ -48,6 +48,10 @@
                 @history="historyOpen = true"
                 @merge="mergeOpen = true" />
 
+            <ReferenceEntrySourceLine
+                v-if="entry.source"
+                :campaignId="campaignId"
+                :source="entry.source" />
             <WikiClaimControl
                 :campaignId="campaignId"
                 :entry="entry"
@@ -77,9 +81,20 @@
                 :viewerMemberId="viewer.memberId"
                 :canEdit="canEdit"
                 :nameOf="memberName"
+                :highlightedBlockId="highlightedBlockId"
                 @edit="openArticleEditor()" />
 
+            <WikiEntryConnections
+                :campaignId="campaignId"
+                :entryId="entry.id"
+                :entryName="entry.name"
+                :entryKind="entry.kind"
+                :nameOf="memberName"
+                :aboutHref="aboutLink" />
+
             <WikiEntryTimeline
+                :id="ENTRY_TIMELINE_ANCHOR"
+                class="scroll-mt-4"
                 :campaign="campaign"
                 :entryId="entry.id"
                 :entryName="entry.name"
@@ -87,6 +102,10 @@
 
             <WikiEntryGallery
                 :campaign="campaign"
+                :entryId="entry.id" />
+
+            <CombatEntryCombats
+                :campaignId="campaignId"
                 :entryId="entry.id" />
 
             <!-- Posts to the current session with the mention prefilled (design §4). -->
@@ -129,8 +148,9 @@
     import { apiErrorStatus } from "~/utils/apiErrorParser";
     import { currentMember } from "~/utils/campaign";
     import type { ArticleBlock } from "~/utils/api/types";
-    import { EDIT_BLOCK_PARAM, entryHref } from "~/utils/article";
+    import { EDIT_BLOCK_PARAM, ENTRY_TIMELINE_ANCHOR, entryHref } from "~/utils/article";
     import { ABOUT_PARAM, canChangeEntryAccess, canEditEntry } from "~/utils/entries";
+    import { BLOCK_LINK_PARAM } from "~/utils/search";
     import { getCampaignQuery } from "~/utils/queries/campaign";
     import { getEntryQuery } from "~/utils/queries/entries";
 
@@ -225,6 +245,41 @@
         },
         { immediate: true }
     );
+
+    // `#timeline` (a loose end's "Promote from timeline", 19e): once the entry has loaded,
+    // the page scrolls to its timeline, where each note has Promote.
+    watch(
+        [() => route.hash, entry],
+        async ([hash, loaded]) => {
+            if (hash !== `#${ENTRY_TIMELINE_ANCHOR}` || !loaded) return;
+            await nextTick();
+            document.getElementById(ENTRY_TIMELINE_ANCHOR)?.scrollIntoView({ block: "start" });
+        },
+        { immediate: true }
+    );
+
+    // `?block={blockId}` from ⌘K (17b) is used once, when the entry has loaded: the read
+    // article scrolls to the block and marks it for a moment, then the parameter is
+    // dropped. A block the viewer cannot see is simply not there.
+    const highlightedBlockId = ref<string | null>(null);
+    let blockTimer: ReturnType<typeof setTimeout> | undefined;
+    watch(
+        [() => route.query[BLOCK_LINK_PARAM], entry],
+        async ([blockId, loaded]) => {
+            if (typeof blockId !== "string" || !loaded) return;
+            const { [BLOCK_LINK_PARAM]: _, ...query } = route.query;
+            void navigateTo({ query }, { replace: true });
+            await nextTick();
+            const el = document.getElementById(`block-${blockId}`);
+            if (!el) return;
+            el.scrollIntoView({ block: "center" });
+            highlightedBlockId.value = blockId;
+            clearTimeout(blockTimer);
+            blockTimer = setTimeout(() => (highlightedBlockId.value = null), 2500);
+        },
+        { immediate: true }
+    );
+    onBeforeUnmount(() => clearTimeout(blockTimer));
 
     const aboutLink = computed(
         () => `/app/campaigns/${encodeURIComponent(campaignId.value)}?${ABOUT_PARAM}=${encodeURIComponent(entryId.value)}`

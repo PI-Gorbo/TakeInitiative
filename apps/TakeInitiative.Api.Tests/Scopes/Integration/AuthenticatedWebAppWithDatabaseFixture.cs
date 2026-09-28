@@ -1,4 +1,5 @@
 
+using System.Collections.Concurrent;
 using System.Net;
 using Alba;
 using FakeItEasy;
@@ -8,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using TakeInitiative.Api.Bootstrap;
 using TakeInitiative.Api.Features.Images;
@@ -31,7 +33,18 @@ public enum Users
     DM,
     Player,
     /// <summary>A signed-up user who is not a member of the seeded campaign.</summary>
-    Outsider
+    Outsider,
+    /// <summary>
+    /// A second player, for the cases that need two of them: a hidden note's author and
+    /// "another player" (17a's leak matrix) cannot be the same person.
+    /// </summary>
+    Player2,
+    /// <summary>
+    /// A signed-up user who joins nothing a test creates. <see cref="Outsider"/> joins a
+    /// <c>TestCampaign</c> by default, so the cases about a non-member (a 403) and about a
+    /// member of another campaign need someone who is never in this one.
+    /// </summary>
+    Stranger,
 }
 
 public record AuthenticatedWebAppWithDatabaseFixtureSeededData
@@ -39,6 +52,8 @@ public record AuthenticatedWebAppWithDatabaseFixtureSeededData
     public required UserSeedData DMUserData { get; set; }
     public required UserSeedData PlayerUserData { get; set; }
     public required UserSeedData OutsiderUserData { get; set; }
+    public required UserSeedData Player2UserData { get; set; }
+    public required UserSeedData StrangerUserData { get; set; }
     public required string CampaignName { get; set; }
     public required Guid CampaignId { get; set; }
 }
@@ -56,14 +71,26 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
     public ShiftableTimeProvider Clock { get; } = new();
     /// <summary>The blob store (step 16a). S3BlobStoreTests covers the real one against MinIO.</summary>
     public InMemoryBlobStore Blobs { get; } = new();
+    /// <summary>
+    /// Every log record the API wrote while this fixture lived (<see cref="CapturingLoggerProvider"/>),
+    /// so a test can assert that nothing logged what should never be logged.
+    /// </summary>
+    public ConcurrentQueue<LoggedRecord> Logs { get; } = new();
 
     /// <summary>Lets a derived fixture swap services in the host (for example the hub context).</summary>
     protected virtual void ConfigureTestServices(IServiceCollection services) { }
 
+    /// <summary>
+    /// The 5eTools index the host reads (21b). Empty, so the provider is off and the Reference
+    /// section is step 20's, whatever the machine running the tests has built; a derived fixture
+    /// points it at the synthetic <c>Fixtures/5etools-index.json</c>.
+    /// </summary>
+    protected virtual string FiveEToolsIndexPath => "";
+
     public async Task InitializeAsync()
     {
         await PostgreSqlContainer.StartAsync();
-        AlbaHost = await Alba.AlbaHost.For<Api.Program>(x =>
+        AlbaHost = await HostStartup.Start(() => Alba.AlbaHost.For<Api.Program>(x =>
             x.UseEnvironment(Environments.Development)
             .ConfigureAppConfiguration((context, configBuilder) =>
                 {
@@ -74,6 +101,7 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
                             ["Blobs:CreateBucket"] = "false",
                             // Tests sweep by hand (ImageSweeper.SweepOnce), never in the background.
                             ["Images:SweepStartDelay"] = "1.00:00:00",
+                            ["Reference:FiveETools:IndexPath"] = FiveEToolsIndexPath,
                         });
                 })
            .ConfigureServices((context, services) =>
@@ -83,10 +111,11 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
                     );
                     services.AddKeyedSingleton<TimeProvider>(SessionGap.ClockKey, Clock);
                     services.Replace(ServiceDescriptor.Singleton<IBlobStore>(Blobs));
+                    services.AddSingleton<ILoggerProvider>(new CapturingLoggerProvider(Logs));
                     services.AddMartenDB(context.Configuration, IsDevelopment: true);
                     ConfigureTestServices(services);
                 })
-        );
+        ));
 
 
         // Seed database with tiny seed.
@@ -110,6 +139,20 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
             Email = "testing3@testingk.com",
             Password = "Besbing!101",
             Username = "TESTING3"
+        });
+
+        var Player2Cookie = await CreateUserWithData(new PostSignUpRequest()
+        {
+            Email = "testing4@testingk.com",
+            Password = "Besbing!102",
+            Username = "TESTING4"
+        });
+
+        var StrangerCookie = await CreateUserWithData(new PostSignUpRequest()
+        {
+            Email = "testing5@testingk.com",
+            Password = "Besbing!103",
+            Username = "TESTING5"
         });
 
         // Temporary authentication fixed to dm to create the campaign.
@@ -146,6 +189,20 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
                 Password = "Besbing!101",
                 Username = "TESTING3",
                 Cookie = OutsiderCookie
+            },
+            Player2UserData = new UserSeedData()
+            {
+                Email = "testing4@testingk.com",
+                Password = "Besbing!102",
+                Username = "TESTING4",
+                Cookie = Player2Cookie
+            },
+            StrangerUserData = new UserSeedData()
+            {
+                Email = "testing5@testingk.com",
+                Password = "Besbing!103",
+                Username = "TESTING5",
+                Cookie = StrangerCookie
             }
         };
 
@@ -159,6 +216,8 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
                 Users.DM => SeedData.DMUserData.Cookie,
                 Users.Player => SeedData.PlayerUserData.Cookie,
                 Users.Outsider => SeedData.OutsiderUserData.Cookie,
+                Users.Player2 => SeedData.Player2UserData.Cookie,
+                Users.Stranger => SeedData.StrangerUserData.Cookie,
                 _ => throw new NotImplementedException(),
             };
         });

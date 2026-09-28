@@ -75,13 +75,18 @@ describe("stream filters", () => {
 
     it("points at 🖼 in the Images empty state, and names step 18 in the Combats one", () => {
         expect(filterEmptyState("Images", true)).toEqual({ title: "No images yet. Attach one with 🖼." });
-        expect(filterEmptyState("Combats", true).detail).toContain("step 18");
+        expect(filterEmptyState("Combats", true)).toEqual({ title: "No combats in these sessions." });
         expect(filterEmptyState("All", true).title).toBe("No session notes yet.");
     });
 
-    it("asks for Session 1 when the campaign has no session, whatever the filter", () => {
-        expect(filterEmptyState("All", false).title).toBe("No sessions yet.");
-        expect(filterEmptyState("Recaps", false).detail).toContain("Start Session 1");
+    it("points at the composer's call to action when the campaign has no session, whatever the filter", () => {
+        expect(filterEmptyState("All", false)).toEqual({
+            title: "Session notes will show here.",
+            detail: "Start your first session below.",
+        });
+        expect(filterEmptyState("Recaps", false).detail).toBe("Start your first session below.");
+        // "No sessions yet" is the composer's line (step 17), never said twice.
+        expect(filterEmptyState("All", false).title).not.toContain("No sessions yet");
     });
 
     it("drops the divider of a session with no matching note, except the current one", () => {
@@ -93,5 +98,15 @@ describe("stream filters", () => {
         const sessions = [entry(1, 1), entry(2, 0), entry(3, 0, true)];
         expect(visibleStreamSessions(sessions, "All").map((s) => s.session.number)).toEqual([1, 2, 3]);
         expect(visibleStreamSessions(sessions, "Recaps").map((s) => s.session.number)).toEqual([1, 3]);
+    });
+
+    it("keeps the divider of a session with a combat card under the Combats filter (18e)", () => {
+        const entry = (number: number, cards: number) =>
+            ({
+                session: { id: `s${number}`, number, title: null, startedAt: "", startedByMemberId: "m", isCurrent: false },
+                notes: [],
+                combats: Array.from({ length: cards }, (_, i) => ({ id: `c${number}-${i}` })),
+            }) as unknown as SessionStreamSession;
+        expect(visibleStreamSessions([entry(1, 1), entry(2, 0)], "Combats").map((s) => s.session.number)).toEqual([1]);
     });
 });

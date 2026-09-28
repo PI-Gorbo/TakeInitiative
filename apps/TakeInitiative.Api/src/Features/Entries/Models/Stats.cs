@@ -54,3 +54,22 @@ public static class EntryStats
     /// <summary>The stats as <paramref name="viewer"/> may read them: null when there are none or they may not.</summary>
     public static Stats? For(Entry entry, Member viewer) => CanRead(entry, viewer) ? entry.Stats : null;
 }
+
+/// <summary>
+/// Who reads an entry's <see cref="Entry.Source"/> (20b.4): the same rule as <see cref="EntryStats"/>.
+/// An NPC's source is its stat block, so "Mysterious Stranger ← SRD Vampire" must not reach a
+/// player (invariant 8).
+/// <list type="bullet">
+/// <item>A Character: everyone who can see it once it is claimed, and the DMs only while it is not.</item>
+/// <item>Any other kind: everyone who can see the entry.</item>
+/// </list>
+/// </summary>
+public static class EntrySources
+{
+    public static bool CanRead(Entry entry, Member viewer)
+        => EntryVisibility.CanSee(entry, viewer)
+            && (entry.Kind != EntryKind.Character || entry.ClaimedByMemberId is not null || viewer.Role == Role.DM);
+
+    /// <summary>The source as <paramref name="viewer"/> may read it: null when there is none or they may not.</summary>
+    public static EntrySource? For(Entry entry, Member viewer) => CanRead(entry, viewer) ? entry.Source : null;
+}

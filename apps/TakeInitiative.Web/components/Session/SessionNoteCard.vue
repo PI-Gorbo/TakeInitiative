@@ -8,9 +8,10 @@
             'group relative flex flex-col gap-0.5 px-4 py-1.5 transition-colors duration-700 hover:bg-accent/30',
             note.isRecap && 'border-l-2 border-gold bg-gold/5 pl-[14px]',
             highlighted && '!bg-gold/15',
+            // Up in the composer for editing (step 17).
+            editing && 'bg-gold/5 ring-2 ring-inset ring-gold/60',
             // A long-press opens the action sheet, not the system's selection or callout.
-            // Never while editing: iOS will not type into a field inside `user-select: none`.
-            !editing && '[-webkit-touch-callout:none] [@media(pointer:coarse)]:select-none',
+            '[-webkit-touch-callout:none] [@media(pointer:coarse)]:select-none',
         ]">
         <header class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm">
             <!-- On a timeline (15c): the session number, linking to the note in the stream. -->
@@ -63,6 +64,14 @@
                 class="text-xs text-muted-foreground">
                 Sending…
             </span>
+            <span
+                v-if="editing"
+                class="flex items-center gap-1 text-xs font-medium text-gold">
+                <Pencil
+                    class="size-3"
+                    aria-hidden="true" />
+                Editing
+            </span>
             <!-- The note's menu. A long-press on a touch screen asks the stream for the
                  action sheet with the same actions (14e). -->
             <slot
@@ -76,39 +85,32 @@
                     @select="run" />
             </slot>
         </header>
-        <SessionNoteEditor
-            v-if="editing"
+        <!-- Edit (step 17) brings the note up in the composer; the card stays as it is,
+             marked "Editing", until the composer saves or cancels. Images first, then
+             the caption under them (16c). -->
+        <ImageNoteImages
+            v-if="note.images.length > 0"
             :campaignId="campaignId"
-            :note="note"
-            :viewer="{ memberId: currentMemberId, isDm }"
-            @saved="editing = false"
-            @cancel="editing = false" />
-        <template v-else>
-            <!-- Images first, then the caption under them (16c). -->
-            <ImageNoteImages
-                v-if="note.images.length > 0"
-                :campaignId="campaignId"
-                :images="note.images"
-                :text="note.text"
-                :authorName="authorName"
-                :compact="!!timeline"
-                :class="['my-0.5', (note.isHidden || pending) && 'opacity-60']"
-                @open="(imageId) => emit('openImage', imageId)" />
-            <SessionNoteMarkdown
-                v-if="note.text"
-                :campaignId="campaignId"
-                :text="note.text"
-                :class="(note.isHidden || pending) && 'opacity-60'" />
-            <!-- The note-level half of a loose end (§5): the author resolves it. -->
-            <button
-                v-if="tagHint"
-                type="button"
-                class="-my-2 flex min-h-11 w-fit items-center gap-1 rounded px-1 text-xs text-gold hover:underline md:min-h-0 md:py-1"
-                @click="editing = true">
-                <span aria-hidden="true">⚠</span>
-                {{ IMAGE_MESSAGES.tagHint }}
-            </button>
-        </template>
+            :images="note.images"
+            :text="note.text"
+            :authorName="authorName"
+            :compact="!!timeline"
+            :class="['my-0.5', (note.isHidden || pending) && 'opacity-60']"
+            @open="(imageId) => emit('openImage', imageId)" />
+        <SessionNoteMarkdown
+            v-if="note.text"
+            :campaignId="campaignId"
+            :text="note.text"
+            :class="(note.isHidden || pending) && 'opacity-60'" />
+        <!-- The note-level half of a loose end (§5): the author resolves it on the
+             loose-ends page, which has the link suggestions and Edit (19e). -->
+        <NuxtLink
+            v-if="tagHint && !editing"
+            :to="looseEndsHref(campaignId, { session: session?.number, note: note.id })"
+            class="-my-2 flex min-h-11 w-fit items-center gap-1 rounded px-1 text-xs text-gold hover:underline md:min-h-0 md:py-1">
+            <span aria-hidden="true">⚠</span>
+            {{ IMAGE_MESSAGES.tagHint }}
+        </NuxtLink>
 
         <WikiPromoteDialog
             v-if="promoteOpened"
@@ -153,7 +155,7 @@
 </template>
 
 <script setup lang="ts">
-    import { EyeOff } from "lucide-vue-next";
+    import { EyeOff, Pencil } from "lucide-vue-next";
     import { toast } from "vue-sonner";
     import { apiErrorMessage } from "~/utils/apiErrorParser";
     import type { Session, SessionNote, Visibility } from "~/utils/api/types";
@@ -166,6 +168,7 @@
     import { addedLaterLabel, formatNoteDateTime, formatNoteTime, formatSessionDate } from "~/utils/sessionDates";
     import { isPendingNote } from "~/utils/sessionStreamCache";
     import { IMAGE_MESSAGES, showTagHint } from "~/utils/images";
+    import { looseEndsHref } from "~/utils/looseEnds";
 
     const emit = defineEmits<{
         /** An image was tapped: the stream or timeline opens the viewer (16c). */
@@ -218,7 +221,10 @@
               })
     );
 
-    const editing = ref(false);
+    // Editing happens in the composer (step 17); this card only starts it and shows it.
+    const composerEdit = useComposerEdit(props.campaignId);
+    const editing = computed(() => composerEdit.isEditing(props.note.id));
+    const startEdit = () => composerEdit.start(props.note, props.session?.number ?? null);
 
     useLongPress(
         useTemplateRef<HTMLElement>("card"),
@@ -249,7 +255,7 @@
                     promoteOpen.value = true;
                     break;
                 case "edit":
-                    editing.value = true;
+                    startEdit();
                     break;
                 case "visibility":
                     if (visibility && visibility !== props.note.visibility) {

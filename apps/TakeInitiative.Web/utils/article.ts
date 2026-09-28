@@ -397,6 +397,12 @@ export const quotesNote = (blocks: readonly ArticleBlock[] | undefined, noteId: 
 /** `/wiki/{entryId}?edit={blockId}`: the entry page opens its article editor at a block. */
 export const EDIT_BLOCK_PARAM = "edit";
 
+/** `?edit=write`: the article editor, at no block in particular (a loose end's Write, 19e). */
+export const WRITE_ARTICLE = "write";
+
+/** `wiki/{entryId}#timeline`: the entry page scrolled to its timeline (a loose end's Promote, 19e). */
+export const ENTRY_TIMELINE_ANCHOR = "timeline";
+
 export const entryHref = (campaignId: string, entryId: string, editBlockId?: string) =>
     `/app/campaigns/${encodeURIComponent(campaignId)}/wiki/${encodeURIComponent(entryId)}` +
     (editBlockId ? `?${EDIT_BLOCK_PARAM}=${encodeURIComponent(editBlockId)}` : "");

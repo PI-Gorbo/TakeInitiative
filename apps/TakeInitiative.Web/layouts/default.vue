@@ -1,7 +1,6 @@
 <template>
     <div class="flex h-full w-full flex-col">
         <slot />
-        <!-- Nuxt  -->
         <ClientOnly>
             <Toaster :position="'top-right'" :duration="1000" />
         </ClientOnly>

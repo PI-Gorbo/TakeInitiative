@@ -29,7 +29,7 @@ public record EntryHistoryItem
 [JsonConverter(typeof(JsonStringEnumConverter<EntryChangeType>))]
 public enum EntryChangeType
 {
-    /// <summary><see cref="EntryChange.Name"/>, <see cref="EntryChange.Kind"/>, <see cref="EntryChange.Visibility"/>.</summary>
+    /// <summary><see cref="EntryChange.Name"/>, <see cref="EntryChange.Kind"/>, <see cref="EntryChange.Visibility"/>, and <see cref="EntryChange.Source"/> when the caller may read it.</summary>
     Created,
     /// <summary><see cref="EntryChange.Name"/>.</summary>
     Renamed,
@@ -73,6 +73,9 @@ public record EntryChange
     public Guid? MergedEntryId { get; init; }
     public Guid? MemberId { get; init; }
     public StatsResponse? Stats { get; init; }
+    /// <summary>The reference item an entry was made from (20b), on <c>Created</c> only, under <see cref="EntrySources"/>' rule.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public EntrySourceResponse? Source { get; init; }
 }
 
 /// <summary>
@@ -84,11 +87,14 @@ public record EntryChange
 /// changed none of them is left out (<see cref="ArticleHistory.Changed"/>), timestamp and all.</item>
 /// <item>A stats change is left out unless the caller could read the stats then: the entry was a
 /// Character, and it was claimed or the caller is a DM (<see cref="EntryStats"/>).</item>
+/// <item>The source on <c>Created</c> is there only when the caller may read it now
+/// (<see cref="EntrySources"/>), which is exactly when <c>GET entry</c> shows it to them, so the
+/// history never tells them more than the entry does.</item>
 /// </list>
 /// Restoring a version is the web's job: it saves that version's blocks through <c>PUT
 /// article</c> with the current etag, so the merge keeps the blocks the caller cannot see.
 /// </summary>
-public class GetEntryHistory(IDocumentSession session) : Endpoint<GetEntryHistoryRequest, EntryHistoryResponse>
+public class GetEntryHistory(IDocumentSession session, ReferenceCatalog reference) : Endpoint<GetEntryHistoryRequest, EntryHistoryResponse>
 {
     public override void Configure()
     {
@@ -102,11 +108,11 @@ public class GetEntryHistory(IDocumentSession session) : Endpoint<GetEntryHistor
         var entry = await this.RequireVisibleEntry(session, req.CampaignId, req.EntryId, member, ct);
 
         var events = await session.Events.FetchStreamAsync(entry.Id, token: ct);
-        await SendAsync(new EntryHistoryResponse { Items = For(entry, events, member).ToArray() }, cancellation: ct);
+        await SendAsync(new EntryHistoryResponse { Items = For(entry, events, member, reference).ToArray() }, cancellation: ct);
     }
 
     /// <summary>The history of <paramref name="entry"/> (its whole stream, <paramref name="events"/>) as <paramref name="viewer"/> may read it.</summary>
-    public static IEnumerable<EntryHistoryItem> For(Entry entry, IReadOnlyList<Marten.Events.IEvent> events, Member viewer)
+    public static IEnumerable<EntryHistoryItem> For(Entry entry, IReadOnlyList<Marten.Events.IEvent> events, Member viewer, ReferenceCatalog reference)
     {
         // Every version of the article, with the index of the event that made it.
         var versions = new List<(int EventIndex, IReadOnlyList<ArticleBlock> Blocks)>();
@@ -126,6 +132,7 @@ public class GetEntryHistory(IDocumentSession session) : Endpoint<GetEntryHistor
                 versions.Add((i, next));
             }
         }
+        var source = EntrySources.For(entry, viewer) is { } s ? EntrySourceResponse.From(s, reference) : null;
         var visibleVersions = ArticleHistory.Changed(entry, versions.Select(v => v.Blocks), viewer)
             .ToDictionary(c => versions[c.Index].EventIndex, c => c.Blocks);
 
@@ -147,7 +154,14 @@ public class GetEntryHistory(IDocumentSession session) : Endpoint<GetEntryHistor
             var visible = visibleVersions.GetValueOrDefault(i);
             EntryChange? change = @event.Data switch
             {
-                EntryCreated e => new() { Type = EntryChangeType.Created, Name = e.Name, Kind = e.Kind, Visibility = e.Visibility },
+                EntryCreated e => new()
+                {
+                    Type = EntryChangeType.Created,
+                    Name = e.Name,
+                    Kind = e.Kind,
+                    Visibility = e.Visibility,
+                    Source = e.Source is null ? null : source,
+                },
                 EntryRenamed e => new() { Type = EntryChangeType.Renamed, Name = e.Name },
                 EntryKindChanged e => new() { Type = EntryChangeType.KindChanged, Kind = e.Kind },
                 EntryAliasAdded e => new() { Type = EntryChangeType.AliasAdded, Alias = e.Alias },

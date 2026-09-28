@@ -29,21 +29,19 @@ export function filterToQuery(filter: SessionStreamFilter): string | undefined {
 
 /**
  * What an empty stream says. A campaign has no session until a member starts Session 1,
- * which reads differently from a filter that matched nothing. Combats have nothing to
- * show until combats join the stream (step 18).
+ * which reads differently from a filter that matched nothing. Then the composer below
+ * is only its "No sessions yet" call to action (step 17), so the stream does not say it
+ * again: it says what will be here and points down.
  */
 export function filterEmptyState(filter: SessionStreamFilter, hasSessions: boolean): { title: string; detail?: string } {
     if (!hasSessions) {
-        return { title: "No sessions yet.", detail: "Start Session 1 in the composer to write your first note." };
+        return { title: "Session notes will show here.", detail: "Start your first session below." };
     }
     switch (filter) {
         case "Images":
             return { title: "No images yet. Attach one with 🖼." };
         case "Combats":
-            return {
-                title: "No combats yet.",
-                detail: "Combats join the session stream in step 18. They will show here.",
-            };
+            return { title: "No combats in these sessions." };
         case "Text":
             return { title: "No text notes yet." };
         case "Recaps":
@@ -56,12 +54,15 @@ export function filterEmptyState(filter: SessionStreamFilter, hasSessions: boole
 }
 
 /**
- * The sessions the stream draws. Under a filter, a session with no matching note has
- * no divider, except the current one, so the composer's session is always on screen.
+ * The sessions the stream draws. Under a filter, a session with no matching note or
+ * combat card has no divider, except the current one, so the composer's session is
+ * always on screen.
  */
 export function visibleStreamSessions<T extends SessionStreamSession>(
     sessions: readonly T[],
     filter: SessionStreamFilter
 ): T[] {
-    return sessions.filter((s) => filter === "All" || s.notes.length > 0 || s.session.isCurrent);
+    return sessions.filter(
+        (s) => filter === "All" || s.notes.length > 0 || (s.combats?.length ?? 0) > 0 || s.session.isCurrent
+    );
 }

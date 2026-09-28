@@ -8,6 +8,7 @@
 // changed, and treats a repeated push as a no-op, keyed by note or session id.
 import type { InfiniteData } from "@tanstack/vue-query";
 import type {
+    CombatCard,
     Session,
     SessionList,
     SessionNote,
@@ -29,7 +30,7 @@ export const isPendingNote = (noteId: string) => noteId.startsWith(PENDING_PREFI
 /**
  * Whether a note belongs in a stream loaded with `filter`. The server applies the
  * same rule to reads (14a, 16b): `Text` is a note with no images and `Images` one with
- * at least one. No note is a combat until step 18.
+ * at least one. `Combats` is combat cards only, so no note matches it (18e).
  */
 export function noteMatchesFilter(
     note: Pick<SessionNote, "isRecap" | "authorMemberId"> & { images?: readonly unknown[] | null },
@@ -51,6 +52,9 @@ export function noteMatchesFilter(
             return false;
     }
 }
+
+/** Whether combat cards belong in a stream loaded with `filter`: `All` and `Combats` (18e). */
+export const cardMatchesFilter = (filter: SessionStreamFilter) => filter === "All" || filter === "Combats";
 
 /** Maps every loaded session, keeping the objects of pages nothing changed in. */
 function mapSessions(
@@ -158,7 +162,7 @@ export function upsertSession(data: SessionStreamData | undefined, session: Sess
         const [first, ...rest] = next.pages;
         next = {
             ...next,
-            pages: [{ ...first, sessions: [...first.sessions, { session, notes: [] }] }, ...rest],
+            pages: [{ ...first, sessions: [...first.sessions, { session, notes: [], combats: [] }] }, ...rest],
         };
     }
 
@@ -174,6 +178,42 @@ export function upsertSession(data: SessionStreamData | undefined, session: Sess
         };
     }
     return next;
+}
+
+/** Inserts a card after every card that sits at or before it (`startedAt ?? createdAt`). */
+function insertCardByTime(cards: CombatCard[], card: CombatCard): CombatCard[] {
+    const at = cardTimeOf(card);
+    let index = cards.length;
+    while (index > 0 && cardTimeOf(cards[index - 1]) > at) index--;
+    return [...cards.slice(0, index), card, ...cards.slice(index)];
+}
+const cardTimeOf = (card: CombatCard) => Date.parse(card.startedAt ?? card.createdAt);
+
+/**
+ * Adds or replaces a combat card (18e), from a `combatChanged` push or a write's response.
+ * It sits in its session by time; a first roll that moved the combat to another session
+ * moves the card, and a session that is not loaded drops it (paging brings it in). Under a
+ * filter that shows no cards, nothing changes.
+ */
+export function upsertCombatCard(
+    data: SessionStreamData | undefined,
+    card: CombatCard,
+    filter: SessionStreamFilter
+): SessionStreamData | undefined {
+    if (!data || !cardMatchesFilter(filter)) return data;
+    return mapSessions(data, (entry) => {
+        const cards = entry.combats ?? [];
+        const index = cards.findIndex((c) => c.id === card.id);
+        if (entry.session.id !== card.sessionId) {
+            return index === -1 ? entry : { ...entry, combats: cards.filter((_, i) => i !== index) };
+        }
+        if (index !== -1 && sameCard(cards[index], card)) return entry;
+        return { ...entry, combats: insertCardByTime(cards.filter((_, i) => i !== index), card) };
+    });
+}
+
+function sameCard(a: CombatCard, b: CombatCard): boolean {
+    return JSON.stringify(a) === JSON.stringify(b);
 }
 
 /** Every loaded session, oldest first: the order the stream draws them in. */

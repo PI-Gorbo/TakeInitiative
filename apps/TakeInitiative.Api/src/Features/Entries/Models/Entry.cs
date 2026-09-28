@@ -22,7 +22,10 @@ public record Entry
     public Guid? CreatedFromNoteId { get; init; }
     public DateTimeOffset UpdatedAt { get; init; }
 
-    /// <summary>§11 seam: where the entry came from. Always null in step 15.</summary>
+    /// <summary>
+    /// The reference item the entry was made from by + Wiki (20b), or null. Set once, at creation.
+    /// Read through <see cref="EntrySources"/>, never as is: an NPC's source is its stat block.
+    /// </summary>
     public EntrySource? Source { get; init; }
     /// <summary>§11 seam. Always empty in step 15.</summary>
     public IReadOnlyList<EntryLink> Links { get; init; } = [];
@@ -75,6 +78,7 @@ public record Entry
             EditAccess = EditAccess.Anyone,
             CreatedAt = @event.Timestamp,
             CreatedFromNoteId = e.CreatedFromNoteId,
+            Source = e.Source,
             UpdatedAt = @event.Timestamp,
         };
     }
@@ -135,7 +139,12 @@ public record Entry
     };
 }
 
-/// <summary>§11: a reference item, a D&amp;D Beyond sheet or an imported message. Unused in step 15.</summary>
+/// <summary>
+/// §11: where an entry came from. From 20b, a reference item: <see cref="Provider"/> is the
+/// provider's key (<c>srd52</c>), <see cref="ExternalId"/> the item's id and <see cref="Url"/> a
+/// public page for it (the SRD's own page for SRD items). The web links to the app's card through
+/// the provider and the id, not through the url. Later, a D&amp;D Beyond sheet or an imported message.
+/// </summary>
 public record EntrySource(string Provider, string ExternalId, string Url);
 
 /// <summary>§11: an outside link on an entry. Unused in step 15.</summary>

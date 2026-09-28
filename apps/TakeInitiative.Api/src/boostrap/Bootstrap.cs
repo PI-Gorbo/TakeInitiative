@@ -30,6 +30,15 @@ public static class Bootstrap
             
             opts.Connection(config.GetConnectionString("TakeDB") ?? throw new OperationCanceledException("Required Configuration 'ConnectionStrings:Marten' is missing."));
 
+            // ⌘K search (step 17a). pg_trgm gives similarity() and word_similarity() for fuzzy
+            // name matching, and unaccent folds accents so "gundren" finds "Gündren". Both are
+            // contrib modules shipped by every common host, and both are trusted from PG 13, so
+            // the app's database owner creates them without being a superuser. A host that
+            // refuses fails startup loudly on CREATE EXTENSION rather than at the first search.
+            // Nothing is paid and nothing new runs (invariant 10).
+            opts.Storage.ExtendedSchemaObjects.Add(new Extension("pg_trgm"));
+            opts.Storage.ExtendedSchemaObjects.Add(new Extension("unaccent"));
+
             // Use system.text.json. Enums are stored as strings so LINQ queries and the
             // JSON bodies agree (Role is also [JsonConverter]-annotated for the API).
             opts.UseSystemTextJsonForSerialization(EnumStorage.AsString);
@@ -63,7 +72,21 @@ public static class Bootstrap
             opts.Schema.For<SessionNote>()
                 .Index([x => x.CampaignId, x => x.PostedAt])
                 .Index(x => x.SessionId)
-                .Index(x => x.MentionedEntryIds, idx => idx.Method = IndexMethod.gin);
+                .Index(x => x.MentionedEntryIds, idx => idx.Method = IndexMethod.gin)
+                // ⌘K's Notes and Images sections (17a.3). An expression index, so it goes on the
+                // document mapping rather than through Index(x => …), which only takes members:
+                // FullTextIndex is the mapping's way in, and DocumentConfig is the text to convert.
+                // `simple`, not `english`: the stemmer would turn "Rockseeker" into `rockseek` and
+                // break prefix-as-you-type (Notes). SearchSql holds the expression and the queries
+                // use the same constant, which is what lets Postgres use the index. The expression is
+                // SearchSql.PlainText — what a reader sees — so the index and the note query match on
+                // exactly the same lexemes and the index cannot miss a note the query wants.
+                .FullTextIndex(idx =>
+                {
+                    idx.Name = SearchSql.NoteIndexName;
+                    idx.RegConfig = SearchSql.Config;
+                    idx.DocumentConfig = SearchSql.NoteText;
+                });
 
             // Entry stream -> Entry document. (CampaignId, Kind) serves the wiki's lists; the
             // GIN indexes serve alias lookups and MentionIndex's "articles that mention this
@@ -73,6 +96,28 @@ public static class Bootstrap
                 .Index([x => x.CampaignId, x => x.Kind])
                 .Index(x => x.Aliases, idx => idx.Method = IndexMethod.gin)
                 .Index(x => x.ArticleMentionIds, idx => idx.Method = IndexMethod.gin);
+
+            // The article prefilter (17a.3): a stored generated tsvector column and a GIN index on
+            // it, rather than an expression index. The planner will not choose a GIN index for a
+            // prefix tsquery at a campaign's size, so an expression index still left Postgres
+            // computing to_tsvector(jsonb_path_query_array(…)) for every entry on every search;
+            // stored, Postgres computes it once, in the statement that writes the entry document.
+            // It covers every block, secret ones too, so it is still only a prefilter: a candidate
+            // entry is re-matched block by block on the blocks the viewer can see, and a hit on a
+            // secret block alone yields nothing. Names, aliases and session titles have no index;
+            // they are scanned per campaign through the (CampaignId, Kind) index above, which is a
+            // few thousand short strings.
+            SearchSchema.AddEntryArticleVector(opts);
+
+            // Combat stream -> Combat document (step 18a). (CampaignId, Status) serves the Combat
+            // tab's list and the live banner, SessionId the combat cards in the stream, and the
+            // GIN index on EntryIds an entry's combats (18e), the way ArticleMentionIds is served.
+            opts.Projections.Snapshot<Combat>(SnapshotLifecycle.Inline);
+            opts.Schema.For<Combat>()
+                .Index(x => x.CampaignId)
+                .Index([x => x.CampaignId, x => x.Status])
+                .Index(x => x.SessionId)
+                .Index(x => x.EntryIds, idx => idx.Method = IndexMethod.gin);
 
             // Image documents (step 16a): storage bookkeeping, not an aggregate. Optimistic
             // concurrency makes two writers racing on one image (attaching it to two notes,
@@ -216,6 +261,52 @@ public static class Bootstrap
         builder.Configure<UrlsOptions>(config.GetSection(UrlsOptions.UrlsOptionsKey));
         builder.Configure<JWTOptions>(config);
         return builder;
+    }
+
+    /// <summary>
+    /// ⌘K search (step 17a): the providers, the service that runs them and the entry matcher. The
+    /// providers and the service are scoped, because a provider is handed the request's Marten
+    /// session as it goes; the matcher holds nothing at all and takes the session as a parameter, so
+    /// it is a singleton. The providers are registered in the order §11 shows results in, wiki first;
+    /// step 18 adds a combat provider and steps 20 and 21 reference providers, as more registrations
+    /// here.
+    /// </summary>
+    public static IServiceCollection AddSearch(this IServiceCollection services)
+    {
+        services.AddSingleton<EntryMatcher>();
+        services.AddScoped<ISearchProvider, WikiSearchProvider>();
+        services.AddScoped<ISearchProvider, SessionSearchProvider>();
+        services.AddScoped<ISearchProvider, CombatSearchProvider>();
+        // Last: the Reference section comes after every campaign section (§11). It reads the
+        // ReferenceCatalog that AddReference() registers.
+        services.AddScoped<ISearchProvider, ReferenceSearchProvider>();
+        services.AddScoped<SearchService>();
+        return services;
+    }
+
+    /// <summary>
+    /// Reference content (step 20a): the providers, registered in the order the Reference section
+    /// merges them (SRD 5.2 first, then the 5eTools index, 21b), and the catalog that lists them.
+    /// Each provider's data is read once and held, so the catalogs and providers are singletons.
+    /// <para>
+    /// The 5eTools catalog reads <c>Reference:FiveETools:IndexPath</c> when it is built, not here,
+    /// so a test host's configuration applies. Its provider is always registered; with no index it
+    /// answers nothing, so the Reference section is exactly step 20's.
+    /// </para>
+    /// </summary>
+    public static IServiceCollection AddReference(this IServiceCollection services)
+    {
+        services.AddSingleton<SrdCatalog>();
+        services.AddSingleton<SrdReferenceProvider>();
+        services.AddSingleton<IReferenceProvider>(sp => sp.GetRequiredService<SrdReferenceProvider>());
+        services.AddSingleton(sp => FiveEToolsCatalog.FromConfiguration(
+            sp.GetService<IConfiguration>(),
+            sp.GetService<IHostEnvironment>()?.ContentRootPath,
+            sp.GetService<ILoggerFactory>()?.CreateLogger<FiveEToolsCatalog>()));
+        services.AddSingleton<FiveEToolsReferenceProvider>();
+        services.AddSingleton<IReferenceProvider>(sp => sp.GetRequiredService<FiveEToolsReferenceProvider>());
+        services.AddScoped<ReferenceCatalog>();
+        return services;
     }
 
     public static IServiceCollection AddDiceRollers(this IServiceCollection services, IConfiguration configuration)

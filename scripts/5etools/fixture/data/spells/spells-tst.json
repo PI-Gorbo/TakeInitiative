@@ -1,0 +1,33 @@
+{
+    "spell": [
+        {
+            "name": "Test Sparkburst",
+            "source": "TST",
+            "page": 50,
+            "level": 3,
+            "school": "V",
+            "time": [{ "number": 1, "unit": "action" }],
+            "range": { "type": "point", "distance": { "type": "feet", "amount": 150 } },
+            "components": { "v": true, "s": true, "m": "a pinch of zorblatt" },
+            "duration": [{ "type": "instant" }],
+            "entries": ["Entryword zorblatt: sparks burst in a {@dice 8d6} flash."]
+        },
+        {
+            "name": "Test Glimmer",
+            "source": "TST",
+            "page": 51,
+            "level": 0,
+            "school": "I",
+            "entries": ["A faint glimmer."]
+        },
+        {
+            "name": "Test Mending Hum",
+            "source": "TST",
+            "page": 52,
+            "level": 0,
+            "school": "T",
+            "srd52": true,
+            "entries": ["A hum."]
+        }
+    ]
+}

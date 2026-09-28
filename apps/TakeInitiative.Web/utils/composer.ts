@@ -8,10 +8,11 @@ import {
     attachmentsFailed,
     attachmentsFromImages,
     draftImages,
+    imageIdsErrorFrom,
     readyImages,
     type Attachment,
 } from "./images";
-import { emptyMentionText, mentionBody, parseDraft, serializeDraft, type MentionText, type NewEntry } from "./mentions";
+import { emptyMentionText, mentionBody, newEntryErrorFrom, parseDraft, serializeDraft, type MentionText, type NewEntry } from "./mentions";
 import { isPendingNote } from "./sessionStreamCache";
 
 /** The API's limit on a note's text (14a), after trimming. */
@@ -108,6 +109,14 @@ export function canPostNote(
     }
 ): boolean {
     if (args.uploadsFailed || noSessionYet(args)) return false;
+    return noteHasContent(args);
+}
+
+/**
+ * Whether a note's text and images are enough to post, or to save an edit (step 17):
+ * text within the limit, or images with an empty caption.
+ */
+export function noteHasContent(args: { text: string; attachmentCount: number; storedLength: number }): boolean {
     const hasContent = postableText(args.text) !== null || (args.attachmentCount > 0 && args.text.trim() === "");
     return hasContent && args.storedLength <= NOTE_TEXT_MAX;
 }
@@ -193,6 +202,34 @@ export function optimisticNote(args: {
 }
 
 /**
+ * Why a post or an edit was refused, in the order the composer answers them (step 17:
+ * posting and editing a note share it).
+ * - `alreadySaved`: a retry after a timeout; the first try went through (15d's 409).
+ * - `images`: 16b's `errors.imageIds`; an upload was swept or taken meanwhile.
+ * - `duplicate`: a Create's name was taken meanwhile; its mention can link to that entry.
+ * - `other`: anything else, told with the API's message.
+ */
+export type NoteWriteError =
+    | { kind: "alreadySaved" }
+    | { kind: "images"; message: string }
+    | { kind: "duplicate"; newEntryId: string; existingEntryId: string }
+    | { kind: "other" };
+
+export function noteWriteError(error: unknown): NoteWriteError {
+    const entryError = newEntryErrorFrom(error);
+    if (entryError?.kind === "alreadyCreated") return { kind: "alreadySaved" };
+    const images = imageIdsErrorFrom(error);
+    if (images) return { kind: "images", message: images };
+    if (entryError?.kind === "duplicate")
+        return { kind: "duplicate", newEntryId: entryError.newEntryId, existingEntryId: entryError.existingEntryId };
+    return { kind: "other" };
+}
+
+/** The name a Create was given, for "… already exists". */
+export const newEntryName = (newEntries: readonly NewEntry[], newEntryId: string): string =>
+    newEntries.find((e) => e.id.toLowerCase() === newEntryId.toLowerCase())?.name ?? "That entry";
+
+/**
  * One button in `ComposerToolbar`. Steps 15 and 16 add `@`, 📷 and 🖼 as items; 14e's
  * commands flip the same state the recap item does.
  */
@@ -215,7 +252,7 @@ export type ComposerToolbarItem = {
 // ── Enter ────────────────────────────────────────────────────────────────────
 
 /**
- * What Enter does in the composer and the note editor. On desktop Enter posts and
+ * What Enter does in the composer, posting or editing a note. On desktop Enter posts and
  * Shift+Enter is a new line; on a touch screen Enter is always a new line and ➤
  * posts. Enter while an IME is composing belongs to the IME.
  */

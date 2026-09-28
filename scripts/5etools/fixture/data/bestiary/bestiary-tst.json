@@ -1,0 +1,117 @@
+{
+    "_meta": { "note": "Invented creatures for TakeInitiative's tests. Not 5eTools content." },
+    "monster": [
+        {
+            "name": "Test Gremlin",
+            "source": "TST",
+            "page": 12,
+            "size": ["S"],
+            "type": "fey",
+            "alignment": ["C", "E"],
+            "ac": [15],
+            "hp": { "average": 13, "formula": "3d6 + 3" },
+            "speed": { "walk": 30 },
+            "str": 8, "dex": 14, "con": 12, "int": 10, "wis": 9, "cha": 7,
+            "save": { "dex": "+4" },
+            "skill": { "stealth": "+6" },
+            "senses": ["darkvision 60 ft."],
+            "passive": 9,
+            "languages": ["Sylvan"],
+            "cr": "1/2",
+            "trait": [{ "name": "Traitword Kettlesense", "entries": ["The gremlin smells zorblatt within 30 feet."] }],
+            "action": [{ "name": "Actionword Bitey", "entries": ["{@atk mw} {@hit 4} to hit, one quibbleflux. {@h}5 ({@damage 1d6 + 2}) piercing damage."] }],
+            "entries": ["Entryword zorblatt: a gremlin is a small nuisance."],
+            "fluff": { "entries": ["Fluffword kettlewhistle."] },
+            "hasToken": true,
+            "tokenUrl": "https://example.invalid/token.webp",
+            "environment": ["urban"]
+        },
+        {
+            "name": "Test Gremlin Chief",
+            "source": "TST",
+            "page": 13,
+            "_copy": {
+                "name": "Test Gremlin",
+                "source": "TST",
+                "_mod": {
+                    "action": { "mode": "appendArr", "items": { "name": "Modword Rally", "entries": ["The chief shouts zorblatt."] } }
+                }
+            },
+            "hp": { "average": 27, "formula": "5d6+10" },
+            "cr": { "cr": "2", "lair": "3" },
+            "initiative": { "proficiency": 1 }
+        },
+        {
+            "name": "Test Gremlin, Understudy",
+            "source": "TST",
+            "page": 14,
+            "_copy": { "name": "Test Gremlin", "source": "TST" }
+        },
+        {
+            "name": "Test Swarm of Motes",
+            "source": "TST",
+            "page": 20,
+            "size": ["M"],
+            "type": { "type": "beast", "swarmSize": "T" },
+            "ac": [{ "ac": 12, "from": ["natural armor"] }],
+            "hp": { "special": "equal to half the summoner's zorblatt" },
+            "dex": 13,
+            "cr": "1"
+        },
+        {
+            "name": "Warden's Stone (Awakened)",
+            "source": "TST",
+            "page": 30,
+            "size": ["L", "H"],
+            "type": { "type": "construct", "tags": ["secret tagword text"] },
+            "ac": [{ "ac": 17, "from": ["{@item plate armor|phb}"] }, { "ac": 19, "condition": "with {@item shield|phb}" }],
+            "hp": { "average": 85, "formula": "10d10 + 30" },
+            "dex": 8,
+            "initiative": { "initiative": 7 },
+            "cr": { "cr": "5", "coven": "7" }
+        },
+        {
+            "name": "Test Clockwork Finch",
+            "source": "TST",
+            "page": 31,
+            "size": ["T"],
+            "type": "construct",
+            "ac": [12],
+            "hp": { "average": 2, "formula": "1d4" },
+            "dex": 16,
+            "initiative": { "proficiency": 1 },
+            "cr": "Unknown"
+        },
+        {
+            "name": "Test Mossback",
+            "source": "TST",
+            "size": ["H"],
+            "type": { "type": { "choose": ["beast", "plant"] } },
+            "ac": [{ "special": "12 + the mossback's zorblatt" }],
+            "hp": { "average": 60, "formula": "8d12 + 8" },
+            "dex": 10,
+            "cr": "4"
+        },
+        {
+            "name": "Test Hollow Sentinel",
+            "source": "TST",
+            "page": 40,
+            "size": ["M"],
+            "type": "undead",
+            "ac": [14],
+            "cr": "3"
+        },
+        {
+            "name": "Test Srd Imp",
+            "source": "TST",
+            "page": 41,
+            "srd52": true,
+            "size": ["T"],
+            "type": "fiend",
+            "ac": [13],
+            "hp": { "average": 10, "formula": "3d4 + 3" },
+            "dex": 17,
+            "cr": "1"
+        }
+    ]
+}

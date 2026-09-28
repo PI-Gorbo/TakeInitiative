@@ -1,5 +1,7 @@
 <template>
-    <NuxtLayout name="default">
+    <div class="flex h-full w-full flex-col">
+        <!-- Not wrapped in the default layout: the layout transition can only animate an
+             element root, not a nested <NuxtLayout>. So its Toaster is repeated below. -->
         <!-- One responsive shell: tabs sit at the bottom on a phone and move to a
              side rail on desktop. The same <nav> does both. -->
         <div class="flex h-full w-full flex-col bg-background md:flex-row">
@@ -22,7 +24,7 @@
                             class="flex h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-md px-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                             aria-label="Search"
                             aria-keyshortcuts="Meta+K Control+K"
-                            @click="searchOpen = true">
+                            @click="openSearch($event.currentTarget as HTMLElement)">
                             <Search class="size-5" />
                             <kbd
                                 class="hidden rounded border px-1.5 text-xs md:inline"
@@ -73,9 +75,18 @@
                                     ? 'text-gold md:bg-accent'
                                     : 'text-muted-foreground hover:text-foreground md:hover:bg-accent/60',
                             ]">
+                            <!-- The Combat tab's icon pulses while a combat is live (18e.3). -->
                             <component
                                 :is="tab.icon"
-                                class="size-6 md:size-5" />
+                                :class="[
+                                    'size-6 md:size-5',
+                                    tab.name === COMBAT_TAB && combatLive && 'text-gold motion-safe:animate-pulse',
+                                ]" />
+                            <span
+                                v-if="tab.name === COMBAT_TAB && combatLive"
+                                class="sr-only"
+                                >(a combat is live)</span
+                            >
                             {{ tab.label }}
                         </NuxtLink>
                     </li>
@@ -83,8 +94,28 @@
             </nav>
         </div>
 
-        <SearchSheet v-model:open="searchOpen" />
-    </NuxtLayout>
+        <SearchSheet
+            v-model:open="searchOpen"
+            :campaignId="campaignId"
+            :returnFocus="returnFocus"
+            @addToWiki="openAddToWiki" />
+        <!-- + Wiki from a ⌘K reference row (20d); the card page has its own. -->
+        <ReferenceAddToWikiDialog
+            v-model:open="addToWikiOpen"
+            :campaignId="campaignId"
+            :item="addToWikiItem" />
+        <!-- iOS raises the keyboard only for a focus made during the tap, and the sheet's
+             input mounts after it: this holds the focus (and the keyboard) until then. -->
+        <input
+            ref="focusProxy"
+            type="text"
+            tabindex="-1"
+            aria-hidden="true"
+            class="pointer-events-none fixed left-0 top-0 size-px opacity-0 text-base" />
+        <ClientOnly>
+            <Toaster :position="'top-right'" :duration="1000" />
+        </ClientOnly>
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -92,6 +123,10 @@
     import { useQuery } from "@tanstack/vue-query";
     import { BookOpen, Castle, ChevronLeft, Search, Swords } from "lucide-vue-next";
     import { getCampaignQuery } from "~/utils/queries/campaign";
+    import { getCombatsQuery } from "~/utils/queries/combats";
+    import type { SearchReferenceHit } from "~/utils/api/types";
+    import { addToWikiItemFromHit, type AddToWikiItem } from "~/utils/reference";
+    import { OPEN_SEARCH } from "~/utils/search";
     import { rememberCampaign } from "~/utils/shareTarget";
 
     const route = useRoute();
@@ -116,6 +151,12 @@
         { name: "app-campaigns-campaignId-wiki", label: "Wiki", icon: BookOpen },
         { name: "app-campaigns-campaignId-combat", label: "Combat", icon: Swords },
     ] as const;
+
+    // The live combats (18e.3), which pushes keep current: the Combat tab pulses while
+    // there is one. `motion-safe:` leaves it still under `prefers-reduced-motion`.
+    const COMBAT_TAB = "app-campaigns-campaignId-combat";
+    const liveCombatsQuery = useQuery(getCombatsQuery(campaignId, { status: ["Active"] }));
+    const combatLive = computed(() => (liveCombatsQuery.data.value?.combats.length ?? 0) > 0);
 
     // The Wiki and Combat tabs stay current on their child pages (an entry page is
     // `app-campaigns-campaignId-wiki-entryId`). The Campaign tab matches exactly, since
@@ -145,13 +186,35 @@
 
     // Search: the 🔍 button, or ⌘K / Ctrl+K.
     const searchOpen = ref(false);
+    const returnFocus = shallowRef<HTMLElement | null>(null);
+    const focusProxy = useTemplateRef<HTMLInputElement>("focusProxy");
+    function openSearch(trigger: HTMLElement | null) {
+        returnFocus.value = trigger;
+        focusProxy.value?.focus({ preventScroll: true });
+        searchOpen.value = true;
+    }
+    provide(OPEN_SEARCH, openSearch);
+
+    // + Wiki from ⌘K (20d): the sheet has closed; the dialog opens on the next tick.
+    const addToWikiOpen = ref(false);
+    const addToWikiItem = shallowRef<AddToWikiItem | null>(null);
+    function openAddToWiki(hit: SearchReferenceHit) {
+        addToWikiItem.value = addToWikiItemFromHit(hit);
+        void nextTick(() => (addToWikiOpen.value = true));
+    }
     const shortcutLabel = computed(() =>
         /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘K" : "Ctrl K"
     );
     useEventListener(window, "keydown", (event: KeyboardEvent) => {
+        // In the composer, ⌘K is its `@` picker, and the editor has taken the key.
+        if (event.defaultPrevented) return;
         if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
             event.preventDefault();
-            searchOpen.value = !searchOpen.value;
+            if (searchOpen.value) searchOpen.value = false;
+            else {
+                returnFocus.value = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+                searchOpen.value = true;
+            }
         }
     });
 </script>

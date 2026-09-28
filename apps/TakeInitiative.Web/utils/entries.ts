@@ -11,6 +11,7 @@ import type {
     EntryList,
     EntryListItem,
     EntrySummary,
+    Stats,
     Visibility,
 } from "./api/types";
 
@@ -131,12 +132,38 @@ export const canReadStats = (entry: Pick<EntrySummary, "kind" | "claimedByMember
 export const canWriteStats = (entry: Pick<EntrySummary, "kind" | "claimedByMemberId">, viewer: EntryViewer) =>
     entry.kind === "Character" && (viewer.isDm || (!!claimerOf(entry) && claimerOf(entry) === viewer.memberId));
 
+/**
+ * Whether the Stats editor reads the entry's source item, to offer "Use … stats": the entry
+ * came from a reference item that is still in the data, and the viewer writes its Stats.
+ */
+export const wantsSourceStats = (entry: Pick<Entry, "kind" | "claimedByMemberId" | "source">, viewer: EntryViewer) =>
+    !!entry.source?.name && canWriteStats(entry, viewer);
+
+/**
+ * "Use SRD 5.2 stats" / "Use 5eTools stats" (20d, 21c): the source's item has Stats (its
+ * `summary.stats`, which the API derives, read from the item endpoint) and the viewer writes
+ * them. A stat block is not needed: a 5eTools monster has Stats and no stat block, and a spell
+ * or an item has neither.
+ */
+export const canUseSourceStats = (
+    entry: Pick<Entry, "kind" | "claimedByMemberId" | "source">,
+    viewer: EntryViewer,
+    sourceStats: Stats | null | undefined
+) => !!sourceStats && wantsSourceStats(entry, viewer);
+
 /** The API's limits for a stat line. */
 export const STATS_AC_MAX = 99;
 export const STATS_EXPRESSION_MAX = 100;
 
 /** The stats editor's three text fields. */
 export type StatsForm = { initiativeRoll: string; maxHp: string; ac: string };
+
+/** A stat line as the editor's fields: none is blank. */
+export const statsForm = (stats: Entry["stats"]): StatsForm => ({
+    initiativeRoll: stats?.initiativeRoll ?? "",
+    maxHp: stats?.maxHp ?? "",
+    ac: stats?.ac != null ? String(stats.ac) : "",
+});
 
 /**
  * The stats editor's fields as a `PUT stats` body: blank is none (all blank clears

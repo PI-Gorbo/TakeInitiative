@@ -46,6 +46,19 @@ public static class EntryNameRules
             .DistinctBy(a => a, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
+    /// <summary>
+    /// The entry the caller can see that is already called <paramref name="name"/> (its name or an
+    /// alias, ignoring case), or null. Entries the caller cannot see are not checked, so a 409 built
+    /// from the answer leaks nothing; duplicates among them are fixed by merge (15g).
+    /// </summary>
+    public static async Task<Entry?> ExistingVisible(IQuerySession session, Guid campaignId, Member member, string name, CancellationToken ct)
+    {
+        var visible = await session.Query<Entry>()
+            .Listed(campaignId, member)
+            .ToListAsync(ct);
+        return visible.FirstOrDefault(e => IsCalled(e, name));
+    }
+
     /// <summary>Whether <paramref name="name"/> is, ignoring case, the entry's name or one of its aliases.</summary>
     public static bool IsCalled(Entry entry, string name)
         => string.Equals(entry.Name, name, StringComparison.OrdinalIgnoreCase)
@@ -73,10 +86,7 @@ public class PostEntry(IDocumentSession session, IHubContext<CampaignHub> hub) :
         var (_, member) = await this.RequireMember(session, req.CampaignId, userId, ct);
         var name = req.Name.Trim();
 
-        var visible = await session.Query<Entry>()
-            .Listed(req.CampaignId, member)
-            .ToListAsync(ct);
-        var existing = visible.FirstOrDefault(e => EntryNameRules.IsCalled(e, name));
+        var existing = await EntryNameRules.ExistingVisible(session, req.CampaignId, member, name, ct);
         if (existing is not null)
         {
             AddError(new ValidationFailure(nameof(PostEntryRequest.Name), $"There is already an entry called \"{existing.Name}\"."));
@@ -96,6 +106,6 @@ public class PostEntry(IDocumentSession session, IHubContext<CampaignHub> hub) :
 
         var entry = (await session.LoadAsync<Entry>(entryId, ct))!;
         await hub.NotifyEntryUpserted(entry);
-        await SendAsync(EntryResponse.From(entry, member), cancellation: ct);
+        await SendAsync(EntryResponse.From(entry, member, Resolve<ReferenceCatalog>()), cancellation: ct);
     }
 }

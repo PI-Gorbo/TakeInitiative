@@ -47,6 +47,7 @@
                             :session="entry.session"
                             :canEditTitle="isDm"
                             :imageCount="entry.imageCount"
+                            :looseEndCount="sessionLooseEndCount(looseEndCounts, entry.session.id)"
                             @openGallery="openGallery(entry.session, entry.imageCount)" />
                         <!-- Recaps sit directly under their divider. -->
                         <SessionNoteCard
@@ -61,22 +62,31 @@
                             :highlighted="note.id === highlightedId"
                             @openActions="openSheet(note, $event)"
                             @openImage="imageViewer.open" />
-                        <SessionNoteCard
-                            v-for="note in entry.notes"
-                            :key="note.id"
-                            :campaignId="campaignId"
-                            :note="note"
-                            :session="entry.session"
-                            :authorName="authorName(note.authorMemberId)"
-                            :currentMemberId="campaign.currentMemberId"
-                            :isDm="isDm"
-                            :highlighted="note.id === highlightedId"
-                            @openActions="openSheet(note, $event)"
-                            @openImage="imageViewer.open" />
+                        <!-- Then the notes and the combat cards (18e), merged by time. -->
+                        <template
+                            v-for="item in entry.items"
+                            :key="item.kind === 'note' ? item.note.id : `combat-${item.card.id}`">
+                            <SessionNoteCard
+                                v-if="item.kind === 'note'"
+                                :campaignId="campaignId"
+                                :note="item.note"
+                                :session="entry.session"
+                                :authorName="authorName(item.note.authorMemberId)"
+                                :currentMemberId="campaign.currentMemberId"
+                                :isDm="isDm"
+                                :highlighted="item.note.id === highlightedId"
+                                @openActions="openSheet(item.note, $event)"
+                                @openImage="imageViewer.open" />
+                            <CombatCard
+                                v-else
+                                :campaignId="campaignId"
+                                :card="item.card"
+                                :directory="directory" />
+                        </template>
                     </section>
 
                     <div
-                        v-if="noteCount === 0"
+                        v-if="noteCount === 0 && cardCount === 0"
                         class="flex flex-col gap-1 px-4 py-6 text-center text-sm text-muted-foreground">
                         <p>{{ emptyState.title }}</p>
                         <p
@@ -135,15 +145,19 @@
 </template>
 
 <script setup lang="ts">
-    import { useInfiniteQuery } from "@tanstack/vue-query";
+    import { useInfiniteQuery, useQuery } from "@tanstack/vue-query";
     import { useResizeObserver } from "@vueuse/core";
     import { ArrowDown, LoaderCircle } from "lucide-vue-next";
     import { toast } from "vue-sonner";
     import type { Campaign, Session, SessionNote, SessionStreamFilter, Visibility } from "~/utils/api/types";
     import { dividerImageCount } from "~/utils/gallery";
+    import { sessionLooseEndCount } from "~/utils/looseEnds";
+    import { getLooseEndCountsQuery } from "~/utils/queries/looseEnds";
     import { currentMember } from "~/utils/campaign";
     import { getSessionStreamQuery } from "~/utils/queries/sessions";
     import { noteLinkProgress, type NoteAction } from "~/utils/noteActions";
+    import { mergeStreamItems } from "~/utils/combatCard";
+    import { useEntryDirectory } from "~/utils/queries/entries";
     import { flattenSessions } from "~/utils/sessionStreamCache";
     import { filterEmptyState, visibleStreamSessions } from "~/utils/streamFilters";
 
@@ -154,6 +168,8 @@
             filter?: SessionStreamFilter;
             /** A note to open at (`?note=` from a copied link, 14d). */
             focusNoteId?: string;
+            /** A session to open at, by number (`?session=` from ⌘K, 17b). */
+            focusSessionNumber?: number;
         }>(),
         { filter: "All" }
     );
@@ -165,19 +181,32 @@
         )
     );
 
+    // The dividers' 🧵 n (19e): the viewer's loose ends per session, whatever the filter.
+    const looseEndCountsQuery = useQuery(getLooseEndCountsQuery(() => props.campaignId));
+    const looseEndCounts = computed(() => looseEndCountsQuery.data.value);
+
     const isDm = computed(() => currentMember(props.campaign)?.role === "DM");
     const usernames = computed(() => new Map(props.campaign.members.map((m) => [m.memberId, m.username])));
     const authorName = (memberId: string) => usernames.value.get(memberId) ?? "Unknown member";
 
-    // Sessions oldest first, recaps lifted under the divider. Under a filter, a
-    // session with no matching note has no divider, except the current one (14e).
+    // Sessions oldest first, recaps lifted under the divider, then the other notes and
+    // the combat cards merged by time (18e). Under a filter, a session with nothing that
+    // matches has no divider, except the current one (14e).
     const visibleSessions = computed(() =>
         visibleStreamSessions(flattenSessions(streamQuery.data.value), props.filter).map((s) => ({
             session: s.session,
             recaps: s.notes.filter((n) => n.isRecap),
-            notes: s.notes.filter((n) => !n.isRecap),
+            items: mergeStreamItems(
+                s.notes.filter((n) => !n.isRecap),
+                s.combats ?? []
+            ),
             imageCount: dividerImageCount(s.notes, props.filter),
         }))
+    );
+    // Combat cards name the entries they link as the wiki names them now.
+    const directory = useEntryDirectory(() => props.campaignId);
+    const cardCount = computed(() =>
+        flattenSessions(streamQuery.data.value).reduce((sum, s) => sum + (s.combats?.length ?? 0), 0)
     );
     const allNotes = computed<SessionNote[]>(() => flattenSessions(streamQuery.data.value).flatMap((s) => s.notes));
     const noteCount = computed(() => allNotes.value.length);
@@ -345,24 +374,12 @@
     // ── Note links ───────────────────────────────────────────────────────────
     // `?note={id}`: load older pages until the note's session is loaded, then scroll
     // to the note and highlight it. A note the viewer cannot see is a 404.
-    const emit = defineEmits<{ noteOpened: [noteId: string] }>();
+    const emit = defineEmits<{ noteOpened: [noteId: string]; sessionOpened: [sessionNumber: number] }>();
     const highlightedId = ref<string | null>(null);
     let highlightTimer: ReturnType<typeof setTimeout> | undefined;
 
-    async function goToNote(noteId: string) {
-        let sessionNumber: number;
-        try {
-            sessionNumber = (
-                await useApi().note.get({
-                    campaignId: props.campaignId,
-                    noteId,
-                })
-            ).sessionNumber;
-        } catch {
-            toast.error("That note is not there, or you cannot see it.");
-            emit("noteOpened", noteId);
-            return;
-        }
+    /** Loads older pages until the session is loaded, or there is nothing older. */
+    async function loadUntilSession(sessionNumber: number) {
         // Bounded, in case the server keeps answering `hasOlder` without older sessions.
         for (let pages = 0; pages < 500; pages++) {
             const progress = noteLinkProgress(
@@ -379,6 +396,23 @@
             await loadOlder();
         }
         await nextTick();
+    }
+
+    async function goToNote(noteId: string) {
+        let sessionNumber: number;
+        try {
+            sessionNumber = (
+                await useApi().note.get({
+                    campaignId: props.campaignId,
+                    noteId,
+                })
+            ).sessionNumber;
+        } catch {
+            toast.error("That note is not there, or you cannot see it.");
+            emit("noteOpened", noteId);
+            return;
+        }
+        await loadUntilSession(sessionNumber);
         const el = document.getElementById(`note-${noteId}`);
         if (el) {
             atBottom.value = false;
@@ -400,7 +434,27 @@
         },
         { immediate: true }
     );
+
+    // `?session={number}` (17b): the same walk, to the session's divider.
+    async function goToSession(sessionNumber: number) {
+        await loadUntilSession(sessionNumber);
+        const el = document.getElementById(`session-${sessionNumber}`);
+        if (el) {
+            atBottom.value = false;
+            el.scrollIntoView({ block: "start" });
+        } else {
+            toast.info(`Session ${sessionNumber} is not there.`);
+        }
+        emit("sessionOpened", sessionNumber);
+    }
+    watch(
+        () => [opened.value, props.focusSessionNumber] as const,
+        ([isOpen, sessionNumber]) => {
+            if (isOpen && sessionNumber) void goToSession(sessionNumber);
+        },
+        { immediate: true }
+    );
     onBeforeUnmount(() => clearTimeout(highlightTimer));
 
-    defineExpose({ scrollToBottom, goToNote });
+    defineExpose({ scrollToBottom, goToNote, goToSession });
 </script>

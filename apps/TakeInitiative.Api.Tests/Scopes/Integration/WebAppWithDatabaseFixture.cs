@@ -22,7 +22,7 @@ public class WebAppWithDatabaseFixture : IAsyncLifetime, IWebAppClient
     public async Task InitializeAsync()
     {
         await _postgres.StartAsync();
-        AlbaHost = await Alba.AlbaHost.For<Program>(x =>
+        AlbaHost = await HostStartup.Start(() => Alba.AlbaHost.For<Program>(x =>
             x.ConfigureAppConfiguration((context, configBuilder) =>
                 {
                     configBuilder.AddInMemoryCollection(
@@ -40,7 +40,7 @@ public class WebAppWithDatabaseFixture : IAsyncLifetime, IWebAppClient
                     services.Replace(ServiceDescriptor.Singleton<IBlobStore>(Blobs));
                     services.AddMartenDB(context.Configuration, IsDevelopment: true);
                 })
-        );
+        ));
     }
     public async Task DisposeAsync()
     {

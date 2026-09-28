@@ -58,6 +58,12 @@ player-first experiences: **combat**, **note taking**, **⌘K search** and
 | **Visibility** | Who can see something: `Everyone`, `DM` (all DMs plus the author), `Me`. Applies to session notes, entries and secret blocks. | audience, privacy |
 | **Edit access** | Who can edit an entry: `Anyone` (who can see it) or `Only me`. DMs can always edit. | — |
 | **Loose ends** | Unidentified things that are waiting to be linked (§5). | inbox, triage |
+| **Evidence** | The notes, article blocks and combats that explain one connection. A note or block is shown as a snippet, a combat as its combat card. | sources, proof |
+| **Weight** | How many pieces of evidence a connection has, as the viewer sees it: the `(3)` after a connection and the thickness of a graph edge. | strength, score |
+| **Fought together** | Evidence that two entries were both visible combatants in one started combat. | — |
+| **Seen at** | The Connections panel's heading for a Character's connections to Places ("Seen here" on a Place). A grouping, not a relation. | — |
+| **Graph** | The Wiki's force-directed drawing of connections (`/wiki/graph`). | map (that is a picture), network |
+| **Link suggestion** | On an unlinked note's loose end, a span of its text the entry matcher matched to an entry. It has no effect until the author accepts it. Not a model **suggestion** (§11a). | auto-link |
 | **Player character** | A Character entry claimed by a member. A member can claim several. | PC in the UI |
 | **Claim** | A member marking a Character entry as their player character. That member is its **claimer**. | own, assign |
 | **Stats** | An optional stat line on a Character entry: initiative roll, max HP, AC. | — |
@@ -70,11 +76,20 @@ player-first experiences: **combat**, **note taking**, **⌘K search** and
 | **Entry matcher** (code: `EntryMatcher`) | Trigram matching of a piece of text against entry names and aliases, under the viewer's visibility. ⌘K, loose ends and suggestions share it (§11a). | fuzzy finder, resolver |
 | **Reference** | Rules content from outside the campaign (SRD, 5eTools) that ⌘K can find. It is never part of the wiki until it is added. | compendium, bestiary |
 | **Source** | Where an entry or session note came from: a reference item, a D&D Beyond sheet, or an imported Discord message. | origin |
+| **Reference item** (code: `ReferenceItem`) | One thing a reference source offers, such as the SRD's Goblin Warrior. It is not in the wiki until it is added. | compendium entry, monster (as a type) |
+| **Reference provider** (code: `IReferenceProvider`) | A source of reference items: SRD 5.2, bundled (step 20), and the 5eTools index, search-only (21). One ⌘K search provider asks each of them. | bestiary |
+| **Stat block** | A reference monster's rules text, laid out as the SRD lays it out and drawn read-only by the stat-block card. | Stats (that is an entry's three-field stat line) |
+| **+ Wiki** (code: `EntryFromReference`) | Creating an entry from a reference item: the right kind, its `Source`, and Stats for a DM. | Promote ("Add to wiki", which copies note text), import |
 | **Suggestion** | A mention or entry proposed by a model. It has no effect until a member accepts it. | auto-tag, prediction |
 | **Import** | Bringing outside notes (e.g. a Discord export) in as session notes. | sync, migration |
 | **Combat** | One encounter. Status: `Draft`, `Active` or `Finished`. | planned/draft combat as a separate thing |
 | **Combatant** | One row in a combat. It can link to an entry. | Staged/Initiative/Planned character |
 | **Round / Turn / Condition** | As in 5e. A condition is a text label with an optional note. | — |
+| **Initiative order** | A combat's rolled combatants, highest initiative first, ties broken by a hidden random `Tiebreak`. | turn order list, tracker |
+| **Waiting** | A combatant with no initiative yet. The next roll places it. | staged, pending |
+| **PlayersSee** | Per combatant, what players see of its HP: `Exact`, `Band` or `Nothing`. AC shows only with `Exact`. | display settings |
+| **HP band** | `Healthy`, `Bloodied` (half HP or less) or `Down` (0 or less), shown for `Band`. | health status |
+| **Combat card** | A combat drawn in its session in the session stream. | combat message, combat post |
 
 Rule: a new noun gets added to this table before it appears in code.
 

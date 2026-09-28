@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Session, SessionList, SessionNote, SessionStream } from "~/utils/api/types";
+import type { CombatCard, Session, SessionList, SessionNote, SessionStream } from "~/utils/api/types";
 import {
     dropPendingCopy,
     flattenSessions,
@@ -7,6 +7,7 @@ import {
     newPendingNoteId,
     noteMatchesFilter,
     removeNote,
+    upsertCombatCard,
     upsertNote,
     upsertSession,
     upsertSessionInList,
@@ -50,8 +51,8 @@ function note(id: string, sessionNumber: number, minute: number, extra: Partial<
 function stream(): SessionStreamData {
     const page0: SessionStream = {
         sessions: [
-            { session: session(3), notes: [note("a", 3, 0), note("b", 3, 10)] },
-            { session: session(4, { isCurrent: true }), notes: [note("c", 4, 5)] },
+            { session: session(3), notes: [note("a", 3, 0), note("b", 3, 10)], combats: [] },
+            { session: session(4, { isCurrent: true }), notes: [note("c", 4, 5)], combats: [] },
         ],
         currentSessionId: "s4",
         suggestNextSession: true,
@@ -59,8 +60,8 @@ function stream(): SessionStreamData {
     };
     const page1: SessionStream = {
         sessions: [
-            { session: session(1), notes: [] },
-            { session: session(2), notes: [note("d", 2, 0)] },
+            { session: session(1), notes: [], combats: [] },
+            { session: session(2), notes: [note("d", 2, 0)], combats: [] },
         ],
         currentSessionId: "s4",
         suggestNextSession: true,
@@ -335,5 +336,60 @@ describe("upsertSessionInList", () => {
         )!;
         expect(next.sessions.map((s) => s.number)).toEqual([1]);
         expect(next.currentSessionId).toBe("s1");
+    });
+});
+
+describe("upsertCombatCard (18e)", () => {
+    const card = (sessionNumber: number, minute: number, extra: Partial<CombatCard> = {}): CombatCard => ({
+        id: "combat-1",
+        sessionId: `s${sessionNumber}`,
+        name: "Goblin Ambush",
+        status: "Active",
+        round: 1,
+        createdAt: `2026-09-${String(sessionNumber).padStart(2, "0")}T19:${String(minute).padStart(2, "0")}:00Z`,
+        startedAt: null,
+        finishedAt: null,
+        combatants: [],
+        ...extra,
+    });
+    const cardsOf = (data: SessionStreamData | undefined, id: string) =>
+        flattenSessions(data).find((s) => s.session.id === id)?.combats ?? [];
+
+    it("adds a card to its loaded session and replaces it in place", () => {
+        const added = upsertCombatCard(stream(), card(3, 5), "All");
+        expect(cardsOf(added, "s3").map((c) => c.round)).toEqual([1]);
+        const updated = upsertCombatCard(added, card(3, 5, { round: 2 }), "All");
+        expect(cardsOf(updated, "s3").map((c) => c.round)).toEqual([2]);
+    });
+
+    it("is a no-op for a repeated push, and under a filter with no cards", () => {
+        const added = upsertCombatCard(stream(), card(3, 5), "Combats")!;
+        expect(upsertCombatCard(added, card(3, 5), "Combats")).toBe(added);
+        const data = stream();
+        expect(upsertCombatCard(data, card(3, 5), "Recaps")).toBe(data);
+        expect(upsertCombatCard(data, card(3, 5), "Mine")).toBe(data);
+    });
+
+    it("moves the card when a first roll moves the combat to another session", () => {
+        const draft = upsertCombatCard(stream(), card(3, 5, { status: "Draft", round: 0 }), "All");
+        const started = upsertCombatCard(draft, card(4, 5, { startedAt: "2026-09-04T19:30:00Z" }), "All");
+        expect(cardsOf(started, "s3")).toEqual([]);
+        expect(cardsOf(started, "s4").map((c) => c.sessionId)).toEqual(["s4"]);
+    });
+
+    it("drops a card whose session is not loaded", () => {
+        const added = upsertCombatCard(stream(), card(3, 5), "All");
+        const elsewhere = upsertCombatCard(added, card(9, 5), "All");
+        expect(flattenSessions(elsewhere).flatMap((s) => s.combats)).toEqual([]);
+    });
+
+    it("keeps cards in time order, started ones by startedAt", () => {
+        const first = upsertCombatCard(stream(), card(3, 30, { id: "late" }), "All");
+        const both = upsertCombatCard(
+            first,
+            card(3, 50, { id: "early", startedAt: "2026-09-03T19:10:00Z" }),
+            "All"
+        );
+        expect(cardsOf(both, "s3").map((c) => c.id)).toEqual(["early", "late"]);
     });
 });

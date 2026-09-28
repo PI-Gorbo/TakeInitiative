@@ -48,7 +48,8 @@
                 :campaignId="campaignId"
                 :block="block"
                 :viewerMemberId="viewerMemberId"
-                :nameOf="nameOf" />
+                :nameOf="nameOf"
+                :highlighted="block.id === highlightedBlockId" />
         </div>
     </section>
 </template>
@@ -63,6 +64,7 @@
         viewerMemberId: string;
         canEdit: boolean;
         nameOf: (memberId: string) => string;
+        highlightedBlockId?: string | null;
     }>();
     const emit = defineEmits<{ edit: [] }>();
     const id = useId();

@@ -58,3 +58,11 @@ public class RecordingHubFixture : AuthenticatedWebAppWithDatabaseFixture
     protected override void ConfigureTestServices(IServiceCollection services)
         => services.AddSingleton<IHubContext<CampaignHub>>(Hub);
 }
+
+/// <summary>A <see cref="RecordingHubFixture"/> whose host reads the synthetic 5eTools index (21b).</summary>
+public class FiveEToolsFixture : RecordingHubFixture
+{
+    public static readonly string IndexPath = Path.Combine(AppContext.BaseDirectory, "Fixtures", "5etools-index.json");
+
+    protected override string FiveEToolsIndexPath => IndexPath;
+}

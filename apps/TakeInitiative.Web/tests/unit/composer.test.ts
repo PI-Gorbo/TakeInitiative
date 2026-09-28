@@ -236,7 +236,7 @@ describe("session picker", () => {
 describe("gap prompt", () => {
     const now = new Date("2026-09-25T20:00:00Z");
     const note = (id: string, postedAt: string) => ({ id, postedAt }) as SessionNote;
-    const loaded = (notes: SessionNote[]): SessionStreamSession[] => [{ session: sessions[0], notes }];
+    const loaded = (notes: SessionNote[]): SessionStreamSession[] => [{ session: sessions[0], notes, combats: [] }];
 
     it("finds the newest loaded note, ignoring optimistic ones", () => {
         const data = loaded([
