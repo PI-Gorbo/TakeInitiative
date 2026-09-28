@@ -1245,6 +1245,8 @@ export interface components {
             hasStatBlock: boolean;
             suggestedKind: components["schemas"]["EntryKind"];
             stats?: components["schemas"]["StatsResponse"] | null;
+            book?: string | null;
+            bookTitle?: string | null;
         };
         StatsResponse: {
             initiativeRoll?: string | null;
@@ -1465,6 +1467,7 @@ export interface components {
             name?: string | null;
             url: string;
             detail?: string | null;
+            bookTitle?: string | null;
             hasStatBlock: boolean;
         };
         GetEntryRequest: Record<string, never>;
