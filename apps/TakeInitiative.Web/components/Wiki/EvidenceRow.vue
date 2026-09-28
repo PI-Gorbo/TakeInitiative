@@ -5,7 +5,7 @@
     <article
         v-if="evidence.block"
         class="flex flex-col gap-1 border-b px-4 py-3">
-        <NoteMarkdown
+        <SessionNoteMarkdown
             :campaignId="campaignId"
             :text="evidence.block.snippet"
             class="text-sm" />
@@ -28,7 +28,7 @@
     <article
         v-else-if="evidence.note"
         class="flex flex-col gap-1 border-b px-4 py-3">
-        <NoteMarkdown
+        <SessionNoteMarkdown
             :campaignId="campaignId"
             :text="evidence.note.snippet"
             class="text-sm" />
