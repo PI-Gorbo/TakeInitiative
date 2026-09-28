@@ -28,7 +28,7 @@ which sits on 18f (#238). Each PR leaves the app runnable:
 |---|---|---|---|---|
 | 19a | `v2/19a-connections-api` | Connections, evidence and the graph (API) | 18's app unchanged in the browser. The API answers an entry's connections, a pair's evidence and a campaign graph, per viewer, and the leak tests pass | [x] |
 | 19b | `v2/19b-loose-ends-api` | Loose ends and link suggestions (API) | The same in the browser. The API lists loose ends per viewer with suggested links for unlinked notes, and counts them for the Wiki and per session | [x] |
-| 19c | `v2/19c-connections-panel` | The Connections panel and evidence sheet | An entry page shows CONNECTIONS, grouped with "Seen at", and a tap opens the evidence. It refreshes live | [ ] |
+| 19c | `v2/19c-connections-panel` | The Connections panel and evidence sheet | An entry page shows CONNECTIONS, grouped with "Seen at", and a tap opens the evidence. It refreshes live | [x] |
 | 19d | `v2/19d-graph-page` | The graph page | `/wiki/graph` draws the force graph, with kind chips, depth 1–2, pan and pinch zoom, and edges that open the evidence | [ ] |
 | 19e | `v2/19e-loose-ends-ui` | Loose ends in the Wiki and on sessions | "Loose ends (n)" in the Wiki and ⌘K, 🧵 counts on dividers, and resolving in place. The step's Verify passes | [ ] |
 
@@ -586,3 +586,27 @@ PR adds the nouns the step puts into code and UI:
     parallel test hosts racing FastEndpoints' process-wide static serializer options.
     Test hosts now start one at a time (`HostStartup`), and the enum converter is set on
     the ASP.NET JSON options in `Program.cs` instead of in `UseFastEndpoints`' config.
+- **As built, 19c.** Where it differs from 19c above:
+  - `Wiki/EntryConnections.vue` takes the entry's id, name and kind, `nameOf` and the
+    page's "Add a note about…" href as props. `[graph ↗]` is not rendered at all yet;
+    19d adds it next to the heading.
+  - When a "Seen at" / "Seen here" group is shown, the rest are headed "Also
+    connected", so they do not read as part of it. With no such group the one group
+    has no heading. The 12-chip limit runs across the groups in panel order
+    (`limitConnectionGroups`), and `sortConnections` re-sorts what the API sends
+    (weight, `lastAt`, name).
+  - A chip is the entry's kind icon, its name, `(weight)` and ⚔, with an accessible
+    name such as "Tharden, 3 pieces of evidence, fought together".
+  - `Wiki/EvidenceSheet.vue` uses reka's dialog parts directly, as
+    `Image/SessionGallerySheet.vue` does, with classes for bottom on a phone and a
+    right-hand panel from `md`, rather than shadcn's `SheetContent` (whose `side` is
+    not responsive). The title's `(n)` is the number of evidence rows once they load,
+    and the chip's weight until then. The evidence query runs only while the sheet is
+    open.
+  - Any route change closes the sheet (row links, mention chips, combat cards, the
+    title's link), and focus is not returned to the chip then, so `?block=`'s scroll
+    stands. A block row's link reads "{entry}'s article"; 🔒 labels use `secretLabel`;
+    a hidden note shows "Hidden".
+  - The hub invalidates `["connections", campaignId]` on the eight pushes listed, and
+    also on joining, reconnecting and a change to the viewer's own role, like the
+    other campaign queries.
