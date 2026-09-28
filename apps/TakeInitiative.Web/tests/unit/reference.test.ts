@@ -1,7 +1,15 @@
 import { describe, expect, it } from "vitest";
-import type { StatBlock } from "~/utils/api/types";
+import type { EntrySource, SearchReferenceHit, StatBlock } from "~/utils/api/types";
 import {
     abilityRows,
+    addToWikiConflict,
+    addToWikiItemFromHit,
+    addToWikiStatsLine,
+    conflictMessage,
+    defaultAddVisibility,
+    shortStatsLine,
+    sourceLink,
+    sourceName,
     attributionParts,
     crLine,
     detailLines,
@@ -223,5 +231,78 @@ describe("attributionParts", () => {
         expect(parts.map((p) => p.text).join("")).toBe(
             "Material from the SRD, available at https://www.dndbeyond.com/srd. Licensed at https://creativecommons.org/licenses/by/4.0/legalcode."
         );
+    });
+});
+
+describe("+ Wiki", () => {
+    const hit: SearchReferenceHit = {
+        provider: "srd52",
+        providerLabel: "SRD 5.2",
+        id: "goblin-warrior",
+        name: "Goblin Warrior",
+        category: "Monster",
+        detail: "CR 1/4 · Small Fey",
+        url: null,
+        hasStatBlock: true,
+        suggestedKind: "Character",
+    };
+    const stats = { initiativeRoll: "1d20+2", maxHp: "3d6", ac: 15 };
+
+    it("defaults to DM for a DM and Everyone for a player", () => {
+        expect(defaultAddVisibility(true)).toBe("DM");
+        expect(defaultAddVisibility(false)).toBe("Everyone");
+    });
+
+    it("takes a ⌘K hit without Stats, so the dialog reads them", () => {
+        const item = addToWikiItemFromHit(hit);
+        expect(item).toMatchObject({ provider: "srd52", id: "goblin-warrior", name: "Goblin Warrior" });
+        expect("stats" in item).toBe(false);
+    });
+
+    it("tells a DM the Stats and a player that a DM adds them", () => {
+        expect(shortStatsLine(stats)).toBe("1d20+2 · 3d6 · AC 15");
+        expect(addToWikiStatsLine("Character", stats, true)).toBe("Stats: 1d20+2 · 3d6 · AC 15");
+        expect(addToWikiStatsLine("Character", stats, false)).toBe("A DM can add its stats.");
+        expect(addToWikiStatsLine("Character", undefined, true)).toBeNull();
+        expect(addToWikiStatsLine("Item", stats, true)).toBeNull();
+        expect(shortStatsLine({ ac: 0 })).toBe("AC 0");
+    });
+
+    it("keeps a 409 while the name is the one that clashed", () => {
+        const conflict = addToWikiConflict(409, " Goblin ", "e1");
+        expect(conflict).toEqual({ name: "Goblin", existingId: "e1" });
+        expect(conflictMessage(conflict, "Goblin")).toBe("There's already an entry called Goblin.");
+        expect(conflictMessage(conflict, "goblin ")).toBe("There's already an entry called Goblin.");
+        expect(conflictMessage(conflict, "Goblin Warrior")).toBeNull();
+        expect(addToWikiConflict(400, "Goblin", null)).toBeNull();
+        expect(addToWikiConflict(409, "Goblin", null)).toEqual({ name: "Goblin", existingId: null });
+        expect(conflictMessage(null, "Goblin")).toBeNull();
+    });
+});
+
+describe("the source line", () => {
+    const source: EntrySource = {
+        provider: "srd52",
+        providerLabel: "SRD 5.2",
+        externalId: "goblin-warrior",
+        name: "Goblin Warrior",
+        url: "https://www.dndbeyond.com/srd",
+        hasStatBlock: true,
+    };
+
+    it("links to our card for a provider with stat blocks", () => {
+        expect(sourceLink("c1", source)).toEqual({ to: "/app/campaigns/c1/reference/srd52/goblin-warrior" });
+        expect(sourceName(source)).toBe("Goblin Warrior");
+    });
+
+    it("links out for a search-only provider", () => {
+        const url = "https://5e.tools/bestiary.html#owlbear_xmm";
+        expect(sourceLink("c1", { ...source, provider: "5etools", hasStatBlock: false, url })).toEqual({ href: url });
+    });
+
+    it("shows the stored id and no link when the item has gone", () => {
+        const gone = { ...source, name: null, hasStatBlock: false };
+        expect(sourceLink("c1", gone)).toBeNull();
+        expect(sourceName(gone)).toBe("goblin-warrior");
     });
 });

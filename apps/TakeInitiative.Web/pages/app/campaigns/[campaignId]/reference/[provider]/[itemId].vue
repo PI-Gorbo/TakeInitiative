@@ -2,7 +2,8 @@
     <div class="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 py-4 pb-safe">
         <!-- A reference item's stat-block card (20c), read-only, with its source's
              attribution under it. It sits in the campaign so the tabs, ⌘K and 20d's + Wiki
-             have one, but the data is the same for every campaign. No tab lights up. -->
+             have one, but the data is the same for every campaign. No tab lights up. + Wiki
+             sits under the name (20d). -->
         <button
             type="button"
             class="-ml-2 flex h-11 w-fit items-center gap-1 rounded-md px-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground md:h-9"
@@ -32,15 +33,32 @@
             iconSize="2x"
             class="pt-8" />
         <template v-else>
-            <ReferenceStatBlockCard :block="item.statBlock" />
+            <ReferenceStatBlockCard :block="item.statBlock">
+                <template #actions>
+                    <Button
+                        variant="outline"
+                        class="h-11 gap-1.5 md:h-9"
+                        :aria-label="`Add ${item.summary.name} to the wiki`"
+                        @click="addOpen = true">
+                        <Plus
+                            class="size-4"
+                            aria-hidden="true" />
+                        Wiki
+                    </Button>
+                </template>
+            </ReferenceStatBlockCard>
             <ReferenceAttribution :attribution="item.attribution" />
+            <ReferenceAddToWikiDialog
+                v-model:open="addOpen"
+                :campaignId="campaignId"
+                :item="item.summary" />
         </template>
     </div>
 </template>
 
 <script setup lang="ts">
     import { useQuery } from "@tanstack/vue-query";
-    import { BookX, ChevronLeft } from "lucide-vue-next";
+    import { BookX, ChevronLeft, Plus } from "lucide-vue-next";
     import { apiErrorStatus } from "~/utils/apiErrorParser";
     import { getReferenceItemQuery } from "~/utils/queries/reference";
     import { OPEN_SEARCH } from "~/utils/search";
@@ -59,6 +77,9 @@
     const itemQuery = useQuery(getReferenceItemQuery(provider, itemId));
     const item = computed(() => itemQuery.data.value);
     const notFound = computed(() => apiErrorStatus(itemQuery.error.value) === 404);
+
+    // + Wiki (20d), with the item's own Stats for the dialog's line.
+    const addOpen = ref(false);
 
     useHead({
         title: () => (item.value ? `${item.value.summary.name} · ${item.value.summary.providerLabel}` : "Reference"),

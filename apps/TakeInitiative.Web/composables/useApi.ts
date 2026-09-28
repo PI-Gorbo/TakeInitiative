@@ -27,6 +27,7 @@ import { putSessionNoteVisibilityRequest } from "~/utils/api/sessionNote/putSess
 import { getEntriesRequest } from "~/utils/api/entry/getEntriesRequest";
 import { getEntryRequest } from "~/utils/api/entry/getEntryRequest";
 import { getEntryTimelineRequest } from "~/utils/api/entry/getEntryTimelineRequest";
+import { postEntryFromReferenceRequest } from "~/utils/api/entry/postEntryFromReferenceRequest";
 import { postEntryRequest } from "~/utils/api/entry/postEntryRequest";
 import { postEntryQuoteRequest } from "~/utils/api/entry/postEntryQuoteRequest";
 import { putEntryAliasesRequest } from "~/utils/api/entry/putEntryAliasesRequest";
@@ -103,6 +104,7 @@ export const useApi = () => {
             list: getEntriesRequest($axios),
             get: getEntryRequest($axios),
             create: postEntryRequest($axios),
+            createFromReference: postEntryFromReferenceRequest($axios),
             timeline: getEntryTimelineRequest($axios),
             putName: putEntryNameRequest($axios),
             putKind: putEntryKindRequest($axios),

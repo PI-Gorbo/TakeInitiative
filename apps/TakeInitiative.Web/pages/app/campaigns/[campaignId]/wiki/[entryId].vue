@@ -1,6 +1,6 @@
 <template>
     <div class="mx-auto flex w-full max-w-3xl flex-col gap-5 px-4 py-4 pb-safe">
-        <!-- An entry (design §4): its header (15c), its claim and stats (15g), its article
+        <!-- An entry (design §4): its header (15c), its source (20d), its claim and stats (15g), its article
              (15f), its connections (19c), its timeline (15c), its gallery (16d) and its combats
              (18e). `?edit={blockId}` opens the article editor at a block
              (a phone's promote, §3a). A merged entry's id loads its target (15g), and the
@@ -48,6 +48,10 @@
                 @history="historyOpen = true"
                 @merge="mergeOpen = true" />
 
+            <ReferenceEntrySourceLine
+                v-if="entry.source"
+                :campaignId="campaignId"
+                :source="entry.source" />
             <WikiClaimControl
                 :campaignId="campaignId"
                 :entry="entry"

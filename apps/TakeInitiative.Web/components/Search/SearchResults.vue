@@ -50,14 +50,26 @@
                     v-else-if="row.type === 'action'"
                     name="action"
                     :row="row" />
+                <!-- + Wiki on a reference row (20d): its own target, so a tap on it is not [view]. -->
+                <button
+                    v-if="row.type === 'hit' && row.hit.reference"
+                    type="button"
+                    class="ml-2 flex size-11 shrink-0 items-center justify-center gap-0.5 rounded-md text-xs font-medium text-muted-foreground hover:bg-background/60 hover:text-foreground md:h-8 md:w-auto md:px-2"
+                    :aria-label="`Add ${row.hit.reference.name} to the wiki`"
+                    @click.stop="emit('addToWiki', row.hit.reference)">
+                    <Plus
+                        class="size-4"
+                        aria-hidden="true" />
+                    <span class="max-md:sr-only">Wiki</span>
+                </button>
             </div>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-    import { LoaderCircle } from "lucide-vue-next";
-    import type { SearchSectionKey } from "~/utils/api/types";
+    import { LoaderCircle, Plus } from "lucide-vue-next";
+    import type { SearchReferenceHit, SearchSectionKey } from "~/utils/api/types";
     import type { SearchRow } from "~/utils/search";
 
     const props = defineProps<{
@@ -69,7 +81,11 @@
         authorName: (memberId: string) => string;
         loadingMore?: SearchSectionKey | null;
     }>();
-    const emit = defineEmits<{ "update:cursor": [index: number]; choose: [row: SearchRow] }>();
+    const emit = defineEmits<{
+        "update:cursor": [index: number];
+        choose: [row: SearchRow];
+        addToWiki: [hit: SearchReferenceHit];
+    }>();
     defineSlots<{ action(props: { row: Extract<SearchRow, { type: "action" }> }): unknown }>();
 
     type Selectable = Exclude<SearchRow, { type: "header" }>;

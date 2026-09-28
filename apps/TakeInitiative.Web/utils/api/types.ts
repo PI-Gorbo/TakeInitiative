@@ -122,6 +122,8 @@ export type ReferenceItem = Schemas["ReferenceItemResponse"];
 export type ReferenceSummary = Schemas["ReferenceSummaryResponse"];
 export type ReferenceAttribution = Schemas["ReferenceAttributionResponse"];
 export type StatBlock = Schemas["StatBlock"];
+/** An entry's source (20b, 20d): left out of the JSON when the viewer cannot read it. */
+export type EntrySource = Schemas["EntrySourceResponse"];
 export type StatBlockSpeed = Schemas["StatBlockSpeed"];
 export type StatBlockTrait = Schemas["StatBlockTrait"];
 export type StatBlockAction = Schemas["StatBlockAction"];

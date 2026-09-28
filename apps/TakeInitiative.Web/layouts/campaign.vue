@@ -97,7 +97,13 @@
         <SearchSheet
             v-model:open="searchOpen"
             :campaignId="campaignId"
-            :returnFocus="returnFocus" />
+            :returnFocus="returnFocus"
+            @addToWiki="openAddToWiki" />
+        <!-- + Wiki from a ⌘K reference row (20d); the card page has its own. -->
+        <ReferenceAddToWikiDialog
+            v-model:open="addToWikiOpen"
+            :campaignId="campaignId"
+            :item="addToWikiItem" />
         <!-- iOS raises the keyboard only for a focus made during the tap, and the sheet's
              input mounts after it: this holds the focus (and the keyboard) until then. -->
         <input
@@ -118,6 +124,8 @@
     import { BookOpen, Castle, ChevronLeft, Search, Swords } from "lucide-vue-next";
     import { getCampaignQuery } from "~/utils/queries/campaign";
     import { getCombatsQuery } from "~/utils/queries/combats";
+    import type { SearchReferenceHit } from "~/utils/api/types";
+    import { addToWikiItemFromHit, type AddToWikiItem } from "~/utils/reference";
     import { OPEN_SEARCH } from "~/utils/search";
     import { rememberCampaign } from "~/utils/shareTarget";
 
@@ -186,6 +194,14 @@
         searchOpen.value = true;
     }
     provide(OPEN_SEARCH, openSearch);
+
+    // + Wiki from ⌘K (20d): the sheet has closed; the dialog opens on the next tick.
+    const addToWikiOpen = ref(false);
+    const addToWikiItem = shallowRef<AddToWikiItem | null>(null);
+    function openAddToWiki(hit: SearchReferenceHit) {
+        addToWikiItem.value = addToWikiItemFromHit(hit);
+        void nextTick(() => (addToWikiOpen.value = true));
+    }
     const shortcutLabel = computed(() =>
         /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘K" : "Ctrl K"
     );

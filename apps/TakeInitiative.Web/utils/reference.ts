@@ -1,12 +1,23 @@
 // The stat-block card's pure rules (20c): SRD 5.2's header lines, the ability table,
 // grouping actions by kind, the rules text as blocks of text runs, and the card's route.
+// + Wiki's dialog and the entry's source line (20d) are here too.
 // `Reference/StatBlockCard.vue` only draws these.
 //
 // The rules text is never markdown and never `v-html`. The build script (20a) lets through
 // only `**bold**`, `_italic_`, blank-line paragraphs and `- ` list lines, and fails on
 // anything else, so those four are all this reads. Everything becomes Vue text nodes, so a
 // bad transcription can never inject markup.
-import type { SearchReferenceHit, StatBlock, StatBlockAction, StatBlockSpeed } from "./api/types";
+import type {
+    EntryKind,
+    EntrySource,
+    ReferenceSummary,
+    SearchReferenceHit,
+    StatBlock,
+    StatBlockAction,
+    StatBlockSpeed,
+    Stats,
+    Visibility,
+} from "./api/types";
 
 // ── Numbers ──────────────────────────────────────────────────────────────────
 
@@ -219,3 +230,78 @@ export function attributionParts(text: string): AttributionPart[] {
     if (at < text.length) parts.push({ text: text.slice(at) });
     return parts;
 }
+
+// ── + Wiki (20d) ─────────────────────────────────────────────────────────────
+
+/** What the + Wiki dialog needs: a ⌘K hit has it all but the Stats, which a card's summary has. */
+export type AddToWikiItem = Pick<
+    ReferenceSummary,
+    "provider" | "providerLabel" | "id" | "name" | "suggestedKind" | "hasStatBlock"
+> & { stats?: Stats | null };
+
+/** A ⌘K reference hit as the dialog's item. */
+export const addToWikiItemFromHit = (hit: SearchReferenceHit): AddToWikiItem => ({
+    provider: hit.provider,
+    providerLabel: hit.providerLabel,
+    id: hit.id,
+    name: hit.name,
+    suggestedKind: hit.suggestedKind,
+    hasStatBlock: hit.hasStatBlock,
+});
+
+/** DM for a DM (prep before the players meet it), Everyone for a player. */
+export const defaultAddVisibility = (isDm: boolean): Visibility => (isDm ? "DM" : "Everyone");
+
+/** "1d20+2 · 3d6 · AC 15": a stat line as short as the dialog shows it. */
+export function shortStatsLine(stats: Stats | null | undefined): string {
+    if (!stats) return "";
+    return [stats.initiativeRoll, stats.maxHp, stats.ac != null ? `AC ${stats.ac}` : null].filter(Boolean).join(" · ");
+}
+
+/**
+ * The dialog's stats line. Only a Character has Stats. A DM's entry gets them in the same
+ * save ("Stats: 1d20+2 · 3d6 · AC 15"); a player's does not ("A DM can add its stats.").
+ * Null when there is nothing to say (another kind, or a DM's stats not loaded yet).
+ */
+export function addToWikiStatsLine(kind: EntryKind, stats: Stats | null | undefined, isDm: boolean): string | null {
+    if (kind !== "Character") return null;
+    if (!isDm) return "A DM can add its stats.";
+    const line = shortStatsLine(stats);
+    return line ? `Stats: ${line}` : null;
+}
+
+/** A 409 from + Wiki: the name that clashed and the entry that has it (when the viewer sees it). */
+export type AddToWikiConflict = { name: string; existingId: string | null };
+
+const sameName = (a: string, b: string) => a.trim().toLocaleLowerCase() === b.trim().toLocaleLowerCase();
+
+/** The dialog's state after a failed add: a conflict for a 409, else null (a toast says why). */
+export const addToWikiConflict = (status: number | undefined, name: string, existingId: string | null) =>
+    status === 409 ? ({ name: name.trim(), existingId } satisfies AddToWikiConflict) : null;
+
+/**
+ * "There's already an entry called Goblin.", shown while the name field still holds the name
+ * that clashed. Renaming clears it; the dialog never overwrites.
+ */
+export function conflictMessage(conflict: AddToWikiConflict | null, currentName: string): string | null {
+    if (!conflict || !sameName(conflict.name, currentName)) return null;
+    return `There's already an entry called ${conflict.name}.`;
+}
+
+// ── The entry's source line (20d) ─────────────────────────────────────────────
+
+export type SourceLink = { to: string } | { href: string } | null;
+
+/**
+ * Where "📖 From SRD 5.2 · Goblin Warrior [view]" goes: our card for a provider with stat
+ * blocks, the item's `url` for a search-only one (21), and nowhere when the item has gone
+ * from the data (`name` is null).
+ */
+export function sourceLink(campaignId: string, source: EntrySource): SourceLink {
+    if (!source.name) return null;
+    if (source.hasStatBlock) return { to: referencePath(campaignId, source.provider, source.externalId) };
+    return source.url ? { href: source.url } : null;
+}
+
+/** The source's item name, or its stored id when the item has gone from the data. */
+export const sourceName = (source: EntrySource) => source.name || source.externalId;

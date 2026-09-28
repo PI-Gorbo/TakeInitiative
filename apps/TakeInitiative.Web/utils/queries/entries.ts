@@ -314,6 +314,19 @@ export const createEntryMutation = () => {
     });
 };
 
+// + Wiki (20d): an entry from a reference item. The list is read again as well, since the
+// entry's Stats arrive with it for a DM and pushes may race the answer.
+export const createEntryFromReferenceMutation = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: useApi().entry.createFromReference,
+        onSuccess: (entry, { campaignId }) => {
+            applyEntryResponse(queryClient, campaignId, entry);
+            void queryClient.invalidateQueries({ queryKey: getEntriesQueryKey(campaignId), exact: true });
+        },
+    });
+};
+
 // Can edit: name, kind, aliases.
 export const putEntryNameMutation = () => {
     const queryClient = useQueryClient();

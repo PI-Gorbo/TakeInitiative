@@ -131,12 +131,28 @@ export const canReadStats = (entry: Pick<EntrySummary, "kind" | "claimedByMember
 export const canWriteStats = (entry: Pick<EntrySummary, "kind" | "claimedByMemberId">, viewer: EntryViewer) =>
     entry.kind === "Character" && (viewer.isDm || (!!claimerOf(entry) && claimerOf(entry) === viewer.memberId));
 
+/**
+ * "Use SRD stats" (20d): the entry came from a reference item with a stat block, and the
+ * viewer writes its Stats. The item's Stats come from the API (its `summary.stats`).
+ */
+export const canUseSourceStats = (
+    entry: Pick<Entry, "kind" | "claimedByMemberId" | "source">,
+    viewer: EntryViewer
+) => !!entry.source?.hasStatBlock && canWriteStats(entry, viewer);
+
 /** The API's limits for a stat line. */
 export const STATS_AC_MAX = 99;
 export const STATS_EXPRESSION_MAX = 100;
 
 /** The stats editor's three text fields. */
 export type StatsForm = { initiativeRoll: string; maxHp: string; ac: string };
+
+/** A stat line as the editor's fields: none is blank. */
+export const statsForm = (stats: Entry["stats"]): StatsForm => ({
+    initiativeRoll: stats?.initiativeRoll ?? "",
+    maxHp: stats?.maxHp ?? "",
+    ac: stats?.ac != null ? String(stats.ac) : "",
+});
 
 /**
  * The stats editor's fields as a `PUT stats` body: blank is none (all blank clears

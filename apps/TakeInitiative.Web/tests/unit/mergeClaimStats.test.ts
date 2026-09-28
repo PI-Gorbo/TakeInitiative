@@ -6,6 +6,7 @@ import {
     canClaimEntry,
     canReadStats,
     canUnclaimEntry,
+    canUseSourceStats,
     canWriteStats,
     currentVersionIndex,
     describeChange,
@@ -16,6 +17,7 @@ import {
     mergeRevealsNothing,
     parseStatsForm,
     resolveEntry,
+    statsForm,
     statsLabel,
 } from "~/utils/entries";
 import { applyMerge } from "~/utils/entryCache";
@@ -162,6 +164,35 @@ describe("claims and stats", () => {
         });
         expect(parseStatsForm({ initiativeRoll: "", maxHp: "", ac: "100" }).errors.ac).toContain("0 and 99");
         expect(parseStatsForm({ initiativeRoll: "", maxHp: "", ac: "1.5" }).body).toBeNull();
+    });
+
+    it("offers \"Use SRD stats\" to whoever writes the stats of an entry from a stat block (20d)", () => {
+        const source = {
+            provider: "srd52",
+            providerLabel: "SRD 5.2",
+            externalId: "owlbear",
+            name: "Owlbear",
+            url: "https://www.dndbeyond.com/srd",
+            hasStatBlock: true,
+        };
+        const owlbear = { ...npc, source };
+        expect(canUseSourceStats(owlbear, dm)).toBe(true);
+        // A player is never sent an NPC's source, and could not write its stats anyway.
+        expect(canUseSourceStats(owlbear, sam)).toBe(false);
+        expect(canUseSourceStats({ ...owlbear, claimedByMemberId: "sam" }, sam)).toBe(true);
+        expect(canUseSourceStats({ ...owlbear, claimedByMemberId: "sam" }, priya)).toBe(false);
+        expect(canUseSourceStats(npc, dm)).toBe(false);
+        expect(canUseSourceStats({ ...owlbear, source: { ...source, hasStatBlock: false } }, dm)).toBe(false);
+        expect(canUseSourceStats({ ...owlbear, kind: "Item" }, dm)).toBe(false);
+    });
+
+    it("fills the form from a stat line", () => {
+        expect(statsForm({ initiativeRoll: "1d20+1", maxHp: "7d10+21", ac: 13 })).toEqual({
+            initiativeRoll: "1d20+1",
+            maxHp: "7d10+21",
+            ac: "13",
+        });
+        expect(statsForm(null)).toEqual({ initiativeRoll: "", maxHp: "", ac: "" });
     });
 
     it("labels a stat line", () => {

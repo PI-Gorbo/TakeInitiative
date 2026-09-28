@@ -60,7 +60,8 @@
                         :optionId="optionId"
                         :authorName="authorName"
                         :loadingMore="loadingMore"
-                        @choose="(row) => choose(row, 'pointer')">
+                        @choose="(row) => choose(row, 'pointer')"
+                        @addToWiki="addToWiki">
                         <template #action="{ row }">
                             <SearchCreateEntryRow
                                 v-if="row.actionId === CREATE_ENTRY_ACTION_ID"
@@ -121,7 +122,14 @@
         DialogTitle,
     } from "reka-ui";
     import { toast } from "vue-sonner";
-    import type { EntryKind, EntrySummary, SearchSection, SearchSectionKey, Visibility } from "~/utils/api/types";
+    import type {
+        EntryKind,
+        EntrySummary,
+        SearchReferenceHit,
+        SearchSection,
+        SearchSectionKey,
+        Visibility,
+    } from "~/utils/api/types";
     import { apiErrorMessage, apiErrorStatus } from "~/utils/apiErrorParser";
     import { currentMember } from "~/utils/campaign";
     import { nextSessionNumber } from "~/utils/composer";
@@ -163,6 +171,8 @@
         returnFocus?: HTMLElement | null;
     }>();
     const open = defineModel<boolean>("open", { required: true });
+    /** + Wiki on a reference row (20d): the sheet closes first, then the host opens the dialog. */
+    const emit = defineEmits<{ addToWiki: [hit: SearchReferenceHit] }>();
 
     const query = ref("");
     const input = useTemplateRef<HTMLInputElement>("input");
@@ -362,6 +372,13 @@
         else void navigateTo(target);
     }
 
+    function addToWiki(hit: SearchReferenceHit) {
+        // The dialog takes the focus; the sheet does not hand it back to its trigger.
+        handedOff = true;
+        open.value = false;
+        emit("addToWiki", hit);
+    }
+
     function runAction(actionId: string, via: "key" | "pointer") {
         const action = SEARCH_ACTIONS.find((a) => a.id === actionId);
         if (!action) return;
@@ -458,6 +475,11 @@
             event.preventDefault();
             // Typed and Enter before the hits arrive: never a Create nobody saw offered.
             const row = activeRow.value ?? rows.value[firstRow(rows.value)];
+            // ⌘Enter on a reference row is + Wiki (20d).
+            if ((event.metaKey || event.ctrlKey) && row?.type === "hit" && row.hit.reference) {
+                addToWiki(row.hit.reference);
+                return;
+            }
             if (loading.value && row?.type === "action" && row.actionId === CREATE_ENTRY_ACTION_ID) return;
             choose(row);
         }
