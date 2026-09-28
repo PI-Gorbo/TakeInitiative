@@ -69,10 +69,18 @@ Stack #224. Everything is on top of `dev` and still open:
 | #223 | `v2/17-composer-cta-dialog` | No sessions → the composer is only a "Start Session 1" call to action. The Promote and Merge dialogs fit their content |
 | #225 | `v2/17-composer-tiptap` | The composer on TipTap: ⌘B, ⌘I, ⌘⇧8, ⌘K for the `@` picker, `@` mentions as nodes. The stored markdown format is unchanged |
 | #226 | `v2/17-composer-edit-mode` | Editing a note happens in the composer, with Cancel and Save. `Session/NoteEditor.vue` is deleted |
-| (this) | `v2/17-handover` | This file |
-| #228 | `v2/17b-search-sheet` | 17b: the search sheet |
-| #229 | `v2/17c-search-actions` | 17c: actions; closes step 17 |
-| — | `v2/18-combat-plan` | Step 18's step file |
+| #227 | `v2/17-handover` | This file |
+| #228 | `v2/17b-search-sheet` | 17b: the ⌘K search sheet |
+| #229 | `v2/17c-search-actions` | 17c: ⌘K actions; closes step 17 |
+| #230 | `v2/18-combat-plan` | Step 18's step file |
+| #231 | `v2/18-fix-nested-layouts` | Fix: the app and logo layouts no longer nest the default layout |
+| #232 | `v2/18a-combat-api` | 18a: the combat model, redaction, combatants and live pushes (API) |
+| #233 | `v2/18-fix-loading-padding` | Fix: `LoadingFallback` pads only its loading and error states |
+| #234 | `v2/18b-combat-turns-api` | 18b: roll, end turn, reorder, finish and history (API) |
+| #235 | `v2/18c-combat-tab` | 18c: the Combat tab, the combat page and adding combatants |
+| #236 | `v2/18d-combatant-sheet` | 18d: the combatant sheet, drag to reorder and the combat history |
+| #237 | `v2/18e-combat-card` | 18e: combat cards in the stream, the Join combat banner and pulse, an entry's combats, the slim composer |
+| #238 | `v2/18f-combat-search` | 18f: combats and "⚔ Start combat" in ⌘K; closes step 18 |
 
 The local branches `pr/PI-Gorbo/222`, `pr/PI-Gorbo/222-1` and `pr/PI-Gorbo/222-2` are stale
 checkouts of #222. Ignore them.
@@ -102,18 +110,15 @@ checkouts of #222. Ignore them.
 
 ## Next work
 
-1. **Get #222–#226 checked in a browser.** No agent has run them in a real browser
-   yet, and each PR body has a checklist. Fix what the user reports on top of the
-   stack.
-2. ~~17b, the search sheet~~ (#228) and ~~17c, actions~~ (#229) are done, and
-   step 17 is closed (PR table ticked, README `done`). Both need the same browser
-   check as 1.
-3. **Step 18, Combat v2** ([18-combat.md](18-combat.md)). Its step file is the docs
-   PR `v2/18-combat-plan` on top of 17c. Run 18a–18f in order, one subagent each.
-   Read the step file's "Decisions this file made where the design was open" first:
-   several deviate from §8 on purpose (`TurnCombatantId`, the first roll starts a
-   combat, no per-combat SignalR groups).
-4. **Then steps 19–24** in README order. Write each step file first.
+1. **Get #222–#238 checked in a browser.** No agent has run them in a real browser,
+   and each PR body has a checklist. The combat PRs 18c–18f (#235–#238) are the
+   biggest outstanding check: step 18's Verify (three profiles, a whole fight) has
+   not been run. Fix what the user reports on top of the stack.
+2. Steps 17 and 18 are closed (PR tables ticked, README `done`).
+3. **Step 19, Connections + loose ends**, is next. Write its step file first, as its
+   own docs PR on top of #238. It reads 18's `Combat.EntryIds` for "Fought together"
+   (18-combat.md, "Seams for later steps").
+4. **Then steps 20–24** in README order. Write each step file first.
 
 ## Follow-ups found this round
 
@@ -124,3 +129,13 @@ checkouts of #222. Ignore them.
   `toggleInline`, `toggleList`) for ArticleBlockEditor. Delete them after that move.
 - Prettier `--check` fails on several web files from before this round. That's
   worth one `style(web)` PR on its own.
+- The Promote dialog's Quote shows raw markdown (`**x**`, `@[Name]`). It should use
+  the TipTap editor.
+- shadcn's `DialogContent` passes `style` to a Teleport, which logs Vue's
+  "extraneous non-props attributes" warning.
+- `insertMentionTrigger` is auto-imported twice, from `utils/editorExtensions.ts` and
+  `utils/mentions.ts` (Nuxt warns "Duplicated imports"). Keep one.
+- `EntryHistoryTests.AnNpcsStats_AreLeftOutOfAPlayersHistory` is flaky: it asserts
+  "5d8" is absent, and a random GUID in the payload can contain it.
+- Restarting the API logs every user out: the data-protection signing keys are not
+  persisted in dev.

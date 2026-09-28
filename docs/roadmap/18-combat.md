@@ -25,11 +25,11 @@ sits on 17c (#229). Each PR leaves the app runnable:
 | PR | Branch | Sub-step | Runnable state after merge | Status |
 |---|---|---|---|---|
 | 18a | `v2/18a-combat-api` | Combat model, redaction and combatants (API) | 17's app unchanged in the browser. The API creates Draft combats, adds, edits and removes combatants, answers a redacted view per viewer and pushes it live. The leak tests pass | [x] |
-| 18b | `v2/18b-combat-turns-api` | Initiative, turns, finish and history (API) | The same in the browser. Roll starts a combat and slots in late joiners, end turn advances turns and rounds, a DM reorders and finishes, and a DM reads the history | [[x] |
+| 18b | `v2/18b-combat-turns-api` | Initiative, turns, finish and history (API) | The same in the browser. Roll starts a combat and slots in late joiners, end turn advances turns and rounds, a DM reorders and finishes, and a DM reads the history | [x] |
 | 18c | `v2/18c-combat-tab` | The Combat tab and the combat page | The Combat tab lists combats. A DM creates one, adds combatants with `@Goblin ×4`, rolls and finishes, a player adds their character and ends their turn, all live | [x] |
 | 18d | `v2/18d-combatant-sheet` | The combatant sheet | Tapping a combatant opens its sheet: damage and heal, conditions, PlayersSee, hidden, AC, initiative, remove, and drag to reorder. A DM opens the history | [x] |
 | 18e | `v2/18e-combat-card` | Combat cards, the banner and entries' combats | The session stream shows combat cards and the Combats filter works. A live combat shows the Join combat banner and pulses the Combat tab. An entry page lists its combats. The combat page has the slim composer | [x] |
-| 18f | `v2/18f-combat-search` | Combats in ⌘K | ⌘K has a COMBATS section and "⚔ Start combat". The step's Verify passes | [ ] |
+| 18f | `v2/18f-combat-search` | Combats in ⌘K | ⌘K has a COMBATS section and "⚔ Start combat". The step's Verify passes | [x] |
 
 Connections' "Fought together" (§6) is step 19, which reads the combatant links this
 step stores. Reference stat blocks feeding Stats are step 20. This step builds neither.
@@ -723,6 +723,28 @@ This PR adds the nouns the step puts into code and UI:
     on every combat, finished ones too. On iOS the keyboard may need a second tap, since
     the text box mounts after the tap.
   - The bar shows on every combat now (for ✎), with End turn only while there is a turn.
+- **As built, 18f.** Where it differs from 18f above:
+  - A hit is `kind: "Combat"` with `combat: { combat: CombatCard, sessionNumber,
+    matchedCombatant? }`, like 18e's entry combats, since the row needs the session
+    number. `matchedCombatant` is set only when a combatant's name matched, not the
+    combat's; with several matching, the combat's name wins a tie, then the closer
+    name, then the first added.
+  - The order within a rung is Active, then Draft (DMs only), then Finished, then
+    newest by `startedAt ?? createdAt`. Combats come last, after Sessions. Like notes, a
+    single character and a query with no letters or digits search no combats.
+  - Two fragments, `SearchVisibilitySql.Combats` and `.Combatants`: a player's combatant
+    fragment also passes their own hidden combatant, as `CombatView.CanSee` does. For a
+    DM both are `(true)`, so the parity test's "keeps something out" check applies to
+    players only. The provider re-checks the combat and the matched combatant's name and
+    throws `SearchDrift` on a mismatch.
+  - "⚔ Start combat" is a matched action (keywords: new combat, fight, encounter,
+    initiative, battle), among a DM's defaults after Start Session, and in the `all`
+    scope it also takes any slot left free for any text, as design §7's sketch shows. Its
+    `?new=` is the query text in the `all` scope, or empty (the dialog's "Combat") from
+    `>` or when the text is the action's own words. The context gained `hasSession`.
+  - The row shows the name, then "Live · Round 3" (gold) or "S12 · Finished", then the
+    matched combatant. `combat?new=` waits for the campaign to load, opens the dialog
+    for a DM only, and is dropped either way.
 - **Not in 18:** temporary HP, death saves, concentration checks, legendary actions,
   lair turns, ready or delay, combat-scoped notes, a combat log for players, deleting
   combats, and v1's Paused, stages, Quantity and CopyNumber (§8: gone).
