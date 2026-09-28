@@ -1,7 +1,8 @@
 <template>
     <!-- The composer's toolbar (design §3a). It draws whatever items it is given, so
          step 15 adds @ and step 16 adds 📷 and 🖼 without reshaping it. The article
-         editor (15f) draws the same items, plus 🔒, without the ➤ button. -->
+         editor (15f) draws the same items, plus 🔒, without the ➤ button. Editing a
+         note in the composer (step 17) swaps ➤ for Cancel and Save. -->
     <div
         role="toolbar"
         aria-label="Formatting"
@@ -47,10 +48,34 @@
         </div>
 
         <slot name="end" />
+        <!-- Editing a note (step 17): Cancel goes back to the draft, Save is the form's
+             submit, so Enter and Mod+Enter in the text box save too. -->
+        <template v-if="mode === 'edit'">
+            <Button
+                type="button"
+                variant="ghost"
+                class="h-11 shrink-0 md:h-8"
+                @mousedown.prevent
+                @click="emit('cancel')">
+                Cancel
+            </Button>
+            <Button
+                type="submit"
+                class="h-11 shrink-0 md:h-8"
+                :disabled="!canPost || waiting"
+                @mousedown.prevent>
+                <!-- Saving, or waiting for new images to finish uploading. -->
+                <LoaderCircle
+                    v-if="waiting"
+                    class="animate-spin"
+                    aria-hidden="true" />
+                Save
+            </Button>
+        </template>
         <!-- `mousedown.prevent` here and on every item keeps the text box focused, so
              on a phone the keyboard stays up and the pinned composer does not move. -->
         <Button
-            v-if="showPost"
+            v-else-if="showPost"
             type="submit"
             size="icon"
             class="size-11 shrink-0 md:size-9"
@@ -74,12 +99,16 @@
     withDefaults(
         defineProps<{
             items: ComposerToolbarItem[];
+            /** ➤ is on; while editing, Save is. */
             canPost?: boolean;
             /** The ➤ button; off in the article editor, which saves the whole article. */
             showPost?: boolean;
-            /** ➤ was pressed and waits for uploads (16c). */
+            /** ➤ was pressed and waits for uploads (16c); while editing, a save is in flight. */
             waiting?: boolean;
+            /** `edit`: a note is being edited in the composer (step 17), so Cancel and Save. */
+            mode?: "post" | "edit";
         }>(),
-        { canPost: false, showPost: true, waiting: false }
+        { canPost: false, showPost: true, waiting: false, mode: "post" }
     );
+    const emit = defineEmits<{ cancel: [] }>();
 </script>

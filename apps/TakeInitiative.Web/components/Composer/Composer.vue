@@ -45,7 +45,7 @@
             ]"
             :style="pinned ? pinnedStyle : undefined"
             aria-label="Composer"
-            @submit.prevent="post()"
+            @submit.prevent="submit()"
             @dragover="onDragOver"
             @dragleave="onDragLeave"
             @drop="onDrop">
@@ -55,7 +55,23 @@
                 class="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-md border-2 border-dashed border-gold bg-background/90 text-sm font-medium text-gold">
                 Drop images to attach them
             </div>
-            <div class="flex min-w-0 items-center gap-1">
+            <!-- Editing a note (step 17): the note is up in the composer, and this strip
+                 says so. The session and visibility pickers go, since an edit cannot
+                 change either (visibility has its own action on the note). -->
+            <div
+                v-if="editing"
+                class="flex min-h-8 items-center gap-1.5 px-1 text-xs font-medium text-gold">
+                <Pencil
+                    class="size-3.5"
+                    aria-hidden="true" />
+                <span>Editing note{{ editing.sessionNumber ? ` — Session ${editing.sessionNumber}` : "" }}</span>
+                <span class="ml-auto hidden font-normal text-muted-foreground md:inline">
+                    Esc to cancel · Enter to save
+                </span>
+            </div>
+            <div
+                v-else
+                class="flex min-w-0 items-center gap-1">
                 <ComposerSessionPicker
                     v-model="state.sessionId"
                     :sessions="sessions"
@@ -66,7 +82,7 @@
             </div>
 
             <ComposerGapPrompt
-                v-if="gapVisible"
+                v-if="gapVisible && !editing"
                 :text="gapText"
                 :nextNumber="nextNumber"
                 :starting="startSession.isPending.value"
@@ -76,26 +92,31 @@
                 <!-- The text box (step 17, the rich text box): the `@` suggestions come with it, as the
                      mention strip under it on a phone (above the keyboard, where the `/`
                      strip goes) and a popover at the caret from md. The `/` strip wins
-                     while it is open, so the two are never shown together. -->
+                     while it is open, so the two are never shown together. While a note is
+                     being edited it writes to the edit's state, not the draft's, and it is
+                     a new text box per note, so undo never reaches back into the draft. -->
                 <ComposerEditor
                     ref="editor"
-                    v-model="state.text"
-                    v-model:links="state.links"
-                    v-model:newEntries="state.newEntries"
+                    :key="editing ? `edit-${editing.note.id}` : 'draft'"
+                    v-model="active.text"
+                    v-model:links="active.links"
+                    v-model:newEntries="active.newEntries"
                     :campaignId="campaignId"
                     :placeholder="placeholder"
-                    label="Session note"
+                    :label="editing ? 'Edit note' : 'Session note'"
                     :describedBy="overLimit ? `${id}-count` : undefined"
-                    :keydown="commands.onKeydown"
-                    :mentionsDisabled="commands.suggestions.value.length > 0"
-                    @submit="post()"
-                    @files="uploads.add"
+                    :keydown="editing ? undefined : commands.onKeydown"
+                    :mentionsDisabled="!editing && commands.suggestions.value.length > 0"
+                    @submit="submit()"
+                    @cancel="cancelEdit"
+                    @files="(files) => activeUploads.add(files)"
                     @focus="onFocus"
                     @blur="onBlur" />
 
                 <!-- Between the text box and the toolbar on a phone, so it sits above the
                      keyboard (design §3a); a popover above the text box from md. -->
                 <ComposerCommandStrip
+                    v-if="!editing"
                     :suggestions="commands.suggestions.value"
                     :active="commands.active.value"
                     :error="commands.error.value"
@@ -103,21 +124,29 @@
                     @pick="commands.pick" />
                 <ComposerMentionLinks
                     v-if="!editor?.mentionsOpen"
-                    :state="state"
+                    :state="active"
                     :directory="directory" />
                 <slot
                     name="strip"
                     :state="state" />
                 <!-- The images (16c), above the toolbar so on a phone they stay above the
-                     keyboard, with the caption nudge under them. -->
+                     keyboard, with the caption nudge under them. A note being edited can
+                     also reorder them, and says which of its own images Save deletes. -->
                 <ImageAttachmentStrip
                     :campaignId="campaignId"
-                    :attachments="state.attachments"
-                    @remove="uploads.remove"
-                    @retry="uploads.retry"
-                    @missing="uploads.remove" />
+                    :attachments="active.attachments"
+                    :movable="!!editing"
+                    @remove="(key) => activeUploads.remove(key)"
+                    @retry="(key) => activeUploads.retry(key)"
+                    @move="(key, delta) => activeUploads.move(key, delta)"
+                    @missing="(key) => activeUploads.remove(key)" />
+                <p
+                    v-if="removedCount > 0"
+                    class="px-1 text-xs text-muted-foreground">
+                    {{ removedCount === 1 ? IMAGE_MESSAGES.willBeDeleted : `${removedCount} images will be deleted.` }}
+                </p>
                 <ImageCaptionNudge
-                    v-if="nudging"
+                    v-if="nudging && !editing"
                     @postAnyway="post({ confirmed: true })"
                     @addCaption="addCaption" />
             </div>
@@ -138,7 +167,7 @@
                 @change="onFilesPicked" />
 
             <p
-                v-if="state.text.length >= NOTE_TEXT_WARN_AT"
+                v-if="active.text.length >= NOTE_TEXT_WARN_AT"
                 :id="`${id}-count`"
                 :class="['text-right text-xs', overLimit ? 'text-destructive-tint' : 'text-muted-foreground']">
                 {{ storedLength.toLocaleString() }} / {{ NOTE_TEXT_MAX.toLocaleString() }}
@@ -146,8 +175,10 @@
 
             <ComposerToolbar
                 :items="toolbarItems"
-                :canPost="canPost"
-                :waiting="waiting" />
+                :mode="editing ? 'edit' : 'post'"
+                :canPost="editing ? canSave : canPost"
+                :waiting="editing ? saving || editUploads.busy.value : waiting"
+                @cancel="cancelEdit" />
         </form>
         <ComposerRevealDialog
             ref="reveal"
@@ -159,19 +190,13 @@
     import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/vue-query";
     import { useElementSize, useMediaQuery, useNow } from "@vueuse/core";
     import type { ComposerEditorApi } from "./Editor.vue";
-    import { AtSign, Bold, CalendarPlus, Camera, ImagePlus, Italic, List, LoaderCircle, ScrollText } from "lucide-vue-next";
+    import { AtSign, Bold, CalendarPlus, Camera, ImagePlus, Italic, List, LoaderCircle, Pencil, ScrollText } from "lucide-vue-next";
     import { toast } from "vue-sonner";
     import { apiErrorMessage, apiErrorStatus } from "~/utils/apiErrorParser";
     import type { Campaign, EntrySummary, SessionStreamFilter, Visibility } from "~/utils/api/types";
     import type { RevealItem } from "~/utils/mentions";
     import { currentMember } from "~/utils/campaign";
-    import {
-        aboutPrefill,
-        newEntryErrorFrom,
-        relinkNewEntry,
-        revealCheck,
-        toStoredText,
-    } from "~/utils/mentions";
+    import { aboutPrefill, relinkNewEntry, revealCheck, toStoredText } from "~/utils/mentions";
     import {
         NOTE_TEXT_MAX,
         NOTE_TEXT_WARN_AT,
@@ -180,9 +205,11 @@
         gapPromptText,
         initialComposerState,
         loadDraft,
+        newEntryName,
         newestNoteAt,
         nextSessionNumber,
         noSessionYet,
+        noteWriteError,
         optimisticNote,
         resetAfterPost,
         saveDraft,
@@ -196,6 +223,7 @@
         getSessionsQuery,
         invalidateSessionStreams,
         postNoteMutation,
+        putNoteMutation,
         startSessionMutation,
     } from "~/utils/queries/sessions";
     import { invalidateEntries, useEntryDirectory } from "~/utils/queries/entries";
@@ -206,9 +234,17 @@
         captionNudge,
         failUploads,
         imageFiles,
-        imageIdsErrorFrom,
         readyImages,
+        removedNoteImages,
     } from "~/utils/images";
+    import {
+        canSaveNoteEdit,
+        emptyNoteEditState,
+        noteEditAudience,
+        noteEditPlan,
+        noteEditState,
+        type NoteEditState,
+    } from "~/utils/noteEdit";
     import {
         SHARE_MESSAGES,
         browserCaches,
@@ -325,7 +361,8 @@
     const postNote = postNoteMutation();
     const queryClient = useQueryClient();
     // The limit counts the stored form (15d), which is what the API checks.
-    const storedLength = computed(() => toStoredText(state.text, state.links).trim().length);
+    // While editing (step 17) the count is the edit's.
+    const storedLength = computed(() => toStoredText(active.value.text, active.value.links).trim().length);
     // With images the caption may be empty (16c). ➤ waits for uploads, and is off while
     // one has failed.
     const canPost = computed(() =>
@@ -344,7 +381,8 @@
     }));
     const reveal = useTemplateRef<{ confirm: (v: Visibility, items: RevealItem[]) => Promise<boolean> }>("reveal");
     const placeholder = computed(() => {
-        if (state.attachments.length > 0) return IMAGE_MESSAGES.captionPlaceholder;
+        if (active.value.attachments.length > 0) return IMAGE_MESSAGES.captionPlaceholder;
+        if (editing.value) return "Edit the note…";
         const target = targetSession(state.sessionId, sessions.value);
         return target ? `Write a note in Session ${target.number}…` : "Write a session note…";
     });
@@ -367,9 +405,7 @@
         nudging.value = false;
         const body = buildPostBody(state, sessions.value);
         if (!body) return;
-        // The reveal warning (15d): nothing is revealed without the tap.
-        const warn = revealCheck(body.visibility, body.text, directory.value, viewer.value);
-        if (warn.length > 0 && !(await reveal.value?.confirm(body.visibility, warn))) {
+        if (!(await confirmReveal(body.visibility, body.text))) {
             focus();
             return;
         }
@@ -395,12 +431,11 @@
             uploads.release(sent.attachments);
             emit("posted");
         } catch (error) {
-            const entryError = newEntryErrorFrom(error);
+            const failure = noteWriteError(error);
             // A retry after a timeout: the first try went through, note and entries.
-            if (entryError?.kind === "alreadyCreated") {
+            if (failure.kind === "alreadySaved") {
                 toast.info("That note was already posted.");
-                void invalidateSessionStreams(queryClient, campaignId.value);
-                void invalidateEntries(queryClient, campaignId.value);
+                refreshAfterRetry();
                 return;
             }
             // Give the text and images back unless something new was written or attached
@@ -408,26 +443,42 @@
             const restore = state.text.trim() === "" && state.attachments.length === 0;
             if (restore) Object.assign(state, sent);
             else uploads.release(sent.attachments);
-            // 16b's `errors.imageIds`: an upload was swept or taken meanwhile; upload again.
-            const imagesError = imageIdsErrorFrom(error);
-            if (imagesError) {
-                if (restore) state.attachments = failUploads(state.attachments, imagesError);
-                toast.error(imagesError);
+            if (failure.kind === "images") {
+                if (restore) state.attachments = failUploads(state.attachments, failure.message);
+                toast.error(failure.message);
                 return;
             }
-            if (entryError?.kind === "duplicate") {
+            if (failure.kind === "duplicate") {
                 // Someone made an entry with that name meanwhile: link it instead.
-                const name = sent.newEntries.find((e) => e.id.toLowerCase() === entryError.newEntryId.toLowerCase())?.name;
-                if (restore) Object.assign(state, relinkNewEntry(state, entryError.newEntryId, entryError.existingEntryId));
+                const name = newEntryName(sent.newEntries, failure.newEntryId);
+                if (restore) Object.assign(state, relinkNewEntry(state, failure.newEntryId, failure.existingEntryId));
                 toast.error(
                     restore
-                        ? `"${name ?? "That entry"}" already exists, so the mention now links to it. Post again.`
-                        : `"${name ?? "That entry"}" already exists. Nothing was posted.`
+                        ? `"${name}" already exists, so the mention now links to it. Post again.`
+                        : `"${name}" already exists. Nothing was posted.`
                 );
                 return;
             }
             toast.error(apiErrorMessage(error, "Could not post the note."));
         }
+    }
+
+    /** The reveal warning (15d), for a post and an edit: nothing is revealed without the tap. */
+    async function confirmReveal(audience: Visibility, storedText: string): Promise<boolean> {
+        const warn = revealCheck(audience, storedText, directory.value, viewer.value);
+        return warn.length === 0 || !!(await reveal.value?.confirm(audience, warn));
+    }
+
+    /** After a retry that had already gone through: fetch the note and its entries. */
+    function refreshAfterRetry() {
+        void invalidateSessionStreams(queryClient, campaignId.value);
+        void invalidateEntries(queryClient, campaignId.value);
+    }
+
+    /** ➤, Enter and Mod+Enter: post, or save the note being edited (step 17). */
+    function submit() {
+        if (editing.value) void save();
+        else void post();
     }
 
     // ── The toolbar ──────────────────────────────────────────────────────────
@@ -476,9 +527,9 @@
             label: "Recap",
             text: "Recap",
             icon: ScrollText,
-            pressed: state.isRecap,
+            pressed: active.value.isRecap,
             separatorBefore: true,
-            run: () => (state.isRecap = !state.isRecap),
+            run: () => (active.value.isRecap = !active.value.isRecap),
         },
     ]);
 
@@ -515,7 +566,7 @@
     function attach(files: readonly File[], { onlyImages }: { onlyImages: boolean }) {
         const images = onlyImages ? imageFiles(files) : [...files];
         if (onlyImages && images.length < files.length) toast.error(IMAGE_MESSAGES.unsupported);
-        uploads.add(images);
+        activeUploads.value.add(images);
     }
     function onFilesPicked(event: Event) {
         const input = event.target as HTMLInputElement;
@@ -545,6 +596,119 @@
         nudging.value = false;
         focus();
     }
+
+    // ── Editing a note (step 17) ────────────────────────────────────────────
+    // The card's "Edit" (or its "⚠ Tag what's in this?") brings the note up here. The
+    // edit has its own state and upload queue beside the draft's (`utils/noteEdit.ts`),
+    // so the draft, its saved copy and its uploads carry on untouched, and it is simply
+    // back when the edit ends. `active` is whichever the text box, the images and the
+    // recap toggle are showing.
+    const edit = useComposerEdit(campaignId.value);
+    const editing = edit.target;
+    const editState = reactive<NoteEditState>(emptyNoteEditState());
+    const editUploads = useImageAttachments({ attachments: toRef(editState, "attachments"), campaignId });
+    const active = computed<NoteEditState>(() => (editing.value ? editState : state));
+    const activeUploads = computed(() => (editing.value ? editUploads : uploads));
+    // The note's own images that Save deletes.
+    const removedCount = computed(() =>
+        editing.value ? removedNoteImages(editing.value.note.images, editState.attachments) : 0
+    );
+
+    const putNote = putNoteMutation();
+    const saving = computed(() => putNote.isPending.value);
+    const canSave = computed(() => canSaveNoteEdit(editState) && !saving.value);
+    watch(saving, (value) => (edit.locked.value = value));
+
+    // Starting, switching and ending an edit. Leaving one drops the uploads its note
+    // never took (after a save there are none left: they are on the note).
+    watch(
+        editing,
+        (next, previous) => {
+            if (previous) editUploads.discard();
+            if (!next) {
+                Object.assign(editState, emptyNoteEditState());
+                // Back to the draft; on a phone the keyboard stays down.
+                if (previous && !touch.value) void nextTick(focus);
+                return;
+            }
+            Object.assign(editState, noteEditState(next.note));
+            // A ➤ waiting for the draft's uploads must not post in the middle of an edit.
+            waiting.value = false;
+            nudging.value = false;
+            void nextTick(() => {
+                editor.value?.focus("end");
+                // The note stays in view above the composer (and the keyboard, which
+                // takes a moment to come up on a phone).
+                setTimeout(() => {
+                    document.getElementById(`note-${next.note.id}`)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+                }, 300);
+            });
+        },
+        { immediate: true }
+    );
+
+    /** Cancel and Esc: back to the draft, with no request. */
+    function cancelEdit() {
+        if (editing.value && !saving.value) edit.end();
+    }
+
+    async function save() {
+        const target = editing.value;
+        if (!target || saving.value) return;
+        const plan = noteEditPlan(target.note, editState);
+        if (plan.kind === "blocked") return;
+        // Nothing changed: no request, the edit just ends.
+        if (plan.kind === "unchanged") {
+            edit.end();
+            return;
+        }
+        if (!(await confirmReveal(noteEditAudience(target.note), plan.body.text))) {
+            editor.value?.focus();
+            return;
+        }
+        try {
+            await putNote.mutateAsync({ campaignId: campaignId.value, noteId: target.note.id, ...plan.body });
+            savedEdit();
+        } catch (error) {
+            const failure = noteWriteError(error);
+            switch (failure.kind) {
+                case "alreadySaved":
+                    // A retry after a timeout: the first save went through.
+                    toast.info("That edit was already saved.");
+                    refreshAfterRetry();
+                    savedEdit();
+                    return;
+                case "duplicate": {
+                    // Someone made an entry with that name meanwhile: link it instead.
+                    const name = newEntryName(editState.newEntries, failure.newEntryId);
+                    Object.assign(editState, relinkNewEntry(editState, failure.newEntryId, failure.existingEntryId));
+                    toast.error(`"${name}" already exists, so the mention now links to it. Save again.`);
+                    return;
+                }
+                case "images":
+                    editState.attachments = failUploads(editState.attachments, failure.message);
+                    toast.error(failure.message);
+                    return;
+                default:
+                    toast.error(apiErrorMessage(error, "Could not save the note."));
+            }
+        }
+    }
+
+    /** Saved: the new images are on the note now, so only their previews go. */
+    function savedEdit() {
+        editUploads.release(editState.attachments);
+        editState.attachments = [];
+        edit.end();
+    }
+
+    // The composer going away (another campaign, another page) ends the edit.
+    onBeforeUnmount(() => {
+        edit.locked.value = false;
+        if (!editing.value) return;
+        editUploads.discard();
+        edit.end();
+    });
 
     // ── A share (16e) ────────────────────────────────────────────────────────
     // Consumed once, as `?about=` is: the service worker kept the shared images and
@@ -635,5 +799,5 @@
     }
 
     // `attach` takes files the way 🖼 does (📷 and the share target go through it too).
-    defineExpose({ focus, state, attach: (files: readonly File[]) => uploads.add(files) });
+    defineExpose({ focus, state, attach: (files: readonly File[]) => activeUploads.value.add(files) });
 </script>

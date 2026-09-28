@@ -158,8 +158,8 @@ function useMentionSuggestions(args: {
 }
 
 /**
- * The `@` picker for a `<textarea>` whose text is a `MentionText`: the note editor and
- * 15f's article editor. The rules are in `utils/mentions.ts`; this wires them to the
+ * The `@` picker for a `<textarea>` whose text is a `MentionText`: 15f's article
+ * editor. The rules are in `utils/mentions.ts`; this wires them to the
  * caret. Draw the result with `<ComposerMentionStrip :picker="picker" …>`.
  */
 export function useMentionPicker(args: {

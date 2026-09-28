@@ -2,8 +2,7 @@
     <!-- The `@` suggestions (15d, design §3 and §3a). On a phone this is the mention
          strip: a row of chips between the text box and the toolbar, so it stays above
          the keyboard with the pinned composer. `docked` pins it above the keyboard by
-         itself, for an editor that is not pinned (the note editor, 15f's article
-         editor). From md it is a popover at the caret. Every control uses
+         itself, for an editor that is not pinned (15f's article editor). From md it is a popover at the caret. Every control uses
          `mousedown.prevent`, so the text box keeps focus and the keyboard stays up. -->
     <div
         v-if="picker.open.value"

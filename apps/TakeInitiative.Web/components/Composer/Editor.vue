@@ -19,7 +19,7 @@
 <script lang="ts">
     import type { FocusPosition } from "@tiptap/core";
 
-    /** What the composer (and, next, its edit mode) reach through a template ref. */
+    /** What the composer reaches through a template ref. */
     export type ComposerEditorApi = {
         /** Whether the caret is in bold, italic or a list, for the toolbar's `pressed`. */
         active: { bold: boolean; italic: boolean; bulletList: boolean };
@@ -83,7 +83,7 @@
         "update:newEntries": [newEntries: NewEntry[]];
         /** Enter on desktop, Mod+Enter anywhere. */
         submit: [];
-        /** Escape, with nothing open to close. Editing a note in the composer will cancel. */
+        /** Escape, with nothing open to close. While editing a note it cancels the edit. */
         cancel: [];
         focus: [];
         blur: [];
