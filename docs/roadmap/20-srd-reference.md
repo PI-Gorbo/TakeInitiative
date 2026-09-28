@@ -30,7 +30,7 @@ which sits on 19e (#244). Each PR leaves the app runnable:
 | PR | Branch | Sub-step | Runnable state after merge | Status |
 |---|---|---|---|---|
 | 20a | `v2/20a-srd-data` | The SRD 5.2 data, its catalog and the provider abstraction | 19's app unchanged. The API embeds 331 SRD monsters, and unit tests prove each one loads, matches and derives Stats that roll | [x] |
-| 20b | `v2/20b-reference-api` | Reference search, the item endpoint and + Wiki (API) | The same in the browser. `GET search` has a `Reference` section, `GET reference/srd52/{id}` answers a stat block, and `POST entries/from-reference` creates an entry with `Source` and Stats | [ ] |
+| 20b | `v2/20b-reference-api` | Reference search, the item endpoint and + Wiki (API) | The same in the browser. `GET search` has a `Reference` section, `GET reference/srd52/{id}` answers a stat block, and `POST entries/from-reference` creates an entry with `Source` and Stats | [x] |
 | 20c | `v2/20c-stat-block-card` | The stat-block card and REFERENCE in ⌘K | ⌘K shows REFERENCE rows. [view] opens the card page with its attribution | [ ] |
 | 20d | `v2/20d-add-to-wiki` | + Wiki, the entry's source line and "Use SRD stats" | + Wiki from ⌘K and from the card, the source line on the entry page, and filling Stats from the source. The step's Verify passes | [ ] |
 
@@ -653,3 +653,37 @@ step puts into code and UI:
   - The csproj embeds `Reference/Srd52/*.json` with an explicit `LogicalName` and removes
     them from `Content`, so they are not copied next to the DLL. `Program` calls
     `SrdCatalog.EnsureLoaded()` right after `Build()`.
+- **As built, 20b.** Where it differs from 20b above:
+  - **The web hides Reference until 20c.** Every ⌘K search now gets a Reference section, and
+    the sheet has no row for it yet. `utils/search.ts` has `HIDDEN_SECTIONS` (Reference), which
+    `searchRows` and `isEmptyResponse` skip. `SECTION_LABELS.Reference` and `hitKey`
+    (`reference-{provider}-{id}`) are in already. **20c empties `HIDDEN_SECTIONS`.**
+  - **`source` is left out, not null.** `EntryResponse.source` and the history's
+    `change.source` have `JsonIgnore(WhenWritingNull)`, so a player's JSON has no `source` key
+    at all (Verify 5.5). `stats` is still sent as null.
+  - **`EntrySourceResponse` has `hasStatBlock` too:** true when the provider draws cards and the
+    item is still in the data, so 20d's source line knows whether to offer [view]. `name` is null
+    and `providerLabel` falls back to the key when the item or the provider has gone.
+  - **History uses today's rule, not the rule at creation.** A `Created` change carries
+    `source` when `EntrySources.CanRead(entry, viewer)` holds now, which is exactly when
+    `GET entry` shows it. The plan's "unless `CouldReadStats`" would have hidden a non-Character's
+    source from everyone and a claimed NPC's from its claimer. It never shows more than the entry.
+  - **`EntryResponse.From` takes the `ReferenceCatalog`** (for the item's name and the label). The
+    twelve entry endpoints pass `Resolve<ReferenceCatalog>()`; `GetEntryHistory` and
+    `PostEntryFromReference` inject it.
+  - **`ReferenceItemResponse` is `{ summary, statBlock, attribution }`** where `summary` is
+    `ReferenceSummaryResponse` (the hit's fields plus `stats`, which 20d's "Use SRD stats"
+    reads). `StatBlock` goes out as is; `ReferenceCategory`, `StatBlockCategory` and
+    `StatBlockActionKind` gained string-enum converters so `schema.d.ts` has string unions.
+  - **+ Wiki's `EntrySource.Url`** is the summary's `Url` (a search-only provider's link), or
+    else the item's attribution `SourceUrl` (`https://www.dndbeyond.com/srd` for SRD items).
+    Validation: `provider` and `itemId` non-empty, `name` optional (`EntryName()` when given),
+    visibility in range. An unknown provider or item is a 404 with `errors.itemId`.
+  - **The merge in `ReferenceSearchProvider`** orders by rung, then similarity, then provider
+    order, then the shorter name, then the name, so "goblin" gives Goblin Boss, Goblin Minion,
+    Goblin Warrior, then Hobgoblin Captain and Hobgoblin Warrior (substring).
+  - **Tests:** `Scopes/Integration/Features/Reference/{ReferenceSearchTests,ReferenceItemTests,
+    EntryFromReferenceTests,ReferenceLeakTests}.cs`, 26 cases. The leak tests walk every key of
+    the raw JSON for `source` and search it for `srd52`, `vampire` and `dndbeyond`, for two
+    players, over `GET entry`, `GET entries`, history, `GET search` and the `entryUpserted` push;
+    claiming shows the source to the table, and unclaiming hides it again.
