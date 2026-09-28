@@ -27,7 +27,7 @@ sits on 17c (#229). Each PR leaves the app runnable:
 | 18a | `v2/18a-combat-api` | Combat model, redaction and combatants (API) | 17's app unchanged in the browser. The API creates Draft combats, adds, edits and removes combatants, answers a redacted view per viewer and pushes it live. The leak tests pass | [x] |
 | 18b | `v2/18b-combat-turns-api` | Initiative, turns, finish and history (API) | The same in the browser. Roll starts a combat and slots in late joiners, end turn advances turns and rounds, a DM reorders and finishes, and a DM reads the history | [[x] |
 | 18c | `v2/18c-combat-tab` | The Combat tab and the combat page | The Combat tab lists combats. A DM creates one, adds combatants with `@Goblin ×4`, rolls and finishes, a player adds their character and ends their turn, all live | [x] |
-| 18d | `v2/18d-combatant-sheet` | The combatant sheet | Tapping a combatant opens its sheet: damage and heal, conditions, PlayersSee, hidden, AC, initiative, remove, and drag to reorder. A DM opens the history | [ ] |
+| 18d | `v2/18d-combatant-sheet` | The combatant sheet | Tapping a combatant opens its sheet: damage and heal, conditions, PlayersSee, hidden, AC, initiative, remove, and drag to reorder. A DM opens the history | [x] |
 | 18e | `v2/18e-combat-card` | Combat cards, the banner and entries' combats | The session stream shows combat cards and the Combats filter works. A live combat shows the Join combat banner and pulses the Combat tab. An entry page lists its combats. The combat page has the slim composer | [ ] |
 | 18f | `v2/18f-combat-search` | Combats in ⌘K | ⌘K has a COMBATS section and "⚔ Start combat". The step's Verify passes | [ ] |
 
@@ -680,6 +680,26 @@ This PR adds the nouns the step puts into code and UI:
     Finish until 18d adds History.
   - The End turn bar says "Waiting for the turn" to a player while a hidden combatant
     has it.
+- **As built, 18d.** Where it differs from 18d above:
+  - The sheet also opens from the **Waiting** list, so a player can type their own
+    initiative there. Nobody opens a sheet on a `Finished` combat (it is read-only).
+  - A player's sheet has no Remove, as 18d.4 says, though the API lets them remove their
+    own combatant.
+  - `components/Combat/NumberField.vue` is added: the HP, Max HP, AC and initiative
+    fields save on blur or Enter and keep the old value on a bad one.
+  - Each save lands in the cache first (`withCombatantEdit`), the PUTs go one at a time,
+    and only the last response is written back, so fast taps never undo each other on
+    screen. A failed save toasts and reads the combat again. A reorder does the same
+    (`withMovedCombatant`).
+  - Setting Max HP on a combatant with no HP fills HP to it (`withMaxHp`). Damage with
+    no HP starts from Max HP, or 0. Heal leaves HP already above Max HP where it is.
+  - The drag handle also moves a row with the arrow keys, announced in a live region.
+    A drag scrolls the page near its edges, and Escape cancels it.
+  - A DM's overflow menu now always shows (History), with Finish below it while the
+    combat is open. The history is read again each time it opens.
+  - On a phone the sheet ends at the keyboard (`useKeyboardInset`), and nothing takes
+    focus when it opens; with a mouse, the damage box does. Remove confirms inline in
+    the sheet rather than in a second dialog.
 - **Not in 18:** temporary HP, death saves, concentration checks, legendary actions,
   lair turns, ready or delay, combat-scoped notes, a combat log for players, deleting
   combats, and v1's Paused, stages, Quantity and CopyNumber (§8: gone).
