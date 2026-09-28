@@ -43,7 +43,7 @@ step 22's plan (#254); this file is #255. Each PR leaves the app runnable:
 | 23a | `v2/23a-extraction-spike` | The spike: which GLiNER variant, measured, and its weights pinned | The app unchanged for users. A Node runner and a static browser harness (`scripts/extraction-spike/`) run each variant over the invented test set and print size, load, latency and F1. The decision is written into this file | [x] |
 | 23b | `v2/23b-extractor-runtime` | The extractor: worker, lazy load, weights, cache, device setting (web) | Nothing visible except "Suggestions on this device" on the Me page. The model is fetched only on request, cached, and run in a worker; the normal bundle does not grow by more than a few KB | [x] |
 | 23c | `v2/23c-suggestions-api` | Match, provenance and revert (API) | 22's app unchanged in the browser. `POST suggestions/match` matches spans; `PUT notes/{id}` accepts a `suggestion` and records `Actor.Model`; the note history shows it; `POST suggestions/revert` unlinks one model version's mentions for their author | [x] |
-| 23d | `v2/23d-suggestions-loose-ends` | Suggestions in Loose ends (web) | Unlinked notes on the loose-ends page offer ✨ suggestions beside 19's link suggestions; accepting links or creates-and-links | [ ] |
+| 23d | `v2/23d-suggestions-loose-ends` | Suggestions in Loose ends (web) | Unlinked notes on the loose-ends page offer ✨ suggestions beside 19's link suggestions; accepting links or creates-and-links | [x] |
 | 23e | `v2/23e-suggestions-inline` | Inline on the author's notes, history, revert (web) | "✨ 3" on the author's own note cards, the ✨ line in note history, and "Accepted suggestions" with Revert on the Me page. The step's Verify passes | [ ] |
 
 Suggestions in the composer while typing, on other members' notes, on article blocks and on
@@ -644,6 +644,61 @@ checks them); none are committed.
   two mentions with the same entry and text in one note from two versions).
 - **Tests**: `SuggestionEditTests` (unit, 10), `SuggestionMatchTests`, `SuggestionAcceptTests`,
   `SuggestionRevertTests`, `SuggestionLeakTests`; 939 API tests pass.
+
+### As built, 23d
+
+- **Where it lives.** `composables/useLooseEndSuggestions.ts` runs the page: once the list has
+  a note row with text (an unlinked note, or a captioned untagged image), it calls
+  `useExtractor().ensure()` without consent, so 23b's `decideLoad` alone decides: Off never,
+  Ask only with the model already on this device and not on mobile data, Automatic unless on
+  mobile data. When the model is `ready` it extracts the listed notes in the worker (the API's
+  order, newest first), drops spans the one-span rule would refuse (`isLinkableSpan`: brackets,
+  a backslash, a backtick, a newline, outer spaces, over 80 characters), and matches every span
+  with `POST suggestions/match` in batches of 50 (`utils/queries/suggestions.ts`,
+  `matchSuggestionSpans`; no vue-query cache, since suggestions are per device). It looks again
+  when the listed notes change (a row resolved), keeping the old chips until the new answer.
+  The rows read their chips through `provide`/`inject` (`LOOSE_END_SUGGESTIONS`), so
+  `LooseEndList` is unchanged.
+- **"✨ Find suggestions"** (`Suggestions/FindSuggestionsButton.vue`, above the list, hidden
+  with the setting Off or with no note rows): with the model on this device a tap loads it;
+  otherwise a tap opens `Suggestions/DownloadPrompt.vue` (the plan's text, the size from the
+  manifest, a link to "Suggestions on this device" on the Me page, and a line saying it always
+  asks on mobile data when metered). Then it shows the download/load progress with Cancel, an
+  error with Retry, "✨ Looking at 12 notes…", and finally "✨ 5 suggestions" or "✨ No
+  suggestions".
+- **Merging** (`utils/suggestions.ts`, `mergeSuggestions`): a model match whose entry 19's link
+  suggestions already offer adds ✨ to 19's chip (`LinkSuggestions.vue`) instead of a second
+  chip; a model **create** over a span a 19 chip covers is dropped; one chip per entry; dismissed
+  ones out; at most three of the model's own chips, matches first, then by confidence. Tapping a
+  ✨ 19 chip records the model only when the model's span is the same span as 19's (same start
+  and length); otherwise it is 19's plain link.
+- **Chips** (`LooseEnds/ModelSuggestions.vue`): "✨ **Rellan** → 👤 @Rellan Ashvale?" and "✨
+  **Greyhollow Keep** looks like a Place · + Create", dashed gold borders (19's are solid), each
+  with a 44 px ✕ that hides it on this device (`ti.suggestions.dismissed`, key `noteId|folded
+  span|model version`, 500 kept, oldest dropped).
+- **Accepting** builds the body with `acceptBody` (19's `findSpan`/`linkSpan`, so a span that
+  moved is still found; `suggestion.start` is where it is in the text being replaced, and the
+  confidence is clamped to [0, 1]). The row then resolves as 19e's do.
+- **Creating** (`Suggestions/CreateFromSuggestion.vue`, a bottom sheet on a phone and a centred
+  dialog from `md`, reka-ui like `EvidenceSheet`): the name (the span, editable), the kind as
+  `Composer/KindChips.vue` with the model's kind picked, and "Visible to …" shown read-only. The
+  API decides it (`NewEntryRequest` has no visibility; `NewEntries.VisibilityFrom`: the note's,
+  a hidden `Everyone` note gives `DM`), and `newEntryVisibility` mirrors it for the label. On
+  "Create and link" it first runs `match` on the typed name; a hit shows "@X is already in the
+  wiki · Link to @X instead" and the button becomes "Create anyway". A 409 duplicate name offers
+  the clashing entry the same way. The text keeps the author's words (`@[span](entry:newId)`),
+  and the entry gets the typed name.
+- **Row label**: `looseEndRowLabel` gives "Unlinked note · 2 suggestions" (the ✨ count: 19
+  chips with ✨ plus the model's own), plain before the model has looked or with Off. The
+  plan's "Unlinked" stays 19e's "Unlinked note". No count elsewhere changes.
+- **Deviations from Files touched**: `utils/api/session/putSessionNoteRequest.ts` needed no
+  change (the request spreads the body, and the regenerated schema already has `suggestion`);
+  the orchestration is a composable (`useLooseEndSuggestions.ts`) rather than code in the page;
+  `utils/queries/suggestions.ts` holds the batched call, not a query. `LooseEndList.vue` is
+  unchanged.
+- **Tests**: `tests/unit/suggestions.test.ts` (merging, the ✨ marker, the cap and order,
+  labels, the dismiss key, cap and storage, the create defaults, the accept body); 700 web tests
+  pass. Nothing here was run against the real model or in a browser.
 
 ### Where the weights come from
 
