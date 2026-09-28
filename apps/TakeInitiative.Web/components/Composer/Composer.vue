@@ -73,20 +73,23 @@
                 @accept="start" />
 
             <div class="relative flex flex-col gap-1">
-                <textarea
-                    ref="textarea"
+                <!-- The text box (step 17, the rich text box): the `@` suggestions come with it, as the
+                     mention strip under it on a phone (above the keyboard, where the `/`
+                     strip goes) and a popover at the caret from md. The `/` strip wins
+                     while it is open, so the two are never shown together. -->
+                <ComposerEditor
+                    ref="editor"
                     v-model="state.text"
-                    rows="1"
-                    :enterkeyhint="touch ? 'enter' : 'send'"
+                    v-model:links="state.links"
+                    v-model:newEntries="state.newEntries"
+                    :campaignId="campaignId"
                     :placeholder="placeholder"
-                    aria-label="Session note"
-                    :aria-describedby="overLimit ? `${id}-count` : undefined"
-                    :aria-controls="mentions.open.value ? `${id}-mentions` : undefined"
-                    :aria-activedescendant="mentions.open.value ? `${id}-mentions-${mentions.highlighted.value}` : undefined"
-                    class="max-h-[40dvh] min-h-11 w-full resize-none overflow-y-auto rounded-md border bg-background px-3 py-2.5 text-base leading-snug outline-none placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring md:min-h-10 md:py-2 md:text-sm"
-                    @keydown="onKeydown"
-                    @input="grow"
-                    @paste="onPaste"
+                    label="Session note"
+                    :describedBy="overLimit ? `${id}-count` : undefined"
+                    :keydown="commands.onKeydown"
+                    :mentionsDisabled="commands.suggestions.value.length > 0"
+                    @submit="post()"
+                    @files="uploads.add"
                     @focus="onFocus"
                     @blur="onBlur" />
 
@@ -98,16 +101,10 @@
                     :error="commands.error.value"
                     :listId="`${id}-commands`"
                     @pick="commands.pick" />
-                <!-- The `@` suggestions (15d): the mention strip on a phone, in the same
-                     place as the `/` strip; a popover at the caret from md. The `/` strip
-                     wins while it is open, so the two are never shown together. -->
-                <ComposerMentionStrip
-                    :picker="mentions"
-                    :listId="`${id}-mentions`" />
                 <ComposerMentionLinks
-                    v-if="!mentions.open.value"
+                    v-if="!editor?.mentionsOpen"
                     :state="state"
-                    :directory="mentions.directory.value" />
+                    :directory="directory" />
                 <slot
                     name="strip"
                     :state="state" />
@@ -161,6 +158,7 @@
 <script setup lang="ts">
     import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/vue-query";
     import { useElementSize, useMediaQuery, useNow } from "@vueuse/core";
+    import type { ComposerEditorApi } from "./Editor.vue";
     import { AtSign, Bold, CalendarPlus, Camera, ImagePlus, Italic, List, LoaderCircle, ScrollText } from "lucide-vue-next";
     import { toast } from "vue-sonner";
     import { apiErrorMessage, apiErrorStatus } from "~/utils/apiErrorParser";
@@ -179,7 +177,6 @@
         NOTE_TEXT_WARN_AT,
         buildPostBody,
         canPostNote,
-        enterAction,
         gapPromptText,
         initialComposerState,
         loadDraft,
@@ -191,12 +188,8 @@
         saveDraft,
         showGapPrompt,
         targetSession,
-        toggleInline,
-        toggleList,
         type ComposerState,
         type ComposerToolbarItem,
-        type InlineFormat,
-        type TextEdit,
     } from "~/utils/composer";
     import {
         getSessionStreamQuery,
@@ -205,7 +198,7 @@
         postNoteMutation,
         startSessionMutation,
     } from "~/utils/queries/sessions";
-    import { invalidateEntries } from "~/utils/queries/entries";
+    import { invalidateEntries, useEntryDirectory } from "~/utils/queries/entries";
     import { composerPinned } from "~/utils/keyboardInset";
     import { flattenSessions, newPendingNoteId } from "~/utils/sessionStreamCache";
     import {
@@ -259,7 +252,6 @@
         () => [state.text, state.links, state.newEntries, state.attachments] as const,
         () => {
             saveDraft(storage, campaignId.value, state);
-            void nextTick(grow);
         }
     );
 
@@ -275,11 +267,7 @@
             state.links = prefill.links;
             if (prefill.visibility) state.visibility = prefill.visibility;
             emit("aboutUsed");
-            void nextTick(() => {
-                const el = textarea.value;
-                el?.focus();
-                el?.setSelectionRange(state.text.length, state.text.length);
-            });
+            void nextTick(() => editor.value?.focus("end"));
         },
         { immediate: true }
     );
@@ -380,7 +368,7 @@
         const body = buildPostBody(state, sessions.value);
         if (!body) return;
         // The reveal warning (15d): nothing is revealed without the tap.
-        const warn = revealCheck(body.visibility, body.text, mentions.directory.value, viewer.value);
+        const warn = revealCheck(body.visibility, body.text, directory.value, viewer.value);
         if (warn.length > 0 && !(await reveal.value?.confirm(body.visibility, warn))) {
             focus();
             return;
@@ -442,50 +430,16 @@
         }
     }
 
-    // ── Keys and the toolbar ─────────────────────────────────────────────────
+    // ── The toolbar ──────────────────────────────────────────────────────────
+    // Enter, Mod+Enter and the shortcuts are the text box's own (step 17, the rich text box).
     const touch = useMediaQuery("(pointer: coarse)");
-    const textarea = useTemplateRef<HTMLTextAreaElement>("textarea");
+    const editor = useTemplateRef<ComposerEditorApi>("editor");
     const isMac = import.meta.client && /Mac|iPhone|iPad/.test(navigator.platform);
     const mod = isMac ? "⌘" : "Ctrl+";
 
-    function onKeydown(event: KeyboardEvent) {
-        // The `/` strip, then the `@` picker, take the arrows, Tab, Enter and Esc while open.
-        if (commands.onKeydown(event)) return;
-        if (mentions.onKeydown(event)) return;
-        const action = enterAction(event, touch.value);
-        if (action === "post") {
-            event.preventDefault();
-            void post();
-            return;
-        }
-        if ((event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey) {
-            const key = event.key.toLowerCase();
-            if (key === "b" || key === "i") {
-                event.preventDefault();
-                format(key === "b" ? "bold" : "italic");
-            }
-        }
-    }
-
-    function applyEdit(edit: (current: TextEdit) => TextEdit) {
-        const el = textarea.value;
-        const current: TextEdit = {
-            text: state.text,
-            selectionStart: el?.selectionStart ?? state.text.length,
-            selectionEnd: el?.selectionEnd ?? state.text.length,
-        };
-        const next = edit(current);
-        state.text = next.text;
-        void nextTick(() => {
-            el?.focus();
-            el?.setSelectionRange(next.selectionStart, next.selectionEnd);
-        });
-    }
-    const format = (kind: InlineFormat) => applyEdit((e) => toggleInline(e, kind));
-
     const toolbarItems = computed<ComposerToolbarItem[]>(() => [
         // First (design §3a): for keyboards where `@` is hard to reach.
-        { id: "mention", label: "Mention an entry", icon: AtSign, run: () => mentions.trigger() },
+        { id: "mention", label: "Mention an entry", icon: AtSign, shortcut: `${mod}K`, run: () => editor.value?.triggerMention() },
         // 🖼 (16c), on every screen size.
         { id: "gallery", label: "Attach images", icon: ImagePlus, run: pickImages },
         // 📷 (16e), on touch screens only: on desktop `capture` is ignored, and it
@@ -493,9 +447,30 @@
         ...(touch.value
             ? [{ id: "camera", label: "Take a photo", icon: Camera, run: takePhoto } satisfies ComposerToolbarItem]
             : []),
-        { id: "bold", label: "Bold", icon: Bold, shortcut: `${mod}B`, run: () => format("bold") },
-        { id: "italic", label: "Italic", icon: Italic, shortcut: `${mod}I`, run: () => format("italic") },
-        { id: "list", label: "List", icon: List, run: () => applyEdit(toggleList) },
+        {
+            id: "bold",
+            label: "Bold",
+            icon: Bold,
+            shortcut: `${mod}B`,
+            pressed: editor.value?.active.bold ?? false,
+            run: () => editor.value?.toggle("bold"),
+        },
+        {
+            id: "italic",
+            label: "Italic",
+            icon: Italic,
+            shortcut: `${mod}I`,
+            pressed: editor.value?.active.italic ?? false,
+            run: () => editor.value?.toggle("italic"),
+        },
+        {
+            id: "list",
+            label: "List",
+            icon: List,
+            shortcut: isMac ? "⌘⇧8" : "Ctrl+Shift+8",
+            pressed: editor.value?.active.bulletList ?? false,
+            run: () => editor.value?.toggle("bulletList"),
+        },
         {
             id: "recap",
             label: "Recap",
@@ -549,12 +524,6 @@
         // iOS: the picker blurred the text box; focus brings the pinned composer back.
         focus();
     }
-    function onPaste(event: ClipboardEvent) {
-        const files = imageFiles(event.clipboardData?.files);
-        if (files.length === 0) return;
-        event.preventDefault();
-        uploads.add(files);
-    }
     const carriesFiles = (event: DragEvent) => !!event.dataTransfer && Array.from(event.dataTransfer.types).includes("Files");
     function onDragOver(event: DragEvent) {
         if (!carriesFiles(event)) return;
@@ -606,15 +575,21 @@
     );
 
     // ── Commands (14e) ───────────────────────────────────────────────────────
-    const commands = useComposerCommands({ state, sessions, textarea });
+    const commands = useComposerCommands({
+        state,
+        sessions,
+        caret: {
+            get: () => editor.value?.caretOffset() ?? null,
+            set: (offset) => editor.value?.setCaretOffset(offset),
+            focus: () => focus(),
+            hasFocus: () => editor.value?.hasFocus() ?? false,
+        },
+    });
 
     // ── Mentions (15d) ───────────────────────────────────────────────────────
-    const mentions = useMentionPicker({
-        state,
-        textarea,
-        campaignId,
-        enabled: () => commands.suggestions.value.length === 0,
-    });
+    // The text box runs the `@` picker; the "Links" row and the reveal warning read
+    // the same entry directory.
+    const directory = useEntryDirectory(campaignId);
 
     // ── Pinned above the keyboard (14e) ──────────────────────────────────────
     const phone = useMediaQuery("(max-width: 767.98px)");
@@ -647,21 +622,8 @@
         pinnedState.value = false;
     });
 
-    // ── The text box ─────────────────────────────────────────────────────────
-    // Grows with its content up to 40% of the screen, then scrolls.
-    function grow() {
-        const el = textarea.value;
-        if (!el) return;
-        el.style.height = "auto";
-        el.style.height = `${el.scrollHeight + (el.offsetHeight - el.clientHeight)}px`;
-    }
-    onMounted(grow);
-    // The text box also appears later, when the first session replaces the call to
-    // action (step 17), with a draft that may already be long.
-    watch(textarea, (el) => el && grow());
-
     function focus() {
-        textarea.value?.focus();
+        editor.value?.focus();
     }
 
     function safeLocalStorage(): Storage | undefined {

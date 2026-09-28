@@ -10,6 +10,18 @@ import {
 } from "~/utils/composerCommands";
 
 /**
+ * The composer's text box, as the commands need it: where the caret is, as an offset
+ * into the text (null when that is not known), and putting it back. Since step 17 the
+ * text box is the TipTap editor, so this is not a textarea's selection any more.
+ */
+export type CommandCaret = {
+    get: () => number | null;
+    set: (offset: number) => void;
+    focus: () => void;
+    hasFocus: () => boolean;
+};
+
+/**
  * The composer's `/` commands (14e). Watches the text: a complete command at its start
  * is consumed into the composer's state and removed from the text. While a command is
  * being typed, `suggestions` lists what the strip offers; `onKeydown` lets the arrow
@@ -18,9 +30,9 @@ import {
 export function useComposerCommands(args: {
     state: ComposerState;
     sessions: Readonly<Ref<Session[]>>;
-    textarea: Readonly<Ref<HTMLTextAreaElement | null>>;
+    caret: CommandCaret;
 }) {
-    const { state, sessions, textarea } = args;
+    const { state, sessions, caret } = args;
 
     function apply(change: CommandChange) {
         if (change.isRecap !== undefined) state.isRecap = change.isRecap;
@@ -28,11 +40,11 @@ export function useComposerCommands(args: {
         if (change.sessionId !== undefined) state.sessionId = change.sessionId;
     }
 
-    function setText(text: string, caret: number) {
+    function setText(text: string, at: number) {
         state.text = text;
+        // After the text box has taken the new text.
         void nextTick(() => {
-            const el = textarea.value;
-            if (el && document.activeElement === el) el.setSelectionRange(caret, caret);
+            if (args.caret.hasFocus()) args.caret.set(at);
         });
     }
 
@@ -44,8 +56,7 @@ export function useComposerCommands(args: {
             const result = applyCommands(text, sessions.value);
             if (result.removed === 0) return;
             apply(result.change);
-            const caret = textarea.value?.selectionStart ?? text.length;
-            setText(result.text, Math.max(0, caret - result.removed));
+            setText(result.text, Math.max(0, (caret.get() ?? text.length) - result.removed));
         },
         { flush: "sync" }
     );
@@ -65,7 +76,7 @@ export function useComposerCommands(args: {
         const next = pickSuggestion(state.text, suggestion);
         apply(next.change);
         setText(next.text, next.text.length);
-        textarea.value?.focus();
+        caret.focus();
     }
 
     /** Handles a key for the strip; true when it did. */
