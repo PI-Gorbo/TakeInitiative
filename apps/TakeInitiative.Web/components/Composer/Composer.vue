@@ -254,6 +254,7 @@
         shareIsEmpty,
         shareWarnings,
     } from "~/utils/shareTarget";
+    import { composeFits } from "~/utils/searchActions";
 
     const props = withDefaults(
         defineProps<{
@@ -264,10 +265,12 @@
             about?: Pick<EntrySummary, "id" | "name" | "visibility">;
             /** A share from the phone's share sheet (16e, `?share=`): attach its images. */
             share?: string;
+            /** "New note mentioning X" from ⌘K (17c, `?compose=`): the text to start with. */
+            compose?: string;
         }>(),
-        { filter: "All", about: undefined, share: undefined }
+        { filter: "All", about: undefined, share: undefined, compose: undefined }
     );
-    const emit = defineEmits<{ posted: []; aboutUsed: []; shareUsed: [] }>();
+    const emit = defineEmits<{ posted: []; aboutUsed: []; shareUsed: []; composeUsed: [] }>();
 
     const id = useId();
     const campaignId = computed(() => props.campaign.id);
@@ -709,6 +712,33 @@
         editUploads.discard();
         edit.end();
     });
+
+    // ── "New note mentioning X" (17c) ───────────────────────────────────────
+    // Consumed once, as `?about=` is. An empty composer takes the text (`@Klarg`) with
+    // the caret at its end, so the `@` picker opens on it and offers the matches or
+    // Create. A draft, or a note being edited, is never overwritten: the text is dropped.
+    watch(
+        () => props.compose,
+        (text) => {
+            if (text === undefined) return;
+            emit("composeUsed");
+            const fits = composeFits({
+                text: state.text,
+                attachmentCount: state.attachments.length,
+                editing: !!editing.value,
+            });
+            if (!fits) {
+                toast.info(editing.value ? "Finish editing the note first." : "Your draft was kept.");
+                return;
+            }
+            state.text = text;
+            state.links = {};
+            // The text box writes the text in first; the caret then lands after the
+            // query, and TipTap's suggestion plugin opens the picker on that selection.
+            void nextTick(() => editor.value?.focus("end"));
+        },
+        { immediate: true }
+    );
 
     // ── A share (16e) ────────────────────────────────────────────────────────
     // Consumed once, as `?about=` is: the service worker kept the shared images and

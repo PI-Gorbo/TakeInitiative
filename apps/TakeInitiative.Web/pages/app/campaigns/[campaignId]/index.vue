@@ -33,8 +33,10 @@
                     :filter="filter"
                     :about="aboutEntry"
                     :share="shareId"
+                    :compose="composeText"
                     @aboutUsed="clearParam(ABOUT_PARAM)"
-                    @shareUsed="clearParam(SHARE_PARAM)" />
+                    @shareUsed="clearParam(SHARE_PARAM)"
+                    @composeUsed="clearParam(COMPOSE_PARAM)" />
             </div>
 
             <CampaignMembersPanel
@@ -54,6 +56,7 @@
     import { getCampaignQuery } from "~/utils/queries/campaign";
     import { getEntriesQuery } from "~/utils/queries/entries";
     import { SESSION_LINK_PARAM, sessionFromQuery } from "~/utils/search";
+    import { COMPOSE_PARAM, composeFromQuery } from "~/utils/searchActions";
     import { SHARE_PARAM, validShareId } from "~/utils/shareTarget";
 
     definePageMeta({
@@ -124,4 +127,15 @@
     // A share from the phone (16e): `/app/share` sends `?share={id}`, and the composer
     // takes the images once and drops the parameter.
     const shareId = computed(() => validShareId(route.query[SHARE_PARAM]));
+
+    // "New note mentioning X" from ⌘K: `?compose=@X` (17c). The composer takes it once,
+    // into an empty draft only, and the page drops it. A blank value is dropped here.
+    const composeText = computed(() => composeFromQuery(route.query[COMPOSE_PARAM]));
+    watch(
+        () => route.query[COMPOSE_PARAM],
+        (value) => {
+            if (value !== undefined && composeFromQuery(value) === undefined) clearParam(COMPOSE_PARAM);
+        },
+        { immediate: true }
+    );
 </script>
