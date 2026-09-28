@@ -1,7 +1,8 @@
 # TakeInitiative Revival Roadmap
 
 Open this file at the start of every session. It is the single source of truth for
-what is done, what is next, and what blocks what.
+what is done, what is next, and what blocks what. An orchestrator picking the build up should read
+[HANDOVER.md](HANDOVER.md) first.
 
 ## The rule
 
