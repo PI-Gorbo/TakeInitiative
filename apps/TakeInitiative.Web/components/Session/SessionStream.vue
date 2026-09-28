@@ -61,22 +61,31 @@
                             :highlighted="note.id === highlightedId"
                             @openActions="openSheet(note, $event)"
                             @openImage="imageViewer.open" />
-                        <SessionNoteCard
-                            v-for="note in entry.notes"
-                            :key="note.id"
-                            :campaignId="campaignId"
-                            :note="note"
-                            :session="entry.session"
-                            :authorName="authorName(note.authorMemberId)"
-                            :currentMemberId="campaign.currentMemberId"
-                            :isDm="isDm"
-                            :highlighted="note.id === highlightedId"
-                            @openActions="openSheet(note, $event)"
-                            @openImage="imageViewer.open" />
+                        <!-- Then the notes and the combat cards (18e), merged by time. -->
+                        <template
+                            v-for="item in entry.items"
+                            :key="item.kind === 'note' ? item.note.id : `combat-${item.card.id}`">
+                            <SessionNoteCard
+                                v-if="item.kind === 'note'"
+                                :campaignId="campaignId"
+                                :note="item.note"
+                                :session="entry.session"
+                                :authorName="authorName(item.note.authorMemberId)"
+                                :currentMemberId="campaign.currentMemberId"
+                                :isDm="isDm"
+                                :highlighted="item.note.id === highlightedId"
+                                @openActions="openSheet(item.note, $event)"
+                                @openImage="imageViewer.open" />
+                            <CombatCard
+                                v-else
+                                :campaignId="campaignId"
+                                :card="item.card"
+                                :directory="directory" />
+                        </template>
                     </section>
 
                     <div
-                        v-if="noteCount === 0"
+                        v-if="noteCount === 0 && cardCount === 0"
                         class="flex flex-col gap-1 px-4 py-6 text-center text-sm text-muted-foreground">
                         <p>{{ emptyState.title }}</p>
                         <p
@@ -144,6 +153,8 @@
     import { currentMember } from "~/utils/campaign";
     import { getSessionStreamQuery } from "~/utils/queries/sessions";
     import { noteLinkProgress, type NoteAction } from "~/utils/noteActions";
+    import { mergeStreamItems } from "~/utils/combatCard";
+    import { useEntryDirectory } from "~/utils/queries/entries";
     import { flattenSessions } from "~/utils/sessionStreamCache";
     import { filterEmptyState, visibleStreamSessions } from "~/utils/streamFilters";
 
@@ -171,15 +182,24 @@
     const usernames = computed(() => new Map(props.campaign.members.map((m) => [m.memberId, m.username])));
     const authorName = (memberId: string) => usernames.value.get(memberId) ?? "Unknown member";
 
-    // Sessions oldest first, recaps lifted under the divider. Under a filter, a
-    // session with no matching note has no divider, except the current one (14e).
+    // Sessions oldest first, recaps lifted under the divider, then the other notes and
+    // the combat cards merged by time (18e). Under a filter, a session with nothing that
+    // matches has no divider, except the current one (14e).
     const visibleSessions = computed(() =>
         visibleStreamSessions(flattenSessions(streamQuery.data.value), props.filter).map((s) => ({
             session: s.session,
             recaps: s.notes.filter((n) => n.isRecap),
-            notes: s.notes.filter((n) => !n.isRecap),
+            items: mergeStreamItems(
+                s.notes.filter((n) => !n.isRecap),
+                s.combats ?? []
+            ),
             imageCount: dividerImageCount(s.notes, props.filter),
         }))
+    );
+    // Combat cards name the entries they link as the wiki names them now.
+    const directory = useEntryDirectory(() => props.campaignId);
+    const cardCount = computed(() =>
+        flattenSessions(streamQuery.data.value).reduce((sum, s) => sum + (s.combats?.length ?? 0), 0)
     );
     const allNotes = computed<SessionNote[]>(() => flattenSessions(streamQuery.data.value).flatMap((s) => s.notes));
     const noteCount = computed(() => allNotes.value.length);

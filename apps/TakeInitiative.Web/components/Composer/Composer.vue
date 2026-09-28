@@ -72,7 +72,9 @@
             <div
                 v-else
                 class="flex min-w-0 items-center gap-1">
+                <!-- Slim (the combat page, §3): no session picker; it posts to the current session. -->
                 <ComposerSessionPicker
+                    v-if="!slim"
                     v-model="state.sessionId"
                     :sessions="sessions"
                     :loaded="sessionsQuery.isSuccess.value"
@@ -82,7 +84,7 @@
             </div>
 
             <ComposerGapPrompt
-                v-if="gapVisible && !editing"
+                v-if="gapVisible && !editing && !slim"
                 :text="gapText"
                 :nextNumber="nextNumber"
                 :starting="startSession.isPending.value"
@@ -109,7 +111,7 @@
                     :mentionsDisabled="!editing && commands.suggestions.value.length > 0"
                     @submit="submit()"
                     @cancel="cancelEdit"
-                    @files="(files) => activeUploads.add(files)"
+                    @files="onEditorFiles"
                     @focus="onFocus"
                     @blur="onBlur" />
 
@@ -133,6 +135,7 @@
                      keyboard, with the caption nudge under them. A note being edited can
                      also reorder them, and says which of its own images Save deletes. -->
                 <ImageAttachmentStrip
+                    v-if="!slim"
                     :campaignId="campaignId"
                     :attachments="active.attachments"
                     :movable="!!editing"
@@ -267,30 +270,39 @@
             share?: string;
             /** "New note mentioning X" from ⌘K (17c, `?compose=`): the text to start with. */
             compose?: string;
+            /**
+             * The combat page's composer (design §3, 18e.5): the text, the visibility picker
+             * and send, posting to the current session. No session picker, gap prompt or
+             * images, and a draft of its own, so the Campaign tab's draft (and its images)
+             * never turns up in a fight.
+             */
+            slim?: boolean;
         }>(),
-        { filter: "All", about: undefined, share: undefined, compose: undefined }
+        { filter: "All", about: undefined, share: undefined, compose: undefined, slim: false }
     );
     const emit = defineEmits<{ posted: []; aboutUsed: []; shareUsed: []; composeUsed: [] }>();
 
     const id = useId();
     const campaignId = computed(() => props.campaign.id);
+    /** Where the draft is kept: the campaign's, or the slim composer's own. */
+    const draftId = (id: string) => (props.slim ? `${id}:slim` : id);
     const storage = import.meta.client ? safeLocalStorage() : undefined;
 
     // ── State ────────────────────────────────────────────────────────────────
     // One reactive object: the pickers, the recap toggle and 14e's commands all
     // write to it.
-    const state = reactive<ComposerState>(initialComposerState(loadDraft(storage, campaignId.value)));
+    const state = reactive<ComposerState>(initialComposerState(loadDraft(storage, draftId(campaignId.value))));
 
     watch(campaignId, (next) => {
         uploads.release(state.attachments);
-        Object.assign(state, initialComposerState(loadDraft(storage, next)));
+        Object.assign(state, initialComposerState(loadDraft(storage, draftId(next))));
     });
     // The draft keeps the mentions' links and new entries too (15d), and the uploaded
     // images (16c).
     watch(
         () => [state.text, state.links, state.newEntries, state.attachments] as const,
         () => {
-            saveDraft(storage, campaignId.value, state);
+            saveDraft(storage, draftId(campaignId.value), state);
         }
     );
 
@@ -378,6 +390,8 @@
         })
     );
     const overLimit = computed(() => storedLength.value > NOTE_TEXT_MAX);
+    /** The session a post goes to: the picked one, or the current one (null) when slim. */
+    const postSessionId = computed(() => (props.slim ? null : state.sessionId));
     const viewer = computed(() => ({
         memberId: props.campaign.currentMemberId,
         isDm: currentMember(props.campaign)?.role === "DM",
@@ -386,7 +400,7 @@
     const placeholder = computed(() => {
         if (active.value.attachments.length > 0) return IMAGE_MESSAGES.captionPlaceholder;
         if (editing.value) return "Edit the note…";
-        const target = targetSession(state.sessionId, sessions.value);
+        const target = targetSession(postSessionId.value, sessions.value);
         return target ? `Write a note in Session ${target.number}…` : "Write a session note…";
     });
 
@@ -406,13 +420,13 @@
             return;
         }
         nudging.value = false;
-        const body = buildPostBody(state, sessions.value);
+        const body = buildPostBody(props.slim ? { ...state, sessionId: null } : state, sessions.value);
         if (!body) return;
         if (!(await confirmReveal(body.visibility, body.text))) {
             focus();
             return;
         }
-        const target = targetSession(state.sessionId, sessions.value);
+        const target = targetSession(postSessionId.value, sessions.value);
         const optimistic = target
             ? optimisticNote({
                   tempId: newPendingNoteId(),
@@ -494,13 +508,16 @@
     const toolbarItems = computed<ComposerToolbarItem[]>(() => [
         // First (design §3a): for keyboards where `@` is hard to reach.
         { id: "mention", label: "Mention an entry", icon: AtSign, shortcut: `${mod}K`, run: () => editor.value?.triggerMention() },
-        // 🖼 (16c), on every screen size.
-        { id: "gallery", label: "Attach images", icon: ImagePlus, run: pickImages },
-        // 📷 (16e), on touch screens only: on desktop `capture` is ignored, and it
-        // would be a second 🖼.
-        ...(touch.value
-            ? [{ id: "camera", label: "Take a photo", icon: Camera, run: takePhoto } satisfies ComposerToolbarItem]
-            : []),
+        // 🖼 (16c), on every screen size, and 📷 (16e), on touch screens only: on desktop
+        // `capture` is ignored, and it would be a second 🖼. The slim composer has neither.
+        ...(props.slim
+            ? []
+            : [
+                  { id: "gallery", label: "Attach images", icon: ImagePlus, run: pickImages } satisfies ComposerToolbarItem,
+                  ...(touch.value
+                      ? [{ id: "camera", label: "Take a photo", icon: Camera, run: takePhoto } satisfies ComposerToolbarItem]
+                      : []),
+              ]),
         {
             id: "bold",
             label: "Bold",
@@ -578,7 +595,13 @@
         // iOS: the picker blurred the text box; focus brings the pinned composer back.
         focus();
     }
-    const carriesFiles = (event: DragEvent) => !!event.dataTransfer && Array.from(event.dataTransfer.types).includes("Files");
+    const carriesFiles = (event: DragEvent) =>
+        !props.slim && !!event.dataTransfer && Array.from(event.dataTransfer.types).includes("Files");
+    /** Files pasted into the text box. The slim composer takes no images. */
+    function onEditorFiles(files: File[]) {
+        if (props.slim) toast.info("Images can be posted from the Campaign tab.");
+        else activeUploads.value.add(files);
+    }
     function onDragOver(event: DragEvent) {
         if (!carriesFiles(event)) return;
         event.preventDefault();

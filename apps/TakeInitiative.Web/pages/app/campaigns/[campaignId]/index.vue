@@ -16,6 +16,8 @@
                     <span class="hidden sm:inline">Members</span>
                 </button>
             </div>
+            <!-- While a combat is live (18e.3). -->
+            <CombatJoinCombatBanner :campaignId="campaign.id" />
 
             <div class="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col">
                 <SessionStream

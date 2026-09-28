@@ -3,7 +3,8 @@
         <!-- A combat (18c.4, design §8, mobile first): the header with the DM's actions,
              the initiative order, the waiting combatants, and the End turn bar at the
              bottom. Every write and push lands in the cache (18c.6). Tapping a combatant
-             opens its sheet (18d), and a DM drags rows to reorder and opens the history. -->
+             opens its sheet (18d), and a DM drags rows to reorder and opens the history.
+             ✎ in the bar opens the slim composer (18e). -->
         <div
             class="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 px-3 py-3 md:px-4">
             <NuxtLink
@@ -179,11 +180,24 @@
             </template>
         </div>
 
-        <CombatBar
-            v-if="combat && actions.endTurn"
-            :state="actions.endTurn"
-            :pending="endTurn.isPending.value"
-            @endTurn="endCurrentTurn" />
+        <!-- The bar, and the slim composer above it (18e.5, design §3): a session note
+             from the fight, posted to the current session and not tied to the combat. -->
+        <div
+            v-if="combat && campaign"
+            class="sticky bottom-0 z-10">
+            <Composer
+                v-if="composing"
+                ref="composer"
+                slim
+                :campaign="campaign"
+                @posted="onPosted" />
+            <CombatBar
+                :state="actions.endTurn"
+                :pending="endTurn.isPending.value"
+                :composing="composing"
+                @endTurn="endCurrentTurn"
+                @compose="toggleComposer" />
+        </div>
 
         <CombatAddCombatantsDialog
             v-if="combat && viewer.isDm"
@@ -327,6 +341,18 @@
             return "Nobody rolled initiative in this combat.";
         return "Nobody has rolled initiative yet.";
     });
+
+    // ── The slim composer (18e.5) ────────────────────────────────────────────
+    const composing = ref(false);
+    const composer = useTemplateRef<{ focus: () => void }>("composer");
+    function toggleComposer() {
+        composing.value = !composing.value;
+        if (composing.value) void nextTick(() => composer.value?.focus());
+    }
+    function onPosted() {
+        composing.value = false;
+        toast.success("Note posted to the session.");
+    }
 
     const addOpen = ref(false);
     const finishOpen = ref(false);

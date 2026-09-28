@@ -12,6 +12,9 @@ import type {
 } from "~/utils/api/types";
 import { apiErrorStatus } from "~/utils/apiErrorParser";
 import { summaryFromCombat, upsertCombatSummary } from "~/utils/combat";
+import { cardFromCombat } from "~/utils/combatCard";
+import { upsertCombatCard } from "~/utils/sessionStreamCache";
+import { updateSessionStreams } from "./sessions";
 import type { RefOrGetter } from "./utils";
 
 // Combat v2 (18c). Every write answers with the caller's own `CombatResponse` and the
@@ -105,6 +108,25 @@ export function applyCombatSummary(
     }
 }
 
+/**
+ * The combat's card (18e) into every loaded session stream, built from the viewer's own
+ * view as the API builds it, and the entry pages' COMBATS read again (which entries a
+ * combat lists can change with any add or remove).
+ */
+function applyCombatCard(
+    queryClient: QueryClient,
+    campaignId: string,
+    combat: Combat
+) {
+    const card = cardFromCombat(combat);
+    updateSessionStreams(queryClient, campaignId, (data, filter) =>
+        upsertCombatCard(data, card, filter)
+    );
+    void queryClient.invalidateQueries({
+        queryKey: entryCombatsKey(campaignId),
+    });
+}
+
 /** `combatChanged`: the receiver's own view of the combat, and its summary. */
 export function applyCombatChanged(
     queryClient: QueryClient,
@@ -116,6 +138,7 @@ export function applyCombatChanged(
         message.combat
     );
     applyCombatSummary(queryClient, campaignId, message.summary);
+    applyCombatCard(queryClient, campaignId, message.combat);
 }
 
 /**
@@ -136,6 +159,7 @@ export function applyCombatResponse(
         .getQueriesData<CombatList>({ queryKey: combatListsKey(campaignId) })
         .flatMap(([, list]) => list?.combats ?? [])
         .find((c) => c.id.toLowerCase() === combat.id.toLowerCase());
+    applyCombatCard(queryClient, campaignId, combat);
     const summary = summaryFromCombat(combat, previous);
     if (summary) applyCombatSummary(queryClient, campaignId, summary);
     else
@@ -153,6 +177,9 @@ export function invalidateCombats(
         queryKey: combatListsKey(campaignId),
     });
     void queryClient.invalidateQueries({ queryKey: combatsKey(campaignId) });
+    void queryClient.invalidateQueries({
+        queryKey: entryCombatsKey(campaignId),
+    });
 }
 
 // ── Mutations, one per endpoint ──────────────────────────────────────────────
@@ -207,6 +234,29 @@ export const endTurnMutation = () => {
         },
     });
 };
+
+// ── An entry's combats (18e) ─────────────────────────────────────────────────
+
+const entryCombatsKey = (campaignId: MaybeRefOrGetter<string>) => [
+    "entryCombats",
+    campaignId,
+];
+
+/** The combats in which the entry is a combatant the viewer can see, newest first. */
+export const getEntryCombatsQuery = (
+    campaignId: RefOrGetter<string>,
+    entryId: RefOrGetter<string>
+) =>
+    queryOptions({
+        queryKey: ["entryCombats", campaignId, entryId],
+        queryFn: () =>
+            useApi().combat.forEntry({
+                campaignId: toValue(campaignId),
+                entryId: toValue(entryId),
+            }),
+        enabled: () => !!toValue(campaignId) && !!toValue(entryId),
+        retry: retryUnless404,
+    });
 
 // ── History (18d reads it) ───────────────────────────────────────────────────
 

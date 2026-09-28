@@ -91,6 +91,7 @@ describe("note links", () => {
         numbers.map((number) => ({
             session: { id: `s${number}`, number } as Session,
             notes: [],
+            combats: [],
         }));
 
     it("is done once the note's session is loaded", () => {

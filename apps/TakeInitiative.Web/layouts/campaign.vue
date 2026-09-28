@@ -75,9 +75,18 @@
                                     ? 'text-gold md:bg-accent'
                                     : 'text-muted-foreground hover:text-foreground md:hover:bg-accent/60',
                             ]">
+                            <!-- The Combat tab's icon pulses while a combat is live (18e.3). -->
                             <component
                                 :is="tab.icon"
-                                class="size-6 md:size-5" />
+                                :class="[
+                                    'size-6 md:size-5',
+                                    tab.name === COMBAT_TAB && combatLive && 'text-gold motion-safe:animate-pulse',
+                                ]" />
+                            <span
+                                v-if="tab.name === COMBAT_TAB && combatLive"
+                                class="sr-only"
+                                >(a combat is live)</span
+                            >
                             {{ tab.label }}
                         </NuxtLink>
                     </li>
@@ -108,6 +117,7 @@
     import { useQuery } from "@tanstack/vue-query";
     import { BookOpen, Castle, ChevronLeft, Search, Swords } from "lucide-vue-next";
     import { getCampaignQuery } from "~/utils/queries/campaign";
+    import { getCombatsQuery } from "~/utils/queries/combats";
     import { rememberCampaign } from "~/utils/shareTarget";
 
     const route = useRoute();
@@ -132,6 +142,12 @@
         { name: "app-campaigns-campaignId-wiki", label: "Wiki", icon: BookOpen },
         { name: "app-campaigns-campaignId-combat", label: "Combat", icon: Swords },
     ] as const;
+
+    // The live combats (18e.3), which pushes keep current: the Combat tab pulses while
+    // there is one. `motion-safe:` leaves it still under `prefers-reduced-motion`.
+    const COMBAT_TAB = "app-campaigns-campaignId-combat";
+    const liveCombatsQuery = useQuery(getCombatsQuery(campaignId, { status: ["Active"] }));
+    const combatLive = computed(() => (liveCombatsQuery.data.value?.combats.length ?? 0) > 0);
 
     // The Wiki and Combat tabs stay current on their child pages (an entry page is
     // `app-campaigns-campaignId-wiki-entryId`). The Campaign tab matches exactly, since

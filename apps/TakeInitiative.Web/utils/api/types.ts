@@ -91,3 +91,9 @@ export type CombatCondition = Schemas["Condition"];
 export type CombatantRequest = Schemas["CombatantRequest"];
 export type CombatHistory = Schemas["CombatHistoryResponse"];
 export type CombatHistoryItem = Schemas["CombatHistoryItem"];
+/** A combat drawn in its session in the stream (18e), and one line of it (`4× @Goblin`). */
+export type CombatCard = Schemas["CombatCard"];
+export type CombatCardCombatant = Schemas["CombatCardCombatant"];
+/** An entry's COMBATS (18e.4): cards with their session numbers, newest first. */
+export type EntryCombats = Schemas["EntryCombatsResponse"];
+export type EntryCombat = Schemas["EntryCombat"];

@@ -45,6 +45,7 @@ import { getSessionImagesRequest } from "~/utils/api/image/getSessionImagesReque
 import { getEntryImagesRequest } from "~/utils/api/image/getEntryImagesRequest";
 import { getSearchRequest } from "~/utils/api/search/getSearchRequest";
 import { getCombatsRequest } from "~/utils/api/combat/getCombatsRequest";
+import { getEntryCombatsRequest } from "~/utils/api/combat/getEntryCombatsRequest";
 import { getCombatRequest } from "~/utils/api/combat/getCombatRequest";
 import { postCombatRequest } from "~/utils/api/combat/postCombatRequest";
 import { postCombatantsRequest } from "~/utils/api/combat/postCombatantsRequest";
@@ -130,6 +131,7 @@ export const useApi = () => {
             finish: postCombatFinishRequest($axios),
             putPosition: putCombatantPositionRequest($axios),
             history: getCombatHistoryRequest($axios),
+            forEntry: getEntryCombatsRequest($axios),
         },
         admin: {
             getMaintenance: getMaintenanceRequest($axios),
