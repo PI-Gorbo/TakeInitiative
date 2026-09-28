@@ -11,14 +11,18 @@ public record GetSessionsRequest
 
 public record GetSessionsResponse
 {
-    /// <summary>Every session of the campaign, newest first.</summary>
+    /// <summary>Every session of the campaign, newest first. Empty until a member starts Session 1.</summary>
     public required SessionResponse[] Sessions { get; init; }
-    public required Guid CurrentSessionId { get; init; }
+    /// <summary>The current session, or null when the campaign has none yet.</summary>
+    public required Guid? CurrentSessionId { get; init; }
     /// <summary>Whether the composer should offer to start the next session (the gap prompt).</summary>
     public required bool SuggestNextSession { get; init; }
 }
 
-/// <summary>Every session of the campaign, newest first, with the current session and the gap prompt. Members only.</summary>
+/// <summary>
+/// Every session of the campaign, newest first, with the current session and the gap
+/// prompt. A campaign with no sessions is an empty list, not a 404. Members only.
+/// </summary>
 public class GetSessions(IDocumentSession session, [FromKeyedServices(SessionGap.ClockKey)] TimeProvider clock) : Endpoint<GetSessionsRequest, GetSessionsResponse>
 {
     public override void Configure()
@@ -35,16 +39,11 @@ public class GetSessions(IDocumentSession session, [FromKeyedServices(SessionGap
             .Where(s => s.CampaignId == req.CampaignId)
             .OrderByDescending(s => s.Number)
             .ToListAsync(ct);
-        if (sessions.Count == 0)
-        {
-            ThrowError("This campaign has no sessions.", StatusCodes.Status404NotFound);
-        }
-
-        var current = sessions[0];
+        var current = sessions.FirstOrDefault();
         await SendAsync(new GetSessionsResponse
         {
-            Sessions = sessions.Select(s => SessionResponse.From(s, current.Id)).ToArray(),
-            CurrentSessionId = current.Id,
+            Sessions = sessions.Select(s => SessionResponse.From(s, current?.Id)).ToArray(),
+            CurrentSessionId = current?.Id,
             SuggestNextSession = await SessionGap.SuggestNextSession(session, current, member, clock, ct),
         }, cancellation: ct);
     }

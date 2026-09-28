@@ -29,13 +29,24 @@
                     v-model="state.sessionId"
                     :sessions="sessions"
                     :loaded="sessionsQuery.isSuccess.value"
+                    :noSession="noSession"
                     :starting="startSession.isPending.value"
                     @start="start" />
                 <ComposerVisibilityPicker v-model="state.visibility" />
             </div>
 
+            <!-- Why the composer cannot post, in the gap prompt's slot: the placeholder
+                 alone is not enough, because a caption or `?about=` text takes its place
+                 and then nothing states the reason. Its wording matches the stream's
+                 empty state, which promises this button. -->
             <ComposerGapPrompt
-                v-if="gapVisible"
+                v-if="noSession"
+                text="No sessions yet."
+                :nextNumber="nextNumber"
+                :starting="startSession.isPending.value"
+                @accept="start" />
+            <ComposerGapPrompt
+                v-else-if="gapVisible"
                 :text="gapText"
                 :nextNumber="nextNumber"
                 :starting="startSession.isPending.value"
@@ -147,14 +158,15 @@
         NOTE_TEXT_MAX,
         NOTE_TEXT_WARN_AT,
         buildPostBody,
+        canPostNote,
         enterAction,
         gapPromptText,
         initialComposerState,
         loadDraft,
         newestNoteAt,
         nextSessionNumber,
+        noSessionYet,
         optimisticNote,
-        postableText,
         resetAfterPost,
         saveDraft,
         showGapPrompt,
@@ -263,6 +275,15 @@
         () => sessionsQuery.data.value?.sessions ?? [...streamSessions.value.map((s) => s.session)].reverse()
     );
     const nextNumber = computed(() => nextSessionNumber(sessions.value));
+    // A campaign has no session until a member starts Session 1, and a note needs one.
+    // Blocking on this asks whether we *know* there is none, not whether we know of one
+    // yet: the picker, the placeholder, the notice and the post guard all read the same
+    // value, so they never disagree about it.
+    const sessionsKnown = computed(() => ({
+        hasSession: sessions.value.length > 0,
+        sessionsLoaded: sessionsQuery.isSuccess.value,
+    }));
+    const noSession = computed(() => noSessionYet(sessionsKnown.value));
 
     // Re-evaluated every minute so an open tab notices the gap.
     const now = useNow({ interval: 60_000 });
@@ -298,11 +319,14 @@
     const storedLength = computed(() => toStoredText(state.text, state.links).trim().length);
     // With images the caption may be empty (16c). ➤ waits for uploads, and is off while
     // one has failed.
-    const canPost = computed(
-        () =>
-            !uploads.failed.value &&
-            (postableText(state.text) !== null || (state.attachments.length > 0 && state.text.trim() === "")) &&
-            storedLength.value <= NOTE_TEXT_MAX
+    const canPost = computed(() =>
+        canPostNote({
+            ...sessionsKnown.value,
+            uploadsFailed: uploads.failed.value,
+            text: state.text,
+            attachmentCount: state.attachments.length,
+            storedLength: storedLength.value,
+        })
     );
     const overLimit = computed(() => storedLength.value > NOTE_TEXT_MAX);
     const viewer = computed(() => ({
@@ -312,12 +336,20 @@
     const reveal = useTemplateRef<{ confirm: (v: Visibility, items: RevealItem[]) => Promise<boolean> }>("reveal");
     const placeholder = computed(() => {
         if (state.attachments.length > 0) return IMAGE_MESSAGES.captionPlaceholder;
+        if (noSession.value) return `Start Session ${nextNumber.value} to write a note…`;
         const target = targetSession(state.sessionId, sessions.value);
         return target ? `Write a note in Session ${target.number}…` : "Write a session note…";
     });
 
     async function post({ confirmed = false }: { confirmed?: boolean } = {}) {
         if (uploads.failed.value) return;
+        // Enter posts without going through ➤, so the "no session yet" guard is here too,
+        // and it says why: the note the member just typed or photographed is still in the
+        // composer and nothing else would explain the silence.
+        if (noSession.value) {
+            toast.error(`No sessions yet. Start Session ${nextNumber.value} first.`);
+            return;
+        }
         // ➤ while images are still going up: post once they are all up.
         if (uploads.busy.value) {
             waiting.value = true;

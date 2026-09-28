@@ -72,6 +72,46 @@ export function postableText(text: string): string | null {
     return trimmed.length > 0 && trimmed.length <= NOTE_TEXT_MAX ? trimmed : null;
 }
 
+/**
+ * What the composer knows about the campaign's sessions. The two are not the same
+ * thing: a list we have not read yet is empty too, and that is not a campaign with
+ * no session.
+ */
+export type SessionsKnown = {
+    /** A session is known, from `GET sessions` or the loaded stream standing in for it. */
+    hasSession: boolean;
+    /** `GET sessions` has answered, so an empty list is the campaign's real state. */
+    sessionsLoaded: boolean;
+};
+
+/**
+ * Whether we know the campaign has no session, which is what blocks a post: a member
+ * has to start Session 1 first. While the read is still in flight nothing is blocked,
+ * because the server resolves the current session itself, so a note typed in that
+ * window still posts.
+ */
+export const noSessionYet = ({ hasSession, sessionsLoaded }: SessionsKnown): boolean =>
+    !hasSession && sessionsLoaded;
+
+/**
+ * Whether ➤ is on, which is also whether Enter posts. With images the caption may be
+ * empty (16c); a failed upload and a campaign with no session both stop the post.
+ */
+export function canPostNote(
+    args: SessionsKnown & {
+        uploadsFailed: boolean;
+        /** The text box's text, in its mention form (15d). */
+        text: string;
+        attachmentCount: number;
+        /** The stored text's length (15d), which is what the API's limit counts. */
+        storedLength: number;
+    }
+): boolean {
+    if (args.uploadsFailed || noSessionYet(args)) return false;
+    const hasContent = postableText(args.text) !== null || (args.attachmentCount > 0 && args.text.trim() === "");
+    return hasContent && args.storedLength <= NOTE_TEXT_MAX;
+}
+
 /** The session a post goes to: the picked one when it still exists, else the current one. */
 export function targetSession(sessionId: string | null, sessions: readonly Session[]): Session | undefined {
     const current = sessions.find((s) => s.isCurrent);

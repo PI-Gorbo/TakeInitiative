@@ -7,35 +7,84 @@ using TakeInitiative.Api.Features.Sessions;
 namespace TakeInitiative.Api.Tests.Integration.Features.Sessions;
 
 /// <summary>
-/// The Session stream: Session 1 with every campaign, starting the next session by
-/// expected number, DM-only titles, and the gap prompt.
+/// The Session stream: a campaign with no session until a member starts Session 1,
+/// starting the next session by expected number, DM-only titles, and the gap prompt.
 /// </summary>
 public class SessionTests(AuthenticatedWebAppWithDatabaseFixture fixture)
     : IClassFixture<AuthenticatedWebAppWithDatabaseFixture>
 {
     [Fact]
-    public async Task ANewCampaign_HasSession1AsItsCurrentSession_InTheSameTransaction()
+    public async Task ANewCampaign_HasNoSessions()
+    {
+        fixture.LoginAsUser(Users.DM);
+        var campaign = (await fixture.PostCreateCampaign(new() { Name = "No sessions yet" })).Value;
+
+        var sessions = await fixture.GetSessions(campaign.Id);
+        sessions.Should().Succeed();
+        sessions.Value.Sessions.Should().BeEmpty();
+        sessions.Value.CurrentSessionId.Should().BeNull();
+        sessions.Value.SuggestNextSession.Should().BeFalse();
+
+        // The stream is an empty page, not a 404, so the Campaign tab can draw its empty state.
+        var stream = await fixture.GetSessionStream(campaign.Id);
+        stream.Should().Succeed();
+        stream.Value.Sessions.Should().BeEmpty();
+        stream.Value.CurrentSessionId.Should().BeNull();
+        stream.Value.HasOlder.Should().BeFalse();
+        // With no session there is nothing to move on from, so the gap prompt stays off
+        // on both reads.
+        stream.Value.SuggestNextSession.Should().BeFalse();
+
+        // Creating a campaign appends its one event and starts no Session stream, so the
+        // emptiness above is the absence of a session, not an unbuilt projection.
+        (await TestCampaign.EventsOf(fixture, campaign.Id)).Should().ContainSingle();
+        using var db = fixture.AlbaHost.Services.GetRequiredService<IDocumentStore>().QuerySession();
+        var sessionStarts = await db.Events.QueryRawEventDataOnly<SessionStarted>()
+            .Where(e => e.CampaignId == campaign.Id)
+            .ToListAsync();
+        sessionStarts.Should().BeEmpty();
+
+        // There is no session to post a note to until someone starts one.
+        await fixture.ExpectStatus(HttpMethod.Post, $"/api/campaigns/{campaign.Id}/notes",
+            new { text = "Too early", visibility = "Everyone", isRecap = false }, 404);
+    }
+
+    [Fact]
+    public async Task StartingTheSecondSession_BeforeTheFirst_SaysNoSessionHasBeenStarted()
+    {
+        // TestCampaign.Create starts Session 1, so this one is created without a session.
+        fixture.LoginAsUser(Users.DM);
+        var campaign = (await fixture.PostCreateCampaign(new() { Name = "Ahead of itself" })).Value;
+
+        var (status, body) = await fixture.Send(HttpMethod.Post, $"/api/campaigns/{campaign.Id}/sessions", new { number = 2 });
+
+        status.Should().Be(409);
+        // The message reaches the member as it is written, and must not name a Session 0.
+        body.Should().Contain("No session has been started yet. Start Session 1 first.").And.NotContain("Session 0");
+        (await fixture.GetSessions(campaign.Id)).Value.Sessions.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task AMember_StartsSession1()
     {
         fixture.LoginAsUser(Users.DM);
         var campaign = (await fixture.PostCreateCampaign(new() { Name = "Session 1" })).Value;
 
-        var sessions = await fixture.GetSessions(campaign.Id);
-        sessions.Should().Succeed();
-        var session1 = sessions.Value.Sessions.Should().ContainSingle().Subject;
+        (await fixture.PostStartSession(campaign.Id, 1)).Should().Succeed();
+
+        var sessions = (await fixture.GetSessions(campaign.Id)).Value;
+        var session1 = sessions.Sessions.Should().ContainSingle().Subject;
         session1.Number.Should().Be(1);
         session1.Title.Should().BeNull();
         session1.IsCurrent.Should().BeTrue();
         session1.StartedByMemberId.Should().Be(campaign.OwnerMemberId);
         session1.StartedAt.Should().BeCloseTo(DateTimeOffset.UtcNow, TimeSpan.FromMinutes(1));
-        sessions.Value.CurrentSessionId.Should().Be(session1.Id);
-        sessions.Value.SuggestNextSession.Should().BeFalse();
+        sessions.CurrentSessionId.Should().Be(session1.Id);
+        sessions.SuggestNextSession.Should().BeFalse();
 
-        var campaignEvents = await TestCampaign.EventsOf(fixture, campaign.Id);
-        var sessionEvents = await TestCampaign.EventsOf(fixture, session1.Id);
-        var started = sessionEvents.Should().ContainSingle().Subject;
+        var started = (await TestCampaign.EventsOf(fixture, session1.Id)).Should().ContainSingle().Subject;
         started.Data.Should().BeEquivalentTo(new SessionStarted(Actor.Member(campaign.OwnerMemberId), campaign.Id, 1));
-        started.CorrelationId.Should().NotBeNullOrWhiteSpace()
-            .And.Be(campaignEvents.Single().CorrelationId);
+        started.CorrelationId.Should().NotBeNullOrWhiteSpace();
     }
 
     [Fact]

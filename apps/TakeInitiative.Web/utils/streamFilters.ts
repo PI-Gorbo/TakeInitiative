@@ -28,10 +28,14 @@ export function filterToQuery(filter: SessionStreamFilter): string | undefined {
 }
 
 /**
- * What an empty stream says under a filter. Combats have nothing to show until
- * combats join the stream (step 18).
+ * What an empty stream says. A campaign has no session until a member starts Session 1,
+ * which reads differently from a filter that matched nothing. Combats have nothing to
+ * show until combats join the stream (step 18).
  */
-export function filterEmptyState(filter: SessionStreamFilter): { title: string; detail?: string } {
+export function filterEmptyState(filter: SessionStreamFilter, hasSessions: boolean): { title: string; detail?: string } {
+    if (!hasSessions) {
+        return { title: "No sessions yet.", detail: "Start Session 1 in the composer to write your first note." };
+    }
     switch (filter) {
         case "Images":
             return { title: "No images yet. Attach one with 🖼." };

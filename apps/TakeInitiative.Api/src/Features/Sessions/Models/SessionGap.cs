@@ -19,12 +19,18 @@ public static class SessionGap
     /// <summary>
     /// True when the current session has at least one note the viewer can see, and the
     /// newest note the viewer can see in the campaign is more than <see cref="Gap"/> old.
-    /// An empty current session never suggests another: it is waiting to be used. Only
-    /// visible notes count, so the answer leaks nothing.
+    /// An empty current session never suggests another: it is waiting to be used. A
+    /// campaign with no session yet never suggests one either, because Session 1 is the
+    /// member's own call. Only visible notes count, so the answer leaks nothing.
     /// </summary>
     public static async Task<bool> SuggestNextSession(
-        IQuerySession session, Session current, Member viewer, TimeProvider clock, CancellationToken ct)
+        IQuerySession session, Session? current, Member viewer, TimeProvider clock, CancellationToken ct)
     {
+        if (current is null)
+        {
+            return false;
+        }
+
         var visible = SessionNoteVisibility.VisibleTo(viewer);
 
         var currentHasNote = await session.Query<SessionNote>()

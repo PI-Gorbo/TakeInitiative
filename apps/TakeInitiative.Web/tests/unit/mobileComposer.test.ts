@@ -74,9 +74,14 @@ describe("stream filters", () => {
     });
 
     it("points at 🖼 in the Images empty state, and names step 18 in the Combats one", () => {
-        expect(filterEmptyState("Images")).toEqual({ title: "No images yet. Attach one with 🖼." });
-        expect(filterEmptyState("Combats").detail).toContain("step 18");
-        expect(filterEmptyState("All").title).toBe("No session notes yet.");
+        expect(filterEmptyState("Images", true)).toEqual({ title: "No images yet. Attach one with 🖼." });
+        expect(filterEmptyState("Combats", true).detail).toContain("step 18");
+        expect(filterEmptyState("All", true).title).toBe("No session notes yet.");
+    });
+
+    it("asks for Session 1 when the campaign has no session, whatever the filter", () => {
+        expect(filterEmptyState("All", false).title).toBe("No sessions yet.");
+        expect(filterEmptyState("Recaps", false).detail).toContain("Start Session 1");
     });
 
     it("drops the divider of a session with no matching note, except the current one", () => {

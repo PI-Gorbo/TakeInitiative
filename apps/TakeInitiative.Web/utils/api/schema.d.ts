@@ -745,7 +745,7 @@ export interface components {
         GetSessionsResponse: {
             sessions: components["schemas"]["SessionResponse"][];
             /** Format: guid */
-            currentSessionId: string;
+            currentSessionId?: string | null;
             suggestNextSession: boolean;
         };
         SessionResponse: {
@@ -764,7 +764,7 @@ export interface components {
         SessionStreamResponse: {
             sessions: components["schemas"]["SessionStreamSession"][];
             /** Format: guid */
-            currentSessionId: string;
+            currentSessionId?: string | null;
             suggestNextSession: boolean;
             hasOlder: boolean;
         };

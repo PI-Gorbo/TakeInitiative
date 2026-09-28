@@ -16,7 +16,7 @@ PR, which sits on 13d (#199). Each PR leaves the app runnable:
 
 | PR | Branch | Sub-step | Runnable state after merge | Status |
 |---|---|---|---|---|
-| 14a | `v2/14a-session-model` | Session and note model | 13's app unchanged in the browser. The API has sessions and notes, and a new campaign has Session 1 | [x] |
+| 14a | `v2/14a-session-model` | Session and note model | 13's app unchanged in the browser. The API has sessions and notes, and a new campaign has none until a member starts Session 1 | [x] |
 | 14b | `v2/14b-live-notes` | Visibility-aware push | The same, and note and session changes are pushed only to the groups allowed to see them | [x] |
 | 14c | `v2/14c-session-stream` | Stream (read and live) | The Campaign tab shows the session stream, live. Members and the join code move to a panel | [x] |
 | 14d | `v2/14d-composer` | Composer and note actions | Post, edit, delete, hide, history, back-posting and the gap prompt, on every screen size | [x] |
@@ -52,7 +52,6 @@ Paths are relative to `apps/TakeInitiative.Api` (API), `apps/TakeInitiative.Api.
 
 **14a: modify**
 - API `src/boostrap/Bootstrap.cs`: register the two projections and their indexes
-- API `src/Features/Campaigns/Api/PostCreateCampaign/PostCreateCampaign.cs`: start Session 1 in the same save
 - Tests `Scopes/Integration/WebAppClientExtensions.cs`: typed calls for the new endpoints
 - Web `utils/api/schema.d.ts`: regenerated
 
@@ -177,10 +176,16 @@ This PR adds the nouns the step puts into code and UI:
    A note the caller cannot see is a **404**, never a 403, so its existence does
    not leak ("hidden things are absent").
 5. **Current session and Session 1.** The current session is the campaign's
-   `Session` with the highest `Number`. `PostCreateCampaign` starts the Campaign
-   stream and the Session 1 stream in the same `SaveChangesAsync`, so they share
-   a transaction and a correlation id. `SessionStarted` for Session 1 carries the
-   owner as its `Actor`.
+   `Session` with the highest `Number`. A new campaign has no session at all:
+   creating one does not start Session 1, because nobody plays the minute they
+   make a campaign. A member starts Session 1 with `POST sessions { number: 1 }`
+   like any other session. Until then the reads return no sessions and a null
+   `currentSessionId`, and posting a note is a 404.
+
+   This supersedes one line of the design session: §3's stream rules say "A new
+   campaign starts with Session 1", which is left as written, since
+   [12-v2-design-session.md](12-v2-design-session.md) is the record of what was
+   agreed that day rather than a description of the code.
 6. **Gap prompt rule** (`SessionGap`, one constant of 3 days, reused by the
    Discord import in step 24). `SuggestNextSession` is true when the current
    session has at least one note the caller can see and the newest such note in
@@ -238,9 +243,8 @@ This PR adds the nouns the step puts into code and UI:
      seam).
 8. **Tests.** Use `Users.DM` (owner), `Users.Player`, and `Users.Outsider` joined by
    code as a second player, all on a campaign created inside the test.
-   - `SessionTests`: a new campaign has Session 1 as its current session, and its
-     `SessionStarted` shares the `CampaignCreated` correlation id; any member
-     starts the next session; starting `current` again returns it without
+   - `SessionTests`: a new campaign has no sessions, and a member starts Session 1
+     on it; any member starts the next session; starting `current` again returns it without
      appending; starting `current + 2` is 409; only a DM changes the title; an
      outsider gets 403 everywhere; the gap prompt is off for an empty current
      session and for a note from today, and on for a note older than 3 days
@@ -418,8 +422,9 @@ This PR adds the nouns the step puts into code and UI:
    every PR in the stack.
 2. `pnpm dev`, then in three browser profiles at a phone size (390 × 844): A (the
    owner, DM) creates a campaign, and B and C join it as Players.
-   1. The Campaign tab shows **Session 1** as the current session with an empty
-      stream and a composer.
+   1. The Campaign tab shows no sessions yet and a composer that cannot post. A
+      starts **Session 1** from the session picker; it becomes the current session,
+      with an empty stream.
    2. A posts `**10gp** each` to Everyone. B sees it bold, without a reload.
    3. B posts with `/dm`. A sees it with 🔒 DM. C does not see it in the
       stream, by its link, or live.
@@ -447,9 +452,9 @@ This PR adds the nouns the step puts into code and UI:
 - **Commit scopes:** only `api`, `web`, `identity`, `dice`, `root`, `ci` and `docs`
   pass the husky hook. Every PR that changes an API contract regenerates and
   commits `schema.d.ts` (13c's CI check fails otherwise).
-- **Reset the dev database after 14a.** Campaigns created before it have no
-  Session 1, and nothing backfills it (there are no v2 users, §12):
-  `docker compose -p takeinitiative -f compose.dev.yml down -v`.
+- **14a needs no dev database reset.** A campaign with no session is the steady
+  state, not a gap: campaigns created before 14a read as sessionless, and a member
+  starts their Session 1 like anyone else. Nothing needs backfilling.
 - **Why sessions are not on the Campaign stream.** §9 makes Session and
   SessionNote their own aggregates to avoid contention on one busy stream.
   The price is that "next session number" is not guarded by one stream's
@@ -508,9 +513,9 @@ This PR adds the nouns the step puts into code and UI:
   number below 1 is a 400. When two requests race past the read, the unique index
   rejects the loser's `SaveChangesAsync` (`23505`); the endpoint catches that and returns
   the winner, so both callers get the same session. A test fires six at once.
-- **A campaign without sessions** (created before 14a) gets a 404 "This campaign has no
-  sessions" from the reads and from posting a note. `POST sessions { number: 1 }` starts
-  its Session 1. v2 has no such campaigns once the dev database is reset.
+- **A campaign without sessions** is every campaign until a member starts one. The reads
+  answer with no sessions and a null `currentSessionId`; posting a note is a 404 "This
+  campaign has no sessions". `POST sessions { number: 1 }` starts its Session 1.
 - **Shapes.** `GET notes/{id}` returns `{ note, sessionNumber }`. `DELETE notes/{id}` is a
   204 with no body, declared in the OpenAPI document. A title is trimmed and blank clears
   it. `filter` takes the enum names `All | Text | Images | Recaps | Combats | Mine`; the
@@ -531,9 +536,8 @@ This PR adds the nouns the step puts into code and UI:
   passed 70/70 checks. Verify 3: back-dating a note's `PostedAt` by 4 days in
   `mt_doc_sessionnote` turned `suggestNextSession` on for `GET sessions` and `GET stream`,
   and starting the next session turned it off. Verify 4: all 13 session and note events
-  that run wrote have a `correlation_id` and an `Actor`, Session 1 shares its
-  `CampaignCreated` correlation id, and the deleted note's row is gone while its
-  `session_note_posted` and `session_note_deleted` events remain.
+  that run wrote have a `correlation_id` and an `Actor`, and the deleted note's row is
+  gone while its `session_note_posted` and `session_note_deleted` events remain.
 
 ### Deviations and decisions in 14b
 

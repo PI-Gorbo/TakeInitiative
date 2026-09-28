@@ -3,6 +3,7 @@ import type { Session, SessionNote, SessionStreamSession } from "~/utils/api/typ
 import {
     NOTE_TEXT_MAX,
     buildPostBody,
+    canPostNote,
     draftKey,
     enterAction,
     gapPromptText,
@@ -10,6 +11,7 @@ import {
     loadDraft,
     newestNoteAt,
     nextSessionNumber,
+    noSessionYet,
     optimisticNote,
     postableText,
     resetAfterPost,
@@ -154,6 +156,46 @@ describe("composer state", () => {
         });
         const older = optimisticNote({ tempId: "pending-2", body, session: sessions[2], authorMemberId: "me", now });
         expect(older.addedLater).toBe(true);
+    });
+});
+
+describe("posting without a session", () => {
+    const post = (args: Partial<Parameters<typeof canPostNote>[0]> = {}) =>
+        canPostNote({
+            hasSession: true,
+            sessionsLoaded: true,
+            uploadsFailed: false,
+            text: "Klarg is dead",
+            attachmentCount: 0,
+            storedLength: 13,
+            ...args,
+        });
+
+    it("blocks a post once the read says the campaign has no session", () => {
+        expect(noSessionYet({ hasSession: false, sessionsLoaded: true })).toBe(true);
+        expect(post({ hasSession: false, sessionsLoaded: true })).toBe(false);
+        // Images and no caption are refused for the same reason.
+        expect(post({ hasSession: false, sessionsLoaded: true, text: "", attachmentCount: 1, storedLength: 0 })).toBe(false);
+    });
+
+    it("blocks nothing while the read is still in flight", () => {
+        // An empty list we have not read yet is not a campaign with no session, and the
+        // server resolves the current session itself.
+        expect(noSessionYet({ hasSession: false, sessionsLoaded: false })).toBe(false);
+        expect(post({ hasSession: false, sessionsLoaded: false })).toBe(true);
+    });
+
+    it("posts as usual once a session is known", () => {
+        expect(noSessionYet({ hasSession: true, sessionsLoaded: true })).toBe(false);
+        expect(post()).toBe(true);
+        expect(post({ text: "", attachmentCount: 1, storedLength: 0 })).toBe(true);
+    });
+
+    it("still refuses a failed upload, blank text and text over the limit", () => {
+        expect(post({ uploadsFailed: true })).toBe(false);
+        expect(post({ text: "  ", storedLength: 0 })).toBe(false);
+        // A mention's stored form is longer than the text box's (15d), and it is what counts.
+        expect(post({ storedLength: NOTE_TEXT_MAX + 1 })).toBe(false);
     });
 });
 
