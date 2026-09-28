@@ -83,7 +83,7 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
     public async Task InitializeAsync()
     {
         await PostgreSqlContainer.StartAsync();
-        AlbaHost = await Alba.AlbaHost.For<Api.Program>(x =>
+        AlbaHost = await HostStartup.Start(() => Alba.AlbaHost.For<Api.Program>(x =>
             x.UseEnvironment(Environments.Development)
             .ConfigureAppConfiguration((context, configBuilder) =>
                 {
@@ -107,7 +107,7 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
                     services.AddMartenDB(context.Configuration, IsDevelopment: true);
                     ConfigureTestServices(services);
                 })
-        );
+        ));
 
 
         // Seed database with tiny seed.
