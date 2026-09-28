@@ -1,4 +1,4 @@
-// The composer's text as a TipTap document, and back (step 17b). Pure, so it is unit
+// The composer's text as a TipTap document, and back (step 17, the rich text box). Pure, so it is unit
 // tested without a DOM; `components/Composer/Editor.vue` wires it to the editor.
 //
 // The composer still works on the text it always had (14d, 15d): markdown, where a
@@ -26,7 +26,7 @@
 // so text that needs no escape is written exactly as it was read.
 import type { JSONContent } from "@tiptap/core";
 import MarkdownIt, { type Token } from "markdown-it";
-import { unescapeMentionText } from "./mentions";
+import { escapeMentionText, unescapeMentionText } from "./mentions";
 
 /** The mention node's name in the editor's schema. */
 export const MENTION_NODE = "mention";
@@ -340,7 +340,8 @@ function inlineOf(node: JSONContent): Inline[] {
         } else if (child.type === MENTION_NODE) {
             const attrs = child.attrs as Partial<MentionAttrs> | undefined;
             const label = attrs?.label ?? "";
-            if (attrs?.id) out.push({ kind: "mention", id: attrs.id, raw: attrs.raw ?? label, marks });
+            // A mention pasted from elsewhere may have no `raw`: its name, escaped.
+            if (attrs?.id) out.push({ kind: "mention", id: attrs.id, raw: attrs.raw || escapeMentionText(label), marks });
             else if (label) out.push({ kind: "text", text: label, marks });
         } else if (child.type === "hardBreak") {
             // Not in the editor's schema; a space keeps the words apart.
