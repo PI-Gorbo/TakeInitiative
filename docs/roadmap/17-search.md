@@ -21,7 +21,7 @@ which sits on 16e (#219). Each PR leaves the app runnable:
 | PR | Branch | Sub-step | Runnable state after merge | Status |
 |---|---|---|---|---|
 | 17a | `v2/17a-search-api` | Search index and query API | 16's app unchanged in the browser. `GET search` answers sections with snippets, per viewer, and the leak tests pass | [x] |
-| 17b | `v2/17b-search-sheet` | The search sheet | ⌘K and 🔍 search for real: sections, highlighted snippets, keyboard navigation, tappable rows on a phone, and every hit opens where it lives | [ ] |
+| 17b | `v2/17b-search-sheet` | The search sheet | ⌘K and 🔍 search for real: sections, highlighted snippets, keyboard navigation, tappable rows on a phone, and every hit opens where it lives | [x] |
 | 17c | `v2/17c-search-actions` | Actions | The Actions section and `>`: create an entry, start the next session, post a note about X, go to. The step's Verify passes | [ ] |
 
 Combats (the COMBATS section and "⚔ Start combat") are step 18. Loose ends, as an
@@ -67,8 +67,8 @@ Paths are relative to `apps/TakeInitiative.Api` (API), `apps/TakeInitiative.Api.
 **17b**
 - Web add `utils/search.ts` (input parsing, rows, cursor, snippet segments, destinations, recents), `utils/api/search/getSearchRequest.ts`, `utils/queries/search.ts`
 - Web add `components/Search/{SearchResults,SearchHitRow,SearchSnippet}.vue`
-- Web modify `components/SearchSheet.vue`, `composables/useApi.ts`, `utils/api/types.ts`
-- Web modify `pages/app/campaigns/[campaignId]/index.vue` and `components/Session/SessionStream.vue` (`?session=`), `pages/app/campaigns/[campaignId]/wiki/[entryId].vue` and the article view (`?block=`)
+- Web modify `components/SearchSheet.vue`, `layouts/campaign.vue` (the campaign id, focus, and ⌘K beside the composer's), `composables/useApi.ts`, `utils/api/types.ts`
+- Web modify `pages/app/campaigns/[campaignId]/index.vue` and `components/Session/SessionStream.vue` (`?session=`), `pages/app/campaigns/[campaignId]/wiki/[entryId].vue` and `components/Wiki/{Article,ArticleBlock}.vue` (`?block=`)
 - Web add `tests/unit/search.test.ts`
 
 **17c**
@@ -493,18 +493,20 @@ nouns the step puts into code and UI:
    - Results are not pushed live: a search is a moment, and reopening searches again.
 2. **Input** (`parseSearchInput`, pure). `@…` has scope `entries`, and `>…` has scope
    `actions`, with no request (17c). Anything else has scope `all`. An empty input
-   sends no request.
+   sends no request. The text is cut at the server's 100 characters. An `entries`
+   search sends the text without the `@` and `sections=entries` (`searchParams`).
 3. **Rows** (`searchRows(response)`, pure) flattens the sections into rows under sticky
    headers (ENTRIES, NOTES, IMAGES, SESSIONS, in the server's order). A section with
    `hasMore` ends in a "Show more notes" row, which refetches that section alone with
-   `take=20` and replaces it in place.
+   `take=20` and replaces it in place. A section shown in full has no second
+   "Show more", since 20 is the server's largest `take`.
 
    | Hit | Row |
    |---|---|
    | Entry | kind icon, name, "aka Rockseeker" when an alias matched, "Character · 7 mentions", 🔒 when not `Everyone`; an article hit adds its snippet |
    | Note | the snippet, "Sam · S12 · Sat 20 Sep", 📜 for a recap, 🔒 DM / 🔒 Me |
    | Image | up to four `thumb` tiles (`imageUrl`, 16c), the caption snippet, "Priya · S13" |
-   | Session | "Session 12 · Sat 20 Sep · The Triboar Trail", with the title's snippet |
+   | Session | "Session 12 · Sat 20 Sep · The Triboar Trail". When the title matched, the line stops at the date and the title's snippet sits under it |
 
    `SearchSnippet` draws `highlights` as `<mark>` around text nodes, never as HTML.
 4. **Where a hit goes** (`hitTarget`, pure). Choosing a row closes the sheet and
@@ -521,12 +523,17 @@ nouns the step puts into code and UI:
      `noteLinkProgress`, as `goToNote` does.
    - `?block=` scrolls to that block on the entry page (`id="block-{id}"`) and
      highlights it. A block the viewer cannot see is simply not there.
+
+   No hit opens a note for **editing**: a note or image hit reads it in the stream. So
+   ⌘K never touches the composer's edit mode (`useComposerEdit`, #226), and a draft or
+   an edit in progress is left as it was.
 5. **States.**
-   - **Empty input.** Up to five **recent entries** (opened from ⌘K, kept as ids in
-     `localStorage` under `ti:recentEntries:{campaignId}`, and read through the entry
-     directory, so an entry now hidden or merged drops out), and the hint "Search
+   - **Empty input.** Up to five **recent entries** under "Recent entries" (opened
+     from ⌘K, kept as ids in `localStorage` under `ti:recentEntries:{campaignId}`, and
+     read through the entry directory, so an entry now hidden or merged drops out). They
+     are ordinary rows, so the arrows and Enter reach them. Under them, the hint "Search
      entries, notes, images and sessions. @ for entries, > for actions." 17c adds
-     actions here.
+     actions here; until then `>` says "Actions arrive soon."
    - **Loading.** A thin bar under the input. The previous results stay, so the sheet
      never flashes empty.
    - **No results.** "Nothing found for "zanthor"."
@@ -536,9 +543,15 @@ nouns the step puts into code and UI:
      The results are a `role="listbox"`, and each section is a `role="group"` labelled
      by its header.
    - ↑ and ↓ move through rows, skipping headers and wrapping at the ends. Enter
-     opens the row. The cursor returns to the first row whenever results change.
+     opens the row. The cursor returns to the first row whenever a new answer
+     arrives; after "Show more" it stays where that row was, on the first new hit.
      Hovering moves the cursor. Esc closes the sheet (Reka's dialog), and ⌘K toggles
      it (13d).
+   - **⌘K in the composer** is its `@` picker (#225). The editor takes the key first
+     and prevents its default, and the layout's ⌘K listener ignores a key that is
+     already handled, so ⌘K there opens the picker and not the sheet.
+   - Closing puts focus back where it was: the 🔍 button, or whatever had it when ⌘K
+     was pressed.
    - Tab is left alone in 17b. In 17c it cycles the kind on the Create row, as in the
      composer (§3).
 7. **Mobile** (§3a, invariant 11).
@@ -549,7 +562,9 @@ nouns the step puts into code and UI:
      so no row is ever under the keyboard. A touch scroll in the results blurs the
      input, so the keyboard drops and more rows show.
    - 🔍 focuses the input within the tap: iOS only raises the keyboard for a focus made
-     during a user gesture.
+     during a user gesture. The sheet's input mounts after the tap, so the tap first
+     focuses a hidden input in the layout, which holds the keyboard up until the
+     sheet's input takes the focus from it.
 8. **Budgets (web).**
    - The sheet is open with the input focused within 100 ms of ⌘K.
    - Results show within 300 ms (p95) of the last keystroke against a local API on
