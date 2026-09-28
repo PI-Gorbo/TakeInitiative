@@ -92,7 +92,7 @@ Stack #224. Everything is on top of `dev` and still open:
 | #247 | `v2/20b-reference-api` | 20b: the Reference section in `GET search`, `GET reference/{provider}/{id}`, `POST entries/from-reference` and `Entry.Source` (API) |
 | #248 | `v2/20c-stat-block-card` | 20c: the stat-block card page and REFERENCE rows in ⌘K |
 | #249 | `v2/20d-add-to-wiki` | 20d: + Wiki (⌘K row, ⌘Enter, the card), the entry's source line and "Use SRD stats"; closes step 20 |
-| #PR21 | `v2/21-5etools-plan` | Step 21's step file |
+| #250 | `v2/21-5etools-plan` | Step 21's step file |
 
 The local branches `pr/PI-Gorbo/222`, `pr/PI-Gorbo/222-1` and `pr/PI-Gorbo/222-2` are stale
 checkouts of #222. Ignore them.
@@ -144,7 +144,7 @@ checkouts of #222. Ignore them.
    fixtures at a pinned sha, whose licence 20a checked) and the attribution text (step
    20's Notes, "Why Open5e's fixtures" and "As built, 20a").
 3. **Step 21 is next: the 5eTools index.** Its step file is
-   [21-5etools-index.md](21-5etools-index.md) (#PR21, on top of `v2/20d-add-to-wiki`). Run
+   [21-5etools-index.md](21-5etools-index.md) (#250, on top of `v2/20d-add-to-wiki`). Run
    21a–21c as stacked PRs on top of it. 21d, deleting the four Bestiary branches, is the
    user's to run, not an agent's. Before 21a starts, the user should answer the step's
    "Decisions for the user" (Stats in the index, no download, off in production, SRD
