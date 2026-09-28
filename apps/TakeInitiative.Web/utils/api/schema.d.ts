@@ -596,6 +596,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/campaigns/{campaignId}/entries/{entryId}/connections/{OtherentryId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetConnectionEvidence"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/campaigns/{campaignId}/connections/graph": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetConnectionGraph"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/campaigns/{campaignId}/entries/{entryId}/connections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetEntryConnections"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/campaigns/{campaignId}/combats/{combatId}/combatants/{combatantId}": {
         parameters: {
             query?: never;
@@ -1295,6 +1343,94 @@ export interface components {
         PutEntryVisibilityRequest: {
             visibility: components["schemas"]["Visibility"];
         };
+        ConnectionEvidenceResponse: {
+            from: components["schemas"]["EntrySummaryResponse"];
+            to: components["schemas"]["EntrySummaryResponse"];
+            evidence: components["schemas"]["EvidenceResponse"][];
+        };
+        EvidenceResponse: {
+            kind: components["schemas"]["EvidenceKind"];
+            block?: components["schemas"]["BlockEvidence"] | null;
+            note?: components["schemas"]["NoteEvidence"] | null;
+            combat?: components["schemas"]["CombatEvidence"] | null;
+        };
+        /** @enum {string} */
+        EvidenceKind: "Block" | "Note" | "Combat";
+        BlockEvidence: {
+            /** Format: guid */
+            entryId: string;
+            entryName: string;
+            /** Format: guid */
+            blockId: string;
+            visibility: components["schemas"]["Visibility"];
+            snippet: string;
+        };
+        NoteEvidence: {
+            /** Format: guid */
+            noteId: string;
+            /** Format: guid */
+            sessionId: string;
+            /** Format: int32 */
+            sessionNumber: number;
+            /** Format: guid */
+            authorMemberId: string;
+            visibility: components["schemas"]["Visibility"];
+            isHidden: boolean;
+            /** Format: date-time */
+            postedAt: string;
+            hasImages: boolean;
+            snippet: string;
+        };
+        CombatEvidence: {
+            card: components["schemas"]["CombatCard"];
+            /** Format: int32 */
+            sessionNumber: number;
+        };
+        GetConnectionEvidenceRequest: Record<string, never>;
+        ConnectionGraphResponse: {
+            nodes: components["schemas"]["GraphNodeResponse"][];
+            edges: components["schemas"]["GraphEdgeResponse"][];
+            truncated: boolean;
+        };
+        GraphNodeResponse: {
+            entry: components["schemas"]["EntrySummaryResponse"];
+            /** Format: int32 */
+            mentionCount: number;
+            /** Format: int32 */
+            depth?: number | null;
+        };
+        GraphEdgeResponse: {
+            /** Format: guid */
+            a: string;
+            /** Format: guid */
+            b: string;
+            /** Format: int32 */
+            weight: number;
+            /** Format: int32 */
+            notes: number;
+            /** Format: int32 */
+            blocks: number;
+            /** Format: int32 */
+            combats: number;
+        };
+        GetConnectionGraphRequest: Record<string, never>;
+        EntryConnectionsResponse: {
+            connections: components["schemas"]["EntryConnectionResponse"][];
+        };
+        EntryConnectionResponse: {
+            entry: components["schemas"]["EntrySummaryResponse"];
+            /** Format: int32 */
+            weight: number;
+            /** Format: int32 */
+            notes: number;
+            /** Format: int32 */
+            blocks: number;
+            /** Format: int32 */
+            combats: number;
+            /** Format: date-time */
+            lastAt?: string | null;
+        };
+        GetEntryConnectionsRequest: Record<string, never>;
         CombatResponse: {
             /** Format: guid */
             id: string;
@@ -3013,6 +3149,121 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EntryResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GetConnectionEvidence: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+                entryId: string;
+                otherEntryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionEvidenceResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GetConnectionGraph: {
+        parameters: {
+            query?: {
+                focus?: string | null;
+                depth?: number | null;
+                kinds?: string | null;
+            };
+            header?: never;
+            path: {
+                campaignId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionGraphResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GetEntryConnections: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryConnectionsResponse"];
                 };
             };
             /** @description Unauthorized */
