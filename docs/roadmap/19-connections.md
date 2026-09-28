@@ -30,7 +30,7 @@ which sits on 18f (#238). Each PR leaves the app runnable:
 | 19b | `v2/19b-loose-ends-api` | Loose ends and link suggestions (API) | The same in the browser. The API lists loose ends per viewer with suggested links for unlinked notes, and counts them for the Wiki and per session | [x] |
 | 19c | `v2/19c-connections-panel` | The Connections panel and evidence sheet | An entry page shows CONNECTIONS, grouped with "Seen at", and a tap opens the evidence. It refreshes live | [x] |
 | 19d | `v2/19d-graph-page` | The graph page | `/wiki/graph` draws the force graph, with kind chips, depth 1–2, pan and pinch zoom, and edges that open the evidence | [x] |
-| 19e | `v2/19e-loose-ends-ui` | Loose ends in the Wiki and on sessions | "Loose ends (n)" in the Wiki and ⌘K, 🧵 counts on dividers, and resolving in place. The step's Verify passes | [ ] |
+| 19e | `v2/19e-loose-ends-ui` | Loose ends in the Wiki and on sessions | "Loose ends (n)" in the Wiki and ⌘K, 🧵 counts on dividers, and resolving in place. The step's Verify passes | [x] |
 
 Typed relations, a stored edge table and model suggestions (step 23) are not in 19
 (Notes, "Not in 19").
@@ -636,3 +636,28 @@ PR adds the nouns the step puts into code and UI:
     see it." with "Show the whole Wiki".
   - Also in this PR: `fix(web)` for 19c, where `EvidenceRow.vue` used `<NoteMarkdown>` (it
     is auto-imported as `<SessionNoteMarkdown>`), so evidence snippets did not render.
+- **As built, 19e.** Where it differs from 19e above:
+  - The page reads the whole list once (`["looseEnds", campaignId, "list"]`) and narrows it
+    to `?session={number}` itself, so "All" is already loaded; the request still takes
+    `sessionId`. The counts are `["looseEnds", campaignId, "counts"]`. The hub invalidates
+    `["looseEnds", campaignId]` everywhere it invalidates connections.
+  - `linkSpan` goes through `findSpan`: the span at `start` if it is still there as a whole
+    word outside a mention, else the nearest such copy (the note was edited since the read),
+    else null and a toast asking to Edit. Offsets are UTF-16, as the API's.
+  - A link sends `text` and `isRecap` only, so the images stay. It does not ask the reveal
+    question the composer asks: the suggestion is an entry the author can already see, and
+    the words were already in the note.
+  - The kind chips are `Wiki/ChoiceChips.vue` (a wrapping radio group labelled "Kind of
+    {name}"), not `Composer/KindChips.vue`, whose label is "Kind of the new entry" and which
+    scrolls sideways.
+  - **Write** is `wiki/{id}?edit=write` (`WRITE_ARTICLE`): the editor opens with no block
+    focused. **Promote from timeline** is `wiki/{id}#timeline` (`ENTRY_TIMELINE_ANCHOR`);
+    the entry page scrolls to its timeline once the entry loads.
+  - **Edit** starts `useComposerEdit(campaignId).start(note, sessionNumber)` and goes to the
+    Campaign tab with `?note={id}`, so the stream opens at the note being edited.
+  - A resolved row stays with "✓ Resolved" for 1.5 s (`withHeld` puts it back at its place
+    after the refetch dropped it), while the counts refetch at once. "Nothing loose" waits
+    for the last held row.
+  - The 16c hint links to `wiki/loose-ends?session={n}&note={id}`; the page scrolls to that
+    row and marks it for a moment. The Wiki row has no `aria-label` of its own: its text is
+    "Loose ends (n)".
