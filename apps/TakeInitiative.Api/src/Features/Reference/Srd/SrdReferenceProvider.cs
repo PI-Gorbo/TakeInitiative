@@ -9,6 +9,7 @@ public class SrdReferenceProvider(SrdCatalog catalog) : IReferenceProvider
     public string Key => SrdCatalog.ProviderKey;
     public string Label => catalog.Source.Document;
     public bool HasStatBlocks => true;
+    public ReferenceAttribution Attribution => catalog.Attribution;
 
     public IReadOnlyList<ReferenceMatch> Search(string text, int take)
         => ReferenceMatcher.Search(text, catalog.Candidates, take)

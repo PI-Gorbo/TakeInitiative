@@ -12,11 +12,13 @@ public record GetReferenceItemRequest
 }
 
 /// <summary>
-/// One reference item's stat block (20b.2), for any signed-in user. There is no campaign in the
-/// route: reference content is the same for every campaign and every member, and nothing in it is
-/// secret. An unknown provider or id is a 404, and so is a search-only provider's item, which has
-/// no stat block (step 21: the app never shows 5eTools content). The data changes only with a
-/// deploy, so the answer may be cached for a day.
+/// One reference item (20b.2), for any signed-in user. There is no campaign in the route:
+/// reference content is the same for every campaign and every member, and nothing in it is secret.
+/// A provider with stat blocks answers the stat block. A search-only provider (5eTools, 21b.5)
+/// answers the summary with <c>statBlock: null</c>: the summary holds only index fields, which the
+/// ⌘K row already shows, and gives + Wiki and "Use … stats" the item's Stats; no 5eTools content
+/// leaves the server. An unknown provider or id is a 404. The data changes only with a deploy (or
+/// a restart with a new index), so the answer may be cached for a day.
 /// </summary>
 public class GetReferenceItem(ReferenceCatalog catalog) : Endpoint<GetReferenceItemRequest, ReferenceItemResponse>
 {
@@ -33,13 +35,19 @@ public class GetReferenceItem(ReferenceCatalog catalog) : Endpoint<GetReferenceI
         this.GetUserIdOrThrowUnauthorized();
 
         var provider = catalog.Get(req.Provider);
-        if (provider is null || provider.Get(req.ItemId) is not { StatBlock: { } statBlock } item)
+        var item = provider switch
+        {
+            null => null,
+            { HasStatBlocks: true } => provider.Get(req.ItemId) is { StatBlock: not null } full ? full : null,
+            _ => provider.Find(req.ItemId) is { } summary ? new ReferenceItem(summary, null, provider.Attribution) : null,
+        };
+        if (item is null)
         {
             await SendNotFoundAsync(ct);
             return;
         }
 
         HttpContext.Response.Headers.CacheControl = CacheControl;
-        await SendAsync(ReferenceItemResponse.From(provider, item, statBlock), cancellation: ct);
+        await SendAsync(ReferenceItemResponse.From(provider!, item), cancellation: ct);
     }
 }

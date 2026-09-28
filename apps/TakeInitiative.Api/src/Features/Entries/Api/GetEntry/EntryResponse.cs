@@ -77,6 +77,8 @@ public record EntrySourceResponse
     public required string ExternalId { get; init; }
     public string? Name { get; init; }
     public required string Url { get; init; }
+    /// <summary>Where the item is printed, "MM p. 28", while it is still in the data. Null for the SRD.</summary>
+    public string? Detail { get; init; }
     /// <summary>Whether the web can link to the item's stat-block card: its provider draws them, and the item is still in the data.</summary>
     public required bool HasStatBlock { get; init; }
 
@@ -91,6 +93,7 @@ public record EntrySourceResponse
             ExternalId = source.ExternalId,
             Name = item?.Name,
             Url = source.Url,
+            Detail = item?.Book,
             HasStatBlock = item is not null && provider!.HasStatBlocks,
         };
     }

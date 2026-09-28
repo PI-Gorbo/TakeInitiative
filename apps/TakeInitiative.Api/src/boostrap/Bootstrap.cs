@@ -286,14 +286,25 @@ public static class Bootstrap
 
     /// <summary>
     /// Reference content (step 20a): the providers, registered in the order the Reference section
-    /// merges them (SRD 5.2 first; step 21 adds the 5eTools index after it), and the catalog that
-    /// lists them. The SRD's data is read once and held, so its catalog and provider are singletons.
+    /// merges them (SRD 5.2 first, then the 5eTools index, 21b), and the catalog that lists them.
+    /// Each provider's data is read once and held, so the catalogs and providers are singletons.
+    /// <para>
+    /// The 5eTools catalog reads <c>Reference:FiveETools:IndexPath</c> when it is built, not here,
+    /// so a test host's configuration applies. Its provider is always registered; with no index it
+    /// answers nothing, so the Reference section is exactly step 20's.
+    /// </para>
     /// </summary>
     public static IServiceCollection AddReference(this IServiceCollection services)
     {
         services.AddSingleton<SrdCatalog>();
         services.AddSingleton<SrdReferenceProvider>();
         services.AddSingleton<IReferenceProvider>(sp => sp.GetRequiredService<SrdReferenceProvider>());
+        services.AddSingleton(sp => FiveEToolsCatalog.FromConfiguration(
+            sp.GetService<IConfiguration>(),
+            sp.GetService<IHostEnvironment>()?.ContentRootPath,
+            sp.GetService<ILoggerFactory>()?.CreateLogger<FiveEToolsCatalog>()));
+        services.AddSingleton<FiveEToolsReferenceProvider>();
+        services.AddSingleton<IReferenceProvider>(sp => sp.GetRequiredService<FiveEToolsReferenceProvider>());
         services.AddScoped<ReferenceCatalog>();
         return services;
     }

@@ -2,11 +2,13 @@ using System.Text.Json.Serialization;
 
 namespace TakeInitiative.Api.Features.Reference;
 
-/// <summary>What kind of thing a reference item is. Step 20 has monsters only; step 21 adds spells, items and so on.</summary>
+/// <summary>What kind of thing a reference item is. The SRD has monsters only; the 5eTools index (step 21) adds spells and items.</summary>
 [JsonConverter(typeof(JsonStringEnumConverter<ReferenceCategory>))]
 public enum ReferenceCategory
 {
     Monster,
+    Spell,
+    Item,
 }
 
 /// <summary>
@@ -21,6 +23,7 @@ public enum ReferenceCategory
 /// The Stats + Wiki fills for a DM, or null. On the summary rather than the stat block so that a
 /// search-only provider, which has no stat block, can still offer them.
 /// </param>
+/// <param name="Book">Where the item is printed, "MM p. 28", for an entry's source line. Null for the SRD.</param>
 public record ReferenceSummary(
     string Provider,
     string Id,
@@ -29,7 +32,8 @@ public record ReferenceSummary(
     string Detail,
     string? Url,
     EntryKind SuggestedKind,
-    Stats? Stats);
+    Stats? Stats,
+    string? Book = null);
 
 /// <summary>
 /// One search result: the item, and how well its name matched, on the same ladder as

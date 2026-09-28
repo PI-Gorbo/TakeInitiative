@@ -2,18 +2,20 @@ namespace TakeInitiative.Api.Features.Reference;
 
 /// <summary>
 /// One reference item in full (20b), for the stat-block card: what the row showed, the stat block,
-/// and the attribution the card prints under it. The same for every member of every campaign.
+/// and the attribution the card prints under it. The same for every member of every campaign. A
+/// search-only provider's item (5eTools, 21b.5) has no stat block: <see cref="StatBlock"/> is null
+/// and the web links out instead of drawing a card.
 /// </summary>
 public record ReferenceItemResponse
 {
     public required ReferenceSummaryResponse Summary { get; init; }
-    public required StatBlock StatBlock { get; init; }
+    public required StatBlock? StatBlock { get; init; }
     public required ReferenceAttributionResponse Attribution { get; init; }
 
-    public static ReferenceItemResponse From(IReferenceProvider provider, ReferenceItem item, StatBlock statBlock) => new()
+    public static ReferenceItemResponse From(IReferenceProvider provider, ReferenceItem item) => new()
     {
         Summary = ReferenceSummaryResponse.From(provider, item.Summary),
-        StatBlock = statBlock,
+        StatBlock = item.StatBlock,
         Attribution = new ReferenceAttributionResponse
         {
             Text = item.Attribution.Text,

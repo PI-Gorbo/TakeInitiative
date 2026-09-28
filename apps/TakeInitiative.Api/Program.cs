@@ -101,6 +101,8 @@ internal class Program
 
         // The SRD data is embedded in this assembly: fail startup, not the first search, if it is missing.
         app.Services.GetRequiredService<SrdCatalog>().EnsureLoaded();
+        // The 5eTools index is optional: none is logged and the provider is off, but a bad file fails startup.
+        app.Services.GetRequiredService<FiveEToolsCatalog>();
 
         // Map SignalR Hubs
         app.MapHub<CampaignHub>("/campaignHub");

@@ -120,12 +120,13 @@ public class SrdCatalogTests
     }
 
     [Fact]
-    public void AddReference_RegistersTheSrdProvider()
+    public void AddReference_RegistersTheSrdProvider_ThenTheFiveEToolsOne()
     {
         using var services = new ServiceCollection().AddReference().BuildServiceProvider();
         using var scope = services.CreateScope();
         var catalog = scope.ServiceProvider.GetRequiredService<ReferenceCatalog>();
-        catalog.Providers.Select(p => p.Key).Should().Equal("srd52");
+        catalog.Providers.Select(p => p.Key).Should().Equal("srd52", "5etools");
+        catalog.Providers[1].Search("goblin", 10).Should().BeEmpty("with no index configured the 5eTools provider is off");
         catalog.GetItem("SRD52", "goblin-warrior")!.Summary.Name.Should().Be("Goblin Warrior");
         catalog.GetItem("5etools", "goblin-warrior").Should().BeNull();
     }

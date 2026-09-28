@@ -122,6 +122,18 @@ public class ReferenceSearchTests(AuthenticatedWebAppWithDatabaseFixture fixture
     }
 
     [Fact]
+    public async Task WithNoFiveEToolsIndex_TheSectionIsTheSrdsAlone()
+    {
+        fixture.Logs.Should().Contain(l => l.Message.Contains("5eTools index not configured; the 5eTools provider is off"));
+        var campaign = await TestCampaign.Create(fixture, "Reference: no 5eTools", withSecondPlayer: false);
+        fixture.LoginAsUser(Users.Player);
+
+        (await Search(campaign.Id, "goblin", take: 20)).Section(SearchSectionKey.Reference)
+            .Should().OnlyContain(h => h.Reference!.Provider == "srd52");
+        (await Search(campaign.Id, "test gremlin", sections: "reference")).ShouldHaveNoSection(SearchSectionKey.Reference, "no index, no 5eTools rows");
+    }
+
+    [Fact]
     public async Task TheSectionName_IsAccepted()
     {
         var campaign = await TestCampaign.Create(fixture, "Reference: names", withSecondPlayer: false);

@@ -17,6 +17,9 @@ public interface IReferenceProvider
     /// <summary>True when <see cref="Get"/> answers a stat block the app draws itself; false for a search-only provider whose rows link out.</summary>
     bool HasStatBlocks { get; }
 
+    /// <summary>Whom to credit. The SRD's licence statement; for 5eTools a plain note that the row links out, which the web does not show as a licence.</summary>
+    ReferenceAttribution Attribution { get; }
+
     /// <summary>The items whose names match <paramref name="text"/>, best first, at most <paramref name="take"/>. In memory.</summary>
     IReadOnlyList<ReferenceMatch> Search(string text, int take);
 

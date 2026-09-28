@@ -80,6 +80,13 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
     /// <summary>Lets a derived fixture swap services in the host (for example the hub context).</summary>
     protected virtual void ConfigureTestServices(IServiceCollection services) { }
 
+    /// <summary>
+    /// The 5eTools index the host reads (21b). Empty, so the provider is off and the Reference
+    /// section is step 20's, whatever the machine running the tests has built; a derived fixture
+    /// points it at the synthetic <c>Fixtures/5etools-index.json</c>.
+    /// </summary>
+    protected virtual string FiveEToolsIndexPath => "";
+
     public async Task InitializeAsync()
     {
         await PostgreSqlContainer.StartAsync();
@@ -94,6 +101,7 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
                             ["Blobs:CreateBucket"] = "false",
                             // Tests sweep by hand (ImageSweeper.SweepOnce), never in the background.
                             ["Images:SweepStartDelay"] = "1.00:00:00",
+                            ["Reference:FiveETools:IndexPath"] = FiveEToolsIndexPath,
                         });
                 })
            .ConfigureServices((context, services) =>
