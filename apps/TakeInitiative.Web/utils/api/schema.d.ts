@@ -1024,15 +1024,16 @@ export interface components {
             hits: components["schemas"]["SearchHit"][];
         };
         /** @enum {string} */
-        SearchSectionKey: "Entries" | "Notes" | "Images" | "Sessions";
+        SearchSectionKey: "Entries" | "Notes" | "Images" | "Sessions" | "Combats";
         SearchHit: {
             kind: components["schemas"]["SearchHitKind"];
             entry?: components["schemas"]["SearchEntryHit"] | null;
             note?: components["schemas"]["SearchNoteHit"] | null;
             session?: components["schemas"]["SearchSessionHit"] | null;
+            combat?: components["schemas"]["SearchCombatHit"] | null;
         };
         /** @enum {string} */
-        SearchHitKind: "Entry" | "Note" | "Session";
+        SearchHitKind: "Entry" | "Note" | "Session" | "Combat";
         SearchEntryHit: {
             entry: components["schemas"]["EntrySummaryResponse"];
             /** Format: int32 */
@@ -1094,6 +1095,12 @@ export interface components {
         SearchSessionHit: {
             session: components["schemas"]["SessionResponse"];
             snippet?: components["schemas"]["Snippet"] | null;
+        };
+        SearchCombatHit: {
+            combat: components["schemas"]["CombatCard"];
+            /** Format: int32 */
+            sessionNumber: number;
+            matchedCombatant?: string | null;
         };
         GetSearchRequest: Record<string, never>;
         DeleteImageRequest: Record<string, never>;

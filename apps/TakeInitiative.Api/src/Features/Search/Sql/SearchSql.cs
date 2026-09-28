@@ -32,6 +32,7 @@ public static class SearchSql
     public const string NoteTable = "mt_doc_sessionnote";
     public const string EntryTable = "mt_doc_entry";
     public const string SessionTable = "mt_doc_session";
+    public const string CombatTable = "mt_doc_combat";
 
     public const string NoteIndexName = "mt_doc_sessionnote_idx_search";
     public const string EntryIndexName = "mt_doc_entry_idx_search";

@@ -276,6 +276,7 @@ public static class Bootstrap
         services.AddSingleton<EntryMatcher>();
         services.AddScoped<ISearchProvider, WikiSearchProvider>();
         services.AddScoped<ISearchProvider, SessionSearchProvider>();
+        services.AddScoped<ISearchProvider, CombatSearchProvider>();
         services.AddScoped<SearchService>();
         return services;
     }

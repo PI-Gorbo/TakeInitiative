@@ -1,6 +1,8 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using TakeInitiative.Api.Features.Campaigns;
+using TakeInitiative.Api.Features.Combats;
+using TakeInitiative.Api.Tests.Integration.Features.Combats;
 using TakeInitiative.Api.Features.Entries;
 using TakeInitiative.Api.Features.Search;
 using TakeInitiative.Api.Tests.Integration.Features.Sessions;
@@ -300,6 +302,80 @@ public class SearchTests(AuthenticatedWebAppWithDatabaseFixture fixture)
         snippet.Highlights.Should().ContainSingle()
             .Which.Start.Should().Be(snippet.Text.IndexOf("Redbrands", StringComparison.Ordinal),
                 "the offsets are over the text the reader sees, after both removals");
+    }
+
+    // Combats (18f): the section, after Sessions, and its order.
+
+    private async Task<Guid> StartedCombat(Guid campaignId, string name, params string[] combatants)
+    {
+        var combat = await fixture.CreateCombat(campaignId, name);
+        if (combatants.Length > 0)
+        {
+            var added = await fixture.AddAsDm(campaignId, combat.Id, [.. combatants.Select(c => (object)new { name = c })]);
+            await fixture.Start(combat.Id, added.Combatants.ToDictionary(c => c.Id, _ => 10));
+        }
+        else
+        {
+            await fixture.Start(combat.Id, new Dictionary<Guid, int>());
+        }
+        return combat.Id;
+    }
+
+    [Fact]
+    public async Task Combats_ComeBackByTheLadder_ThenLiveBeforeDraftsBeforeFinished_ThenNewest()
+    {
+        CombatTestKit.UseRealDice(fixture);
+        var campaign = await NewCampaign("Search: combats");
+
+        // The same rung (a word prefix of "ambush") in each status, and two finished ones to show
+        // that newer comes first inside a status.
+        var olderFinished = await StartedCombat(campaign.Id, "Old Ambush");
+        var newerFinished = await StartedCombat(campaign.Id, "River Ambush");
+        fixture.LoginAsUser(Users.DM);
+        await fixture.Finish(campaign.Id, olderFinished).Ok();
+        await fixture.Finish(campaign.Id, newerFinished).Ok();
+        var draft = (await fixture.CreateCombat(campaign.Id, "Goblin Ambush")).Id;
+        var live = await StartedCombat(campaign.Id, "Bridge Ambush");
+        // A better rung beats every status: exact, then a prefix.
+        var prefix = await StartedCombat(campaign.Id, "Ambush at the ford");
+        fixture.LoginAsUser(Users.DM);
+        await fixture.Finish(campaign.Id, prefix).Ok();
+        var exact = (await fixture.CreateCombat(campaign.Id, "Ambush")).Id;
+
+        fixture.LoginAsUser(Users.DM);
+        var hits = (await Search(campaign.Id, "ambush", sections: "combats", take: 10)).Section(SearchSectionKey.Combats);
+        hits.Select(h => h.Combat!.Combat.Id).Should().Equal(exact, prefix, live, draft, newerFinished, olderFinished);
+        hits.Should().AllSatisfy(h =>
+        {
+            h.Kind.Should().Be(SearchHitKind.Combat);
+            h.Combat!.MatchedCombatant.Should().BeNull();
+            h.Combat!.SessionNumber.Should().Be(1);
+        });
+    }
+
+    [Fact]
+    public async Task ACombat_IsFoundByACombatantsName_AfterTheOtherSections()
+    {
+        CombatTestKit.UseRealDice(fixture);
+        var campaign = await NewCampaign("Search: combat by combatant");
+        var combatId = await StartedCombat(campaign.Id, "Triboar Trail", "Goblin 1", "Goblin 2", "Klarg");
+        fixture.LoginAsUser(Users.Player);
+        (await fixture.PostSessionNote(campaign.Id, "Klarg roared from the cave")).Should().Succeed();
+
+        var response = await Search(campaign.Id, "klarg");
+        response.Sections.Select(s => s.Key).Should().Equal(SearchSectionKey.Notes, SearchSectionKey.Combats);
+        var hit = response.Section(SearchSectionKey.Combats).Should().ContainSingle().Subject.Combat!;
+        hit.Combat.Id.Should().Be(combatId);
+        hit.MatchedCombatant.Should().Be("Klarg");
+        hit.Combat.Combatants.Select(c => c.Name).Should().BeEquivalentTo("Goblin 1", "Goblin 2", "Klarg");
+
+        // Several combatants match: the first listed is named, once.
+        (await Search(campaign.Id, "goblin", sections: "combats")).Section(SearchSectionKey.Combats)
+            .Should().ContainSingle().Which.Combat!.MatchedCombatant.Should().Be("Goblin 1");
+        // A single character searches no combats (the length rule).
+        (await Search(campaign.Id, "k")).ShouldHaveNoSection(SearchSectionKey.Combats, "one character matches entry names and session numbers only");
+        // And @ is entries only.
+        (await Search(campaign.Id, "@klarg")).ShouldHaveNoSection(SearchSectionKey.Combats, "@ searches entries only");
     }
 
     // Nothing goes wrong quietly.

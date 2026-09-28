@@ -1,6 +1,9 @@
 using FluentAssertions;
+using System.Text.Json;
 using TakeInitiative.Api.Features.Campaigns;
+using TakeInitiative.Api.Features.Combats;
 using TakeInitiative.Api.Features.Entries;
+using TakeInitiative.Api.Tests.Integration.Features.Combats;
 using TakeInitiative.Api.Features.Search;
 using TakeInitiative.Api.Tests.Integration.Features.Sessions;
 using static TakeInitiative.Api.Tests.Integration.WebAppClientExtensions;
@@ -490,5 +493,94 @@ public class SearchLeakTests(AuthenticatedWebAppWithDatabaseFixture fixture)
         // An invalid query is still a 403 and not a 400: membership is checked first, so an
         // outsider never learns whether their query was valid.
         (await fixture.GetStatus(SearchUrl(world.Id, ""))).Should().Be(403);
+    }
+
+    // 17. Combats (18f): a Draft's name is the DMs' alone.
+
+    /// <summary>The one combat hit of a response.</summary>
+    private static SearchCombatHit OneCombat(SearchResponse response, Guid combatId)
+    {
+        var section = response.Sections.Should().ContainSingle(s => s.Key == SearchSectionKey.Combats).Subject;
+        section.HasMore.Should().BeFalse();
+        var hit = section.Hits.Should().ContainSingle().Subject;
+        hit.Kind.Should().Be(SearchHitKind.Combat);
+        hit.Combat!.Combat.Id.Should().Be(combatId);
+        return hit.Combat!;
+    }
+
+    [Fact]
+    public async Task ADraftCombatsName_IsFoundByTheDms_AndByNoPlayer()
+    {
+        CombatTestKit.UseRealDice(fixture);
+        var world = await NewWorld("Leak: draft combat");
+        var combat = await fixture.CreateCombat(world.Id, $"The {Token} ambush");
+        await fixture.AddAsDm(world.Id, combat.Id, new { name = "Goblin" });
+
+        foreach (var dm in new[] { Users.DM, Users.Outsider })
+        {
+            var hit = OneCombat(await Search(world, dm, Token), combat.Id);
+            hit.MatchedCombatant.Should().BeNull("the combat's own name matched");
+            hit.Combat.Status.Should().Be(CombatStatus.Draft);
+            hit.SessionNumber.Should().Be(1);
+        }
+
+        Nothing(await Search(world, Users.Player, Token));
+        Nothing(await Search(world, Users.Player2, Token));
+        // Not by a combatant's name either: the whole Draft is out of a player's reach.
+        (await Search(world, Users.Player, "goblin")).ShouldHaveNoSection(SearchSectionKey.Combats, "a Draft is DM-only");
+
+        // Discarded without starting, it stays the DMs' alone.
+        fixture.LoginAsUser(Users.DM);
+        await fixture.Finish(world.Id, combat.Id).Ok();
+        OneCombat(await Search(world, Users.DM, Token), combat.Id).Combat.Status.Should().Be(CombatStatus.Finished);
+        Nothing(await Search(world, Users.Player, Token));
+    }
+
+    // 18. A hidden combatant's name finds nothing for a player, and is not in their card.
+
+    [Fact]
+    public async Task AHiddenCombatantsName_FindsNothingForAPlayer()
+    {
+        CombatTestKit.UseRealDice(fixture);
+        var world = await NewWorld("Leak: hidden combatant");
+        var combat = await fixture.CreateCombat(world.Id, "Cragmaw ambush");
+        var added = await fixture.AddAsDm(world.Id, combat.Id,
+            new { name = "Goblin" },
+            new { name = $"{Token} the Lurker", hidden = true });
+        await fixture.Start(combat.Id, added.Combatants.ToDictionary(c => c.Id, _ => 10));
+
+        foreach (var dm in new[] { Users.DM, Users.Outsider })
+        {
+            OneCombat(await Search(world, dm, Token), combat.Id).MatchedCombatant.Should().Be($"{Token} the Lurker");
+        }
+
+        Nothing(await Search(world, Users.Player, Token));
+        Nothing(await Search(world, Users.Player2, Token));
+
+        // Found by its own name, the player's card still holds nothing of the hidden one.
+        var player = await Search(world, Users.Player, "cragmaw");
+        var card = OneCombat(player, combat.Id).Combat;
+        card.Combatants.Select(c => c.Name).Should().Equal("Goblin");
+        JsonSerializer.Serialize(player, CombatTestKit.Web).Should().NotContainEquivalentOf(Token);
+    }
+
+    // 19. A started combat is found by a visible combatant's name, by everyone.
+
+    [Fact]
+    public async Task AStartedCombat_IsFoundByAVisibleCombatantsName_ByEveryone()
+    {
+        CombatTestKit.UseRealDice(fixture);
+        var world = await NewWorld("Leak: started combat");
+        var combat = await fixture.CreateCombat(world.Id, "Goblin Ambush");
+        var added = await fixture.AddAsDm(world.Id, combat.Id, new { name = $"{Token} Klarg" });
+        await fixture.Start(combat.Id, added.Combatants.ToDictionary(c => c.Id, _ => 12));
+
+        foreach (var who in new[] { Users.DM, Users.Outsider, Users.Player, Users.Player2 })
+        {
+            var hit = OneCombat(await Search(world, who, Token), combat.Id);
+            hit.MatchedCombatant.Should().Be($"{Token} Klarg");
+            hit.Combat.Status.Should().Be(CombatStatus.Active);
+            hit.Combat.Round.Should().Be(1);
+        }
     }
 }

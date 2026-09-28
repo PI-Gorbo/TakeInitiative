@@ -63,6 +63,25 @@ public static class SearchVisibilitySql
             OR (@isDm AND b ->> 'Visibility' = 'DM'))
         """;
 
+    /// <summary>
+    /// <see cref="CombatView.CanSee(Combat, Member)"/>: a DM sees every combat of the
+    /// campaign, Drafts included; a player one that has started (<c>StartedAt</c> set), so a
+    /// Draft, and a Draft discarded without starting, never match for them (18a.4).
+    /// </summary>
+    public static string Combats(Member viewer) => viewer.Role == Role.DM
+        ? "(true)"
+        : "(d.data ->> 'StartedAt' IS NOT NULL)";
+
+    /// <summary>
+    /// <see cref="CombatView.CanSee(Combatant, Member)"/>: a DM sees every combatant; a
+    /// player one that is not hidden, or their own. A combatant is <c>c</c>, one element of
+    /// <c>jsonb_array_elements(d.data -&gt; 'Combatants')</c>. It is used <b>inside</b>
+    /// <see cref="Combats(Member)"/>, never alone, because the combat's own rule applies too.
+    /// </summary>
+    public static string Combatants(Member viewer) => viewer.Role == Role.DM
+        ? "(true)"
+        : "(NOT coalesce((c ->> 'Hidden')::boolean, false) OR c ->> 'OwnerMemberId' = @me)";
+
     /// <summary>The viewer's member id as Marten stores a Guid in JSON: the 36-character lower-case form.</summary>
     public static string Me(Member viewer) => viewer.MemberId.ToString();
 }

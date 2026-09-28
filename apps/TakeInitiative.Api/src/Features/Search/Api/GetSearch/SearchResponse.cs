@@ -3,8 +3,8 @@ using System.Text.Json.Serialization;
 namespace TakeInitiative.Api.Features.Search;
 
 /// <summary>
-/// One heading of ⌘K results (glossary: Search section). Steps 18, 20 and 21 add
-/// <c>Combats</c> and <c>Reference</c> without changing the others.
+/// One heading of ⌘K results (glossary: Search section). Step 18 added <c>Combats</c>;
+/// steps 20 and 21 add <c>Reference</c> without changing the others.
 /// </summary>
 [JsonConverter(typeof(JsonStringEnumConverter<SearchSectionKey>))]
 public enum SearchSectionKey
@@ -13,6 +13,7 @@ public enum SearchSectionKey
     Notes,
     Images,
     Sessions,
+    Combats,
 }
 
 /// <summary>Which of a hit's payloads is filled. Step 20's REFERENCE adds a case.</summary>
@@ -22,6 +23,7 @@ public enum SearchHitKind
     Entry,
     Note,
     Session,
+    Combat,
 }
 
 /// <summary>What matched on an entry: its name, one of its aliases, or a block of its article.</summary>
@@ -34,7 +36,7 @@ public enum SearchMatchedOn
 }
 
 /// <summary>
-/// The sections a search answers with, in the order Entries, Notes, Images, Sessions. A section
+/// The sections a search answers with, in the order Entries, Notes, Images, Sessions, Combats. A section
 /// with no hits is left out, and the query string is never stored.
 /// </summary>
 public record SearchResponse
@@ -64,6 +66,7 @@ public record SearchHit
     public SearchEntryHit? Entry { get; init; }
     public SearchNoteHit? Note { get; init; }
     public SearchSessionHit? Session { get; init; }
+    public SearchCombatHit? Combat { get; init; }
 }
 
 /// <summary>
@@ -105,4 +108,17 @@ public record SearchSessionHit
 {
     public required SessionResponse Session { get; init; }
     public Snippet? Snippet { get; init; }
+}
+
+/// <summary>
+/// A combat hit (18f): the viewer's own card of it, the number of the session it is in, and the
+/// combatant name that matched when it was not the combat's own name. The card is built from the
+/// viewer's redacted view, so it holds nothing the combat page would not show them.
+/// </summary>
+public record SearchCombatHit
+{
+    public required CombatCard Combat { get; init; }
+    public required int SessionNumber { get; init; }
+    /// <summary>The name of the combatant that matched, as the viewer sees it. Null when the combat's name matched.</summary>
+    public string? MatchedCombatant { get; init; }
 }

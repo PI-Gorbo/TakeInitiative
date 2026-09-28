@@ -8,9 +8,12 @@ namespace TakeInitiative.Api.Features.Search;
 /// </summary>
 public class SearchService(IEnumerable<ISearchProvider> providers)
 {
-    /// <summary>The order the sections are shown in. Steps 18, 20 and 21 extend it.</summary>
+    /// <summary>The order the sections are shown in. Step 18 added Combats; steps 20 and 21 extend it.</summary>
     private static readonly SearchSectionKey[] Order =
-        [SearchSectionKey.Entries, SearchSectionKey.Notes, SearchSectionKey.Images, SearchSectionKey.Sessions];
+    [
+        SearchSectionKey.Entries, SearchSectionKey.Notes, SearchSectionKey.Images, SearchSectionKey.Sessions,
+        SearchSectionKey.Combats,
+    ];
 
     public async Task<SearchSection[]> SearchAsync(SearchQuery query, SearchContext context, CancellationToken ct)
     {

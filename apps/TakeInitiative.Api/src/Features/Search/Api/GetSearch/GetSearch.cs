@@ -14,7 +14,7 @@ public record GetSearchRequest
     /// <c>:</c> and <c>*</c> are plain text.
     /// </summary>
     public string? Q { get; init; }
-    /// <summary>A comma list of <c>entries,notes,images,sessions</c>. All of them by default.</summary>
+    /// <summary>A comma list of <c>entries,notes,images,sessions,combats</c>. All of them by default.</summary>
     public string? Sections { get; init; }
     /// <summary>How many hits each section returns: 5 by default, at most 20.</summary>
     public int? Take { get; init; }

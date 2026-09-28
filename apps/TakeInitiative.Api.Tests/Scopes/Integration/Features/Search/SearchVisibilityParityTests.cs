@@ -3,6 +3,7 @@ using Marten;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using TakeInitiative.Api.Features.Campaigns;
+using TakeInitiative.Api.Features.Combats;
 using TakeInitiative.Api.Features.Entries;
 using TakeInitiative.Api.Features.Search;
 using TakeInitiative.Api.Features.Sessions;
@@ -233,19 +234,122 @@ public class SearchVisibilityParityTests(WebAppWithDatabaseFixture fixture) : IC
             accepted, canSee, role);
     }
 
+    // Combats (18f): started or not × each status, seen as a DM and as a player. A DM sees every
+    // combat, so for a DM the fragment is meant to accept them all.
+
+    [Theory]
+    [MemberData(nameof(Roles))]
+    public async Task TheCombatFragment_AcceptsExactlyWhatCombatViewDoes(Role role)
+    {
+        var campaignId = Guid.NewGuid();
+        var combats = (
+            from status in Enum.GetValues<CombatStatus>()
+            from started in Booleans
+            select new Combat
+            {
+                Id = Guid.NewGuid(),
+                CampaignId = campaignId,
+                SessionId = Guid.NewGuid(),
+                Name = $"{status}, started {started}",
+                Status = status,
+                CreatedAt = DateTimeOffset.UnixEpoch,
+                StartedAt = started ? DateTimeOffset.UnixEpoch : null,
+            }).ToList();
+        await using (var session = Store.LightweightSession())
+        {
+            session.Store(combats.ToArray());
+            await session.SaveChangesAsync();
+        }
+
+        var viewer = Viewer(role);
+        Because(
+            combats.ToDictionary(c => c.Id, c => c.Name),
+            await Accepted(SearchSql.CombatTable, SearchVisibilitySql.Combats(viewer), campaignId, viewer),
+            combats.Where(c => CombatView.CanSee(c, viewer)).Select(c => c.Id).ToHashSet(),
+            role,
+            discriminates: role == Role.Player);
+    }
+
+    // Combatants: hidden or not × owned by the viewer, by someone else or by no one, inside a
+    // started combat, the way the provider uses the fragment.
+
+    [Theory]
+    [MemberData(nameof(Roles))]
+    public async Task TheCombatantFragment_AcceptsExactlyWhatCombatViewDoes(Role role)
+    {
+        var campaignId = Guid.NewGuid();
+        var combatants = (
+            from hidden in Booleans
+            from owner in new Guid?[] { ViewerId, OtherId, null }
+            select new Combatant
+            {
+                Id = Guid.NewGuid(),
+                Name = $"hidden {hidden}, owner {owner?.ToString()[..2] ?? "none"}",
+                OwnerMemberId = owner,
+                Hidden = hidden,
+            }).ToList();
+        var combat = new Combat
+        {
+            Id = Guid.NewGuid(),
+            CampaignId = campaignId,
+            SessionId = Guid.NewGuid(),
+            Name = "The combat",
+            Status = CombatStatus.Active,
+            CreatedAt = DateTimeOffset.UnixEpoch,
+            StartedAt = DateTimeOffset.UnixEpoch,
+            Combatants = combatants,
+        };
+        await using (var session = Store.LightweightSession())
+        {
+            session.Store(combat);
+            await session.SaveChangesAsync();
+        }
+
+        var viewer = Viewer(role);
+        var fragment = $"{SearchVisibilitySql.Combats(viewer)} AND {SearchVisibilitySql.Combatants(viewer)}";
+        await using var query = Store.QuerySession();
+        var accepted = (await SearchSql.QueryAsync(
+                query,
+                $"""
+                SELECT (c ->> 'Id')::uuid
+                FROM {SearchSql.Table(query, SearchSql.CombatTable)} d
+                CROSS JOIN LATERAL jsonb_array_elements(d.data -> 'Combatants') AS c
+                WHERE {SearchSql.CampaignFilter} AND {fragment}
+                """,
+                command => Parameters(command, campaignId, viewer, fragment),
+                reader => reader.GetGuid(0),
+                default))
+            .ToHashSet();
+
+        Because(
+            combatants.ToDictionary(c => c.Id, c => c.Name),
+            accepted,
+            combatants.Where(c => CombatView.CanSee(c, viewer)).Select(c => c.Id).ToHashSet(),
+            role,
+            discriminates: role == Role.Player);
+    }
+
     /// <summary>
     /// The two sets, compared by what each row <b>is</b> rather than by its id, so a failure names
     /// the case that disagreed: a row SQL let through that C# would not is a leak, and a row C#
     /// allows that SQL drops is a hidden result.
     /// </summary>
-    private static void Because<T>(IReadOnlyDictionary<Guid, string> labels, HashSet<Guid> accepted, HashSet<Guid> canSee, T role)
+    /// <param name="discriminates">
+    /// Whether the rule keeps something out for this viewer. A DM sees every combat and combatant,
+    /// so for them the combat fragments accept everything by design.
+    /// </param>
+    private static void Because<T>(
+        IReadOnlyDictionary<Guid, string> labels, HashSet<Guid> accepted, HashSet<Guid> canSee, T role, bool discriminates = true)
     {
         string[] Names(IEnumerable<Guid> ids) => [.. ids.Select(id => labels[id]).OrderBy(x => x)];
 
-        // The fragment must discriminate, or the comparison above would hold for a WHERE false and
+        // The fragment must discriminate, or the comparison below would hold for a WHERE false and
         // for a WHERE true alike.
         accepted.Should().NotBeEmpty($"the fragment lets something through ({role})");
-        accepted.Count.Should().BeLessThan(labels.Count, $"the fragment keeps something out ({role})");
+        if (discriminates)
+        {
+            accepted.Count.Should().BeLessThan(labels.Count, $"the fragment keeps something out ({role})");
+        }
 
         Names(accepted.Except(canSee)).Should().BeEmpty($"SQL must not accept what the C# rule denies ({role})");
         Names(canSee.Except(accepted)).Should().BeEmpty($"SQL must accept everything the C# rule allows ({role})");
