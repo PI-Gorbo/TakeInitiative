@@ -292,6 +292,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/reference/{provider}/{itemId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetReferenceItem"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/campaigns/{campaignId}/loose-ends/counts": {
         parameters: {
             query?: never;
@@ -462,6 +478,22 @@ export interface paths {
         get: operations["GetEntryTimeline"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/campaigns/{campaignId}/entries/from-reference": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["PostEntryFromReference"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1104,16 +1136,17 @@ export interface components {
             hits: components["schemas"]["SearchHit"][];
         };
         /** @enum {string} */
-        SearchSectionKey: "Entries" | "Notes" | "Images" | "Sessions" | "Combats";
+        SearchSectionKey: "Entries" | "Notes" | "Images" | "Sessions" | "Combats" | "Reference";
         SearchHit: {
             kind: components["schemas"]["SearchHitKind"];
             entry?: components["schemas"]["SearchEntryHit"] | null;
             note?: components["schemas"]["SearchNoteHit"] | null;
             session?: components["schemas"]["SearchSessionHit"] | null;
             combat?: components["schemas"]["SearchCombatHit"] | null;
+            reference?: components["schemas"]["SearchReferenceHit"] | null;
         };
         /** @enum {string} */
-        SearchHitKind: "Entry" | "Note" | "Session" | "Combat";
+        SearchHitKind: "Entry" | "Note" | "Session" | "Combat" | "Reference";
         SearchEntryHit: {
             entry: components["schemas"]["EntrySummaryResponse"];
             /** Format: int32 */
@@ -1182,7 +1215,125 @@ export interface components {
             sessionNumber: number;
             matchedCombatant?: string | null;
         };
+        SearchReferenceHit: {
+            provider: string;
+            providerLabel: string;
+            id: string;
+            name: string;
+            category: components["schemas"]["ReferenceCategory"];
+            detail: string;
+            url?: string | null;
+            hasStatBlock: boolean;
+            suggestedKind: components["schemas"]["EntryKind"];
+        };
+        /** @enum {string} */
+        ReferenceCategory: "Monster";
         GetSearchRequest: Record<string, never>;
+        ReferenceItemResponse: {
+            summary: components["schemas"]["ReferenceSummaryResponse"];
+            statBlock: components["schemas"]["StatBlock"];
+            attribution: components["schemas"]["ReferenceAttributionResponse"];
+        };
+        ReferenceSummaryResponse: {
+            provider: string;
+            providerLabel: string;
+            id: string;
+            name: string;
+            category: components["schemas"]["ReferenceCategory"];
+            detail: string;
+            url?: string | null;
+            hasStatBlock: boolean;
+            suggestedKind: components["schemas"]["EntryKind"];
+            stats?: components["schemas"]["StatsResponse"] | null;
+        };
+        StatsResponse: {
+            initiativeRoll?: string | null;
+            maxHp?: string | null;
+            /** Format: int32 */
+            ac?: number | null;
+        };
+        StatBlock: {
+            id: string;
+            name: string;
+            category: components["schemas"]["StatBlockCategory"];
+            size: string;
+            type: string;
+            alignment: string;
+            /** Format: int32 */
+            ac: number;
+            acNote: string;
+            /** Format: int32 */
+            initiativeBonus: number;
+            /** Format: int32 */
+            hp: number;
+            hitDice: string;
+            speed: components["schemas"]["StatBlockSpeed"];
+            abilities: components["schemas"]["AbilityScores"];
+            saves: components["schemas"]["AbilityScores"];
+            skills: {
+                [key: string]: number;
+            };
+            vulnerabilities: string;
+            resistances: string;
+            immunities: string;
+            conditionImmunities: string;
+            senses: string;
+            languages: string;
+            cr: string;
+            /** Format: int32 */
+            xp: number;
+            /** Format: int32 */
+            pb: number;
+            traits: components["schemas"]["StatBlockTrait"][];
+            actions: components["schemas"]["StatBlockAction"][];
+        };
+        /** @enum {string} */
+        StatBlockCategory: "Monster" | "Animal";
+        StatBlockSpeed: {
+            /** Format: int32 */
+            walk?: number | null;
+            /** Format: int32 */
+            fly?: number | null;
+            /** Format: int32 */
+            swim?: number | null;
+            /** Format: int32 */
+            climb?: number | null;
+            /** Format: int32 */
+            burrow?: number | null;
+            hover: boolean;
+        };
+        AbilityScores: {
+            /** Format: int32 */
+            str: number;
+            /** Format: int32 */
+            dex: number;
+            /** Format: int32 */
+            con: number;
+            /** Format: int32 */
+            int: number;
+            /** Format: int32 */
+            wis: number;
+            /** Format: int32 */
+            cha: number;
+        };
+        StatBlockTrait: {
+            name: string;
+            text: string;
+        };
+        StatBlockAction: {
+            kind: components["schemas"]["StatBlockActionKind"];
+            name: string;
+            text: string;
+        };
+        /** @enum {string} */
+        StatBlockActionKind: "Action" | "BonusAction" | "Reaction" | "LegendaryAction";
+        ReferenceAttributionResponse: {
+            text: string;
+            licenseName: string;
+            licenseUrl: string;
+            sourceUrl: string;
+        };
+        GetReferenceItemRequest: Record<string, never>;
         LooseEndCountsResponse: {
             /** Format: int32 */
             total: number;
@@ -1278,6 +1429,7 @@ export interface components {
             mergedFromIds: string[];
             article: components["schemas"]["ArticleResponse"];
             stats?: components["schemas"]["StatsResponse"] | null;
+            source?: components["schemas"]["EntrySourceResponse"] | null;
         };
         ArticleResponse: {
             etag: string;
@@ -1306,11 +1458,13 @@ export interface components {
             /** Format: date-time */
             promotedAt: string;
         };
-        StatsResponse: {
-            initiativeRoll?: string | null;
-            maxHp?: string | null;
-            /** Format: int32 */
-            ac?: number | null;
+        EntrySourceResponse: {
+            provider: string;
+            providerLabel: string;
+            externalId: string;
+            name?: string | null;
+            url: string;
+            hasStatBlock: boolean;
         };
         GetEntryRequest: Record<string, never>;
         EntryHistoryResponse: {
@@ -1336,6 +1490,7 @@ export interface components {
             /** Format: guid */
             memberId?: string | null;
             stats?: components["schemas"]["StatsResponse"] | null;
+            source?: components["schemas"]["EntrySourceResponse"] | null;
         };
         /** @enum {string} */
         EntryChangeType: "Created" | "Renamed" | "KindChanged" | "AliasAdded" | "AliasRemoved" | "VisibilityChanged" | "EditAccessChanged" | "ArticleEdited" | "QuotePromoted" | "Merged" | "Claimed" | "Unclaimed" | "StatsChanged";
@@ -1359,6 +1514,12 @@ export interface components {
         PostEntryRequest: {
             name: string;
             kind: components["schemas"]["EntryKind"];
+            visibility: components["schemas"]["Visibility"];
+        };
+        PostEntryFromReferenceRequest: {
+            provider: string;
+            itemId: string;
+            name?: string | null;
             visibility: components["schemas"]["Visibility"];
         };
         PostEntryMergeRequest: {
@@ -2436,6 +2597,43 @@ export interface operations {
             };
         };
     };
+    GetReferenceItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider: string | null;
+                itemId: string | null;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReferenceItemResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     GetLooseEndCounts: {
         parameters: {
             query?: never;
@@ -2881,6 +3079,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EntryTimelineResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PostEntryFromReference: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostEntryFromReferenceRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryResponse"];
                 };
             };
             /** @description Unauthorized */

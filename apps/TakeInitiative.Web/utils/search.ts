@@ -45,7 +45,14 @@ export const SECTION_LABELS: Record<SearchSectionKey, { header: string; more: st
     Images: { header: "Images", more: "Show more images" },
     Sessions: { header: "Sessions", more: "Show more sessions" },
     Combats: { header: "Combats", more: "Show more combats" },
+    Reference: { header: "Reference", more: "Show more reference" },
 };
+
+/**
+ * Sections the API sends that the sheet cannot draw yet. The API answers Reference from 20b; its
+ * rows come in 20c, which empties this.
+ */
+export const HIDDEN_SECTIONS: ReadonlySet<SearchSectionKey> = new Set<SearchSectionKey>(["Reference"]);
 
 /** The most a section shows after "Show more": the server's largest `take`. */
 export const SEARCH_MORE_TAKE = 20;
@@ -83,6 +90,7 @@ export function hitKey(hit: SearchHit): string {
     if (hit.note) return `note-${hit.note.id}`;
     if (hit.session) return `session-${hit.session.session.id}`;
     if (hit.combat) return `combat-${hit.combat.combat.id}`;
+    if (hit.reference) return `reference-${hit.reference.provider}-${hit.reference.id}`;
     return "hit";
 }
 
@@ -96,7 +104,7 @@ export function searchRows(
 ): SearchRow[] {
     const rows: SearchRow[] = [];
     for (const section of response?.sections ?? []) {
-        if (section.hits.length === 0) continue;
+        if (section.hits.length === 0 || HIDDEN_SECTIONS.has(section.key)) continue;
         const key = section.key;
         rows.push({ type: "header", id: `header-${key}`, section: key, label: SECTION_LABELS[key].header });
         for (const hit of section.hits) {
@@ -135,7 +143,7 @@ export function replaceSection<R extends Pick<SearchResponse, "sections">>(respo
 
 /** Whether a response found nothing at all. */
 export const isEmptyResponse = (response: Pick<SearchResponse, "sections">) =>
-    response.sections.every((s) => s.hits.length === 0);
+    response.sections.every((s) => s.hits.length === 0 || HIDDEN_SECTIONS.has(s.key));
 
 // ── The cursor ───────────────────────────────────────────────────────────────
 

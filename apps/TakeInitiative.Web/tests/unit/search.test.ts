@@ -5,6 +5,7 @@ import {
     RECENT_ENTRIES_MAX,
     combatHitLine,
     firstRow,
+    hitKey,
     hitTarget,
     isEmptyResponse,
     moveCursor,
@@ -158,6 +159,33 @@ describe("searchRows", () => {
             "more-Combats",
         ]);
         expect(rows.at(-1)).toMatchObject({ type: "more", label: "Show more combats" });
+    });
+
+    it("leaves out Reference until 20c draws its rows", () => {
+        const reference: SearchSection = {
+            key: "Reference",
+            hasMore: true,
+            hits: [
+                {
+                    kind: "Reference",
+                    reference: {
+                        provider: "srd52",
+                        providerLabel: "SRD 5.2",
+                        id: "goblin-warrior",
+                        name: "Goblin Warrior",
+                        category: "Monster",
+                        detail: "CR 1/4 · Small Fey",
+                        url: null,
+                        hasStatBlock: true,
+                        suggestedKind: "Character",
+                    },
+                },
+            ],
+        };
+        const rows = searchRows(response({ key: "Entries", hasMore: false, hits: [entryHit("e1")] }, reference));
+        expect(rows.map((r) => r.id)).toEqual(["header-Entries", "Entries-entry-e1"]);
+        expect(isEmptyResponse(response(reference))).toBe(true);
+        expect(hitKey(reference.hits[0]!)).toBe("reference-srd52-goblin-warrior");
     });
 
     it("leaves out empty sections", () => {
