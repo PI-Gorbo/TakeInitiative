@@ -6,12 +6,15 @@ import {
     COMPOSE_TEXT_MAX,
     CREATE_ENTRY_ACTION_ID,
     SEARCH_ACTIONS,
+    START_COMBAT_ACTION_ID,
     SEARCH_ACTIONS_MAX,
     composeFits,
     composeFromQuery,
     cycleEntryKind,
     cycleEntryVisibility,
+    newCombatFromQuery,
     searchActions,
+    startCombatName,
     type SearchActionContext,
 } from "~/utils/searchActions";
 
@@ -39,6 +42,7 @@ const context = (extra: Partial<SearchActionContext> = {}): SearchActionContext 
     campaignId: "c1",
     isDm: false,
     nextSessionNumber: 14,
+    hasSession: true,
     scope: "all",
     text: "",
     directory: entryDirectory(list),
@@ -120,8 +124,9 @@ describe("searchActions", () => {
 
 describe("searchActions in the > scope", () => {
     it("lists every available action, without the query's own", () => {
-        const all = ids(context({ scope: "actions" }));
-        expect(all).toEqual(SEARCH_ACTIONS.filter((a) => !a.fromQuery).map((a) => a.id));
+        const c = context({ scope: "actions" });
+        const all = ids(c);
+        expect(all).toEqual(SEARCH_ACTIONS.filter((a) => !a.fromQuery && a.available(c)).map((a) => a.id));
         expect(all).not.toContain(CREATE_ENTRY_ACTION_ID);
         expect(all.length).toBeGreaterThan(SEARCH_ACTIONS_MAX);
     });
@@ -198,5 +203,49 @@ describe("?compose=", () => {
         expect(composeFits({ text: "draft", attachmentCount: 0, editing: false })).toBe(false);
         expect(composeFits({ text: "", attachmentCount: 1, editing: false })).toBe(false);
         expect(composeFits({ text: "", attachmentCount: 0, editing: true })).toBe(false);
+    });
+});
+
+// ── ⚔ Start combat (18f) ─────────────────────────────────────────────────────
+
+describe("Start combat", () => {
+    const dm = (extra: Partial<SearchActionContext> = {}) => context({ isDm: true, ...extra });
+
+    it("is for DMs only, once a session exists", () => {
+        expect(ids(dm({ scope: "actions", text: "start combat" }))).toContain(START_COMBAT_ACTION_ID);
+        expect(ids(context({ scope: "actions", text: "start combat" }))).not.toContain(START_COMBAT_ACTION_ID);
+        expect(ids(dm({ scope: "actions", text: "start combat", hasSession: false }))).not.toContain(
+            START_COMBAT_ACTION_ID
+        );
+    });
+
+    it("is among a DM's defaults, after Start Session", () => {
+        expect(ids(dm())).toEqual(["start-session", START_COMBAT_ACTION_ID, "go-campaign", "go-wiki", "go-combat"]);
+    });
+
+    it("is offered for any text in a free slot, and never in the @ scope", () => {
+        expect(ids(dm({ text: "Goblin Ambush" }))).toEqual([CREATE_ENTRY_ACTION_ID, "note-mentioning", START_COMBAT_ACTION_ID]);
+        expect(ids(dm({ scope: "entries", text: "Goblin Ambush" }))).not.toContain(START_COMBAT_ACTION_ID);
+        // Matched by its words, it is listed once.
+        expect(ids(dm({ text: "fight" })).filter((id) => id === START_COMBAT_ACTION_ID)).toHaveLength(1);
+    });
+
+    it("opens New combat named after the query, but not after its own words or a > query", () => {
+        expect(action(START_COMBAT_ACTION_ID).run(dm({ text: "Goblin Ambush" }))).toEqual({
+            kind: "navigate",
+            target: { path: "/app/campaigns/c1/combat", query: { new: "Goblin Ambush" } },
+        });
+        expect(startCombatName(dm({ text: "start combat" }))).toBe("");
+        expect(startCombatName(dm({ scope: "actions", text: "combat" }))).toBe("");
+        expect(startCombatName(dm({ text: "x".repeat(150) }))).toHaveLength(100);
+    });
+
+    it("reads ?new= back", () => {
+        expect(newCombatFromQuery(undefined)).toBeUndefined();
+        expect(newCombatFromQuery("  Goblin Ambush ")).toBe("Goblin Ambush");
+        expect(newCombatFromQuery("")).toBe("");
+        expect(newCombatFromQuery(null)).toBe("");
+        expect(newCombatFromQuery(["Klarg", "x"])).toBe("Klarg");
+        expect(newCombatFromQuery("y".repeat(150))).toHaveLength(100);
     });
 });

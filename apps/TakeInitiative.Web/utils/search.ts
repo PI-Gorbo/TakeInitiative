@@ -1,7 +1,16 @@
 // ⌘K search's pure rules (17b): reading the input, flattening the server's sections
 // into rows, the keyboard cursor, snippet highlights, where a hit goes, and the
 // recent entries kept in `localStorage`. `SearchSheet` only wires these to the DOM.
-import type { EntryListItem, SearchHit, SearchResponse, SearchSection, SearchSectionKey, Snippet, Visibility } from "./api/types";
+import type {
+    CombatCard,
+    EntryListItem,
+    SearchHit,
+    SearchResponse,
+    SearchSection,
+    SearchSectionKey,
+    Snippet,
+    Visibility,
+} from "./api/types";
 import type { EntryDirectory } from "./entries";
 import { NOTE_LINK_PARAM } from "./noteActions";
 
@@ -35,6 +44,7 @@ export const SECTION_LABELS: Record<SearchSectionKey, { header: string; more: st
     Notes: { header: "Notes", more: "Show more notes" },
     Images: { header: "Images", more: "Show more images" },
     Sessions: { header: "Sessions", more: "Show more sessions" },
+    Combats: { header: "Combats", more: "Show more combats" },
 };
 
 /** The most a section shows after "Show more": the server's largest `take`. */
@@ -72,6 +82,7 @@ export function hitKey(hit: SearchHit): string {
     if (hit.entry) return `entry-${hit.entry.entry.id}`;
     if (hit.note) return `note-${hit.note.id}`;
     if (hit.session) return `session-${hit.session.session.id}`;
+    if (hit.combat) return `combat-${hit.combat.combat.id}`;
     return "hit";
 }
 
@@ -189,6 +200,15 @@ export const lockLabel = (visibility: Visibility): string | null =>
 export const sessionLine = (number: number, date: string, title?: string | null) =>
     [`Session ${number}`, date, title?.trim()].filter(Boolean).join(" · ");
 
+/**
+ * A combat's line (18f): "Live · Round 3" while it runs, else its session and status,
+ * "S12 · Finished" or "S12 · Draft".
+ */
+export function combatHitLine(card: Pick<CombatCard, "status" | "round">, sessionNumber: number): string {
+    if (card.status === "Active") return `Live · Round ${card.round}`;
+    return `S${sessionNumber} · ${card.status}`;
+}
+
 // ── Where a hit goes ─────────────────────────────────────────────────────────
 
 export const SESSION_LINK_PARAM = "session";
@@ -198,8 +218,8 @@ export type SearchTarget = { path: string; query: Record<string, string> };
 
 /**
  * An entry opens its page (at the matching block for an article hit); a note or an
- * image opens the stream at the note, and a session at its divider. The stream's
- * filter is left out, so the target is never hidden by one.
+ * image opens the stream at the note, a session at its divider, and a combat its
+ * page. The stream's filter is left out, so the target is never hidden by one.
  */
 export function hitTarget(campaignId: string, hit: SearchHit): SearchTarget {
     const campaign = `/app/campaigns/${encodeURIComponent(campaignId)}`;
@@ -209,6 +229,7 @@ export function hitTarget(campaignId: string, hit: SearchHit): SearchTarget {
     }
     if (hit.note) return { path: campaign, query: { [NOTE_LINK_PARAM]: hit.note.id } };
     if (hit.session) return { path: campaign, query: { [SESSION_LINK_PARAM]: String(hit.session.session.number) } };
+    if (hit.combat) return { path: `${campaign}/combat/${encodeURIComponent(hit.combat.combat.id)}`, query: {} };
     return { path: campaign, query: {} };
 }
 

@@ -1,6 +1,6 @@
 // ⌘K's actions (17c): the registry, which actions a query offers and in what order,
-// the Create row's kind and visibility cycling, and `?compose=`. Pure: an action's
-// `run` describes what to do, and `SearchSheet` does it.
+// the Create row's kind and visibility cycling, `?compose=` and `?new=` (18f). Pure:
+// an action's `run` describes what to do, and `SearchSheet` does it.
 import type { EntryKind, EntrySummary, Visibility } from "./api/types";
 import {
     ABOUT_PARAM,
@@ -11,6 +11,7 @@ import {
     type EntryDirectory,
 } from "./entries";
 import { foldForMatch, matchRank } from "./mentions";
+import { COMBAT_NAME_MAX } from "./combat";
 import type { SearchScope, SearchTarget } from "./search";
 import { FILTER_PARAM } from "./streamFilters";
 
@@ -18,10 +19,12 @@ import { FILTER_PARAM } from "./streamFilters";
 
 export type SearchActionContext = {
     campaignId: string;
-    /** The viewer's role. No action needs it yet; "⚔ Start combat" (18) is DMs only. */
+    /** The viewer's role: "⚔ Start combat" (18f) is DMs only. */
     isDm: boolean;
     /** Current + 1, or null while the sessions are not loaded (Start is hidden). */
     nextSessionNumber: number | null;
+    /** Whether the campaign has a session yet: a combat starts in the current one (18f). */
+    hasSession: boolean;
     scope: SearchScope;
     /** The query text, after its prefix. */
     text: string;
@@ -49,6 +52,12 @@ export type SearchAction = {
      * not matched against it. These are offered in the `all` and `@` scopes only.
      */
     fromQuery?: boolean;
+    /**
+     * Offered for any text in the `all` scope, in a slot the query's own and the
+     * matched actions leave free, as well as when it matches (design §7's
+     * "gund" → "⚔ Start combat").
+     */
+    withAnyText?: boolean;
 };
 
 const campaignPath = (campaignId: string) => `/app/campaigns/${encodeURIComponent(campaignId)}`;
@@ -61,7 +70,10 @@ const to = (path: string, query: Record<string, string> = {}): SearchActionRun =
 
 export const CREATE_ENTRY_ACTION_ID = "create-entry";
 export const START_SESSION_ACTION_ID = "start-session";
+export const START_COMBAT_ACTION_ID = "start-combat";
 export const COMPOSE_PARAM = "compose";
+/** `combat?new=Goblin Ambush`: the Combat tab opens New combat with that name (18f). */
+export const NEW_COMBAT_PARAM = "new";
 /** The most `?compose=` puts in the composer. */
 export const COMPOSE_TEXT_MAX = 200;
 
@@ -130,6 +142,17 @@ export const SEARCH_ACTIONS: readonly SearchAction[] = [
         available: ({ nextSessionNumber }) => nextSessionNumber !== null,
         run: ({ nextSessionNumber }) => ({ kind: "startSession", number: nextSessionNumber! }),
     },
+    {
+        id: START_COMBAT_ACTION_ID,
+        icon: "⚔",
+        label: () => "Start combat",
+        keywords: () => ["new combat", "fight", "encounter", "initiative", "battle"],
+        // DMs only, and a combat is created in the current session, so one must exist.
+        available: ({ isDm, hasSession }) => isDm && hasSession,
+        run: (context) =>
+            to(`${campaignPath(context.campaignId)}/combat`, { [NEW_COMBAT_PARAM]: startCombatName(context) }),
+        withAnyText: true,
+    },
     ...TABS.map(
         (tab): SearchAction => ({
             id: `go-${tab.id}`,
@@ -166,8 +189,8 @@ export const SEARCH_ACTIONS: readonly SearchAction[] = [
 
 /** In the `all` and `@` scopes, Actions is the last section, with at most this many. */
 export const SEARCH_ACTIONS_MAX = 4;
-/** What an empty input offers: Start Session N+1, then the tabs. */
-const DEFAULT_ACTION_IDS = [START_SESSION_ACTION_ID, "go-campaign", "go-wiki", "go-combat"];
+/** What an empty input offers: Start Session N+1, Start combat (DMs), then the tabs. */
+const DEFAULT_ACTION_IDS = [START_SESSION_ACTION_ID, START_COMBAT_ACTION_ID, "go-campaign", "go-wiki", "go-combat"];
 
 /** An action's best `matchRank` over its label and keywords, or undefined. */
 export function actionRank(action: SearchAction, context: SearchActionContext, text: string): number | undefined {
@@ -183,7 +206,7 @@ export function actionRank(action: SearchAction, context: SearchActionContext, t
  * - `>`: every available action but the query's own, matched by the text, best first;
  * - `all`, empty: the defaults;
  * - `all` with text: Create, Post a note about, New note mentioning, then the matched
- *   actions, at most four in all;
+ *   actions, then Start combat if there is room, at most four in all;
  * - `@`: only the query's own actions (the rest are not about entries).
  */
 export function searchActions(
@@ -208,7 +231,21 @@ export function searchActions(
     }
     const own = available.filter((action) => action.fromQuery);
     if (context.scope === "entries") return own.slice(0, SEARCH_ACTIONS_MAX);
-    return [...own, ...matched()].slice(0, SEARCH_ACTIONS_MAX);
+    const found = matched();
+    const anyText = available.filter((action) => action.withAnyText && !found.includes(action));
+    return [...own, ...found, ...anyText].slice(0, SEARCH_ACTIONS_MAX);
+}
+
+/**
+ * The name Start combat hands the New combat dialog: the query text in the `all`
+ * scope ("goblin ambush" → "goblin ambush"), unless the text is the action's own
+ * words ("start combat", "fight"), and nothing from `>` (the dialog's default).
+ */
+export function startCombatName(context: SearchActionContext): string {
+    if (context.scope !== "all" || !context.text) return "";
+    const action = SEARCH_ACTIONS.find((a) => a.id === START_COMBAT_ACTION_ID);
+    if (action && actionRank(action, context, context.text) !== undefined) return "";
+    return context.text.slice(0, COMBAT_NAME_MAX);
 }
 
 // ── The Create row ───────────────────────────────────────────────────────────
@@ -240,6 +277,20 @@ export function composeFromQuery(value: unknown): string | undefined {
     if (typeof raw !== "string") return undefined;
     const text = raw.trim().slice(0, COMPOSE_TEXT_MAX);
     return text || undefined;
+}
+
+// ── `?new=` ──────────────────────────────────────────────────────────────────
+
+/**
+ * `combat?new=Goblin Ambush` as the New combat dialog's name: trimmed, at most 100
+ * characters, and "" for an empty value (the dialog's default). Undefined when the
+ * parameter is absent.
+ */
+export function newCombatFromQuery(value: unknown): string | undefined {
+    const raw = Array.isArray(value) ? value[0] : value;
+    if (raw === null && value !== undefined) return "";
+    if (typeof raw !== "string") return undefined;
+    return raw.trim().slice(0, COMBAT_NAME_MAX);
 }
 
 /**

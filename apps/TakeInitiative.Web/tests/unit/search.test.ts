@@ -3,6 +3,7 @@ import type { EntryList, EntrySummary, SearchHit, SearchResponse, SearchSection 
 import { entryDirectory } from "~/utils/entries";
 import {
     RECENT_ENTRIES_MAX,
+    combatHitLine,
     firstRow,
     hitTarget,
     isEmptyResponse,
@@ -69,6 +70,23 @@ const sessionHit = (number: number): SearchHit => ({
     },
 });
 
+const combatHit = (id: string, status: "Draft" | "Active" | "Finished" = "Active", matchedCombatant?: string): SearchHit => ({
+    kind: "Combat",
+    combat: {
+        combat: {
+            id,
+            sessionId: "s",
+            name: "Goblin Ambush",
+            status,
+            round: 3,
+            createdAt: "2026-09-20T19:00:00Z",
+            combatants: [{ name: "Goblin", entryId: "e1", count: 4 }],
+        },
+        sessionNumber: 12,
+        matchedCombatant,
+    },
+});
+
 const response = (...sections: SearchSection[]): SearchResponse => ({ query: "q", sections });
 
 // ── parseSearchInput ─────────────────────────────────────────────────────────
@@ -122,6 +140,24 @@ describe("searchRows", () => {
             "Sessions",
         ]);
         expect(new Set(rows.map((r) => r.id)).size).toBe(rows.length);
+    });
+
+    it("puts Combats last, under their own header and Show more", () => {
+        const rows = searchRows(
+            response(
+                { key: "Sessions", hasMore: false, hits: [sessionHit(12)] },
+                { key: "Combats", hasMore: true, hits: [combatHit("k1"), combatHit("k2", "Finished")] }
+            )
+        );
+        expect(rows.map((r) => r.id)).toEqual([
+            "header-Sessions",
+            "Sessions-session-session-12",
+            "header-Combats",
+            "Combats-combat-k1",
+            "Combats-combat-k2",
+            "more-Combats",
+        ]);
+        expect(rows.at(-1)).toMatchObject({ type: "more", label: "Show more combats" });
     });
 
     it("leaves out empty sections", () => {
@@ -236,6 +272,16 @@ describe("hitTarget", () => {
 
     it("opens a session at its divider", () => {
         expect(hitTarget("c1", sessionHit(12))).toEqual({ path: "/app/campaigns/c1", query: { session: "12" } });
+    });
+
+    it("opens a combat's page", () => {
+        expect(hitTarget("c1", combatHit("k1"))).toEqual({ path: "/app/campaigns/c1/combat/k1", query: {} });
+    });
+
+    it("writes a combat's line: live with its round, else its session and status", () => {
+        expect(combatHitLine({ status: "Active", round: 3 }, 12)).toBe("Live · Round 3");
+        expect(combatHitLine({ status: "Finished", round: 5 }, 12)).toBe("S12 · Finished");
+        expect(combatHitLine({ status: "Draft", round: 0 }, 13)).toBe("S13 · Draft");
     });
 
     it("reads ?session= back", () => {

@@ -1,5 +1,5 @@
 <template>
-    <!-- One ⌘K hit (17b): an entry, a note, an image note or a session. -->
+    <!-- One ⌘K hit (17b): an entry, a note, an image note, a session or a combat (18f). -->
     <div class="flex min-w-0 flex-1 items-start gap-3">
         <template v-if="hit.entry">
             <span
@@ -85,14 +85,32 @@
                     :snippet="hit.session.snippet" />
             </span>
         </template>
+
+        <template v-else-if="hit.combat">
+            <span
+                class="flex size-9 shrink-0 items-center justify-center text-muted-foreground"
+                aria-hidden="true">
+                <Swords class="size-5" />
+            </span>
+            <span class="flex min-w-0 flex-1 flex-col">
+                <span class="truncate font-medium">{{ hit.combat.combat.name }}</span>
+                <span
+                    :class="[
+                        'truncate text-xs',
+                        hit.combat.combat.status === 'Active' ? 'text-gold' : 'text-muted-foreground',
+                    ]">
+                    {{ combatMeta }}
+                </span>
+            </span>
+        </template>
     </div>
 </template>
 
 <script setup lang="ts">
-    import { CalendarDays, ImageIcon, MessageSquare, ScrollText } from "lucide-vue-next";
+    import { CalendarDays, ImageIcon, MessageSquare, ScrollText, Swords } from "lucide-vue-next";
     import type { SearchHit, SearchSectionKey } from "~/utils/api/types";
     import { ENTRY_KIND_ICONS, mentionCountLabel } from "~/utils/entries";
-    import { lockLabel, sessionLine } from "~/utils/search";
+    import { combatHitLine, lockLabel, sessionLine } from "~/utils/search";
     import { formatSessionDate } from "~/utils/sessionDates";
 
     const props = defineProps<{
@@ -103,6 +121,14 @@
     }>();
 
     const imageSrc = useImageUrl();
+
+    // "Live · Round 3 · Goblin 2": the line, then the combatant that matched when it
+    // was not the combat's own name.
+    const combatMeta = computed(() => {
+        const hit = props.hit.combat;
+        if (!hit) return "";
+        return [combatHitLine(hit.combat, hit.sessionNumber), hit.matchedCombatant].filter(Boolean).join(" · ");
+    });
 
     // "Sam · S12 · Sat 20 Sep · 📜 Recap · 🔒 DM"; an image note leaves the date out.
     const noteMeta = computed(() => {

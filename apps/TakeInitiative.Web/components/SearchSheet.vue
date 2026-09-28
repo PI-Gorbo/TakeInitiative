@@ -253,6 +253,7 @@
             campaignId: props.campaignId,
             isDm: campaign ? currentMember(campaign)?.role === "DM" : false,
             nextSessionNumber: sessions ? nextSessionNumber(sessions.sessions) : null,
+            hasSession: (sessions?.sessions.length ?? 0) > 0,
             scope: typed.value.scope,
             text: typed.value.text,
             directory: directory.value,
@@ -315,7 +316,7 @@
     const message = computed(() => {
         if (!typed.value.text) {
             return typed.value.scope === "all"
-                ? "Search entries, notes, images and sessions. @ for entries, > for actions."
+                ? "Search entries, notes, images, sessions and combats. @ for entries, > for actions."
                 : typed.value.scope === "entries"
                   ? "Search entries."
                   : null;

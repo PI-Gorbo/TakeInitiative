@@ -7,7 +7,7 @@
             <Button
                 v-if="isDm && hasCombats"
                 class="h-11 gap-1 md:h-9"
-                @click="newOpen = true">
+                @click="openNew()">
                 <Plus
                     class="size-4"
                     aria-hidden="true" />
@@ -36,7 +36,7 @@
             <Button
                 v-if="isDm"
                 class="-mt-10 h-11 gap-1 md:h-9"
-                @click="newOpen = true">
+                @click="openNew()">
                 <Plus
                     class="size-4"
                     aria-hidden="true" />
@@ -51,7 +51,8 @@
 
         <CombatNewCombatDialog
             v-model:open="newOpen"
-            :campaignId="campaignId" />
+            :campaignId="campaignId"
+            :initialName="newName" />
     </div>
 </template>
 
@@ -61,6 +62,10 @@
     import { currentMember } from "~/utils/campaign";
     import { getCampaignQuery } from "~/utils/queries/campaign";
     import { getCombatsQuery } from "~/utils/queries/combats";
+    import {
+        NEW_COMBAT_PARAM,
+        newCombatFromQuery,
+    } from "~/utils/searchActions";
 
     definePageMeta({
         layout: "campaign",
@@ -68,6 +73,7 @@
     });
 
     const route = useRoute("app-campaigns-campaignId-combat");
+    const router = useRouter();
     const campaignId = computed(() => route.params.campaignId as string);
 
     const campaignQuery = useQuery(getCampaignQuery(campaignId));
@@ -81,4 +87,24 @@
     );
 
     const newOpen = ref(false);
+    const newName = ref("");
+    function openNew(name = "") {
+        newName.value = name;
+        newOpen.value = true;
+    }
+
+    // "⚔ Start combat" from ⌘K (18f): `?new=Goblin Ambush` opens New combat with that
+    // name, once, and the page drops the parameter, as `?compose=` is. A player (or a
+    // role the campaign has not loaded yet) waits for the role; a player's is dropped.
+    watch(
+        [() => route.query[NEW_COMBAT_PARAM], () => campaignQuery.data.value],
+        ([value, campaign]) => {
+            const name = newCombatFromQuery(value);
+            if (name === undefined || !campaign) return;
+            if (isDm.value) openNew(name);
+            const { [NEW_COMBAT_PARAM]: _, ...query } = route.query;
+            void router.replace({ query });
+        },
+        { immediate: true }
+    );
 </script>
