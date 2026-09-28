@@ -115,9 +115,11 @@ checkouts of #222. Ignore them.
    biggest outstanding check: step 18's Verify (three profiles, a whole fight) has
    not been run. Fix what the user reports on top of the stack.
 2. Steps 17 and 18 are closed (PR tables ticked, README `done`).
-3. **Step 19, Connections + loose ends**, is next. Write its step file first, as its
-   own docs PR on top of #238. It reads 18's `Combat.EntryIds` for "Fought together"
-   (18-combat.md, "Seams for later steps").
+3. **Step 19, Connections + loose ends**, is next. Its step file is
+   [19-connections.md](19-connections.md) (docs PR `v2/19-connections-plan`, on top of
+   #238). Run 19a–19e from it in order: two API PRs (connections, loose ends), then the
+   Connections panel, the graph page and the loose-ends UI. It reads 18's
+   `Combat.EntryIds` for "Fought together".
 4. **Then steps 20–24** in README order. Write each step file first.
 
 ## Follow-ups found this round

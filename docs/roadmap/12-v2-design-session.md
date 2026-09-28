@@ -58,6 +58,12 @@ player-first experiences: **combat**, **note taking**, **⌘K search** and
 | **Visibility** | Who can see something: `Everyone`, `DM` (all DMs plus the author), `Me`. Applies to session notes, entries and secret blocks. | audience, privacy |
 | **Edit access** | Who can edit an entry: `Anyone` (who can see it) or `Only me`. DMs can always edit. | — |
 | **Loose ends** | Unidentified things that are waiting to be linked (§5). | inbox, triage |
+| **Evidence** | The notes, article blocks and combats that explain one connection. A note or block is shown as a snippet, a combat as its combat card. | sources, proof |
+| **Weight** | How many pieces of evidence a connection has, as the viewer sees it: the `(3)` after a connection and the thickness of a graph edge. | strength, score |
+| **Fought together** | Evidence that two entries were both visible combatants in one started combat. | — |
+| **Seen at** | The Connections panel's heading for a Character's connections to Places ("Seen here" on a Place). A grouping, not a relation. | — |
+| **Graph** | The Wiki's force-directed drawing of connections (`/wiki/graph`). | map (that is a picture), network |
+| **Link suggestion** | On an unlinked note's loose end, a span of its text the entry matcher matched to an entry. It has no effect until the author accepts it. Not a model **suggestion** (§11a). | auto-link |
 | **Player character** | A Character entry claimed by a member. A member can claim several. | PC in the UI |
 | **Claim** | A member marking a Character entry as their player character. That member is its **claimer**. | own, assign |
 | **Stats** | An optional stat line on a Character entry: initiative roll, max HP, AC. | — |
