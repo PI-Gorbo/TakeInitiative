@@ -44,6 +44,17 @@ import { deleteImageRequest } from "~/utils/api/image/deleteImageRequest";
 import { getSessionImagesRequest } from "~/utils/api/image/getSessionImagesRequest";
 import { getEntryImagesRequest } from "~/utils/api/image/getEntryImagesRequest";
 import { getSearchRequest } from "~/utils/api/search/getSearchRequest";
+import { getCombatsRequest } from "~/utils/api/combat/getCombatsRequest";
+import { getCombatRequest } from "~/utils/api/combat/getCombatRequest";
+import { postCombatRequest } from "~/utils/api/combat/postCombatRequest";
+import { postCombatantsRequest } from "~/utils/api/combat/postCombatantsRequest";
+import { putCombatantRequest } from "~/utils/api/combat/putCombatantRequest";
+import { deleteCombatantRequest } from "~/utils/api/combat/deleteCombatantRequest";
+import { postCombatRollRequest } from "~/utils/api/combat/postCombatRollRequest";
+import { postCombatEndTurnRequest } from "~/utils/api/combat/postCombatEndTurnRequest";
+import { postCombatFinishRequest } from "~/utils/api/combat/postCombatFinishRequest";
+import { putCombatantPositionRequest } from "~/utils/api/combat/putCombatantPositionRequest";
+import { getCombatHistoryRequest } from "~/utils/api/combat/getCombatHistoryRequest";
 
 export const useApi = () => {
     const { $axios } = useNuxtApp();
@@ -106,6 +117,19 @@ export const useApi = () => {
         },
         search: {
             get: getSearchRequest($axios),
+        },
+        combat: {
+            list: getCombatsRequest($axios),
+            get: getCombatRequest($axios),
+            create: postCombatRequest($axios),
+            addCombatants: postCombatantsRequest($axios),
+            putCombatant: putCombatantRequest($axios),
+            deleteCombatant: deleteCombatantRequest($axios),
+            roll: postCombatRollRequest($axios),
+            endTurn: postCombatEndTurnRequest($axios),
+            finish: postCombatFinishRequest($axios),
+            putPosition: putCombatantPositionRequest($axios),
+            history: getCombatHistoryRequest($axios),
         },
         admin: {
             getMaintenance: getMaintenanceRequest($axios),

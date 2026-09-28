@@ -77,3 +77,17 @@ export type SearchSection = Schemas["SearchSection"];
 export type SearchSectionKey = Schemas["SearchSectionKey"];
 export type SearchHit = Schemas["SearchHit"];
 export type Snippet = Schemas["Snippet"];
+/** Combat v2 (18a): one combat, redacted for the viewer, and its combatants. */
+export type Combat = Schemas["CombatResponse"];
+export type Combatant = Schemas["CombatantResponse"];
+export type CombatStatus = Schemas["CombatStatus"];
+export type CombatSummary = Schemas["CombatSummaryResponse"];
+export type CombatList = Schemas["GetCombatsResponse"];
+/** What players see of a combatant's HP: `Exact`, `Band` or `Nothing`. */
+export type PlayersSee = Schemas["PlayersSee"];
+export type HpBand = Schemas["HpBand"];
+export type CombatCondition = Schemas["Condition"];
+/** One combatant, or several copies of an entry, for `POST combatants`. */
+export type CombatantRequest = Schemas["CombatantRequest"];
+export type CombatHistory = Schemas["CombatHistoryResponse"];
+export type CombatHistoryItem = Schemas["CombatHistoryItem"];

@@ -1,8 +1,9 @@
 import * as signalR from "@microsoft/signalr";
 import { useQueryClient } from "@tanstack/vue-query";
 import { toast } from "vue-sonner";
-import type { Campaign, EntrySummary, Role, Session, SessionNote } from "~/utils/api/types";
+import type { Campaign, Combat, CombatSummary, EntrySummary, Role, Session, SessionNote } from "~/utils/api/types";
 import { getCampaignQueryKey, getCampaignsQueryKey } from "~/utils/queries/campaign";
+import { applyCombatChanged, invalidateCombats } from "~/utils/queries/combats";
 import {
     applyEntryArticleChanged,
     applyEntryMerged,
@@ -38,6 +39,8 @@ type EntryRemovedMessage = { entryId: string };
 type EntryArticleChangedMessage = { entryId: string };
 type EntryMergedMessage = { fromEntryId: string; intoEntryId: string };
 type EntryStatsChangedMessage = { entryId: string };
+// The combat push (the API's CombatHub.cs, 18a.7): the receiver's own redacted view.
+type CombatChangedMessage = { combat: Combat; summary: CombatSummary };
 
 /**
  * Keeps the open campaign live over `CampaignHub`: joins the `campaign:{id}` group
@@ -80,6 +83,8 @@ export function useCampaignHub(campaignId: MaybeRefOrGetter<string | undefined>)
             void invalidateSessionStreams(queryClient, id);
             void invalidateSessions(queryClient, id);
             void invalidateEntries(queryClient, id);
+            // And which combats (Drafts), and how much of each (18c.2).
+            invalidateCombats(queryClient, id);
         }
     });
 
@@ -152,6 +157,12 @@ export function useCampaignHub(campaignId: MaybeRefOrGetter<string | undefined>)
         if (id) applyEntryStatsChanged(queryClient, id, entryId);
     });
 
+    // Combat (18c): each receiver gets their own view, so it is applied as it comes.
+    connection.on("combatChanged", (message: CombatChangedMessage) => {
+        const id = joinedCampaignId.value;
+        if (id && message?.combat) applyCombatChanged(queryClient, id, message);
+    });
+
     connection.onreconnected(async () => {
         // A reconnect leaves every group, so join again and catch up on anything
         // pushed while the connection was down.
@@ -161,6 +172,7 @@ export function useCampaignHub(campaignId: MaybeRefOrGetter<string | undefined>)
             void invalidateSessionStreams(queryClient, id);
             void invalidateSessions(queryClient, id);
             void invalidateEntries(queryClient, id);
+            invalidateCombats(queryClient, id);
         }
         await refreshCampaign();
     });
@@ -176,6 +188,7 @@ export function useCampaignHub(campaignId: MaybeRefOrGetter<string | undefined>)
         void invalidateSessions(queryClient, id);
         // The wiki list too, and with it the mention counts, which are never pushed.
         void invalidateEntries(queryClient, id);
+        invalidateCombats(queryClient, id);
     }
 
     async function leave() {
