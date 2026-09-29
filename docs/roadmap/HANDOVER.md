@@ -103,6 +103,7 @@ Stack #224. Everything is on top of `dev` and still open:
 | #255 | `v2/23-suggestions-plan` | Step 23's step file (in-browser suggestions), on top of #254 |
 | #256 | `v2/23a-extraction-spike` | 23a: the GLiNER variant spike (Laya dropped by the user); picks GLiNER small v2.5 and pins its weights, small v2.1 as the fallback |
 | #257 | `v2/23b-extractor-runtime` | 23b: the extractor runtime (worker, lazy load, self-hosted weights from our own reproducible export of upstream GLiNER small v2.5, Cache API, "Suggestions on this device" on the Me page) |
+| #PRNUM | `v2/25a-wiki-redesign-plan` | Step 25's step file (the wiki redesign), on `dev` after #262. 25b–25g stack on it |
 
 The local branches `pr/PI-Gorbo/222`, `pr/PI-Gorbo/222-1` and `pr/PI-Gorbo/222-2` are stale
 checkouts of #222. Ignore them.
@@ -215,6 +216,12 @@ checkouts of #222. Ignore them.
    - No agent commits model weights. `public/models/` is git-ignored.
    - The user's decisions are in step 23's Notes, "Decisions for the user".
 6. **Then step 24** (Discord import), whose step file is written just before it starts.
+   **Step 25, the wiki redesign, runs alongside it.** Its step file is
+   [25-wiki-redesign.md](25-wiki-redesign.md) (branch `v2/25a-wiki-redesign-plan`, on `dev`).
+   25b–25g stack on it, one subagent per PR: drop "Add a note about X" from the wiki,
+   Claim → "Played by" in copy, Summary | Notes tabs, the mobile collapse, the desktop side
+   panel, and the wiki home. The mockups are at
+   https://claude.ai/artifact/8YdLCzEPqDmnrpkgyhFWTR. Only UI copy is renamed; code names stay.
 7. **Then a cleanup pass** over "Follow-ups found this round" below, before the deferred
    5eTools and D&D Beyond work is picked up again.
 

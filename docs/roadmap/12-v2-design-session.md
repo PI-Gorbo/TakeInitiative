@@ -42,11 +42,11 @@ player-first experiences: **combat**, **note taking**, **⌘K search** and
 | **Entry** | One named thing in the wiki. | entity, page, topic, tag |
 | **Creator** | The member who created an entry. An entry's `DM` and `Me` visibility and its `Only me` edit access are relative to them. | owner (that is the campaign's), author (that is a note's) |
 | **Kind** | An entry's category, from a closed set: `Character`, `Place`, `Faction`, `Item`, `Event`, `Other`. | type |
-| **Article** | An entry's editable content (markdown, can contain mentions). | description, body |
+| **Article** (UI: **Summary**) | An entry's editable content (markdown, can contain mentions). The UI calls it the entry's **Summary** (step 25); "article" is the code and API name and is not used in UI copy. | description, body, article (in UI) |
 | **Block** | One part of an article: ordinary text, a secret block or a quote. Ordinary text stays one block until a secret block or a quote splits it. | paragraph, section |
 | **Quote** | A block made by promote: text from a session note that links back to it and has that note's visibility. | citation, excerpt |
-| **Timeline** | The read-only list on an entry of every session note that mentions it. | backlinks (in UI) |
-| **Promote** | "Add to wiki": copies a selection of a session note into an entry's article as a quote that links back to the note. | integrate, pin |
+| **Timeline** (UI: **Notes**) | The read-only list on an entry of every session note that mentions it. The UI shows it as the entry's **Notes** tab (step 25); "timeline" is the code and API name. | backlinks, timeline (in UI) |
+| **Promote** (UI: **Add to summary**) | Copies a selection of a session note into an entry's article as a quote that links back to the note. The UI says **Add to summary** (step 25); "promote" is the code name. | integrate, pin, promote (in UI) |
 | **Secret block** | A block in an article with its own visibility (🔒 DM / 🔒 Me). | — |
 | **Mention** | An `@` link to an entry, in a session note or an article. | tag, reference |
 | **Mention chip** | How a mention is drawn: its text, linking to the entry. A viewer who cannot see the entry gets plain text. | tag, pill |
@@ -64,8 +64,8 @@ player-first experiences: **combat**, **note taking**, **⌘K search** and
 | **Seen at** | The Connections panel's heading for a Character's connections to Places ("Seen here" on a Place). A grouping, not a relation. | — |
 | **Graph** | The Wiki's force-directed drawing of connections (`/wiki/graph`). | map (that is a picture), network |
 | **Link suggestion** | On an unlinked note's loose end, a span of its text the entry matcher matched to an entry. It has no effect until the author accepts it. Not a model **suggestion** (§11a). | auto-link |
-| **Player character** | A Character entry claimed by a member. A member can claim several. | PC in the UI |
-| **Claim** | A member marking a Character entry as their player character. That member is its **claimer**. | own, assign |
+| **Player character** | A Character entry that a member plays. A member can play several. | PC in the UI |
+| **Player** (UI: **Played by**; code and API: `claim`) | The member who plays a Character entry. The UI says "Played by Sam", "This is my character" and "Not my character", and a DM sets it with a "Played by" select (step 25). "Claim" and **claimer** stay the code and API names (`PUT entries/{id}/claim`, `ClaimedByMemberId`, the events) and are banned in UI copy. | own (that is the campaign's), assign, claim/unclaim (in UI) |
 | **Stats** | An optional stat line on a Character entry: initiative roll, max HP, AC. | — |
 | **⌘K search** (code: `Search`) | Campaign-wide search, opened with ⌘K / Ctrl+K or the 🔍 button. It shows results in search sections, then actions, and finds only what the viewer can see. | command palette, omnibox, global search |
 | **Search section** | One heading of ⌘K results: `Entries`, `Notes`, `Images`, `Sessions` or `Actions` (later `Combats` and `Reference`). | category, group, tab |
@@ -92,6 +92,8 @@ player-first experiences: **combat**, **note taking**, **⌘K search** and
 | **Combat card** | A combat drawn in its session in the session stream. | combat message, combat post |
 
 Rule: a new noun gets added to this table before it appears in code.
+
+UI words vs code words ([step 25](25-wiki-redesign.md), "Words"): the UI says **Played by**, **Summary**, **Notes** and **Add to summary** where the code and API say claim, article, timeline and promote. Only the UI copy changed; the code names, routes and events did not.
 
 ## 2. Core loop: capture in sessions, integrate into the wiki
 
