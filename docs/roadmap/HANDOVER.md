@@ -104,6 +104,7 @@ Stack #224. Everything is on top of `dev` and still open:
 | #256 | `v2/23a-extraction-spike` | 23a: the GLiNER variant spike (Laya dropped by the user); picks GLiNER small v2.5 and pins its weights, small v2.1 as the fallback |
 | #257 | `v2/23b-extractor-runtime` | 23b: the extractor runtime (worker, lazy load, self-hosted weights from our own reproducible export of upstream GLiNER small v2.5, Cache API, "Suggestions on this device" on the Me page) |
 | #263 | `v2/25a-wiki-redesign-plan` | Step 25's step file (the wiki redesign), on `dev` after #262. 25b–25g stack on it |
+| #264 | `v2/25b-wiki-drop-add-note` | 25b: the wiki drops "Add a note about X" (entry page button and empty Connections link). ⌘K's "Post a note about X" stays. On #263 |
 
 The local branches `pr/PI-Gorbo/222`, `pr/PI-Gorbo/222-1` and `pr/PI-Gorbo/222-2` are stale
 checkouts of #222. Ignore them.
