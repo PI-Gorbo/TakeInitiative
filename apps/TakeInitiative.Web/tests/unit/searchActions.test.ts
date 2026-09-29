@@ -8,6 +8,7 @@ import {
     SEARCH_ACTIONS,
     START_COMBAT_ACTION_ID,
     SEARCH_ACTIONS_MAX,
+    SHARE_ACTION_ID,
     composeFits,
     composeFromQuery,
     cycleEntryKind,
@@ -180,6 +181,15 @@ describe("searchActions in the > scope", () => {
 });
 
 // ── Rows ─────────────────────────────────────────────────────────────────────
+
+describe("Share", () => {
+    it("opens the Members panel, found by share or invite but not offered by default", () => {
+        expect(action(SHARE_ACTION_ID).run(context())).toEqual({ kind: "openMembers" });
+        expect(ids(context({ text: "share" }))).toContain(SHARE_ACTION_ID);
+        expect(ids(context({ scope: "actions", text: "invite" }))[0]).toBe(SHARE_ACTION_ID);
+        expect(ids(context())).not.toContain(SHARE_ACTION_ID);
+    });
+});
 
 describe("actionRows", () => {
     it("is an Actions header then a row per action, or nothing", () => {

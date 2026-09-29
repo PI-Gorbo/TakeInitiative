@@ -1,5 +1,5 @@
 <template>
-    <div class="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 py-4 pb-safe">
+    <PageContainer class="flex flex-col gap-4 px-4 py-4 pb-safe">
         <!-- A reference item's stat-block card (20c), read-only, with its source's
              attribution under it. It sits in the campaign so the tabs, ⌘K and 20d's + Wiki
              have one, but the data is the same for every campaign. No tab lights up. + Wiki
@@ -79,7 +79,7 @@
                 :campaignId="campaignId"
                 :item="item.summary" />
         </template>
-    </div>
+    </PageContainer>
 </template>
 
 <script setup lang="ts">

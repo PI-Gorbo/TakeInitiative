@@ -39,7 +39,8 @@ export type SearchActionContext = {
 export type SearchActionRun =
     | { kind: "navigate"; target: SearchTarget; composer?: boolean }
     | { kind: "startSession"; number: number }
-    | { kind: "createEntry"; name: string };
+    | { kind: "createEntry"; name: string }
+    | { kind: "openMembers" };
 
 export type SearchAction = {
     id: string;
@@ -74,6 +75,8 @@ export const CREATE_ENTRY_ACTION_ID = "create-entry";
 export const START_SESSION_ACTION_ID = "start-session";
 export const START_COMBAT_ACTION_ID = "start-combat";
 export const LOOSE_ENDS_ACTION_ID = "loose-ends";
+/** Opens the Members panel, with the join link to share. */
+export const SHARE_ACTION_ID = "share";
 export const COMPOSE_PARAM = "compose";
 /** `combat?new=Goblin Ambush`: the Combat tab opens New combat with that name (18f). */
 export const NEW_COMBAT_PARAM = "new";
@@ -176,6 +179,14 @@ export const SEARCH_ACTIONS: readonly SearchAction[] = [
             run: ({ campaignId }) => to(`${campaignPath(campaignId)}/wiki`, { [KIND_PARAM]: kind.value.toLowerCase() }),
         })
     ),
+    {
+        id: SHARE_ACTION_ID,
+        icon: "👥",
+        label: () => "Share",
+        keywords: () => ["invite", "members", "players", "join link", "join code"],
+        available: () => true,
+        run: () => ({ kind: "openMembers" }),
+    },
     {
         id: "wiki-graph",
         icon: "🕸️",

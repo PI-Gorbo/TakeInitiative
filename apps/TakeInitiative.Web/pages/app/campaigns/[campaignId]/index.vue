@@ -4,22 +4,24 @@
              element while the campaign loads: the page transition animates it. -->
         <template v-if="campaign">
             <!-- The filter chips and the members button. -->
-            <div class="flex shrink-0 items-center gap-2 border-b px-2">
-                <SessionStreamFilters v-model="filter" />
-                <button
-                    type="button"
-                    class="flex h-11 min-w-11 items-center justify-center gap-2 rounded-md px-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                    :aria-label="`Members (${campaign.members.length})`"
-                    @click="membersOpen = true">
-                    <Users class="size-5" />
-                    <span>{{ campaign.members.length }}</span>
-                    <span class="hidden sm:inline">Members</span>
-                </button>
+            <div class="shrink-0 border-b">
+                <PageContainer class="flex items-center gap-2 px-2">
+                    <SessionStreamFilters v-model="filter" />
+                    <button
+                        type="button"
+                        class="flex h-11 min-w-11 items-center justify-center gap-2 rounded-md px-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                        :aria-label="`Members (${campaign.members.length})`"
+                        @click="openMembers?.()">
+                        <Users class="size-5" />
+                        <span>{{ campaign.members.length }}</span>
+                        <span class="hidden sm:inline">Members</span>
+                    </button>
+                </PageContainer>
             </div>
             <!-- While a combat is live (18e.3). -->
             <CombatJoinCombatBanner :campaignId="campaign.id" />
 
-            <div class="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col">
+            <PageContainer class="flex min-h-0 flex-1 flex-col">
                 <SessionStream
                     ref="stream"
                     :campaignId="campaign.id"
@@ -39,11 +41,7 @@
                     @aboutUsed="clearParam(ABOUT_PARAM)"
                     @shareUsed="clearParam(SHARE_PARAM)"
                     @composeUsed="clearParam(COMPOSE_PARAM)" />
-            </div>
-
-            <CampaignMembersPanel
-                v-model:open="membersOpen"
-                :campaign="campaign" />
+            </PageContainer>
         </template>
     </div>
 </template>
@@ -57,7 +55,7 @@
     import { FILTER_PARAM, filterFromQuery, filterToQuery } from "~/utils/streamFilters";
     import { getCampaignQuery } from "~/utils/queries/campaign";
     import { getEntriesQuery } from "~/utils/queries/entries";
-    import { SESSION_LINK_PARAM, sessionFromQuery } from "~/utils/search";
+    import { OPEN_MEMBERS, SESSION_LINK_PARAM, sessionFromQuery } from "~/utils/search";
     import { COMPOSE_PARAM, composeFromQuery } from "~/utils/searchActions";
     import { SHARE_PARAM, validShareId } from "~/utils/shareTarget";
 
@@ -71,7 +69,8 @@
     const campaignQuery = useQuery(getCampaignQuery(() => route.params.campaignId as string));
     const campaign = computed(() => campaignQuery.data.value);
 
-    const membersOpen = ref(false);
+    // The panel lives in the campaign layout, so ⌘K's Share opens it from any tab.
+    const openMembers = inject(OPEN_MEMBERS);
 
     // The filter lives in the URL (`?filter=recaps`), so a reload or a shared link
     // keeps it. Changing it replaces the entry rather than adding history.

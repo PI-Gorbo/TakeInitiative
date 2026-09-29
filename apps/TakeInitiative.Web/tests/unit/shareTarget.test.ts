@@ -6,6 +6,7 @@ import type { CampaignSummary } from "~/utils/api/types";
 import { NOTE_IMAGES_MAX } from "~/utils/images";
 import {
     LAST_CAMPAIGN_KEY,
+    RECENT_CAMPAIGNS_KEY,
     SHARED_AT_HEADER,
     SHARE_CACHE,
     SHARE_MAX_AGE_MS,
@@ -14,9 +15,12 @@ import {
     captionAfterShare,
     chooseCampaign,
     deleteShare,
+    pickRecentCampaigns,
     pruneShares,
     readShare,
+    recentCampaigns,
     rememberCampaign,
+    rememberRecentCampaign,
     rememberedCampaign,
     shareCaption,
     shareIsEmpty,
@@ -312,5 +316,55 @@ describe("the campaign", () => {
         } as unknown as Storage;
         expect(() => rememberCampaign(blocked, "b")).not.toThrow();
         expect(rememberedCampaign(blocked)).toBeUndefined();
+    });
+});
+
+describe("recent campaigns", () => {
+    const fakeStorage = () => {
+        const values = new Map<string, string>();
+        const storage = {
+            getItem: (k: string) => values.get(k) ?? null,
+            setItem: (k: string, v: string) => void values.set(k, v),
+        } as unknown as Storage;
+        return { values, storage };
+    };
+    const summary = (id: string) => ({ id, name: id }) as CampaignSummary;
+
+    it("keeps the newest first, without repeats, up to ten", () => {
+        const { storage } = fakeStorage();
+        for (const id of ["a", "b", "a", "c"]) rememberRecentCampaign(storage, id);
+        expect(recentCampaigns(storage)).toEqual(["c", "a", "b"]);
+        for (let i = 0; i < 12; i++) rememberRecentCampaign(storage, `x${i}`);
+        expect(recentCampaigns(storage)).toHaveLength(10);
+        expect(recentCampaigns(storage)[0]).toBe("x11");
+    });
+
+    it("reads nothing from bad or blocked storage", () => {
+        const { values, storage } = fakeStorage();
+        values.set(RECENT_CAMPAIGNS_KEY, "{not json");
+        expect(recentCampaigns(storage)).toEqual([]);
+        values.set(RECENT_CAMPAIGNS_KEY, JSON.stringify({ a: 1 }));
+        expect(recentCampaigns(storage)).toEqual([]);
+        expect(recentCampaigns(undefined)).toEqual([]);
+        const blocked = {
+            getItem: () => {
+                throw new Error("blocked");
+            },
+            setItem: () => {
+                throw new Error("blocked");
+            },
+        } as unknown as Storage;
+        expect(() => rememberRecentCampaign(blocked, "a")).not.toThrow();
+        expect(recentCampaigns(blocked)).toEqual([]);
+    });
+
+    it("picks three the user is still in, not the open one", () => {
+        const campaigns = ["a", "b", "c", "d", "e"].map(summary);
+        expect(pickRecentCampaigns(["a", "gone", "b", "c", "d", "e"], campaigns, "a").map((c) => c.id)).toEqual([
+            "b",
+            "c",
+            "d",
+        ]);
+        expect(pickRecentCampaigns([], campaigns, "a")).toEqual([]);
     });
 });

@@ -172,7 +172,7 @@
     }>();
     const open = defineModel<boolean>("open", { required: true });
     /** + Wiki on a reference row (20d): the sheet closes first, then the host opens the dialog. */
-    const emit = defineEmits<{ addToWiki: [hit: SearchReferenceHit] }>();
+    const emit = defineEmits<{ addToWiki: [hit: SearchReferenceHit]; openMembers: [] }>();
 
     const query = ref("");
     const input = useTemplateRef<HTMLInputElement>("input");
@@ -394,6 +394,12 @@
                 return;
             case "startSession":
                 void start(run.number);
+                return;
+            case "openMembers":
+                // The Members panel takes the focus, as the + Wiki dialog does.
+                handedOff = true;
+                open.value = false;
+                emit("openMembers");
                 return;
             case "navigate":
                 handedOff = !!run.composer;

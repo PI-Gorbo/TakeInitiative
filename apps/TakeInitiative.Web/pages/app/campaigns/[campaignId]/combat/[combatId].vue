@@ -5,8 +5,7 @@
              bottom. Every write and push lands in the cache (18c.6). Tapping a combatant
              opens its sheet (18d), and a DM drags rows to reorder and opens the history.
              ✎ in the bar opens the slim composer (18e). -->
-        <div
-            class="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 px-3 py-3 md:px-4">
+        <PageContainer class="flex flex-1 flex-col gap-4 px-3 py-3 md:px-4">
             <NuxtLink
                 :to="`/app/campaigns/${encodeURIComponent(campaignId)}/combat`"
                 class="-ml-2 flex h-11 w-fit items-center gap-1 rounded-md px-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground md:h-9">
@@ -178,7 +177,7 @@
                     </template>
                 </CombatWaitingList>
             </template>
-        </div>
+        </PageContainer>
 
         <!-- The bar, and the slim composer above it (18e.5, design §3): a session note
              from the fight, posted to the current session and not tied to the combat. -->

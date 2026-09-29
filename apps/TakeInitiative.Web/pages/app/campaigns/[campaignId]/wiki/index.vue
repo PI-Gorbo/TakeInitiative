@@ -6,18 +6,22 @@
         <NuxtLink
             v-if="looseEndCount > 0"
             :to="looseEndsHref(campaignId)"
-            class="flex min-h-11 shrink-0 items-center gap-2 border-b bg-gold/5 px-4 text-sm hover:bg-gold/10 md:min-h-9">
-            <span aria-hidden="true">🧵</span>
-            <span class="flex-1 font-medium">Loose ends ({{ looseEndCount }})</span>
-            <ChevronRight
-                class="size-4 text-muted-foreground"
-                aria-hidden="true" />
+            class="block shrink-0 border-b bg-gold/5 text-sm hover:bg-gold/10">
+            <PageContainer class="flex min-h-11 items-center gap-2 px-4 md:min-h-9">
+                <span aria-hidden="true">🧵</span>
+                <span class="flex-1 font-medium">Loose ends ({{ looseEndCount }})</span>
+                <ChevronRight
+                    class="size-4 text-muted-foreground"
+                    aria-hidden="true" />
+            </PageContainer>
         </NuxtLink>
-        <div class="flex shrink-0 items-center gap-2 border-b px-2">
-            <WikiKindFilter v-model="kind" />
+        <div class="shrink-0 border-b">
+            <PageContainer class="flex items-center gap-2 px-2">
+                <WikiKindFilter v-model="kind" />
+            </PageContainer>
         </div>
 
-        <div class="mx-auto flex w-full max-w-5xl flex-col gap-3 px-3 py-3 md:px-4">
+        <PageContainer class="flex flex-col gap-3 px-3 py-3 md:px-4">
             <div class="flex flex-wrap items-center gap-2">
                 <div class="relative min-w-0 flex-1 basis-48">
                     <Search
@@ -102,7 +106,7 @@
                 v-else
                 :campaignId="campaignId"
                 :items="shown" />
-        </div>
+        </PageContainer>
 
         <WikiNewEntryDialog
             v-model:open="newOpen"

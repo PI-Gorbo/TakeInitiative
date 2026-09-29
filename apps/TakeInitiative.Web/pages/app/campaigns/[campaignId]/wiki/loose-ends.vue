@@ -1,5 +1,5 @@
 <template>
-    <div class="mx-auto flex w-full max-w-3xl flex-col gap-3 px-4 py-4 pb-safe">
+    <PageContainer class="flex flex-col gap-3 px-4 py-4 pb-safe">
         <!-- Loose ends (design §5, 19e): the viewer's own to-dos, derived on every read.
              `?session={number}` narrows it to one session (a divider's 🧵 n), and
              `?note={id}` marks one note's row (the 16c hint). Each row is resolved in place. -->
@@ -53,7 +53,7 @@
             :items="viewerItems"
             :authorName="() => authorName"
             :ready="!!looseEndsQuery.data.value && !looseEndsQuery.isFetching.value" />
-    </div>
+    </PageContainer>
 </template>
 
 <script setup lang="ts">

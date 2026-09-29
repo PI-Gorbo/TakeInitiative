@@ -253,6 +253,9 @@ export function hitTarget(campaignId: string, hit: SearchHit): SearchTarget {
  */
 export const OPEN_SEARCH: InjectionKey<(trigger: HTMLElement | null) => void> = Symbol("openSearch");
 
+/** The campaign layout's Members panel, which ⌘K's Share also opens. */
+export const OPEN_MEMBERS: InjectionKey<() => void> = Symbol("openMembers");
+
 /** `?session=12` as a session number, or undefined. */
 export function sessionFromQuery(value: unknown): number | undefined {
     if (typeof value !== "string" || !/^\d{1,9}$/.test(value)) return undefined;

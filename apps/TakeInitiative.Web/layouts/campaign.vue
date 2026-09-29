@@ -9,16 +9,9 @@
                 <header
                     class="sticky top-0 z-10 border-b bg-background/95 pt-safe px-safe backdrop-blur">
                     <div class="flex h-14 items-center gap-1 px-1">
-                        <NuxtLink
-                            to="/app/campaigns"
-                            class="flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                            aria-label="All campaigns">
-                            <ChevronLeft class="size-5" />
-                        </NuxtLink>
-                        <h1
-                            class="min-w-0 flex-1 truncate font-NovaCut text-xl text-gold">
-                            {{ campaignQuery.data.value?.name ?? "" }}
-                        </h1>
+                        <CampaignSwitcher
+                            :campaignId="campaignId"
+                            :name="campaignQuery.data.value?.name ?? ''" />
                         <button
                             type="button"
                             class="flex h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-md px-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
@@ -98,7 +91,13 @@
             v-model:open="searchOpen"
             :campaignId="campaignId"
             :returnFocus="returnFocus"
-            @addToWiki="openAddToWiki" />
+            @addToWiki="openAddToWiki"
+            @openMembers="openMembers" />
+        <!-- On every tab: the Campaign tab's Members button and ⌘K's Share open it. -->
+        <CampaignMembersPanel
+            v-if="campaignQuery.data.value"
+            v-model:open="membersOpen"
+            :campaign="campaignQuery.data.value" />
         <!-- + Wiki from a ⌘K reference row (20d); the card page has its own. -->
         <ReferenceAddToWikiDialog
             v-model:open="addToWikiOpen"
@@ -121,13 +120,13 @@
 <script setup lang="ts">
     import { useEventListener } from "@vueuse/core";
     import { useQuery } from "@tanstack/vue-query";
-    import { BookOpen, Castle, ChevronLeft, Search, Swords } from "lucide-vue-next";
+    import { BookOpen, Castle, Search, Swords } from "lucide-vue-next";
     import { getCampaignQuery } from "~/utils/queries/campaign";
     import { getCombatsQuery } from "~/utils/queries/combats";
     import type { SearchReferenceHit } from "~/utils/api/types";
     import { addToWikiItemFromHit, type AddToWikiItem } from "~/utils/reference";
-    import { OPEN_SEARCH } from "~/utils/search";
-    import { rememberCampaign } from "~/utils/shareTarget";
+    import { OPEN_MEMBERS, OPEN_SEARCH } from "~/utils/search";
+    import { rememberCampaign, rememberRecentCampaign } from "~/utils/shareTarget";
 
     const route = useRoute();
     const campaignId = computed(
@@ -168,12 +167,14 @@
 
     const hideTabBar = useComposerPinned();
 
-    // The share page (16e) goes straight to the last opened campaign.
+    // The share page (16e) goes straight to the last opened campaign, and the
+    // campaign switcher offers the recent ones.
     watch(
         campaignId,
         (id) => {
             try {
                 rememberCampaign(window.localStorage, id);
+                rememberRecentCampaign(window.localStorage, id);
             } catch {
                 // No storage: the share page lists the campaigns instead.
             }
@@ -194,6 +195,10 @@
         searchOpen.value = true;
     }
     provide(OPEN_SEARCH, openSearch);
+
+    const membersOpen = ref(false);
+    const openMembers = () => (membersOpen.value = true);
+    provide(OPEN_MEMBERS, openMembers);
 
     // + Wiki from ⌘K (20d): the sheet has closed; the dialog opens on the next tick.
     const addToWikiOpen = ref(false);
