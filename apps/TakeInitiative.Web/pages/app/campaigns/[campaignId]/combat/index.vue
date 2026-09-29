@@ -1,5 +1,5 @@
 <template>
-    <div class="mx-auto flex w-full max-w-3xl flex-col gap-4 px-3 py-3 md:px-4">
+    <PageContainer class="flex flex-col gap-4 px-3 py-3 md:px-4">
         <!-- The Combat tab (18c.3): the combats the viewer can see, live first. A DM
              creates one with New combat. Pushes keep the list current. -->
         <div class="flex min-h-11 items-center gap-2">
@@ -53,7 +53,7 @@
             v-model:open="newOpen"
             :campaignId="campaignId"
             :initialName="newName" />
-    </div>
+    </PageContainer>
 </template>
 
 <script setup lang="ts">

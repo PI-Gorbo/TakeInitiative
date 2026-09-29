@@ -1,5 +1,5 @@
 <template>
-    <div class="mx-auto flex w-full max-w-3xl flex-col gap-5 px-4 py-4 pb-safe">
+    <PageContainer class="flex flex-col gap-5 px-4 py-4 pb-safe">
         <!-- An entry (design §4): its header (15c), its source (20d), its claim and stats (15g), its article
              (15f), its connections (19c), its timeline (15c), its gallery (16d) and its combats
              (18e). `?edit={blockId}` opens the article editor at a block
@@ -139,7 +139,7 @@
                 :members="campaign.members"
                 :nameOf="memberName" />
         </template>
-    </div>
+    </PageContainer>
 </template>
 
 <script setup lang="ts">

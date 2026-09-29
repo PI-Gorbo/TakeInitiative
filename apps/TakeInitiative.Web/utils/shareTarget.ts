@@ -134,6 +134,47 @@ export function rememberedCampaign(storage: Storage | undefined): string | undef
     }
 }
 
+// ── Recent campaigns ─────────────────────────────────────────────────────────
+
+/** The campaign switcher's recently opened campaigns, newest first. */
+export const RECENT_CAMPAIGNS_KEY = "ti:recentCampaigns";
+const RECENT_CAMPAIGNS_KEPT = 10;
+/** How many the switcher offers, besides the open one. */
+export const RECENT_CAMPAIGNS_SHOWN = 3;
+
+export function recentCampaigns(storage: Storage | undefined): string[] {
+    try {
+        const ids: unknown = JSON.parse(storage?.getItem(RECENT_CAMPAIGNS_KEY) ?? "[]");
+        return Array.isArray(ids) ? ids.filter((id): id is string => typeof id === "string" && !!id) : [];
+    } catch {
+        return [];
+    }
+}
+
+export function rememberRecentCampaign(storage: Storage | undefined, campaignId: string) {
+    if (!campaignId) return;
+    const ids = [campaignId, ...recentCampaigns(storage).filter((id) => id !== campaignId)];
+    try {
+        storage?.setItem(RECENT_CAMPAIGNS_KEY, JSON.stringify(ids.slice(0, RECENT_CAMPAIGNS_KEPT)));
+    } catch {
+        // Storage is full or blocked: the switcher shows only "All campaigns".
+    }
+}
+
+/** The recent campaigns the user is still in, newest first, without the open one. */
+export function pickRecentCampaigns(
+    ids: readonly string[],
+    campaigns: readonly CampaignSummary[],
+    currentId: string,
+    count: number = RECENT_CAMPAIGNS_SHOWN
+): CampaignSummary[] {
+    return ids
+        .filter((id) => id !== currentId)
+        .map((id) => campaigns.find((c) => c.id === id))
+        .filter((c): c is CampaignSummary => !!c)
+        .slice(0, count);
+}
+
 // ── Cache Storage ────────────────────────────────────────────────────────────
 
 type ShareCaches = Pick<CacheStorage, "open" | "has">;
