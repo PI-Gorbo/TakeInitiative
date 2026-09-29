@@ -52,7 +52,7 @@ function summary(id: string, name: string, extra: Partial<EntrySummary> = {}): E
     };
 }
 const list = (...entries: EntrySummary[]): EntryList => ({
-    entries: entries.map((entry) => ({ entry, mentionCount: 1, lastMentionedAt: null })),
+    entries: entries.map((entry) => ({ entry, mentionCount: 1, lastMentionedAt: null, noteCount: 0 })),
 });
 
 describe("the directory after a merge", () => {

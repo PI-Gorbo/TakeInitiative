@@ -10,15 +10,15 @@ export type EntryTimelineData = InfiniteData<EntryTimeline, unknown>;
 const sameId = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
 
 /**
- * Adds or replaces an entry in the wiki list. Mention counts are per viewer and never
- * pushed (15b), so a replaced entry keeps its count and a new one starts at 0 until
- * the list is read again.
+ * Adds or replaces an entry in the wiki list. Mention counts and the summary gist are per
+ * viewer and never pushed (15b, 25g), so a replaced entry keeps them and a new one starts
+ * at 0 with no gist until the list is read again.
  */
 export function upsertEntrySummary(list: EntryList | undefined, summary: EntrySummary): EntryList | undefined {
     if (!list) return list;
     const index = list.entries.findIndex((item) => sameId(item.entry.id, summary.id));
     if (index === -1) {
-        return { ...list, entries: [...list.entries, { entry: summary, mentionCount: 0, lastMentionedAt: null }] };
+        return { ...list, entries: [...list.entries, { entry: summary, mentionCount: 0, lastMentionedAt: null, noteCount: 0 }] };
     }
     const entries = [...list.entries];
     entries[index] = { ...entries[index], entry: summary };

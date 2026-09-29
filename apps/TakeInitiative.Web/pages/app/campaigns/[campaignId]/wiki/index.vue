@@ -1,8 +1,80 @@
 <template>
     <div class="flex h-full w-full flex-col">
-        <!-- The Wiki tab (design §4, 15c): every entry the viewer can see, by kind, sorted
-             by how often or how recently it is mentioned. "Loose ends (n)" sits at the
-             top while the viewer has any (19e). -->
+        <!-- The Wiki tab (design §4, 15c, 25g): a title row with icon buttons (Graph, Sort,
+             New), the search below it, the kind chips, and "Loose ends (n)" while the viewer
+             has any (19e). Then every entry the viewer can see. -->
+        <div class="shrink-0 border-b">
+            <PageContainer class="flex flex-col gap-2 px-3 pb-2 pt-3 md:px-4">
+                <div class="flex items-center gap-1">
+                    <h1 class="min-w-0 flex-1 truncate text-xl font-semibold">Wiki</h1>
+                    <Button
+                        as-child
+                        variant="ghost"
+                        size="icon"
+                        class="h-11 w-11 md:h-9 md:w-9">
+                        <NuxtLink
+                            :to="graphHref(campaignId)"
+                            aria-label="Graph"
+                            title="Graph">
+                            <Waypoints
+                                class="size-5 text-muted-foreground md:size-4"
+                                aria-hidden="true" />
+                        </NuxtLink>
+                    </Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger
+                            class="flex size-11 items-center justify-center rounded-md hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring md:size-9"
+                            :aria-label="`Sort: ${sortLabel}. Change sort`"
+                            :title="`Sort: ${sortLabel}`">
+                            <ArrowDownWideNarrow
+                                class="size-5 text-muted-foreground md:size-4"
+                                aria-hidden="true" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                            align="end"
+                            class="w-52">
+                            <DropdownMenuLabel>Sort</DropdownMenuLabel>
+                            <DropdownMenuRadioGroup
+                                :modelValue="sort"
+                                @update:modelValue="(v) => (sort = v as WikiSort)">
+                                <DropdownMenuRadioItem
+                                    v-for="option in WIKI_SORTS"
+                                    :key="option.value"
+                                    :value="option.value"
+                                    class="min-h-11 md:min-h-8">
+                                    {{ option.label }}
+                                </DropdownMenuRadioItem>
+                            </DropdownMenuRadioGroup>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    <Button
+                        size="icon"
+                        class="ml-1 h-11 w-11 md:h-9 md:w-9"
+                        aria-label="New entry"
+                        title="New entry"
+                        @click="newOpen = true">
+                        <Plus
+                            class="size-5 md:size-4"
+                            aria-hidden="true" />
+                    </Button>
+                </div>
+                <div class="relative">
+                    <Search
+                        class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                        aria-hidden="true" />
+                    <Input
+                        v-model="query"
+                        type="search"
+                        enterkeyhint="search"
+                        placeholder="Filter by name or alias"
+                        aria-label="Filter entries by name or alias"
+                        class="h-11 pl-9 text-base md:h-9 md:text-sm" />
+                </div>
+            </PageContainer>
+            <PageContainer class="flex items-center gap-2 px-2">
+                <WikiKindFilter v-model="kind" />
+            </PageContainer>
+        </div>
         <NuxtLink
             v-if="looseEndCount > 0"
             :to="looseEndsHref(campaignId)"
@@ -15,76 +87,8 @@
                     aria-hidden="true" />
             </PageContainer>
         </NuxtLink>
-        <div class="shrink-0 border-b">
-            <PageContainer class="flex items-center gap-2 px-2">
-                <WikiKindFilter v-model="kind" />
-            </PageContainer>
-        </div>
 
         <PageContainer class="flex flex-col gap-3 px-3 py-3 md:px-4">
-            <div class="flex flex-wrap items-center gap-2">
-                <div class="relative min-w-0 flex-1 basis-48">
-                    <Search
-                        class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-                        aria-hidden="true" />
-                    <Input
-                        v-model="query"
-                        type="search"
-                        enterkeyhint="search"
-                        placeholder="Filter by name or alias"
-                        aria-label="Filter entries by name or alias"
-                        class="h-11 pl-9 text-base md:h-9 md:text-sm" />
-                </div>
-                <DropdownMenu>
-                    <DropdownMenuTrigger
-                        class="flex h-11 items-center gap-1 rounded-md px-2 text-sm hover:bg-accent hover:text-accent-foreground md:h-9"
-                        :aria-label="`Sort: ${sortLabel}. Change sort`">
-                        <ArrowDownWideNarrow
-                            class="size-4 text-muted-foreground"
-                            aria-hidden="true" />
-                        <span class="font-medium">{{ sortLabel }}</span>
-                        <ChevronDown
-                            class="size-4 text-muted-foreground"
-                            aria-hidden="true" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                        align="end"
-                        class="w-52">
-                        <DropdownMenuLabel>Sort</DropdownMenuLabel>
-                        <DropdownMenuRadioGroup
-                            :modelValue="sort"
-                            @update:modelValue="(v) => (sort = v as WikiSort)">
-                            <DropdownMenuRadioItem
-                                v-for="option in WIKI_SORTS"
-                                :key="option.value"
-                                :value="option.value"
-                                class="min-h-11 md:min-h-8">
-                                {{ option.label }}
-                            </DropdownMenuRadioItem>
-                        </DropdownMenuRadioGroup>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-                <Button
-                    as-child
-                    variant="ghost"
-                    class="h-11 gap-1 px-2 md:h-9">
-                    <NuxtLink :to="graphHref(campaignId)">
-                        <Waypoints
-                            class="size-4 text-muted-foreground"
-                            aria-hidden="true" />
-                        Graph
-                    </NuxtLink>
-                </Button>
-                <Button
-                    class="h-11 gap-1 md:h-9"
-                    @click="newOpen = true">
-                    <Plus
-                        class="size-4"
-                        aria-hidden="true" />
-                    New entry
-                </Button>
-            </div>
-
             <LoadingFallback
                 v-if="!entriesQuery.data.value"
                 :isLoading="entriesQuery.isLoading.value"
@@ -105,7 +109,9 @@
             <WikiEntryList
                 v-else
                 :campaignId="campaignId"
-                :items="shown" />
+                :items="shown"
+                :viewerMemberId="campaignQuery.data.value?.currentMemberId"
+                :nameOf="memberName" />
         </PageContainer>
 
         <WikiNewEntryDialog
@@ -117,7 +123,7 @@
 
 <script setup lang="ts">
     import { useQuery } from "@tanstack/vue-query";
-    import { ArrowDownWideNarrow, BookOpen, ChevronDown, ChevronRight, Plus, Search, Waypoints } from "lucide-vue-next";
+    import { ArrowDownWideNarrow, BookOpen, ChevronRight, Plus, Search, Waypoints } from "lucide-vue-next";
     import type { EntryKind } from "~/utils/api/types";
     import {
         KIND_PARAM,
@@ -133,6 +139,7 @@
     } from "~/utils/entries";
     import { graphHref } from "~/utils/graph";
     import { looseEndsHref } from "~/utils/looseEnds";
+    import { getCampaignQuery } from "~/utils/queries/campaign";
     import { getEntriesQuery } from "~/utils/queries/entries";
     import { getLooseEndCountsQuery } from "~/utils/queries/looseEnds";
 
@@ -146,6 +153,10 @@
     const campaignId = computed(() => route.params.campaignId as string);
 
     const entriesQuery = useQuery(getEntriesQuery(campaignId));
+    // Member names for "Played by X" (25g); unknown until the campaign loads.
+    const campaignQuery = useQuery(getCampaignQuery(campaignId));
+    const memberName = (memberId: string) =>
+        campaignQuery.data.value?.members.find((m) => m.memberId.toLowerCase() === memberId.toLowerCase())?.username;
     // Loose ends (19e) are the viewer's own and derived; the hub refetches them on pushes.
     const looseEndCountsQuery = useQuery(getLooseEndCountsQuery(campaignId));
     const looseEndCount = computed(() => looseEndCountsQuery.data.value?.total ?? 0);
