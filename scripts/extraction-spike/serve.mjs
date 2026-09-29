@@ -56,7 +56,8 @@ createServer(async (req, res) => {
         res.writeHead(200, { ...headers, "Content-Type": types[extname(file)] ?? "application/octet-stream", "Content-Length": info.size });
         createReadStream(file).pipe(res);
     } catch (e) {
+        console.error("serve.mjs request error:", e);
         res.writeHead(500, headers);
-        res.end(String(e));
+        res.end("internal server error");
     }
 }).listen(port, () => console.log(`23a harness on http://localhost:${port}`));
