@@ -1,6 +1,6 @@
 <template>
     <!-- Player characters (15g, glossary: Claim): who this Character belongs to, and
-         "Claim as my character", "Unclaim", or for DMs a member picker. Shown only on
+         "This is my character", "Not my character", or for DMs a member picker. Shown only on
          Character entries. -->
     <div
         v-if="entry.kind === 'Character'"
@@ -11,7 +11,7 @@
             <UserCheck
                 class="size-4"
                 aria-hidden="true" />
-            {{ claimer === viewer.memberId ? "Your player character" : `${nameOf(claimer)}'s player character` }}
+            {{ claimer === viewer.memberId ? "Played by you" : `Played by ${nameOf(claimer)}` }}
         </span>
         <Button
             v-if="canClaimEntry(entry) && !viewer.isDm"
@@ -19,16 +19,16 @@
             class="h-11 md:h-8"
             :disabled="busy"
             @click="claim(viewer.memberId)">
-            Claim as my character
+            This is my character
         </Button>
         <label
             v-if="canAssignClaim(entry, viewer)"
             class="flex items-center gap-2">
-            <span class="text-muted-foreground">{{ claimer ? "Player character of" : "Claim for" }}</span>
+            <span class="text-muted-foreground">Played by</span>
             <select
                 :value="claimer ?? ''"
                 :disabled="busy"
-                aria-label="Player character of"
+                aria-label="Played by"
                 class="h-11 rounded-md border bg-background px-2 text-base md:h-8 md:text-sm"
                 @change="(e) => claim(((e.target as HTMLSelectElement).value || null) as string | null)">
                 <option value="">Nobody</option>
@@ -46,7 +46,7 @@
             class="h-11 md:h-8"
             :disabled="busy"
             @click="claim(null)">
-            Unclaim
+            Not my character
         </Button>
     </div>
 </template>
@@ -86,7 +86,7 @@
         try {
             await mutation.mutateAsync({ campaignId: props.campaignId, entryId: props.entry.id, memberId });
         } catch (error) {
-            toast.error(apiErrorMessage(error, "Could not change the claim."));
+            toast.error(apiErrorMessage(error, "Could not change who plays this."));
         }
     }
 </script>

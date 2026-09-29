@@ -41,7 +41,7 @@
                         </li>
                         <li>Notes that mention {{ entry.name }} show on {{ into.name }}'s timeline. Their text stays.</li>
                         <li v-if="entry.claimedByMemberId">
-                            It stays {{ nameOf(entry.claimedByMemberId) }}'s player character.
+                            Still played by {{ nameOf(entry.claimedByMemberId) }}.
                         </li>
                     </ul>
                     <p

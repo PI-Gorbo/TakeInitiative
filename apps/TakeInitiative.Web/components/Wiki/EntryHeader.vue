@@ -66,7 +66,7 @@
             <span
                 v-if="entry.claimedByMemberId"
                 class="rounded border px-1.5 text-xs font-medium">
-                {{ claimerName ? `${claimerName}'s character` : "Player character" }}
+                {{ claimerName ? `Played by ${claimerName}` : "Played by a player" }}
             </span>
         </p>
     </header>

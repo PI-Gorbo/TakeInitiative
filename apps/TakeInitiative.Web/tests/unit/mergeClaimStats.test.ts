@@ -245,7 +245,8 @@ describe("history", () => {
         const line = (change: EntryChange) => describeChange(change, nameOf);
         expect(line({ type: "Renamed", name: "Gundren Rockseeker" })).toBe('renamed it to "Gundren Rockseeker"');
         expect(line({ type: "Merged", name: "Gundren", blocks: [] })).toBe('merged "Gundren" into it');
-        expect(line({ type: "Claimed", memberId: "sam" })).toBe("made it Sam's player character");
+        expect(line({ type: "Claimed", memberId: "sam" })).toBe("set Sam as its player");
+        expect(line({ type: "Unclaimed" })).toBe("cleared its player");
         expect(line({ type: "StatsChanged", stats: null })).toBe("cleared the stats");
         expect(line({ type: "Created", kind: "Place", visibility: "DM" })).toBe("created it as a Place (🔒 DM)");
     });

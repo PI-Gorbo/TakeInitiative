@@ -239,9 +239,9 @@ export function describeChange(change: EntryChange, nameOf: (memberId: string) =
         case "Merged":
             return `merged "${change.name}" into it`;
         case "Claimed":
-            return change.memberId ? `made it ${nameOf(change.memberId)}'s player character` : "claimed it";
+            return change.memberId ? `set ${nameOf(change.memberId)} as its player` : "said they play it";
         case "Unclaimed":
-            return "unclaimed it";
+            return "cleared its player";
         case "StatsChanged":
             return change.stats ? `set the stats: ${statsLabel(change.stats)}` : "cleared the stats";
     }
@@ -291,9 +291,9 @@ export function mergeProblem(
     }
     const claimer = claimerOf(from);
     if (claimer) {
-        if (into.kind !== "Character") return `"${from.name}" is a player character, so it can only be merged into a Character.`;
+        if (into.kind !== "Character") return `"${from.name}" has a player, so it can only be merged into a Character.`;
         const other = claimerOf(into);
-        if (other && other !== claimer) return `"${from.name}" and "${into.name}" are different members' player characters.`;
+        if (other && other !== claimer) return `"${from.name}" and "${into.name}" are played by different members.`;
     }
     const aliases = [from.name, ...from.aliases].reduce(
         (acc, alias) => addAlias(acc, alias, into.name, Number.POSITIVE_INFINITY),
