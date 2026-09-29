@@ -29,7 +29,7 @@
                     </p>
                     <p class="text-xs text-muted-foreground">
                         <time :datetime="item.at">{{ formatAt(item.at) }}</time>
-                        <span v-if="index === current"> · current article</span>
+                        <span v-if="index === current"> · current summary</span>
                     </p>
                     <details
                         v-if="isArticleVersion(item.change)"

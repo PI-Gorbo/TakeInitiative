@@ -1,6 +1,6 @@
 <template>
     <!-- Promote from a selection (15f, design §4, desktop only): selecting text inside
-         one note shows "Add to wiki" by the selection. `utils/promote.ts` maps the
+         one note shows "Add to summary" by the selection. `utils/promote.ts` maps the
          rendered selection back to the note's markdown. On a touch screen the note's
          long-press sheet promotes the whole note instead (§3a). One per page. -->
     <Teleport to="body">
@@ -14,7 +14,7 @@
             <BookPlus
                 class="size-4 text-gold"
                 aria-hidden="true" />
-            Add to wiki
+            Add to summary
         </button>
     </Teleport>
     <WikiPromoteDialog

@@ -20,7 +20,7 @@
                 <BookOpen
                     class="size-3.5"
                     aria-hidden="true" />
-                {{ evidence.block.entryName }}'s article
+                {{ evidence.block.entryName }}'s summary
             </NuxtLink>
         </p>
     </article>

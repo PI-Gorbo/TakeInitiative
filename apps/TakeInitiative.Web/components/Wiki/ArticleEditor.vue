@@ -6,10 +6,10 @@
          opens `ConflictDialog` (reload and re-apply). A change pushed while editing
          shows "This article changed" and never replaces the text being written. -->
     <section
-        aria-label="Edit the article"
+        aria-label="Edit the summary"
         class="flex flex-col gap-3 pb-24 md:pb-0">
         <div class="sticky top-0 z-10 -mx-4 flex items-center gap-2 border-b bg-background/95 px-4 py-2 backdrop-blur">
-            <h3 class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Editing article</h3>
+            <h3 class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Editing summary</h3>
             <div class="flex-1" />
             <Button
                 variant="ghost"
@@ -42,7 +42,7 @@
             v-if="changed"
             role="status"
             class="flex flex-wrap items-center gap-2 rounded-md border border-gold/50 bg-gold/10 px-3 py-2 text-sm">
-            <span class="flex-1">This article changed while you were editing.</span>
+            <span class="flex-1">This summary changed while you were editing.</span>
             <Button
                 variant="outline"
                 size="sm"
@@ -351,7 +351,7 @@
                 );
                 return;
             }
-            toast.error(apiErrorMessage(error, "Could not save the article."));
+            toast.error(apiErrorMessage(error, "Could not save the summary."));
         } finally {
             saving.value = false;
         }

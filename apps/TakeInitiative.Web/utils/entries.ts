@@ -233,9 +233,9 @@ export function describeChange(change: EntryChange, nameOf: (memberId: string) =
         case "EditAccessChanged":
             return change.editAccess === "OnlyMe" ? "set edit access to Only the creator" : "set edit access to Anyone";
         case "ArticleEdited":
-            return "edited the article";
+            return "edited the summary";
         case "QuotePromoted":
-            return "promoted a quote";
+            return "added a note to the summary";
         case "Merged":
             return `merged "${change.name}" into it`;
         case "Claimed":

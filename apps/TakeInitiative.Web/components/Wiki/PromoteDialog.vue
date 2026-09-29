@@ -15,11 +15,11 @@
             class="max-h-[90dvh] max-w-lg grid-cols-[minmax(0,1fr)] overflow-y-auto max-md:top-4 max-md:translate-y-0 [&>*]:min-w-0"
             :style="phone ? { maxHeight: `calc(100dvh - ${inset}px - 2rem)` } : undefined">
             <DialogHeader>
-                <DialogTitle>Promote to wiki</DialogTitle>
+                <DialogTitle>Add to summary</DialogTitle>
                 <DialogDescription>
                     Adds
                     {{ excerpt === undefined ? "this note" : "the selection" }}
-                    to an entry's article as a quote that links back to the note.
+                    to an entry's summary as a quote that links back to the note.
                 </DialogDescription>
             </DialogHeader>
 
@@ -55,7 +55,7 @@
                 <p
                     v-if="phone"
                     class="text-xs text-muted-foreground">
-                    The whole note goes in. Trim it in the article editor next.
+                    The whole note goes in. Trim it in the summary editor next.
                 </p>
 
                 <p
@@ -66,7 +66,7 @@
                 <p
                     v-if="alreadyQuoted"
                     class="rounded-md bg-gold/10 px-3 py-2 text-sm">
-                    {{ targetName }}'s article already quotes this note. Promoting again adds another quote.
+                    {{ targetName }}'s summary already quotes this note. Adding it again adds another quote.
                 </p>
 
                 <DialogFooter class="gap-2">
@@ -85,7 +85,7 @@
                             v-if="busy"
                             class="animate-spin"
                             aria-hidden="true" />
-                        Promote
+                        Add to summary
                     </Button>
                 </DialogFooter>
             </form>
@@ -208,7 +208,7 @@
                 await navigateTo(entryHref(props.campaignId, entryId, result.blockId));
                 return;
             }
-            toast.success(`Added to ${entryName}'s article.`, {
+            toast.success(`Added to ${entryName}'s summary.`, {
                 action: {
                     label: "Open",
                     onClick: () => void navigateTo(entryHref(props.campaignId, entryId)),
@@ -221,7 +221,7 @@
                     ? "That note or entry is gone, or you cannot see it."
                     : status === 403
                       ? "You cannot edit that entry."
-                      : apiErrorMessage(error, "Could not promote the note.")
+                      : apiErrorMessage(error, "Could not add the note to the summary.")
             );
         }
     }

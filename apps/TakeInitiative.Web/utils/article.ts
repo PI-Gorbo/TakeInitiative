@@ -392,6 +392,54 @@ export function articleRevealCheck(
 export const quotesNote = (blocks: readonly ArticleBlock[] | undefined, noteId: string) =>
     !!blocks?.some((b) => b.quote?.noteId.toLowerCase() === noteId.toLowerCase());
 
+// ── Summary | Notes (25d) ────────────────────────────────────────────────────
+// In the UI the article is the entry's **Summary** and its timeline its **Notes**
+// (glossary §1); the code keeps the old names.
+
+/** The entry page's two tabs, and `?tab=` on its URL. */
+export type EntryTab = "summary" | "notes";
+export const ENTRY_TAB_PARAM = "tab";
+
+export const isEntryTab = (value: unknown): value is EntryTab => value === "summary" || value === "notes";
+
+/**
+ * The tab an entry page opens on. `?edit=` and `?block=` point into the summary, so they
+ * win; then `?tab=`, then `#timeline` (a loose end's "Pick from notes"). Otherwise the
+ * summary, or the notes while the summary is empty (there is nothing to read yet).
+ */
+export function initialEntryTab(input: {
+    hasSummary: boolean;
+    tab?: unknown;
+    hash?: string;
+    forceSummary?: boolean;
+}): EntryTab {
+    if (input.forceSummary) return "summary";
+    if (isEntryTab(input.tab)) return input.tab;
+    if (input.hash === `#${ENTRY_TIMELINE_ANCHOR}`) return "notes";
+    return input.hasSummary ? "summary" : "notes";
+}
+
+/** The notes the summary quotes (lower-cased ids): each shows "✓ In summary" on Notes. */
+export const quotedNoteIds = (blocks: readonly ArticleBlock[] | undefined): ReadonlySet<string> =>
+    new Set((blocks ?? []).flatMap((b) => (b.quote ? [b.quote.noteId.toLowerCase()] : [])));
+
+/**
+ * "Built from 3 of 12 notes": the distinct notes the summary quotes, of the notes the
+ * viewer can see that mention the entry. `noteCount` is null until every page of the
+ * notes has loaded (there is no total on the API), and then only N is shown. Null when
+ * nothing is quoted: a summary written by hand is not "built from" anything.
+ */
+export function builtFromLabel(quoted: number, noteCount: number | null): string | null {
+    if (quoted <= 0) return null;
+    const notes = (n: number) => (n === 1 ? "note" : "notes");
+    if (noteCount === null || noteCount < quoted) return `Built from ${quoted} ${notes(quoted)}`;
+    return `Built from ${quoted} of ${noteCount} ${notes(noteCount)}`;
+}
+
+/** A quote's source chip: "From Jo's note · Session 4", or "From your note · …". */
+export const quoteSourceLabel = (authorName: string, authorIsViewer: boolean, sessionNumber: number) =>
+    `From ${authorIsViewer ? "your" : `${authorName}'s`} note · Session ${sessionNumber}`;
+
 // ── Links ────────────────────────────────────────────────────────────────────
 
 /** `/wiki/{entryId}?edit={blockId}`: the entry page opens its article editor at a block. */
@@ -400,7 +448,7 @@ export const EDIT_BLOCK_PARAM = "edit";
 /** `?edit=write`: the article editor, at no block in particular (a loose end's Write, 19e). */
 export const WRITE_ARTICLE = "write";
 
-/** `wiki/{entryId}#timeline`: the entry page scrolled to its timeline (a loose end's Promote, 19e). */
+/** `wiki/{entryId}#timeline`: the entry page on its Notes tab (a loose end's "Pick from notes", 19e). */
 export const ENTRY_TIMELINE_ANCHOR = "timeline";
 
 export const entryHref = (campaignId: string, entryId: string, editBlockId?: string) =>

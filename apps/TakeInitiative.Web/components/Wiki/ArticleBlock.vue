@@ -1,7 +1,8 @@
 <template>
-    <!-- One block of an article, read (15f, design §4): ordinary markdown with chips; a
-         secret block framed "🔒 DM" or "🔒 Me"; a quote as a blockquote with
-         "— Sam, Session 12 ↗" linking back to its note. A quote of a 🔒 note is both. -->
+    <!-- One block of an article (the Summary, 25d), read (15f, design §4): ordinary
+         markdown with chips; a secret block framed "🔒 DM" or "🔒 Me"; a quote as a
+         blockquote with its source ("From Jo's note · Session 4 ↗", or "— Jo, Session 4 ↗"
+         in the history). A quote of a 🔒 note is both. -->
     <div
         :id="`block-${block.id}`"
         :class="[
@@ -26,7 +27,23 @@
                     :text="block.text"
                     document />
             </blockquote>
-            <figcaption class="pl-3 text-xs text-muted-foreground">
+            <!-- On the entry page (25d): a source chip that opens the note on the Notes
+                 tab. Elsewhere (the history dialog): a link to the note in the stream. -->
+            <figcaption
+                v-if="sourceChip"
+                class="pl-3">
+                <button
+                    type="button"
+                    class="-my-1 inline-flex h-11 max-w-full items-center gap-1 rounded-full px-1 text-xs font-medium text-gold hover:underline md:my-0 md:h-7"
+                    @click="emit('openNote', block.quote.noteId)">
+                    <span class="truncate rounded-full border border-gold/40 bg-gold/5 px-2.5 py-1">
+                        {{ sourceLabel }} ↗
+                    </span>
+                </button>
+            </figcaption>
+            <figcaption
+                v-else
+                class="pl-3 text-xs text-muted-foreground">
                 — {{ nameOf(block.quote.authorMemberId) }},
                 <NuxtLink
                     :to="noteHref"
@@ -46,7 +63,7 @@
 
 <script setup lang="ts">
     import type { ArticleBlock } from "~/utils/api/types";
-    import { secretAudience, secretLabel } from "~/utils/article";
+    import { quoteSourceLabel, secretAudience, secretLabel } from "~/utils/article";
     import { NOTE_LINK_PARAM } from "~/utils/noteActions";
 
     const props = defineProps<{
@@ -56,7 +73,10 @@
         nameOf: (memberId: string) => string;
         /** Opened from ⌘K (`?block=`, 17b): marked for a moment. */
         highlighted?: boolean;
+        /** The entry page's source chip, which asks for the note on the Notes tab (25d). */
+        sourceChip?: boolean;
     }>();
+    const emit = defineEmits<{ openNote: [noteId: string] }>();
 
     const secret = computed(() => secretLabel(props.block.visibility));
     const audience = computed(() =>
@@ -65,6 +85,15 @@
             props.nameOf(props.block.ownerMemberId),
             props.block.ownerMemberId === props.viewerMemberId
         )
+    );
+    const sourceLabel = computed(() =>
+        props.block.quote
+            ? quoteSourceLabel(
+                  props.nameOf(props.block.quote.authorMemberId),
+                  props.block.quote.authorMemberId === props.viewerMemberId,
+                  props.block.quote.sessionNumber
+              )
+            : ""
     );
     const noteHref = computed(() =>
         props.block.quote
