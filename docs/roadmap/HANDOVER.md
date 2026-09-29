@@ -99,6 +99,8 @@ Stack #224. Everything is on top of `dev` and still open:
 | #251 | `v2/21a-5etools-script` | 21a: the 5eTools index script (`pnpm 5etools:build`), its synthetic fixture and tests |
 | #252 | `v2/21b-5etools-provider` | 21b: the search-only 5eTools provider in the API, off without an index |
 | #253 | `v2/21c-5etools-web` | 21c: 5eTools rows link out in ⌘K, with + Wiki, the source line ("↗ From 5eTools · Beholder (MM p. 28)", its tooltip the book's title) and "Use 5eTools stats". Also sends book titles from the API. Closes step 21 apart from 21d |
+| #254 | `v2/22-ddb-plan` | Step 22's step file (D&D Beyond link). Merged as a plan only: step 22 is deferred, with no code |
+| #255 | `v2/23-suggestions-plan` | Step 23's step file (in-browser suggestions), on top of #254 |
 
 The local branches `pr/PI-Gorbo/222`, `pr/PI-Gorbo/222-1` and `pr/PI-Gorbo/222-2` are stale
 checkouts of #222. Ignore them.
@@ -140,7 +142,8 @@ checkouts of #222. Ignore them.
    - **SRD reference, 20c–20d (#248–#249):** step 20's Verify 4 (a DM at 1280×800, a
      player at 390×844): REFERENCE rows in ⌘K, the card, + Wiki with its 409, the source
      line, `@Goblin Warrior ×4` in a combat, and "Use SRD stats".
-   - **5eTools, 21b–21c (#252–#253):** step 21's Verify 5 and 6 (a DM at 1280×800, a
+   - **5eTools, 21b–21c (#252–#253)** (deferred with the rest of step 21, below; check
+     it in the later pass): step 21's Verify 5 and 6 (a DM at 1280×800, a
      player at 390×844), with a local index. To build one, get a copy of the 5etools source
      data yourself (e.g. a checkout of its source repository next to this repo, as
      `5etools-src/`, which is git-ignored). Run `pnpm 5etools:build --from <that folder>`,
@@ -170,9 +173,11 @@ checkouts of #222. Ignore them.
    line. Before 20a merges, the user should confirm the data source (Open5e's SRD 5.2
    fixtures at a pinned sha, whose licence 20a checked) and the attribution text (step
    20's Notes, "Why Open5e's fixtures" and "As built, 20a").
-3. **Step 21 is done apart from 21d, which is the user's.** 21a–21c are #251–#253. These
-   need the user; the plan's defaults stand until they answer (step 21's "Decisions for
-   the user"):
+3. **Deferred by the user (2026-09-28): 5eTools and D&D Beyond** are to be handled in a
+   later pass, after the cleanup below. Nothing in this item or the next is to be run now.
+   **Step 21 is done apart from 21d.** 21a–21c are #251–#253. 21d and step 21's
+   "Decisions for the user" are **deferred**; the plan's defaults stand until the user
+   takes them up:
    - **21d: delete the four Bestiary branches** (`git push origin --delete bestiary
      Bestiary_2025 Bestiary_2025_CopyParsing Bestiary_2025_project_refactor`). No agent runs
      this.
@@ -186,10 +191,26 @@ checkouts of #222. Ignore them.
      commits. After deleting the branch, ask GitHub Support to purge the cached commits,
      or accept that they stay reachable by sha until GitHub garbage-collects them (forks
      keep them).
-4. **Step 22 is next: the D&D Beyond link** (README: a sheet URL on player characters,
-   and a manual refresh of core stats). Its step file isn't written yet. Write
-   `22-dndbeyond-link.md` first as its own docs PR on top of `v2/21c-5etools-web`, then
-   run 23–24 in README order.
+4. **Step 22 (the D&D Beyond link) is deferred.** Its step file,
+   [22-ddb-link.md](22-ddb-link.md), is on the stack as #254 (`v2/22-ddb-plan`, on top of
+   `v2/21c-5etools-web`), as a plan only. 22a–22c are not built.
+   - Partial 22a API work is saved **locally only** in `git stash`, as "22a D&D Beyond link
+     API - partial, deferred 2026-09-28" (stashed on `v2/22a-ddb-link-api`). It is not
+     pushed. Leave the stash alone until the later pass picks step 22 up.
+   - Step 22's "Decisions for the user" (above all, whether to turn the refresh on given
+     D&D Beyond's Terms of Service) are deferred with it.
+   - When it resumes: **no agent calls D&D Beyond**, in tests or by hand (step 22's Notes).
+5. **Step 23 is next: in-browser suggestions.** Its step file is
+   [23-suggestions.md](23-suggestions.md) (branch `v2/23-suggestions-plan`, on top of
+   `v2/22-ddb-plan`). Run 23a (the GLiNER vs Laya spike, which writes its decision into the
+   step file), then 23b–23e on top of it.
+   - 23a's measurements on a phone and in a real browser are the user's; an agent builds
+     the dev page and the scorer and fills in what it can run.
+   - No agent commits model weights. `public/models/` is git-ignored.
+   - The user's decisions are in step 23's Notes, "Decisions for the user".
+6. **Then step 24** (Discord import), whose step file is written just before it starts.
+7. **Then a cleanup pass** over "Follow-ups found this round" below, before the deferred
+   5eTools and D&D Beyond work is picked up again.
 
 ## Follow-ups found this round
 
