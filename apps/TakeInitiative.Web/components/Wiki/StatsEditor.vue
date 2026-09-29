@@ -6,13 +6,15 @@
          checks them, and its message shows under the field. An entry from a reference
          item offers "Use SRD 5.2 stats" (20d) or "Use 5eTools stats" (21c) to whoever writes
          them, when that item has Stats. On a phone (25e) it is a collapsed row that peeks
-         "AC 15 · HP 38 · Init +3", open from the start for the character's player. -->
+         "AC 15 · HP 38 · Init +3", open from the start for the character's player. In the
+         desktop's right-hand panel (25f) it is forced open, a headed section with no border. -->
     <WikiEntrySection
         v-if="readable && (entry.stats || writable)"
         title="Stats"
         :peek="statsPeekLabel(entry.stats) || 'No stats yet'"
         :defaultOpen="isPlayer"
-        class="rounded-md border">
+        :forceOpen="forceOpen"
+        :class="{ 'rounded-md border': !forceOpen }">
         <template #title>
             Stats<span
                 v-if="!claimed"
@@ -52,7 +54,9 @@
             v-if="editing"
             class="flex flex-col gap-3"
             @submit.prevent="save">
-            <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div
+                class="grid grid-cols-1 gap-3"
+                :class="{ 'sm:grid-cols-3': !forceOpen }">
                 <label class="flex flex-col gap-1 text-sm">
                     <span class="font-medium">Initiative roll</span>
                     <input
@@ -150,6 +154,8 @@
         campaignId: string;
         entry: Entry;
         viewer: EntryViewer;
+        /** The desktop's right-hand panel (25f): always open, and the form one field a row. */
+        forceOpen?: boolean;
     }>();
 
     const claimed = computed(() => !!claimerOf(props.entry));

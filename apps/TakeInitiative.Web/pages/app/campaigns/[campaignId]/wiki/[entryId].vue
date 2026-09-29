@@ -1,202 +1,289 @@
 <template>
-    <PageContainer class="flex flex-col gap-5 px-4 py-4 pb-safe">
+    <PageContainer
+        class="lg:grid lg:max-w-none lg:grid-cols-[minmax(0,1fr)_360px] xl:grid-cols-[minmax(0,1fr)_400px]">
         <!-- An entry (design §4), in 25e's phone order: its header (15c, with the "Played by"
              chip and the ⋯ menu), a stats peek (15g), a connections strip (19c), and the
              Summary | Notes tabs (25d: its article, 15f, and its timeline, 15c). The end of
              Summary is "More about X": Details (source 20d, claim 15g, access), Gallery (16d)
-             and Combats (18e), each a collapsed row. `?edit={blockId}` opens the article
-             editor at a block (a phone's promote, §3a). A merged entry's id loads its target
-             (15g), and the URL is replaced with the target's. -->
-        <NuxtLink
-            :to="`/app/campaigns/${encodeURIComponent(campaignId)}/wiki`"
-            class="-ml-2 flex h-11 w-fit items-center gap-1 rounded-md px-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground md:h-9">
-            <ChevronLeft
-                class="size-4"
-                aria-hidden="true" />
-            Wiki
-        </NuxtLink>
+             and Combats (18e), each a collapsed row. At `lg` (25f) the page leaves
+             PageContainer's width for two columns: the header and tabs centred on the left,
+             and a right-hand panel that scrolls on its own with everything else, forced open.
+             Each section mounts in one place only (`desktop`), so no form, dialog or id is
+             drawn twice. `?edit={blockId}` opens the article editor at a block (a phone's
+             promote, §3a). A merged entry's id loads its target (15g), and the URL is
+             replaced with the target's. -->
+        <div class="min-w-0 px-4 py-4 pb-safe lg:px-10 lg:py-8">
+            <div class="flex flex-col gap-5 lg:mx-auto lg:max-w-3xl">
+                <NuxtLink
+                    :to="`/app/campaigns/${encodeURIComponent(campaignId)}/wiki`"
+                    class="-ml-2 flex h-11 w-fit items-center gap-1 rounded-md px-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground md:h-9">
+                    <ChevronLeft
+                        class="size-4"
+                        aria-hidden="true" />
+                    Wiki
+                </NuxtLink>
 
-        <EmptyState
-            v-if="notFound"
-            :icon="BookX"
-            title="Entry not found">
-            That entry is not there, or you cannot see it.
-        </EmptyState>
-        <LoadingFallback
-            v-else-if="!entry || !campaign"
-            :isLoading="entryQuery.isLoading.value || !campaign"
-            :isError="entryQuery.isError.value"
-            iconSize="2x"
-            class="pt-8" />
-        <template v-else>
-            <WikiEntryHeaderEditor
-                v-if="editing"
-                :key="entry.id"
-                :campaignId="campaignId"
-                :entry="entry"
-                :canEdit="canEdit"
-                :canChangeAccess="canChangeAccess"
-                @done="editing = false" />
-            <WikiEntryHeader
-                v-else
-                :entry="entry"
-                :viewerMemberId="campaign.currentMemberId"
-                :canEdit="canEdit"
-                :canChangeAccess="canChangeAccess"
-                :claimerName="entry.claimedByMemberId ? memberName(entry.claimedByMemberId) : undefined"
-                @edit="editing = true"
-                @history="historyOpen = true"
-                @merge="mergeOpen = true" />
+                <EmptyState
+                    v-if="notFound"
+                    :icon="BookX"
+                    title="Entry not found">
+                    That entry is not there, or you cannot see it.
+                </EmptyState>
+                <LoadingFallback
+                    v-else-if="!entry || !campaign"
+                    :isLoading="entryQuery.isLoading.value || !campaign"
+                    :isError="entryQuery.isError.value"
+                    iconSize="2x"
+                    class="pt-8" />
+                <template v-else>
+                    <WikiEntryHeaderEditor
+                        v-if="editing"
+                        :key="entry.id"
+                        :campaignId="campaignId"
+                        :entry="entry"
+                        :canEdit="canEdit"
+                        :canChangeAccess="canChangeAccess"
+                        @done="editing = false" />
+                    <WikiEntryHeader
+                        v-else
+                        :entry="entry"
+                        :viewerMemberId="campaign.currentMemberId"
+                        :canEdit="canEdit"
+                        :canChangeAccess="canChangeAccess"
+                        :claimerName="entry.claimedByMemberId ? memberName(entry.claimedByMemberId) : undefined"
+                        @edit="editing = true"
+                        @history="historyOpen = true"
+                        @merge="mergeOpen = true" />
 
+                    <template v-if="!desktop">
+                        <WikiStatsEditor
+                            :key="`${entry.id}-stats`"
+                            :campaignId="campaignId"
+                            :entry="entry"
+                            :viewer="viewer" />
+                        <WikiEntryConnections
+                            :campaignId="campaignId"
+                            :entryId="entry.id"
+                            :entryName="entry.name"
+                            :entryKind="entry.kind"
+                            :nameOf="memberName"
+                            strip />
+                    </template>
+
+                    <!-- Summary | Notes (25d): the article and the timeline, in the UI's words.
+                         Both panels stay mounted, so switching never drops an open editor. -->
+                    <Tabs
+                        :id="ENTRY_TIMELINE_ANCHOR"
+                        :modelValue="tab"
+                        :unmountOnHide="false"
+                        class="flex scroll-mt-4 flex-col gap-3"
+                        @update:modelValue="(value) => selectTab(value)">
+                        <TabsList class="grid h-11 w-full grid-cols-2 md:h-10 md:w-fit">
+                            <TabsTrigger
+                                value="summary"
+                                class="h-9 md:h-8">
+                                Summary
+                            </TabsTrigger>
+                            <TabsTrigger
+                                value="notes"
+                                class="h-9 md:h-8">
+                                Notes<template v-if="noteCount !== null"> · {{ noteCount }}</template>
+                            </TabsTrigger>
+                        </TabsList>
+                        <TabsContent
+                            value="summary"
+                            class="mt-0">
+                            <WikiArticleEditor
+                                v-if="articleEditing && canEdit"
+                                :key="`${entry.id}-editor`"
+                                :campaignId="campaignId"
+                                :entry="entry"
+                                :viewer="viewer"
+                                :nameOf="memberName"
+                                :focusBlockId="focusBlockId"
+                                :restore="restoring"
+                                @done="closeArticleEditor" />
+                            <WikiArticle
+                                v-else
+                                :campaignId="campaignId"
+                                :article="entry.article"
+                                :viewerMemberId="viewer.memberId"
+                                :canEdit="canEdit"
+                                :nameOf="memberName"
+                                :highlightedBlockId="highlightedBlockId"
+                                :entryName="entry.name"
+                                :noteCount="noteCount"
+                                @edit="openArticleEditor()"
+                                @pickNotes="selectTab('notes')"
+                                @openNote="openNote" />
+
+                            <!-- More about X (25e): what a quick lookup rarely needs, collapsed. At
+                                 `lg` it is the right-hand panel instead. -->
+                            <section
+                                v-if="!desktop"
+                                :aria-labelledby="`${moreId}-title`"
+                                class="mt-6 flex flex-col gap-2">
+                                <h2
+                                    :id="`${moreId}-title`"
+                                    class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                    More about {{ entry.name }}
+                                </h2>
+                                <div class="divide-y rounded-md border">
+                                    <WikiEntrySection
+                                        :key="`${entry.id}-details`"
+                                        title="Details"
+                                        :peek="accessPeekLabel(entry, viewer.memberId, creatorName)">
+                                        <WikiEntryDetails
+                                            :campaignId="campaignId"
+                                            :entry="entry"
+                                            :viewer="viewer"
+                                            :members="campaign.members"
+                                            :nameOf="memberName"
+                                            :creatorName="creatorName" />
+                                    </WikiEntrySection>
+                                    <WikiEntrySection
+                                        :key="`${entry.id}-gallery`"
+                                        title="Gallery"
+                                        :peek="galleryPeekLabel(imageCount)">
+                                        <WikiEntryGallery
+                                            :campaign="campaign"
+                                            :entryId="entry.id"
+                                            embedded />
+                                        <p
+                                            v-if="imageCount === 0"
+                                            class="text-sm text-muted-foreground">
+                                            No images mention {{ entry.name }} yet.
+                                        </p>
+                                    </WikiEntrySection>
+                                    <WikiEntrySection
+                                        :key="`${entry.id}-combats`"
+                                        title="Combats"
+                                        :peek="combatsPeekLabel(combatCount)">
+                                        <CombatEntryCombats
+                                            :campaignId="campaignId"
+                                            :entryId="entry.id"
+                                            embedded />
+                                        <p
+                                            v-if="combatCount === 0"
+                                            class="text-sm text-muted-foreground">
+                                            {{ entry.name }} has not been in a combat.
+                                        </p>
+                                    </WikiEntrySection>
+                                </div>
+                            </section>
+                        </TabsContent>
+                        <TabsContent
+                            value="notes"
+                            class="mt-0">
+                            <WikiEntryTimeline
+                                :campaign="campaign"
+                                :entryId="entry.id"
+                                :entryName="entry.name"
+                                :canEdit="canEdit"
+                                :inSummary="inSummary"
+                                :highlightedNoteId="highlightedNoteId" />
+                        </TabsContent>
+                    </Tabs>
+
+                    <WikiEntryHistoryDialog
+                        v-model:open="historyOpen"
+                        :campaignId="campaignId"
+                        :entryId="entry.id"
+                        :entryName="entry.name"
+                        :viewerMemberId="viewer.memberId"
+                        :canEdit="canEdit"
+                        :nameOf="memberName"
+                        @restore="restoreVersion" />
+                    <WikiMergeDialog
+                        v-if="canEdit"
+                        v-model:open="mergeOpen"
+                        :campaignId="campaignId"
+                        :entry="entry"
+                        :viewer="viewer"
+                        :members="campaign.members"
+                        :nameOf="memberName" />
+                </template>
+            </div>
+        </div>
+
+        <!-- The right-hand panel (25f): sticky under the app header (h-14 and its border) and
+             as tall as the rest of the screen, so it scrolls on its own while the summary
+             stays put. It mounts only at `lg`, so it needs no `lg:` prefixes. -->
+        <aside
+            v-if="desktop && entry && campaign && !notFound"
+            :aria-label="`More about ${entry.name}`"
+            class="sticky top-0 flex h-[calc(100dvh-3.5rem-1px)] flex-col divide-y self-start overflow-y-auto border-l bg-muted/20">
+            <WikiEntrySection
+                v-if="entry.kind === 'Character'"
+                title="Played by"
+                forceOpen>
+                <WikiClaimControl
+                    :campaignId="campaignId"
+                    :entry="entry"
+                    :viewer="viewer"
+                    :members="campaign.members"
+                    :nameOf="memberName" />
+            </WikiEntrySection>
             <WikiStatsEditor
                 :key="`${entry.id}-stats`"
                 :campaignId="campaignId"
                 :entry="entry"
-                :viewer="viewer" />
-            <WikiEntryConnections
-                :campaignId="campaignId"
-                :entryId="entry.id"
-                :entryName="entry.name"
-                :entryKind="entry.kind"
-                :nameOf="memberName"
-                strip />
-
-            <!-- Summary | Notes (25d): the article and the timeline, in the UI's words.
-                 Both panels stay mounted, so switching never drops an open editor. -->
-            <Tabs
-                :id="ENTRY_TIMELINE_ANCHOR"
-                :modelValue="tab"
-                :unmountOnHide="false"
-                class="flex scroll-mt-4 flex-col gap-3"
-                @update:modelValue="(value) => selectTab(value)">
-                <TabsList class="grid h-11 w-full grid-cols-2 md:h-10 md:w-fit">
-                    <TabsTrigger
-                        value="summary"
-                        class="h-9 md:h-8">
-                        Summary
-                    </TabsTrigger>
-                    <TabsTrigger
-                        value="notes"
-                        class="h-9 md:h-8">
-                        Notes<template v-if="noteCount !== null"> · {{ noteCount }}</template>
-                    </TabsTrigger>
-                </TabsList>
-                <TabsContent
-                    value="summary"
-                    class="mt-0">
-                    <WikiArticleEditor
-                        v-if="articleEditing && canEdit"
-                        :key="`${entry.id}-editor`"
-                        :campaignId="campaignId"
-                        :entry="entry"
-                        :viewer="viewer"
-                        :nameOf="memberName"
-                        :focusBlockId="focusBlockId"
-                        :restore="restoring"
-                        @done="closeArticleEditor" />
-                    <WikiArticle
-                        v-else
-                        :campaignId="campaignId"
-                        :article="entry.article"
-                        :viewerMemberId="viewer.memberId"
-                        :canEdit="canEdit"
-                        :nameOf="memberName"
-                        :highlightedBlockId="highlightedBlockId"
-                        :entryName="entry.name"
-                        :noteCount="noteCount"
-                        @edit="openArticleEditor()"
-                        @pickNotes="selectTab('notes')"
-                        @openNote="openNote" />
-
-                    <!-- More about X (25e): what a quick lookup rarely needs, collapsed. -->
-                    <section
-                        :aria-labelledby="`${moreId}-title`"
-                        class="mt-6 flex flex-col gap-2">
-                        <h2
-                            :id="`${moreId}-title`"
-                            class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                            More about {{ entry.name }}
-                        </h2>
-                        <div class="divide-y rounded-md border">
-                            <WikiEntrySection
-                                :key="`${entry.id}-details`"
-                                title="Details"
-                                :peek="accessPeekLabel(entry, viewer.memberId, creatorName)">
-                                <WikiEntryDetails
-                                    :campaignId="campaignId"
-                                    :entry="entry"
-                                    :viewer="viewer"
-                                    :members="campaign.members"
-                                    :nameOf="memberName"
-                                    :creatorName="creatorName" />
-                            </WikiEntrySection>
-                            <WikiEntrySection
-                                :key="`${entry.id}-gallery`"
-                                title="Gallery"
-                                :peek="galleryPeekLabel(imageCount)">
-                                <WikiEntryGallery
-                                    :campaign="campaign"
-                                    :entryId="entry.id"
-                                    embedded />
-                                <p
-                                    v-if="imageCount === 0"
-                                    class="text-sm text-muted-foreground">
-                                    No images mention {{ entry.name }} yet.
-                                </p>
-                            </WikiEntrySection>
-                            <WikiEntrySection
-                                :key="`${entry.id}-combats`"
-                                title="Combats"
-                                :peek="combatsPeekLabel(combatCount)">
-                                <CombatEntryCombats
-                                    :campaignId="campaignId"
-                                    :entryId="entry.id"
-                                    embedded />
-                                <p
-                                    v-if="combatCount === 0"
-                                    class="text-sm text-muted-foreground">
-                                    {{ entry.name }} has not been in a combat.
-                                </p>
-                            </WikiEntrySection>
-                        </div>
-                    </section>
-                </TabsContent>
-                <TabsContent
-                    value="notes"
-                    class="mt-0">
-                    <WikiEntryTimeline
-                        :campaign="campaign"
-                        :entryId="entry.id"
-                        :entryName="entry.name"
-                        :canEdit="canEdit"
-                        :inSummary="inSummary"
-                        :highlightedNoteId="highlightedNoteId" />
-                </TabsContent>
-            </Tabs>
-
-            <WikiEntryHistoryDialog
-                v-model:open="historyOpen"
-                :campaignId="campaignId"
-                :entryId="entry.id"
-                :entryName="entry.name"
-                :viewerMemberId="viewer.memberId"
-                :canEdit="canEdit"
-                :nameOf="memberName"
-                @restore="restoreVersion" />
-            <WikiMergeDialog
-                v-if="canEdit"
-                v-model:open="mergeOpen"
-                :campaignId="campaignId"
-                :entry="entry"
                 :viewer="viewer"
-                :members="campaign.members"
-                :nameOf="memberName" />
-        </template>
+                forceOpen />
+            <div class="p-4">
+                <WikiEntryConnections
+                    :key="`${entry.id}-connections`"
+                    :campaignId="campaignId"
+                    :entryId="entry.id"
+                    :entryName="entry.name"
+                    :entryKind="entry.kind"
+                    :nameOf="memberName" />
+            </div>
+            <WikiEntrySection
+                title="Details"
+                forceOpen>
+                <WikiEntryDetails
+                    :campaignId="campaignId"
+                    :entry="entry"
+                    :viewer="viewer"
+                    :members="campaign.members"
+                    :nameOf="memberName"
+                    :creatorName="creatorName"
+                    hideClaim />
+            </WikiEntrySection>
+            <WikiEntrySection
+                title="Gallery"
+                forceOpen>
+                <WikiEntryGallery
+                    :campaign="campaign"
+                    :entryId="entry.id"
+                    embedded />
+                <p
+                    v-if="imageCount === 0"
+                    class="text-sm text-muted-foreground">
+                    No images mention {{ entry.name }} yet.
+                </p>
+            </WikiEntrySection>
+            <WikiEntrySection
+                title="Combats"
+                forceOpen>
+                <CombatEntryCombats
+                    :campaignId="campaignId"
+                    :entryId="entry.id"
+                    embedded />
+                <p
+                    v-if="combatCount === 0"
+                    class="text-sm text-muted-foreground">
+                    {{ entry.name }} has not been in a combat.
+                </p>
+            </WikiEntrySection>
+        </aside>
     </PageContainer>
 </template>
 
 <script setup lang="ts">
     import { useInfiniteQuery, useQuery } from "@tanstack/vue-query";
+    import { useMediaQuery } from "@vueuse/core";
     import { BookX, ChevronLeft } from "lucide-vue-next";
     import { apiErrorStatus } from "~/utils/apiErrorParser";
     import { currentMember } from "~/utils/campaign";
@@ -248,6 +335,10 @@
     const creatorName = computed(
         () => campaign.value?.members.find((m) => m.memberId === entry.value?.creatorMemberId)?.username ?? "the creator"
     );
+
+    // 25f: the desktop layout from Tailwind's `lg`. The app renders on the client only
+    // (`/app/**` has no SSR), so the first paint already knows the width.
+    const desktop = useMediaQuery("(min-width: 1024px)");
 
     const memberName = (memberId: string) =>
         campaign.value?.members.find((m) => m.memberId === memberId)?.username ?? "Unknown member";
