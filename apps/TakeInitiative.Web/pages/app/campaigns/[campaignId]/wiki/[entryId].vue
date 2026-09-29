@@ -1,8 +1,10 @@
 <template>
     <PageContainer class="flex flex-col gap-5 px-4 py-4 pb-safe">
-        <!-- An entry (design §4): its header (15c), its source (20d), its claim and stats (15g), the
-             Summary | Notes tabs (25d: its article, 15f, and its timeline, 15c), its connections
-             (19c), its gallery (16d) and its combats (18e). `?edit={blockId}` opens the article
+        <!-- An entry (design §4), in 25e's phone order: its header (15c, with the "Played by"
+             chip and the ⋯ menu), a stats peek (15g), a connections strip (19c), and the
+             Summary | Notes tabs (25d: its article, 15f, and its timeline, 15c). The end of
+             Summary is "More about X": Details (source 20d, claim 15g, access), Gallery (16d)
+             and Combats (18e), each a collapsed row. `?edit={blockId}` opens the article
              editor at a block (a phone's promote, §3a). A merged entry's id loads its target
              (15g), and the URL is replaced with the target's. -->
         <NuxtLink
@@ -39,30 +41,25 @@
                 v-else
                 :entry="entry"
                 :viewerMemberId="campaign.currentMemberId"
-                :creatorName="creatorName"
                 :canEdit="canEdit"
                 :canChangeAccess="canChangeAccess"
-                :editing="editing"
                 :claimerName="entry.claimedByMemberId ? memberName(entry.claimedByMemberId) : undefined"
                 @edit="editing = true"
                 @history="historyOpen = true"
                 @merge="mergeOpen = true" />
 
-            <ReferenceEntrySourceLine
-                v-if="entry.source"
-                :campaignId="campaignId"
-                :source="entry.source" />
-            <WikiClaimControl
-                :campaignId="campaignId"
-                :entry="entry"
-                :viewer="viewer"
-                :members="campaign.members"
-                :nameOf="memberName" />
             <WikiStatsEditor
                 :key="`${entry.id}-stats`"
                 :campaignId="campaignId"
                 :entry="entry"
                 :viewer="viewer" />
+            <WikiEntryConnections
+                :campaignId="campaignId"
+                :entryId="entry.id"
+                :entryName="entry.name"
+                :entryKind="entry.kind"
+                :nameOf="memberName"
+                strip />
 
             <!-- Summary | Notes (25d): the article and the timeline, in the UI's words.
                  Both panels stay mounted, so switching never drops an open editor. -->
@@ -110,6 +107,59 @@
                         @edit="openArticleEditor()"
                         @pickNotes="selectTab('notes')"
                         @openNote="openNote" />
+
+                    <!-- More about X (25e): what a quick lookup rarely needs, collapsed. -->
+                    <section
+                        :aria-labelledby="`${moreId}-title`"
+                        class="mt-6 flex flex-col gap-2">
+                        <h2
+                            :id="`${moreId}-title`"
+                            class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            More about {{ entry.name }}
+                        </h2>
+                        <div class="divide-y rounded-md border">
+                            <WikiEntrySection
+                                :key="`${entry.id}-details`"
+                                title="Details"
+                                :peek="accessPeekLabel(entry, viewer.memberId, creatorName)">
+                                <WikiEntryDetails
+                                    :campaignId="campaignId"
+                                    :entry="entry"
+                                    :viewer="viewer"
+                                    :members="campaign.members"
+                                    :nameOf="memberName"
+                                    :creatorName="creatorName" />
+                            </WikiEntrySection>
+                            <WikiEntrySection
+                                :key="`${entry.id}-gallery`"
+                                title="Gallery"
+                                :peek="galleryPeekLabel(imageCount)">
+                                <WikiEntryGallery
+                                    :campaign="campaign"
+                                    :entryId="entry.id"
+                                    embedded />
+                                <p
+                                    v-if="imageCount === 0"
+                                    class="text-sm text-muted-foreground">
+                                    No images mention {{ entry.name }} yet.
+                                </p>
+                            </WikiEntrySection>
+                            <WikiEntrySection
+                                :key="`${entry.id}-combats`"
+                                title="Combats"
+                                :peek="combatsPeekLabel(combatCount)">
+                                <CombatEntryCombats
+                                    :campaignId="campaignId"
+                                    :entryId="entry.id"
+                                    embedded />
+                                <p
+                                    v-if="combatCount === 0"
+                                    class="text-sm text-muted-foreground">
+                                    {{ entry.name }} has not been in a combat.
+                                </p>
+                            </WikiEntrySection>
+                        </div>
+                    </section>
                 </TabsContent>
                 <TabsContent
                     value="notes"
@@ -123,21 +173,6 @@
                         :highlightedNoteId="highlightedNoteId" />
                 </TabsContent>
             </Tabs>
-
-            <WikiEntryConnections
-                :campaignId="campaignId"
-                :entryId="entry.id"
-                :entryName="entry.name"
-                :entryKind="entry.kind"
-                :nameOf="memberName" />
-
-            <WikiEntryGallery
-                :campaign="campaign"
-                :entryId="entry.id" />
-
-            <CombatEntryCombats
-                :campaignId="campaignId"
-                :entryId="entry.id" />
 
             <WikiEntryHistoryDialog
                 v-model:open="historyOpen"
@@ -178,9 +213,12 @@
     } from "~/utils/article";
     import { timelineItems } from "~/utils/entryCache";
     import { canChangeEntryAccess, canEditEntry } from "~/utils/entries";
+    import { accessPeekLabel, combatsPeekLabel, galleryPeekLabel } from "~/utils/entrySections";
+    import { galleryImageCount, galleryNotes, galleryTiles } from "~/utils/gallery";
     import { BLOCK_LINK_PARAM } from "~/utils/search";
     import { getCampaignQuery } from "~/utils/queries/campaign";
-    import { getEntryQuery, getEntryTimelineQuery } from "~/utils/queries/entries";
+    import { getEntryCombatsQuery } from "~/utils/queries/combats";
+    import { getEntryImagesQuery, getEntryQuery, getEntryTimelineQuery } from "~/utils/queries/entries";
 
     definePageMeta({
         layout: "campaign",
@@ -291,6 +329,18 @@
         clearTimeout(noteTimer);
         noteTimer = setTimeout(() => (highlightedNoteId.value = null), 2500);
     }
+
+    // ── More about X (25e) ───────────────────────────────────────────────────
+    // The peeks' counts read the same queries as the gallery and the combats list (one
+    // cache entry each), so opening a row draws what is already loaded.
+    const moreId = useId();
+    const galleryQuery = useInfiniteQuery(getEntryImagesQuery(campaignId, () => entry.value?.id ?? ""));
+    const imageCount = computed(() => {
+        const data = galleryQuery.data.value;
+        return data ? (galleryImageCount(data) ?? galleryTiles(galleryNotes(data)).length) : undefined;
+    });
+    const combatsQuery = useQuery(getEntryCombatsQuery(campaignId, () => entry.value?.id ?? ""));
+    const combatCount = computed(() => combatsQuery.data.value?.combats.length);
 
     // ── History, restore and merge (15g) ─────────────────────────────────────
     const historyOpen = ref(false);

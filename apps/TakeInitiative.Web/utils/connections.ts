@@ -10,6 +10,8 @@ import type {
 
 /** How many chips show before "+ n more". */
 export const CONNECTIONS_SHOWN = 12;
+/** How many chips the phone's one-line strip shows before "+n more" (25e). */
+export const CONNECTIONS_STRIP_SHOWN = 6;
 
 export type ConnectionGroupKey = "seenAt" | "seenHere" | "all";
 export type ConnectionGroup = {
@@ -98,6 +100,18 @@ export function limitConnectionGroups(
         shown.push({ ...group, connections });
     }
     return { groups: shown, hidden: total - (Math.max(0, limit) - left) };
+}
+
+/**
+ * The phone's strip (25e): the top chips on one scrolling line, in the groups' order
+ * ("Seen at" first) without their headings, and how many "+n more" reveals.
+ */
+export function connectionStrip(
+    groups: readonly ConnectionGroup[],
+    limit = CONNECTIONS_STRIP_SHOWN
+): { connections: EntryConnection[]; hidden: number } {
+    const shown = limitConnectionGroups(groups, limit);
+    return { connections: shown.groups.flatMap((g) => g.connections), hidden: shown.hidden };
 }
 
 /** "Fought together" (glossary): the pair were both visible combatants in a started combat. */

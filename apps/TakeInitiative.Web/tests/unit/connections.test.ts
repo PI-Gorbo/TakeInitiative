@@ -6,6 +6,8 @@ import {
     foughtTogether,
     groupConnections,
     limitConnectionGroups,
+    connectionStrip,
+    CONNECTIONS_STRIP_SHOWN,
     noteEvidenceLabel,
     sortConnections,
 } from "~/utils/connections";
@@ -127,6 +129,31 @@ describe("groupConnections", () => {
             groupConnections("Character", [phandalin]).map((g) => g.key)
         ).toEqual(["seenAt"]);
         expect(groupConnections("Character", [])).toEqual([]);
+    });
+});
+
+describe("connectionStrip (25e)", () => {
+    it("flattens the first six in panel order and counts the rest", () => {
+        const places = Array.from({ length: 2 }, (_, i) =>
+            connection(`Place ${i}`, "Place", 1)
+        );
+        const others = Array.from({ length: 6 }, (_, i) =>
+            connection(`Item ${i}`, "Item", 30 - i)
+        );
+        const { connections, hidden } = connectionStrip(
+            groupConnections("Character", [...others, ...places])
+        );
+        expect(CONNECTIONS_STRIP_SHOWN).toBe(6);
+        expect(names(connections)).toEqual([
+            "Place 0",
+            "Place 1",
+            "Item 0",
+            "Item 1",
+            "Item 2",
+            "Item 3",
+        ]);
+        expect(hidden).toBe(2);
+        expect(connectionStrip([])).toEqual({ connections: [], hidden: 0 });
     });
 });
 

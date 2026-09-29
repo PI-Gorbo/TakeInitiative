@@ -9,7 +9,8 @@
         class="flex flex-col gap-2">
         <h3
             :id="`${id}-title`"
-            class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+            :class="{ 'sr-only': embedded }">
             Gallery
         </h3>
         <ImageGrid
@@ -60,6 +61,8 @@
     const props = defineProps<{
         campaign: Campaign;
         entryId: string;
+        /** Inside an `EntrySection` (25e), whose row is the visible title. */
+        embedded?: boolean;
     }>();
 
     const id = useId();
