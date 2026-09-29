@@ -40,12 +40,12 @@ file's docs PR. Each PR leaves the app runnable:
 | PR | Branch | Sub-step | Runnable state after merge | Status |
 |---|---|---|---|---|
 | 25a | `v2/25a-wiki-redesign-plan` | This plan and the glossary | Docs only | [x] |
-| 25b | `v2/25b-wiki-drop-add-note` | Remove "Add a note about X" from the wiki | The entry page and its empty Connections panel no longer link to the composer. ⌘K's "Post a note about X" still works | [ ] |
-| 25c | `v2/25c-played-by` | Claim → "Played by" in copy (web and API strings) | "Played by Sam", "This is my character", "Not my character" everywhere a claim shows; API errors say "player" | [ ] |
-| 25d | `v2/25d-summary-notes-tabs` | Summary \| Notes tabs | The article and timeline become two tabs, with the "Built from N of M notes" line, source chips on quotes, "Add to summary" / "✓ In summary", and the empty state | [ ] |
-| 25e | `v2/25e-entry-mobile-collapse` | The mobile order and collapsed sections | Stats peek, Connections strip, and "More about X" (Details, Gallery, Combats) collapsed | [ ] |
-| 25f | `v2/25f-entry-desktop-panel` | The desktop layout (`lg+`) | Full-width page, capped main panel, sticky right-hand panel with the sections forced open | [ ] |
-| 25g | `v2/25g-wiki-home-polish` | The wiki home | Icon-button toolbar, and each row shows "Played by", a one-line summary gist and "N notes · last in Session X". The step's Verify passes | [ ] |
+| 25b | `v2/25b-wiki-drop-add-note` | Remove "Add a note about X" from the wiki | The entry page and its empty Connections panel no longer link to the composer. ⌘K's "Post a note about X" still works || [x] |
+| 25c | `v2/25c-played-by` | Claim → "Played by" in copy (web and API strings) | "Played by Sam", "This is my character", "Not my character" everywhere a claim shows; API errors say "player" || [x] |
+| 25d | `v2/25d-summary-notes-tabs` | Summary \| Notes tabs | The article and timeline become two tabs, with the "Built from N of M notes" line, source chips on quotes, "Add to summary" / "✓ In summary", and the empty state || [x] |
+| 25e | `v2/25e-entry-mobile-collapse` | The mobile order and collapsed sections | Stats peek, Connections strip, and "More about X" (Details, Gallery, Combats) collapsed || [x] |
+| 25f | `v2/25f-entry-desktop-panel` | The desktop layout (`lg+`) | Full-width page, capped main panel, sticky right-hand panel with the sections forced open || [x] |
+| 25g | `v2/25g-wiki-home-polish` | The wiki home | Icon-button toolbar, and each row shows "Played by", a one-line summary gist and "N notes · last in Session X". The step's Verify passes || [x] |
 
 Step 24 (the Discord import, #261) is unrelated and stays where it is; this step does not
 depend on it.

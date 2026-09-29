@@ -100,7 +100,7 @@ Steps 08–11 ship as one stack of PRs (`gh stack`), one PR per step.
 | 22 | [D&D Beyond link](22-ddb-link.md) | `deferred` | 15 | Sheet URL on player characters, manual refresh of core stats. **Deferred (2026-09-28):** only the plan (#254) is on the stack; no code. Its decisions wait for the later pass |
 | 23 | [In-browser suggestions](23-suggestions.md) | `in progress` | 15, 17 | Zero-shot extraction (GLiNER small v2.5, picked by 23a's spike) in the browser; suggestions, never facts |
 | 24 | Discord import | `todo` | 16, 23 | Import a Discord export into sessions, with suggested mentions to review |
-| 25 | [Wiki redesign](25-wiki-redesign.md) | `in progress` | 15, 19, 20 | Mobile-first entry page (Summary \| Notes tabs, collapsed sections), a desktop side panel, "Played by" for claims, no "Add a note" on the wiki |
+| 25 | [Wiki redesign](25-wiki-redesign.md) | `done` | 15, 19, 20 | Mobile-first entry page (Summary \| Notes tabs, collapsed sections), a desktop side panel, "Played by" for claims, no "Add a note" on the wiki |
 
 Step 12 is the design every later step must respect, and its
 [invariants](12-v2-design-session.md#10-invariants) are binding. Step files 13+
