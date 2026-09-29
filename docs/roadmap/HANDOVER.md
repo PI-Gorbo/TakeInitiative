@@ -103,7 +103,7 @@ Stack #224. Everything is on top of `dev` and still open:
 | #255 | `v2/23-suggestions-plan` | Step 23's step file (in-browser suggestions), on top of #254 |
 | #256 | `v2/23a-extraction-spike` | 23a: the GLiNER variant spike (Laya dropped by the user); picks GLiNER small v2.5 and pins its weights, small v2.1 as the fallback |
 | #257 | `v2/23b-extractor-runtime` | 23b: the extractor runtime (worker, lazy load, self-hosted weights from our own reproducible export of upstream GLiNER small v2.5, Cache API, "Suggestions on this device" on the Me page) |
-| #PRNUM | `v2/25a-wiki-redesign-plan` | Step 25's step file (the wiki redesign), on `dev` after #262. 25b–25g stack on it |
+| #263 | `v2/25a-wiki-redesign-plan` | Step 25's step file (the wiki redesign), on `dev` after #262. 25b–25g stack on it |
 
 The local branches `pr/PI-Gorbo/222`, `pr/PI-Gorbo/222-1` and `pr/PI-Gorbo/222-2` are stale
 checkouts of #222. Ignore them.
