@@ -1,6 +1,6 @@
 <template>
-    <!-- The campaign's name opens a menu: the recently opened campaigns, then all of them. -->
     <h1 class="min-w-0 flex-1">
+        <!-- The campaign's name opens a menu: the recently opened campaigns, then all of them. -->
         <DropdownMenu @update:open="(open) => open && readRecent()">
             <DropdownMenuTrigger
                 class="flex h-11 max-w-full items-center gap-1 rounded-md px-2 text-left hover:bg-accent"
