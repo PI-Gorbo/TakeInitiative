@@ -105,8 +105,11 @@ reference, but there are no channels.
  Session notes ──@mention──▶ entry Timeline (automatic, read-only, raw record)
                                │
                                └─ Promote ──▶ entry Article (curated, editable)
- Entry page ── "Add a note about X" ──▶ new session note in the current session
+ ⌘K "Post a note about X" ──▶ new session note in the current session
 ```
+
+The entry page itself no longer links to the composer: step 25b removed its "Add a
+note about X" button. ⌘K's "Post a note about X" is the way in.
 
 ## 3. Campaign tab: sessions and the composer (text UX)
 
@@ -214,8 +217,10 @@ session. It is not tied to the combat.
  TIMELINE     S12  Sam    We met @Gundren on the road…            [Promote]
               S13  Priya  🖼 Letter from @Gundren                   [Promote]
  GALLERY      [img] [img]          COMBATS  Goblin Ambush (S12)
- [ Add a note about Gundren… ]   ← posts to the current session with @Gundren prefilled
 ```
+- **No "Add a note about X" button** (removed in step 25b): the wiki does not link to
+  the composer. ⌘K's "Post a note about X" posts to the current session with the
+  mention prefilled.
 - **Promote:** select text in a timeline note, choose "Add to wiki", then pick the
   entry. The selection is added to the article as a quote with a source link.
   Promoting a 🔒 note creates a **secret block** with the same visibility.

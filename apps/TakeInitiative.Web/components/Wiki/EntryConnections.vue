@@ -30,11 +30,6 @@
             v-else-if="connections.length === 0"
             class="py-2 text-sm text-muted-foreground">
             {{ noConnectionsLabel(entryName) }}
-            <NuxtLink
-                :to="aboutHref"
-                class="inline-flex min-h-11 items-center font-medium text-gold hover:underline md:min-h-0">
-                Add a note about {{ entryName }}…
-            </NuxtLink>
         </p>
         <div
             v-else
@@ -120,8 +115,6 @@
         entryName: string;
         entryKind: EntryKind;
         nameOf: (memberId: string) => string;
-        /** "Add a note about…" (design §4): the page's own link, for the empty panel. */
-        aboutHref: string;
     }>();
     const id = useId();
 

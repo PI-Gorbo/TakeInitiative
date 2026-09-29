@@ -89,8 +89,7 @@
                 :entryId="entry.id"
                 :entryName="entry.name"
                 :entryKind="entry.kind"
-                :nameOf="memberName"
-                :aboutHref="aboutLink" />
+                :nameOf="memberName" />
 
             <WikiEntryTimeline
                 :id="ENTRY_TIMELINE_ANCHOR"
@@ -107,19 +106,6 @@
             <CombatEntryCombats
                 :campaignId="campaignId"
                 :entryId="entry.id" />
-
-            <!-- Posts to the current session with the mention prefilled (design §4). -->
-            <Button
-                as-child
-                variant="outline"
-                class="h-12 justify-start gap-2 text-muted-foreground md:h-10">
-                <NuxtLink :to="aboutLink">
-                    <MessageSquarePlus
-                        class="size-4"
-                        aria-hidden="true" />
-                    <span class="truncate">Add a note about {{ entry.name }}…</span>
-                </NuxtLink>
-            </Button>
 
             <WikiEntryHistoryDialog
                 v-model:open="historyOpen"
@@ -144,12 +130,12 @@
 
 <script setup lang="ts">
     import { useQuery } from "@tanstack/vue-query";
-    import { BookX, ChevronLeft, MessageSquarePlus } from "lucide-vue-next";
+    import { BookX, ChevronLeft } from "lucide-vue-next";
     import { apiErrorStatus } from "~/utils/apiErrorParser";
     import { currentMember } from "~/utils/campaign";
     import type { ArticleBlock } from "~/utils/api/types";
     import { EDIT_BLOCK_PARAM, ENTRY_TIMELINE_ANCHOR, entryHref } from "~/utils/article";
-    import { ABOUT_PARAM, canChangeEntryAccess, canEditEntry } from "~/utils/entries";
+    import { canChangeEntryAccess, canEditEntry } from "~/utils/entries";
     import { BLOCK_LINK_PARAM } from "~/utils/search";
     import { getCampaignQuery } from "~/utils/queries/campaign";
     import { getEntryQuery } from "~/utils/queries/entries";
@@ -280,8 +266,4 @@
         { immediate: true }
     );
     onBeforeUnmount(() => clearTimeout(blockTimer));
-
-    const aboutLink = computed(
-        () => `/app/campaigns/${encodeURIComponent(campaignId.value)}?${ABOUT_PARAM}=${encodeURIComponent(entryId.value)}`
-    );
 </script>
