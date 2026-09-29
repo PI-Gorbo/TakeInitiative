@@ -43,7 +43,7 @@ public class PutEntryKind(IDocumentSession session, IHubContext<CampaignHub> hub
         if (entry.Kind != req.Kind && entry.ClaimedByMemberId is not null)
         {
             ThrowError(new ValidationFailure(nameof(PutEntryKindRequest.Kind).ToLowerInvariant(),
-                "This character is someone's player character. Unclaim it first."), StatusCodes.Status409Conflict);
+                "This character has a player. Clear its player first."), StatusCodes.Status409Conflict);
         }
 
         if (entry.Kind != req.Kind)

@@ -144,13 +144,13 @@ public class PostCombatants(IDocumentSession session, IHubContext<CampaignHub> h
             || only.Hidden is not null
             || only.PlayersSee is not null)
         {
-            ThrowError("Players add one combatant at a time: a character they have claimed.", StatusCodes.Status403Forbidden);
+            ThrowError("Players add one combatant at a time: a character they play.", StatusCodes.Status403Forbidden);
         }
 
         var entry = await this.RequireVisibleEntry(session, req.CampaignId, only.EntryId.Value, member, ct);
         if (entry.Kind != EntryKind.Character || entry.ClaimedByMemberId != member.MemberId)
         {
-            ThrowError("Players can only add a character they have claimed.", StatusCodes.Status403Forbidden);
+            ThrowError("Players can only add a character they play.", StatusCodes.Status403Forbidden);
         }
         var ids = entry.MentionIds();
         if (combat.Combatants.Any(c => c.EntryId is { } id && ids.Contains(id)))
