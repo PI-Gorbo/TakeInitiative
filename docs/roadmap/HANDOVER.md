@@ -106,6 +106,7 @@ Stack #224. Everything is on top of `dev` and still open:
 | #263 | `v2/25a-wiki-redesign-plan` | Step 25's step file (the wiki redesign), on `dev` after #262. 25b–25g stack on it |
 | #264 | `v2/25b-wiki-drop-add-note` | 25b: the wiki drops "Add a note about X" (entry page button and empty Connections link). ⌘K's "Post a note about X" stays. On #263 |
 | #265 | `v2/25c-played-by` | 25c: "Played by" instead of claim in the web copy and API errors ("This is my character", "Not my character"). Route, DTOs, events and helpers keep their names. On #264 |
+| #266 | `v2/25d-summary-notes-tabs` | 25d: the entry page's Summary \| Notes tabs ("Built from N of M notes", quote source chips, "Add to summary" / "✓ In summary", the empty summary, `?tab=`), and Article / Timeline / Promote become Summary / Notes / Add to summary in all UI copy. On #265 |
 
 The local branches `pr/PI-Gorbo/222`, `pr/PI-Gorbo/222-1` and `pr/PI-Gorbo/222-2` are stale
 checkouts of #222. Ignore them.
