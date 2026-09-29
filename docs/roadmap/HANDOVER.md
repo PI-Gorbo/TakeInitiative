@@ -102,6 +102,7 @@ Stack #224. Everything is on top of `dev` and still open:
 | #254 | `v2/22-ddb-plan` | Step 22's step file (D&D Beyond link). Merged as a plan only: step 22 is deferred, with no code |
 | #255 | `v2/23-suggestions-plan` | Step 23's step file (in-browser suggestions), on top of #254 |
 | #256 | `v2/23a-extraction-spike` | 23a: the GLiNER variant spike (Laya dropped by the user); picks GLiNER small v2.5 and pins its weights, small v2.1 as the fallback |
+| #257 | `v2/23b-extractor-runtime` | 23b: the extractor runtime (worker, lazy load, self-hosted weights from our own reproducible export of upstream GLiNER small v2.5, Cache API, "Suggestions on this device" on the Me page) |
 
 The local branches `pr/PI-Gorbo/222`, `pr/PI-Gorbo/222-1` and `pr/PI-Gorbo/222-2` are stale
 checkouts of #222. Ignore them.
@@ -205,7 +206,9 @@ checkouts of #222. Ignore them.
    [23-suggestions.md](23-suggestions.md) (branch `v2/23-suggestions-plan`, on top of
    `v2/22-ddb-plan`). 23a is done: the user chose GLiNER (Laya dropped), and the spike
    picked **GLiNER small v2.5** (small v2.1 pinned as the fallback); both are pinned in the
-   step file's "Decision, 23a". Next is 23b, then 23c–23e on top of it.
+   step file's "Decision, 23a". 23b is done (the runtime; see "As built, 23b" for where the
+   weights come from: `pnpm models:fetch`, or `pnpm models:export` to rebuild them from
+   upstream). Next is 23c, then 23d–23e on top of it.
    - 23a's measurements on a phone and in a real browser are the user's: run
      `scripts/extraction-spike/` (`node serve.mjs`, http://localhost:3190) and fill in the
      table. Only Node on the Mac was measured.

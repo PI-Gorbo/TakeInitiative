@@ -1,5 +1,11 @@
 import type { CreateAxiosDefaults } from "axios";
+import { readFileSync } from "node:fs";
 import { defineNuxtConfig } from "nuxt/config";
+
+// Step 23b: the suggestion model, pinned (id, revision, files and their sha256s). The files are
+// served from `public/models/` (git-ignored, filled by `pnpm models:fetch`) unless
+// NUXT_PUBLIC_SUGGESTIONS_BASE_URL points somewhere else.
+const suggestionModel = JSON.parse(readFileSync(new URL("./suggestion-model.json", import.meta.url), "utf8"));
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
@@ -51,6 +57,11 @@ export default defineNuxtConfig({
                 : false
         },
 
+        // The suggestion model's files (23b): the path holds the revision, so they never change.
+        '/models/**': {
+            headers: { 'cache-control': 'public, max-age=31536000, immutable' },
+        },
+
     },
 
     runtimeConfig: {
@@ -60,6 +71,22 @@ export default defineNuxtConfig({
                 baseURL: process.env.API_URL,
             },
             webUrl: process.env.WEB_URL,
+            // `baseUrl` empty = self-hosted (`/models/{id}/{revision}/`).
+            suggestions: {
+                id: suggestionModel.id as string,
+                name: suggestionModel.name as string,
+                version: suggestionModel.version as string,
+                revision: suggestionModel.revision as string,
+                upstream: suggestionModel.upstream as string,
+                licence: suggestionModel.licence as string,
+                attribution: suggestionModel.attribution as string,
+                threshold: suggestionModel.threshold as number,
+                maxWidth: suggestionModel.maxWidth as number,
+                maxWords: suggestionModel.maxWords as number,
+                maxTokens: suggestionModel.maxTokens as number,
+                files: suggestionModel.files as { path: string; bytes: number; sha256: string }[],
+                baseUrl: "",
+            },
         },
     },
     build: {
@@ -68,6 +95,12 @@ export default defineNuxtConfig({
             "@fortawesome/vue-fontawesome",
             "@fortawesome/fontawesome-svg-core",
         ],
+    },
+    vite: {
+        // The extractor worker (23b) is an ES module worker; the runtime is never pre-bundled
+        // (its WASM is imported by URL in the worker).
+        worker: { format: "es" },
+        optimizeDeps: { exclude: ["onnxruntime-web"] },
     },
     css: ["~/assets/index.css", "@fortawesome/fontawesome-svg-core/styles.css"],
     modules: [

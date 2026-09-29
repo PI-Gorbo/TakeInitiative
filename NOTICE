@@ -47,3 +47,22 @@ git-ignored (.data/) and is not part of this repository, its builds or its image
 No 5eTools or Wizards of the Coast content is distributed with TakeInitiative. The
 script's test fixtures (scripts/5etools/fixture/) are invented. TakeInitiative is not
 affiliated with, endorsed, sponsored or approved by 5etools or by Wizards of the Coast.
+
+GLiNER (the suggestion model)
+-----------------------------
+
+The in-browser suggestion model is GLiNER small v2.5 (gliner-community/gliner_small-v2.5,
+https://huggingface.co/gliner-community/gliner_small-v2.5, revision
+f227d3cd637bd4e6757ae143935316d062393341), by Urchade Zaratiana et al. of the GLiNER project
+(https://github.com/urchade/GLiNER), licensed under the Apache License, Version 2.0
+(https://www.apache.org/licenses/LICENSE-2.0).
+
+Changes made: the model is converted to ONNX (opset 19) with the GLiNER package's own export and
+its weights quantised to int8 with onnxruntime's dynamic quantiser, by
+scripts/gliner/export.py. The model is not fine-tuned or otherwise changed.
+
+The weights are not in this repository. `pnpm models:fetch` places them, checked by sha256,
+in apps/TakeInitiative.Web/public/models/ (git-ignored) together with the licence text and a
+NOTICE (scripts/models/gliner_small-v2.5/), and the web app serves them from there. The
+runtime is onnxruntime-web (MIT, Microsoft) and the tokenizer @huggingface/tokenizers
+(Apache-2.0, Hugging Face), both npm dependencies of the web app.
