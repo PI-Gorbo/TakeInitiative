@@ -20,12 +20,11 @@ description and no stat block. The row's whole purpose is to be *findable*, *lin
 (step 27) and to link out.
 
 "Running" at the end: on a dev machine, `dotnet run --project apps/TakeInitiative.KnowledgeBase.Cli
--- ingest --from ~/5etools-src/data` prints `+2,847 new · 0 updated · 0 removed` and
-writes them to Postgres. A DM opens **Wiki ▸ Knowledge base** on a phone, filters to
+-- ingest --from ~/5etools-src/data` prints the report below — `new 2,847 · updated 0 ·
+unchanged 0 · missing 0` — and writes them to Postgres. A DM opens **Wiki ▸ Knowledge base** on a phone, filters to
 Monsters, types "behol", taps the Beholder row and lands on 5etools in a new tab. ⌘K for
 "beholder" behaves exactly as it did after step 21, but the rows now come from the
-database. Running the ingest a second time prints `+0 new · 0 updated · 0 removed` and
-changes nothing. Pointing it at a folder with one bestiary file in it prints a warning that
+database. Running the ingest a second time reports every row unchanged and writes nothing. Pointing it at a folder with one bestiary file in it prints a warning that
 2,800 rows are missing from the source and **deletes none of them**.
 
 The step ships as seven PRs stacked with `gh stack` on top of this file's docs PR. Each PR
@@ -180,8 +179,7 @@ create table knowledge_base_item (
     source_book   text    not null,           -- 'MM'
     source_title  text,                       -- 'Monster Manual (2014)'
     page          int,
-    label         text,                       -- 'CR 13' | 'Level 3' | 'Rare'
-    detail        text    not null,           -- the muted row line: 'CR 13 · Large Aberration'
+    label         text,                       -- the muted row line: 'CR 13 · Large Aberration'
     url           text    not null,           -- the deep link out to 5etools
     image_url     text,                       -- 26g; null where the item has no artwork
     stats         jsonb,                      -- monsters only: { hp, ac, initiativeBonus }
@@ -193,6 +191,11 @@ create table knowledge_base_item (
 );
 ```
 
+- **There is no separate `detail` column.** An earlier draft of this table had both a short
+  `label` ("CR 13") and a longer `detail` ("CR 13 · Large Aberration"). The parser emits
+  exactly one string — `KnowledgeBaseItem.Label`, nullable — and it already *is* the muted
+  row line. There is no second, shorter string anywhere in the allowlist, so `detail` could
+  only ever have held a copy. 26e and 26f read `label` for the row's muted line.
 - **The primary key is the parser's id**, not a generated one. `build-5etools-index.mjs:90`
   already forms `monster_beholder_mm` from category, name and source, and fails on a
   duplicate at line 327. That is what makes a link durable across re-ingests, and it is the
@@ -204,8 +207,21 @@ create table knowledge_base_item (
 - **Indexes**: the `tsvector`, the trigram index, and a plain `(provider, category,
   source_book)` for the browse page's filters.
 - Created through the same `ExtendedSchemaObjects` path the search schema uses, so the API
-  owns it and the CLI does not own migrations — **but that path does not currently run in
-  production**, which 26c has to fix. See "The schema is not applied in production" below.
+  owns it and the CLI does not own migrations. That path did not run in production; 26c fixed
+  it — see "The schema is not applied in production" below.
+- **It is a bespoke `ISchemaObject`, following `EntryRowFitsInline` rather than
+  `AddEntryArticleVector`.** `SearchSchema` holds two different patterns and only the second
+  applies here. `AddEntryArticleVector` smuggles a `GENERATED ALWAYS AS … STORED` clause
+  through a `ColumnCheck` on a table *Weasel already builds from a document mapping*;
+  `knowledge_base_item` is not a document table. It also needs
+  `using gin (lower(name) gin_trgm_ops)`, and Weasel.Postgresql 7.11.7's `IndexDefinition`
+  has no notion of an operator class (`NgramIndex` is not available at this Marten version).
+  A Weasel `Table` that did not know about the trigram index would also stand a chance of
+  dropping it. So the table is written as idempotent `create … if not exists` SQL whose delta
+  is answered by counting its four relations. The cost, documented on the class: no
+  column-level migration, so a later column needs an explicit `alter table` rather than
+  falling out of a diff. In exchange, a start against an unchanged database is a provable
+  no-op, which `SearchSchemaTests` already asserts.
 
 ### The schema is not applied in production
 
@@ -406,8 +422,16 @@ Deleted:
 5. Store tests against Testcontainers Postgres: insert, re-run unchanged, change one field,
    a missing row with and without `--prune`, the threshold refusal, and the link-protection
    path (stubbed until 27 exists — assert the query, not an entry).
-6. `dotnet run … -- ingest --dry-run --from scripts/5etools/fixture/data` prints a sane
-   report against a dev database.
+6. `dotnet run … -- ingest --dry-run --from packages/TakeInitiative.KnowledgeBase.Tests/Fixture/data --min-monsters 1`
+   prints a sane report against a dev database.
+
+   Two things an earlier draft of this step got wrong here. The fixture corpus lives in the
+   test project (26b vendored it; `scripts/5etools/` is deleted in 26d₂), not under
+   `scripts/`. And `FiveEToolsParserOptions.MinMonsters` defaults to 1000 while the fixtures
+   hold 8, so without a way to lower it the command could only ever exit 1 — hence
+   `--min-monsters` on the CLI, and `KnowledgeBase:Source:MinMonsters` beside it. The guard
+   is worth keeping for real runs: a low count is how "you pointed at the wrong folder"
+   shows up.
 
 ### 26d. The provider
 
@@ -507,6 +531,19 @@ Deleted:
 - **Postgres 15** is what dev and the test fixtures pin (`compose.dev.yml` notes
   `postgres:latest` is now 18+ and moved its data directory). Nothing in this schema needs
   anything newer.
+
+### Behaviour worth knowing before 26e and 27
+
+- **`source_title` is outside the content hash.** The hash is the parser's own serialisation
+  of a row, and book titles are read once into the index header rather than onto each row. So
+  a 5eTools release that renamed only a book reports every row unchanged and keeps the old
+  caption. The fix if it ever matters is a one-line `update`; widening the hash would mean a
+  second string to keep byte-stable, which is what this step is trying to avoid.
+- **`stale` clears itself.** A row whose hash matches but which a previous prune flagged
+  counts as *updated*, so the flag comes off when the source has it back. Otherwise step 27's
+  link renderer would keep claiming the source is gone.
+- **In a combined `--prune` run the threshold is measured after the upsert**, in the same
+  transaction, so the denominator is the corpus as it would stand rather than as it was.
 
 ### Decisions for the user
 
