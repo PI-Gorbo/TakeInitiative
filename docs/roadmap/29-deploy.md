@@ -349,21 +349,36 @@ the last N untagged versions.
 
 ---
 
-## Architecture: amd64, arm64, or both
+## Architecture: arm64 (settled, 2026-10-01)
 
-The reference machine is **arm64** (Apple Silicon; `docs/roadmap/README.md`'s reference
-environment). GitHub's `ubuntu-latest` runner is **amd64**. The VPS's architecture is **not known
-to this plan** — most cheap VPS plans (Hetzner CX/CPX, DigitalOcean, Vultr) are amd64, but
-Hetzner's CAX line and Oracle's Ampere free tier are arm64, and an arm64 VPS is often the better
-value. This is the single fact that most changes 29e, so it is the first Decision below.
+**The target is an Ubuntu box with an arm64 CPU** (the user, 2026-10-01). So:
 
-**Default: build `linux/amd64` only.** It is one platform, it is the runner's native
-architecture, and it is almost certainly what the VPS wants.
+- **`platforms: linux/arm64` only.** One platform, no manifest list, no QEMU, no cross-build.
+- **`runs-on: ubuntu-24.04-arm`.** GitHub's arm64 runners are free for public repositories, and
+  `PI-Gorbo/TakeInitiative` is public, so the build is native rather than emulated.
+- **The dev machine is arm64 too** (Apple Silicon). That is a real piece of luck: what is built
+  and run locally is the same architecture as production, so a local `docker run` is a genuine
+  rehearsal rather than an emulated approximation. It also means 29d's measured **626 MB** web
+  image is the production number, not a cross-arch guess.
 
-If the VPS turns out to be arm64, the change is two lines: `runs-on: ubuntu-24.04-arm` (free for
-public repositories) and `platforms: linux/arm64`.
+Every pinned base image was checked for arm64 before settling this:
 
-If both are ever wanted, **do not reach for QEMU**: emulating a `dotnet publish` or a
+| Image | arm64 |
+|---|---|
+| `postgres:15-alpine` | yes (`linux/arm64/v8`) |
+| `node:24-alpine` | yes (`linux/arm64/v8`) |
+| `mcr.microsoft.com/dotnet/aspnet:10.0` | yes |
+| `mcr.microsoft.com/dotnet/sdk:10.0` | yes |
+| `pgsty/minio:RELEASE.2026-08-04T00-00-00Z` | yes — worth checking, since it is a community build and the one most likely to be amd64-only |
+
+`SkiaSharp.NativeAssets.Linux.NoDependencies` ships **13** `linux-*` RID folders including
+`linux-arm64`, so `dotnet publish -a arm64` keeps one of them. That is where the ~155 MB of
+unused natives goes.
+
+### If this ever needs to change
+
+Both images are still written to cross-build, so adding amd64 later is a `platforms:` line
+rather than a rewrite. But **do not reach for QEMU**: emulating a `dotnet publish` or a
 `nuxt build` is 10–20× slower and will time the job out or bore you into disabling it. Both
 images can cross-build cheaply instead, and 29c/29d write them that way from the start so the
 option stays open:
@@ -395,8 +410,8 @@ option stays open:
   COPY --from=build --chown=nuxtjs:nodejs /repo/apps/TakeInitiative.Web/.output /app
   ```
 
-**On the Mac**, pulling an amd64-only image needs `--platform linux/amd64` and runs under
-emulation. Fine for a smoke test, useless for timing anything.
+Since both the dev machine and the VPS are arm64, nothing here runs under emulation and no
+`--platform` flag is needed anywhere.
 
 ---
 
