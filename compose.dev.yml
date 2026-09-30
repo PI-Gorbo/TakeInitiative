@@ -112,6 +112,15 @@ services:
         ports:
             - "7403:3000"
         restart: always
+        healthcheck:
+            # The image carries its own HEALTHCHECK on the same route; this repeats it
+            # so `docker compose ps` reports health with the interval dev wants.
+            # busybox wget - node:24-alpine has no curl.
+            test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3000/healthz || exit 1"]
+            interval: 30s
+            retries: 5
+            start_period: 30s
+            timeout: 10s
 
 volumes:
     takedb-data:

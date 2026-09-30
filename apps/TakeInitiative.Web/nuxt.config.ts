@@ -67,10 +67,21 @@ export default defineNuxtConfig({
     runtimeConfig: {
         public: {
             // https://medium.com/@hackcharms/how-to-use-axios-in-nuxt3-same-as	-nuxt2-with-typescript-3f4daf524cdd
+            // The `?? ""` is load-bearing, not tidiness (29d). nuxt.config.ts runs during
+            // `nuxt build`, so these are inlined into the bundle — but Nitro re-applies the
+            // environment to runtimeConfig on every request (`applyEnv`), which means a
+            // container can override them with NUXT_PUBLIC_AXIOS_BASE_URL and
+            // NUXT_PUBLIC_WEB_URL (the NUXT_ prefix plus scule's snake_case of the config
+            // path). `applyEnv` only walks keys that are already in the built config, and an
+            // `undefined` does not survive inlining, so an empty-string default is what keeps
+            // the key present and therefore overridable. One image, any domain.
+            //
+            // `/app/**` being `ssr: false` does not break this: the SPA shell is still
+            // rendered per request and writes `config.public` into `window.__NUXT__.config`.
             axios: <CreateAxiosDefaults>{
-                baseURL: process.env.API_URL,
+                baseURL: process.env.API_URL ?? "",
             },
-            webUrl: process.env.WEB_URL,
+            webUrl: process.env.WEB_URL ?? "",
             // `baseUrl` empty = self-hosted (`/models/{id}/{revision}/`).
             suggestions: {
                 id: suggestionModel.id as string,
