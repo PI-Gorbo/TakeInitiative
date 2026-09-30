@@ -88,7 +88,6 @@ way (offline is out of scope, §12).
 - `docs/roadmap/23-suggestions.md`: this file
 - `docs/roadmap/README.md`: link step 23, `in progress`; mark step 21's 21d and its decisions,
   and step 22, **deferred**
-- `docs/roadmap/HANDOVER.md`: the deferrals, the stash, and "Next work" pointing here
 
 **23a** (as built: the runner lives in `scripts/`, not a dev page, so the web app gains no
 dependency)
@@ -122,7 +121,7 @@ dependency)
 - Web add `components/Suggestions/{NoteSuggestionsChip,NoteSuggestionsSheet,AcceptedSuggestions}.vue`, `utils/api/suggestion/{postSuggestionRevertRequest,getSuggestionModelsRequest}.ts`
 - Web modify `components/Session/SessionNoteCard.vue` (the chip, author only), the note history view (the ✨ line), `pages/app/me.vue` (Accepted suggestions), `composables/useCampaignHub.ts` (nothing new pushed; invalidate the suggestion-models query on `sessionNoteUpserted`)
 - Web modify `tests/unit/suggestions.test.ts`
-- `docs/roadmap/23-suggestions.md`, `README.md`, `HANDOVER.md`: tick and close the step
+- `docs/roadmap/23-suggestions.md`, `README.md`: tick and close the step
 
 ## Steps
 
@@ -436,8 +435,7 @@ Built for the model 23a picked. Names below say "the model".
    notes · **Revert**". Revert asks "Unlink the 14 mentions this model suggested in your
    notes? Mentions you typed yourself stay." and then lists `createdEntries` with links
    ("These entries were created from its suggestions and stay: …").
-5. **Close the step**: tick this file's PR table, set README's status to `done`, update
-   HANDOVER.
+5. **Close the step**: tick this file's PR table and set README's status to `done`.
 
 ## Verify
 
