@@ -23,7 +23,12 @@ using Weasel.Postgresql.Tables;
 namespace TakeInitiative.Api.Bootstrap;
 public static class Bootstrap
 {
-    public static IServiceCollection AddMartenDB(this IServiceCollection services, IConfiguration config, bool IsDevelopment)
+    /// <summary>
+    /// Turns the startup schema migration off. On by default; see the comment beside the call.
+    /// </summary>
+    public const string ApplySchemaOnStartupKey = "Marten:ApplySchemaOnStartup";
+
+    public static IServiceCollection AddMartenDB(this IServiceCollection services, IConfiguration config)
     {
         var martenOpts = services.AddMarten(opts =>
         {
@@ -133,13 +138,43 @@ public static class Bootstrap
                 .AddSubClass<MaintenanceConfig>();
         }).AddAsyncDaemon(DaemonMode.Solo);
 
-        if (IsDevelopment)
+        // Create the schema up front rather than leaning on Marten's implicit
+        // auto-create, which makes a fresh database's behaviour depend on which
+        // endpoint happens to be hit first. A schema conflict now fails startup
+        // loudly; `docker compose -p takeinitiative -f compose.dev.yml down -v`
+        // resets a stale local database.
+        //
+        // This runs in every environment now, not only in Development (26c). The API's
+        // dockerfile sets no ASPNETCORE_ENVIRONMENT, so a container runs as Production,
+        // and while `if (IsDevelopment)` guarded this call, Production applied nothing
+        // at all: measured against a freshly reset database, `select extname from
+        // pg_extension` came back with plpgsql alone and pg_tables was empty. The two
+        // extensions above hang off no document type, so Marten's lazy per-document
+        // auto-create has no reason to ensure them, and ⌘K's word_similarity() would
+        // have failed at query time with "function does not exist". That is a step 17
+        // bug nobody had hit only because nothing is deployed yet.
+        //
+        // Running DDL at boot is safe here because there is exactly one API process.
+        // AddAsyncDaemon(DaemonMode.Solo) above already means only one process may run
+        // the projection daemon, so the deployment must never scale the API past one
+        // replica — and that same single-replica constraint is what removes the "two
+        // startups race on the same CREATE" problem. The migration also finishes before
+        // Kestrel opens the port, so no request can race it.
+        //
+        // What it is not is a no-op on a schema that has drifted. Weasel runs in
+        // CreateOrUpdate, which never drops a table, but it does drop and recreate an
+        // index whose stored definition no longer matches, and it drops a document-table
+        // column it does not know about (see SearchSchemaTests, which asserts a second
+        // start has nothing left to do — that test is what keeps a GIN index over every
+        // note from being rebuilt on every boot). So the cost of a start is bounded by
+        // how far the database has drifted from the configuration, not by its size.
+        //
+        // The default is on, so a fresh deployment works without anyone knowing the
+        // setting exists. ApplySchemaOnStartupKey turns it off, for a database whose DDL
+        // is applied out of band: more than one replica, a blue/green swap, or a change
+        // that is not additive are exactly the cases where startup DDL stops being safe.
+        if (config.GetValue(ApplySchemaOnStartupKey, true))
         {
-            // Create the schema up front rather than leaning on Marten's implicit
-            // auto-create, which makes a fresh database's behaviour depend on which
-            // endpoint happens to be hit first. A schema conflict now fails startup
-            // loudly; `docker compose -p takeinitiative -f compose.dev.yml down -v`
-            // resets a stale local database.
             martenOpts.ApplyAllDatabaseChangesOnStartup();
         }
 

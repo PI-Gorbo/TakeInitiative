@@ -105,7 +105,10 @@ public class EntryHistoryTests : IClassFixture<AuthenticatedWebAppWithDatabaseFi
 
         var (items, raw) = await History(Users.Player, campaign.Id, klarg.Id);
         items.Should().NotContain(i => i.Change.Type == EntryChangeType.StatsChanged);
-        raw.Should().NotContain("5d8");
+        // The whole expression, not "5d8": a member id is hex, so roughly one run in 70 had a
+        // guid containing those three characters and failed here for no reason. A guid cannot
+        // contain "5d8+10", so this still catches the hit dice leaking into the raw body.
+        raw.Should().NotContain("5d8+10");
         (await History(Users.DM, campaign.Id, klarg.Id)).Items.Should().Contain(i => i.Change.Type == EntryChangeType.StatsChanged);
     }
 

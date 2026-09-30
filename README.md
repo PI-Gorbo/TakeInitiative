@@ -65,8 +65,9 @@ This builds and runs Postgres, the API and the web app.
 
 ## Resetting the database
 
-The API applies all Marten schema changes on startup in Development, so a stale
-local database can block startup. To wipe it:
+The API applies all Marten schema changes on startup in every environment, so a
+stale local database can block startup. (`Marten:ApplySchemaOnStartup=false` turns
+that off, for a database whose DDL is applied out of band.) To wipe it:
 
 ```bash
 docker compose -p takeinitiative -f compose.dev.yml down -v

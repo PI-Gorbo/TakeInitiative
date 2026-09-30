@@ -112,7 +112,7 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
                     services.AddKeyedSingleton<TimeProvider>(SessionGap.ClockKey, Clock);
                     services.Replace(ServiceDescriptor.Singleton<IBlobStore>(Blobs));
                     services.AddSingleton<ILoggerProvider>(new CapturingLoggerProvider(Logs));
-                    services.AddMartenDB(context.Configuration, IsDevelopment: true);
+                    services.AddMartenDB(context.Configuration);
                     ConfigureTestServices(services);
                 })
         ));

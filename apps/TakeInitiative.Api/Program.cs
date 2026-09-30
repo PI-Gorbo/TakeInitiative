@@ -63,7 +63,7 @@ internal class Program
 
         // Custom Injection
         builder.Services.AddOptionObjects(builder.Configuration);
-        builder.Services.AddMartenDB(builder.Configuration, builder.Environment.IsDevelopment());
+        builder.Services.AddMartenDB(builder.Configuration);
         builder.Services.AddSerilog();
         builder.AddIdentityAuthenticationAndAuthorization();
         builder.Services.AddDiceRollers(builder.Configuration);
