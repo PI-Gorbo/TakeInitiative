@@ -98,6 +98,18 @@ Steps 08–11 ship as one stack of PRs (`gh stack`), one PR per step.
 | 28 | [Knowledge-base match suggestions](28-kb-suggestions.md) | `todo` | 26, 27, 23 | On an entry that looks like a knowledge-base item, offer the link and let the user confirm it |
 | 29 | [Deploy](29-deploy.md) | `todo` | 13–28 | Production images built in GitHub Actions, pushed to GHCR, pulled by Coolify. The app is reachable by other people |
 
+### Bugs found while planning 26–29 (2026-10-01)
+
+Neither is new work; both are defects in already-`done` steps, found by building the
+thing that would have exposed them. Recorded here because an architecture review
+should see them as "found and fixed", not discovered again.
+
+| Bug | Found by | Status |
+|---|---|---|
+| **The Marten schema was never applied outside Development.** `ApplyAllDatabaseChangesOnStartup()` sat behind `if (IsDevelopment)` and the API container sets no `ASPNETCORE_ENVIRONMENT`. Document tables would still appear lazily, but `pg_trgm` and `unaccent` are `ExtendedSchemaObjects` that hang off no document type, so ⌘K's `word_similarity()` would have failed on the server while working on every laptop. A step 17 bug | planning 29, fixed in 26c | `fixed` |
+| **Every server-rendered route 500s in a production build**, the landing page included. The SSR bundle emits `import require$$0 … from 'vue'`, a dead Rollup CJS-interop artifact, and Vue's ESM build has no default export. `/app/**` survives only because it is `ssr: false`. `pnpm dev` is unaffected, which is why it went unseen | building the web image in 29d | `in progress` |
+| **Two flaky tests.** `SessionNoteTests.AnEdit_SetsEditedAt_…` compared Postgres microseconds with .NET ticks (fixed in #205, and it is what kept step 14 open). `EntryHistoryTests.AnNpcsStats_…` asserted a raw body lacked `"5d8"`, which a hex member id hits about one run in 70 | #205; the schema measurement | `fixed` |
+
 **MVP line.** Everything below is post-MVP (design §11 and §11a).
 
 | # | Step | Status | Depends on | Goal |

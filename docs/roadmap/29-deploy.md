@@ -147,7 +147,8 @@ worth a layer).
 
 ### The database schema in production
 
-`Bootstrap.AddMartenDB(config, IsDevelopment)` ends with:
+`Bootstrap.AddMartenDB(config)` ends with (the `IsDevelopment` parameter was its own only
+use and went with the fix in 26c):
 
 ```csharp
 if (IsDevelopment)
@@ -824,7 +825,8 @@ Paths from the repo root.
   `DataProtection:KeyPath` with dev defaults that preserve today's behaviour
 - `apps/TakeInitiative.Api/src/boostrap/Options/`: a small options class if the flags earn one
 - `apps/TakeInitiative.Api.Tests/`: a test that the flag is honoured and that the fixtures still
-  get their schema (`Scopes/Integration/*Fixture.cs` call `AddMartenDB(..., IsDevelopment: true)`
+  get their schema (`Scopes/Integration/*Fixture.cs` used to call `AddMartenDB(..., IsDevelopment: true)`
+  and now rely on `Marten:ApplySchemaOnStartup` defaulting to true, which `SchemaOnStartupTests` pins
   and must keep working unchanged)
 - `README.md`: the "Resetting the database" note now says the schema is applied on startup
   everywhere unless the flag is off

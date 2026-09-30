@@ -35,7 +35,7 @@ leaves the app runnable:
 |---|---|---|---|---|
 | 26a | `v2/26a-knowledge-base-plan` | This plan | Docs only | [ ] |
 | 26b | `v2/26b-kb-parser` | `packages/TakeInitiative.KnowledgeBase`: the ported parser and the row model | 25's app unchanged, and nothing references the package yet. Its tests reproduce the Node script's output from the same fixtures, byte for byte | [x] built; 66 tests |
-| 26c | `v2/26c-kb-cli` | The schema, the upsert and `apps/TakeInitiative.KnowledgeBase.Cli` | The same. `ingest --dry-run` reports a diff; `ingest` upserts into Postgres. Nothing reads the table yet | [ ] |
+| 26c | `v2/26c-kb-cli` | The schema, the upsert and `apps/TakeInitiative.KnowledgeBase.Cli` | The same. `ingest --dry-run` reports a diff; `ingest` upserts into Postgres. Nothing reads the table yet | step 1 [x]; rest [ ] |
 | 26d₁ | `v2/26d1-reference-async` | `IReferenceProvider` goes async | No behaviour change at all. The SRD provider wraps its in-memory lookups; every call site awaits. Independent of 26b, so it can land first | [x] built |
 | 26d₂ | `v2/26d2-kb-provider` | The 5eTools provider reads Postgres | ⌘K behaves as it did after 21c, with its 5eTools rows served from the database. `FiveEToolsIndex`, its options and `scripts/5etools/` are gone | [ ] |
 | 26e | `v2/26e-kb-api` | The browse API | `GET knowledge-base` lists, filters and pages; `GET knowledge-base/{provider}/{id}` answers one row. No UI yet | [ ] |
