@@ -14,10 +14,7 @@ public class ReferenceSearchProvider(ReferenceCatalog catalog) : ISearchProvider
 {
     public IReadOnlyList<SearchSectionKey> Sections => [SearchSectionKey.Reference];
 
-    public Task<IReadOnlyList<SearchSection>> SearchAsync(SearchQuery query, SearchContext context, CancellationToken ct)
-        => Task.FromResult(Search(query, context));
-
-    private IReadOnlyList<SearchSection> Search(SearchQuery query, SearchContext context)
+    public async Task<IReadOnlyList<SearchSection>> SearchAsync(SearchQuery query, SearchContext context, CancellationToken ct)
     {
         if (!context.Wanted.Contains(SearchSectionKey.Reference)
             || query.Scope != SearchScope.All
@@ -26,10 +23,18 @@ public class ReferenceSearchProvider(ReferenceCatalog catalog) : ISearchProvider
             return [];
         }
 
+        // Ask each provider in registration order and keep that order: the gather is indexed by
+        // the provider's position, not by whichever answers first.
+        var answers = new IReadOnlyList<ReferenceMatch>[catalog.Providers.Count];
+        for (var i = 0; i < catalog.Providers.Count; i++)
+        {
+            answers[i] = await catalog.Providers[i].Search(query.Text, context.Take + 1, ct);
+        }
+
         // Each provider ranks its own matches; the merge keeps the same ladder across them, then
         // prefers the earlier provider (SRD before 5eTools) on a tie, then the name.
         var matches = catalog.Providers
-            .SelectMany((provider, order) => provider.Search(query.Text, context.Take + 1)
+            .SelectMany((provider, order) => answers[order]
                 .Select(match => (Provider: provider, Order: order, Match: match)))
             .OrderBy(m => m.Match.Category)
             .ThenByDescending(m => m.Match.Similarity)

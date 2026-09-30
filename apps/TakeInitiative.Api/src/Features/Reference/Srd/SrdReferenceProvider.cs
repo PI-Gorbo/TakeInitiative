@@ -11,15 +11,16 @@ public class SrdReferenceProvider(SrdCatalog catalog) : IReferenceProvider
     public bool HasStatBlocks => true;
     public ReferenceAttribution Attribution => catalog.Attribution;
 
-    public IReadOnlyList<ReferenceMatch> Search(string text, int take)
-        => ReferenceMatcher.Search(text, catalog.Candidates, take)
+    /// <summary>In memory: the bundled catalogue, so the task is always already completed.</summary>
+    public Task<IReadOnlyList<ReferenceMatch>> Search(string text, int take, CancellationToken ct)
+        => Task.FromResult<IReadOnlyList<ReferenceMatch>>(ReferenceMatcher.Search(text, catalog.Candidates, take)
             .Select(m => new ReferenceMatch(m.Item.Summary, m.Category, m.Similarity))
-            .ToList();
+            .ToList());
 
-    public ReferenceItem? Get(string id)
-        => catalog.Get(id) is { } monster
+    public Task<ReferenceItem?> Get(string id, CancellationToken ct)
+        => Task.FromResult<ReferenceItem?>(catalog.Get(id) is { } monster
             ? new ReferenceItem(monster.Summary, monster.StatBlock, catalog.Attribution)
-            : null;
+            : null);
 
-    public ReferenceSummary? Find(string id) => catalog.Get(id)?.Summary;
+    public Task<ReferenceSummary?> Find(string id, CancellationToken ct) => Task.FromResult<ReferenceSummary?>(catalog.Get(id)?.Summary);
 }

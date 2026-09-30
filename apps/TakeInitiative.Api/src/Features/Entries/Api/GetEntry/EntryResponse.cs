@@ -45,7 +45,7 @@ public record EntryResponse
     /// The entry as <paramref name="viewer"/> sees it. The article, the stats and the source are
     /// redacted for them; <paramref name="reference"/> names the source's provider and item.
     /// </summary>
-    public static EntryResponse From(Entry entry, Member viewer, ReferenceCatalog reference) => new()
+    public static async Task<EntryResponse> From(Entry entry, Member viewer, ReferenceCatalog reference, CancellationToken ct) => new()
     {
         Id = entry.Id,
         Name = entry.Name,
@@ -60,7 +60,7 @@ public record EntryResponse
         MergedFromIds = entry.MergedFromIds,
         Article = ArticleResponse.From(entry, viewer),
         Stats = EntryStats.For(entry, viewer) is { } stats ? StatsResponse.From(stats) : null,
-        Source = EntrySources.For(entry, viewer) is { } source ? EntrySourceResponse.From(source, reference) : null,
+        Source = EntrySources.For(entry, viewer) is { } source ? await EntrySourceResponse.From(source, reference, ct) : null,
     };
 }
 
@@ -84,10 +84,10 @@ public record EntrySourceResponse
     /// <summary>Whether the web can link to the item's stat-block card: its provider draws them, and the item is still in the data.</summary>
     public required bool HasStatBlock { get; init; }
 
-    public static EntrySourceResponse From(EntrySource source, ReferenceCatalog reference)
+    public static async Task<EntrySourceResponse> From(EntrySource source, ReferenceCatalog reference, CancellationToken ct)
     {
         var provider = reference.Get(source.Provider);
-        var item = provider?.Find(source.ExternalId);
+        var item = provider is null ? null : await provider.Find(source.ExternalId, ct);
         return new EntrySourceResponse
         {
             Provider = source.Provider,

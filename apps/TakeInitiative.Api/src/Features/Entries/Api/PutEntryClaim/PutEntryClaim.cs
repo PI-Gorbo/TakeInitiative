@@ -50,7 +50,7 @@ public class PutEntryClaim(IDocumentSession session, IHubContext<CampaignHub> hu
         {
             if (entry.ClaimedByMemberId == claimerId)
             {
-                await SendAsync(EntryResponse.From(entry, member, Resolve<ReferenceCatalog>()), cancellation: ct);
+                await SendAsync(await EntryResponse.From(entry, member, Resolve<ReferenceCatalog>(), ct), cancellation: ct);
                 return;
             }
             if (!isDm && claimerId != member.MemberId)
@@ -80,7 +80,7 @@ public class PutEntryClaim(IDocumentSession session, IHubContext<CampaignHub> hu
         {
             if (entry.ClaimedByMemberId is not { } current)
             {
-                await SendAsync(EntryResponse.From(entry, member, Resolve<ReferenceCatalog>()), cancellation: ct);
+                await SendAsync(await EntryResponse.From(entry, member, Resolve<ReferenceCatalog>(), ct), cancellation: ct);
                 return;
             }
             if (!isDm && current != member.MemberId)
@@ -95,6 +95,6 @@ public class PutEntryClaim(IDocumentSession session, IHubContext<CampaignHub> hu
         entry = (await session.LoadAsync<Entry>(entry.Id, ct))!;
         await hub.NotifyEntryUpserted(entry);
         await hub.NotifyEntryStatsChanged(campaign.Members, before, entry);
-        await SendAsync(EntryResponse.From(entry, member, Resolve<ReferenceCatalog>()), cancellation: ct);
+        await SendAsync(await EntryResponse.From(entry, member, Resolve<ReferenceCatalog>(), ct), cancellation: ct);
     }
 }

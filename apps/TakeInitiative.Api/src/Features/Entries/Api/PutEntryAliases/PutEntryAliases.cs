@@ -67,6 +67,6 @@ public class PutEntryAliases(IDocumentSession session, IHubContext<CampaignHub> 
             await hub.NotifyEntryUpserted(entry);
         }
 
-        await SendAsync(EntryResponse.From(entry, member, Resolve<ReferenceCatalog>()), cancellation: ct);
+        await SendAsync(await EntryResponse.From(entry, member, Resolve<ReferenceCatalog>(), ct), cancellation: ct);
     }
 }

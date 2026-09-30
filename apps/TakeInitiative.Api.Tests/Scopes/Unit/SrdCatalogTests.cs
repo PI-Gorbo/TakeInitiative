@@ -104,30 +104,30 @@ public class SrdCatalogTests
     }
 
     [Fact]
-    public void TheProvider_SearchesAndGets()
+    public async Task TheProvider_SearchesAndGets()
     {
         var provider = new SrdReferenceProvider(Catalog);
         (provider.Key, provider.Label, provider.HasStatBlocks).Should().Be(("srd52", "SRD 5.2", true));
 
-        provider.Search("goblin", 3).Select(m => m.Item.Name).Should().Equal("Goblin Boss", "Goblin Minion", "Goblin Warrior");
-        provider.Search("gobln", 5).Select(m => m.Item.Name).Should().Contain("Goblin Warrior");
+        (await provider.Search("goblin", 3, CancellationToken.None)).Select(m => m.Item.Name).Should().Equal("Goblin Boss", "Goblin Minion", "Goblin Warrior");
+        (await provider.Search("gobln", 5, CancellationToken.None)).Select(m => m.Item.Name).Should().Contain("Goblin Warrior");
 
-        var item = provider.Get("owlbear")!;
+        var item = (await provider.Get("owlbear", CancellationToken.None))!;
         item.StatBlock!.Name.Should().Be("Owlbear");
         item.Attribution.Should().Be(Catalog.Attribution);
-        provider.Get("tarrasque-jr").Should().BeNull();
-        provider.Find("owlbear").Should().Be(item.Summary);
+        (await provider.Get("tarrasque-jr", CancellationToken.None)).Should().BeNull();
+        (await provider.Find("owlbear", CancellationToken.None)).Should().Be(item.Summary);
     }
 
     [Fact]
-    public void AddReference_RegistersTheSrdProvider_ThenTheFiveEToolsOne()
+    public async Task AddReference_RegistersTheSrdProvider_ThenTheFiveEToolsOne()
     {
         using var services = new ServiceCollection().AddReference().BuildServiceProvider();
         using var scope = services.CreateScope();
         var catalog = scope.ServiceProvider.GetRequiredService<ReferenceCatalog>();
         catalog.Providers.Select(p => p.Key).Should().Equal("srd52", "5etools");
-        catalog.Providers[1].Search("goblin", 10).Should().BeEmpty("with no index configured the 5eTools provider is off");
-        catalog.GetItem("SRD52", "goblin-warrior")!.Summary.Name.Should().Be("Goblin Warrior");
-        catalog.GetItem("5etools", "goblin-warrior").Should().BeNull();
+        (await catalog.Providers[1].Search("goblin", 10, CancellationToken.None)).Should().BeEmpty("with no index configured the 5eTools provider is off");
+        (await catalog.GetItem("SRD52", "goblin-warrior", CancellationToken.None))!.Summary.Name.Should().Be("Goblin Warrior");
+        (await catalog.GetItem("5etools", "goblin-warrior", CancellationToken.None)).Should().BeNull();
     }
 }

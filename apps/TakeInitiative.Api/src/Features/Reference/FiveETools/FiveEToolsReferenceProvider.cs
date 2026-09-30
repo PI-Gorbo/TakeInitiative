@@ -13,14 +13,15 @@ public class FiveEToolsReferenceProvider(FiveEToolsCatalog catalog) : IReference
     public bool HasStatBlocks => false;
     public ReferenceAttribution Attribution => catalog.Attribution;
 
-    public IReadOnlyList<ReferenceMatch> Search(string text, int take)
-        => catalog.IsOn
+    /// <summary>In memory: the index is loaded at startup, so the task is always already completed.</summary>
+    public Task<IReadOnlyList<ReferenceMatch>> Search(string text, int take, CancellationToken ct)
+        => Task.FromResult<IReadOnlyList<ReferenceMatch>>(catalog.IsOn
             ? ReferenceMatcher.Search(text, catalog.Candidates, take)
                 .Select(m => new ReferenceMatch(m.Item, m.Category, m.Similarity))
                 .ToList()
-            : [];
+            : []);
 
-    public ReferenceItem? Get(string id) => null;
+    public Task<ReferenceItem?> Get(string id, CancellationToken ct) => Task.FromResult<ReferenceItem?>(null);
 
-    public ReferenceSummary? Find(string id) => catalog.Find(id);
+    public Task<ReferenceSummary?> Find(string id, CancellationToken ct) => Task.FromResult<ReferenceSummary?>(catalog.Find(id));
 }

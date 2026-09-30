@@ -45,6 +45,6 @@ public class PutEntryEditAccess(IDocumentSession session, IHubContext<CampaignHu
             await hub.NotifyEntryUpserted(entry);
         }
 
-        await SendAsync(EntryResponse.From(entry, member, Resolve<ReferenceCatalog>()), cancellation: ct);
+        await SendAsync(await EntryResponse.From(entry, member, Resolve<ReferenceCatalog>(), ct), cancellation: ct);
     }
 }

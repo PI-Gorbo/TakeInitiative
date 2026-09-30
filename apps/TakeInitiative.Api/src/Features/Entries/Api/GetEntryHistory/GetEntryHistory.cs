@@ -108,11 +108,17 @@ public class GetEntryHistory(IDocumentSession session, ReferenceCatalog referenc
         var entry = await this.RequireVisibleEntry(session, req.CampaignId, req.EntryId, member, ct);
 
         var events = await session.Events.FetchStreamAsync(entry.Id, token: ct);
-        await SendAsync(new EntryHistoryResponse { Items = For(entry, events, member, reference).ToArray() }, cancellation: ct);
+        // The source is looked up once, here, so For stays a plain iterator over the stream.
+        var source = EntrySources.For(entry, member) is { } s ? await EntrySourceResponse.From(s, reference, ct) : null;
+        await SendAsync(new EntryHistoryResponse { Items = For(entry, events, member, source).ToArray() }, cancellation: ct);
     }
 
-    /// <summary>The history of <paramref name="entry"/> (its whole stream, <paramref name="events"/>) as <paramref name="viewer"/> may read it.</summary>
-    public static IEnumerable<EntryHistoryItem> For(Entry entry, IReadOnlyList<Marten.Events.IEvent> events, Member viewer, ReferenceCatalog reference)
+    /// <summary>
+    /// The history of <paramref name="entry"/> (its whole stream, <paramref name="events"/>) as
+    /// <paramref name="viewer"/> may read it. <paramref name="source"/> is the entry's reference
+    /// source as they may read it, or null when there is none or it is not theirs to see.
+    /// </summary>
+    public static IEnumerable<EntryHistoryItem> For(Entry entry, IReadOnlyList<Marten.Events.IEvent> events, Member viewer, EntrySourceResponse? source)
     {
         // Every version of the article, with the index of the event that made it.
         var versions = new List<(int EventIndex, IReadOnlyList<ArticleBlock> Blocks)>();
@@ -132,7 +138,6 @@ public class GetEntryHistory(IDocumentSession session, ReferenceCatalog referenc
                 versions.Add((i, next));
             }
         }
-        var source = EntrySources.For(entry, viewer) is { } s ? EntrySourceResponse.From(s, reference) : null;
         var visibleVersions = ArticleHistory.Changed(entry, versions.Select(v => v.Blocks), viewer)
             .ToDictionary(c => versions[c.Index].EventIndex, c => c.Blocks);
 

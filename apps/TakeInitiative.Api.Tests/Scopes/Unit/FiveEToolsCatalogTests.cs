@@ -87,29 +87,29 @@ public class FiveEToolsCatalogTests : IDisposable
     }
 
     [Fact]
-    public void TheProvider_IsSearchOnly()
+    public async Task TheProvider_IsSearchOnly()
     {
         var provider = new FiveEToolsReferenceProvider(Catalog);
         (provider.Key, provider.Label, provider.HasStatBlocks).Should().Be(("5etools", "5eTools", false));
 
-        provider.Search("gremlin", 10).Select(m => m.Item.Name).Should().StartWith("Test Gremlin");
-        provider.Search("sparkbrst", 5).Select(m => m.Item.Id).Should().Contain("spell_test-sparkburst_tst", "the fuzzy rung");
-        provider.Get("monster_test-gremlin_tst").Should().BeNull("the app never shows 5eTools content");
-        provider.Find("monster_test-gremlin_tst")!.Name.Should().Be("Test Gremlin");
+        (await provider.Search("gremlin", 10, CancellationToken.None)).Select(m => m.Item.Name).Should().StartWith("Test Gremlin");
+        (await provider.Search("sparkbrst", 5, CancellationToken.None)).Select(m => m.Item.Id).Should().Contain("spell_test-sparkburst_tst", "the fuzzy rung");
+        (await provider.Get("monster_test-gremlin_tst", CancellationToken.None)).Should().BeNull("the app never shows 5eTools content");
+        (await provider.Find("monster_test-gremlin_tst", CancellationToken.None))!.Name.Should().Be("Test Gremlin");
     }
 
     [Theory]
     [InlineData(null)]
     [InlineData("")]
     [InlineData("/nowhere/5etools/index.json")]
-    public void NoPathOrNoFile_IsOff_WithoutAnError(string? path)
+    public async Task NoPathOrNoFile_IsOff_WithoutAnError(string? path)
     {
         var catalog = new FiveEToolsCatalog(path);
         catalog.IsOn.Should().BeFalse();
         catalog.Rows.Should().BeEmpty();
         var provider = new FiveEToolsReferenceProvider(catalog);
-        provider.Search("gremlin", 10).Should().BeEmpty();
-        provider.Find("monster_test-gremlin_tst").Should().BeNull();
+        (await provider.Search("gremlin", 10, CancellationToken.None)).Should().BeEmpty();
+        (await provider.Find("monster_test-gremlin_tst", CancellationToken.None)).Should().BeNull();
     }
 
     [Fact]

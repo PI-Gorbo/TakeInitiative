@@ -121,7 +121,7 @@ public class PostEntryMerge(IDocumentSession session, IHubContext<CampaignHub> h
 
         var after = (await session.LoadAsync<Entry>(into.Id, ct))!;
         await hub.NotifyEntryMerged(from, after);
-        await SendAsync(EntryResponse.From(after, member, Resolve<ReferenceCatalog>()), cancellation: ct);
+        await SendAsync(await EntryResponse.From(after, member, Resolve<ReferenceCatalog>(), ct), cancellation: ct);
     }
 
     [System.Diagnostics.CodeAnalysis.DoesNotReturn]
