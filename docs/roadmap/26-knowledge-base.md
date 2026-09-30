@@ -36,7 +36,8 @@ leaves the app runnable:
 | 26a | `v2/26a-knowledge-base-plan` | This plan | Docs only | [ ] |
 | 26b | `v2/26b-kb-parser` | `packages/TakeInitiative.KnowledgeBase`: the ported parser and the row model | 25's app unchanged, and nothing references the package yet. Its tests reproduce the Node script's output from the same fixtures, byte for byte | [ ] |
 | 26c | `v2/26c-kb-cli` | The schema, the upsert and `apps/TakeInitiative.KnowledgeBase.Cli` | The same. `ingest --dry-run` reports a diff; `ingest` upserts into Postgres. Nothing reads the table yet | [ ] |
-| 26d | `v2/26d-kb-provider` | `IReferenceProvider` goes async; the 5eTools provider reads Postgres | ⌘K behaves as it did after 21c, with its 5eTools rows served from the database. `FiveEToolsIndex`, its options and `scripts/5etools/` are gone | [ ] |
+| 26d₁ | `v2/26d1-reference-async` | `IReferenceProvider` goes async | No behaviour change at all. The SRD provider wraps its in-memory lookups; every call site awaits. Independent of 26b, so it can land first | [ ] |
+| 26d₂ | `v2/26d2-kb-provider` | The 5eTools provider reads Postgres | ⌘K behaves as it did after 21c, with its 5eTools rows served from the database. `FiveEToolsIndex`, its options and `scripts/5etools/` are gone | [ ] |
 | 26e | `v2/26e-kb-api` | The browse API | `GET knowledge-base` lists, filters and pages; `GET knowledge-base/{provider}/{id}` answers one row. No UI yet | [ ] |
 | 26f | `v2/26f-kb-page` | The Knowledge base page | Wiki ▸ Knowledge base browses, filters and searches on a phone and on a desktop. ⌘K gains "Browse all". The step's Verify passes | [ ] |
 | 26g | `v2/26g-kb-images` | The artwork slot | A row and its detail show the item's 5eTools artwork where one exists, with a fallback, loaded from their CDN and never stored | [ ] |
@@ -202,8 +203,45 @@ create table knowledge_base_item (
   `ExtendedSchemaObjects`.
 - **Indexes**: the `tsvector`, the trigram index, and a plain `(provider, category,
   source_book)` for the browse page's filters.
-- Created through the same `ExtendedSchemaObjects` path the search schema uses, so
-  `ApplyAllDatabaseChangesOnStartup` handles it and the CLI does not own migrations.
+- Created through the same `ExtendedSchemaObjects` path the search schema uses, so the API
+  owns it and the CLI does not own migrations — **but that path does not currently run in
+  production**, which 26c has to fix. See "The schema is not applied in production" below.
+
+### The schema is not applied in production
+
+Found while planning step 29, and verified: `Bootstrap.cs:136` guards
+`ApplyAllDatabaseChangesOnStartup()` at line 143 with `if (IsDevelopment)`, and the API's
+`dockerfile` sets no `ASPNETCORE_ENVIRONMENT`, so a container runs as Production and never
+applies it. `pg_trgm` and `unaccent` are registered as `Storage.ExtendedSchemaObjects`
+(lines 39–40), which hang off no document type, so Marten's lazy per-document auto-creation
+has no reason to create them either.
+
+Two consequences, one of them already live:
+
+1. **⌘K's fuzzy matching would fail in production today**, because `word_similarity()` needs
+   `pg_trgm`. This is a pre-existing bug in step 17, not something 26 introduces. Nobody has
+   hit it because nothing is deployed yet.
+2. **This step's table would not exist in production**, so the ingest CLI would fail there
+   forever while working perfectly in dev.
+
+So **26c fixes it**, rather than leaving it to step 29. A step that adds a schema object is
+the right place to make sure schema objects are actually created, and it keeps "the API owns
+the schema, the CLI does not" true in every environment instead of only in dev:
+
+- A `Marten:ApplySchemaOnStartup` setting, defaulting to `true`, replaces the
+  `IsDevelopment` check.
+- Keep the existing comment and extend it with the production reasoning **and the
+  single-replica constraint**: `AddAsyncDaemon(DaemonMode.Solo)` already means the API must
+  never run more than one replica, which is also what makes DDL on startup safe.
+- Tests: the flag off leaves the schema alone, the flag on applies it, and the integration
+  fixtures are unaffected.
+- **Measure before and after.** Run the API with `ASPNETCORE_ENVIRONMENT=Production`
+  against a freshly reset database and record `select extname from pg_extension` in the PR.
+  It is worth having the evidence written down, because this is the kind of bug that gets
+  "fixed" twice.
+
+Step 29 keeps the rest of its production-readiness work (persisted data-protection keys,
+forwarded headers) and drops the schema half.
 
 ## `IReferenceProvider` becomes async
 
@@ -354,17 +392,20 @@ Deleted:
 
 ### 26c. The schema, the store and the CLI
 
-1. `KnowledgeBaseSchema`: the table, the generated `tsvector`, the trigram index and the
+1. **Fix the schema application first** — `Marten:ApplySchemaOnStartup`, per "The schema is
+   not applied in production" above, with the before-and-after measurement. Do this before
+   adding a new schema object, so the new object is created everywhere from its first day.
+2. `KnowledgeBaseSchema`: the table, the generated `tsvector`, the trigram index and the
    filter index, as `ISchemaObject`s following `SearchSchema`.
-2. `KnowledgeBaseStore`: `Diff(items)` → `IngestReport`, `Upsert(items)`,
+3. `KnowledgeBaseStore`: `Diff(items)` → `IngestReport`, `Upsert(items)`,
    `Prune(provider, keep, force)` with the link check and the 20% threshold. One
    transaction per run.
-3. The CLI: `ingest` with the flags above, configuration binding, a progress line per data
+4. The CLI: `ingest` with the flags above, configuration binding, a progress line per data
    file, the report, and the exit codes.
-4. Store tests against Testcontainers Postgres: insert, re-run unchanged, change one field,
+5. Store tests against Testcontainers Postgres: insert, re-run unchanged, change one field,
    a missing row with and without `--prune`, the threshold refusal, and the link-protection
    path (stubbed until 27 exists — assert the query, not an entry).
-5. `dotnet run … -- ingest --dry-run --from scripts/5etools/fixture/data` prints a sane
+6. `dotnet run … -- ingest --dry-run --from scripts/5etools/fixture/data` prints a sane
    report against a dev database.
 
 ### 26d. The provider
