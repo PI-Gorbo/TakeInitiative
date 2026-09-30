@@ -52,7 +52,7 @@ function summary(id: string, name: string, extra: Partial<EntrySummary> = {}): E
         ...extra,
     };
 }
-const item = (entry: EntrySummary, mentionCount = 0): EntryListItem => ({ entry, mentionCount, lastMentionedAt: null });
+const item = (entry: EntrySummary, mentionCount = 0): EntryListItem => ({ entry, mentionCount, lastMentionedAt: null, noteCount: 0 });
 
 const directory = entryDirectory({
     entries: [

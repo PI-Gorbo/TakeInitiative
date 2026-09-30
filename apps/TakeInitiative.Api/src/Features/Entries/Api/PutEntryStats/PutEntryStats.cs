@@ -98,8 +98,8 @@ public class PutEntryStats(IDocumentSession session, IHubContext<CampaignHub> hu
         if (!EntryStats.CanWrite(entry, member))
         {
             ThrowError(entry.ClaimedByMemberId is null
-                ? "Only the DMs can set the stats of a character nobody has claimed."
-                : "Only the claimer and the DMs can set a player character's stats.", StatusCodes.Status403Forbidden);
+                ? "Only the DMs can set the stats of a character nobody plays."
+                : "Only its player and the DMs can set a player character's stats.", StatusCodes.Status403Forbidden);
         }
 
         var stats = Stats.Of(req.InitiativeRoll, req.MaxHp, req.Ac);

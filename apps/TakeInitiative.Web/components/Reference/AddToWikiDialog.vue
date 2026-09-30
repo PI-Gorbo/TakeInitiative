@@ -11,7 +11,7 @@
             <DialogHeader>
                 <DialogTitle>Add to the wiki</DialogTitle>
                 <DialogDescription>
-                    A new entry from {{ item?.providerLabel ?? "the reference" }}, with an empty article.
+                    A new entry from {{ item?.providerLabel ?? "the reference" }}, with an empty summary.
                 </DialogDescription>
             </DialogHeader>
             <form

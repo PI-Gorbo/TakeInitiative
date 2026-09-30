@@ -1,5 +1,6 @@
 using FastEndpoints;
 using Marten;
+using TakeInitiative.Api.Features.Sessions;
 using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Entries;
@@ -30,6 +31,15 @@ public record EntryListItemResponse
     public required int MentionCount { get; init; }
     /// <summary>When the latest of those notes was posted. Null when no note mentions it (blocks have no time).</summary>
     public DateTimeOffset? LastMentionedAt { get; init; }
+    /// <summary>How many of those are notes (25g): "N notes", and "N notes to pick from" for an empty summary.</summary>
+    public required int NoteCount { get; init; }
+    /// <summary>The number of the session the latest of those notes is in (25g): "last in Session X".</summary>
+    public int? LastMentionedSessionNumber { get; init; }
+    /// <summary>
+    /// The article's first line as the caller sees it, as plain text (<see cref="ArticleGist"/>),
+    /// never from a secret block. Null when there is none. Per viewer, so it is never pushed.
+    /// </summary>
+    public string? SummaryGist { get; init; }
 }
 
 /// <summary>
@@ -53,6 +63,14 @@ public class GetEntries(IDocumentSession session) : Endpoint<GetEntriesRequest, 
             .OrderBy(e => e.Name)
             .ToListAsync(ct);
         var counts = await MentionIndex.CountsFor(session, req.CampaignId, member, ct, entries);
+        var sessionIds = counts.Values.Select(c => c.LastSessionId).OfType<Guid>().Distinct().ToArray();
+        var sessionNumbers = sessionIds.Length == 0
+            ? new Dictionary<Guid, int>()
+            : (await session.Query<Session>()
+                .Where(s => s.CampaignId == req.CampaignId && s.Id.IsOneOf(sessionIds))
+                .Select(s => new { s.Id, s.Number })
+                .ToListAsync(ct))
+                .ToDictionary(s => s.Id, s => s.Number);
 
         await SendAsync(new GetEntriesResponse
         {
@@ -65,6 +83,10 @@ public class GetEntries(IDocumentSession session) : Endpoint<GetEntriesRequest, 
                         Entry = EntrySummaryResponse.From(e),
                         MentionCount = count?.Count ?? 0,
                         LastMentionedAt = count?.LastMentionedAt,
+                        NoteCount = count?.NoteCount ?? 0,
+                        LastMentionedSessionNumber = count?.LastSessionId is { } sessionId
+                            && sessionNumbers.TryGetValue(sessionId, out var number) ? number : null,
+                        SummaryGist = ArticleGist.For(e, member),
                     };
                 })
                 .ToArray(),

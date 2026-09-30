@@ -33,7 +33,7 @@ export function noteActionsFor(note: SessionNote, { isAuthor, isDm }: NoteAction
 }
 
 export const NOTE_ACTION_LABELS: Record<NoteAction, string> = {
-    promote: "Promote to wiki",
+    promote: "Add to summary",
     edit: "Edit",
     visibility: "Change visibility",
     hide: "Hide",

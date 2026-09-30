@@ -1,15 +1,12 @@
 <template>
-    <!-- An entry's timeline (glossary, design §4, 15c): every session note the viewer
-         can see that mentions it, oldest first, paged with "Load older". Read-only:
-         editing a note is the only way to change it. -->
+    <!-- An entry's timeline (glossary, design §4, 15c), the Notes tab in the UI (25d):
+         every session note the viewer can see that mentions it, newest first, paged
+         with "Load older notes". Read-only: editing a note is the only way to change
+         it. Each note offers "Add to summary" (promote, 15f), or shows "✓ In summary"
+         when a quote in the summary already comes from it. -->
     <section
-        :aria-labelledby="`${id}-title`"
+        :aria-label="`Notes about ${entryName}`"
         class="flex flex-col gap-1">
-        <h3
-            :id="`${id}-title`"
-            class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Timeline
-        </h3>
         <LoadingFallback
             v-if="!timelineQuery.data.value"
             :isLoading="timelineQuery.isLoading.value"
@@ -22,21 +19,11 @@
             No session notes mention {{ entryName }} yet.
         </p>
         <template v-else>
-            <div
-                v-if="timelineQuery.hasNextPage.value"
-                class="flex justify-center">
-                <Button
-                    variant="ghost"
-                    class="h-11 text-xs text-muted-foreground md:h-9"
-                    :disabled="timelineQuery.isFetchingNextPage.value"
-                    @click="timelineQuery.fetchNextPage()">
-                    <LoaderCircle
-                        v-if="timelineQuery.isFetchingNextPage.value"
-                        class="size-4 animate-spin"
-                        aria-hidden="true" />
-                    Load older
-                </Button>
-            </div>
+            <p class="pb-1 text-sm text-muted-foreground">
+                Every note that mentions {{ entryName }}, newest first.<template v-if="canEdit">
+                    Add the useful ones to the summary.</template
+                >
+            </p>
             <ol
                 class="-mx-4 flex flex-col"
                 role="feed"
@@ -52,31 +39,56 @@
                         :authorName="authorName(item.note.authorMemberId)"
                         :currentMemberId="campaign.currentMemberId"
                         :isDm="isDm"
+                        :highlighted="!!highlightedNoteId && sameId(item.note.id, highlightedNoteId)"
                         @openImage="imageViewer.open">
-                        <!-- Design §4: [Promote] on each timeline note, into this entry. -->
+                        <!-- Design §4 / 25d: "Add to summary" on each note, into this
+                             entry, or "✓ In summary" once a quote comes from it. -->
                         <template #actions="{ actions, run }">
+                            <span
+                                v-if="inSummary.has(item.note.id.toLowerCase())"
+                                class="ml-auto flex items-center gap-1 text-xs font-medium text-gold">
+                                <Check
+                                    class="size-3.5"
+                                    aria-hidden="true" />
+                                In summary
+                            </span>
                             <Button
-                                v-if="actions.includes('promote')"
+                                v-else-if="actions.includes('promote')"
                                 variant="ghost"
                                 size="sm"
                                 class="-my-2 ml-auto h-11 gap-1 text-xs text-muted-foreground md:-my-1 md:h-7"
-                                :aria-label="`Promote this note to ${entryName}'s article`"
+                                :aria-label="`Add this note to ${entryName}'s summary`"
                                 @click="run('promote')">
                                 <BookPlus
                                     class="size-3.5"
                                     aria-hidden="true" />
-                                Promote
+                                Add to summary
                             </Button>
                         </template>
                     </SessionNoteCard>
                 </li>
             </ol>
+            <div
+                v-if="timelineQuery.hasNextPage.value"
+                class="flex justify-center">
+                <Button
+                    variant="ghost"
+                    class="h-11 text-xs text-muted-foreground md:h-9"
+                    :disabled="timelineQuery.isFetchingNextPage.value"
+                    @click="timelineQuery.fetchNextPage()">
+                    <LoaderCircle
+                        v-if="timelineQuery.isFetchingNextPage.value"
+                        class="size-4 animate-spin"
+                        aria-hidden="true" />
+                    Load older notes
+                </Button>
+            </div>
         </template>
-        <!-- Articles that mention this entry (15e). Only blocks the viewer can see count. -->
+        <!-- Summaries that mention this entry (15e). Only blocks the viewer can see count. -->
         <p
             v-if="articleMentions.length > 0"
             class="flex flex-wrap items-center gap-x-2 gap-y-1 pt-1 text-sm text-muted-foreground">
-            <span>Also mentioned in the articles of</span>
+            <span>Also mentioned in the summaries of</span>
             <NuxtLink
                 v-for="mention in articleMentions"
                 :key="mention.id"
@@ -94,7 +106,7 @@
             :authorName="authorName"
             :ready="!!timelineQuery.data.value && !timelineQuery.isFetching.value" />
 
-        <!-- Desktop: "Add to wiki" by a selection inside a timeline note (15f). -->
+        <!-- Desktop: "Add to summary" by a selection inside a note (15f). -->
         <WikiPromoteSelection
             :campaignId="campaign.id"
             :viewer="{ memberId: campaign.currentMemberId, isDm }"
@@ -105,7 +117,7 @@
 
 <script setup lang="ts">
     import { useInfiniteQuery } from "@tanstack/vue-query";
-    import { BookPlus, LoaderCircle } from "lucide-vue-next";
+    import { BookPlus, Check, LoaderCircle } from "lucide-vue-next";
     import type { Campaign } from "~/utils/api/types";
     import { currentMember } from "~/utils/campaign";
     import { entryHref } from "~/utils/article";
@@ -117,18 +129,23 @@
         campaign: Campaign;
         entryId: string;
         entryName: string;
-        /** The viewer can edit this entry: each note offers Promote into it (15f). */
+        /** The viewer can edit this entry: each note offers "Add to summary" into it (15f). */
         canEdit: boolean;
+        /** The notes the summary quotes, lower-cased (`quotedNoteIds`): "✓ In summary". */
+        inSummary: ReadonlySet<string>;
+        /** A note opened from a quote's source chip: marked for a moment (25d). */
+        highlightedNoteId?: string | null;
     }>();
 
-    const id = useId();
     const timelineQuery = useInfiniteQuery(
         getEntryTimelineQuery(
             () => props.campaign.id,
             () => props.entryId
         )
     );
-    const items = computed(() => timelineItems(timelineQuery.data.value));
+    // Newest first (25d); the pages hold them oldest first.
+    const items = computed(() => timelineItems(timelineQuery.data.value).reverse());
+    const sameId = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
     const findNote = (noteId: string) => items.value.find((i) => i.note.id === noteId)?.note;
     const imageViewer = useImageViewer();
 

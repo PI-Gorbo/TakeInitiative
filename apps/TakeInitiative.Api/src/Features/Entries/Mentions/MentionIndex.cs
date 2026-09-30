@@ -10,8 +10,10 @@ namespace TakeInitiative.Api.Features.Entries;
 /// <summary>
 /// How often the notes and article blocks a viewer can see mention one entry, and when the
 /// latest note that does was posted (null when only articles mention it: blocks have no time).
+/// <see cref="NoteCount"/> is the notes alone, and <see cref="LastSessionId"/> the session of the
+/// latest of them (25g's "N notes · last in Session X").
 /// </summary>
-public record MentionCount(int Count, DateTimeOffset? LastMentionedAt);
+public record MentionCount(int Count, DateTimeOffset? LastMentionedAt, int NoteCount = 0, Guid? LastSessionId = null);
 
 /// <summary>One article block that mentions an entry, on the entry whose article holds it.</summary>
 public record BlockMention(Entry Entry, ArticleBlock Block);
@@ -179,18 +181,23 @@ public static class MentionIndex
 
         var fromNotes = notes
             .SelectMany(r => r.MentionedEntryIds.Select(Resolve).Distinct().Where(Counted)
-                .Select(id => (EntryId: id, PostedAt: (DateTimeOffset?)r.PostedAt)));
+                .Select(id => (EntryId: id, PostedAt: (DateTimeOffset?)r.PostedAt, SessionId: (Guid?)r.SessionId)));
         var fromBlocks = mentioningEntries
             .Where(e => e.ArticleMentionIds.Length > 0)
             .SelectMany(e => ArticleView.VisibleBlocks(e, viewer)
                 .SelectMany(b => MentionParser.EntryIds(b.Text).Select(Resolve).Distinct())
                 .Where(id => id != e.Id)
                 .Where(Counted)
-                .Select(id => (EntryId: id, PostedAt: (DateTimeOffset?)null)));
+                .Select(id => (EntryId: id, PostedAt: (DateTimeOffset?)null, SessionId: (Guid?)null)));
 
         return fromNotes.Concat(fromBlocks)
             .GroupBy(x => x.EntryId)
-            .ToDictionary(g => g.Key, g => new MentionCount(g.Count(), g.Max(x => x.PostedAt)));
+            .ToDictionary(g => g.Key, g =>
+            {
+                var notes = g.Where(x => x.PostedAt is not null).ToList();
+                var latest = notes.Count > 0 ? notes.MaxBy(x => x.PostedAt) : default;
+                return new MentionCount(g.Count(), latest.PostedAt, notes.Count, latest.SessionId);
+            });
     }
 
     /// <summary>

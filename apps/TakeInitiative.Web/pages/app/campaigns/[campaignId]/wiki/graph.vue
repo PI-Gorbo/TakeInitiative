@@ -75,7 +75,7 @@
                 :icon="Waypoints"
                 title="No connections yet"
                 class="pt-8">
-                Two entries connect when a note or an article block mentions
+                Two entries connect when a note or a summary block mentions
                 both, or when they fight in one combat.
             </EmptyState>
             <WikiConnectionGraph

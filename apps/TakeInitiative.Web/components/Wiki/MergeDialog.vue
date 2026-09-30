@@ -34,14 +34,14 @@
                             become aliases of {{ into.name }}.
                         </li>
                         <li>
-                            Its article is added to {{ into.name }}'s under "Merged from {{ entry.name }}"<template
+                            Its summary is added to {{ into.name }}'s under "Merged from {{ entry.name }}"<template
                                 v-if="entry.article.blocks.length === 0">
                                 (it has nothing you can see)</template
                             >. Secret blocks stay secret.
                         </li>
-                        <li>Notes that mention {{ entry.name }} show on {{ into.name }}'s timeline. Their text stays.</li>
+                        <li>Notes that mention {{ entry.name }} show under {{ into.name }}'s Notes. Their text stays.</li>
                         <li v-if="entry.claimedByMemberId">
-                            It stays {{ nameOf(entry.claimedByMemberId) }}'s player character.
+                            Still played by {{ nameOf(entry.claimedByMemberId) }}.
                         </li>
                     </ul>
                     <p

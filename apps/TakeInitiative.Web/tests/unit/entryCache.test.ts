@@ -58,12 +58,12 @@ const timeline: EntryTimelineData = {
 };
 
 describe("the wiki list", () => {
-    const list: EntryList = { entries: [{ entry: summary(GUNDREN, "Gundren"), mentionCount: 3, lastMentionedAt: "x" }] };
+    const list: EntryList = { entries: [{ entry: summary(GUNDREN, "Gundren"), mentionCount: 3, lastMentionedAt: "x", noteCount: 2 }] };
 
     it("replaces a pushed entry and keeps the viewer's count", () => {
         const next = upsertEntrySummary(list, summary(GUNDREN.toUpperCase(), "Gundren Rockseeker"));
         expect(next!.entries).toHaveLength(1);
-        expect(next!.entries[0]).toMatchObject({ mentionCount: 3, lastMentionedAt: "x" });
+        expect(next!.entries[0]).toMatchObject({ mentionCount: 3, lastMentionedAt: "x", noteCount: 2 });
         expect(next!.entries[0].entry.name).toBe("Gundren Rockseeker");
     });
 

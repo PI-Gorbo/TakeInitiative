@@ -8,7 +8,8 @@
         class="flex flex-col gap-1">
         <h3
             :id="`${id}-title`"
-            class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+            :class="{ 'sr-only': embedded }">
             Combats
         </h3>
         <ol class="-mx-4 flex flex-col">
@@ -30,7 +31,12 @@
     import { getEntryCombatsQuery } from "~/utils/queries/combats";
     import { useEntryDirectory } from "~/utils/queries/entries";
 
-    const props = defineProps<{ campaignId: string; entryId: string }>();
+    const props = defineProps<{
+        campaignId: string;
+        entryId: string;
+        /** Inside an `EntrySection` (25e), whose row is the visible title. */
+        embedded?: boolean;
+    }>();
     const id = useId();
 
     const combatsQuery = useQuery(

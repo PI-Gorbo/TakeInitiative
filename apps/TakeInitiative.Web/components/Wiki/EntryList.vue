@@ -6,7 +6,9 @@
             :key="item.entry.id">
             <WikiEntryListItem
                 :campaignId="campaignId"
-                :item="item" />
+                :item="item"
+                :viewerMemberId="viewerMemberId"
+                :nameOf="nameOf" />
         </li>
     </ul>
 </template>
@@ -14,5 +16,10 @@
 <script setup lang="ts">
     import type { EntryListItem } from "~/utils/api/types";
 
-    defineProps<{ campaignId: string; items: readonly EntryListItem[] }>();
+    defineProps<{
+        campaignId: string;
+        items: readonly EntryListItem[];
+        viewerMemberId?: string;
+        nameOf: (memberId: string) => string | undefined;
+    }>();
 </script>

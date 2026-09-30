@@ -65,7 +65,7 @@ export const LOOSE_END_KIND_LABELS: Record<LooseEndKind, string> = {
     UnlinkedNote: "Unlinked note",
     UntaggedImageNote: "Untagged image",
     OtherKind: "Kind is Other",
-    EmptyArticle: "Empty article",
+    EmptyArticle: "No summary",
 };
 
 export const isNoteLooseEnd = (kind: LooseEndKind) => kind === "UnlinkedNote" || kind === "UntaggedImageNote";

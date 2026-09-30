@@ -6,7 +6,7 @@
     <Dialog v-model:open="open">
         <DialogContent class="flex max-h-[90dvh] max-w-lg flex-col">
             <DialogHeader>
-                <DialogTitle>Someone else changed this article</DialogTitle>
+                <DialogTitle>Someone else changed this summary</DialogTitle>
                 <DialogDescription>
                     Reload and re-apply your changes.
                     {{ items.length > 0 ? "Your text is below to copy." : "" }}

@@ -27,7 +27,7 @@
                         >
                     </DialogTitle>
                     <DialogDescription class="sr-only">
-                        The notes, article blocks and combats you can see that
+                        The notes, summary blocks and combats you can see that
                         connect {{ entryName }} and
                         {{ connection?.entry.name }}.
                     </DialogDescription>

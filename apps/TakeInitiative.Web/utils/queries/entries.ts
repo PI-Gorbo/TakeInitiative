@@ -215,7 +215,9 @@ export function invalidateTimelinesTouchedBy(
  * `entryArticleChanged` (15e): the viewer's view of an article changed. The payload
  * has no content, so a loaded entry is read again. An open article editor keeps its
  * own copy of the text and shows "This article changed" (`ArticleEditor`). Timelines
- * list which articles mention their entry, so the loaded ones are read again too.
+ * list which articles mention their entry, so the loaded ones are read again too, and so
+ * is the list: its summary gist (25g) and article mention counts are per viewer and
+ * never pushed.
  */
 export function applyEntryArticleChanged(queryClient: QueryClient, campaignId: string, entryId: string) {
     void queryClient.invalidateQueries({
@@ -225,6 +227,7 @@ export function applyEntryArticleChanged(queryClient: QueryClient, campaignId: s
             String(query.queryKey[2]).toLowerCase() === entryId.toLowerCase(),
     });
     void queryClient.invalidateQueries({ queryKey: timelinesKey(campaignId) });
+    void queryClient.invalidateQueries({ queryKey: getEntriesQueryKey(campaignId), exact: true });
 }
 
 /** Whether a query is `["entry" | "entryTimeline" | "entryHistory" | "entryImages", campaignId, one of ids]`. */

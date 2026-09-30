@@ -55,15 +55,15 @@ public class PutEntryClaim(IDocumentSession session, IHubContext<CampaignHub> hu
             }
             if (!isDm && claimerId != member.MemberId)
             {
-                ThrowError("Only a DM can assign a player character to someone else.", StatusCodes.Status403Forbidden);
+                ThrowError("Only a DM can set someone else as a character's player.", StatusCodes.Status403Forbidden);
             }
             if (entry.Kind != EntryKind.Character)
             {
-                ThrowError(new ValidationFailure(KindErrorKey, "Only a Character can be claimed."), StatusCodes.Status409Conflict);
+                ThrowError(new ValidationFailure(KindErrorKey, "Only a Character can have a player."), StatusCodes.Status409Conflict);
             }
             if (!isDm && entry.ClaimedByMemberId is not null)
             {
-                ThrowError(new ValidationFailure(MemberErrorKey, "Someone else has already claimed this character."), StatusCodes.Status409Conflict);
+                ThrowError(new ValidationFailure(MemberErrorKey, "Someone else already plays this character."), StatusCodes.Status409Conflict);
             }
             var claimer = campaign.MemberById(claimerId);
             if (claimer is null)
@@ -85,7 +85,7 @@ public class PutEntryClaim(IDocumentSession session, IHubContext<CampaignHub> hu
             }
             if (!isDm && current != member.MemberId)
             {
-                ThrowError("Only the claimer and the DMs can unclaim a player character.", StatusCodes.Status403Forbidden);
+                ThrowError("Only its player and the DMs can change who plays it.", StatusCodes.Status403Forbidden);
             }
             session.Events.Append(entry.Id, new EntryUnclaimed(Actor.Member(member.MemberId)));
         }

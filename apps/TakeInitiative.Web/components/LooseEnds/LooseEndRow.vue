@@ -113,7 +113,7 @@
                     {{ ENTRY_KIND_ICONS[entry.kind] }} {{ entry.name }}
                 </NuxtLink>
                 <span class="text-muted-foreground">
-                    has {{ mentionCountLabel(item.mentionCount ?? 0) }} and no article
+                    has {{ mentionCountLabel(item.mentionCount ?? 0) }} and no summary
                 </span>
             </p>
             <div class="flex flex-wrap gap-1.5">
@@ -132,7 +132,7 @@
                     variant="outline"
                     class="h-11 md:h-8">
                     <NuxtLink :to="{ path: entryHref(campaignId, entry.id), hash: `#${ENTRY_TIMELINE_ANCHOR}` }">
-                        Promote from timeline
+                        Pick from notes
                     </NuxtLink>
                 </Button>
             </div>

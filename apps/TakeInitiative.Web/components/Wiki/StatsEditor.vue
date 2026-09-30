@@ -5,20 +5,32 @@
          nobody else is sent them. Initiative and HP are dice expressions: the server
          checks them, and its message shows under the field. An entry from a reference
          item offers "Use SRD 5.2 stats" (20d) or "Use 5eTools stats" (21c) to whoever writes
-         them, when that item has Stats. -->
-    <section
+         them, when that item has Stats. On a phone (25e) it is a collapsed row that peeks
+         "AC 15 · HP 38 · Init +3", open from the start for the character's player. In the
+         desktop's right-hand panel (25f) it is forced open, a headed section with no border. -->
+    <WikiEntrySection
         v-if="readable && (entry.stats || writable)"
-        aria-label="Stats"
-        class="flex flex-col gap-2 rounded-md border px-3 py-2">
+        title="Stats"
+        :peek="statsPeekLabel(entry.stats) || 'No stats yet'"
+        :defaultOpen="isPlayer"
+        :forceOpen="forceOpen"
+        :class="{ 'rounded-md border': !forceOpen }">
+        <template #title>
+            Stats<span
+                v-if="!claimed"
+                class="ml-1 font-normal normal-case text-muted-foreground"
+                >· 🔒 DMs only</span
+            >
+        </template>
         <div class="flex flex-wrap items-center gap-x-2">
-            <h3 class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Stats<span
-                    v-if="!claimed"
-                    class="ml-1 normal-case"
-                    >· 🔒 DMs only</span
-                >
-            </h3>
-            <div class="flex-1" />
+            <p
+                v-if="!editing"
+                class="min-w-0 flex-1 text-sm">
+                {{ statsLabel(entry.stats) || "No stats yet." }}
+            </p>
+            <div
+                v-else
+                class="flex-1" />
             <!-- "Use … stats" (20d, 21c): the source item's Stats into the form, to review and Save. -->
             <Button
                 v-if="useSource && entry.source"
@@ -38,16 +50,13 @@
             </Button>
         </div>
 
-        <p
-            v-if="!editing"
-            class="text-sm">
-            {{ statsLabel(entry.stats) || "No stats yet." }}
-        </p>
         <form
-            v-else
+            v-if="editing"
             class="flex flex-col gap-3"
             @submit.prevent="save">
-            <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div
+                class="grid grid-cols-1 gap-3"
+                :class="{ 'sm:grid-cols-3': !forceOpen }">
                 <label class="flex flex-col gap-1 text-sm">
                     <span class="font-medium">Initiative roll</span>
                     <input
@@ -114,7 +123,7 @@
                 </Button>
             </div>
         </form>
-    </section>
+    </WikiEntrySection>
 </template>
 
 <script setup lang="ts">
@@ -138,15 +147,20 @@
     } from "~/utils/entries";
     import { putEntryStatsMutation } from "~/utils/queries/entries";
     import { getReferenceItemQuery } from "~/utils/queries/reference";
+    import { statsPeekLabel } from "~/utils/entrySections";
     import { sourceStatsLabel } from "~/utils/reference";
 
     const props = defineProps<{
         campaignId: string;
         entry: Entry;
         viewer: EntryViewer;
+        /** The desktop's right-hand panel (25f): always open, and the form one field a row. */
+        forceOpen?: boolean;
     }>();
 
     const claimed = computed(() => !!claimerOf(props.entry));
+    // The character's player opens on their stats (25e); everyone else sees the peek.
+    const isPlayer = computed(() => claimed.value && claimerOf(props.entry) === props.viewer.memberId);
     const readable = computed(() => canReadStats(props.entry, props.viewer));
     const writable = computed(() => canWriteStats(props.entry, props.viewer));
     watch(writable, (value) => {

@@ -84,10 +84,10 @@ public class PostEntryMerge(IDocumentSession session, IHubContext<CampaignHub> h
                     $"Some people who can see \"{into.Name}\" cannot see \"{from.Name}\". Change visibility first.");
                 break;
             case EntryMergeError.ClaimNeedsCharacter:
-                Refuse(ClaimErrorKey, $"\"{from.Name}\" is a player character, so it can only be merged into a Character.");
+                Refuse(ClaimErrorKey, $"\"{from.Name}\" has a player, so it can only be merged into a Character.");
                 break;
             case EntryMergeError.ClaimedByAnother:
-                Refuse(ClaimErrorKey, $"\"{from.Name}\" and \"{into.Name}\" are different members' player characters.");
+                Refuse(ClaimErrorKey, $"\"{from.Name}\" and \"{into.Name}\" are played by different members.");
                 break;
         }
 

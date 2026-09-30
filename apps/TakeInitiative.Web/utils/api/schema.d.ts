@@ -1410,6 +1410,11 @@ export interface components {
             mentionCount: number;
             /** Format: date-time */
             lastMentionedAt?: string | null;
+            /** Format: int32 */
+            noteCount: number;
+            /** Format: int32 */
+            lastMentionedSessionNumber?: number | null;
+            summaryGist?: string | null;
         };
         GetEntriesRequest: Record<string, never>;
         EntryResponse: {

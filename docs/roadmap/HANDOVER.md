@@ -103,6 +103,13 @@ Stack #224. Everything is on top of `dev` and still open:
 | #255 | `v2/23-suggestions-plan` | Step 23's step file (in-browser suggestions), on top of #254 |
 | #256 | `v2/23a-extraction-spike` | 23a: the GLiNER variant spike (Laya dropped by the user); picks GLiNER small v2.5 and pins its weights, small v2.1 as the fallback |
 | #257 | `v2/23b-extractor-runtime` | 23b: the extractor runtime (worker, lazy load, self-hosted weights from our own reproducible export of upstream GLiNER small v2.5, Cache API, "Suggestions on this device" on the Me page) |
+| #263 | `v2/25a-wiki-redesign-plan` | Step 25's step file (the wiki redesign), on `dev` after #262. 25b–25g stack on it |
+| #264 | `v2/25b-wiki-drop-add-note` | 25b: the wiki drops "Add a note about X" (entry page button and empty Connections link). ⌘K's "Post a note about X" stays. On #263 |
+| #265 | `v2/25c-played-by` | 25c: "Played by" instead of claim in the web copy and API errors ("This is my character", "Not my character"). Route, DTOs, events and helpers keep their names. On #264 |
+| #266 | `v2/25d-summary-notes-tabs` | 25d: the entry page's Summary \| Notes tabs ("Built from N of M notes", quote source chips, "Add to summary" / "✓ In summary", the empty summary, `?tab=`), and Article / Timeline / Promote become Summary / Notes / Add to summary in all UI copy. On #265 |
+| #267 | `v2/25e-entry-mobile-collapse` | 25e: the phone order on the entry page: header with "Played by" chip and Edit details in ⋯, stats peek, connections strip, then "More about X" (Details, Gallery, Combats) as collapsed `Wiki/EntrySection` rows (`forceOpen` ready for 25f). On #266 |
+| #268 | `v2/25f-entry-desktop-panel` | 25f: the entry page at `lg`: full width (`lg:max-w-none` on its `PageContainer`), header and Summary \| Notes centred at `max-w-3xl`, and a sticky right-hand panel that scrolls on its own (Played by, Stats, Connections, Details, Gallery, Combats, each `forceOpen`). `useMediaQuery` mounts each section in one place. On #267 |
+| #269 | `v2/25g-wiki-home-polish` | 25g: the wiki home: a "Wiki" title row with icon buttons (Graph, Sort, New), full-width search, and rows with "Played by", a one-line summary gist (per viewer, never from a secret block) and "N notes · last in Session X". API adds `summaryGist`, `noteCount`, `lastMentionedSessionNumber` to `EntryListItemResponse`. On #268 |
 
 The local branches `pr/PI-Gorbo/222`, `pr/PI-Gorbo/222-1` and `pr/PI-Gorbo/222-2` are stale
 checkouts of #222. Ignore them.
@@ -215,6 +222,12 @@ checkouts of #222. Ignore them.
    - No agent commits model weights. `public/models/` is git-ignored.
    - The user's decisions are in step 23's Notes, "Decisions for the user".
 6. **Then step 24** (Discord import), whose step file is written just before it starts.
+   **Step 25, the wiki redesign, runs alongside it.** Its step file is
+   [25-wiki-redesign.md](25-wiki-redesign.md) (branch `v2/25a-wiki-redesign-plan`, on `dev`).
+   25b–25g stack on it, one subagent per PR: drop "Add a note about X" from the wiki,
+   Claim → "Played by" in copy, Summary | Notes tabs, the mobile collapse, the desktop side
+   panel, and the wiki home. The mockups are at
+   https://claude.ai/artifact/8YdLCzEPqDmnrpkgyhFWTR. Only UI copy is renamed; code names stay.
 7. **Then a cleanup pass** over "Follow-ups found this round" below, before the deferred
    5eTools and D&D Beyond work is picked up again.
 

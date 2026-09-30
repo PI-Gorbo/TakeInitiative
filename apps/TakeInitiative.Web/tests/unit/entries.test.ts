@@ -8,7 +8,9 @@ import {
     canChangeEntryAccess,
     canEditEntry,
     editAccessLabel,
+    emptyGistLabel,
     entriesCalled,
+    entryMetaLabel,
     entryDirectory,
     existingEntryIdFrom,
     filterEntries,
@@ -16,6 +18,8 @@ import {
     kindToQuery,
     mentionCountLabel,
     mentionMarkup,
+    noteCountLabel,
+    playedByLabel,
     resolveEntry,
     sortEntries,
     sortFromQuery,
@@ -45,6 +49,7 @@ const item = (entry: EntrySummary, mentionCount = 0, lastMentionedAt: string | n
     entry,
     mentionCount,
     lastMentionedAt,
+    noteCount: 0,
 });
 
 const gundren = item(summary("a1", "Gundren Rockseeker", { aliases: ["Rockseeker"] }), 7, "2026-09-10T19:00:00Z");
@@ -183,5 +188,36 @@ describe("existingEntryIdFrom", () => {
         expect(existingEntryIdFrom(error)).toBe("e1");
         expect(existingEntryIdFrom({ response: { data: { errors: { name: ["bad"] } } } })).toBeNull();
         expect(existingEntryIdFrom(undefined)).toBeNull();
+    });
+});
+
+describe("the wiki home's rows (25g)", () => {
+    it("counts notes", () => {
+        expect(noteCountLabel(0)).toBe("0 notes");
+        expect(noteCountLabel(1)).toBe("1 note");
+        expect(noteCountLabel(12)).toBe("12 notes");
+    });
+
+    it("says who plays a character, falling back to a player", () => {
+        const names: Record<string, string> = { sam: "Sam" };
+        const nameOf = (id: string) => names[id];
+        expect(playedByLabel("sam", "me", nameOf)).toBe("Played by Sam");
+        expect(playedByLabel("gone", "me", nameOf)).toBe("Played by a player");
+        expect(playedByLabel("ME", "me", nameOf)).toBe("Played by you");
+        expect(playedByLabel("sam", undefined, nameOf)).toBe("Played by Sam");
+    });
+
+    it("offers the notes when the summary is empty", () => {
+        expect(emptyGistLabel(0)).toBe("No summary yet");
+        expect(emptyGistLabel(1)).toBe("No summary yet, 1 note to pick from");
+        expect(emptyGistLabel(4)).toBe("No summary yet, 4 notes to pick from");
+    });
+
+    it("gives the note count and the latest session", () => {
+        expect(entryMetaLabel({ noteCount: 12, lastMentionedSessionNumber: 6 })).toBe("12 notes · last in Session 6");
+        expect(entryMetaLabel({ noteCount: 1, lastMentionedSessionNumber: 1 })).toBe("1 note · last in Session 1");
+        expect(entryMetaLabel({ noteCount: 3, lastMentionedSessionNumber: null })).toBe("3 notes");
+        expect(entryMetaLabel({ noteCount: 3 })).toBe("3 notes");
+        expect(entryMetaLabel({ noteCount: 0, lastMentionedSessionNumber: null })).toBe("No notes yet");
     });
 });

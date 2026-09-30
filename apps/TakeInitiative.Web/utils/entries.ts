@@ -233,15 +233,15 @@ export function describeChange(change: EntryChange, nameOf: (memberId: string) =
         case "EditAccessChanged":
             return change.editAccess === "OnlyMe" ? "set edit access to Only the creator" : "set edit access to Anyone";
         case "ArticleEdited":
-            return "edited the article";
+            return "edited the summary";
         case "QuotePromoted":
-            return "promoted a quote";
+            return "added a note to the summary";
         case "Merged":
             return `merged "${change.name}" into it`;
         case "Claimed":
-            return change.memberId ? `made it ${nameOf(change.memberId)}'s player character` : "claimed it";
+            return change.memberId ? `set ${nameOf(change.memberId)} as its player` : "said they play it";
         case "Unclaimed":
-            return "unclaimed it";
+            return "cleared its player";
         case "StatsChanged":
             return change.stats ? `set the stats: ${statsLabel(change.stats)}` : "cleared the stats";
     }
@@ -291,9 +291,9 @@ export function mergeProblem(
     }
     const claimer = claimerOf(from);
     if (claimer) {
-        if (into.kind !== "Character") return `"${from.name}" is a player character, so it can only be merged into a Character.`;
+        if (into.kind !== "Character") return `"${from.name}" has a player, so it can only be merged into a Character.`;
         const other = claimerOf(into);
-        if (other && other !== claimer) return `"${from.name}" and "${into.name}" are different members' player characters.`;
+        if (other && other !== claimer) return `"${from.name}" and "${into.name}" are played by different members.`;
     }
     const aliases = [from.name, ...from.aliases].reduce(
         (acc, alias) => addAlias(acc, alias, into.name, Number.POSITIVE_INFINITY),
@@ -398,6 +398,41 @@ export function sortEntries(items: readonly EntryListItem[], sort: WikiSort): En
 /** "No mentions", "1 mention", "7 mentions". */
 export const mentionCountLabel = (count: number) =>
     count === 0 ? "No mentions" : count === 1 ? "1 mention" : `${count} mentions`;
+
+// ── The wiki home's rows (25g) ───────────────────────────────────────────────
+
+/** "1 note", "12 notes". */
+export const noteCountLabel = (count: number) => (count === 1 ? "1 note" : `${count} notes`);
+
+/**
+ * A player character's chip: "Played by you", "Played by Sam", or "Played by a player"
+ * when the member is unknown (left the campaign, or the campaign has not loaded).
+ */
+export function playedByLabel(
+    claimedByMemberId: string,
+    viewerMemberId: string | undefined,
+    nameOf: (memberId: string) => string | undefined
+): string {
+    if (viewerMemberId && claimedByMemberId.toLowerCase() === viewerMemberId.toLowerCase()) return "Played by you";
+    return `Played by ${nameOf(claimedByMemberId) ?? "a player"}`;
+}
+
+/**
+ * The row's second line when the summary is empty: "No summary yet, 4 notes to pick
+ * from", or just "No summary yet" when no note mentions the entry.
+ */
+export const emptyGistLabel = (noteCount: number) =>
+    noteCount === 0 ? "No summary yet" : `No summary yet, ${noteCountLabel(noteCount)} to pick from`;
+
+/**
+ * The row's meta line: "12 notes · last in Session 6", "12 notes" when the session is
+ * unknown, and "No notes yet" when no note the viewer can see mentions it.
+ */
+export function entryMetaLabel(item: Pick<EntryListItem, "noteCount" | "lastMentionedSessionNumber">): string {
+    if (item.noteCount === 0) return "No notes yet";
+    const count = noteCountLabel(item.noteCount);
+    return item.lastMentionedSessionNumber == null ? count : `${count} · last in Session ${item.lastMentionedSessionNumber}`;
+}
 
 /** `aka "Rockseeker", "the dwarf"`, or "" with no aliases. */
 export const aliasesLabel = (aliases: readonly string[]) =>
