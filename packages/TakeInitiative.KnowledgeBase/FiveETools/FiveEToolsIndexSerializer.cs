@@ -46,6 +46,7 @@ public static class FiveEToolsIndexSerializer
         ("source", (json, item) => WriteString(json, item.Source)),
         ("page", (json, item) => WriteNumberOrNull(json, item.Page)),
         ("url", (json, item) => WriteString(json, item.Url)),
+        ("imageUrl", (json, item) => WriteStringOrNull(json, item.ImageUrl)),
         ("label", (json, item) => WriteStringOrNull(json, item.Label)),
         ("stats", (json, item) => WriteStats(json, item.Stats)),
     ];

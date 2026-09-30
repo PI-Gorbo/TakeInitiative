@@ -52,8 +52,9 @@ public sealed record KnowledgeBaseRow
     public required string Url { get; init; }
 
     /// <summary>
-    /// The row's artwork, by URL. Always null until 26g, which is the step that adds it to the
-    /// allowlist; the column exists now so 26g is a parser change and not a migration.
+    /// The row's artwork, by URL (26g): a path out of the source's fluff files, turned into a URL on
+    /// their own media host. Nothing is fetched and nothing is stored — the browser loads it from
+    /// them or it does not load at all. Null where the source names no picture.
     /// </summary>
     public string? ImageUrl { get; init; }
 
@@ -107,7 +108,7 @@ public sealed record KnowledgeBaseRow
             Page = item.Page,
             Label = item.Label,
             Url = item.Url,
-            ImageUrl = null,
+            ImageUrl = item.ImageUrl,
             Stats = StatsJson(item.Stats),
             ContentHash = HashOf(item),
         };

@@ -1,12 +1,28 @@
 <template>
     <div class="flex h-full w-full flex-col">
-        <!-- The Wiki tab (design §4, 15c, 25g): a title row with icon buttons (Graph, Sort,
-             New), the search below it, the kind chips, and "Loose ends (n)" while the viewer
-             has any (19e). Then every entry the viewer can see. -->
+        <!-- The Wiki tab (design §4, 15c, 25g): a title row with icon buttons (Knowledge
+             base, Graph, Sort, New), the search below it, the kind chips, and "Loose ends
+             (n)" while the viewer has any (19e). Then every entry the viewer can see. -->
         <div class="shrink-0 border-b">
             <PageContainer class="flex flex-col gap-2 px-3 pb-2 pt-3 md:px-4">
                 <div class="flex items-center gap-1">
                     <h1 class="min-w-0 flex-1 truncate text-xl font-semibold">Wiki</h1>
+                    <!-- The Knowledge base (26f): the corpus has no bottom tab of its own,
+                         so this toolbar and ⌘K are the two ways in. -->
+                    <Button
+                        as-child
+                        variant="ghost"
+                        size="icon"
+                        class="h-11 w-11 md:h-9 md:w-9">
+                        <NuxtLink
+                            :to="knowledgeBaseHref(campaignId)"
+                            aria-label="Knowledge base"
+                            title="Knowledge base">
+                            <Library
+                                class="size-5 text-muted-foreground md:size-4"
+                                aria-hidden="true" />
+                        </NuxtLink>
+                    </Button>
                     <Button
                         as-child
                         variant="ghost"
@@ -123,7 +139,7 @@
 
 <script setup lang="ts">
     import { useQuery } from "@tanstack/vue-query";
-    import { ArrowDownWideNarrow, BookOpen, ChevronRight, Plus, Search, Waypoints } from "lucide-vue-next";
+    import { ArrowDownWideNarrow, BookOpen, ChevronRight, Library, Plus, Search, Waypoints } from "lucide-vue-next";
     import type { EntryKind } from "~/utils/api/types";
     import {
         KIND_PARAM,
@@ -138,6 +154,7 @@
         type WikiSort,
     } from "~/utils/entries";
     import { graphHref } from "~/utils/graph";
+    import { knowledgeBaseHref } from "~/utils/knowledgeBase";
     import { looseEndsHref } from "~/utils/looseEnds";
     import { getCampaignQuery } from "~/utils/queries/campaign";
     import { getEntriesQuery } from "~/utils/queries/entries";

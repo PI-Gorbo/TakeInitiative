@@ -96,8 +96,19 @@ public class GetKnowledgeBase(IDocumentSession session, KnowledgeBaseQueries que
     /// <summary>A provider key is a word.</summary>
     public const int MaxProviderLength = 40;
 
-    /// <summary>The same rule as the reference item endpoint's: the corpus changes only on an ingest.</summary>
-    public const string CacheControl = "private, max-age=86400";
+    /// <summary>
+    /// The corpus changes only on an ingest, but it must be allowed to change <em>then</em>. A
+    /// day-long <c>max-age</c> meant a browser that had seen the corpus could not see a re-ingest
+    /// for a day without a hard reload — and "ingest, then look at it" is this page's whole
+    /// purpose, so the one workflow it has was the one the cache broke.
+    /// <para>
+    /// <c>no-cache</c> still lets the response be stored; it requires revalidation before reuse.
+    /// A page is at most <see cref="MaxTake"/> rows, so re-sending one is cheap. An <c>ETag</c>
+    /// over the provider's latest <c>ingested_at</c> would make revalidation a 304 instead, which
+    /// is the cheap improvement if this ever shows up in a profile.
+    /// </para>
+    /// </summary>
+    public const string CacheControl = "private, no-cache";
 
     public override void Configure()
     {

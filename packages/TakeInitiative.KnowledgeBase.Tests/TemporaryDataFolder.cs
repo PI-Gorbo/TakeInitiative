@@ -46,6 +46,24 @@ internal sealed class TemporaryDataFolder : IDisposable
     /// <summary>The <c>data/bestiary/</c> folder inside a <see cref="WithMonsters" /> checkout.</summary>
     public string Bestiary => Path.Combine(Root, "data", "bestiary");
 
+    /// <summary>
+    /// Writes one more file into the checkout, at a path relative to its root
+    /// (<c>data/bestiary/fluff-index.json</c>), creating the folders it needs.
+    /// </summary>
+    /// <remarks>
+    /// This is how 26g's artwork cases get a corpus with fluff images in it. They are not added to
+    /// <c>Fixture/</c>: that folder is a byte copy of the corpus the Node script's golden output was
+    /// taken from, and keeping it that way is what makes the golden file's one-line 26g diff
+    /// readable as "a key was added" rather than "the inputs moved too".
+    /// </remarks>
+    public TemporaryDataFolder Write(string relativePath, string json)
+    {
+        var file = Path.Combine(Root, relativePath.Replace('/', Path.DirectorySeparatorChar));
+        Directory.CreateDirectory(Path.GetDirectoryName(file)!);
+        File.WriteAllText(file, json);
+        return this;
+    }
+
     /// <summary>An empty folder, which is not a 5eTools checkout.</summary>
     public static TemporaryDataFolder Empty() =>
         new(Directory.CreateTempSubdirectory("ti-5etools-").FullName);

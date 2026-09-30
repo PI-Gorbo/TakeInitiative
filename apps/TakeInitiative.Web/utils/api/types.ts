@@ -129,6 +129,13 @@ export type SearchReferenceHit = Schemas["SearchReferenceHit"];
 export type ReferenceItem = Schemas["ReferenceItemResponse"];
 export type ReferenceSummary = Schemas["ReferenceSummaryResponse"];
 export type ReferenceAttribution = Schemas["ReferenceAttributionResponse"];
+export type ReferenceCategory = Schemas["ReferenceCategory"];
+/** The Knowledge base's browse list (26e, 26f): one page of the corpus and its facet counts. */
+export type KnowledgeBase = Schemas["KnowledgeBaseResponse"];
+export type KnowledgeBaseItem = Schemas["KnowledgeBaseItemResponse"];
+export type KnowledgeBaseFacets = Schemas["KnowledgeBaseFacetsResponse"];
+export type KnowledgeBaseCategoryFacet = Schemas["KnowledgeBaseCategoryFacetResponse"];
+export type KnowledgeBaseBookFacet = Schemas["KnowledgeBaseBookFacetResponse"];
 export type StatBlock = Schemas["StatBlock"];
 /** An entry's source (20b, 20d): left out of the JSON when the viewer cannot read it. */
 export type EntrySource = Schemas["EntrySourceResponse"];

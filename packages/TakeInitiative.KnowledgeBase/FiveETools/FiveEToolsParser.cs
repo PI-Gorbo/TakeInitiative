@@ -103,6 +103,11 @@ public static partial class FiveEToolsParser
             : null;
 
         var titles = Books.ReadTitles(data, reader);
+
+        // The artwork slot (26g). Read once, before any row is built, because the fluff files are
+        // indexed by name and source and every category asks the same index the same question.
+        var images = FiveEToolsImages.Read(data, reader);
+
         var rows = new List<KnowledgeBaseItem>();
 
         // A row worth writing: it has a name and a source, and its source is not Unearthed Arcana.
@@ -184,7 +189,7 @@ public static partial class FiveEToolsParser
                 }
             }
 
-            rows.Add(Pick("Monster", raw, row, Bestiary.MonsterLabel(monster, where), stats, baseUrl));
+            rows.Add(Pick("Monster", raw, row, Bestiary.MonsterLabel(monster, where), stats, baseUrl, images));
         }
 
         // --- spells -----------------------------------------------------------------------------
@@ -195,7 +200,7 @@ public static partial class FiveEToolsParser
             if (Usable(raw) is not { } row) continue;
 
             var label = Spells.SpellLabel(raw, $"spell \"{row.Name}\" ({row.Source})");
-            rows.Add(Pick("Spell", raw, row, label, null, baseUrl));
+            rows.Add(Pick("Spell", raw, row, label, null, baseUrl, images));
         }
 
         // --- items: magic and mundane items, then base items (weapons, armour, gear) -------------
@@ -229,7 +234,7 @@ public static partial class FiveEToolsParser
                 baseItem = found;
             }
 
-            rows.Add(Pick("Item", raw, row, Items.ItemLabel(raw, baseItem), null, baseUrl));
+            rows.Add(Pick("Item", raw, row, Items.ItemLabel(raw, baseItem), null, baseUrl, images));
         }
 
         // --- the guards -------------------------------------------------------------------------
@@ -361,7 +366,8 @@ public static partial class FiveEToolsParser
         (string Name, string Source) row,
         string? label,
         KnowledgeBaseItemStats? stats,
-        string baseUrl)
+        string baseUrl,
+        FiveEToolsImages images)
     {
         if (!FiveEToolsAllowlist.Pages.TryGetValue(category, out var sitePage))
         {
@@ -376,6 +382,7 @@ public static partial class FiveEToolsParser
             Source = row.Source,
             Page = Js.AsInteger(Js.Get(raw, "page")),
             Url = $"{baseUrl}/{sitePage}.html#{Ids.EncodeHash(row.Name, row.Source)}",
+            ImageUrl = images.UrlFor(category, row.Name, row.Source, baseUrl),
             Label = label,
             Stats = stats,
         };

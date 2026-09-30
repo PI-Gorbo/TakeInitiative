@@ -21,7 +21,7 @@ public class AllowlistTests
         var gremlin = Fixture5eTools.Build().Index.Row("monster_test-gremlin_tst");
 
         Assert.Equal(
-            new[] { "id", "name", "category", "source", "page", "url", "label", "stats" },
+            new[] { "id", "name", "category", "source", "page", "url", "imageUrl", "label", "stats" },
             FiveEToolsIndexSerializer.ItemKeysWritten);
         Assert.Equal(new[] { "ac", "hp", "initiativeBonus" }, FiveEToolsIndexSerializer.StatsKeysWritten);
 
@@ -34,6 +34,9 @@ public class AllowlistTests
                 Source = "TST",
                 Page = 12,
                 Url = "https://5e.tools/bestiary.html#test%20gremlin_tst",
+                // The fixture names no artwork, which is why 26g's base URL had to be checked
+                // against real data instead: see FiveEToolsImages.
+                ImageUrl = null,
                 Label = "CR 1/2 · Small Fey",
                 Stats = new KnowledgeBaseItemStats(15, "3d6+3", 2),
             },

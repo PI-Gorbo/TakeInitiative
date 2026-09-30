@@ -3,6 +3,7 @@ import type { EntryList, EntrySummary, SearchHit, SearchResponse, SearchSection 
 import { entryDirectory } from "~/utils/entries";
 import {
     RECENT_ENTRIES_MAX,
+    REFERENCE_BROWSE_LABEL,
     combatHitLine,
     firstRow,
     hitKey,
@@ -193,8 +194,11 @@ describe("searchRows", () => {
             "header-Reference",
             "Reference-reference-srd52-goblin-warrior",
             "more-Reference",
+            "browse-Reference",
         ]);
-        expect(rows.at(-1)).toMatchObject({ type: "more", label: "Show more reference" });
+        expect(rows.at(-2)).toMatchObject({ type: "more", label: "Show more reference" });
+        // 26f: the section's last row is the way out, into the Knowledge base page.
+        expect(rows.at(-1)).toMatchObject({ type: "browse", label: REFERENCE_BROWSE_LABEL });
         expect(isEmptyResponse(response({ key: "Reference", hasMore: false, hits: [referenceHit()] }))).toBe(false);
     });
 

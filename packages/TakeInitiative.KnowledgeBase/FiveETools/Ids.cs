@@ -84,6 +84,15 @@ public static partial class Ids
     }
 
     /// <summary>
+    /// A media path (26g) encoded for a URL: each segment as <c>encodeURIComponent</c> would write
+    /// it, joined back with <c>/</c>. 5eTools' file names hold spaces, commas and apostrophes —
+    /// <c>items/MOT/Akmon, Hammer of Purphoros.webp</c> — and their site leaves the encoding to the
+    /// browser, which a stored URL cannot.
+    /// </summary>
+    public static string EncodePath(string path) =>
+        string.Join("/", path.Split('/').Select(EncodeUriComponent));
+
+    /// <summary>
     /// <c>replace(/[^a-z0-9]+/g, "-")</c>, optionally followed by
     /// <c>replace(/^-+|-+$/g, "")</c>. Written as one pass because a dash is only ever emitted
     /// before the next kept character, which collapses runs and trims the ends at once.

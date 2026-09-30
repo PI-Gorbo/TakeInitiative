@@ -7,9 +7,11 @@ namespace TakeInitiative.KnowledgeBase;
 /// <remarks>
 /// <para>
 /// This is the whole of it — an id, a name, a category, a source book and page, a short label built
-/// from enums, a link out, and for a monster three numbers. There is no rules text, no description,
-/// no stat block and no image. The row's purpose is to be findable, linkable and to link out; a DM
-/// who wants to read the thing follows <see cref="Url" /> to the people who wrote it.
+/// from enums, a link out, the URL of the source's own artwork (26g), and for a monster three
+/// numbers. There is no rules text, no description and no stat block, and no image is ever copied:
+/// <see cref="ImageUrl" /> is a link, served by them to the browser. The row's purpose is to be
+/// findable, linkable and to link out; a DM who wants to read the thing follows <see cref="Url" />
+/// to the people who wrote it.
 /// </para>
 /// <para>
 /// The shape is not an implementation detail. It is the allowlist
@@ -41,6 +43,18 @@ public sealed record KnowledgeBaseItem
 
     /// <summary>The deep link out to the reference site.</summary>
     public required string Url { get; init; }
+
+    /// <summary>
+    /// The row's artwork (26g), as a URL on the reference site's own media host. Null where the
+    /// source names no picture, which is most rows.
+    /// </summary>
+    /// <remarks>
+    /// Still only an identifier: a path the parser turns into a URL. Nothing is fetched and nothing
+    /// is stored — the bytes are served by them, to the reader's browser, and never reach our
+    /// server. Adding it was a widening of the allowlist and a decision for the user, which is why
+    /// <see cref="FiveETools.FiveEToolsAllowlist.ItemKeys" /> names it explicitly.
+    /// </remarks>
+    public string? ImageUrl { get; init; }
 
     /// <summary>
     /// The muted line under the name: <c>CR 13 · Large Aberration</c>, <c>Level 3 Evocation</c>,

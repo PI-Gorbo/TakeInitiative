@@ -53,6 +53,15 @@ export const SECTION_LABELS: Record<SearchSectionKey, { header: string; more: st
 /** The most a section shows after "Show more": the server's largest `take`. */
 export const SEARCH_MORE_TAKE = 20;
 
+/**
+ * The last row under REFERENCE (26f): the way out of ⌘K and into the Knowledge base page.
+ *
+ * Until 26f, ⌘K's Reference section was the *only* place the corpus existed, which is the
+ * thing step 21 got wrong — you could not see what had been ingested without guessing search
+ * terms at it. This row is the corpus admitting it has a location.
+ */
+export const REFERENCE_BROWSE_LABEL = "Browse all reference material →";
+
 /** The server's sections, then the web's own Actions (17c). */
 export type SearchRowSection = SearchSectionKey | "Actions";
 
@@ -60,6 +69,8 @@ export type SearchRow =
     | { type: "header"; id: string; section: SearchRowSection; label: string }
     | { type: "hit"; id: string; section: SearchSectionKey; hit: SearchHit }
     | { type: "more"; id: string; section: SearchSectionKey; label: string }
+    /** "Browse all reference material →" (26f): the last row of the Reference section. */
+    | { type: "browse"; id: string; section: "Reference"; label: string }
     | { type: "action"; id: string; section: "Actions"; actionId: string; icon: string; label: string };
 
 /** The Actions section's rows (17c), after every other section. */
@@ -108,6 +119,10 @@ export function searchRows(
         }
         if (section.hasMore && !expanded.has(key)) {
             rows.push({ type: "more", id: `more-${key}`, section: key, label: SECTION_LABELS[key].more });
+        }
+        // Reference ends in the way out of ⌘K: the corpus is browsable now (26f).
+        if (key === "Reference") {
+            rows.push({ type: "browse", id: "browse-Reference", section: "Reference", label: REFERENCE_BROWSE_LABEL });
         }
     }
     return rows;

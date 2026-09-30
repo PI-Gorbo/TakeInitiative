@@ -134,6 +134,7 @@
     import { currentMember } from "~/utils/campaign";
     import { nextSessionNumber } from "~/utils/composer";
     import { existingEntryIdFrom, resolveEntry } from "~/utils/entries";
+    import { knowledgeBaseHref } from "~/utils/knowledgeBase";
     import { getCampaignQuery } from "~/utils/queries/campaign";
     import { createEntryMutation, useEntryDirectory } from "~/utils/queries/entries";
     import { getLooseEndCountsQuery } from "~/utils/queries/looseEnds";
@@ -362,6 +363,14 @@
         }
         if (row.type === "more") {
             void showMore(row.section, rows.value.indexOf(row));
+            return;
+        }
+        // "Browse all reference material →" (26f): the corpus's own page, unfiltered. The
+        // typed text is not carried over — the reference rows above already answer it, and
+        // this row is for the reader who wants to see what is *in* the corpus.
+        if (row.type === "browse") {
+            open.value = false;
+            void navigateTo(knowledgeBaseHref(props.campaignId));
             return;
         }
         if (row.hit.entry) recentIds.value = rememberRecentEntry(storage(), props.campaignId, row.hit.entry.entry.id);

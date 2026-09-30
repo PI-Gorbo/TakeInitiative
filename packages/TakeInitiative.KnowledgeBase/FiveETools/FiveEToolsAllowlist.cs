@@ -8,9 +8,9 @@ namespace TakeInitiative.KnowledgeBase.FiveETools;
 /// <para>
 /// 5eTools' data is copyrighted and is not licensed for reuse. The index is therefore built field by
 /// field out of this list — identifiers, a source book and page, a label assembled from enums this
-/// repository maps itself, a link, and for a monster three numbers. No rules text, no description,
-/// no stat block, no image and no other 5eTools field is ever written, and nothing in the parser
-/// copies or spreads one of their objects into a row.
+/// repository maps itself, two links, and for a monster three numbers. No rules text, no
+/// description, no stat block and no other 5eTools field is ever written; no image is ever copied,
+/// only linked (26g); and nothing in the parser copies or spreads one of their objects into a row.
 /// </para>
 /// <para>
 /// The lists are not documentation. <see cref="FiveEToolsParser" /> checks the keys it is about to
@@ -25,9 +25,14 @@ public static class FiveEToolsAllowlist
     public static readonly IReadOnlyList<string> TopKeys =
         ["format", "fiveEToolsVersion", "counts", "sources", "items"];
 
-    /// <summary>The keys of one row.</summary>
+    /// <summary>
+    /// The keys of one row. <c>imageUrl</c> is 26g, and it is the one entry here that was added
+    /// after the list was written: a path out of the source's fluff files turned into a URL on
+    /// their own media host, with the bytes served by them to the reader's browser and never
+    /// fetched or stored by us. The remark above is why it took a decision to add it.
+    /// </summary>
     public static readonly IReadOnlyList<string> ItemKeys =
-        ["id", "name", "category", "source", "page", "url", "label", "stats"];
+        ["id", "name", "category", "source", "page", "url", "imageUrl", "label", "stats"];
 
     /// <summary>The keys of a monster's stats.</summary>
     public static readonly IReadOnlyList<string> StatsKeys = ["ac", "hp", "initiativeBonus"];

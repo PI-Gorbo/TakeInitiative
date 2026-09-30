@@ -31,6 +31,18 @@ namespace TakeInitiative.KnowledgeBase.Tests;
 /// <c>Fixture/data</c>, which is a byte copy of the <c>fixture/data</c> that command named. The script
 /// has no timestamp in its output by design, so it stays idempotent.
 /// </para>
+/// <para>
+/// <b>The file was regenerated once, deliberately, for 26g.</b> The artwork slot adds
+/// <c>imageUrl</c> to <see cref="FiveEToolsAllowlist.ItemKeys" /> and therefore to every serialised
+/// row, so the Node script's output and this parser's could no longer be the same bytes. The
+/// regeneration was a one-line change per row and nothing else — <c>"imageUrl":null</c> after
+/// <c>"url"</c>, on all fourteen rows, with every other byte of the file untouched, because the
+/// committed fixtures carry no artwork <c>href</c> at all. That diff is the evidence that 26g
+/// changed what a row <i>may</i> hold and not what the parse <i>does</i>. It was written by parsing
+/// <c>Fixture/</c> with <see cref="FiveEToolsIndexSerializer.Serialize" /> and saving the result
+/// over the file; from here on, this parser is the specification for rows the Node script never had
+/// a field for, and the Node script is still the specification for every other byte.
+/// </para>
 /// </remarks>
 public class GoldenFileTests
 {

@@ -45,6 +45,12 @@
                         aria-hidden="true" />
                     {{ row.label }}
                 </span>
+                <!-- "Browse all reference material →" (26f): the Knowledge base page. -->
+                <span
+                    v-else-if="row.type === 'browse'"
+                    class="flex items-center gap-2 pl-12 text-sm text-muted-foreground">
+                    {{ row.label }}
+                </span>
                 <!-- An action (17c): the sheet draws it, since it runs it. -->
                 <slot
                     v-else-if="row.type === 'action'"
