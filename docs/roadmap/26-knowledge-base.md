@@ -32,14 +32,14 @@ leaves the app runnable:
 
 | PR | Branch | Sub-step | Runnable state after merge | Status |
 |---|---|---|---|---|
-| 26a | `v2/26a-knowledge-base-plan` | This plan | Docs only | [ ] |
+| 26a | `v2/26a-knowledge-base-plan` | This plan | Docs only | [x] |
 | 26b | `v2/26b-kb-parser` | `packages/TakeInitiative.KnowledgeBase`: the ported parser and the row model | 25's app unchanged, and nothing references the package yet. Its tests reproduce the Node script's output from the same fixtures, byte for byte | [x] built; 66 tests |
 | 26c | `v2/26c-kb-cli` | The schema, the upsert and `apps/TakeInitiative.KnowledgeBase.Cli` | The same. `ingest --dry-run` reports a diff; `ingest` upserts into Postgres. Nothing reads the table yet | [x] built; 90 tests |
 | 26d₁ | `v2/26d1-reference-async` | `IReferenceProvider` goes async | No behaviour change at all. The SRD provider wraps its in-memory lookups; every call site awaits. Independent of 26b, so it can land first | [x] built |
 | 26d₂ | `v2/26d2-kb-provider` | The 5eTools provider reads Postgres | ⌘K behaves as it did after 21c, with its 5eTools rows served from the database. `FiveEToolsIndex`, its options and `scripts/5etools/` are gone | [x] built |
 | 26e | `v2/26e-kb-api` | The browse API | `GET knowledge-base` lists, filters and pages. **No second per-item route**: `GET reference/{provider}/{itemId}` has answered that since step 20 and already returns the summary with `statBlock: null` for a search-only provider | [x] built |
-| 26f | `v2/26f-kb-page` | The Knowledge base page | Wiki ▸ Knowledge base browses, filters and searches on a phone and on a desktop. ⌘K gains "Browse all". The step's Verify passes | [ ] |
-| 26g | `v2/26g-kb-images` | The artwork slot | A row and its detail show the item's 5eTools artwork where one exists, with a fallback, loaded from their CDN and never stored | [ ] |
+| 26f | `v2/26f-kb-page` | The Knowledge base page | Wiki ▸ Knowledge base browses, filters and searches on a phone and on a desktop. ⌘K gains "Browse all". The step's Verify passes | [x] built |
+| 26g | `v2/26g-kb-images` | The artwork slot | A row shows the item's 5eTools artwork where one exists, with a glyph fallback, loaded from their CDN and never stored | [x] built |
 
 Step 27 turns `Entry.Links` into a real feature and links entries to these rows. Step 28
 suggests those links. Neither is in 26.
@@ -553,6 +553,20 @@ Deleted:
   `postgres:latest` is now 18+ and moved its data directory). Nothing in this schema needs
   anything newer.
 
+### Two things 26f found that this plan had wrong
+
+- **The two empty states are not distinguishable from a filtered answer.** A filtered query
+  over an empty corpus and one over a full corpus both return `total: 0`. So a shared
+  `?category=monster` link, opened against a database nobody has ingested into, would have said
+  "No items match. Clear filters." — blaming the reader's filters for exactly the condition this
+  page exists to report. When a filtered page comes back empty the composable asks once more,
+  unfiltered, for one row, and renders nothing until that answers rather than flashing the wrong
+  message.
+- **The phone sketch's row line contradicts "The schema".** The sketch shows
+  `Monster · CR 13 · MM`, implying a short label; the schema section says `label` is the whole
+  muted line and there is no shorter string. The prose is right: line 2 is `category · label`,
+  line 3 is `book · p. N`.
+
 ### Behaviour worth knowing before 26e and 27
 
 - **`source_title` is outside the content hash.** The hash is the parser's own serialisation
@@ -565,6 +579,14 @@ Deleted:
   link renderer would keep claiming the source is gone.
 - **In a combined `--prune` run the threshold is measured after the upsert**, in the same
   transaction, so the denominator is the corpus as it would stand rather than as it was.
+- **The browse endpoint sends `private, no-cache`, not a long `max-age`.** 26e shipped
+  `max-age=86400` with `staleTime: Infinity`, which meant a browser that had seen the corpus
+  could not see a re-ingest for a day without a hard reload — and "ingest, then look at it" is
+  this page's only workflow. An `ETag` over the provider's latest `ingested_at` would turn
+  revalidation into a 304 if it ever shows up in a profile.
+- **From 26g on, this parser is the specification, not the Node script.** `imageUrl` is a field
+  the script never had, so the golden file is no longer a comparison against it. `GoldenFileTests`
+  records that.
 
 ### Decisions for the user
 
