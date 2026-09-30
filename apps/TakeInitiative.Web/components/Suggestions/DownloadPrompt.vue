@@ -6,9 +6,9 @@
             <DialogHeader>
                 <DialogTitle>✨ Download the suggestion model?</DialogTitle>
                 <DialogDescription>
-                    The suggestion model runs on this device. Your notes are not
-                    sent anywhere to be read. It is a one-time
-                    {{ size }} download.
+                    The model runs inside your browser, on this device. Your
+                    notes are never sent to an outside AI service to be read. It
+                    is a one-time {{ size }} download.
                 </DialogDescription>
             </DialogHeader>
             <p

@@ -35,8 +35,9 @@ history reads "Linked @Rellan Ashvale · ✨ suggested by gliner_small-v2.5 (0.8
 mobile data nothing downloads until they say so. A DM who dislikes a model version reverts
 their own accepted suggestions from it in one action, and the mentions go back to plain text.
 
-The step ships as five PRs stacked with `gh stack` on top of this file's docs PR, which sits on
-step 22's plan (#254); this file is #255. Each PR leaves the app runnable:
+The step shipped as five PRs stacked with `gh stack` on top of this file's docs PR, which sits
+on step 22's plan (#254); this file is #255. 23f was added afterwards, on `dev`. Each PR leaves
+the app runnable:
 
 | PR | Branch | Sub-step | Runnable state after merge | Status |
 |---|---|---|---|---|
@@ -45,6 +46,7 @@ step 22's plan (#254); this file is #255. Each PR leaves the app runnable:
 | 23c | `v2/23c-suggestions-api` | Match, provenance and revert (API) | 22's app unchanged in the browser. `POST suggestions/match` matches spans; `PUT notes/{id}` accepts a `suggestion` and records `Actor.Model`; the note history shows it; `POST suggestions/revert` unlinks one model version's mentions for their author | [x] |
 | 23d | `v2/23d-suggestions-loose-ends` | Suggestions in Loose ends (web) | Unlinked notes on the loose-ends page offer ✨ suggestions beside 19's link suggestions; accepting links or creates-and-links | [x] |
 | 23e | `v2/23e-suggestions-inline` | Inline on the author's notes, history, revert (web) | "✨ 3" on the author's own note cards, the ✨ line in note history, and "Accepted suggestions" with Revert on the Me page. The step's Verify passes | [x] |
+| 23f | `v2/23f-suggestions-ask-again` | Ask again, deeper, on one note (web) | "✨ Find suggestions" in a note's own menu reads that one note on demand, loading the model on the tap; "Look again" in the sheet runs a deeper pass over it | [x] |
 
 Suggestions in the composer while typing, on other members' notes, on article blocks and on
 images, a server-side model, fine-tuning, and the Discord import (24) are not in 23 (Notes,
@@ -116,6 +118,11 @@ dependency)
 - Web add `components/LooseEnds/ModelSuggestions.vue`, `components/Suggestions/{CreateFromSuggestion,FindSuggestionsButton,DownloadPrompt}.vue`, `utils/suggestions.ts` (merge with link suggestions, labels, local dismiss), `utils/api/suggestion/postSuggestionMatchRequest.ts`, `utils/queries/suggestions.ts`
 - Web modify `components/LooseEnds/{LooseEndRow,LinkSuggestions}.vue`, `utils/looseEnds.ts` (row label with the suggestion count), `utils/api/session/putSessionNoteRequest.ts` (`suggestion`)
 - Web add `tests/unit/suggestions.test.ts`
+
+**23f**
+- Web modify `utils/extraction/spans.ts` (the pass ladder, `passAt`), `utils/extraction/extractor.ts` + `utils/extraction/messages.ts` + `workers/extractor.worker.ts` (a per-call pass), `composables/useExtractor.ts` (the pass in the memo and queue keys, `suggestionsSetting()`), `composables/useNoteSuggestions.ts` (`ask`, `lookAgain`, per-note depth and phase), `utils/suggestions.ts` (`withoutNoteDismissals`, `isUnsure`, `depthLabel`, a cap on `inlineSuggestions`), `utils/noteActions.ts` (the `suggest` action)
+- Web modify `components/Session/{SessionNoteCard,NoteActions,NoteActionSheet}.vue`, `components/Suggestions/{NoteSuggestionsChip,NoteSuggestionsSheet}.vue`, `components/LooseEnds/ModelSuggestions.vue` (the "unsure" mark)
+- Web modify `tests/unit/{suggestions,extractionSpans,noteActions}.test.ts`
 
 **23e**
 - Web add `components/Suggestions/{NoteSuggestionsChip,NoteSuggestionsSheet,AcceptedSuggestions}.vue`, `utils/api/suggestion/{postSuggestionRevertRequest,getSuggestionModelsRequest}.ts`
@@ -437,6 +444,31 @@ Built for the model 23a picked. Names below say "the model".
    ("These entries were created from its suggestions and stay: …").
 5. **Close the step**: tick this file's PR table and set README's status to `done`.
 
+### 23f. Ask again, deeper, on one note (web)
+
+The author's way of saying "try harder on this one". 23d's "✨ Find suggestions" reads a whole
+page at the model's pinned threshold; 23e's chip only appears where the stream happened to read
+a note already. Neither lets the author come back to one note and ask again.
+
+1. **The menu item.** `noteActionsFor` gains `suggest` ("✨ Find suggestions"), after **Edit**,
+   on the **author's own** note with text (only the author can accept, invariant 4), and only
+   when the device setting is not Off. It is in both the desktop menu and 14e's long-press
+   sheet, and runs after that sheet closes so the suggestions sheet keeps the focus.
+2. **On demand.** The tap loads the model if it is not up — a model already on this device
+   loads on the tap, a first download goes through 23d's `DownloadPrompt` — then reads **that
+   one note**, whether or not the stream would have, and opens the sheet. The sheet reports the
+   download, the load, the read and any failure, so the tap is never silent.
+3. **A deeper pass.** `passAt` (pure, in `spans.ts`) is the ladder: level 0 is the pinned
+   threshold and `MAX_SPANS_PER_NOTE`; each **Look again** drops the threshold and raises the
+   cap. A span the automatic pass would have thrown away is marked "unsure" rather than shown
+   as if it were as good as the rest. The depth is per note and lasts for the tab. Deeper is
+   offered on one note only: the same threshold over a whole page would be mostly noise.
+4. **The author asked.** An explicit ask undoes ✕ on that note (23d's local dismiss list),
+   because the author has just asked to see everything; ✕ inside the sheet still holds while
+   they go deeper. Nothing else changes: a suggestion still has no effect until it is accepted,
+   accepting is still one `PUT notes/{id}` by the author, and the note still never leaves the
+   device to be read.
+
 ## Verify
 
 1. `dotnet test` and `pnpm build` pass, `vitest` and `npx nuxi typecheck` pass,
@@ -473,6 +505,14 @@ Built for the model 23a picked. Names below say "the model".
 5. On B's phone: the download prompt, the create dialog and the sheet are reachable by touch,
    nothing sits under the keyboard or the home indicator, and the tab does not reload during
    extraction (23a's memory check).
+6. **23f.** B, with the model **not** loaded in a fresh tab, opens the menu on their own note
+   and taps "✨ Find suggestions": the model loads (or asks first, if this device has never
+   downloaded it), the sheet says what it is doing and then shows that note's suggestions.
+   **Look again** adds weaker spans, marked "unsure", and says "Looked twice · 5 suggestions";
+   a third tap says "That is as deep as the model goes on this note." A span B dismissed with
+   ✕ is back after the next "Find suggestions", and a ✕ during one sitting holds while B goes
+   deeper. The item is absent on A's notes, on an image note with no caption, and with the
+   device setting **Off**. Nothing is linked or created until B taps a chip.
 
 ## Notes / gotchas
 
@@ -737,6 +777,39 @@ checks them); none are committed.
 - **Tests**: `tests/unit/suggestions.test.ts` gains the inline rules (already mentioned, no
   longer in the prose, the cap and dismissals), the queue, and the labels; 705 web tests
   pass. **Not run against the real model or in a browser**, like 23b–23d.
+### As built, 23f
+
+- **`passAt(level, base)`** (`utils/extraction/spans.ts`, pure) is the ladder: the pinned
+  threshold × `[1, 0.625, 0.375]` with a 0.1 floor, and `[10, 20, 30]` spans — so at the pinned
+  0.4 the passes are 0.4/10, 0.25/20 and 0.15/30. `SUGGESTION_DEPTH_MAX` is 2. The level is
+  clamped, so a tap past the deepest pass changes nothing. A deeper pass costs the **same
+  inference**: only the two cut-offs move, which is why it is worth offering on one note.
+- **A pass per call.** `extract(text, pass?)` threads it down to `runChunk`'s sigmoid cut-off
+  and `finalSpans`, and `ToWorker.extract` carries it. `useExtractor.extract(noteId, text,
+  pass?)` defaults to `passAt(0, threshold)`, so the loose-ends page (which passes none) and
+  the stream share one memo entry; the pass is part of the memo key **and** of the queue key,
+  so a deeper request queues beside a pending shallow one instead of stealing its result.
+- **On demand** (`composables/useNoteSuggestions.ts`): `ask()` puts the note in `asked`, which
+  exempts it from the in-view rule in `pump`, and appends it to the queue, which `pump` takes
+  from the end — so the author's ask jumps the queue. `lookAgain()` raises that note's level
+  and asks again. A per-note `phase` (`idle | working | done | error`) is what the sheet
+  reports; the automatic reads stay `idle` and say nothing.
+- **The cap.** `inlineSuggestions` takes a `max`: three chips on the automatic pass (23d.3),
+  the pass's own cap once the author has asked. So the card's "✨ 7" and the sheet agree, and a
+  deeper pass is not silently truncated to three.
+- **The tap loads the model**, which is the one place in the stream that may download:
+  `NoteSuggestionsChip.ask()` opens the sheet and calls `ensure({ consent: true })` when the
+  weights are already on this device, and shows 23d's `DownloadPrompt` first when they are not.
+  `SessionNoteCard` reads the device setting through a new `suggestionsSetting()` export, which
+  touches neither the runtime config nor the worker, so hiding the item costs a card nothing.
+- **"Look again" doubles as Retry**: after a failed load or a failed read it repeats the same
+  pass instead of going deeper, and the sheet's status line says which failed.
+- **Tests**: `passAt`'s ladder, clamp and floor, and that a deeper pass keeps what the first one
+  found (`extractionSpans.test.ts`); `withoutNoteDismissals`, `isUnsure`, `depthLabel`, the
+  unsure aria label and the raised cap (`suggestions.test.ts`); the menu item's placement and
+  who never sees it (`noteActions.test.ts`). 743 web tests pass. **Not run against the real
+  model or in a browser**, like 23b–23e.
+
 ### Where the weights come from
 
 - **Self-hosted by default.** The weights are served from the app's own origin, fetched at

@@ -1,11 +1,18 @@
 <template>
     <Card class="flex flex-col gap-3 p-3">
         <!-- "Suggestions on this device" (23b): a per-device setting, kept in localStorage. -->
-        <div>
+        <div class="flex flex-col gap-2">
             <h3 class="font-medium">✨ Suggestions on this device</h3>
             <p class="text-sm text-muted-foreground">
-                The suggestion model runs on this device and proposes links in your own notes. Your notes are not sent
-                anywhere to be read, and nothing is linked until you accept it.
+                Suggestions come from a small model that runs inside your browser, on this device. What you write in
+                your campaign is <b class="font-medium text-foreground">never sent to an outside AI service</b> — not to
+                OpenAI, not to Anthropic, not to anyone else — and it never will be. Nothing is linked until you accept
+                it.
+            </p>
+            <p class="text-sm text-muted-foreground">
+                Two things do leave this device: the model's own files, downloaded once from
+                {{ extractor.source.value.host }}, and the names the model picks out, which go to this campaign's own
+                server to ask whether they already have a wiki entry. Your notes themselves stay here.
             </p>
         </div>
 
