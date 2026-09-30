@@ -10,10 +10,15 @@ import {
     acceptBody,
     batches,
     createDefaults,
+    depthLabel,
     dismissKey,
     DISMISSED_KEY,
     isLinkableSpan,
+    isUnsure,
     kindWithArticle,
+    modelSuggestionAriaLabel,
+    NOTHING_DEEPER_LABEL,
+    withoutNoteDismissals,
     lookingAtLabel,
     mergeSuggestions,
     readDismissed,
@@ -401,5 +406,59 @@ describe("inline suggestions (23e)", () => {
             "Unlink the 14 mentions this model suggested in your notes? Mentions you typed yourself stay."
         );
         expect(revertQuestion(1)).toMatch(/^Unlink the mention this model/);
+    });
+});
+
+describe("asking again, deeper (23f)", () => {
+    it("clears one note's dismissals and leaves every other note's alone", () => {
+        const list = [
+            dismissKey("N1", "Greyhollow", "v1"),
+            dismissKey("n1", "Rellan", "v2"),
+            dismissKey("n2", "Greyhollow", "v1"),
+        ];
+        expect(withoutNoteDismissals(list, "n1")).toEqual([dismissKey("n2", "Greyhollow", "v1")]);
+        // The note id is compared folded, as `dismissKey` writes it.
+        expect(withoutNoteDismissals(list, "N1")).toHaveLength(1);
+        expect(withoutNoteDismissals(list, "nope")).toEqual(list);
+    });
+
+    it("marks only a span under the model's own threshold as unsure", () => {
+        expect(isUnsure({ confidence: 0.22 }, 0.4)).toBe(true);
+        expect(isUnsure({ confidence: 0.4 }, 0.4)).toBe(false);
+        expect(isUnsure({ confidence: 0.8 }, 0.4)).toBe(false);
+    });
+
+    it("says so in the chip's accessible name", () => {
+        const s = model(span("the low road", 0, 0.2), null);
+        expect(modelSuggestionAriaLabel(s, true)).toMatch(/The model is unsure of this one$/);
+        expect(modelSuggestionAriaLabel(s)).not.toMatch(/unsure/);
+    });
+
+    it("labels the pass the sheet is showing", () => {
+        expect(depthLabel(0, 3)).toBe("Found 3 suggestions.");
+        expect(depthLabel(0, 1)).toBe("Found 1 suggestion.");
+        expect(depthLabel(0, 0)).toBe("Found nothing.");
+        expect(depthLabel(1, 5)).toBe("Looked twice · 5 suggestions.");
+        expect(depthLabel(2, 0)).toBe("Looked 3 times · nothing.");
+        expect(NOTHING_DEEPER_LABEL).toMatch(/deep/);
+    });
+
+    it("shows more than 23d's three chips once the author has asked", () => {
+        const text = "Ash, Bree, Cole and Dunmore met Eska";
+        const found = [
+            model(span("Ash", 0, 0.99), null),
+            model(span("Bree", 5, 0.7), null),
+            model(span("Cole", 11, 0.6), null),
+            model(span("Dunmore", 20, 0.95), null),
+            model(span("Eska", 32, 0.5), null),
+        ];
+        expect(inlineSuggestions(text, found)).toHaveLength(3);
+        expect(inlineSuggestions(text, found, undefined, 20).map((s) => s.text)).toEqual([
+            "Ash",
+            "Dunmore",
+            "Bree",
+            "Cole",
+            "Eska",
+        ]);
     });
 });

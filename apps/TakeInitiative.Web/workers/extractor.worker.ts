@@ -74,7 +74,7 @@ scope.onmessage = ({ data }) => {
             return;
         }
         try {
-            post({ type: "result", id: data.id, spans: await extractor.extract(data.text) });
+            post({ type: "result", id: data.id, spans: await extractor.extract(data.text, data.pass) });
         } catch (e) {
             post({ type: "error", id: data.id, message: e instanceof Error ? e.message : String(e) });
         }

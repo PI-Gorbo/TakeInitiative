@@ -29,6 +29,26 @@ describe("noteActionsFor", () => {
         ]);
     });
 
+    it("offers Find suggestions to the author, after Edit, when the model is not Off (23f)", () => {
+        expect(noteActionsFor(note(), { isAuthor: true, isDm: false, canSuggest: true })).toEqual([
+            "promote",
+            "edit",
+            "suggest",
+            "visibility",
+            "copyLink",
+            "delete",
+        ]);
+    });
+
+    it("never offers Find suggestions to someone who cannot accept it, or on a note with no text", () => {
+        // Only the author can accept a suggestion (invariant 4).
+        expect(noteActionsFor(note(), { isAuthor: false, isDm: true, canSuggest: true })).not.toContain("suggest");
+        // An image note with no caption: nothing for the model to read.
+        expect(
+            noteActionsFor(note({ text: "   " }), { isAuthor: true, isDm: false, canSuggest: true })
+        ).not.toContain("suggest");
+    });
+
     it("gives another player only copy link", () => {
         expect(noteActionsFor(note(), { isAuthor: false, isDm: false })).toEqual(["promote", "copyLink"]);
     });

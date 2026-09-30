@@ -72,9 +72,11 @@
                     aria-hidden="true" />
                 Editing
             </span>
-            <!-- "✨ 3" (23e): the suggestion model's suggestions, on the viewer's own notes only. -->
+            <!-- "✨ 3" (23e): the suggestion model's suggestions, on the viewer's own notes only.
+                 The menu's "Find suggestions" (23f) calls `ask()` on it. -->
             <SuggestionsNoteSuggestionsChip
                 v-if="ownInStream"
+                ref="suggestionsChip"
                 :campaignId="campaignId"
                 :note="note"
                 :target="cardEl"
@@ -168,6 +170,7 @@
     import { apiErrorMessage } from "~/utils/apiErrorParser";
     import type { Session, SessionNote, Visibility } from "~/utils/api/types";
     import { NOTE_LINK_PARAM, noteActionsFor, noteLink, type NoteAction } from "~/utils/noteActions";
+    import { suggestionsSetting } from "~/composables/useExtractor";
     import {
         deleteNoteMutation,
         putNoteHiddenMutation,
@@ -218,6 +221,9 @@
     const noteHref = computed(
         () => `/app/campaigns/${encodeURIComponent(props.campaignId)}?${NOTE_LINK_PARAM}=${encodeURIComponent(props.note.id)}`
     );
+    // "✨ Find suggestions" is offered unless the suggestion model is Off on this device (23f).
+    // Reading the setting does not touch the model, the config or the network.
+    const suggestionsOn = suggestionsSetting();
     const actions = computed<NoteAction[]>(() =>
         props.timeline
             ? props.promoteEntryId && !isPendingNote(props.note.id)
@@ -226,6 +232,7 @@
             : noteActionsFor(props.note, {
                   isAuthor: props.note.authorMemberId === props.currentMemberId,
                   isDm: props.isDm,
+                  canSuggest: suggestionsOn.value !== "off",
               })
     );
 
@@ -239,6 +246,8 @@
     const ownInStream = computed(
         () => !props.timeline && !!props.note.text && props.note.authorMemberId === props.currentMemberId
     );
+    // Mounted whenever `ownInStream`, which is every note the menu offers "Find suggestions" on.
+    const suggestionsChip = useTemplateRef<{ ask: () => Promise<void> }>("suggestionsChip");
 
     useLongPress(
         cardEl,
@@ -270,6 +279,9 @@
                     break;
                 case "edit":
                     startEdit();
+                    break;
+                case "suggest":
+                    await suggestionsChip.value?.ask();
                     break;
                 case "visibility":
                     if (visibility && visibility !== props.note.visibility) {
