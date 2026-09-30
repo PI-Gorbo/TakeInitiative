@@ -34,10 +34,10 @@ leaves the app runnable:
 |---|---|---|---|---|
 | 26a | `v2/26a-knowledge-base-plan` | This plan | Docs only | [ ] |
 | 26b | `v2/26b-kb-parser` | `packages/TakeInitiative.KnowledgeBase`: the ported parser and the row model | 25's app unchanged, and nothing references the package yet. Its tests reproduce the Node script's output from the same fixtures, byte for byte | [x] built; 66 tests |
-| 26c | `v2/26c-kb-cli` | The schema, the upsert and `apps/TakeInitiative.KnowledgeBase.Cli` | The same. `ingest --dry-run` reports a diff; `ingest` upserts into Postgres. Nothing reads the table yet | step 1 [x]; rest [ ] |
+| 26c | `v2/26c-kb-cli` | The schema, the upsert and `apps/TakeInitiative.KnowledgeBase.Cli` | The same. `ingest --dry-run` reports a diff; `ingest` upserts into Postgres. Nothing reads the table yet | [x] built; 90 tests |
 | 26d₁ | `v2/26d1-reference-async` | `IReferenceProvider` goes async | No behaviour change at all. The SRD provider wraps its in-memory lookups; every call site awaits. Independent of 26b, so it can land first | [x] built |
-| 26d₂ | `v2/26d2-kb-provider` | The 5eTools provider reads Postgres | ⌘K behaves as it did after 21c, with its 5eTools rows served from the database. `FiveEToolsIndex`, its options and `scripts/5etools/` are gone | [ ] |
-| 26e | `v2/26e-kb-api` | The browse API | `GET knowledge-base` lists, filters and pages; `GET knowledge-base/{provider}/{id}` answers one row. No UI yet | [ ] |
+| 26d₂ | `v2/26d2-kb-provider` | The 5eTools provider reads Postgres | ⌘K behaves as it did after 21c, with its 5eTools rows served from the database. `FiveEToolsIndex`, its options and `scripts/5etools/` are gone | [x] built |
+| 26e | `v2/26e-kb-api` | The browse API | `GET knowledge-base` lists, filters and pages. **No second per-item route**: `GET reference/{provider}/{itemId}` has answered that since step 20 and already returns the summary with `statBlock: null` for a search-only provider | [x] built |
 | 26f | `v2/26f-kb-page` | The Knowledge base page | Wiki ▸ Knowledge base browses, filters and searches on a phone and on a desktop. ⌘K gains "Browse all". The step's Verify passes | [ ] |
 | 26g | `v2/26g-kb-images` | The artwork slot | A row and its detail show the item's 5eTools artwork where one exists, with a fallback, loaded from their CDN and never stored | [ ] |
 
@@ -201,9 +201,27 @@ create table knowledge_base_item (
   duplicate at line 327. That is what makes a link durable across re-ingests, and it is the
   single most important thing the port must preserve.
 - **Search** gets a stored generated `tsvector` column over `name`, plus a `gin_trgm_ops`
-  index on `lower(name)` for fuzzy matching — the same two-pronged approach step 17 uses for
-  entries, following `SearchSchema`'s pattern for adding a generated column through Marten's
-  `ExtendedSchemaObjects`.
+  index on `lower(name)`. **The two indexes cannot be the only filter**, which an earlier draft
+  of this step assumed:
+  - `pg_trgm`'s index-backed `<%` reads `pg_trgm.word_similarity_threshold` (0.6), not the
+    app's `EntryMatchOptions.Default.MinSimilarity` (0.5), so relying on it would silently drop
+    matches the SRD provider finds. The fuzzy rung's floor is a property of the app, not of a
+    database session.
+  - The index is on `lower(name)`; the ladder folds with `lower(unaccent(name))`, and
+    `unaccent` is not immutable, so no index can hold it. Prefiltering on `lower(name)` alone
+    loses "uber" → "Überwald", which 21b's in-memory provider handled.
+
+  So the query is a four-term disjunction that is a **superset** of what the ladder then
+  matches: the tsvector index, the trigram index, the fuzzy rung above the app's own floor, and
+  any name the fold changes. The first two serve the common cases; rung 4 and the accent case
+  are scored over the rows that come back, exactly as `EntryMatcher` already does for entry
+  names.
+
+  **Follow-up, deliberately not done here:** a stored `lower(unaccent(name))` column written by
+  the ingest and indexed with `gin_trgm_ops` collapses those four terms into one index scan. It
+  is a change to `KnowledgeBaseSchema` and `KnowledgeBaseStore`, which 26c settled, and the
+  corpus is small enough that it does not matter yet. It is the right fix if browse or ⌘K ever
+  feels slow on a full 5eTools ingest.
 - **Indexes**: the `tsvector`, the trigram index, and a plain `(provider, category,
   source_book)` for the browse page's filters.
 - Created through the same `ExtendedSchemaObjects` path the search schema uses, so the API
@@ -375,8 +393,11 @@ Deleted:
   Safe because 26b vendored `fixture/` into the test project
 - `apps/TakeInitiative.Api/src/Features/Reference/FiveETools/FiveEToolsIndex.cs`,
   `FiveEToolsOptions.cs`, `FiveEToolsCatalog.cs`, `FiveEToolsReferenceProvider.cs`
-- `apps/TakeInitiative.Api.Tests/Fixtures/5etools-index.json`, once its tests move to the
-  new provider
+- ~~`apps/TakeInitiative.Api.Tests/Fixtures/5etools-index.json`~~ — **kept.** It is the only
+  corpus in the repository holding a name that collides with an SRD monster (`Goblin Boss`),
+  and that collision is the entire basis of step 20's "SRD ranks first at the same rung"
+  assertion. The parser's corpus has none, so deleting this would have meant giving that
+  assertion up. It is now read as plain data and written through the real `KnowledgeBaseStore`
 
 ## Steps
 
