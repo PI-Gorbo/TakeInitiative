@@ -41,6 +41,13 @@ public record SessionNote
     /// treats a missing value as false.
     /// </summary>
     public bool HasImages { get; init; }
+    /// <summary>
+    /// The mentions the author made by accepting a suggestion (23c.4), with the model and version
+    /// that proposed each, kept in step with the text on every edit
+    /// (<see cref="Suggestions.SuggestedMentions"/>). Every other mention was typed by a member.
+    /// A note projected before step 23 has none.
+    /// </summary>
+    public SuggestedMention[] SuggestedMentions { get; init; } = [];
 
     public const int TextMaxLength = 10_000;
     public const int MaxImages = 10;
@@ -98,6 +105,7 @@ public record SessionNote
         var images = @event.Data.Images ?? Images;
         return this with
         {
+            SuggestedMentions = Suggestions.SuggestedMentions.After(Text, SuggestedMentions, @event.Data),
             Text = @event.Data.Text,
             MentionedEntryIds = MentionParser.EntryIds(@event.Data.Text),
             IsRecap = @event.Data.IsRecap,

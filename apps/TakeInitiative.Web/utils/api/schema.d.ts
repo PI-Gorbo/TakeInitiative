@@ -148,6 +148,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/campaigns/{campaignId}/suggestions/models": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetSuggestionModels"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/campaigns/{campaignId}/suggestions/match": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["PostSuggestionMatch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/campaigns/{campaignId}/suggestions/revert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["PostSuggestionRevert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/campaigns/{campaignId}/notes/{noteId}": {
         parameters: {
             query?: never;
@@ -981,6 +1029,68 @@ export interface components {
         PutUsernameRequest: {
             newUsername: string;
         };
+        GetSuggestionModelsResponse: {
+            models: components["schemas"]["SuggestionModelResponse"][];
+        };
+        SuggestionModelResponse: {
+            model: string;
+            version: string;
+            /** Format: int32 */
+            mentions: number;
+            /** Format: int32 */
+            notes: number;
+        };
+        GetSuggestionModelsRequest: Record<string, never>;
+        PostSuggestionMatchResponse: {
+            matches: (components["schemas"]["SuggestionMatchResponse"] | null)[];
+        };
+        SuggestionMatchResponse: {
+            entry: components["schemas"]["EntrySummaryResponse"];
+            /** Format: double */
+            similarity: number;
+        };
+        EntrySummaryResponse: {
+            /** Format: guid */
+            id: string;
+            name: string;
+            kind: components["schemas"]["EntryKind"];
+            aliases: string[];
+            visibility: components["schemas"]["Visibility"];
+            editAccess: components["schemas"]["EditAccess"];
+            /** Format: guid */
+            creatorMemberId: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            /** Format: guid */
+            claimedByMemberId?: string | null;
+            mergedFromIds: string[];
+        };
+        /** @enum {string} */
+        EntryKind: "Character" | "Place" | "Faction" | "Item" | "Event" | "Other";
+        /** @enum {string} */
+        Visibility: "Everyone" | "DM" | "Me";
+        /** @enum {string} */
+        EditAccess: "Anyone" | "OnlyMe";
+        PostSuggestionMatchRequest: {
+            spans: components["schemas"]["SuggestionSpanRequest"][];
+        };
+        SuggestionSpanRequest: {
+            text: string;
+            kind?: components["schemas"]["EntryKind"] | null;
+        };
+        PostSuggestionRevertResponse: {
+            /** Format: int32 */
+            notes: number;
+            /** Format: int32 */
+            mentions: number;
+            createdEntries: components["schemas"]["EntrySummaryResponse"][];
+        };
+        PostSuggestionRevertRequest: {
+            model: string;
+            version: string;
+        };
         DeleteSessionNoteRequest: Record<string, never>;
         GetSessionNoteResponse: {
             note: components["schemas"]["SessionNoteResponse"];
@@ -1007,8 +1117,6 @@ export interface components {
             hiddenByMemberId?: string | null;
             images: components["schemas"]["NoteImageResponse"][];
         };
-        /** @enum {string} */
-        Visibility: "Everyone" | "DM" | "Me";
         NoteImageResponse: {
             /** Format: guid */
             id: string;
@@ -1028,6 +1136,13 @@ export interface components {
             at: string;
             /** Format: int32 */
             imageCount: number;
+            model?: components["schemas"]["ModelSuggestion"] | null;
+        };
+        ModelSuggestion: {
+            name: string;
+            version: string;
+            /** Format: double */
+            confidence: number;
         };
         GetSessionNoteHistoryRequest: Record<string, never>;
         GetSessionsResponse: {
@@ -1105,8 +1220,6 @@ export interface components {
             name: string;
             kind: components["schemas"]["EntryKind"];
         };
-        /** @enum {string} */
-        EntryKind: "Character" | "Place" | "Faction" | "Item" | "Event" | "Other";
         PostStartSessionRequest: {
             /** Format: int32 */
             number: number;
@@ -1116,6 +1229,19 @@ export interface components {
             isRecap: boolean;
             newEntries?: components["schemas"]["NewEntryRequest"][] | null;
             imageIds?: string[] | null;
+            suggestion?: components["schemas"]["SuggestionRequest"] | null;
+        };
+        SuggestionRequest: {
+            model: string;
+            version: string;
+            /** Format: double */
+            confidence: number;
+            /** Format: int32 */
+            start: number;
+            /** Format: int32 */
+            length: number;
+            /** Format: guid */
+            entryId: string;
         };
         PutSessionNoteHiddenRequest: {
             hidden: boolean;
@@ -1157,26 +1283,6 @@ export interface components {
             blockId?: string | null;
             snippet?: components["schemas"]["Snippet"] | null;
         };
-        EntrySummaryResponse: {
-            /** Format: guid */
-            id: string;
-            name: string;
-            kind: components["schemas"]["EntryKind"];
-            aliases: string[];
-            visibility: components["schemas"]["Visibility"];
-            editAccess: components["schemas"]["EditAccess"];
-            /** Format: guid */
-            creatorMemberId: string;
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: date-time */
-            updatedAt: string;
-            /** Format: guid */
-            claimedByMemberId?: string | null;
-            mergedFromIds: string[];
-        };
-        /** @enum {string} */
-        EditAccess: "Anyone" | "OnlyMe";
         /** @enum {string} */
         SearchMatchedOn: "Name" | "Alias" | "Article";
         Snippet: {
@@ -2119,6 +2225,122 @@ export interface operations {
                 content: {
                     "text/plain": unknown;
                     "application/json": unknown;
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GetSuggestionModels: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetSuggestionModelsResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PostSuggestionMatch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostSuggestionMatchRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostSuggestionMatchResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PostSuggestionRevert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostSuggestionRevertRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostSuggestionRevertResponse"];
                 };
             };
             /** @description Unauthorized */

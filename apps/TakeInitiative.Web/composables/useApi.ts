@@ -63,6 +63,9 @@ import { getConnectionEvidenceRequest } from "~/utils/api/connection/getConnecti
 import { getConnectionGraphRequest } from "~/utils/api/connection/getConnectionGraphRequest";
 import { getLooseEndsRequest } from "~/utils/api/looseEnd/getLooseEndsRequest";
 import { getLooseEndCountsRequest } from "~/utils/api/looseEnd/getLooseEndCountsRequest";
+import { postSuggestionMatchRequest } from "~/utils/api/suggestion/postSuggestionMatchRequest";
+import { getSuggestionModelsRequest } from "~/utils/api/suggestion/getSuggestionModelsRequest";
+import { postSuggestionRevertRequest } from "~/utils/api/suggestion/postSuggestionRevertRequest";
 
 export const useApi = () => {
     const { $axios } = useNuxtApp();
@@ -152,6 +155,11 @@ export const useApi = () => {
         looseEnd: {
             list: getLooseEndsRequest($axios),
             counts: getLooseEndCountsRequest($axios),
+        },
+        suggestion: {
+            match: postSuggestionMatchRequest($axios),
+            models: getSuggestionModelsRequest($axios),
+            revert: postSuggestionRevertRequest($axios),
         },
         admin: {
             getMaintenance: getMaintenanceRequest($axios),

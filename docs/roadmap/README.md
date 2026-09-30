@@ -1,8 +1,7 @@
 # TakeInitiative Revival Roadmap
 
 Open this file at the start of every session. It is the single source of truth for
-what is done, what is next, and what blocks what. An orchestrator picking the build up should read
-[HANDOVER.md](HANDOVER.md) first.
+what is done, what is next, and what blocks what.
 
 ## The rule
 
@@ -98,7 +97,7 @@ Steps 08–11 ship as one stack of PRs (`gh stack`), one PR per step.
 | 20 | [SRD reference](20-srd-reference.md) | `done` | 17 | Bundled SRD 5.2 provider, stat-block card, + wiki with Stats |
 | 21 | [5eTools index](21-5etools-index.md) | `done` (21a–21c); 21d `deferred` | 20 | Preprocessing script, search-only provider, deep links. **Deferred (2026-09-28): 21d (deleting the four Bestiary branches, the user's to run) and step 21's "Decisions for the user", until a later pass after cleanup** |
 | 22 | [D&D Beyond link](22-ddb-link.md) | `deferred` | 15 | Sheet URL on player characters, manual refresh of core stats. **Deferred (2026-09-28):** only the plan (#254) is on the stack; no code. Its decisions wait for the later pass |
-| 23 | [In-browser suggestions](23-suggestions.md) | `in progress` | 15, 17 | Zero-shot extraction (GLiNER small v2.5, picked by 23a's spike) in the browser; suggestions, never facts |
+| 23 | [In-browser suggestions](23-suggestions.md) | `done` | 15, 17 | Zero-shot extraction (GLiNER small v2.5, picked by 23a's spike) in the browser; suggestions, never facts |
 | 24 | Discord import | `todo` | 16, 23 | Import a Discord export into sessions, with suggested mentions to review |
 | 25 | [Wiki redesign](25-wiki-redesign.md) | `done` | 15, 19, 20 | Mobile-first entry page (Summary \| Notes tabs, collapsed sections), a desktop side panel, "Played by" for claims, no "Add a note" on the wiki |
 

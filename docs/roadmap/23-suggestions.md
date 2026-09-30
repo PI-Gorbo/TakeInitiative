@@ -42,9 +42,9 @@ step 22's plan (#254); this file is #255. Each PR leaves the app runnable:
 |---|---|---|---|---|
 | 23a | `v2/23a-extraction-spike` | The spike: which GLiNER variant, measured, and its weights pinned | The app unchanged for users. A Node runner and a static browser harness (`scripts/extraction-spike/`) run each variant over the invented test set and print size, load, latency and F1. The decision is written into this file | [x] |
 | 23b | `v2/23b-extractor-runtime` | The extractor: worker, lazy load, weights, cache, device setting (web) | Nothing visible except "Suggestions on this device" on the Me page. The model is fetched only on request, cached, and run in a worker; the normal bundle does not grow by more than a few KB | [x] |
-| 23c | `v2/23c-suggestions-api` | Match, provenance and revert (API) | 22's app unchanged in the browser. `POST suggestions/match` matches spans; `PUT notes/{id}` accepts a `suggestion` and records `Actor.Model`; the note history shows it; `POST suggestions/revert` unlinks one model version's mentions for their author | [ ] |
-| 23d | `v2/23d-suggestions-loose-ends` | Suggestions in Loose ends (web) | Unlinked notes on the loose-ends page offer ✨ suggestions beside 19's link suggestions; accepting links or creates-and-links | [ ] |
-| 23e | `v2/23e-suggestions-inline` | Inline on the author's notes, history, revert (web) | "✨ 3" on the author's own note cards, the ✨ line in note history, and "Accepted suggestions" with Revert on the Me page. The step's Verify passes | [ ] |
+| 23c | `v2/23c-suggestions-api` | Match, provenance and revert (API) | 22's app unchanged in the browser. `POST suggestions/match` matches spans; `PUT notes/{id}` accepts a `suggestion` and records `Actor.Model`; the note history shows it; `POST suggestions/revert` unlinks one model version's mentions for their author | [x] |
+| 23d | `v2/23d-suggestions-loose-ends` | Suggestions in Loose ends (web) | Unlinked notes on the loose-ends page offer ✨ suggestions beside 19's link suggestions; accepting links or creates-and-links | [x] |
+| 23e | `v2/23e-suggestions-inline` | Inline on the author's notes, history, revert (web) | "✨ 3" on the author's own note cards, the ✨ line in note history, and "Accepted suggestions" with Revert on the Me page. The step's Verify passes | [x] |
 
 Suggestions in the composer while typing, on other members' notes, on article blocks and on
 images, a server-side model, fine-tuning, and the Discord import (24) are not in 23 (Notes,
@@ -88,7 +88,6 @@ way (offline is out of scope, §12).
 - `docs/roadmap/23-suggestions.md`: this file
 - `docs/roadmap/README.md`: link step 23, `in progress`; mark step 21's 21d and its decisions,
   and step 22, **deferred**
-- `docs/roadmap/HANDOVER.md`: the deferrals, the stash, and "Next work" pointing here
 
 **23a** (as built: the runner lives in `scripts/`, not a dev page, so the web app gains no
 dependency)
@@ -122,7 +121,7 @@ dependency)
 - Web add `components/Suggestions/{NoteSuggestionsChip,NoteSuggestionsSheet,AcceptedSuggestions}.vue`, `utils/api/suggestion/{postSuggestionRevertRequest,getSuggestionModelsRequest}.ts`
 - Web modify `components/Session/SessionNoteCard.vue` (the chip, author only), the note history view (the ✨ line), `pages/app/me.vue` (Accepted suggestions), `composables/useCampaignHub.ts` (nothing new pushed; invalidate the suggestion-models query on `sessionNoteUpserted`)
 - Web modify `tests/unit/suggestions.test.ts`
-- `docs/roadmap/23-suggestions.md`, `README.md`, `HANDOVER.md`: tick and close the step
+- `docs/roadmap/23-suggestions.md`, `README.md`: tick and close the step
 
 ## Steps
 
@@ -436,8 +435,7 @@ Built for the model 23a picked. Names below say "the model".
    notes · **Revert**". Revert asks "Unlink the 14 mentions this model suggested in your
    notes? Mentions you typed yourself stay." and then lists `createdEntries` with links
    ("These entries were created from its suggestions and stay: …").
-5. **Close the step**: tick this file's PR table, set README's status to `done`, update
-   HANDOVER.
+5. **Close the step**: tick this file's PR table and set README's status to `done`.
 
 ## Verify
 
@@ -606,6 +604,139 @@ checks them); none are committed.
 - **Not done**: no phone or real-browser numbers yet (23a's harness is still the user's).
   The phone default stays "Ask" until they exist.
 
+### As built, 23c
+
+- **Endpoints**: `POST suggestions/match`, `GET suggestions/models`, `POST suggestions/revert`
+  (`src/Features/Suggestions/Api/`), and `PUT notes/{id}`'s optional `suggestion`
+  (`{ model, version, confidence, start, length, entryId }`). Shapes as in 23c above.
+- **Matching** is 19b's: one `EntryMatcher.MatchAsync` call with `LooseEnds.MatchOptions`
+  (`Take = 2`, `MinSimilarity = 0.6`), then `LinkSpans.Accepts`. The matcher folds case and
+  accents (`lower(unaccent(…))`), so "rellan" matches and the answer carries the entry's own
+  name ("Rellan Ashvale"). 23b's "Try it" printed "rellan" because the invented sample sentence
+  itself says "met rellan": the web slices spans from the note's text and loses no case.
+  The model's `kind` is accepted but not used.
+- **The event**: `Actor(MemberId, ModelSuggestion? Model)` as planned (`Actor.Suggested(…)`).
+  **Deviation:** `SessionNoteEdited` gained one optional field, `Suggestion`
+  (`SuggestedSpan(Start, Length, EntryId)`), rather than a doc comment only, so the projection
+  knows which mention the edit added without guessing from a diff. Old events read it as null.
+- **The one-span rule** (`SuggestionEdit.Check`): the new text must equal the old with exactly
+  `@[span](entry:id)` at `start`, and `MentionParser` must see the old mentions plus that one
+  (so a span inside a mention, a link or code is a 400). A span with `[`, `]`, `\`, a backtick
+  or a newline, with outer spaces, or splitting a surrogate pair is refused. The recap flag and
+  images must not change. The entry must be one the author can see (unknown, hidden and merged
+  look the same) or the single `newEntries` entry; a created entry's `EntryCreated` carries the
+  same Actor. All of it is 400 with `errors.suggestion`.
+- **`SessionNote.SuggestedMentions`** rows are `{ entryId, start, text, model, version,
+  confidence }` (`text` added so revert can check the literal `@[text](entry:id)` is still
+  there). They are carried through each edit by its common prefix and suffix: rows outside the
+  changed stretch stay or shift; rows inside it follow their literal in order only when the
+  stretch has as many of that literal before and after, else they are dropped (the mention then
+  counts as hand-typed). Not `MentionParser` offsets: Markdig's parse was not needed for this.
+- **History**: each version has `model` (`{ name, version, confidence }` or null), flat on
+  the version rather than under `actor`. The entry history does not show the model (not asked
+  for; `EntryCreated` has it).
+- **Revert** appends one plain `SessionNoteEdited` per note it changes and pushes
+  `sessionNoteUpserted`. `createdEntries` are read from the caller's listed entries created
+  from a note whose `EntryCreated` carries that model and version.
+- **Caveats**: `models` and `revert` load the caller's notes in the campaign and filter in
+  memory (one member's notes; no index on the new field). A revert that also touches another
+  version's identical mention in the same changed stretch drops that row too (it would take
+  two mentions with the same entry and text in one note from two versions).
+- **Tests**: `SuggestionEditTests` (unit, 10), `SuggestionMatchTests`, `SuggestionAcceptTests`,
+  `SuggestionRevertTests`, `SuggestionLeakTests`; 939 API tests pass.
+
+### As built, 23d
+
+- **Where it lives.** `composables/useLooseEndSuggestions.ts` runs the page: once the list has
+  a note row with text (an unlinked note, or a captioned untagged image), it calls
+  `useExtractor().ensure()` without consent, so 23b's `decideLoad` alone decides: Off never,
+  Ask only with the model already on this device and not on mobile data, Automatic unless on
+  mobile data. When the model is `ready` it extracts the listed notes in the worker (the API's
+  order, newest first), drops spans the one-span rule would refuse (`isLinkableSpan`: brackets,
+  a backslash, a backtick, a newline, outer spaces, over 80 characters), and matches every span
+  with `POST suggestions/match` in batches of 50 (`utils/queries/suggestions.ts`,
+  `matchSuggestionSpans`; no vue-query cache, since suggestions are per device). It looks again
+  when the listed notes change (a row resolved), keeping the old chips until the new answer.
+  The rows read their chips through `provide`/`inject` (`LOOSE_END_SUGGESTIONS`), so
+  `LooseEndList` is unchanged.
+- **"✨ Find suggestions"** (`Suggestions/FindSuggestionsButton.vue`, above the list, hidden
+  with the setting Off or with no note rows): with the model on this device a tap loads it;
+  otherwise a tap opens `Suggestions/DownloadPrompt.vue` (the plan's text, the size from the
+  manifest, a link to "Suggestions on this device" on the Me page, and a line saying it always
+  asks on mobile data when metered). Then it shows the download/load progress with Cancel, an
+  error with Retry, "✨ Looking at 12 notes…", and finally "✨ 5 suggestions" or "✨ No
+  suggestions".
+- **Merging** (`utils/suggestions.ts`, `mergeSuggestions`): a model match whose entry 19's link
+  suggestions already offer adds ✨ to 19's chip (`LinkSuggestions.vue`) instead of a second
+  chip; a model **create** over a span a 19 chip covers is dropped; one chip per entry; dismissed
+  ones out; at most three of the model's own chips, matches first, then by confidence. Tapping a
+  ✨ 19 chip records the model only when the model's span is the same span as 19's (same start
+  and length); otherwise it is 19's plain link.
+- **Chips** (`LooseEnds/ModelSuggestions.vue`): "✨ **Rellan** → 👤 @Rellan Ashvale?" and "✨
+  **Greyhollow Keep** looks like a Place · + Create", dashed gold borders (19's are solid), each
+  with a 44 px ✕ that hides it on this device (`ti.suggestions.dismissed`, key `noteId|folded
+  span|model version`, 500 kept, oldest dropped).
+- **Accepting** builds the body with `acceptBody` (19's `findSpan`/`linkSpan`, so a span that
+  moved is still found; `suggestion.start` is where it is in the text being replaced, and the
+  confidence is clamped to [0, 1]). The row then resolves as 19e's do.
+- **Creating** (`Suggestions/CreateFromSuggestion.vue`, a bottom sheet on a phone and a centred
+  dialog from `md`, reka-ui like `EvidenceSheet`): the name (the span, editable), the kind as
+  `Composer/KindChips.vue` with the model's kind picked, and "Visible to …" shown read-only. The
+  API decides it (`NewEntryRequest` has no visibility; `NewEntries.VisibilityFrom`: the note's,
+  a hidden `Everyone` note gives `DM`), and `newEntryVisibility` mirrors it for the label. On
+  "Create and link" it first runs `match` on the typed name; a hit shows "@X is already in the
+  wiki · Link to @X instead" and the button becomes "Create anyway". A 409 duplicate name offers
+  the clashing entry the same way. The text keeps the author's words (`@[span](entry:newId)`),
+  and the entry gets the typed name.
+- **Row label**: `looseEndRowLabel` gives "Unlinked note · 2 suggestions" (the ✨ count: 19
+  chips with ✨ plus the model's own), plain before the model has looked or with Off. The
+  plan's "Unlinked" stays 19e's "Unlinked note". No count elsewhere changes.
+- **Deviations from Files touched**: `utils/api/session/putSessionNoteRequest.ts` needed no
+  change (the request spreads the body, and the regenerated schema already has `suggestion`);
+  the orchestration is a composable (`useLooseEndSuggestions.ts`) rather than code in the page;
+  `utils/queries/suggestions.ts` holds the batched call, not a query. `LooseEndList.vue` is
+  unchanged.
+- **Tests**: `tests/unit/suggestions.test.ts` (merging, the ✨ marker, the cap and order,
+  labels, the dismiss key, cap and storage, the create defaults, the accept body); 700 web tests
+  pass. Nothing here was run against the real model or in a browser.
+
+### As built, 23e
+
+- **The chip** (`Suggestions/NoteSuggestionsChip.vue`) sits in `Session/SessionNoteCard.vue`'s
+  header, before the menu, on the viewer's own notes with text in the stream (not on an
+  entry's timeline, not while the note is sending or being edited). It shows "✨ 3" only when
+  the model is `ready` in this tab and has read the note. It never starts a download: when a
+  card mounts and the model is already on this device, `ensure()` is called once per tab
+  without consent, so 23b's `decideLoad` decides (Off never, Ask and Automatic not on mobile
+  data), as on the loose-ends page.
+- **Reading notes lazily** (`composables/useNoteSuggestions.ts`, tab-wide like the extractor):
+  one `IntersectionObserver` (200 px margin) over the author's cards; a card in view is queued
+  (at most 12, `INLINE_QUEUE_MAX`; the last to come into view goes first), one note at a time
+  in the worker after `requestIdleCallback`; a card scrolled away before its turn is skipped.
+  Spans go to `match` in batches of up to 50 when the queue drains. Results are kept in memory
+  for the tab, keyed by note id and text: an edit or an accepted suggestion reads the note
+  again. `inlineSuggestions` (pure) drops a match for an entry the note already mentions (by
+  entry, not only at that span, which is stricter than the plan) and a span no longer in the
+  note's prose, then applies 23d's merge (three per note, matches first, dismissals out; the
+  dismiss list is 23d's).
+- **The sheet** (`Suggestions/NoteSuggestionsSheet.vue`, reka-ui like `EvidenceSheet`): the
+  note, 23d's `LooseEnds/ModelSuggestions.vue` chips, and Edit (`useComposerEdit().start`).
+  A match links in one tap (`composables/useAcceptSuggestion.ts`, now shared with
+  `LooseEndRow`); "+ Create" closes the sheet and opens 23d's `CreateFromSuggestion`.
+- **History**: `Session/NoteHistoryDialog.vue` shows "✨ suggested by gliner_small-v2.5 (0.87)"
+  on a version with a `model`, the provenance version in its tooltip. The plan's "Linked
+  @Rellan Ashvale ·" prefix is not shown: the version's text already has the mention.
+- **Accepted suggestions** (`Suggestions/AcceptedSuggestions.vue`) is on the Me page in its own
+  "Your notes" section under "This device" (it is about the account, not the device): per
+  campaign with any, "gliner_small-v2.5 · 14 mentions in 9 notes" with the provenance version
+  under it and **Revert**. Revert asks the plan's question, then says "Unlinked … " and lists
+  `createdEntries` as links ("These entries were created from its suggestions and stay").
+  `GET suggestions/models` is one `useQueries` per campaign; it re-reads on any
+  `sessionNoteUpserted` push (`useCampaignHub`) and after a revert, which also refreshes the
+  streams, loose ends, connections and note histories.
+- **Tests**: `tests/unit/suggestions.test.ts` gains the inline rules (already mentioned, no
+  longer in the prose, the cap and dismissals), the queue, and the labels; 705 web tests
+  pass. **Not run against the real model or in a browser**, like 23b–23d.
 ### Where the weights come from
 
 - **Self-hosted by default.** The weights are served from the app's own origin, fetched at

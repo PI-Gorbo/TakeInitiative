@@ -116,6 +116,14 @@ export type LooseEnd = Schemas["LooseEndResponse"];
 export type LooseEndKind = Schemas["LooseEndKind"];
 export type LooseEndCounts = Schemas["LooseEndCountsResponse"];
 export type LinkSuggestion = Schemas["LinkSuggestionResponse"];
+/** Suggestions (23c, 23d): a model span matched against the wiki, and an accepted one's provenance on `PUT notes/{id}`. */
+export type SuggestionMatch = Schemas["SuggestionMatchResponse"];
+export type SuggestionSpanRequest = Schemas["SuggestionSpanRequest"];
+export type SuggestionRequest = Schemas["SuggestionRequest"];
+/** Accepted suggestions (23e): per model version, in the caller's own notes; revert's answer. */
+export type SuggestionModelUsage = Schemas["SuggestionModelResponse"];
+export type SuggestionRevertResult = Schemas["PostSuggestionRevertResponse"];
+export type NewEntryRequest = Schemas["NewEntryRequest"];
 /** Reference (20b, 20c): a ⌘K reference hit, and an item with its stat block and attribution. */
 export type SearchReferenceHit = Schemas["SearchReferenceHit"];
 export type ReferenceItem = Schemas["ReferenceItemResponse"];

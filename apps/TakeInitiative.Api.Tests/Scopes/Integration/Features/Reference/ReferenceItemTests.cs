@@ -32,10 +32,11 @@ public class ReferenceItemTests(AuthenticatedWebAppWithDatabaseFixture fixture)
                 s.Provider == "srd52" && s.ProviderLabel == "SRD 5.2" && s.Id == "goblin-warrior"
                 && s.Name == "Goblin Warrior" && s.HasStatBlock && s.SuggestedKind == EntryKind.Character);
             item.Summary.Stats.Should().Be(new StatsResponse { InitiativeRoll = "1d20+2", MaxHp = "3d6", Ac = 15 });
-            item.StatBlock.Ac.Should().Be(15);
-            item.StatBlock.HitDice.Should().Be("3d6");
-            item.StatBlock.Cr.Should().Be("1/4");
-            item.StatBlock.Actions.Select(a => (a.Kind, a.Name)).Should().Contain(
+            var statBlock = item.StatBlock!;
+            statBlock.Ac.Should().Be(15);
+            statBlock.HitDice.Should().Be("3d6");
+            statBlock.Cr.Should().Be("1/4");
+            statBlock.Actions.Select(a => (a.Kind, a.Name)).Should().Contain(
                 [(StatBlockActionKind.Action, "Scimitar"), (StatBlockActionKind.BonusAction, "Nimble Escape")]);
             item.Attribution.Text.Should().Contain("System Reference Document 5.2").And.Contain("Creative Commons");
             item.Attribution.LicenseUrl.Should().StartWith("https://creativecommons.org/");

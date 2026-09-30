@@ -74,13 +74,16 @@ public static class NewEntries
     /// <summary>
     /// Checks <paramref name="newEntries"/> and appends an <see cref="EntryCreated"/> for each.
     /// The caller saves them with the note's events. Returns the new ids, for
-    /// <see cref="NotifyCreated"/> after the save.
+    /// <see cref="NotifyCreated"/> after the save. <paramref name="actor"/> is the author, and
+    /// carries the model when the entry comes from an accepted suggestion (23c); by default it is
+    /// the author alone.
     /// </summary>
     public static Task<IReadOnlyList<Guid>> AppendNewEntries<TRequest, TResponse>(
         this Endpoint<TRequest, TResponse> endpoint, IDocumentSession session, Guid campaignId, Member author,
-        Guid noteId, string text, Visibility visibility, IReadOnlyList<NewEntryRequest>? newEntries, CancellationToken ct)
+        Guid noteId, string text, Visibility visibility, IReadOnlyList<NewEntryRequest>? newEntries, CancellationToken ct,
+        Actor? actor = null)
         where TRequest : notnull
-        => endpoint.AppendNewEntries(session, campaignId, author, text, "the note's text", newEntries, _ => visibility, noteId, ct);
+        => endpoint.AppendNewEntries(session, campaignId, author, text, "the note's text", newEntries, _ => visibility, noteId, ct, actor);
 
     /// <summary>
     /// The general form, shared by notes and articles (15e): each new entry's visibility comes
@@ -90,7 +93,7 @@ public static class NewEntries
     public static async Task<IReadOnlyList<Guid>> AppendNewEntries<TRequest, TResponse>(
         this Endpoint<TRequest, TResponse> endpoint, IDocumentSession session, Guid campaignId, Member author,
         string text, string where, IReadOnlyList<NewEntryRequest>? newEntries, Func<NewEntryRequest, Visibility> visibilityOf,
-        Guid? createdFromNoteId, CancellationToken ct)
+        Guid? createdFromNoteId, CancellationToken ct, Actor? actor = null)
         where TRequest : notnull
     {
         if (newEntries is null || newEntries.Count == 0)
@@ -134,7 +137,7 @@ public static class NewEntries
         foreach (var entry in newEntries)
         {
             session.Events.StartStream<Entry>(entry.Id, new EntryCreated(
-                Actor: Actor.Member(author.MemberId),
+                Actor: actor ?? Actor.Member(author.MemberId),
                 CampaignId: campaignId,
                 CreatorMemberId: author.MemberId,
                 Name: entry.Name.Trim(),
