@@ -34,9 +34,9 @@ leaves the app runnable:
 | PR | Branch | Sub-step | Runnable state after merge | Status |
 |---|---|---|---|---|
 | 26a | `v2/26a-knowledge-base-plan` | This plan | Docs only | [ ] |
-| 26b | `v2/26b-kb-parser` | `packages/TakeInitiative.KnowledgeBase`: the ported parser and the row model | 25's app unchanged, and nothing references the package yet. Its tests reproduce the Node script's output from the same fixtures, byte for byte | [ ] |
+| 26b | `v2/26b-kb-parser` | `packages/TakeInitiative.KnowledgeBase`: the ported parser and the row model | 25's app unchanged, and nothing references the package yet. Its tests reproduce the Node script's output from the same fixtures, byte for byte | [x] built; 66 tests |
 | 26c | `v2/26c-kb-cli` | The schema, the upsert and `apps/TakeInitiative.KnowledgeBase.Cli` | The same. `ingest --dry-run` reports a diff; `ingest` upserts into Postgres. Nothing reads the table yet | [ ] |
-| 26d₁ | `v2/26d1-reference-async` | `IReferenceProvider` goes async | No behaviour change at all. The SRD provider wraps its in-memory lookups; every call site awaits. Independent of 26b, so it can land first | [ ] |
+| 26d₁ | `v2/26d1-reference-async` | `IReferenceProvider` goes async | No behaviour change at all. The SRD provider wraps its in-memory lookups; every call site awaits. Independent of 26b, so it can land first | [x] built |
 | 26d₂ | `v2/26d2-kb-provider` | The 5eTools provider reads Postgres | ⌘K behaves as it did after 21c, with its 5eTools rows served from the database. `FiveEToolsIndex`, its options and `scripts/5etools/` are gone | [ ] |
 | 26e | `v2/26e-kb-api` | The browse API | `GET knowledge-base` lists, filters and pages; `GET knowledge-base/{provider}/{id}` answers one row. No UI yet | [ ] |
 | 26f | `v2/26f-kb-page` | The Knowledge base page | Wiki ▸ Knowledge base browses, filters and searches on a phone and on a desktop. ⌘K gains "Browse all". The step's Verify passes | [ ] |
@@ -355,7 +355,8 @@ Modified:
 
 Deleted:
 
-- `scripts/5etools/` — the whole folder, in 26d, once 26b's golden test proves the port
+- `scripts/5etools/` — the whole folder, in 26d₂, once 26b's golden test proves the port.
+  Safe because 26b vendored `fixture/` into the test project
 - `apps/TakeInitiative.Api/src/Features/Reference/FiveETools/FiveEToolsIndex.cs`,
   `FiveEToolsOptions.cs`, `FiveEToolsCatalog.cs`, `FiveEToolsReferenceProvider.cs`
 - `apps/TakeInitiative.Api.Tests/Fixtures/5etools-index.json`, once its tests move to the
@@ -418,6 +419,13 @@ Deleted:
    returns null; `Find` reads one row.
 3. Delete the four `FiveETools*` files, `FiveEToolsOptions` from configuration, and
    `scripts/5etools/`. Move the provider's tests over.
+
+   **The test corpus was already vendored in 26b.** `packages/TakeInitiative.KnowledgeBase.Tests/Fixture/`
+   is a byte copy of `scripts/5etools/fixture/`, read from `AppContext.BaseDirectory`, so the
+   golden test has no notion of a repository root and survives this deletion. Do not go
+   looking for the fixtures — deleting the folder is safe. (An earlier draft of this plan said
+   to delete "the whole folder" without noticing it held the golden test's only input; 26b
+   caught it and copied the corpus rather than following the plan into a broken commit.)
 4. ⌘K for "beholder" against an ingested dev database returns what 21c returned.
 
 ### 26e. The browse API

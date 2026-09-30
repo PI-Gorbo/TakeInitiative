@@ -198,6 +198,10 @@ importers:
 
   packages/TakeInitiative.Dice.Tests: {}
 
+  packages/TakeInitiative.KnowledgeBase: {}
+
+  packages/TakeInitiative.KnowledgeBase.Tests: {}
+
 packages:
 
   '@alloc/quick-lru@5.2.0':

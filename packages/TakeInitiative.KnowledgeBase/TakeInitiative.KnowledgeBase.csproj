@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!-- The knowledge base's 5eTools parser (roadmap step 26b), a port of
+         scripts/5etools/build-5etools-index.mjs. Deliberately references nothing:
+         System.Text.Json ships in the shared framework, and 26c adds the Postgres
+         store in a project that references this one, so the parse stays free of
+         Marten, Npgsql and ASP.NET and can be run from a CLI or a test with no
+         host at all. -->
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>TakeInitiative.KnowledgeBase</RootNamespace>
+    </PropertyGroup>
+
+</Project>
