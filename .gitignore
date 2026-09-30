@@ -5,6 +5,10 @@
 
 # dotenv files
 .env
+# A filled-in copy of docs/deploy/production.env.example holds production secrets. The example
+# itself lives under docs/ and is not matched here.
+.env.*
+!.env.example
 
 # User-specific files
 *.rsuser

@@ -72,3 +72,18 @@ that off, for a database whose DDL is applied out of band.) To wipe it:
 ```bash
 docker compose -p takeinitiative -f compose.dev.yml down -v
 ```
+
+## Production
+
+Production runs from images built by GitHub Actions and pushed to GHCR
+(`.github/workflows/images.yml`), which Coolify pulls. Nothing on the server builds:
+`compose.prod.yml` has no build key anywhere, so it cannot.
+
+| File | What it is |
+| --- | --- |
+| `compose.prod.yml` | The committed production spec. Coolify runs it as a git-backed Docker Compose resource |
+| `docs/deploy/production.env.example` | Every environment variable production needs, which are secret, and where each is set |
+
+Postgres is not in that file — it is a Coolify-managed PostgreSQL 15 resource, so its
+lifecycle and its backups are separate from app redeploys. See
+`docs/roadmap/29-deploy.md` for the reasoning behind all of it.
