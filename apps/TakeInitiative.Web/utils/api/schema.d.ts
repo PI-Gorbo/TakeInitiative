@@ -340,6 +340,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/campaigns/{campaignId}/knowledge-base": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetKnowledgeBase"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/reference/{provider}/{itemId}": {
         parameters: {
             query?: never;
@@ -1335,6 +1351,42 @@ export interface components {
         /** @enum {string} */
         ReferenceCategory: "Monster" | "Spell" | "Item";
         GetSearchRequest: Record<string, never>;
+        KnowledgeBaseResponse: {
+            items: components["schemas"]["KnowledgeBaseItemResponse"][];
+            /** Format: int32 */
+            total: number;
+            facets: components["schemas"]["KnowledgeBaseFacetsResponse"];
+        };
+        KnowledgeBaseItemResponse: {
+            provider: string;
+            providerLabel?: string | null;
+            id: string;
+            name: string;
+            category: components["schemas"]["ReferenceCategory"];
+            label?: string | null;
+            book: string;
+            bookTitle?: string | null;
+            /** Format: int32 */
+            page?: number | null;
+            url: string;
+            imageUrl?: string | null;
+        };
+        KnowledgeBaseFacetsResponse: {
+            categories: components["schemas"]["KnowledgeBaseCategoryFacetResponse"][];
+            books: components["schemas"]["KnowledgeBaseBookFacetResponse"][];
+        };
+        KnowledgeBaseCategoryFacetResponse: {
+            category: components["schemas"]["ReferenceCategory"];
+            /** Format: int32 */
+            count: number;
+        };
+        KnowledgeBaseBookFacetResponse: {
+            book: string;
+            bookTitle?: string | null;
+            /** Format: int32 */
+            count: number;
+        };
+        GetKnowledgeBaseRequest: Record<string, never>;
         ReferenceItemResponse: {
             summary: components["schemas"]["ReferenceSummaryResponse"];
             statBlock?: components["schemas"]["StatBlock"] | null;
@@ -2810,6 +2862,49 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SearchResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GetKnowledgeBase: {
+        parameters: {
+            query?: {
+                q?: string | null;
+                category?: components["schemas"]["ReferenceCategory"] | null;
+                book?: string | null;
+                provider?: string | null;
+                skip?: number | null;
+                take?: number | null;
+            };
+            header?: never;
+            path: {
+                campaignId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KnowledgeBaseResponse"];
                 };
             };
             /** @description Unauthorized */

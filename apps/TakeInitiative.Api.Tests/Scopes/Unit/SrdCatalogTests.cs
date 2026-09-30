@@ -1,4 +1,6 @@
+using FakeItEasy;
 using FluentAssertions;
+using Marten;
 using Microsoft.Extensions.DependencyInjection;
 using TakeInitiative.Api.Bootstrap;
 using TakeInitiative.Api.Features.Entries;
@@ -119,15 +121,28 @@ public class SrdCatalogTests
         (await provider.Find("owlbear", CancellationToken.None)).Should().Be(item.Summary);
     }
 
+    /// <summary>
+    /// The registration order, which is behaviour and not bookkeeping: <c>ReferenceSearchProvider</c>
+    /// breaks a tie on the match ladder by a provider's position in this list, so SRD 5.2 being first is
+    /// what makes it rank above a 5eTools row of the same name and the same similarity (step 20). The
+    /// ranking itself is asserted end to end in <c>KnowledgeBaseReferenceTests</c>, which has a corpus
+    /// with two names the SRD also has.
+    /// </summary>
     [Fact]
-    public async Task AddReference_RegistersTheSrdProvider_ThenTheFiveEToolsOne()
+    public async Task AddReference_RegistersTheSrdProvider_ThenTheKnowledgeBaseOne()
     {
-        using var services = new ServiceCollection().AddReference().BuildServiceProvider();
+        // The knowledge-base provider reads the request's Marten session (26d₂). This test is about the
+        // registrations, not about a database, so the session is a fake and nothing here queries it.
+        using var services = new ServiceCollection()
+            .AddScoped(_ => A.Fake<IQuerySession>())
+            .AddReference()
+            .BuildServiceProvider();
         using var scope = services.CreateScope();
         var catalog = scope.ServiceProvider.GetRequiredService<ReferenceCatalog>();
         catalog.Providers.Select(p => p.Key).Should().Equal("srd52", "5etools");
-        (await catalog.Providers[1].Search("goblin", 10, CancellationToken.None)).Should().BeEmpty("with no index configured the 5eTools provider is off");
+        catalog.Providers.Select(p => p.HasStatBlocks).Should().Equal(true, false);
         (await catalog.GetItem("SRD52", "goblin-warrior", CancellationToken.None))!.Summary.Name.Should().Be("Goblin Warrior");
-        (await catalog.GetItem("5etools", "goblin-warrior", CancellationToken.None)).Should().BeNull();
+        (await catalog.GetItem("5etools", "goblin-warrior", CancellationToken.None))
+            .Should().BeNull("the app never shows 5eTools content, so Get is always null");
     }
 }

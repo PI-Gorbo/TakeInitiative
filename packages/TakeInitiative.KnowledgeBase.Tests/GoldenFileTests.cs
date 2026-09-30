@@ -24,8 +24,12 @@ namespace TakeInitiative.KnowledgeBase.Tests;
 ///     --min-monsters 1
 /// </code>
 /// <para>
-/// Re-derive it with exactly that command while the script is still in the tree. The script has no
-/// timestamp in its output by design, so the command is idempotent.
+/// <b>That script is no longer in the tree.</b> 26d₂ deleted <c>scripts/5etools/</c> once this test was
+/// green, which is what it was kept for. The command is recorded because it is how the golden file was
+/// derived and the only way to re-derive it — from
+/// <c>git show &lt;a commit before 26d₂&gt;:scripts/5etools/build-5etools-index.mjs</c>, against
+/// <c>Fixture/data</c>, which is a byte copy of the <c>fixture/data</c> that command named. The script
+/// has no timestamp in its output by design, so it stays idempotent.
 /// </para>
 /// </remarks>
 public class GoldenFileTests

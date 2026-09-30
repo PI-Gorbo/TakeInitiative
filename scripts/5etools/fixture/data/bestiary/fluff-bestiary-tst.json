@@ -1,8 +1,0 @@
-{
-    "monsterFluff": [
-        { "name": "Test Gremlin", "source": "TST", "entries": ["Fluffword zorblatt: gremlins hum lullabies to broken kettles."] }
-    ],
-    "monster": [
-        { "name": "Test Fluff Phantom", "source": "TST", "page": 1, "size": ["M"], "type": "undead", "ac": [10], "hp": { "average": 5, "formula": "2d4" }, "cr": "0", "dex": 10 }
-    ]
-}

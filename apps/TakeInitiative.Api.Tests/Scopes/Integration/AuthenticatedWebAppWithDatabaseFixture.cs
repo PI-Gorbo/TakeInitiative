@@ -81,11 +81,13 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
     protected virtual void ConfigureTestServices(IServiceCollection services) { }
 
     /// <summary>
-    /// The 5eTools index the host reads (21b). Empty, so the provider is off and the Reference
-    /// section is step 20's, whatever the machine running the tests has built; a derived fixture
-    /// points it at the synthetic <c>Fixtures/5etools-index.json</c>.
+    /// Runs once the host is up and its schema applied, for a derived fixture that needs rows in a
+    /// table no endpoint writes. The knowledge base (26d₂) is the only one: it is written by the
+    /// ingest CLI, so a test host's table is empty unless a fixture seeds it — which is also the
+    /// state a deployment with nothing ingested is in, and what most of the Reference tests want.
     /// </summary>
-    protected virtual string FiveEToolsIndexPath => "";
+    /// <param name="connectionString">The container's database, the same one the host is bound to.</param>
+    protected virtual Task SeedDatabaseAsync(string connectionString) => Task.CompletedTask;
 
     public async Task InitializeAsync()
     {
@@ -101,7 +103,6 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
                             ["Blobs:CreateBucket"] = "false",
                             // Tests sweep by hand (ImageSweeper.SweepOnce), never in the background.
                             ["Images:SweepStartDelay"] = "1.00:00:00",
-                            ["Reference:FiveETools:IndexPath"] = FiveEToolsIndexPath,
                         });
                 })
            .ConfigureServices((context, services) =>
@@ -117,6 +118,10 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
                 })
         ));
 
+        // After the host, because the host is what creates the schema
+        // (ApplyAllDatabaseChangesOnStartup), and before the users, because a seeded corpus should
+        // be there for the first request a test makes.
+        await SeedDatabaseAsync(PostgreSqlContainer.GetConnectionString());
 
         // Seed database with tiny seed.
         // Sign Up With User1 Credentials.

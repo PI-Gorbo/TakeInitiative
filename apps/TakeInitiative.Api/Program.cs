@@ -64,6 +64,11 @@ internal class Program
         // Custom Injection
         builder.Services.AddOptionObjects(builder.Configuration);
         builder.Services.AddMartenDB(builder.Configuration);
+        // Cookie tickets are Data Protection payloads, so the key ring has to outlive the
+        // container or a redeploy signs everybody out. No-op unless DataProtection:KeyPath is set.
+        builder.Services.AddDataProtectionKeyRing(builder.Configuration);
+        // The reverse proxy in front of the API terminates TLS; see AddForwardedHeaders.
+        builder.Services.AddForwardedHeaders();
         builder.Services.AddSerilog();
         builder.AddIdentityAuthenticationAndAuthorization();
         builder.Services.AddDiceRollers(builder.Configuration);
@@ -101,11 +106,18 @@ internal class Program
 
         // The SRD data is embedded in this assembly: fail startup, not the first search, if it is missing.
         app.Services.GetRequiredService<SrdCatalog>().EnsureLoaded();
-        // The 5eTools index is optional: none is logged and the provider is off, but a bad file fails startup.
-        app.Services.GetRequiredService<FiveEToolsCatalog>();
+        // The 5eTools corpus is read from knowledge_base_item per request (26d₂), so there is nothing
+        // to load here and nothing that can fail startup. An empty table is a state, not an error: the
+        // Reference section is the SRD's alone and 26e's browse endpoint says why.
 
         // Map SignalR Hubs
         app.MapHub<CampaignHub>("/campaignHub");
+
+        // First, before anything can read Request.Scheme or the client address: TLS is terminated
+        // at the reverse proxy, which forwards plain HTTP, so without this every request looks like
+        // http from the proxy's own address. See Bootstrap.AddForwardedHeaders for why
+        // KnownIPNetworks/KnownProxies are empty and why that is safe here.
+        app.UseForwardedHeaders();
 
         app
             .UseCors("MainAppCors")

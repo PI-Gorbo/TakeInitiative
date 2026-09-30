@@ -1,6 +1,0 @@
-{
-    "name": "synthetic-5etools-fixture",
-    "private": true,
-    "version": "0.0.0-test",
-    "description": "Invented test data shaped like a 5etools source checkout. No real 5eTools content."
-}

@@ -238,7 +238,7 @@ Two things follow:
 - `CookieSecurePolicy.Always` in non-development sets `Secure` on the cookie regardless of what
   the API thinks the scheme is, so sign-in works — but any code that reads `Request.Scheme` or
   the client IP sees `http` and Traefik's address. 29b adds `UseForwardedHeaders` for
-  `XForwardedFor | XForwardedProto`, with `KnownNetworks`/`KnownProxies` cleared (the proxy is on
+  `XForwardedFor | XForwardedProto`, with `KnownIPNetworks`/`KnownProxies` cleared (the proxy is on
   a Docker bridge network whose address is not predictable). Do it as the *first* middleware.
 - `AllowedHosts` must name the API's real host, and `CORS:MainApp` the web app's real origin, or
   the browser gets a CORS failure that looks like the API being down.
@@ -252,6 +252,28 @@ domain and it breaks: cross-site XHR needs `SameSite=None; Secure`, and that is 
 nobody needs. **Keep the API on a subdomain of the web app's domain.**
 
 ---
+
+### `/healthz` is host-filtered (measured, 2026-10-01)
+
+`/healthz` needs no authentication, but it still passes through host filtering, which is
+active whenever `AllowedHosts` is set — and production sets it. Measured inside a container
+started with `AllowedHosts=api.example.test`:
+
+| Request | Result |
+|---|---|
+| `Host: api.example.test` | **200** |
+| no `Host` header (so `127.0.0.1`) | **400** |
+| `Host: evil.example` | **400** |
+
+`curl --fail` fails on a 400, so the obvious healthcheck never succeeds. With
+`restart: unless-stopped` the container flaps forever, and **Coolify reports the deploy as
+failed while the API behind it is working perfectly.** This is the single most confusing
+failure available in this step, because every log line looks fine.
+
+The image's `HEALTHCHECK` therefore derives its `Host` from the container's own
+`AllowedHosts` (the first `;`-separated name, defaulting to `localhost`), so it is correct in
+dev and in production without being configured twice. **29f's compose healthcheck has to do
+the same thing, or add `localhost` to `AllowedHosts`.**
 
 ## GHCR, since the point is partly to learn it
 
@@ -415,7 +437,28 @@ Since both the dev machine and the VPS are arm64, nothing here runs under emulat
 
 ---
 
-## Image size
+## Image size (measured, 2026-10-01 — the estimates below were all far too low)
+
+| | Measured |
+|---|---|
+| API image today (with the build fixed) | **1.12 GB** |
+| API image after `-a arm64` | **467 MB** (−58%) |
+| Published output | 536 MB → 63 MB |
+| `runtimes/` | 485 MB across **17** RID folders → **gone entirely** |
+
+Two corrections to what this plan originally said:
+
+- It counted only the 13 `linux-*` folders (≈150 MB) and missed `osx` (17 MB) and, far more
+  importantly, **`win-arm64` + `win-x64` + `win-x86` = 320 MB**. The Windows trio is two
+  thirds of the waste.
+- `-a $TARGETARCH` does **not** "keep one `runtimes/` folder". It removes `runtimes/`
+  altogether and flattens the single native asset to `/app/libSkiaSharp.so` (13 MB). Anyone
+  checking the fix by grepping for `runtimes/` will think it failed.
+
+`--no-self-contained` is passed explicitly on the publish, so a future SDK default cannot
+quietly turn a RID publish self-contained and double the image again.
+
+### Original estimates
 
 | Image | Roughly | What dominates |
 |---|---|---|
@@ -626,7 +669,8 @@ services:
         volumes:
             - takeapi-keys:/keys
         healthcheck:
-            test: ["CMD-SHELL", "curl --fail http://localhost:8080/healthz || exit 1"]
+            # NOT a plain curl: /healthz is host-filtered. See "/healthz is host-filtered".
+            test: ["CMD-SHELL", "curl -fsS -H \"Host: ${API_HOST}\" http://127.0.0.1:8080/healthz || exit 1"]
             interval: 30s
             retries: 5
             start_period: 60s
@@ -901,7 +945,7 @@ Each later sub-step branches from the one before (`gh stack` hangs in this repo;
    worth doing until it is fixed there.
 2. `DataProtection:KeyPath`: when set, persist the key ring there and `SetApplicationName("TakeInitiative")`.
    When unset (dev, tests), change nothing.
-3. `UseForwardedHeaders` for `XForwardedFor | XForwardedProto`, `KnownNetworks` and `KnownProxies`
+3. `UseForwardedHeaders` for `XForwardedFor | XForwardedProto`, `KnownIPNetworks` and `KnownProxies`
    cleared, as the first middleware. Comment why the lists are empty (the proxy is on a Docker
    network with no fixed address) and that the API is not reachable except through Traefik.
 4. Tests: the data-protection path with the setting present and absent, and the forwarded-headers
@@ -917,7 +961,9 @@ Production run from step 1 now creates both extensions and every table before th
    `-a $TARGETARCH` on both `restore` and `publish`.
 2. Runtime stage: `apt-get install -y --no-install-recommends curl` before the `COPY --from=build`,
    `mkdir -p /keys && chown $APP_UID:$APP_UID /keys`, then `USER $APP_UID`.
-3. `HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=5 CMD curl -fsS http://localhost:8080/healthz || exit 1`.
+3. `HEALTHCHECK` on `/healthz` — **but it must send a `Host` header the app accepts.** See
+   "`/healthz` is host-filtered" below. A plain `curl -fsS http://localhost:8080/healthz`
+   answers **400** whenever `AllowedHosts` is set, so the container would never go healthy.
 4. Keep `ASPNETCORE_HTTP_PORTS=8080` and `EXPOSE 8080` — `compose.dev.yml` maps `7402:8080`.
 5. `dockerfile.dockerignore`: add `!global.json` if the RID-specific restore needs it, and
    re-check the allowlist still covers everything the build reads.

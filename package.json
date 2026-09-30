@@ -18,8 +18,6 @@
         "gen:api": "pnpm turbo run gen:api --filter=@ti/web",
         "sync:version": "node scripts/sync-version.mjs",
         "srd:build": "node scripts/srd/build-srd52.mjs",
-        "5etools:build": "node scripts/5etools/build-5etools-index.mjs",
-        "5etools:test": "node --test \"scripts/5etools/*.test.mjs\"",
         "models:fetch": "node scripts/models/fetch-model.mjs",
         "models:export": "uv run scripts/gliner/export.py"
     },

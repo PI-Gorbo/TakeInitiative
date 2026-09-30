@@ -4,6 +4,7 @@ using Microsoft.Extensions.Primitives;
 using TakeInitiative.Api.Features.Campaigns;
 using TakeInitiative.Api.Features.Entries;
 using TakeInitiative.Api.Features.Images;
+using TakeInitiative.Api.Features.Reference;
 using TakeInitiative.Api.Features.Search;
 using TakeInitiative.Api.Features.Sessions;
 using TakeInitiative.Api.Features.Users;
@@ -338,6 +339,37 @@ public static class WebAppClientExtensions
     public static Task<Result<SearchResponse>> GetSearch(
         this IWebAppClient client, Guid campaignId, string q, string? sections = null, int? take = null)
         => client.Get<SearchResponse>(SearchUrl(campaignId, q, sections, take));
+
+    /// <summary>
+    /// The knowledge base's browse url (26e). Every filter is optional and only the ones a test names
+    /// are sent, so "no q at all" and "q=" are different requests, which is the difference between a
+    /// list and a search.
+    /// </summary>
+    public static string KnowledgeBaseUrl(
+        Guid campaignId, string? q = null, ReferenceCategory? category = null, string? book = null,
+        string? provider = null, int? skip = null, int? take = null)
+    {
+        var query = new List<string>();
+        if (q is not null) query.Add($"q={Uri.EscapeDataString(q)}");
+        if (category is not null) query.Add($"category={category}");
+        if (book is not null) query.Add($"book={Uri.EscapeDataString(book)}");
+        if (provider is not null) query.Add($"provider={Uri.EscapeDataString(provider)}");
+        if (skip is not null) query.Add($"skip={skip}");
+        if (take is not null) query.Add($"take={take}");
+        var url = $"/api/campaigns/{campaignId}/knowledge-base";
+        return query.Count == 0 ? url : url + "?" + string.Join("&", query);
+    }
+
+    /// <summary>One page of the knowledge base, asserting a 200.</summary>
+    public static async Task<KnowledgeBaseResponse> GetKnowledgeBase(
+        this IWebAppClient client, Guid campaignId, string? q = null, ReferenceCategory? category = null,
+        string? book = null, string? provider = null, int? skip = null, int? take = null)
+    {
+        var response = await client.Get<KnowledgeBaseResponse>(
+            KnowledgeBaseUrl(campaignId, q, category, book, provider, skip, take));
+        response.Should().Succeed();
+        return response.Value;
+    }
 
     /// <summary>One section's hits, or an empty list when the section is absent (it had nothing).</summary>
     public static SearchHit[] Section(this SearchResponse response, SearchSectionKey key)

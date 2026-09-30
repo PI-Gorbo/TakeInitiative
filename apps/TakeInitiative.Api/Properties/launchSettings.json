@@ -16,8 +16,7 @@
             "launchUrl": "swagger",
             "applicationUrl": "https://localhost:7010;http://localhost:5010",
             "environmentVariables": {
-                "ASPNETCORE_ENVIRONMENT": "Development",
-                "Reference__FiveETools__IndexPath": "../../.data/5etools/index.json"
+                "ASPNETCORE_ENVIRONMENT": "Development"
             }
         },
         "IIS Express": {

@@ -59,10 +59,13 @@ public class RecordingHubFixture : AuthenticatedWebAppWithDatabaseFixture
         => services.AddSingleton<IHubContext<CampaignHub>>(Hub);
 }
 
-/// <summary>A <see cref="RecordingHubFixture"/> whose host reads the synthetic 5eTools index (21b).</summary>
-public class FiveEToolsFixture : RecordingHubFixture
+/// <summary>
+/// A <see cref="RecordingHubFixture"/> with the synthetic 5eTools corpus ingested into
+/// <c>knowledge_base_item</c> (26d₂). Every other fixture leaves the table empty, which is the state
+/// a deployment with nothing ingested is in and what the rest of the Reference tests assert against.
+/// </summary>
+public class KnowledgeBaseFixture : RecordingHubFixture
 {
-    public static readonly string IndexPath = Path.Combine(AppContext.BaseDirectory, "Fixtures", "5etools-index.json");
-
-    protected override string FiveEToolsIndexPath => IndexPath;
+    protected override Task SeedDatabaseAsync(string connectionString)
+        => Features.Reference.KnowledgeBaseCorpus.SeedAsync(connectionString);
 }

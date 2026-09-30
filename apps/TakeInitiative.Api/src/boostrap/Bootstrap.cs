@@ -11,6 +11,8 @@ using Marten.Events.Projections;
 using Marten.Schema;
 using Weasel.Core;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using SendGrid.Extensions.DependencyInjection;
@@ -28,6 +30,15 @@ public static class Bootstrap
     /// Turns the startup schema migration off. On by default; see the comment beside the call.
     /// </summary>
     public const string ApplySchemaOnStartupKey = "Marten:ApplySchemaOnStartup";
+
+    /// <summary>
+    /// Where the cookie key ring is persisted. Unset — dev and the tests — changes nothing; see
+    /// <see cref="AddDataProtectionKeyRing"/>.
+    /// </summary>
+    public const string DataProtectionKeyPathKey = "DataProtection:KeyPath";
+
+    /// <summary>The application name pinned into the key ring; see <see cref="AddDataProtectionKeyRing"/>.</summary>
+    public const string DataProtectionApplicationName = "TakeInitiative";
 
     public static IServiceCollection AddMartenDB(this IServiceCollection services, IConfiguration config)
     {
@@ -196,6 +207,81 @@ public static class Bootstrap
     }
 
     /// <summary>
+    /// Persists the ASP.NET Core Data Protection key ring to <c>DataProtection:KeyPath</c> when that
+    /// setting has a value, and changes nothing at all when it does not.
+    /// <para>
+    /// Authentication is cookie-based (<c>AddCookieAuth</c>), so every sign-in ticket is encrypted
+    /// with a key from that ring. Nothing used to configure it, which means the ring was written to
+    /// <c>$HOME/.aspnet/DataProtection-Keys</c> inside the container and thrown away with the
+    /// container: <b>every redeploy signed every user out</b>. Production sets
+    /// <c>DataProtection__KeyPath=/keys</c> and mounts a named volume there, so the ring outlives
+    /// the container and a release stops being a mass sign-out.
+    /// </para>
+    /// <para>
+    /// <see cref="DataProtectionApplicationName"/> is pinned because the default discriminator is
+    /// the content-root path: keys written under one content root cannot be read under another, so
+    /// without it a moved <c>WORKDIR</c> would invalidate the ring the volume just preserved.
+    /// </para>
+    /// <para>
+    /// Unset is the dev and test default on purpose. `pnpm dev` and the Alba fixtures then get
+    /// ASP.NET Core's own behaviour, unchanged, rather than a key directory nobody asked for.
+    /// </para>
+    /// </summary>
+    public static IServiceCollection AddDataProtectionKeyRing(this IServiceCollection services, IConfiguration config)
+    {
+        var keyPath = config.GetValue<string>(DataProtectionKeyPathKey);
+        if (string.IsNullOrWhiteSpace(keyPath))
+        {
+            return services;
+        }
+
+        services.AddDataProtection()
+            .PersistKeysToFileSystem(new DirectoryInfo(keyPath))
+            .SetApplicationName(DataProtectionApplicationName);
+
+        return services;
+    }
+
+    /// <summary>
+    /// Configures <c>UseForwardedHeaders</c> for the reverse proxy that terminates TLS in front of
+    /// the API. <c>Program.cs</c> runs the middleware first, before anything can read
+    /// <c>Request.Scheme</c> or the client address.
+    /// <para>
+    /// <c>KnownIPNetworks</c> and <c>KnownProxies</c> are deliberately <b>empty</b>. The middleware
+    /// only honours the headers when the immediate peer is on that list, and its default list is
+    /// loopback alone — but the proxy reaches the API across a Docker network whose address is
+    /// assigned when the network is created and changes when it is recreated, so there is no address
+    /// to put on a list. Emptying both lists is what turns the check off; a list with a guessed
+    /// address in it would silently ignore the headers instead.
+    /// </para>
+    /// <para>
+    /// That is only safe because the API is not reachable except through the proxy: no service in
+    /// <c>compose.prod.yml</c> publishes a host port, the API is on the proxy's internal network,
+    /// and the only route in from the internet is the proxy itself. If the API is ever published
+    /// directly, a client could spoof its own address and scheme, and these two lists have to come
+    /// back.
+    /// </para>
+    /// <para>
+    /// Only the two headers the proxy actually sets are read. <c>X-Forwarded-Host</c> is left off:
+    /// <c>AllowedHosts</c> names the API's real host, and honouring a forwarded host would let the
+    /// header pick the host instead.
+    /// </para>
+    /// </summary>
+    public static IServiceCollection AddForwardedHeaders(this IServiceCollection services)
+    {
+        services.Configure<ForwardedHeadersOptions>(opts =>
+        {
+            opts.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+            // KnownIPNetworks, not KnownNetworks: the latter is [Obsolete] in .NET 10 (ASPDEPR005)
+            // and CI treats warnings as errors. They are two views of the same list.
+            opts.KnownIPNetworks.Clear();
+            opts.KnownProxies.Clear();
+        });
+
+        return services;
+    }
+
+    /// <summary>
     /// Images (step 16a): the S3 blob store, the processor, the bucket for dev and the
     /// sweeper. Building the S3 client does no I/O, so <c>--export-openapi</c> needs no
     /// blob store.
@@ -333,12 +419,19 @@ public static class Bootstrap
 
     /// <summary>
     /// Reference content (step 20a): the providers, registered in the order the Reference section
-    /// merges them (SRD 5.2 first, then the 5eTools index, 21b), and the catalog that lists them.
-    /// Each provider's data is read once and held, so the catalogs and providers are singletons.
+    /// merges them (SRD 5.2 first, then the 5eTools corpus, 21b), and the catalog that lists them.
     /// <para>
-    /// The 5eTools catalog reads <c>Reference:FiveETools:IndexPath</c> when it is built, not here,
-    /// so a test host's configuration applies. Its provider is always registered; with no index it
-    /// answers nothing, so the Reference section is exactly step 20's.
+    /// <b>The order is the behaviour.</b> <c>ReferenceSearchProvider</c> breaks a tie on the match
+    /// ladder by the provider's position in this list, so SRD 5.2 coming first is what makes it rank
+    /// above a 5eTools row of the same name and the same similarity (step 20). Moving a line here
+    /// changes ⌘K.
+    /// </para>
+    /// <para>
+    /// The SRD's catalogue is read once from the assembly and held, so it and its provider are
+    /// singletons. The knowledge-base provider (26d₂) reads <c>knowledge_base_item</c> through the
+    /// request's Marten session and so is scoped, which <c>ReferenceCatalog</c> was already scoped
+    /// for. Its table may be empty — nothing has been ingested — and that is a state rather than an
+    /// error: it answers no rows and the Reference section is exactly step 20's.
     /// </para>
     /// </summary>
     public static IServiceCollection AddReference(this IServiceCollection services)
@@ -346,12 +439,9 @@ public static class Bootstrap
         services.AddSingleton<SrdCatalog>();
         services.AddSingleton<SrdReferenceProvider>();
         services.AddSingleton<IReferenceProvider>(sp => sp.GetRequiredService<SrdReferenceProvider>());
-        services.AddSingleton(sp => FiveEToolsCatalog.FromConfiguration(
-            sp.GetService<IConfiguration>(),
-            sp.GetService<IHostEnvironment>()?.ContentRootPath,
-            sp.GetService<ILoggerFactory>()?.CreateLogger<FiveEToolsCatalog>()));
-        services.AddSingleton<FiveEToolsReferenceProvider>();
-        services.AddSingleton<IReferenceProvider>(sp => sp.GetRequiredService<FiveEToolsReferenceProvider>());
+        services.AddScoped<KnowledgeBaseQueries>();
+        services.AddScoped<KnowledgeBaseReferenceProvider>();
+        services.AddScoped<IReferenceProvider>(sp => sp.GetRequiredService<KnowledgeBaseReferenceProvider>());
         services.AddScoped<ReferenceCatalog>();
         return services;
     }
