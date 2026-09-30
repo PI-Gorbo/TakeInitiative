@@ -19,6 +19,15 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.6.0" />
+        <!-- The store's tests run against a real Postgres (26c). postgres:15-alpine is the
+             image compose.dev.yml and the API's Alba fixtures pin, so dev, the API suite and
+             this one all agree on the major version; the generated tsvector column and the
+             gin_trgm_ops index are not things to discover a difference in on a deploy. -->
+        <PackageReference Include="Testcontainers.PostgreSql" Version="3.9.0" />
+        <!-- Direct pin only to lift SSH.NET 2023.0.0 (GHSA-q939-rpr3-3284,
+             GHSA-mggc-4xg6-vcxf), pulled in transitively by Testcontainers. The same pin,
+             for the same reason, is in apps/TakeInitiative.Api.Tests. -->
+        <PackageReference Include="SSH.NET" Version="2026.0.0" />
         <PackageReference Include="xunit" Version="2.9.0" />
         <PackageReference Include="xunit.runner.visualstudio" Version="2.4.5">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

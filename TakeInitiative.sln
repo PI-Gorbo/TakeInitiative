@@ -19,6 +19,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TakeInitiative.KnowledgeBas
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TakeInitiative.KnowledgeBase.Tests", "packages\TakeInitiative.KnowledgeBase.Tests\TakeInitiative.KnowledgeBase.Tests.csproj", "{2169819B-12BE-4729-9321-79F50E7BA6D5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TakeInitiative.KnowledgeBase.Cli", "apps\TakeInitiative.KnowledgeBase.Cli\TakeInitiative.KnowledgeBase.Cli.csproj", "{B19F960A-7C2F-4556-93EA-B18B1C086864}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -101,6 +103,18 @@ Global
 		{2169819B-12BE-4729-9321-79F50E7BA6D5}.Release|x64.Build.0 = Release|Any CPU
 		{2169819B-12BE-4729-9321-79F50E7BA6D5}.Release|x86.ActiveCfg = Release|Any CPU
 		{2169819B-12BE-4729-9321-79F50E7BA6D5}.Release|x86.Build.0 = Release|Any CPU
+		{B19F960A-7C2F-4556-93EA-B18B1C086864}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B19F960A-7C2F-4556-93EA-B18B1C086864}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B19F960A-7C2F-4556-93EA-B18B1C086864}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B19F960A-7C2F-4556-93EA-B18B1C086864}.Debug|x64.Build.0 = Debug|Any CPU
+		{B19F960A-7C2F-4556-93EA-B18B1C086864}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B19F960A-7C2F-4556-93EA-B18B1C086864}.Debug|x86.Build.0 = Debug|Any CPU
+		{B19F960A-7C2F-4556-93EA-B18B1C086864}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B19F960A-7C2F-4556-93EA-B18B1C086864}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B19F960A-7C2F-4556-93EA-B18B1C086864}.Release|x64.ActiveCfg = Release|Any CPU
+		{B19F960A-7C2F-4556-93EA-B18B1C086864}.Release|x64.Build.0 = Release|Any CPU
+		{B19F960A-7C2F-4556-93EA-B18B1C086864}.Release|x86.ActiveCfg = Release|Any CPU
+		{B19F960A-7C2F-4556-93EA-B18B1C086864}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -112,5 +126,6 @@ Global
 		{D9C4317F-851E-4CD2-99F5-98585761EDC6} = {809F86A1-1C4C-B159-0CD4-DF9D33D876CE}
 		{C0FAA5DA-04EA-4780-AA46-DC0C6AEF13E3} = {809F86A1-1C4C-B159-0CD4-DF9D33D876CE}
 		{2169819B-12BE-4729-9321-79F50E7BA6D5} = {809F86A1-1C4C-B159-0CD4-DF9D33D876CE}
+		{B19F960A-7C2F-4556-93EA-B18B1C086864} = {CFC275A3-AD62-4ABC-A90B-AFDA010134E3}
 	EndGlobalSection
 EndGlobal

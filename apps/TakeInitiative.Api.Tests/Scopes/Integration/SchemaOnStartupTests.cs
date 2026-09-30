@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Npgsql;
 using TakeInitiative.Api.Bootstrap;
+using TakeInitiative.KnowledgeBase.Schema;
 using Testcontainers.PostgreSql;
 
 using ApiBootstrap = TakeInitiative.Api.Bootstrap.Bootstrap;
@@ -87,6 +88,22 @@ public class SchemaOnStartupTests(SchemaOnStartupTests.PostgresFixture fixture) 
         // starting and therefore before Kestrel would open the port.
         tables.Should().Contain("mt_events").And.Contain("mt_streams");
         tables.Should().Contain("mt_doc_entry").And.Contain("mt_doc_campaign").And.Contain("mt_doc_sessionnote");
+
+        // The knowledge base's table (26c). It hangs off no document type — it is written by a CLI and
+        // has no aggregate — so, exactly like the two extensions above, nothing in Marten's lazy
+        // per-document auto-create would ever reach it. It exists because it is an extended schema
+        // object and this setting applies them.
+        tables.Should().Contain(KnowledgeBaseSchema.TableName);
+
+        // And its three indexes, which is also the assertion that the ordering holds: the trigram
+        // index is `using gin (lower(name) gin_trgm_ops)`, so it can only have been created after
+        // pg_trgm was. If Weasel ever stopped writing extended schema objects in the order they were
+        // added, the start above would have failed outright.
+        var indexes = await Indexes(connectionString, KnowledgeBaseSchema.TableName);
+        indexes.Should()
+            .Contain(KnowledgeBaseSchema.SearchIndexName)
+            .And.Contain(KnowledgeBaseSchema.NameTrigramIndexName)
+            .And.Contain(KnowledgeBaseSchema.FilterIndexName);
     }
 
     /// <summary>
@@ -137,6 +154,12 @@ public class SchemaOnStartupTests(SchemaOnStartupTests.PostgresFixture fixture) 
 
     private static Task<List<string>> Tables(string connectionString) =>
         Query(connectionString, "select tablename from pg_tables where schemaname = 'public'");
+
+    private static Task<List<string>> Indexes(string connectionString, string table) =>
+        // The table name is a constant from the knowledge base's schema, never input.
+        Query(
+            connectionString,
+            $"select indexname from pg_indexes where schemaname = 'public' and tablename = '{table}'");
 
     private static async Task<List<string>> Query(string connectionString, string sql)
     {

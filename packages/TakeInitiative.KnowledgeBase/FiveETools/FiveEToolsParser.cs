@@ -81,7 +81,7 @@ public static partial class FiveEToolsParser
     /// </exception>
     public static FiveEToolsBuildResult Build(FiveEToolsParserOptions options)
     {
-        using var reader = new JsonReader();
+        using var reader = new JsonReader(options.OnFileRead);
 
         var (data, checkout) = FindDataDirectory(options.From);
         var baseUrl = options.BaseUrl.TrimEnd('/');

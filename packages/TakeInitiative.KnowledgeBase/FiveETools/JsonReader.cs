@@ -13,7 +13,13 @@ namespace TakeInitiative.KnowledgeBase.FiveETools;
 /// the whole build. This class keeps them and the build disposes it once, at the end, by which
 /// point the index holds nothing but strings and numbers.
 /// </remarks>
-internal sealed class JsonReader : IDisposable
+/// <param name="onFile">
+/// Called with each file's path as it is read, for the CLI's progress line (26c). Every data file
+/// the parse touches goes through this class, so this is the one place a caller has to hook to see
+/// them all; nothing about the parse depends on it, and it is null in every test but the one that
+/// asserts it fires.
+/// </param>
+internal sealed class JsonReader(Action<string>? onFile = null) : IDisposable
 {
     // 5eTools' files are wide rather than deep, but the default 64 is a limit Node's JSON.parse
     // does not have, and a port should not fail on a file the script would read.
@@ -24,6 +30,8 @@ internal sealed class JsonReader : IDisposable
     /// <exception cref="FiveEToolsBuildException">The file is missing or is not JSON.</exception>
     public JsonElement Read(string file)
     {
+        onFile?.Invoke(file);
+
         try
         {
             var document = JsonDocument.Parse(File.ReadAllBytes(file), Options);

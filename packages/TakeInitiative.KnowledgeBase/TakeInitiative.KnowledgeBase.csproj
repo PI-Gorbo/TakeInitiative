@@ -1,16 +1,25 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <!-- The knowledge base's 5eTools parser (roadmap step 26b), a port of
-         scripts/5etools/build-5etools-index.mjs. Deliberately references nothing:
-         System.Text.Json ships in the shared framework, and 26c adds the Postgres
-         store in a project that references this one, so the parse stays free of
-         Marten, Npgsql and ASP.NET and can be run from a CLI or a test with no
-         host at all. -->
+    <!-- The knowledge base's 5eTools parser (roadmap step 26b) and its Postgres store
+         (26c). The parser is a port of scripts/5etools/build-5etools-index.mjs and needs
+         nothing but System.Text.Json, which ships in the shared framework.
+
+         The store adds Npgsql and nothing else: no Marten, no Weasel, no ASP.NET. The
+         ingest is a command-line tool run from an operator's machine, so the write path
+         has to work with no host, no DI container and no web stack built around it — and
+         keeping Marten out also keeps it honest that this table is a flat one with no
+         events and no aggregate (see the plan's "It is deliberately not event-sourced").
+         Npgsql 8.0.3 is the version Marten 7.31.1 already pulls into the API, so the two
+         unify on one assembly rather than lifting the API's. -->
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <RootNamespace>TakeInitiative.KnowledgeBase</RootNamespace>
     </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Npgsql" Version="8.0.3" />
+    </ItemGroup>
 
 </Project>

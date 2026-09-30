@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Identity;
 using SendGrid.Extensions.DependencyInjection;
 using Serilog;
 using TakeInitiative.Api.Features.Admin;
+using TakeInitiative.Api.Features.Reference.KnowledgeBase;
 using TakeInitiative.Utilities;
 using Weasel.Postgresql;
 using Weasel.Postgresql.Tables;
@@ -43,6 +44,17 @@ public static class Bootstrap
             // Nothing is paid and nothing new runs (invariant 10).
             opts.Storage.ExtendedSchemaObjects.Add(new Extension("pg_trgm"));
             opts.Storage.ExtendedSchemaObjects.Add(new Extension("unaccent"));
+
+            // The knowledge base's table (26c): a flat table with no events and no aggregate,
+            // written by the ingest CLI and read by 26d's provider and 26e's browse endpoint. It is
+            // registered here, after pg_trgm, because its trigram index needs gin_trgm_ops and
+            // Weasel writes extended schema objects in the order they were added.
+            //
+            // The API creates it and the CLI never does. The CLI checks that it exists and stops
+            // with "start the API once" if it does not, so there is one owner for the schema in
+            // every environment rather than two that have to agree. See KnowledgeBaseTable for why
+            // it writes its own SQL instead of being a Weasel Table.
+            opts.Storage.ExtendedSchemaObjects.Add(new KnowledgeBaseTable(opts.DatabaseSchemaName));
 
             // Use system.text.json. Enums are stored as strings so LINQ queries and the
             // JSON bodies agree (Role is also [JsonConverter]-annotated for the API).

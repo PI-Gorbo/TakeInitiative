@@ -37,4 +37,16 @@ public sealed record FiveEToolsParserOptions
     /// rather than producing an index that a later prune would read as "everything is gone".
     /// </summary>
     public int MinMonsters { get; init; } = DefaultMinMonsters;
+
+    /// <summary>
+    /// Called with the path of each data file as it is read, so the CLI can print a progress line
+    /// per file (26c). A 5eTools checkout is a few hundred files and the parse is otherwise silent
+    /// for a minute; without this an operator cannot tell a slow read from a hang.
+    /// </summary>
+    /// <remarks>
+    /// It is the only thing in a parse that observes the outside world, and it deliberately cannot
+    /// influence it: the parse ignores what it returns, and a build's output does not depend on
+    /// whether it is set.
+    /// </remarks>
+    public Action<string>? OnFileRead { get; init; }
 }

@@ -50,5 +50,10 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\packages\TakeInitiative.Dice\TakeInitiative.Dice.csproj" />
+      <!-- The knowledge base (26c). The API needs the table's DDL and column names so that
+           ApplyAllDatabaseChangesOnStartup creates the table the ingest CLI writes to; 26d's
+           reference provider then reads it. The package pulls in Npgsql, which Marten already
+           brought, and nothing else. -->
+      <ProjectReference Include="..\..\packages\TakeInitiative.KnowledgeBase\TakeInitiative.KnowledgeBase.csproj" />
     </ItemGroup>
 </Project>
