@@ -670,7 +670,10 @@ services:
             - takeapi-keys:/keys
         healthcheck:
             # NOT a plain curl: /healthz is host-filtered. See "/healthz is host-filtered".
-            test: ["CMD-SHELL", "curl -fsS -H \"Host: ${API_HOST}\" http://127.0.0.1:8080/healthz || exit 1"]
+            # This sample substitutes API_HOST at compose time. The real compose.prod.yml instead
+            # derives the Host from the container's own AllowedHosts, which is the one-source-of-
+            # truth version this plan's own prose asks for. Read the file, not this block.
+            test: ["CMD-SHELL", 'allowed="$${AllowedHosts:-localhost}"; curl -fsS -H "Host: $${allowed%%;*}" http://127.0.0.1:8080/healthz || exit 1']
             interval: 30s
             retries: 5
             start_period: 60s
@@ -805,7 +808,7 @@ jobs:
               with:
                   context: .
                   file: ${{ matrix.dockerfile }}
-                  platforms: linux/amd64
+                  platforms: linux/arm64
                   push: true
                   tags: ${{ steps.meta.outputs.tags }}
                   labels: ${{ steps.meta.outputs.labels }}
@@ -1013,7 +1016,8 @@ finds it in `window.__NUXT__.config` — that grep is the whole point of the sub
 
 Verify: a `dev` push produces `edge` and `sha-<short>` on both packages; `workflow_dispatch`
 works; a `docker pull ghcr.io/pi-gorbo/takeinitiative-api:edge` on the Mac needs
-`--platform linux/amd64` and runs (slowly). The second build is visibly faster than the first —
+no `--platform` flag and runs natively, because the dev machine is arm64 too. The second build is
+visibly faster than the first —
 that is the `:buildcache` tag working.
 
 ### 29f. The production spec
@@ -1043,13 +1047,24 @@ later. Then run this step's **Verify** end to end.
    release's digest, redeploy, confirm the app still works, then go back. Write down where to
    find a digest: the Actions run summary, `docker image inspect` on the VPS, or the package's
    versions page.
-2. **Backups.** `pg_dump` over the SSH tunnel to a file on your machine; `mc mirror` (or
-   `rclone sync`) for the bucket. Both as copy-pasteable commands. Then **restore one** into a
-   local Postgres 15 and start the API against it — a backup nobody has restored is not a backup.
+2. **Backups.** **Two things cannot be rebuilt, not one.** Postgres is the campaign, and the
+   **MinIO volume is every photo anyone has uploaded** — an earlier draft of this step named only
+   Postgres and specified no bucket backup at all. `docs/deploy/operations.md` §3 fills the gap.
+
+   `pg_dump` for the database — and prefer a tunnel-free `docker exec … pg_dump > local file`
+   for anything scheduled, since a container IP changes on recreate. A `tar` of the MinIO volume
+   for the bucket, rather than `mc mirror`: MinIO publishes no host port and the `pgsty` rebuild's
+   bundled tooling is unverified. Then **restore one** into a local Postgres 15 and start the API
+   against it — a backup nobody has restored is not a backup, and a dump Postgres accepts but
+   Marten cannot read is not a restore.
 3. **The knowledge-base ingest tunnel** (step 26's consumer):
 
    ```sh
-   ssh -N -L 55432:<pg-internal-host>:5432 <user>@<vps>
+   # ssh -L resolves its destination FROM THE VPS, and the VPS cannot resolve a container's
+# internal hostname — Docker's embedded DNS at 127.0.0.11 exists only inside containers.
+# Read the container's IP first (IPs are routable from the host; they change on recreate).
+ssh <user>@<vps> 'docker inspect -f "{{range .NetworkSettings.Networks}}{{.IPAddress}} {{end}}" <pg-container>'
+ssh -N -L 55432:<pg-container-ip>:5432 <user>@<vps>
    dotnet run --project apps/TakeInitiative.KnowledgeBase.Cli -- ingest \
        --from ~/5etools-src/data \
        --connection "Host=localhost;Port=55432;Database=takeinitiative;User ID=…;Password=…"
@@ -1085,7 +1100,8 @@ Run in order. Every item is checkable; the last one is the point of the step.
    healthy.
 
 3. **The images are real.** On the Mac:
-   `docker pull --platform linux/amd64 ghcr.io/pi-gorbo/takeinitiative-web:latest`, run it with
+   `docker pull ghcr.io/pi-gorbo/takeinitiative-web:latest` (**no `--platform` flag**: the images
+   are arm64-only, so forcing amd64 fails outright, and an arm64 Mac runs them natively), run it with
    `NUXT_PUBLIC_AXIOS_BASE_URL` pointing at a local API, and sign in. Same image, different URL,
    no rebuild.
 
@@ -1162,8 +1178,9 @@ Run in order. Every item is checkable; the last one is the point of the step.
 - **~155 MB of the API image is unused SkiaSharp.** `SkiaSharp.NativeAssets.Linux.NoDependencies`
   4.152.1 ships 13 `runtimes/linux-*` folders at ~12 MB each, and a publish with no RID copies
   them all. `-a $TARGETARCH` keeps one.
-- **arm64 vs amd64.** The dev machine is arm64, GitHub's default runner is amd64, and the VPS is
-  unknown. Default `linux/amd64`. If both are ever needed, cross-build — the .NET SDK does it
+- **arm64 vs amd64.** ~~The VPS is unknown.~~ **Settled 2026-10-01: arm64.** See "Architecture:
+  arm64 (settled)". The dev machine is arm64 too, so nothing runs emulated anywhere and no
+  `--platform` flag belongs in any command here. If amd64 is ever needed, cross-build — the .NET SDK does it
   with `-a $TARGETARCH`, and the web `.output` is architecture-independent (checked:
   `@huggingface/tokenizers` is pure JS, `onnxruntime-web` is WASM, no `sharp`), so pinning the
   build stages to `$BUILDPLATFORM` gives a multi-arch manifest without QEMU. Never build these
@@ -1217,7 +1234,7 @@ Run in order. Every item is checkable; the last one is the point of the step.
 
 Each has the default this plan assumes.
 
-1. **The VPS: which provider, how big, and what architecture.** *Default assumed: an amd64 VPS
+1. ~~**The VPS: which provider, how big, and what architecture.**~~ **Settled: an Ubuntu box on arm64.** The text below is kept only so the reasoning is not re-derived. *Originally: an amd64 VPS
    with 2 vCPU and 4 GB.* Unknown to this plan, and it decides 29e's `platforms:` line. If it is
    arm64 (Hetzner CAX, Oracle Ampere), say so and 29e becomes `runs-on: ubuntu-24.04-arm` with
    `platforms: linux/arm64`. Because nothing builds on the box, 2 GB is workable but leaves
