@@ -37,9 +37,9 @@ runnable:
 
 | PR | Branch | Sub-step | Runnable state after merge | Status |
 |---|---|---|---|---|
-| 28a | `v2/28a-kb-suggestions-plan` | This plan | Docs only | [ ] |
-| 28b | `v2/28b-kb-match-api` | The match query and the dismissal (API) | 27's app unchanged in the browser. `GET entries/{id}/knowledge-base-suggestions` answers candidates, and `POST …/dismiss` silences them | [ ] |
-| 28c | `v2/28c-kb-prompt` | The prompt on the entry page | The prompt, Link it, No, and the empty case. The step's Verify passes | [ ] |
+| 28a | `v2/28a-kb-suggestions-plan` | This plan | Docs only | [x] |
+| 28b | `v2/28b-kb-match-api` | The match query and the dismissal (API) | 27's app unchanged in the browser. `GET entries/{id}/knowledge-base-suggestions` answers candidates, and `POST …/dismiss` silences them | [x] built |
+| 28c | `v2/28c-kb-prompt` | The prompt on the entry page | The prompt, Link it, No, and the empty case. The step's Verify passes | [x] built |
 
 ## Depends on
 

@@ -95,7 +95,7 @@ Steps 08–11 ship as one stack of PRs (`gh stack`), one PR per step.
 | 25 | [Wiki redesign](25-wiki-redesign.md) | `done` | 15, 19, 20 | Mobile-first entry page (Summary \| Notes tabs, collapsed sections), a desktop side panel, "Played by" for claims, no "Add a note" on the wiki |
 | 26 | [Knowledge base](26-knowledge-base.md) | `done` | 20, 21 | A .NET ingest CLI, the slim 5eTools index in Postgres with a `tsvector`, and a **browsable Knowledge base surface** so reference rows have somewhere to live |
 | 27 | [Links](27-links.md) | `done` | 26 | The `EntryLink` seam becomes real: `knowledgebase` and `external` links on an entry, with events, history and visibility |
-| 28 | [Knowledge-base match suggestions](28-kb-suggestions.md) | `todo` | 26, 27, 23 | On an entry that looks like a knowledge-base item, offer the link and let the user confirm it |
+| 28 | [Knowledge-base match suggestions](28-kb-suggestions.md) | `done` | 26, 27, 23 | On an entry that looks like a knowledge-base item, offer the link and let the user confirm it |
 | 29 | [Deploy](29-deploy.md) | `todo` | 13–28 | Production images built in GitHub Actions, pushed to GHCR, pulled by Coolify. The app is reachable by other people |
 
 ### Bugs found while planning 26–29 (2026-10-01)
