@@ -8,6 +8,7 @@ import type {
     EntryChange,
     EntryHistoryItem,
     EntryKind,
+    EntryLink,
     EntryList,
     EntryListItem,
     EntrySummary,
@@ -244,7 +245,23 @@ export function describeChange(change: EntryChange, nameOf: (memberId: string) =
             return "cleared its player";
         case "StatsChanged":
             return change.stats ? `set the stats: ${statsLabel(change.stats)}` : "cleared the stats";
+        case "LinkAdded":
+            return `added a link${linkSuffix(change.link)}`;
+        case "LinkRemoved":
+            return `removed a link${linkSuffix(change.link)}`;
     }
+}
+
+/**
+ * How a link is named in a history line (27b): "Beholder (5eTools)" for a knowledge-base link, the
+ * member's own label for an external one, and nothing at all when neither is there — a row whose
+ * name has gone from the corpus still reads "added a link" rather than "added a link: undefined".
+ */
+function linkSuffix(link: EntryLink | null | undefined): string {
+    if (!link) return "";
+    if (link.kind === "External") return link.label ? `: ${link.label}` : "";
+    const name = link.name ?? link.itemId;
+    return name ? `: ${name}${link.providerLabel ? ` (${link.providerLabel})` : ""}` : "";
 }
 
 // ── Merge (15g, the API's EntryMerge) ────────────────────────────────────────

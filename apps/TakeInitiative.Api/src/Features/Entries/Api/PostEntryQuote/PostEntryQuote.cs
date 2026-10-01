@@ -118,7 +118,7 @@ public partial class PostEntryQuote(IDocumentSession session, IHubContext<Campai
         var before = after with { Article = new Article { Blocks = after.Article.Blocks.Where(b => b.Id != block.Id).ToList() } };
         await hub.NotifyEntryArticleChanged(campaign.Members, before, after);
 
-        await SendAsync(new EntryQuoteResponse { Entry = await EntryResponse.From(after, member, Resolve<ReferenceCatalog>(), ct), BlockId = block.Id }, cancellation: ct);
+        await SendAsync(new EntryQuoteResponse { Entry = await EntryResponse.From(after, member, Resolve<ReferenceCatalog>(), Resolve<EntryLinkResolver>(), ct), BlockId = block.Id }, cancellation: ct);
     }
 
     /// <summary>Runs of whitespace as one space, trimmed: a selection's line breaks need not match the source's.</summary>

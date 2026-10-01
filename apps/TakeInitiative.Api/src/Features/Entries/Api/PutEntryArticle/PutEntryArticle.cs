@@ -103,7 +103,7 @@ public class PutEntryArticle(IDocumentSession session, IHubContext<CampaignHub> 
                 {
                     await hub.NotifyEntryArticleChanged(campaign.Members, before, after);
                 }
-                await SendAsync(await EntryResponse.From(after, member, Resolve<ReferenceCatalog>(), ct), cancellation: ct);
+                await SendAsync(await EntryResponse.From(after, member, Resolve<ReferenceCatalog>(), Resolve<EntryLinkResolver>(), ct), cancellation: ct);
                 return;
             }
             catch (ConcurrencyException) when (attempt == 1)

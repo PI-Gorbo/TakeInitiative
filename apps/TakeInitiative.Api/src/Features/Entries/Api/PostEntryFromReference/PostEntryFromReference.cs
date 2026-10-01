@@ -45,7 +45,7 @@ public class PostEntryFromReferenceRequestValidator : Validator<PostEntryFromRef
 /// The source follows the Stats read rule (<see cref="EntrySources"/>), so a player who adds an NPC
 /// gets back an entry without it.
 /// </summary>
-public class PostEntryFromReference(IDocumentSession session, IHubContext<CampaignHub> hub, ReferenceCatalog reference)
+public class PostEntryFromReference(IDocumentSession session, IHubContext<CampaignHub> hub, ReferenceCatalog reference, EntryLinkResolver links)
     : Endpoint<PostEntryFromReferenceRequest, EntryResponse>
 {
     public const string ItemIdKey = "itemId";
@@ -122,6 +122,6 @@ public class PostEntryFromReference(IDocumentSession session, IHubContext<Campai
         {
             await hub.NotifyEntryStatsChanged(campaign.Members, entry with { Stats = null }, entry);
         }
-        await SendAsync(await EntryResponse.From(entry, member, reference, ct), cancellation: ct);
+        await SendAsync(await EntryResponse.From(entry, member, reference, links, ct), cancellation: ct);
     }
 }

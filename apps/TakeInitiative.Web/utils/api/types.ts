@@ -59,6 +59,12 @@ export type EntryQuote = Schemas["EntryQuoteResponse"];
 export type ArticleMention = Schemas["EntryArticleMention"];
 /** A Character's optional stat line (15g). */
 export type Stats = Schemas["StatsResponse"];
+/**
+ * One link on an entry, as the viewer may read it (27b): a knowledge-base row resolved against the
+ * corpus, or a url the member typed. `stale` means the row has gone from the knowledge base.
+ */
+export type EntryLink = Schemas["EntryLinkResponse"];
+export type EntryLinkKind = Schemas["EntryLinkKind"];
 /** An entry's history, redacted for the viewer (15g). */
 export type EntryHistory = Schemas["EntryHistoryResponse"];
 export type EntryHistoryItem = Schemas["EntryHistoryItem"];

@@ -225,7 +225,13 @@ public static class IngestCommand
 
         // --- the write ------------------------------------------------------------------------------
 
-        var store = new KnowledgeBaseStore(connectionString, databaseSchema: databaseSchema);
+        // EntryKnowledgeBaseLinks, not the default: this is the only process that prunes, so if the
+        // link protection is not wired in here it is not wired in anywhere. A row an entry links to
+        // is marked stale instead of deleted (26c, 27b), and --force does not override it.
+        var store = new KnowledgeBaseStore(
+            connectionString,
+            new EntryKnowledgeBaseLinks(databaseSchema),
+            databaseSchema: databaseSchema);
 
         IngestOutcome outcome;
         try

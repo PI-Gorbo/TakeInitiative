@@ -238,6 +238,31 @@ public static class WebAppClientExtensions
     public static Task<Result<EntryHistoryResponse>> GetEntryHistory(this IWebAppClient client, Guid campaignId, Guid entryId)
         => client.Get<EntryHistoryResponse>(EntryUrl(campaignId, entryId, "history"));
 
+    // Links (step 27).
+
+    public static string LinksUrl(Guid campaignId, Guid entryId) => EntryUrl(campaignId, entryId, "links");
+
+    public static string LinkUrl(Guid campaignId, Guid entryId, Guid linkId) => EntryUrl(campaignId, entryId, $"links/{linkId}");
+
+    /// <summary>The <c>POST links</c> body for a knowledge-base link.</summary>
+    public static object KnowledgeBaseLinkBody(string provider, string itemId)
+        => new { kind = nameof(EntryLinkKind.KnowledgeBase), provider, itemId };
+
+    /// <summary>The <c>POST links</c> body for an external link.</summary>
+    public static object ExternalLinkBody(string? url, string? label)
+        => new { kind = nameof(EntryLinkKind.External), url, label };
+
+    public static Task<Result<EntryResponse>> PostKnowledgeBaseLink(
+        this IWebAppClient client, Guid campaignId, Guid entryId, string provider, string itemId)
+        => client.Post<object, EntryResponse>(KnowledgeBaseLinkBody(provider, itemId), LinksUrl(campaignId, entryId));
+
+    public static Task<Result<EntryResponse>> PostExternalLink(
+        this IWebAppClient client, Guid campaignId, Guid entryId, string url, string label)
+        => client.Post<object, EntryResponse>(ExternalLinkBody(url, label), LinksUrl(campaignId, entryId));
+
+    public static Task<Result<EntryResponse>> DeleteEntryLink(this IWebAppClient client, Guid campaignId, Guid entryId, Guid linkId)
+        => client.DeleteNoBody<EntryResponse>(LinkUrl(campaignId, entryId, linkId));
+
     // Images (step 16a).
 
     public static string ImagesUrl(Guid campaignId) => $"/api/campaigns/{campaignId}/images";
@@ -402,17 +427,32 @@ public static class WebAppClientExtensions
     }
 
     /// <summary>Sends a request that should fail and returns its status and body, to check error keys and that nothing leaks.</summary>
-    public static async Task<(int Status, string Body)> Send(this IWebAppClient client, HttpMethod method, string url, object body)
+    public static async Task<(int Status, string Body)> Send(this IWebAppClient client, HttpMethod method, string url, object? body = null)
     {
         var result = await client.AlbaHost.Scenario(_ =>
         {
-            if (method == HttpMethod.Post) _.Post.Json(body).ToUrl(url);
-            else if (method == HttpMethod.Put) _.Put.Json(body).ToUrl(url);
+            if (method == HttpMethod.Post) _.Post.Json(body ?? new { }).ToUrl(url);
+            else if (method == HttpMethod.Put) _.Put.Json(body ?? new { }).ToUrl(url);
+            // A DELETE here carries no body: every one in the API takes route values only.
+            else if (method == HttpMethod.Delete) _.Delete.Url(url);
+            else if (method == HttpMethod.Get) _.Get.Url(url);
             else throw new NotSupportedException(method.ToString());
             _.IgnoreStatusCode();
         });
         return (result.Context.Response.StatusCode, await result.ReadAsTextAsync());
     }
+
+    /// <summary>A <c>DELETE</c> with no body that answers a document, asserting a 200.</summary>
+    private static Task<Result<TResponse>> DeleteNoBody<TResponse>(this IWebAppClient client, string url)
+        => Result.Try(async () =>
+            {
+                var result = await client.AlbaHost.Scenario(_ =>
+                {
+                    _.Delete.Url(url);
+                    _.StatusCodeShouldBe(200);
+                });
+                return await result.ReadAsJsonAsync<TResponse>() ?? throw new InvalidCastException($"Could not cast response to type of {typeof(TResponse).Name}");
+            });
 
     private static Task<Result<TResponse>> Get<TResponse>(this IWebAppClient client, string url)
         => Result.Try(async () =>

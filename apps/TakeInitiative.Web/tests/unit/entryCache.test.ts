@@ -90,7 +90,9 @@ describe("the wiki list", () => {
 describe("mergeEntrySummary", () => {
     it("updates the loaded entry with the same id only, and keeps its article", () => {
         const article = { etag: "etag", blocks: [] };
-        const entry: Entry = { ...summary(GUNDREN, "Gundren"), article };
+        // `links` is on the loaded entry and not on its summary (27b), so it is spread in here for
+        // the same reason `article` is: merging a summary must leave both of them alone.
+        const entry: Entry = { ...summary(GUNDREN, "Gundren"), article, links: [] };
         const merged = mergeEntrySummary(entry, summary(GUNDREN, "Renamed"))!;
         expect(merged.name).toBe("Renamed");
         expect(merged.article).toBe(article);

@@ -92,6 +92,15 @@ public sealed record KnowledgeBaseItemRow
 /// </param>
 public sealed record KnowledgeBaseMatchRow(KnowledgeBaseItemRow Item, int Rung, double Similarity);
 
+/// <summary>
+/// A row a link points at, and whether the corpus still has it (27b). <see cref="Stale" /> is the
+/// table's own <c>stale</c> column, set by a prune that wanted to delete the row and could not
+/// because an entry linked to it — the one case where a stored row is "no longer in your knowledge
+/// base". A row that is not there at all is not a <see cref="KnowledgeBaseLinkRow" />: the resolver
+/// treats a key with no row as stale too, and the two read the same way to a link's reader.
+/// </summary>
+public sealed record KnowledgeBaseLinkRow(KnowledgeBaseItemRow Item, bool Stale);
+
 /// <summary>One page of the browse query (26e), with the total the page came out of.</summary>
 public sealed record KnowledgeBasePage(IReadOnlyList<KnowledgeBaseItemRow> Items, int Total);
 

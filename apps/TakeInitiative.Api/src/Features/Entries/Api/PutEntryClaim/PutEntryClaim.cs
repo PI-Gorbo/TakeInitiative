@@ -26,8 +26,9 @@ public record PutEntryClaimRequest
 /// <item>A claimer unclaims their own. Anyone else unclaiming is a 403.</item>
 /// </list>
 /// A member can claim several entries (glossary: Player character). The same claim appends
-/// nothing. Pushes <c>entryUpserted</c> (the summary carries the claimer) and
-/// <c>entryStatsChanged</c> to the members for whom the claim showed or hid the stats.
+/// nothing. Pushes <c>entryUpserted</c> (the summary carries the claimer), and
+/// <c>entryStatsChanged</c> and <c>entryLinksChanged</c> to the members for whom the claim showed
+/// or hid the stats and the links.
 /// </summary>
 public class PutEntryClaim(IDocumentSession session, IHubContext<CampaignHub> hub) : Endpoint<PutEntryClaimRequest, EntryResponse>
 {
@@ -50,7 +51,7 @@ public class PutEntryClaim(IDocumentSession session, IHubContext<CampaignHub> hu
         {
             if (entry.ClaimedByMemberId == claimerId)
             {
-                await SendAsync(await EntryResponse.From(entry, member, Resolve<ReferenceCatalog>(), ct), cancellation: ct);
+                await SendAsync(await EntryResponse.From(entry, member, Resolve<ReferenceCatalog>(), Resolve<EntryLinkResolver>(), ct), cancellation: ct);
                 return;
             }
             if (!isDm && claimerId != member.MemberId)
@@ -80,7 +81,7 @@ public class PutEntryClaim(IDocumentSession session, IHubContext<CampaignHub> hu
         {
             if (entry.ClaimedByMemberId is not { } current)
             {
-                await SendAsync(await EntryResponse.From(entry, member, Resolve<ReferenceCatalog>(), ct), cancellation: ct);
+                await SendAsync(await EntryResponse.From(entry, member, Resolve<ReferenceCatalog>(), Resolve<EntryLinkResolver>(), ct), cancellation: ct);
                 return;
             }
             if (!isDm && current != member.MemberId)
@@ -95,6 +96,9 @@ public class PutEntryClaim(IDocumentSession session, IHubContext<CampaignHub> hu
         entry = (await session.LoadAsync<Entry>(entry.Id, ct))!;
         await hub.NotifyEntryUpserted(entry);
         await hub.NotifyEntryStatsChanged(campaign.Members, before, entry);
-        await SendAsync(await EntryResponse.From(entry, member, Resolve<ReferenceCatalog>(), ct), cancellation: ct);
+        // A claim shows the links to the players and an unclaim hides them again (27b), the same way
+        // it shows and hides the stats: EntryLinks is EntrySources, which turns on the claim.
+        await hub.NotifyEntryLinksChanged(campaign.Members, before, entry);
+        await SendAsync(await EntryResponse.From(entry, member, Resolve<ReferenceCatalog>(), Resolve<EntryLinkResolver>(), ct), cancellation: ct);
     }
 }

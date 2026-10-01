@@ -130,6 +130,44 @@ public class KnowledgeBaseQueries(IQuerySession session)
     }
 
     /// <summary>
+    /// The rows named by <paramref name="keys" />, with each one's <c>stale</c> flag, in <b>one</b>
+    /// statement whatever the keys are — which is what <see cref="EntryLinkResolver" /> needs and
+    /// why this exists beside <see cref="FindAsync" /> rather than being a loop over it. An entry may
+    /// carry twenty links, and twenty round trips per entry read is the thing the plan's "one query
+    /// per request, never one per link" forbids.
+    /// <para>
+    /// Keys are <c>(provider, id)</c> pairs because they are the table's primary key and a link may
+    /// name any provider. The two halves go as parallel arrays and are zipped back together by
+    /// <c>unnest</c>, so the statement's text does not depend on how many there are and Postgres can
+    /// plan it once. A key with no row simply has no row in the answer: that is the stale case
+    /// (27b), not an error.
+    /// </para>
+    /// </summary>
+    public async Task<IReadOnlyList<KnowledgeBaseLinkRow>> ByIdsAsync(
+        IReadOnlyCollection<(string Provider, string Id)> keys, CancellationToken ct)
+    {
+        if (keys.Count == 0)
+        {
+            return [];
+        }
+
+        return await SearchSql.QueryAsync(
+            session,
+            $"""
+             select {Columns("k")}, k.stale
+             from unnest(@providers, @ids) as w(provider, id)
+             join {Table} k on k.provider = w.provider and k.id = w.id
+             """,
+            command =>
+            {
+                AddTextArray(command, "providers", [.. keys.Select(key => key.Provider)]);
+                AddTextArray(command, "ids", [.. keys.Select(key => key.Id)]);
+            },
+            reader => new KnowledgeBaseLinkRow(Read(reader), reader.GetBoolean(13)),
+            ct);
+    }
+
+    /// <summary>
     /// One page of the browse list (26e) and the facet counts beside it, on one connection. The
     /// filters are all optional; <paramref name="query" /> ranks the page on the same ladder ⌘K uses
     /// and, when it is absent, the page is by name.
@@ -362,6 +400,14 @@ public class KnowledgeBaseQueries(IQuerySession session)
         {
             Value = string.IsNullOrWhiteSpace(value) ? DBNull.Value : value,
         });
+
+    /// <summary>
+    /// A <c>text[]</c> parameter. <see cref="ByIdsAsync" />'s two of them are zipped by
+    /// <c>unnest</c>, which needs the element type stated for the same reason <see cref="AddText" />
+    /// does: Postgres has nothing else to infer it from.
+    /// </summary>
+    private static void AddTextArray(NpgsqlCommand command, string name, string[] values) =>
+        command.Parameters.Add(new NpgsqlParameter(name, NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = values });
 }
 
 /// <summary>

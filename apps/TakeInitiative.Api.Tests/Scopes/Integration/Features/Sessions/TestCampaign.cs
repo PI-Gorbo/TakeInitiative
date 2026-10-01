@@ -54,6 +54,17 @@ public record TestCampaign(Guid Id, Guid DmMemberId, Guid PlayerMemberId, Guid? 
             created.Value.Id, created.Value.OwnerMemberId, player.Value.CurrentMemberId, second, created.Value.JoinCode);
     }
 
+    /// <summary>
+    /// Appends events straight to a stream, for a shape no endpoint writes yet. 27b's read-path
+    /// tests use it, because the <c>POST links</c> endpoint only arrives in 27c.
+    /// </summary>
+    public static async Task Append(AuthenticatedWebAppWithDatabaseFixture fixture, Guid streamId, params object[] events)
+    {
+        await using var session = fixture.AlbaHost.Services.GetRequiredService<IDocumentStore>().LightweightSession();
+        session.Events.Append(streamId, events);
+        await session.SaveChangesAsync();
+    }
+
     public static async Task<IReadOnlyList<Marten.Events.IEvent>> EventsOf(AuthenticatedWebAppWithDatabaseFixture fixture, Guid streamId)
     {
         using var session = fixture.AlbaHost.Services.GetRequiredService<IDocumentStore>().QuerySession();

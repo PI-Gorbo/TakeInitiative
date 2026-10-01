@@ -119,11 +119,18 @@ public static class Bootstrap
             // Entry stream -> Entry document. (CampaignId, Kind) serves the wiki's lists; the
             // GIN indexes serve alias lookups and MentionIndex's "articles that mention this
             // entry".
+            //
+            // LinkedItemKeys (27b) is the third GIN index, for one question asked from outside the
+            // API entirely: 26c's prune, run from the ingest CLI, asks "does any entry link to this
+            // row?" before it deletes anything (EntryKnowledgeBaseLinks). The index is what makes
+            // that a probe rather than a scan of every entry in every campaign, and the prune is on
+            // the operator's critical path — a slow answer there is a slow ingest.
             opts.Projections.Snapshot<Entry>(SnapshotLifecycle.Inline);
             opts.Schema.For<Entry>()
                 .Index([x => x.CampaignId, x => x.Kind])
                 .Index(x => x.Aliases, idx => idx.Method = IndexMethod.gin)
-                .Index(x => x.ArticleMentionIds, idx => idx.Method = IndexMethod.gin);
+                .Index(x => x.ArticleMentionIds, idx => idx.Method = IndexMethod.gin)
+                .Index(x => x.LinkedItemKeys, idx => idx.Method = IndexMethod.gin);
 
             // The article prefilter (17a.3): a stored generated tsvector column and a GIN index on
             // it, rather than an expression index. The planner will not choose a GIN index for a
@@ -443,6 +450,9 @@ public static class Bootstrap
         services.AddScoped<KnowledgeBaseReferenceProvider>();
         services.AddScoped<IReferenceProvider>(sp => sp.GetRequiredService<KnowledgeBaseReferenceProvider>());
         services.AddScoped<ReferenceCatalog>();
+        // An entry's links (27b), resolved against the corpus on every read. Scoped for the same
+        // reason the catalog is: it reads the request's Marten session through KnowledgeBaseQueries.
+        services.AddScoped<EntryLinkResolver>();
         return services;
     }
 

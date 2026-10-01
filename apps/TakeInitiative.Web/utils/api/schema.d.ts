@@ -484,6 +484,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/campaigns/{campaignId}/entries/{entryId}/links/{linkId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["DeleteEntryLink"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/campaigns/{campaignId}/entries": {
         parameters: {
             query?: never;
@@ -558,6 +574,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["PostEntryFromReference"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/campaigns/{campaignId}/entries/{entryId}/links": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["PostEntryLink"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1559,22 +1591,6 @@ export interface components {
             /** Format: binary */
             file?: string | null;
         };
-        GetEntriesResponse: {
-            entries: components["schemas"]["EntryListItemResponse"][];
-        };
-        EntryListItemResponse: {
-            entry: components["schemas"]["EntrySummaryResponse"];
-            /** Format: int32 */
-            mentionCount: number;
-            /** Format: date-time */
-            lastMentionedAt?: string | null;
-            /** Format: int32 */
-            noteCount: number;
-            /** Format: int32 */
-            lastMentionedSessionNumber?: number | null;
-            summaryGist?: string | null;
-        };
-        GetEntriesRequest: Record<string, never>;
         EntryResponse: {
             /** Format: guid */
             id: string;
@@ -1595,6 +1611,7 @@ export interface components {
             article: components["schemas"]["ArticleResponse"];
             stats?: components["schemas"]["StatsResponse"] | null;
             source?: components["schemas"]["EntrySourceResponse"] | null;
+            links: components["schemas"]["EntryLinkResponse"][];
         };
         ArticleResponse: {
             etag: string;
@@ -1633,6 +1650,45 @@ export interface components {
             bookTitle?: string | null;
             hasStatBlock: boolean;
         };
+        EntryLinkResponse: {
+            /** Format: guid */
+            id: string;
+            kind: components["schemas"]["EntryLinkKind"];
+            /** Format: date-time */
+            addedAt: string;
+            /** Format: guid */
+            addedByMemberId: string;
+            url?: string | null;
+            label?: string | null;
+            provider?: string | null;
+            providerLabel?: string | null;
+            itemId?: string | null;
+            name?: string | null;
+            detail?: string | null;
+            bookTitle?: string | null;
+            imageUrl?: string | null;
+            hasStatBlock: boolean;
+            stale: boolean;
+        };
+        /** @enum {string} */
+        EntryLinkKind: "KnowledgeBase" | "External";
+        DeleteEntryLinkRequest: Record<string, never>;
+        GetEntriesResponse: {
+            entries: components["schemas"]["EntryListItemResponse"][];
+        };
+        EntryListItemResponse: {
+            entry: components["schemas"]["EntrySummaryResponse"];
+            /** Format: int32 */
+            mentionCount: number;
+            /** Format: date-time */
+            lastMentionedAt?: string | null;
+            /** Format: int32 */
+            noteCount: number;
+            /** Format: int32 */
+            lastMentionedSessionNumber?: number | null;
+            summaryGist?: string | null;
+        };
+        GetEntriesRequest: Record<string, never>;
         GetEntryRequest: Record<string, never>;
         EntryHistoryResponse: {
             items: components["schemas"]["EntryHistoryItem"][];
@@ -1658,9 +1714,10 @@ export interface components {
             memberId?: string | null;
             stats?: components["schemas"]["StatsResponse"] | null;
             source?: components["schemas"]["EntrySourceResponse"] | null;
+            link?: components["schemas"]["EntryLinkResponse"] | null;
         };
         /** @enum {string} */
-        EntryChangeType: "Created" | "Renamed" | "KindChanged" | "AliasAdded" | "AliasRemoved" | "VisibilityChanged" | "EditAccessChanged" | "ArticleEdited" | "QuotePromoted" | "Merged" | "Claimed" | "Unclaimed" | "StatsChanged";
+        EntryChangeType: "Created" | "Renamed" | "KindChanged" | "AliasAdded" | "AliasRemoved" | "VisibilityChanged" | "EditAccessChanged" | "ArticleEdited" | "QuotePromoted" | "Merged" | "Claimed" | "Unclaimed" | "StatsChanged" | "LinkAdded" | "LinkRemoved";
         GetEntryHistoryRequest: Record<string, never>;
         EntryTimelineResponse: {
             items: components["schemas"]["EntryTimelineItem"][];
@@ -1688,6 +1745,13 @@ export interface components {
             itemId: string;
             name?: string | null;
             visibility: components["schemas"]["Visibility"];
+        };
+        PostEntryLinkRequest: {
+            kind: components["schemas"]["EntryLinkKind"];
+            provider?: string | null;
+            itemId?: string | null;
+            url?: string | null;
+            label?: string | null;
         };
         PostEntryMergeRequest: {
             /** Format: guid */
@@ -3233,6 +3297,44 @@ export interface operations {
             };
         };
     };
+    DeleteEntryLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+                entryId: string;
+                linkId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     GetEntries: {
         parameters: {
             query?: never;
@@ -3435,6 +3537,47 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["PostEntryFromReferenceRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PostEntryLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostEntryLinkRequest"];
             };
         };
         responses: {

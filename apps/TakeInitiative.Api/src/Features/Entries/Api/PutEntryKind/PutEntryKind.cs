@@ -54,6 +54,6 @@ public class PutEntryKind(IDocumentSession session, IHubContext<CampaignHub> hub
             await hub.NotifyEntryUpserted(entry);
         }
 
-        await SendAsync(await EntryResponse.From(entry, member, Resolve<ReferenceCatalog>(), ct), cancellation: ct);
+        await SendAsync(await EntryResponse.From(entry, member, Resolve<ReferenceCatalog>(), Resolve<EntryLinkResolver>(), ct), cancellation: ct);
     }
 }

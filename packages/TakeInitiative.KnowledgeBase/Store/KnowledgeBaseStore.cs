@@ -47,8 +47,9 @@ namespace TakeInitiative.KnowledgeBase.Store;
 /// </remarks>
 /// <param name="connectionString">Where to write. The CLI's <c>--connection</c>.</param>
 /// <param name="links">
-/// Which rows a user's entry links to. Defaults to <see cref="NoKnowledgeBaseLinks" />, which is the
-/// only true answer until step 27.
+/// Which rows a user's entry links to. The ingest CLI — the only caller that prunes — passes
+/// <see cref="EntryKnowledgeBaseLinks" /> (27b). It defaults to <see cref="NoKnowledgeBaseLinks" />
+/// for a caller with no entry table to read, such as a test that only upserts.
 /// </param>
 /// <param name="databaseSchema">The Postgres schema the table lives in. Marten's default is public.</param>
 /// <param name="clock">
