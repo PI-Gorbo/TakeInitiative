@@ -16,9 +16,9 @@ public record DeleteEntryLinkRequest
 /// <summary>
 /// Removes a link from an entry (27c).
 /// <list type="bullet">
-/// <item>Who may remove is who may add: the entry's edit access plus the DMs
-/// (<see cref="EntryAccess.RequireCanEdit"/>, 403 otherwise). Not only whoever added it — a DM has
-/// to be able to take a player's link off an entry.</item>
+/// <item>Who may remove is who may add: <see cref="EntryLinks.CanWrite"/> (403 otherwise) — the
+/// entry's edit access plus the DMs, plus the member who plays a claimed Character (27d). Not only
+/// whoever added it — a DM has to be able to take a player's link off an entry.</item>
 /// <item>A link id that is not on the entry is a 404. It is not treated as a no-op success: the
 /// member asked to remove something and nothing of that id was there, which is worth knowing.</item>
 /// <item>A link the caller may not <i>read</i> cannot be removed either, and gets the same 404 — on
@@ -45,7 +45,7 @@ public class DeleteEntryLink(IDocumentSession session, IHubContext<CampaignHub> 
         var userId = this.GetUserIdOrThrowUnauthorized();
         var (campaign, member) = await this.RequireMember(session, req.CampaignId, userId, ct);
         var entry = await this.RequireVisibleEntry(session, req.CampaignId, req.EntryId, member, ct);
-        this.RequireCanEdit(entry, member);
+        this.RequireCanWriteLinks(entry, member);
 
         // EntryLinks.For, not entry.Links: the read rule decides what the caller can name, so a 404
         // for a link they may not read is the same 404 as for one that does not exist.

@@ -6,7 +6,7 @@ import {
     useQueryClient,
     type QueryClient,
 } from "@tanstack/vue-query";
-import type { Entry, EntryList, EntrySummary, EntryTimeline, Gallery, SessionNote } from "~/utils/api/types";
+import type { Entry, EntryLink, EntryList, EntrySummary, EntryTimeline, Gallery, SessionNote } from "~/utils/api/types";
 import { apiErrorStatus } from "~/utils/apiErrorParser";
 import { entryDirectory } from "~/utils/entries";
 import { GALLERY_PAGE_SIZE } from "~/utils/gallery";
@@ -265,6 +265,19 @@ export function applyEntryStatsChanged(queryClient: QueryClient, campaignId: str
     });
 }
 
+/**
+ * `entryLinksChanged` (27c): the links this viewer may read changed — one was added or removed,
+ * or a claim showed or hid the whole list. No content, so a loaded entry and its history are read
+ * again, exactly as `entryStatsChanged` does.
+ */
+export function applyEntryLinksChanged(queryClient: QueryClient, campaignId: string, entryId: string) {
+    void queryClient.invalidateQueries({
+        predicate: (query) =>
+            (query.queryKey[0] === "entry" || query.queryKey[0] === "entryHistory") &&
+            isEntryQueryFor(query.queryKey, campaignId, [entryId]),
+    });
+}
+
 /** Everything entry-related for a campaign: after a hub join, a reconnect, or a role change. */
 export function invalidateEntries(queryClient: QueryClient, campaignId: string) {
     return queryClient.invalidateQueries({
@@ -428,6 +441,77 @@ export const putEntryStatsMutation = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: useApi().entry.putStats,
+        onSuccess: (entry, { campaignId }) => applyEntryResponse(queryClient, campaignId, entry),
+    });
+};
+
+// ── Links (27d) ───────────────────────────────────────────────────────────────
+
+/**
+ * Replaces the `links` of every loaded copy of an entry, and answers the undo: a function that
+ * puts each one back exactly as it was. That is the whole of the optimistic add and remove, and
+ * it is a snapshot rather than an inverse operation so a rollback cannot drift from the change.
+ *
+ * Every loaded copy, found by predicate rather than by one key, because an entry's query key
+ * holds the id as the route spelled it and a push or another tab may have loaded it in another
+ * case — the same reason `applyEntryStatsChanged` matches that way.
+ */
+function changeLoadedLinks(
+    queryClient: QueryClient,
+    campaignId: string,
+    entryId: string,
+    change: (links: readonly EntryLink[]) => readonly EntryLink[]
+): () => void {
+    const undo: { key: readonly unknown[]; links: readonly EntryLink[] }[] = [];
+    for (const query of queryClient.getQueryCache().findAll({ queryKey: ["entry", campaignId] })) {
+        if (String(query.queryKey[2]).toLowerCase() !== entryId.toLowerCase()) continue;
+        const entry = query.state.data as Entry | undefined;
+        if (!entry) continue;
+        undo.push({ key: query.queryKey, links: entry.links });
+        queryClient.setQueryData<Entry>(query.queryKey, { ...entry, links: [...change(entry.links)] });
+    }
+    return () => {
+        for (const { key, links } of undo) {
+            queryClient.setQueryData<Entry>(key, (entry) => (entry ? { ...entry, links: [...links] } : entry));
+        }
+    };
+}
+
+/** `POST links` plus the row to show while it is on its way (`utils/links.ts` builds it). */
+type PostEntryLinkVariables = Parameters<ReturnType<typeof useApi>["entry"]["postLink"]>[0] & {
+    /** Shown at once under a `pending-` id and replaced by the response. */
+    optimistic?: EntryLink;
+};
+
+/**
+ * Can write links (27d: the entry's editors, plus a claimed Character's player): add one.
+ * Optimistic — the row is on screen before the request — and rolled back on any failure, which
+ * is how 14d's note actions behave, because a 409 for a duplicate and a 404 for a row that has
+ * just been pruned are both answers the member needs to see undone rather than left half-applied.
+ */
+export const postEntryLinkMutation = () => {
+    const api = useApi();
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ optimistic: _optimistic, ...request }: PostEntryLinkVariables) => api.entry.postLink(request),
+        onMutate: ({ campaignId, entryId, optimistic }) =>
+            optimistic
+                ? changeLoadedLinks(queryClient, campaignId, entryId, (links) => [...links, optimistic])
+                : undefined,
+        onError: (_error, _variables, undo) => undo?.(),
+        onSuccess: (entry, { campaignId }) => applyEntryResponse(queryClient, campaignId, entry),
+    });
+};
+
+/** The same, removing one: the row goes at once and comes back if the request fails. */
+export const deleteEntryLinkMutation = () => {
+    const api = useApi();
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: api.entry.deleteLink,
+        onMutate: ({ campaignId, entryId, linkId }) =>
+            changeLoadedLinks(queryClient, campaignId, entryId, (links) => links.filter((link) => link.id !== linkId)),
+        onError: (_error, _variables, undo) => undo?.(),
         onSuccess: (entry, { campaignId }) => applyEntryResponse(queryClient, campaignId, entry),
     });
 };

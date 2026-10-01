@@ -241,6 +241,47 @@ public class LinkApiTests(KnowledgeBaseFixture fixture) : IClassFixture<Knowledg
         (await fixture.DeleteEntryLink(campaign.Id, caves.Id, link.Id)).Value.Links.Should().BeEmpty();
     }
 
+    /// <summary>
+    /// The case that exposed <see cref="EntryLinks.CanWrite"/> (27d): <see cref="EntryPermissions.CanEdit"/>
+    /// has no claimer clause, so a DM who creates an NPC, hands it to a player and then restricts edit
+    /// access would have locked that player out of their own character's sheet link — the whole of 27e.
+    /// The clause is <b>only</b> about links: the same player still cannot touch the article.
+    /// </summary>
+    [Fact]
+    public async Task AClaimer_WritesItsLinks_EvenWithEditAccessRestricted_ButStillCannotEditTheArticle()
+    {
+        var campaign = await TestCampaign.Create(fixture, "Post link: the claimer");
+        var thorin = await Entry(Users.DM, campaign.Id, "Thorin", EntryKind.Character);
+
+        fixture.LoginAsUser(Users.DM);
+        (await fixture.PutEntryClaim(campaign.Id, thorin.Id, campaign.PlayerMemberId)).Should().Succeed();
+        (await fixture.PutEntryEditAccess(campaign.Id, thorin.Id, EditAccess.OnlyMe)).Should().Succeed();
+
+        // The player is neither a DM nor the creator, and edit access is now OnlyMe.
+        fixture.LoginAsUser(Users.Player);
+        var view = (await fixture.GetEntry(campaign.Id, thorin.Id)).Value;
+        (await fixture.Send(HttpMethod.Put, EntryUrl(campaign.Id, thorin.Id, "name"), new { name = "Thorin Oakenshield" }))
+            .Status.Should().Be(403, "the claimer clause is about links, not the entry");
+        (await fixture.Send(HttpMethod.Put, ArticleUrl(campaign.Id, thorin.Id),
+                ArticleBody(view.Article.Etag, [new BlockEdit(null, "My own words")])))
+            .Status.Should().Be(403, "article permissions are not widened");
+
+        // And yet their own sheet link goes on and comes off again.
+        var sheet = "https://www.dndbeyond.com/characters/12345678";
+        var added = await Post(Users.Player, campaign.Id, thorin.Id, ExternalLinkBody(sheet, "D&D Beyond sheet"));
+        var link = added.Links.Should().ContainSingle().Subject;
+        link.Url.Should().Be(sheet);
+        link.AddedByMemberId.Should().Be(campaign.PlayerMemberId);
+
+        fixture.LoginAsUser(Users.Player);
+        (await fixture.DeleteEntryLink(campaign.Id, thorin.Id, link.Id)).Value.Links.Should().BeEmpty();
+
+        // Unclaimed again, the clause is gone and so is the player's access.
+        fixture.LoginAsUser(Users.DM);
+        (await fixture.PutEntryClaim(campaign.Id, thorin.Id, null)).Should().Succeed();
+        (await Refused(Users.Player, campaign.Id, thorin.Id, ExternalLinkBody(sheet, "D&D Beyond sheet"))).Status.Should().Be(403);
+    }
+
     [Fact]
     public async Task DeletingAnUnknownLink_IsA404_AndSoIsOneTheCallerMayNotRead()
     {

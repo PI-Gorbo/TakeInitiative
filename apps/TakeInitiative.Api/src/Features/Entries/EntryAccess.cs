@@ -50,6 +50,19 @@ public static class EntryAccess
         }
     }
 
+    /// <summary>
+    /// Links (27d): see <see cref="EntryLinks.CanWrite"/> — who may edit, plus the member who plays
+    /// a claimed Character, so restricting edit access cannot take a player's own sheet link away.
+    /// </summary>
+    public static void RequireCanWriteLinks<TRequest, TResponse>(this Endpoint<TRequest, TResponse> endpoint, Entry entry, Member caller)
+        where TRequest : notnull
+    {
+        if (!EntryLinks.CanWrite(entry, caller))
+        {
+            endpoint.ThrowError("Only its creator, its player and the DMs can change this entry's links.", (int)HttpStatusCode.Forbidden);
+        }
+    }
+
     /// <summary>Visibility and edit access: see <see cref="EntryPermissions.CanChangeAccess"/>.</summary>
     public static void RequireCreatorOrDm<TRequest, TResponse>(this Endpoint<TRequest, TResponse> endpoint, Entry entry, Member caller)
         where TRequest : notnull

@@ -40,6 +40,8 @@ import { postEntryMergeRequest } from "~/utils/api/entry/postEntryMergeRequest";
 import { putEntryClaimRequest } from "~/utils/api/entry/putEntryClaimRequest";
 import { putEntryStatsRequest } from "~/utils/api/entry/putEntryStatsRequest";
 import { getEntryHistoryRequest } from "~/utils/api/entry/getEntryHistoryRequest";
+import { postEntryLinkRequest } from "~/utils/api/entry/postEntryLinkRequest";
+import { deleteEntryLinkRequest } from "~/utils/api/entry/deleteEntryLinkRequest";
 import { postImageRequest } from "~/utils/api/image/postImageRequest";
 import { deleteImageRequest } from "~/utils/api/image/deleteImageRequest";
 import { getSessionImagesRequest } from "~/utils/api/image/getSessionImagesRequest";
@@ -121,6 +123,8 @@ export const useApi = () => {
             putClaim: putEntryClaimRequest($axios),
             putStats: putEntryStatsRequest($axios),
             history: getEntryHistoryRequest($axios),
+            postLink: postEntryLinkRequest($axios),
+            deleteLink: deleteEntryLinkRequest($axios),
         },
         image: {
             post: postImageRequest($axios),

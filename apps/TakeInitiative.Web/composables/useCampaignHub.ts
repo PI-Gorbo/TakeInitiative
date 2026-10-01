@@ -10,6 +10,7 @@ import { invalidateSuggestionModels } from "~/utils/queries/suggestions";
 import {
     applyEntryArticleChanged,
     applyEntryMerged,
+    applyEntryLinksChanged,
     applyEntryStatsChanged,
     applyEntryRemoved,
     applyEntrySummary,
@@ -42,6 +43,7 @@ type EntryRemovedMessage = { entryId: string };
 type EntryArticleChangedMessage = { entryId: string };
 type EntryMergedMessage = { fromEntryId: string; intoEntryId: string };
 type EntryStatsChangedMessage = { entryId: string };
+type EntryLinksChangedMessage = { entryId: string };
 // The combat push (the API's CombatHub.cs, 18a.7): the receiver's own redacted view.
 type CombatChangedMessage = { combat: Combat; summary: CombatSummary };
 
@@ -179,6 +181,12 @@ export function useCampaignHub(campaignId: MaybeRefOrGetter<string | undefined>)
     connection.on("entryStatsChanged", ({ entryId }: EntryStatsChangedMessage) => {
         const id = joinedCampaignId.value;
         if (id) applyEntryStatsChanged(queryClient, id, entryId);
+    });
+    // Sent only to members whose readable links changed (27c) — an add, a remove, or a claim
+    // that showed or hid the whole list — with no content.
+    connection.on("entryLinksChanged", ({ entryId }: EntryLinksChangedMessage) => {
+        const id = joinedCampaignId.value;
+        if (id) applyEntryLinksChanged(queryClient, id, entryId);
     });
 
     // Combat (18c): each receiver gets their own view, so it is applied as it comes.

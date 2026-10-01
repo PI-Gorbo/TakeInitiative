@@ -88,10 +88,10 @@ public class PostEntryLinkRequestValidator : Validator<PostEntryLinkRequest>
 /// <summary>
 /// Adds a link to an entry (glossary: Link, 27c). Two kinds, one list, one shape.
 /// <list type="bullet">
-/// <item>Who may write is the entry's edit access plus the DMs
-/// (<see cref="EntryAccess.RequireCanEdit"/>, 403 otherwise) — the article's rule, invariant 4.
-/// Who may <i>read</i> what was written is <see cref="EntryLinks"/>, which is a different and
-/// stricter question.</item>
+/// <item>Who may write is <see cref="EntryLinks.CanWrite"/> (403 otherwise): the article's rule,
+/// invariant 4, plus the member who plays a claimed Character, so a DM tightening edit access
+/// cannot take a player's own sheet link away (27d). Who may <i>read</i> what was written is
+/// <see cref="EntryLinks.CanRead"/>, which is a different and stricter question.</item>
 /// <item>At most <see cref="EntryLinks.MaxPerEntry"/> links on an entry. A 21st is a 409
 /// <c>errors.links</c>.</item>
 /// <item>A <c>KnowledgeBase</c> link's provider must be registered and its row must be there now
@@ -129,7 +129,7 @@ public class PostEntryLink(IDocumentSession session, IHubContext<CampaignHub> hu
         var userId = this.GetUserIdOrThrowUnauthorized();
         var (campaign, member) = await this.RequireMember(session, req.CampaignId, userId, ct);
         var entry = await this.RequireVisibleEntry(session, req.CampaignId, req.EntryId, member, ct);
-        this.RequireCanEdit(entry, member);
+        this.RequireCanWriteLinks(entry, member);
 
         // The cap before the lookups: it is a fact about the entry, so a 21st link is refused without
         // a query for the row it names. The request's own shape was already settled by the validator,

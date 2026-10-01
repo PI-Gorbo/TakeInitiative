@@ -29,14 +29,43 @@ the same player presses Refresh, sees "Thorin Oakenshield · Level 5 · Fighter 
 Initiative 1d20+1 · HP 44 · AC 18", presses "Use these", then Save, and the Stats change.
 A private sheet gives "This sheet isn't public on D&D Beyond" and the link stays.
 
-The step ships as three PRs stacked with `gh stack` on top of this file's docs PR, which
-sits on 21c (#253). Each PR leaves the app runnable.
+## Where this step stands
+
+**22a is delivered, by step 27 (27d/27e), and not as written below.** 27 turned
+`Entry.Links` into a real feature — two kinds, one list, `POST`/`DELETE links`, the read rule,
+history and pushes — so a D&D Beyond sheet needed no endpoint, no response field, no event and
+no history case of its own. It is a **preset over the generic link**: 27e's
+`Wiki/DndBeyondField.vue` reduces whatever is pasted to the canonical
+`https://www.dndbeyond.com/characters/{id}` (22a's four accepted shapes, in
+`apps/TakeInitiative.Web/utils/links.ts`) and adds an ordinary `External` link labelled "D&D
+Beyond sheet". The entry page shows "↗ D&D Beyond sheet" to everyone who may read the entry's
+links, which on a claimed Character is everyone who can see it.
+
+So read §"22a. The sheet link (API)" below as **superseded**, item by item:
+
+| 22a said | What shipped (27) |
+|---|---|
+| `DndBeyondSheet.TryParse` in the API | `dndBeyondSheetUrl` in `utils/links.ts`, the same four shapes and the same canonical url. The API stores any `http(s)` url with a label, because nothing about the model is special-cased |
+| `EntryLink(Url, Label, Provider, ExternalId)`, at most one `dndbeyond` link | 27b's `EntryLink(Id, Kind, Provider, ItemId, Url, Label, AddedAt, AddedByMemberId)`. The cap is 20 links of any kind, and a duplicate url is a 409 |
+| `EntryLinks.CanRead` = `EntryStats.CanRead` | `EntryLinks.CanRead` = `EntrySources.CanRead`: the same answer for a Character, and links on a Place and the rest are read by everyone who can see the entry |
+| `EntryLinks.CanWrite` = `EntryStats.CanWrite` | `EntryLinks.CanWrite` = editors **plus** a claimed Character's player (27d), which is the same rule arrived at from the other side |
+| `PUT entries/{id}/dndbeyond`, `EntryResponse.DndBeyond`, `EntryChangeType.DndBeyondLinked`/`Unlinked` | None of these exist. `POST`/`DELETE links`, `EntryResponse.Links`, and `LinkAdded`/`LinkRemoved` in the history |
+
+**22b and 22c remain post-MVP**, and what remains of them is only the unofficial fetch: the
+`DndBeyond:Refresh` options, `POST …/dndbeyond/refresh` behind its **off-by-default** flag, the
+preview card, "Use these" into the Stats editor and the rename checkbox. With the flag off —
+which is every deployment today — the step is the link that now exists plus hand-entered Stats,
+which was always its no-fetch fallback. 22c's sheet line, its editor and its `describeChange`
+cases are done; only Refresh is left, so 22c is no longer a PR of its own but a part of 22b's.
+
+What is left ships as two PRs stacked with `gh stack`, on top of 27e rather than 21c. Each
+leaves the app runnable.
 
 | PR | Branch | Sub-step | Runnable state after merge | Status |
 |---|---|---|---|---|
-| 22a | `v2/22a-ddb-link-api` | The sheet link on a Character entry (API) | `PUT entries/{id}/dndbeyond` stores or clears a validated sheet link; `GET entry` has `dndBeyond` for those who may read it; history and pushes know about it. No network code | [ ] |
-| 22b | `v2/22b-ddb-refresh-api` | The manual refresh, behind a flag (API) | With `DndBeyond:Refresh:Enabled` off (the default), `POST …/dndbeyond/refresh` is 404 and nothing calls out. With it on, it answers a preview, rate-limited, with a timeout and a size cap. Tests use an invented fixture and never touch the network | [ ] |
-| 22c | `v2/22c-ddb-web` | The sheet line, its editor and "Refresh from D&D Beyond" (web) | The entry page shows and edits the link; Refresh (when offered) fills the Stats editor. The step's Verify passes | [ ] |
+| 22a | — | The sheet link on a Character entry | "↗ D&D Beyond sheet" on a claimed Character, added through a host-validated field, visible to everyone who may read the entry's links | [x] delivered by 27d/27e, as a preset over 27's links rather than its own endpoint |
+| 22b | `v2/22b-ddb-refresh-api` | The manual refresh, behind a flag (API) | With `DndBeyond:Refresh:Enabled` off (the default), `POST …/dndbeyond/refresh` is 404 and nothing calls out. With it on, it answers a preview, rate-limited, with a timeout and a size cap. Tests use an invented fixture and never touch the network | [ ] post-MVP |
+| 22c | `v2/22c-ddb-web` | "Refresh from D&D Beyond" (web) | Refresh (when offered) fills the Stats editor. The sheet line and its editor already ship with 27e | [ ] post-MVP |
 
 Portraits, any other sheet content, private sheets, D&D Beyond logins, other sheet sites
 and automatic refresh are not in 22 (Notes, "Not in 22").
@@ -146,6 +175,11 @@ creation by + Wiki and names a reference item; a sheet link is added and removed
 anywhere, in code or UI.
 
 ### 22a. The sheet link (API)
+
+> **Superseded — see "Where this step stands".** 27d/27e deliver this as a preset over 27's
+> generic links. Nothing below was built: there is no `PUT …/dndbeyond`, no
+> `EntryResponse.DndBeyond` and no `DndBeyondSheet.cs`. The parsing rules in item 1 are the ones
+> that were kept, in `apps/TakeInitiative.Web/utils/links.ts`.
 
 1. **Parsing: `DndBeyondSheet.TryParse(string url, out DndBeyondSheet sheet)`.** Accepts
    only these, over `https` (an `http` URL is upgraded), with or without `www.`, a
@@ -336,6 +370,13 @@ anywhere, in code or UI.
    D&D Beyond or Wizards of the Coast. D&D Beyond's name is text only, never a logo.
 
 ### 22c. The sheet line and the refresh (web)
+
+> **Items 1 and 3 are delivered** (27e): `Wiki/DndBeyondField.vue` is the field and its
+> validation, `Wiki/EntryLinks.vue`/`EntryLinkRow.vue` draw "↗ D&D Beyond sheet" with
+> `rel="noopener noreferrer"` and a 44px target, `entryLinksChanged` refreshes the entry query,
+> and `describeChange` has `LinkAdded`/`LinkRemoved` (one pair of cases for every link, rather
+> than a D&D Beyond pair). Items 2, 4 and 5 — Refresh, its tests and closing the step — are
+> what is left, and they wait on 22b's flag.
 
 1. **The sheet line** (`Wiki/DndBeyondLine.vue`), under `WikiClaimControl`, on a
    Character whose response has `dndBeyond`:

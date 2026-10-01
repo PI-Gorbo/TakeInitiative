@@ -86,6 +86,33 @@ public static class EntryLinks
     public static bool CanRead(Entry entry, Member viewer) => EntrySources.CanRead(entry, viewer);
 
     /// <summary>
+    /// Who may add or remove a link (27d): whoever may edit the entry
+    /// (<see cref="EntryPermissions.CanEdit"/>, invariant 4), <b>plus the member who plays a claimed
+    /// Character</b>.
+    /// <para>
+    /// The second clause is not a widening for its own sake. <see cref="EntryPermissions.CanEdit"/>
+    /// is <c>DM || creator || (EditAccess == Anyone &amp;&amp; CanSee)</c>, with no claimer clause at
+    /// all, so it only appears to cover a player's own character because <c>Anyone</c> is the
+    /// default: a DM who creates an NPC, hands it to a player and then sets edit access to
+    /// <c>OnlyMe</c> would lock that player out of their own character's D&amp;D Beyond sheet link,
+    /// which is the whole of 27e.
+    /// </para>
+    /// <para>
+    /// The shape is <see cref="EntryStats.CanWrite"/>'s, deliberately: "the player who plays this
+    /// character may maintain its links" is expressed the way "…may maintain its stats" already is,
+    /// rather than invented. It is <b>only</b> about links — the article, the name and the kind keep
+    /// <see cref="EntryPermissions.CanEdit"/>, so a claimer whose edit access was restricted can
+    /// still not rewrite the entry.
+    /// </para>
+    /// </summary>
+    public static bool CanWrite(Entry entry, Member viewer)
+        => EntryPermissions.CanEdit(entry, viewer)
+            || (entry.Kind == EntryKind.Character
+                && entry.ClaimedByMemberId is { } claimer
+                && claimer == viewer.MemberId
+                && EntryVisibility.CanSee(entry, viewer));
+
+    /// <summary>
     /// The links as <paramref name="viewer"/> may read them, in <see cref="EntryLink.AddedAt"/>
     /// order: empty when there are none or they may not, so "none" and "not for you" look the same.
     /// </summary>
