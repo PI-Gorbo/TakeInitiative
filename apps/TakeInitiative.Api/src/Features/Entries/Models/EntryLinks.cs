@@ -104,6 +104,18 @@ public static class EntryLinks
     /// <see cref="EntryPermissions.CanEdit"/>, so a claimer whose edit access was restricted can
     /// still not rewrite the entry.
     /// </para>
+    /// <para>
+    /// <b>This deliberately does not require <see cref="CanRead"/>, and adding that breaks a test
+    /// on purpose.</b> On one shape — an unclaimed Character whose edit access is <c>Anyone</c> — a
+    /// plain member may write links they cannot read. That looks like a bug and the obvious fix is
+    /// <c>CanRead(entry, viewer) &amp;&amp; …</c>. It is the wrong fix: <c>DELETE</c> answers
+    /// <b>404</b> for a link the caller may not read, precisely so that naming one does not confirm
+    /// it exists, and an authorisation check that fails first turns that 404 into a 403 — which
+    /// discloses the link. Invariant 5 applies to status codes too, and this is the one place in the
+    /// links feature where it bites. <c>DeletingAnUnknownLink_IsA404_AndSoIsOneTheCallerMayNotRead</c>
+    /// is the test that catches it. The write-then-invisible case is a usability wart, not a leak,
+    /// and the web gates its own control on read ∧ write so nobody reaches it.
+    /// </para>
     /// </summary>
     public static bool CanWrite(Entry entry, Member viewer)
         => EntryPermissions.CanEdit(entry, viewer)

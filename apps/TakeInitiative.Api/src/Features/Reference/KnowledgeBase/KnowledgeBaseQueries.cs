@@ -27,6 +27,12 @@ namespace TakeInitiative.Api.Features.Reference.KnowledgeBase;
 /// rung and an equal similarity.
 /// </para>
 /// <para>
+/// <b>A stale row is not in the corpus any more.</b> Both scans exclude <c>stale</c>. Such a row
+/// exists only because an entry links to it and a prune kept it rather than breaking that link
+/// (step 26c), so it must stay <i>resolvable</i> through <see cref="ByIdsAsync" /> while being
+/// unreachable by search or browse. Without this, the knowledge-base picker could offer a row that
+/// resolves as "no longer in your knowledge base" the instant it is linked.
+///
 /// <b>What the two indexes can and cannot decide.</b> The <c>WHERE</c> is a disjunction, and it has to
 /// be a <i>superset</i> of what the ladder then matches or a row is lost:
 /// </para>
@@ -281,6 +287,7 @@ public class KnowledgeBaseQueries(IQuerySession session)
         cross join q
         cross join lateral (select word_similarity(q.folded, {SearchSql.Folded("k.name")}) as similarity offset 0) w
         where {extraFilter}
+          and not k.stale
           and {Prefilter("k")}
         """;
 
@@ -316,6 +323,7 @@ public class KnowledgeBaseQueries(IQuerySession session)
                      k.label, k.url, k.image_url, k.stats, null::int as rung, 0::float8 as similarity
               from {Table} k
               where (@provider is null or k.provider = @provider)
+                and not k.stale
           )
           """;
 
