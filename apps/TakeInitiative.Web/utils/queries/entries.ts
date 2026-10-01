@@ -6,7 +6,17 @@ import {
     useQueryClient,
     type QueryClient,
 } from "@tanstack/vue-query";
-import type { Entry, EntryLink, EntryList, EntrySummary, EntryTimeline, Gallery, SessionNote } from "~/utils/api/types";
+import type {
+    Entry,
+    EntryKnowledgeBaseSuggestions,
+    EntryLink,
+    EntryList,
+    EntrySummary,
+    EntryTimeline,
+    Gallery,
+    KnowledgeBaseItem,
+    SessionNote,
+} from "~/utils/api/types";
 import { apiErrorStatus } from "~/utils/apiErrorParser";
 import { entryDirectory } from "~/utils/entries";
 import { GALLERY_PAGE_SIZE } from "~/utils/gallery";
@@ -232,7 +242,10 @@ export function applyEntryArticleChanged(queryClient: QueryClient, campaignId: s
 
 /** Whether a query is `["entry" | "entryTimeline" | "entryHistory" | "entryImages", campaignId, one of ids]`. */
 const isEntryQueryFor = (queryKey: readonly unknown[], campaignId: string, ids: readonly string[]) =>
-    ["entry", "entryTimeline", "entryHistory", "entryImages"].includes(String(queryKey[0])) &&
+    // Every per-entry query key, and the list is the filter: a key missing from it never matches,
+    // so adding a query and forgetting to name it here is a view that silently never refreshes.
+    // `entrySuggestions` (28b) is one of them, and it was exactly that bug for a while.
+    ["entry", "entryTimeline", "entryHistory", "entryImages", "entrySuggestions"].includes(String(queryKey[0])) &&
     queryKey[1] === campaignId &&
     ids.some((id) => String(queryKey[2]).toLowerCase() === id.toLowerCase());
 
@@ -276,13 +289,18 @@ export function applyEntryLinksChanged(queryClient: QueryClient, campaignId: str
             (query.queryKey[0] === "entry" || query.queryKey[0] === "entryHistory") &&
             isEntryQueryFor(query.queryKey, campaignId, [entryId]),
     });
+    // The prompt never offers a row the entry already links (28b), so the other DM's link takes this
+    // viewer's prompt away as well.
+    void invalidateEntrySuggestions(queryClient, campaignId, entryId);
 }
 
 /** Everything entry-related for a campaign: after a hub join, a reconnect, or a role change. */
 export function invalidateEntries(queryClient: QueryClient, campaignId: string) {
     return queryClient.invalidateQueries({
         predicate: (query) =>
-            ["entries", "entry", "entryTimeline", "entryHistory", "entryImages"].includes(String(query.queryKey[0])) &&
+            ["entries", "entry", "entryTimeline", "entryHistory", "entryImages", "entrySuggestions"].includes(
+                String(query.queryKey[0])
+            ) &&
             query.queryKey[1] === campaignId,
     });
 }
@@ -297,6 +315,9 @@ export function applyEntryResponse(queryClient: QueryClient, campaignId: string,
     queryClient.setQueryData<Entry>(getEntryQueryKey(campaignId, entry.id), entry);
     // Every write changes the history (a no-op write is harmless to refetch).
     void queryClient.invalidateQueries({ queryKey: getEntryHistoryQueryKey(campaignId, entry.id), exact: true });
+    // And every write can change what the knowledge base would suggest (28c): a rename, an alias, a
+    // new kind and a new link each move the answer, and a link is how "Link it" makes the prompt go.
+    void invalidateEntrySuggestions(queryClient, campaignId, entry.id);
 }
 
 // ── History (15g) ─────────────────────────────────────────────────────────────
@@ -513,5 +534,87 @@ export const deleteEntryLinkMutation = () => {
             changeLoadedLinks(queryClient, campaignId, entryId, (links) => links.filter((link) => link.id !== linkId)),
         onError: (_error, _variables, undo) => undo?.(),
         onSuccess: (entry, { campaignId }) => applyEntryResponse(queryClient, campaignId, entry),
+    });
+};
+
+// ── Knowledge-base suggestions (28b) ──────────────────────────────────────────
+
+export const getEntryKnowledgeBaseSuggestionsQueryKey = (
+    campaignId: MaybeRefOrGetter<string>,
+    entryId: MaybeRefOrGetter<string>
+) => ["entrySuggestions", campaignId, entryId];
+
+/**
+ * The corpus rows this entry might be (28b), for the members who could link one. `enabled` is the
+ * client's copy of who is asked and which kinds can be asked about (`canSeeSuggestions`), so a Place
+ * and a player looking at an NPC send no request at all — the API would answer `[]` either way, and
+ * not asking is one fewer query per entry page.
+ *
+ * It is not pushed and it is not cached for long: it changes when the entry is renamed, given an
+ * alias, re-kinded, linked or dismissed, and every one of those goes through `applyEntryResponse` or
+ * `applyEntryLinksChanged`, which invalidate it.
+ */
+export const getEntryKnowledgeBaseSuggestionsQuery = (
+    campaignId: RefOrGetter<string>,
+    entryId: RefOrGetter<string>,
+    enabled: RefOrGetter<boolean> = () => true
+) =>
+    queryOptions({
+        queryKey: getEntryKnowledgeBaseSuggestionsQueryKey(campaignId, entryId),
+        queryFn: () =>
+            useApi().entry.knowledgeBaseSuggestions({
+                campaignId: toValue(campaignId),
+                entryId: toValue(entryId),
+            }),
+        enabled: () => !!toValue(campaignId) && !!toValue(entryId) && toValue(enabled),
+        staleTime: 0,
+        retry: retryUnless404,
+    });
+
+/** Reads an entry's suggestions again: after any write to it, and after a links push. */
+export const invalidateEntrySuggestions = (queryClient: QueryClient, campaignId: string, entryId: string) =>
+    queryClient.invalidateQueries({
+        predicate: (query) =>
+            query.queryKey[0] === "entrySuggestions" && isEntryQueryFor(query.queryKey, campaignId, [entryId]),
+    });
+
+/**
+ * "No": the entry is not that row. Optimistic — the candidate goes from the card before the request —
+ * and rolled back on failure, because a dismissal that looks accepted and was not would leave the
+ * prompt silently back on the next read.
+ *
+ * The response is the suggestions that are left, so it replaces the list rather than only
+ * invalidating it: the server has already decided what the prompt should ask next.
+ */
+export const dismissEntrySuggestionMutation = () => {
+    const api = useApi();
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: api.entry.dismissSuggestion,
+        onMutate: ({ campaignId, entryId, provider, itemId }) => {
+            const key = getEntryKnowledgeBaseSuggestionsQueryKey(campaignId, entryId);
+            const before = queryClient.getQueryData<EntryKnowledgeBaseSuggestions>(key);
+            if (!before) return undefined;
+            queryClient.setQueryData<EntryKnowledgeBaseSuggestions>(key, {
+                ...before,
+                items: before.items.filter(
+                    (item: KnowledgeBaseItem) =>
+                        item.provider.toLowerCase() !== provider.toLowerCase() || item.id !== itemId
+                ),
+            });
+            return () => queryClient.setQueryData<EntryKnowledgeBaseSuggestions>(key, before);
+        },
+        onError: (_error, _variables, undo) => undo?.(),
+        onSuccess: (left, { campaignId, entryId }) => {
+            queryClient.setQueryData<EntryKnowledgeBaseSuggestions>(
+                getEntryKnowledgeBaseSuggestionsQueryKey(campaignId, entryId),
+                left
+            );
+            // The dismissal is an event on the entry's stream, so its history gained a row.
+            void queryClient.invalidateQueries({
+                queryKey: getEntryHistoryQueryKey(campaignId, entryId),
+                exact: true,
+            });
+        },
     });
 };

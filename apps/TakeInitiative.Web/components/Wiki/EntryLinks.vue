@@ -16,6 +16,19 @@
 
          Remove **confirms**, because removing a link is an event on the entry's stream: it shows
          in the history with who and when, and there is no undo. -->
+    <!-- The knowledge-base prompt (28c) sits directly above the section, wherever the section is:
+         high on a claimed Character, inside "More about X" ▸ Details on everything else, and at the
+         top of this block in the desktop's right-hand panel. Mounting it here rather than in each of
+         those three places is what keeps "directly above the Links section" true by construction.
+         Who is asked is `canAdd` — read ∧ write — which is the API's own rule
+         (`EntrySuggestions.CanSee`), so the card is drawn for exactly the members who could accept
+         it. -->
+    <WikiKnowledgeBaseSuggestion
+        v-if="canAdd"
+        :campaignId="campaignId"
+        :entry="entry"
+        :viewer="viewer"
+        :panel="panel" />
     <section
         v-if="readable && (links.length > 0 || canAdd)"
         :aria-labelledby="`${id}-title`"

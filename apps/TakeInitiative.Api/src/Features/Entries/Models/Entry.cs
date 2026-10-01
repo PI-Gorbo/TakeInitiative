@@ -42,6 +42,17 @@ public record Entry
     /// index, not state: nothing reads it but that query.
     /// </summary>
     public string[] LinkedItemKeys { get; init; } = [];
+    /// <summary>
+    /// The knowledge-base rows this entry has been told it is <b>not</b> (28b), in the order they were
+    /// dismissed. A set rather than a list: the same row dismissed twice is one entry here, which is
+    /// what makes <c>POST …/dismiss</c> idempotent without the endpoint having to ask first.
+    /// <para>
+    /// Only <see cref="KnowledgeBaseSuggester" /> reads it, to leave those rows out of the prompt. It
+    /// is not redacted per viewer and does not need to be: the suggester is only ever asked for an
+    /// entry whose links the caller may read, and a dismissal reaches a reader through nothing else.
+    /// </para>
+    /// </summary>
+    public IReadOnlyList<EntrySuggestionDismissal> DismissedSuggestions { get; init; } = [];
 
     /// <summary>
     /// Every block, secret ones included. Never sent as is: reads go through
@@ -154,6 +165,14 @@ public record Entry
     // Remove by id, and silently so: a removal of a link that is already gone is not a conflict.
     // The endpoint is what turns an unknown id into a 404, before it appends anything.
     public Entry Apply(EntryLinkRemoved e) => WithLinks([.. Links.Where(l => l.Id != e.LinkId)]);
+
+    // A dismissed suggestion (28b). Leaves UpdatedAt alone for the reason links do: it changes
+    // nothing any reader of the summary can see, and moving it would say something happened.
+    // Dismissing the same row twice is one dismissal, so a replayed or repeated event is a no-op.
+    public Entry Apply(EntryKnowledgeBaseSuggestionDismissed e)
+        => DismissedSuggestions.Any(d => d.Is(e.Provider, e.ItemId))
+            ? this
+            : this with { DismissedSuggestions = [.. DismissedSuggestions, new EntrySuggestionDismissal(e.Provider, e.ItemId)] };
 
     private Entry WithBlocks(IReadOnlyList<ArticleBlock> blocks) => this with
     {

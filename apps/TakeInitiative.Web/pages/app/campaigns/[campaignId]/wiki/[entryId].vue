@@ -136,8 +136,20 @@
                                 class="mt-6 flex flex-col gap-2">
                                 <h2
                                     :id="`${moreId}-title`"
-                                    class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                    More about {{ entry.name }}
+                                    class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                    <span class="min-w-0 truncate">More about {{ entry.name }}</span>
+                                    <!-- "✨ 2" (28c): the prompt lives inside Details, which is
+                                         collapsed, and a question nobody can see is a question
+                                         nobody answers. It is here only when the prompt is in
+                                         there — a claimed Character's Links, and its prompt with
+                                         them, are already high on the page. -->
+                                    <span
+                                        v-if="suggestionCount > 0 && !linksShowHigh(entry)"
+                                        class="shrink-0 font-normal normal-case tracking-normal text-gold"
+                                        :title="suggestionBadgeHint(suggestionCount)">
+                                        <span aria-hidden="true">{{ suggestionBadge(suggestionCount) }}</span>
+                                        <span class="sr-only">{{ suggestionBadgeHint(suggestionCount) }}</span>
+                                    </span>
                                 </h2>
                                 <div class="divide-y rounded-md border">
                                     <WikiEntrySection
@@ -320,6 +332,7 @@
     import { timelineItems } from "~/utils/entryCache";
     import { canChangeEntryAccess, canEditEntry } from "~/utils/entries";
     import { linksShowHigh } from "~/utils/links";
+    import { suggestionBadge, suggestionBadgeHint } from "~/utils/kbSuggestions";
     import { accessPeekLabel, combatsPeekLabel, galleryPeekLabel } from "~/utils/entrySections";
     import { galleryImageCount, galleryNotes, galleryTiles } from "~/utils/gallery";
     import { BLOCK_LINK_PARAM } from "~/utils/search";
@@ -452,6 +465,13 @@
     });
     const combatsQuery = useQuery(getEntryCombatsQuery(campaignId, () => entry.value?.id ?? ""));
     const combatCount = computed(() => combatsQuery.data.value?.combats.length);
+    // The "✨ N" badge's count (28c). The same query the prompt inside Details reads — one key, one
+    // request — so the header and the card can never disagree about how many there are.
+    const suggestionCount = useKnowledgeBaseSuggestions(
+        () => campaignId.value,
+        () => entry.value,
+        () => viewer.value
+    ).count;
 
     // ── History, restore and merge (15g) ─────────────────────────────────────
     const historyOpen = ref(false);

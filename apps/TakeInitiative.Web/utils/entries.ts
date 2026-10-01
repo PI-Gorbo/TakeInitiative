@@ -11,6 +11,7 @@ import type {
     EntryLink,
     EntryList,
     EntryListItem,
+    EntrySuggestion,
     EntrySummary,
     Stats,
     Visibility,
@@ -249,7 +250,21 @@ export function describeChange(change: EntryChange, nameOf: (memberId: string) =
             return `added a link${linkSuffix(change.link)}`;
         case "LinkRemoved":
             return `removed a link${linkSuffix(change.link)}`;
+        case "SuggestionDismissed":
+            return `dismissed a suggestion${suggestionSuffix(change.suggestion)}`;
     }
+}
+
+/**
+ * How a dismissed knowledge-base suggestion is named in a history line (28b): "Beholder (5eTools)",
+ * falling back to the stored item id when the row has gone from the corpus — and to nothing at all
+ * when even that is missing, so the line reads "dismissed a suggestion" rather than naming
+ * `undefined`. The same shape `linkSuffix` uses, for the same reason: history names things.
+ */
+function suggestionSuffix(suggestion: EntrySuggestion | null | undefined): string {
+    if (!suggestion) return "";
+    const name = suggestion.name ?? suggestion.itemId;
+    return name ? `: ${name}${suggestion.providerLabel ? ` (${suggestion.providerLabel})` : ""}` : "";
 }
 
 /**

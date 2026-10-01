@@ -66,18 +66,17 @@ public class EntryLinkResolver(KnowledgeBaseQueries queries, ReferenceCatalog re
     public async Task<IReadOnlyDictionary<Guid, EntryLinkItem>> ResolveAsync(
         IEnumerable<EntryLink> links, CancellationToken ct)
     {
-        // The links to resolve, each with its provider and the key it names. The key takes the
-        // provider's own spelling of itself where the provider is registered: the table's primary key
-        // is case-sensitive, so a link stored as "5eTOOLS" would otherwise miss its row and read as
-        // stale. A link missing either half of its key cannot be written by any endpoint, so it is
-        // left out rather than guessed at.
-        var wanted = new List<(EntryLink Link, IReferenceProvider? Provider, (string Provider, string Id) Key)>();
+        // The links to resolve, each with the key it names. The key takes the provider's own spelling
+        // of itself where the provider is registered: the table's primary key is case-sensitive, so a
+        // link stored as "5eTOOLS" would otherwise miss its row and read as stale. A link missing
+        // either half of its key cannot be written by any endpoint, so it is left out rather than
+        // guessed at.
+        var wanted = new List<(EntryLink Link, (string Provider, string Id) Key)>();
         foreach (var link in links)
         {
             if (link is { Kind: EntryLinkKind.KnowledgeBase, Provider: { } named, ItemId: { } itemId })
             {
-                var provider = reference.Get(named);
-                wanted.Add((link, provider, (provider?.Key ?? named, itemId)));
+                wanted.Add((link, (reference.Get(named)?.Key ?? named, itemId)));
             }
         }
 
@@ -86,25 +85,67 @@ public class EntryLinkResolver(KnowledgeBaseQueries queries, ReferenceCatalog re
             return new Dictionary<Guid, EntryLinkItem>();
         }
 
+        var items = await ResolveItemsAsync(wanted.Select(x => x.Key), ct);
+
+        var resolved = new Dictionary<Guid, EntryLinkItem>();
+        foreach (var (link, key) in wanted)
+        {
+            if (items.TryGetValue(key, out var item))
+            {
+                resolved[link.Id] = item;
+            }
+        }
+        return resolved;
+    }
+
+    /// <summary>
+    /// The same resolution, by <c>(provider, id)</c> rather than by link: one query for every key
+    /// given, each answering a row or the stale case. Two readers need it — an entry's links, above,
+    /// and the dismissed suggestions in its history (28b), which name a row without a link to hang it
+    /// on — and it is the same question, so it is the same code and the same one query.
+    /// <para>
+    /// Keys are compared as the table compares them (<see cref="KeyComparer" />), both when the
+    /// duplicates are dropped and in the dictionary that comes back, so a caller may look a key up in
+    /// whatever case it holds the provider.
+    /// </para>
+    /// </summary>
+    public async Task<IReadOnlyDictionary<(string Provider, string Id), EntryLinkItem>> ResolveItemsAsync(
+        IEnumerable<(string Provider, string Id)> keys, CancellationToken ct)
+    {
+        var wanted = new List<((string Provider, string Id) Key, IReferenceProvider? Provider)>();
+        var seen = new HashSet<(string Provider, string Id)>(KeyComparer);
+        foreach (var key in keys)
+        {
+            if (seen.Add(key))
+            {
+                wanted.Add((key, reference.Get(key.Provider)));
+            }
+        }
+
+        var resolved = new Dictionary<(string Provider, string Id), EntryLinkItem>(KeyComparer);
+        if (wanted.Count == 0)
+        {
+            return resolved;
+        }
+
         // Which of them keep their rows in the table, and which answer from memory. Asking the
         // catalog for a table-backed provider's missing row would be the per-link query this class
         // exists to avoid, so the two are kept apart.
         var rows = await queries.ByIdsAsync(
-            [.. wanted.Where(x => x.Provider is KnowledgeBaseReferenceProvider).Select(x => x.Key).Distinct()],
+            [.. wanted.Where(x => x.Provider is KnowledgeBaseReferenceProvider).Select(x => x.Key)],
             ct);
         var byKey = rows.ToDictionary(
             row => (row.Item.Provider, row.Item.Id),
             row => row,
             KeyComparer);
 
-        var resolved = new Dictionary<Guid, EntryLinkItem>();
-        foreach (var (link, provider, key) in wanted)
+        foreach (var (key, provider) in wanted)
         {
             var label = provider?.Label ?? key.Provider;
 
             if (byKey.TryGetValue(key, out var row))
             {
-                resolved[link.Id] = new EntryLinkItem(
+                resolved[key] = new EntryLinkItem(
                     ProviderLabel: label,
                     Name: row.Item.Name,
                     Detail: row.Item.Summary.Detail,
@@ -126,7 +167,7 @@ public class EntryLinkResolver(KnowledgeBaseQueries queries, ReferenceCatalog re
                 ? null
                 : await provider.Find(key.Id, ct);
 
-            resolved[link.Id] = new EntryLinkItem(
+            resolved[key] = new EntryLinkItem(
                 ProviderLabel: label,
                 Name: item?.Name,
                 Detail: item?.Detail,

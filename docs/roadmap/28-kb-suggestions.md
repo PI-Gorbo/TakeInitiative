@@ -66,8 +66,12 @@ The prompt is deliberately quiet:
   because the user typed the query and is looking at results; a prompt that appears
   uninvited cannot.
 - **The entry's kind must be compatible** with the row's category: a `Character` may match a
-  Monster, an `Item` may match an Item or a Spell, and a `Place`, `Faction` or `Event`
-  matches nothing. This alone removes most false prompts.
+  Monster, an `Item` may match an Item or a Spell, an `Other` may match a Spell, and a
+  `Place`, `Faction` or `Event` matches nothing. This alone removes most false prompts.
+  (`Other` was missing from this list and had to be added in 28b: there is no Spell entry
+  kind, so `KnowledgeBaseItemRow.Summary` already files every spell row under `Other` for
+  + Wiki. Without the clause a corpus of spells could never be suggested at all, and
+  "Fireball ↗ Fireball" is the least ambiguous prompt in the feature.)
 - **At most 3 candidates**, best first. If the best is ladder 0 and the next is ladder 1,
   only the exact one shows; the others are behind "3 possible matches" which expands.
 - **No prompt at all** when the entry already has a knowledge-base link, when it has been
@@ -116,9 +120,16 @@ prompt is gone anyway, and the link itself is the record.
 ### Entry page, phone
 
 The prompt sits **directly above the Links section**, inside Details, so it appears where
-its outcome lands. One exception: for a DM on an entry with **no** links at all, it shows in
-the collapsed "More about X" header as "✨ 1 suggestion", because a prompt buried in a
-collapsed section would never be seen.
+its outcome lands — and it is drawn by `EntryLinks.vue` itself, so it follows that section
+wherever it goes (high on a claimed Character, inside Details on everything else, and in the
+right-hand panel at `lg`) rather than being mounted three times.
+
+The count also shows in the "More about X" header as "✨ N", because a prompt buried in a
+collapsed section would never be seen. 28c shows it whenever the prompt is in there, not
+only "for an entry with no links at all" as this plan first said: the number of links has
+nothing to do with how buried the question is, and an NPC with a D&D Beyond link would
+otherwise hide its prompt for no reason. It is left out only when Links — and with it the
+prompt — are already high on the page, which is a claimed Character.
 
 ```
 │ ▾ More about The Eye     ✨1  │
@@ -145,11 +156,15 @@ The same card at the top of the right-hand panel's Details block.
 New:
 
 - `apps/TakeInitiative.Api/src/Features/Reference/KnowledgeBase/KnowledgeBaseSuggester.cs` —
-  the candidate query and the kind-compatibility rule
+  the kind-compatibility rule and the exclusions; the statement itself is
+  `KnowledgeBaseQueries.SuggestAsync`, because that class is "every read of
+  `knowledge_base_item`" and a second place for SQL over that table would make it untrue
 - `…/Entries/Models/Events/EntryKnowledgeBaseSuggestionDismissed.cs`
+- `…/Entries/Models/EntrySuggestions.cs` — `EntrySuggestionDismissal`, and `CanSee`
 - `…/Entries/Api/GetEntryKnowledgeBaseSuggestions/` — the endpoint, its response
 - `…/Entries/Api/PostEntrySuggestionDismiss/` — the endpoint, its request
-- `apps/TakeInitiative.Web/components/Entry/KnowledgeBaseSuggestion.vue`
+- `apps/TakeInitiative.Web/components/Wiki/KnowledgeBaseSuggestion.vue` (the wiki's
+  components live in `components/Wiki/`, not `components/Entry/`)
 - `apps/TakeInitiative.Web/composables/useKnowledgeBaseSuggestions.ts`
 - `apps/TakeInitiative.Web/utils/kbSuggestions.ts` + its unit tests (the prompt's wording,
   the expand/collapse rule, kind compatibility mirrored for the client)
@@ -157,8 +172,10 @@ New:
 Modified:
 
 - `…/Entries/Models/Entry.cs` — `DismissedSuggestions`, and the event applied
+- `…/Entries/Links/EntryLinkResolver.cs` — resolution by `(provider, id)`, so history can
+  name a dismissed row the way it names a link's
 - `…/Entries/Api/GetEntryHistory/GetEntryHistory.cs` — the new change type
-- `apps/TakeInitiative.Web/components/Entry/EntryLinks.vue` — the prompt above it
+- `apps/TakeInitiative.Web/components/Wiki/EntryLinks.vue` — the prompt above it
 - `apps/TakeInitiative.Web/pages/app/campaigns/[campaignId]/wiki/[entryId].vue` — the
   "✨ N" badge on the collapsed section header
 - `apps/TakeInitiative.Web/utils/api/schema.d.ts` — regenerated
@@ -179,7 +196,10 @@ Write this file; update `README.md`. `gh stack` on 27e.
    **and** write access; returns `[]` (not 403) when the caller may not see them, so the web
    has one code path and reveals nothing by status code.
 3. `POST …/entries/{entryId}/knowledge-base-suggestions/dismiss` with `{ provider, itemId }`
-   — appends the event, idempotent, authorised as the write path.
+   — appends the event, idempotent, authorised as the write path (`EntryLinks.CanWrite`
+   alone, **not** that and `CanRead`: adding the read check is the trap `CanWrite`'s own
+   remarks describe). It answers the suggestions that are **left**, through the same
+   redaction the `GET` uses, so the web has one response shape and one code path.
 4. Project `DismissedSuggestions`; add the history case.
 5. Alba tests: an exact match, a prefix match, a fuzzy match producing nothing, each
    incompatible kind, the linked-already case, dismissal silencing one candidate but not

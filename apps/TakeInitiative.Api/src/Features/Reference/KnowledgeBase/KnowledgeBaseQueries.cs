@@ -11,9 +11,10 @@ using TakeInitiative.KnowledgeBase.Schema;
 namespace TakeInitiative.Api.Features.Reference.KnowledgeBase;
 
 /// <summary>
-/// Every read of <c>knowledge_base_item</c>: ⌘K's search (26d₂), one row by id, and the browse
-/// page's page and facet counts (26e). Plain SQL on the Marten session's database, the way
-/// <c>EntryMatcher</c> and the search providers do it, because none of this is a document query.
+/// Every read of <c>knowledge_base_item</c>: ⌘K's search (26d₂), one row by id, the browse
+/// page's page and facet counts (26e), and an entry's suggested matches (28b). Plain SQL on the
+/// Marten session's database, the way <c>EntryMatcher</c> and the search providers do it, because
+/// none of this is a document query.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -27,7 +28,8 @@ namespace TakeInitiative.Api.Features.Reference.KnowledgeBase;
 /// rung and an equal similarity.
 /// </para>
 /// <para>
-/// <b>A stale row is not in the corpus any more.</b> Both scans exclude <c>stale</c>. Such a row
+/// <b>A stale row is not in the corpus any more.</b> Every scan excludes <c>stale</c> — the search,
+/// the browse and the suggester. Such a row
 /// exists only because an entry links to it and a prune kept it rather than breaking that link
 /// (step 26c), so it must stay <i>resolvable</i> through <see cref="ByIdsAsync" /> while being
 /// unreachable by search or browse. Without this, the knowledge-base picker could offer a row that
@@ -174,6 +176,57 @@ public class KnowledgeBaseQueries(IQuerySession session)
     }
 
     /// <summary>
+    /// The rows that could be what an entry is (28b): the best <c>Take</c> of them, over every name in
+    /// <paramref name="query" />, on rungs <b>0 and 1 only</b> — exact, or the name is a prefix of the
+    /// row's. Empty for no names, no categories or an empty table, with no statement sent at all.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Two rungs, not five.</b> ⌘K can afford the fuzzy rung because the reader typed the query and
+    /// is looking at the results; a prompt that appears uninvited cannot. On a corpus of thousands of
+    /// short names, rungs 2–4 offer "Beholder" for "Behold the Sky" and teach the member to ignore
+    /// the ✨. So this is not <see cref="Ladder" /> with a filter on top: it is the two rungs written
+    /// out, which is also what lets the <c>WHERE</c> decide the match outright rather than prefilter it.
+    /// </para>
+    /// <para>
+    /// <b>The two rungs are one term.</b> Both mean "the folded name starts with the folded query", so
+    /// <c>strpos(folded name, folded query) = 1</c> is the whole ladder and <c>min(…)</c> over the
+    /// names then says which rung it was — the best one, when an entry's name and one of its aliases
+    /// both match the same row. The <c>like</c> beside it is the <c>gin_trgm_ops</c> index's term and
+    /// decides nothing; <c>lower(name) &lt;&gt; lower(unaccent(name))</c> keeps the rows the fold
+    /// changes, for the reason the class comment gives.
+    /// </para>
+    /// <para>
+    /// <b>The candidates are grouped by the primary key and then joined back</b> for their columns,
+    /// rather than grouped by every column: <c>stats</c> is <c>jsonb</c>, and a <c>GROUP BY</c> over it
+    /// would make the plan depend on jsonb having the operators to group by. The join back is an
+    /// index lookup of at most <c>Take</c> rows.
+    /// </para>
+    /// </remarks>
+    public async Task<IReadOnlyList<KnowledgeBaseItemRow>> SuggestAsync(
+        KnowledgeBaseSuggestionQuery query, CancellationToken ct)
+    {
+        var names = query.Names.Where(name => !string.IsNullOrWhiteSpace(name)).Select(name => name.Trim()).ToArray();
+        if (names.Length == 0 || query.Categories.Count == 0 || query.Take <= 0)
+        {
+            return [];
+        }
+
+        return await SearchSql.QueryAsync(
+            session,
+            SuggestSqlText(),
+            command =>
+            {
+                AddTextArray(command, "names", names);
+                AddTextArray(command, "categories", [.. query.Categories.Select(category => category.ToString())]);
+                AddTextArray(command, "excluded", [.. query.ExcludedKeys]);
+                command.Parameters.AddWithValue("take", query.Take);
+            },
+            Read,
+            ct);
+    }
+
+    /// <summary>
     /// One page of the browse list (26e) and the facet counts beside it, on one connection. The
     /// filters are all optional; <paramref name="query" /> ranks the page on the same ladder ⌘K uses
     /// and, when it is absent, the page is by name.
@@ -301,6 +354,37 @@ public class KnowledgeBaseQueries(IQuerySession session)
         from matched m
         where m.rung is not null
         order by m.rung, score desc, length(m.name), m.name, m.id
+        limit @take
+        """;
+
+    /// <summary>
+    /// 28b's candidates: see <see cref="SuggestAsync" />. The ordering is the prompt's — the better rung
+    /// first, then the shorter name, then the name — so "Beholder" comes before "Beholder Zombie" and the
+    /// list is stable across requests (the primary key breaks the last tie).
+    /// </summary>
+    private string SuggestSqlText() => $"""
+        with q as (
+            select folded,
+                   replace(replace(replace(folded, '\', '\\'), '%', '\%'), '_', '\_') || '%' as pattern
+            from (select distinct {SearchSql.Folded("n")} as folded from unnest(@names) as w(n)) f
+            where length(f.folded) > 0
+        ),
+        matched as (
+            select k.provider, k.id,
+                   min(case when {SearchSql.Folded("k.name")} = q.folded then 0 else 1 end) as rung
+            from {Table} k
+            cross join q
+            where not k.stale
+              and k.category = any(@categories)
+              and (lower(k.provider) || ':' || k.id) <> all(@excluded)
+              and (lower(k.name) like q.pattern escape '\' or lower(k.name) <> {SearchSql.Folded("k.name")})
+              and strpos({SearchSql.Folded("k.name")}, q.folded) = 1
+            group by k.provider, k.id
+        )
+        select {Columns("k")}
+        from matched m
+        join {Table} k on k.provider = m.provider and k.id = m.id
+        order by m.rung, length(k.name), k.name, k.provider, k.id
         limit @take
         """;
 
@@ -433,4 +517,29 @@ public sealed record KnowledgeBaseBrowse(
     string? Book,
     string? Query,
     int Skip,
+    int Take);
+
+/// <summary>
+/// What <see cref="KnowledgeBaseQueries.SuggestAsync" /> is asked (28b). Every field is built by
+/// <see cref="KnowledgeBaseSuggester" /> from one entry: this record is only the shape the statement
+/// takes, and it holds no rule of its own.
+/// </summary>
+/// <param name="Names">
+/// The entry's name and its aliases, in any case and with accents as they are typed. Blank ones are
+/// dropped and the rest are folded by the statement.
+/// </param>
+/// <param name="Categories">
+/// The row categories this entry's kind may match. <b>Empty means no suggestion at all</b>, which is
+/// how a Place, a Faction and an Event are left out — so the caller never has to special-case them.
+/// </param>
+/// <param name="ExcludedKeys">
+/// The rows not to offer, as <c>lower(provider):id</c>: the ones this entry already links and the
+/// ones it has dismissed. The provider folds, because two links spelled <c>5etools</c> and
+/// <c>5eTools</c> name one provider; the id does not, because it is the table's case-sensitive key.
+/// </param>
+/// <param name="Take">How many candidates at most. Zero or less answers none.</param>
+public sealed record KnowledgeBaseSuggestionQuery(
+    IReadOnlyCollection<string> Names,
+    IReadOnlyCollection<ReferenceCategory> Categories,
+    IReadOnlyCollection<string> ExcludedKeys,
     int Take);

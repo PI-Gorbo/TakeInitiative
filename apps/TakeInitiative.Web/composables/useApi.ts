@@ -42,6 +42,8 @@ import { putEntryStatsRequest } from "~/utils/api/entry/putEntryStatsRequest";
 import { getEntryHistoryRequest } from "~/utils/api/entry/getEntryHistoryRequest";
 import { postEntryLinkRequest } from "~/utils/api/entry/postEntryLinkRequest";
 import { deleteEntryLinkRequest } from "~/utils/api/entry/deleteEntryLinkRequest";
+import { getEntryKnowledgeBaseSuggestionsRequest } from "~/utils/api/entry/getEntryKnowledgeBaseSuggestionsRequest";
+import { postEntrySuggestionDismissRequest } from "~/utils/api/entry/postEntrySuggestionDismissRequest";
 import { postImageRequest } from "~/utils/api/image/postImageRequest";
 import { deleteImageRequest } from "~/utils/api/image/deleteImageRequest";
 import { getSessionImagesRequest } from "~/utils/api/image/getSessionImagesRequest";
@@ -125,6 +127,8 @@ export const useApi = () => {
             history: getEntryHistoryRequest($axios),
             postLink: postEntryLinkRequest($axios),
             deleteLink: deleteEntryLinkRequest($axios),
+            knowledgeBaseSuggestions: getEntryKnowledgeBaseSuggestionsRequest($axios),
+            dismissSuggestion: postEntrySuggestionDismissRequest($axios),
         },
         image: {
             post: postImageRequest($axios),

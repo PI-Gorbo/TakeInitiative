@@ -263,6 +263,26 @@ public static class WebAppClientExtensions
     public static Task<Result<EntryResponse>> DeleteEntryLink(this IWebAppClient client, Guid campaignId, Guid entryId, Guid linkId)
         => client.DeleteNoBody<EntryResponse>(LinkUrl(campaignId, entryId, linkId));
 
+    // Knowledge-base suggestions (step 28).
+
+    public static string SuggestionsUrl(Guid campaignId, Guid entryId)
+        => EntryUrl(campaignId, entryId, "knowledge-base-suggestions");
+
+    public static string DismissSuggestionUrl(Guid campaignId, Guid entryId)
+        => EntryUrl(campaignId, entryId, "knowledge-base-suggestions/dismiss");
+
+    /// <summary>The <c>POST …/dismiss</c> body: the row the entry is not.</summary>
+    public static object DismissSuggestionBody(string? provider, string? itemId) => new { provider, itemId };
+
+    public static Task<Result<EntryKnowledgeBaseSuggestionsResponse>> GetKnowledgeBaseSuggestions(
+        this IWebAppClient client, Guid campaignId, Guid entryId)
+        => client.Get<EntryKnowledgeBaseSuggestionsResponse>(SuggestionsUrl(campaignId, entryId));
+
+    public static Task<Result<EntryKnowledgeBaseSuggestionsResponse>> PostDismissSuggestion(
+        this IWebAppClient client, Guid campaignId, Guid entryId, string provider, string itemId)
+        => client.Post<object, EntryKnowledgeBaseSuggestionsResponse>(
+            DismissSuggestionBody(provider, itemId), DismissSuggestionUrl(campaignId, entryId));
+
     // Images (step 16a).
 
     public static string ImagesUrl(Guid campaignId) => $"/api/campaigns/{campaignId}/images";

@@ -65,6 +65,15 @@ export type Stats = Schemas["StatsResponse"];
  */
 export type EntryLink = Schemas["EntryLinkResponse"];
 export type EntryLinkKind = Schemas["EntryLinkKind"];
+/**
+ * The knowledge-base rows an entry might be (28b), best first and at most three. A row is a
+ * `KnowledgeBaseItem` — the same shape the Knowledge base page lists — so the prompt draws it with
+ * 26f's own row helpers and "Link it" has everything `POST links` needs. There is no score on it: a
+ * trigram match is not a probability, and the row's detail line is what lets the member judge.
+ */
+export type EntryKnowledgeBaseSuggestions = Schemas["EntryKnowledgeBaseSuggestionsResponse"];
+/** A dismissed suggestion as history names it (28b): the row, resolved as the reader sees it now. */
+export type EntrySuggestion = Schemas["EntrySuggestionResponse"];
 /** An entry's history, redacted for the viewer (15g). */
 export type EntryHistory = Schemas["EntryHistoryResponse"];
 export type EntryHistoryItem = Schemas["EntryHistoryItem"];

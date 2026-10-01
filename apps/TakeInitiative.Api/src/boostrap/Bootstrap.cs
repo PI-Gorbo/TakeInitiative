@@ -453,6 +453,9 @@ public static class Bootstrap
         // An entry's links (27b), resolved against the corpus on every read. Scoped for the same
         // reason the catalog is: it reads the request's Marten session through KnowledgeBaseQueries.
         services.AddScoped<EntryLinkResolver>();
+        // "Does this entry look like a row in the corpus?" (28b): one query, no model. Scoped for the
+        // same reason — it asks KnowledgeBaseQueries, which holds the request's session.
+        services.AddScoped<KnowledgeBaseSuggester>();
         return services;
     }
 
