@@ -45,7 +45,7 @@ public class PostEntryFromReferenceRequestValidator : Validator<PostEntryFromRef
 /// The source follows the Stats read rule (<see cref="EntrySources"/>), so a player who adds an NPC
 /// gets back an entry without it.
 /// </summary>
-public class PostEntryFromReference(IDocumentSession session, IHubContext<CampaignHub> hub, ReferenceCatalog reference)
+public class PostEntryFromReference(IDocumentSession session, IHubContext<CampaignHub> hub, ReferenceCatalog reference, EntryLinkResolver links)
     : Endpoint<PostEntryFromReferenceRequest, EntryResponse>
 {
     public const string ItemIdKey = "itemId";
@@ -64,7 +64,7 @@ public class PostEntryFromReference(IDocumentSession session, IHubContext<Campai
         var (campaign, member) = await this.RequireMember(session, req.CampaignId, userId, ct);
 
         var provider = reference.Get(req.Provider);
-        var item = provider?.Find(req.ItemId);
+        var item = provider is null ? null : await provider.Find(req.ItemId, ct);
         if (provider is null || item is null)
         {
             ThrowError(new ValidationFailure(ItemIdKey, "That isn't in the reference data."), StatusCodes.Status404NotFound);
@@ -85,6 +85,9 @@ public class PostEntryFromReference(IDocumentSession session, IHubContext<Campai
             ThrowIfAnyErrors(StatusCodes.Status409Conflict);
         }
 
+        // The item's own url when it has one; only then does the provider's licence url matter, so
+        // the ?? chain keeps the second lookup out of the common path exactly as before.
+        var sourceUrl = item.Url ?? (await provider.Get(item.Id, ct))?.Attribution.SourceUrl ?? "";
         var created = new EntryCreated(
             Actor: Actor.Member(member.MemberId),
             CampaignId: req.CampaignId,
@@ -92,7 +95,7 @@ public class PostEntryFromReference(IDocumentSession session, IHubContext<Campai
             Name: name,
             Kind: item.SuggestedKind,
             Visibility: req.Visibility,
-            Source: new EntrySource(provider.Key, item.Id, item.Url ?? provider.Get(item.Id)?.Attribution.SourceUrl ?? ""));
+            Source: new EntrySource(provider.Key, item.Id, sourceUrl));
 
         // The entry as it will be, for the Stats write rule: new, so unclaimed.
         var entryId = Guid.NewGuid();
@@ -119,6 +122,6 @@ public class PostEntryFromReference(IDocumentSession session, IHubContext<Campai
         {
             await hub.NotifyEntryStatsChanged(campaign.Members, entry with { Stats = null }, entry);
         }
-        await SendAsync(EntryResponse.From(entry, member, reference), cancellation: ct);
+        await SendAsync(await EntryResponse.From(entry, member, reference, links, ct), cancellation: ct);
     }
 }

@@ -1,7 +1,9 @@
 <template>
     <!-- One note's ✨ suggestions (23e.2): a bottom sheet on a phone and a right-hand panel from
          `md`, like the evidence sheet. The note, then the same chips as on the loose-ends page
-         (23d), then Edit to finish by hand. Nothing happens until the author taps. -->
+         (23d), then Edit to finish by hand. Nothing happens until the author taps.
+         23f: "Look again" asks the model for a deeper pass over this one note. This component
+         stays presentational — the chip decides what each tap does and what `status` says. -->
     <DialogRoot v-model:open="open">
         <DialogPortal>
             <DialogOverlay
@@ -34,18 +36,39 @@
                         :text="note.text"
                         class="rounded-md border px-3 py-2" />
                     <p
-                        v-if="suggestions.length === 0"
+                        v-if="status"
+                        :role="status.isError ? 'alert' : 'status'"
+                        :class="[
+                            'text-sm',
+                            status.isError
+                                ? 'text-destructive-tint'
+                                : 'text-muted-foreground',
+                        ]">
+                        {{ status.text }}
+                    </p>
+                    <p
+                        v-if="!working && suggestions.length === 0"
                         role="status"
                         class="text-sm text-muted-foreground">
-                        No more suggestions for this note.
+                        {{
+                            canLookAgain
+                                ? "Nothing here yet. Look again to have the model try harder."
+                                : NOTHING_DEEPER_LABEL
+                        }}
                     </p>
                     <LooseEndsModelSuggestions
-                        v-else
+                        v-else-if="suggestions.length > 0"
                         :suggestions="suggestions"
                         :disabled="busy"
+                        :unsureBelow="unsureBelow"
                         @link="(s) => emit('link', s)"
                         @create="(s) => emit('create', s)"
                         @dismiss="(s) => emit('dismiss', s)" />
+                    <p
+                        v-if="!canLookAgain && suggestions.length > 0"
+                        class="text-xs text-muted-foreground">
+                        {{ NOTHING_DEEPER_LABEL }}
+                    </p>
                     <p class="text-xs text-muted-foreground">
                         From the suggestion model on this device. Your note was
                         not sent anywhere to be read.
@@ -53,7 +76,18 @@
                 </div>
 
                 <footer
-                    class="flex shrink-0 justify-end gap-2 border-t px-4 py-2">
+                    class="flex shrink-0 items-center justify-between gap-2 border-t px-4 py-2">
+                    <Button
+                        v-if="canLookAgain"
+                        variant="ghost"
+                        class="h-11 gap-1 text-gold md:h-9"
+                        :disabled="busy || working"
+                        :aria-label="`${LOOK_AGAIN_LABEL}: read this note again, looking harder`"
+                        @click="emit('lookAgain')">
+                        <span aria-hidden="true">✨</span>
+                        {{ working ? "Looking…" : LOOK_AGAIN_LABEL }}
+                    </Button>
+                    <span v-else />
                     <Button
                         variant="ghost"
                         class="h-11 gap-1 md:h-9"
@@ -83,7 +117,11 @@
         DialogTitle,
     } from "reka-ui";
     import type { SessionNote } from "~/utils/api/types";
-    import type { ModelSuggestion } from "~/utils/suggestions";
+    import {
+        LOOK_AGAIN_LABEL,
+        NOTHING_DEEPER_LABEL,
+        type ModelSuggestion,
+    } from "~/utils/suggestions";
 
     defineProps<{
         campaignId: string;
@@ -91,6 +129,14 @@
         suggestions: readonly ModelSuggestion[];
         /** While a link is being saved. */
         busy?: boolean;
+        /** 23f: what the model is doing, or what went wrong. */
+        status?: { text: string; isError?: boolean } | null;
+        /** 23f: true while the model is loading or reading this note. */
+        working?: boolean;
+        /** 23f: false once the deepest pass has run — there is nothing more to ask for. */
+        canLookAgain?: boolean;
+        /** 23f: the pinned threshold, on a deeper pass: under it a chip is marked "unsure". */
+        unsureBelow?: number;
     }>();
     const open = defineModel<boolean>("open", { required: true });
     const emit = defineEmits<{
@@ -98,5 +144,6 @@
         create: [suggestion: ModelSuggestion];
         dismiss: [suggestion: ModelSuggestion];
         edit: [];
+        lookAgain: [];
     }>();
 </script>

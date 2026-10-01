@@ -9,8 +9,46 @@ export type SuggestionKind = (typeof SUGGESTION_KINDS)[number];
 /** The model's labels: the kinds in lower case (§11a, no mapping). */
 export const LABELS = SUGGESTION_KINDS.map((k) => k.toLowerCase());
 
-/** At most this many spans a note are sent to matching. */
+/** At most this many spans a note are sent to matching, on the automatic pass. */
 export const MAX_SPANS_PER_NOTE = 10;
+
+/** How hard one pass looks: the confidence a span must reach, and how many are kept. */
+export interface SuggestionPass {
+    threshold: number;
+    max: number;
+}
+
+/**
+ * Step 23f: the passes behind "✨ Find suggestions" on one note. Level 0 is the automatic read
+ * (the model's pinned threshold, `MAX_SPANS_PER_NOTE` spans); each further tap drops the
+ * threshold and raises the cap, so spans the pass before it discarded come through. A deeper
+ * pass adds to what the one before it found: `runChunk` picks by descending confidence, so a
+ * weaker span never displaces a stronger one. (`tidy` resolves overlaps by length first, so a
+ * newly admitted longer span can still swallow a shorter one — rare, and the longer span is the
+ * better name when it happens.)
+ *
+ * Deeper is only worth offering on one note at a time: a pass at 0.15 over a whole page of notes
+ * would be mostly noise, which is why the loose-ends page and the stream stay at level 0.
+ */
+const PASSES: readonly { factor: number; max: number }[] = [
+    { factor: 1, max: MAX_SPANS_PER_NOTE },
+    { factor: 0.625, max: 20 },
+    { factor: 0.375, max: 30 },
+];
+
+/** The deepest level `passAt` offers. Past it there is nothing more to ask for. */
+export const SUGGESTION_DEPTH_MAX = PASSES.length - 1;
+
+/** However low a pass goes, it never goes below this: under it GLiNER is guessing. */
+export const MIN_SUGGESTION_THRESHOLD = 0.1;
+
+/** The pass at `level` (clamped), from the model's pinned `base` threshold. Pure. */
+export function passAt(level: number, base: number): SuggestionPass {
+    const p = PASSES[Math.min(Math.max(Math.trunc(level) || 0, 0), SUGGESTION_DEPTH_MAX)]!;
+    // Two decimals: the pass is part of the extractor's memo key, so it has to be exact.
+    const threshold = Math.round(Math.max(MIN_SUGGESTION_THRESHOLD, base * p.factor) * 100) / 100;
+    return { threshold, max: p.max };
+}
 
 /** A span the model found, with offsets into the note. */
 export interface ModelSpan {

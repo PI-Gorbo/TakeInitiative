@@ -3,8 +3,10 @@
         class="lg:grid lg:max-w-none lg:grid-cols-[minmax(0,1fr)_360px] xl:grid-cols-[minmax(0,1fr)_400px]">
         <!-- An entry (design §4), in 25e's phone order: its header (15c, with the "Played by"
              chip and the ⋯ menu), a stats peek (15g), a connections strip (19c), and the
-             Summary | Notes tabs (25d: its article, 15f, and its timeline, 15c). The end of
-             Summary is "More about X": Details (source 20d, claim 15g, access), Gallery (16d)
+             Summary | Notes tabs (25d: its article, 15f, and its timeline, 15c). A claimed
+             Character also shows its Links high, under the stats line (27d). The end of
+             Summary is "More about X": Details (source 20d, claim 15g, access, the D&D Beyond
+             sheet 27e, and every other entry's Links), Gallery (16d)
              and Combats (18e), each a collapsed row. At `lg` (25f) the page leaves
              PageContainer's width for two columns: the header and tabs centred on the left,
              and a right-hand panel that scrolls on its own with everything else, forced open.
@@ -58,6 +60,15 @@
                     <template v-if="!desktop">
                         <WikiStatsEditor
                             :key="`${entry.id}-stats`"
+                            :campaignId="campaignId"
+                            :entry="entry"
+                            :viewer="viewer" />
+                        <!-- Links (27d), high on a claimed Character: its sheet is a
+                             high-frequency lookup (access pattern 2). Every other entry keeps
+                             them inside "More about X" ▸ Details. -->
+                        <WikiEntryLinks
+                            v-if="linksShowHigh(entry)"
+                            :key="`${entry.id}-links`"
                             :campaignId="campaignId"
                             :entry="entry"
                             :viewer="viewer" />
@@ -125,8 +136,20 @@
                                 class="mt-6 flex flex-col gap-2">
                                 <h2
                                     :id="`${moreId}-title`"
-                                    class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                    More about {{ entry.name }}
+                                    class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                    <span class="min-w-0 truncate">More about {{ entry.name }}</span>
+                                    <!-- "✨ 2" (28c): the prompt lives inside Details, which is
+                                         collapsed, and a question nobody can see is a question
+                                         nobody answers. It is here only when the prompt is in
+                                         there — a claimed Character's Links, and its prompt with
+                                         them, are already high on the page. -->
+                                    <span
+                                        v-if="suggestionCount > 0 && !linksShowHigh(entry)"
+                                        class="shrink-0 font-normal normal-case tracking-normal text-gold"
+                                        :title="suggestionBadgeHint(suggestionCount)">
+                                        <span aria-hidden="true">{{ suggestionBadge(suggestionCount) }}</span>
+                                        <span class="sr-only">{{ suggestionBadgeHint(suggestionCount) }}</span>
+                                    </span>
                                 </h2>
                                 <div class="divide-y rounded-md border">
                                     <WikiEntrySection
@@ -139,7 +162,8 @@
                                             :viewer="viewer"
                                             :members="campaign.members"
                                             :nameOf="memberName"
-                                            :creatorName="creatorName" />
+                                            :creatorName="creatorName"
+                                            :showLinks="!linksShowHigh(entry)" />
                                     </WikiEntrySection>
                                     <WikiEntrySection
                                         :key="`${entry.id}-gallery`"
@@ -251,6 +275,13 @@
                     :creatorName="creatorName"
                     hideClaim />
             </WikiEntrySection>
+            <!-- Links (27d): a block under Details, forced open like the rest of the panel (25f). -->
+            <WikiEntryLinks
+                :key="`${entry.id}-links`"
+                :campaignId="campaignId"
+                :entry="entry"
+                :viewer="viewer"
+                panel />
             <WikiEntrySection
                 title="Gallery"
                 forceOpen>
@@ -300,6 +331,8 @@
     } from "~/utils/article";
     import { timelineItems } from "~/utils/entryCache";
     import { canChangeEntryAccess, canEditEntry } from "~/utils/entries";
+    import { linksShowHigh } from "~/utils/links";
+    import { suggestionBadge, suggestionBadgeHint } from "~/utils/kbSuggestions";
     import { accessPeekLabel, combatsPeekLabel, galleryPeekLabel } from "~/utils/entrySections";
     import { galleryImageCount, galleryNotes, galleryTiles } from "~/utils/gallery";
     import { BLOCK_LINK_PARAM } from "~/utils/search";
@@ -432,6 +465,13 @@
     });
     const combatsQuery = useQuery(getEntryCombatsQuery(campaignId, () => entry.value?.id ?? ""));
     const combatCount = computed(() => combatsQuery.data.value?.combats.length);
+    // The "✨ N" badge's count (28c). The same query the prompt inside Details reads — one key, one
+    // request — so the header and the card can never disagree about how many there are.
+    const suggestionCount = useKnowledgeBaseSuggestions(
+        () => campaignId.value,
+        () => entry.value,
+        () => viewer.value
+    ).count;
 
     // ── History, restore and merge (15g) ─────────────────────────────────────
     const historyOpen = ref(false);

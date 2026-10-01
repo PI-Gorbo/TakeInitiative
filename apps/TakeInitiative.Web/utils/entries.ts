@@ -8,8 +8,10 @@ import type {
     EntryChange,
     EntryHistoryItem,
     EntryKind,
+    EntryLink,
     EntryList,
     EntryListItem,
+    EntrySuggestion,
     EntrySummary,
     Stats,
     Visibility,
@@ -244,7 +246,37 @@ export function describeChange(change: EntryChange, nameOf: (memberId: string) =
             return "cleared its player";
         case "StatsChanged":
             return change.stats ? `set the stats: ${statsLabel(change.stats)}` : "cleared the stats";
+        case "LinkAdded":
+            return `added a link${linkSuffix(change.link)}`;
+        case "LinkRemoved":
+            return `removed a link${linkSuffix(change.link)}`;
+        case "SuggestionDismissed":
+            return `dismissed a suggestion${suggestionSuffix(change.suggestion)}`;
     }
+}
+
+/**
+ * How a dismissed knowledge-base suggestion is named in a history line (28b): "Beholder (5eTools)",
+ * falling back to the stored item id when the row has gone from the corpus — and to nothing at all
+ * when even that is missing, so the line reads "dismissed a suggestion" rather than naming
+ * `undefined`. The same shape `linkSuffix` uses, for the same reason: history names things.
+ */
+function suggestionSuffix(suggestion: EntrySuggestion | null | undefined): string {
+    if (!suggestion) return "";
+    const name = suggestion.name ?? suggestion.itemId;
+    return name ? `: ${name}${suggestion.providerLabel ? ` (${suggestion.providerLabel})` : ""}` : "";
+}
+
+/**
+ * How a link is named in a history line (27b): "Beholder (5eTools)" for a knowledge-base link, the
+ * member's own label for an external one, and nothing at all when neither is there — a row whose
+ * name has gone from the corpus still reads "added a link" rather than "added a link: undefined".
+ */
+function linkSuffix(link: EntryLink | null | undefined): string {
+    if (!link) return "";
+    if (link.kind === "External") return link.label ? `: ${link.label}` : "";
+    const name = link.name ?? link.itemId;
+    return name ? `: ${name}${link.providerLabel ? ` (${link.providerLabel})` : ""}` : "";
 }
 
 // ── Merge (15g, the API's EntryMerge) ────────────────────────────────────────

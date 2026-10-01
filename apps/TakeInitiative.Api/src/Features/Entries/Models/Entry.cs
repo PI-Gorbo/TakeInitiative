@@ -1,12 +1,14 @@
 using Marten.Events;
 
+using TakeInitiative.KnowledgeBase.Store;
+
 namespace TakeInitiative.Api.Features.Entries;
 
 /// <summary>
 /// Inline projection of an Entry stream (stream id = entry id). The article is from 15e,
-/// and merge, claim and stats from 15g. <see cref="Source"/> and <see cref="Links"/> are
-/// the §11 seams: declared now so steps 20–22 add events rather than a migration, never
-/// written in step 15 and left out of every response.
+/// merge, claim and stats from 15g, <see cref="Source"/> from 20b and <see cref="Links"/>
+/// from 27b. The two were the §11 seams: declared in step 15 so that later steps add events
+/// rather than a migration, which is what both of them did.
 /// </summary>
 public record Entry
 {
@@ -27,8 +29,30 @@ public record Entry
     /// Read through <see cref="EntrySources"/>, never as is: an NPC's source is its stat block.
     /// </summary>
     public EntrySource? Source { get; init; }
-    /// <summary>§11 seam. Always empty in step 15.</summary>
+    /// <summary>
+    /// The entry's links (27b), oldest first. Read through <see cref="EntryLinks"/>, never as is:
+    /// an NPC's link to a monster is its stat block, exactly as its <see cref="Source"/> is.
+    /// </summary>
     public IReadOnlyList<EntryLink> Links { get; init; } = [];
+    /// <summary>
+    /// One <c>provider:id</c> key per knowledge-base link (<see cref="EntryLinks.ItemKeys"/>),
+    /// derived from <see cref="Links"/> the way <see cref="ArticleMentionIds"/> is derived from the
+    /// article, and GIN-indexed for one question: "does any entry link to this row?", which 26c's
+    /// prune asks before it deletes anything (<see cref="EntryKnowledgeBaseLinks"/>). It is an
+    /// index, not state: nothing reads it but that query.
+    /// </summary>
+    public string[] LinkedItemKeys { get; init; } = [];
+    /// <summary>
+    /// The knowledge-base rows this entry has been told it is <b>not</b> (28b), in the order they were
+    /// dismissed. A set rather than a list: the same row dismissed twice is one entry here, which is
+    /// what makes <c>POST …/dismiss</c> idempotent without the endpoint having to ask first.
+    /// <para>
+    /// Only <see cref="KnowledgeBaseSuggester" /> reads it, to leave those rows out of the prompt. It
+    /// is not redacted per viewer and does not need to be: the suggester is only ever asked for an
+    /// entry whose links the caller may read, and a dismissal reaches a reader through nothing else.
+    /// </para>
+    /// </summary>
+    public IReadOnlyList<EntrySuggestionDismissal> DismissedSuggestions { get; init; } = [];
 
     /// <summary>
     /// Every block, secret ones included. Never sent as is: reads go through
@@ -132,11 +156,45 @@ public record Entry
 
     public Entry Apply(EntryQuotePromoted e) => WithBlocks([.. Article.Blocks, e.Block]);
 
+    // Link events leave UpdatedAt alone, for the reason stats do: on an unclaimed Character only
+    // the DMs may read the links (EntryLinks), and UpdatedAt is on the summary every member who
+    // can see the entry receives, so moving it would tell them a link they cannot see exists
+    // (invariant 5).
+    public Entry Apply(EntryLinkAdded e) => WithLinks([.. Links, e.Link]);
+
+    // Remove by id, and silently so: a removal of a link that is already gone is not a conflict.
+    // The endpoint is what turns an unknown id into a 404, before it appends anything.
+    public Entry Apply(EntryLinkRemoved e) => WithLinks([.. Links.Where(l => l.Id != e.LinkId)]);
+
+    // A dismissed suggestion (28b). Leaves UpdatedAt alone for the reason links do: it changes
+    // nothing any reader of the summary can see, and moving it would say something happened.
+    // Dismissing the same row twice is one dismissal, so a replayed or repeated event is a no-op.
+    public Entry Apply(EntryKnowledgeBaseSuggestionDismissed e)
+        => DismissedSuggestions.Any(d => d.Is(e.Provider, e.ItemId))
+            ? this
+            : this with { DismissedSuggestions = [.. DismissedSuggestions, new EntrySuggestionDismissal(e.Provider, e.ItemId)] };
+
     private Entry WithBlocks(IReadOnlyList<ArticleBlock> blocks) => this with
     {
         Article = new Article { Blocks = blocks },
         ArticleMentionIds = blocks.SelectMany(b => MentionParser.EntryIds(b.Text)).Distinct().ToArray(),
     };
+
+    /// <summary>
+    /// The links, ordered by <see cref="EntryLink.AddedAt"/> (the order is part of what
+    /// <see cref="Links"/> promises, so it is applied here rather than per reader), and the
+    /// derived key array that carries the prune's GIN index. <c>OrderBy</c> is stable, so two
+    /// links added in the same microsecond keep the order they were appended in.
+    /// </summary>
+    private Entry WithLinks(IReadOnlyList<EntryLink> links)
+    {
+        var ordered = links.OrderBy(l => l.AddedAt).ToList();
+        return this with
+        {
+            Links = ordered,
+            LinkedItemKeys = [.. EntryLinks.ItemKeys(ordered).Distinct(StringComparer.Ordinal)],
+        };
+    }
 }
 
 /// <summary>
@@ -146,6 +204,3 @@ public record Entry
 /// the provider and the id, not through the url. Later, a D&amp;D Beyond sheet or an imported message.
 /// </summary>
 public record EntrySource(string Provider, string ExternalId, string Url);
-
-/// <summary>§11: an outside link on an entry. Unused in step 15.</summary>
-public record EntryLink(string Url, string? Label);

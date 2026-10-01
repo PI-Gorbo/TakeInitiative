@@ -38,8 +38,8 @@ public class GetReferenceItem(ReferenceCatalog catalog) : Endpoint<GetReferenceI
         var item = provider switch
         {
             null => null,
-            { HasStatBlocks: true } => provider.Get(req.ItemId) is { StatBlock: not null } full ? full : null,
-            _ => provider.Find(req.ItemId) is { } summary ? new ReferenceItem(summary, null, provider.Attribution) : null,
+            { HasStatBlocks: true } => await provider.Get(req.ItemId, ct) is { StatBlock: not null } full ? full : null,
+            _ => await provider.Find(req.ItemId, ct) is { } summary ? new ReferenceItem(summary, null, provider.Attribution) : null,
         };
         if (item is null)
         {

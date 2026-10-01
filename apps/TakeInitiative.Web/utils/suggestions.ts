@@ -150,11 +150,12 @@ export function mergeSuggestions(
 export const kindWithArticle = (kind: EntryKind) =>
     `${/^[AEIOU]/.test(kind) ? "an" : "a"} ${kind}`;
 
-/** A ✨ chip's accessible name. */
-export const modelSuggestionAriaLabel = (s: ModelSuggestion) =>
-    s.match
+/** A ✨ chip's accessible name. `unsure` is 23f: only a deeper pass found it. */
+export const modelSuggestionAriaLabel = (s: ModelSuggestion, unsure = false) =>
+    (s.match
         ? `Suggestion: link “${s.text}” to ${s.match.entry.name}`
-        : `Suggestion: “${s.text}” looks like ${kindWithArticle(s.kind)}. Create it and link it`;
+        : `Suggestion: “${s.text}” looks like ${kindWithArticle(s.kind)}. Create it and link it`) +
+    (unsure ? ". The model is unsure of this one" : "");
 
 /** "✨ Looking at 12 notes…". */
 export const lookingAtLabel = (count: number) =>
@@ -184,6 +185,15 @@ export function readDismissed(storage: StorageLike | null): string[] {
     } catch {
         return [];
     }
+}
+
+/** The list without this note's dismissals: an explicit "✨ Find suggestions" starts fresh (23f). */
+export function withoutNoteDismissals(
+    list: readonly string[],
+    noteId: string
+): string[] {
+    const prefix = `${noteId.toLowerCase()}|`;
+    return list.filter((k) => !k.startsWith(prefix));
 }
 
 /** The list with `key` added last (moved there if it was already in), capped at `max`. */
@@ -289,7 +299,8 @@ export function acceptBody(
 export function inlineSuggestions(
     text: string,
     model: readonly ModelSuggestion[],
-    isDismissed: (s: ModelSuggestion) => boolean = () => false
+    isDismissed: (s: ModelSuggestion) => boolean = () => false,
+    max = MAX_MODEL_SUGGESTIONS_PER_NOTE
 ): ModelSuggestion[] {
     const mentioned = new Set(mentionedEntryIds(text).map((id) => id.toLowerCase()));
     // Read from an older text (the author just linked one): keep only spans still in the prose.
@@ -301,7 +312,8 @@ export function inlineSuggestions(
                 prose.includes(s.text) &&
                 (!s.match || !mentioned.has(s.match.entry.id.toLowerCase()))
         ),
-        isDismissed
+        isDismissed,
+        max
     ).model;
 }
 
@@ -317,6 +329,32 @@ export function withQueued(
     const out = [...queue.filter((id) => id !== noteId), noteId];
     return out.length > max ? out.slice(out.length - max) : out;
 }
+
+// ── Asking again, deeper, on one note (23f) ──────────────────────────────────
+
+/**
+ * A span the automatic pass would have thrown away: it is only here because the author asked
+ * again, so the chip says so rather than pretending to the same confidence as the rest.
+ */
+export const isUnsure = (
+    s: Pick<ModelSuggestion, "confidence">,
+    baseThreshold: number
+) => s.confidence < baseThreshold;
+
+/** The sheet's footer button, and what it says once there is nothing deeper to ask for. */
+export const LOOK_AGAIN_LABEL = "Look again";
+export const NOTHING_DEEPER_LABEL =
+    "That is as deep as the model goes on this note.";
+
+/** "✨ Looked twice · 5 suggestions": what the sheet says about the pass it is showing. */
+export const depthLabel = (level: number, count: number) => {
+    const found =
+        count === 0
+            ? "nothing"
+            : `${count} ${count === 1 ? "suggestion" : "suggestions"}`;
+    if (level === 0) return `Found ${found}.`;
+    return `Looked ${level === 1 ? "twice" : `${level + 1} times`} · ${found}.`;
+};
 
 /** "✨ 3" chip's accessible name. */
 export const inlineChipAriaLabel = (count: number) =>

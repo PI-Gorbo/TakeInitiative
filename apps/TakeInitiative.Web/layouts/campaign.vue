@@ -160,8 +160,16 @@
     // The Wiki and Combat tabs stay current on their child pages (an entry page is
     // `app-campaigns-campaignId-wiki-entryId`). The Campaign tab matches exactly, since
     // every campaign route name starts with its own.
+    //
+    // The Knowledge base (26f) is the one page that belongs to a tab it is not under: it sits
+    // at `/app/campaigns/{id}/knowledge-base` rather than under `wiki/` because it is global
+    // rather than campaign content, but it is reached from the Wiki's toolbar and goes back
+    // there, and a tab bar with nothing current reads as "you have left the app".
+    const WIKI_TAB = "app-campaigns-campaignId-wiki";
+    const WIKI_OWNED = ["app-campaigns-campaignId-knowledge-base"];
     const isCurrentTab = (tab: (typeof tabs)[number]) => {
         const name = String(route.name ?? "");
+        if (tab.name === WIKI_TAB && WIKI_OWNED.includes(name)) return true;
         return name === tab.name || (tab.name !== tabs[0].name && name.startsWith(`${tab.name}-`));
     };
 

@@ -7,7 +7,7 @@
 // The runtime and the tokenizer are passed in (structural types below), so this file imports
 // neither: only `workers/extractor.worker.ts` does, which keeps them out of every page chunk.
 
-import { LABELS, SUGGESTION_KINDS, finalSpans, mask, sentences, type ModelSpan, type RawSpan } from "./spans";
+import { LABELS, SUGGESTION_KINDS, finalSpans, mask, sentences, type ModelSpan, type RawSpan, type SuggestionPass } from "./spans";
 
 /** The parts of `onnxruntime-web` the extractor uses. */
 export interface OrtLike {
@@ -32,6 +32,7 @@ export interface ExtractorOptions {
     maxWords: number;
     /** The encoder's limit, in sub-tokens, prompt included. */
     maxTokens: number;
+    /** The model's pinned threshold: the default pass, when `extract` is not given one. */
     threshold: number;
 }
 
@@ -102,7 +103,8 @@ export function createExtractor({ ort, session, tokenizer, maxWidth, maxWords, m
         });
     }
 
-    async function runChunk(w: Word[], labels: string[]): Promise<RawSpan[]> {
+    // `at` is the pass's threshold, which is the pinned `threshold` unless `extract` was given a pass.
+    async function runChunk(w: Word[], labels: string[], at: number): Promise<RawSpan[]> {
         const ids: number[] = [cls];
         const wordsMask: number[] = [0];
         for (const l of labels) {
@@ -155,7 +157,7 @@ export function createExtractor({ ort, session, tokenizer, maxWidth, maxWords, m
             for (let j = 0; j < maxWidth && i + j < n; j++) {
                 for (let c = 0; c < C; c++) {
                     const p = sigmoid(logits[(i * maxWidth + j) * C + c]);
-                    if (p >= threshold) found.push({ i, e: i + j, c, p });
+                    if (p >= at) found.push({ i, e: i + j, c, p });
                 }
             }
         }
@@ -174,14 +176,20 @@ export function createExtractor({ ort, session, tokenizer, maxWidth, maxWords, m
     }
 
     return {
-        /** The spans the note offers (masked first, tidied after), in text order. */
-        async extract(text: string): Promise<ModelSpan[]> {
+        /**
+         * The spans the note offers (masked first, tidied after), in text order. `pass` is 23f's
+         * depth: without one the model's pinned threshold and span cap apply, which is every
+         * automatic read. A deeper pass costs the same inference — only the two cut-offs move —
+         * so re-reading one note is cheap.
+         */
+        async extract(text: string, pass?: SuggestionPass): Promise<ModelSpan[]> {
+            const at = pass?.threshold ?? threshold;
             const masked = mask(text);
             const raw: RawSpan[] = [];
             for (const w of chunks(masked, LABELS)) {
-                if (w.length) raw.push(...(await runChunk(w, LABELS)));
+                if (w.length) raw.push(...(await runChunk(w, LABELS, at)));
             }
-            return finalSpans(text, raw, threshold);
+            return finalSpans(text, raw, at, pass?.max);
         },
     };
 }

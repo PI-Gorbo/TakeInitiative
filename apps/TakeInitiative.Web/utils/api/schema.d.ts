@@ -340,6 +340,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/campaigns/{campaignId}/knowledge-base": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetKnowledgeBase"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/reference/{provider}/{itemId}": {
         parameters: {
             query?: never;
@@ -468,6 +484,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/campaigns/{campaignId}/entries/{entryId}/links/{linkId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["DeleteEntryLink"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/campaigns/{campaignId}/entries": {
         parameters: {
             query?: never;
@@ -516,6 +548,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/campaigns/{campaignId}/entries/{entryId}/knowledge-base-suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetEntryKnowledgeBaseSuggestions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/campaigns/{campaignId}/entries/{entryId}/timeline": {
         parameters: {
             query?: never;
@@ -548,6 +596,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/campaigns/{campaignId}/entries/{entryId}/links": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["PostEntryLink"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/campaigns/{campaignId}/entries/{entryId}/merge": {
         parameters: {
             query?: never;
@@ -574,6 +638,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["PostEntryQuote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/campaigns/{campaignId}/entries/{entryId}/knowledge-base-suggestions/dismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["PostEntrySuggestionDismiss"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1335,6 +1415,42 @@ export interface components {
         /** @enum {string} */
         ReferenceCategory: "Monster" | "Spell" | "Item";
         GetSearchRequest: Record<string, never>;
+        KnowledgeBaseResponse: {
+            items: components["schemas"]["KnowledgeBaseItemResponse"][];
+            /** Format: int32 */
+            total: number;
+            facets: components["schemas"]["KnowledgeBaseFacetsResponse"];
+        };
+        KnowledgeBaseItemResponse: {
+            provider: string;
+            providerLabel?: string | null;
+            id: string;
+            name: string;
+            category: components["schemas"]["ReferenceCategory"];
+            label?: string | null;
+            book: string;
+            bookTitle?: string | null;
+            /** Format: int32 */
+            page?: number | null;
+            url: string;
+            imageUrl?: string | null;
+        };
+        KnowledgeBaseFacetsResponse: {
+            categories: components["schemas"]["KnowledgeBaseCategoryFacetResponse"][];
+            books: components["schemas"]["KnowledgeBaseBookFacetResponse"][];
+        };
+        KnowledgeBaseCategoryFacetResponse: {
+            category: components["schemas"]["ReferenceCategory"];
+            /** Format: int32 */
+            count: number;
+        };
+        KnowledgeBaseBookFacetResponse: {
+            book: string;
+            bookTitle?: string | null;
+            /** Format: int32 */
+            count: number;
+        };
+        GetKnowledgeBaseRequest: Record<string, never>;
         ReferenceItemResponse: {
             summary: components["schemas"]["ReferenceSummaryResponse"];
             statBlock?: components["schemas"]["StatBlock"] | null;
@@ -1507,22 +1623,6 @@ export interface components {
             /** Format: binary */
             file?: string | null;
         };
-        GetEntriesResponse: {
-            entries: components["schemas"]["EntryListItemResponse"][];
-        };
-        EntryListItemResponse: {
-            entry: components["schemas"]["EntrySummaryResponse"];
-            /** Format: int32 */
-            mentionCount: number;
-            /** Format: date-time */
-            lastMentionedAt?: string | null;
-            /** Format: int32 */
-            noteCount: number;
-            /** Format: int32 */
-            lastMentionedSessionNumber?: number | null;
-            summaryGist?: string | null;
-        };
-        GetEntriesRequest: Record<string, never>;
         EntryResponse: {
             /** Format: guid */
             id: string;
@@ -1543,6 +1643,7 @@ export interface components {
             article: components["schemas"]["ArticleResponse"];
             stats?: components["schemas"]["StatsResponse"] | null;
             source?: components["schemas"]["EntrySourceResponse"] | null;
+            links: components["schemas"]["EntryLinkResponse"][];
         };
         ArticleResponse: {
             etag: string;
@@ -1581,6 +1682,45 @@ export interface components {
             bookTitle?: string | null;
             hasStatBlock: boolean;
         };
+        EntryLinkResponse: {
+            /** Format: guid */
+            id: string;
+            kind: components["schemas"]["EntryLinkKind"];
+            /** Format: date-time */
+            addedAt: string;
+            /** Format: guid */
+            addedByMemberId: string;
+            url?: string | null;
+            label?: string | null;
+            provider?: string | null;
+            providerLabel?: string | null;
+            itemId?: string | null;
+            name?: string | null;
+            detail?: string | null;
+            bookTitle?: string | null;
+            imageUrl?: string | null;
+            hasStatBlock: boolean;
+            stale: boolean;
+        };
+        /** @enum {string} */
+        EntryLinkKind: "KnowledgeBase" | "External";
+        DeleteEntryLinkRequest: Record<string, never>;
+        GetEntriesResponse: {
+            entries: components["schemas"]["EntryListItemResponse"][];
+        };
+        EntryListItemResponse: {
+            entry: components["schemas"]["EntrySummaryResponse"];
+            /** Format: int32 */
+            mentionCount: number;
+            /** Format: date-time */
+            lastMentionedAt?: string | null;
+            /** Format: int32 */
+            noteCount: number;
+            /** Format: int32 */
+            lastMentionedSessionNumber?: number | null;
+            summaryGist?: string | null;
+        };
+        GetEntriesRequest: Record<string, never>;
         GetEntryRequest: Record<string, never>;
         EntryHistoryResponse: {
             items: components["schemas"]["EntryHistoryItem"][];
@@ -1606,10 +1746,23 @@ export interface components {
             memberId?: string | null;
             stats?: components["schemas"]["StatsResponse"] | null;
             source?: components["schemas"]["EntrySourceResponse"] | null;
+            link?: components["schemas"]["EntryLinkResponse"] | null;
+            suggestion?: components["schemas"]["EntrySuggestionResponse"] | null;
         };
         /** @enum {string} */
-        EntryChangeType: "Created" | "Renamed" | "KindChanged" | "AliasAdded" | "AliasRemoved" | "VisibilityChanged" | "EditAccessChanged" | "ArticleEdited" | "QuotePromoted" | "Merged" | "Claimed" | "Unclaimed" | "StatsChanged";
+        EntryChangeType: "Created" | "Renamed" | "KindChanged" | "AliasAdded" | "AliasRemoved" | "VisibilityChanged" | "EditAccessChanged" | "ArticleEdited" | "QuotePromoted" | "Merged" | "Claimed" | "Unclaimed" | "StatsChanged" | "LinkAdded" | "LinkRemoved" | "SuggestionDismissed";
+        EntrySuggestionResponse: {
+            provider: string;
+            providerLabel?: string | null;
+            itemId: string;
+            name?: string | null;
+            detail?: string | null;
+        };
         GetEntryHistoryRequest: Record<string, never>;
+        EntryKnowledgeBaseSuggestionsResponse: {
+            items: components["schemas"]["KnowledgeBaseItemResponse"][];
+        };
+        GetEntryKnowledgeBaseSuggestionsRequest: Record<string, never>;
         EntryTimelineResponse: {
             items: components["schemas"]["EntryTimelineItem"][];
             hasOlder: boolean;
@@ -1637,6 +1790,13 @@ export interface components {
             name?: string | null;
             visibility: components["schemas"]["Visibility"];
         };
+        PostEntryLinkRequest: {
+            kind: components["schemas"]["EntryLinkKind"];
+            provider?: string | null;
+            itemId?: string | null;
+            url?: string | null;
+            label?: string | null;
+        };
         PostEntryMergeRequest: {
             /** Format: guid */
             intoEntryId: string;
@@ -1650,6 +1810,10 @@ export interface components {
             /** Format: guid */
             noteId: string;
             text?: string | null;
+        };
+        PostEntrySuggestionDismissRequest: {
+            provider: string;
+            itemId: string;
         };
         PutEntryAliasesRequest: {
             aliases: string[];
@@ -2828,6 +2992,49 @@ export interface operations {
             };
         };
     };
+    GetKnowledgeBase: {
+        parameters: {
+            query?: {
+                q?: string | null;
+                category?: components["schemas"]["ReferenceCategory"] | null;
+                book?: string | null;
+                provider?: string | null;
+                skip?: number | null;
+                take?: number | null;
+            };
+            header?: never;
+            path: {
+                campaignId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KnowledgeBaseResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     GetReferenceItem: {
         parameters: {
             query?: never;
@@ -3138,6 +3345,44 @@ export interface operations {
             };
         };
     };
+    DeleteEntryLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+                entryId: string;
+                linkId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     GetEntries: {
         parameters: {
             query?: never;
@@ -3288,6 +3533,43 @@ export interface operations {
             };
         };
     };
+    GetEntryKnowledgeBaseSuggestions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryKnowledgeBaseSuggestionsResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     GetEntryTimeline: {
         parameters: {
             query?: {
@@ -3340,6 +3622,47 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["PostEntryFromReferenceRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PostEntryLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostEntryLinkRequest"];
             };
         };
         responses: {
@@ -3432,6 +3755,47 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EntryQuoteResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PostEntrySuggestionDismiss: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostEntrySuggestionDismissRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryKnowledgeBaseSuggestionsResponse"];
                 };
             };
             /** @description Unauthorized */

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Primitives;
 using TakeInitiative.Api.Features.Campaigns;
 using TakeInitiative.Api.Features.Entries;
 using TakeInitiative.Api.Features.Images;
+using TakeInitiative.Api.Features.Reference;
 using TakeInitiative.Api.Features.Search;
 using TakeInitiative.Api.Features.Sessions;
 using TakeInitiative.Api.Features.Users;
@@ -237,6 +238,51 @@ public static class WebAppClientExtensions
     public static Task<Result<EntryHistoryResponse>> GetEntryHistory(this IWebAppClient client, Guid campaignId, Guid entryId)
         => client.Get<EntryHistoryResponse>(EntryUrl(campaignId, entryId, "history"));
 
+    // Links (step 27).
+
+    public static string LinksUrl(Guid campaignId, Guid entryId) => EntryUrl(campaignId, entryId, "links");
+
+    public static string LinkUrl(Guid campaignId, Guid entryId, Guid linkId) => EntryUrl(campaignId, entryId, $"links/{linkId}");
+
+    /// <summary>The <c>POST links</c> body for a knowledge-base link.</summary>
+    public static object KnowledgeBaseLinkBody(string provider, string itemId)
+        => new { kind = nameof(EntryLinkKind.KnowledgeBase), provider, itemId };
+
+    /// <summary>The <c>POST links</c> body for an external link.</summary>
+    public static object ExternalLinkBody(string? url, string? label)
+        => new { kind = nameof(EntryLinkKind.External), url, label };
+
+    public static Task<Result<EntryResponse>> PostKnowledgeBaseLink(
+        this IWebAppClient client, Guid campaignId, Guid entryId, string provider, string itemId)
+        => client.Post<object, EntryResponse>(KnowledgeBaseLinkBody(provider, itemId), LinksUrl(campaignId, entryId));
+
+    public static Task<Result<EntryResponse>> PostExternalLink(
+        this IWebAppClient client, Guid campaignId, Guid entryId, string url, string label)
+        => client.Post<object, EntryResponse>(ExternalLinkBody(url, label), LinksUrl(campaignId, entryId));
+
+    public static Task<Result<EntryResponse>> DeleteEntryLink(this IWebAppClient client, Guid campaignId, Guid entryId, Guid linkId)
+        => client.DeleteNoBody<EntryResponse>(LinkUrl(campaignId, entryId, linkId));
+
+    // Knowledge-base suggestions (step 28).
+
+    public static string SuggestionsUrl(Guid campaignId, Guid entryId)
+        => EntryUrl(campaignId, entryId, "knowledge-base-suggestions");
+
+    public static string DismissSuggestionUrl(Guid campaignId, Guid entryId)
+        => EntryUrl(campaignId, entryId, "knowledge-base-suggestions/dismiss");
+
+    /// <summary>The <c>POST …/dismiss</c> body: the row the entry is not.</summary>
+    public static object DismissSuggestionBody(string? provider, string? itemId) => new { provider, itemId };
+
+    public static Task<Result<EntryKnowledgeBaseSuggestionsResponse>> GetKnowledgeBaseSuggestions(
+        this IWebAppClient client, Guid campaignId, Guid entryId)
+        => client.Get<EntryKnowledgeBaseSuggestionsResponse>(SuggestionsUrl(campaignId, entryId));
+
+    public static Task<Result<EntryKnowledgeBaseSuggestionsResponse>> PostDismissSuggestion(
+        this IWebAppClient client, Guid campaignId, Guid entryId, string provider, string itemId)
+        => client.Post<object, EntryKnowledgeBaseSuggestionsResponse>(
+            DismissSuggestionBody(provider, itemId), DismissSuggestionUrl(campaignId, entryId));
+
     // Images (step 16a).
 
     public static string ImagesUrl(Guid campaignId) => $"/api/campaigns/{campaignId}/images";
@@ -339,6 +385,37 @@ public static class WebAppClientExtensions
         this IWebAppClient client, Guid campaignId, string q, string? sections = null, int? take = null)
         => client.Get<SearchResponse>(SearchUrl(campaignId, q, sections, take));
 
+    /// <summary>
+    /// The knowledge base's browse url (26e). Every filter is optional and only the ones a test names
+    /// are sent, so "no q at all" and "q=" are different requests, which is the difference between a
+    /// list and a search.
+    /// </summary>
+    public static string KnowledgeBaseUrl(
+        Guid campaignId, string? q = null, ReferenceCategory? category = null, string? book = null,
+        string? provider = null, int? skip = null, int? take = null)
+    {
+        var query = new List<string>();
+        if (q is not null) query.Add($"q={Uri.EscapeDataString(q)}");
+        if (category is not null) query.Add($"category={category}");
+        if (book is not null) query.Add($"book={Uri.EscapeDataString(book)}");
+        if (provider is not null) query.Add($"provider={Uri.EscapeDataString(provider)}");
+        if (skip is not null) query.Add($"skip={skip}");
+        if (take is not null) query.Add($"take={take}");
+        var url = $"/api/campaigns/{campaignId}/knowledge-base";
+        return query.Count == 0 ? url : url + "?" + string.Join("&", query);
+    }
+
+    /// <summary>One page of the knowledge base, asserting a 200.</summary>
+    public static async Task<KnowledgeBaseResponse> GetKnowledgeBase(
+        this IWebAppClient client, Guid campaignId, string? q = null, ReferenceCategory? category = null,
+        string? book = null, string? provider = null, int? skip = null, int? take = null)
+    {
+        var response = await client.Get<KnowledgeBaseResponse>(
+            KnowledgeBaseUrl(campaignId, q, category, book, provider, skip, take));
+        response.Should().Succeed();
+        return response.Value;
+    }
+
     /// <summary>One section's hits, or an empty list when the section is absent (it had nothing).</summary>
     public static SearchHit[] Section(this SearchResponse response, SearchSectionKey key)
         => response.Sections.FirstOrDefault(s => s.Key == key)?.Hits ?? [];
@@ -370,17 +447,32 @@ public static class WebAppClientExtensions
     }
 
     /// <summary>Sends a request that should fail and returns its status and body, to check error keys and that nothing leaks.</summary>
-    public static async Task<(int Status, string Body)> Send(this IWebAppClient client, HttpMethod method, string url, object body)
+    public static async Task<(int Status, string Body)> Send(this IWebAppClient client, HttpMethod method, string url, object? body = null)
     {
         var result = await client.AlbaHost.Scenario(_ =>
         {
-            if (method == HttpMethod.Post) _.Post.Json(body).ToUrl(url);
-            else if (method == HttpMethod.Put) _.Put.Json(body).ToUrl(url);
+            if (method == HttpMethod.Post) _.Post.Json(body ?? new { }).ToUrl(url);
+            else if (method == HttpMethod.Put) _.Put.Json(body ?? new { }).ToUrl(url);
+            // A DELETE here carries no body: every one in the API takes route values only.
+            else if (method == HttpMethod.Delete) _.Delete.Url(url);
+            else if (method == HttpMethod.Get) _.Get.Url(url);
             else throw new NotSupportedException(method.ToString());
             _.IgnoreStatusCode();
         });
         return (result.Context.Response.StatusCode, await result.ReadAsTextAsync());
     }
+
+    /// <summary>A <c>DELETE</c> with no body that answers a document, asserting a 200.</summary>
+    private static Task<Result<TResponse>> DeleteNoBody<TResponse>(this IWebAppClient client, string url)
+        => Result.Try(async () =>
+            {
+                var result = await client.AlbaHost.Scenario(_ =>
+                {
+                    _.Delete.Url(url);
+                    _.StatusCodeShouldBe(200);
+                });
+                return await result.ReadAsJsonAsync<TResponse>() ?? throw new InvalidCastException($"Could not cast response to type of {typeof(TResponse).Name}");
+            });
 
     private static Task<Result<TResponse>> Get<TResponse>(this IWebAppClient client, string url)
         => Result.Try(async () =>

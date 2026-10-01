@@ -50,6 +50,6 @@ public class PutEntryVisibility(IDocumentSession session, IHubContext<CampaignHu
             await hub.NotifyEntryMoved(before, entry);
         }
 
-        await SendAsync(EntryResponse.From(entry, member, Resolve<ReferenceCatalog>()), cancellation: ct);
+        await SendAsync(await EntryResponse.From(entry, member, Resolve<ReferenceCatalog>(), Resolve<EntryLinkResolver>(), ct), cancellation: ct);
     }
 }

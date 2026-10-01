@@ -11,11 +11,14 @@ using Marten.Events.Projections;
 using Marten.Schema;
 using Weasel.Core;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using SendGrid.Extensions.DependencyInjection;
 using Serilog;
 using TakeInitiative.Api.Features.Admin;
+using TakeInitiative.Api.Features.Reference.KnowledgeBase;
 using TakeInitiative.Utilities;
 using Weasel.Postgresql;
 using Weasel.Postgresql.Tables;
@@ -23,7 +26,21 @@ using Weasel.Postgresql.Tables;
 namespace TakeInitiative.Api.Bootstrap;
 public static class Bootstrap
 {
-    public static IServiceCollection AddMartenDB(this IServiceCollection services, IConfiguration config, bool IsDevelopment)
+    /// <summary>
+    /// Turns the startup schema migration off. On by default; see the comment beside the call.
+    /// </summary>
+    public const string ApplySchemaOnStartupKey = "Marten:ApplySchemaOnStartup";
+
+    /// <summary>
+    /// Where the cookie key ring is persisted. Unset — dev and the tests — changes nothing; see
+    /// <see cref="AddDataProtectionKeyRing"/>.
+    /// </summary>
+    public const string DataProtectionKeyPathKey = "DataProtection:KeyPath";
+
+    /// <summary>The application name pinned into the key ring; see <see cref="AddDataProtectionKeyRing"/>.</summary>
+    public const string DataProtectionApplicationName = "TakeInitiative";
+
+    public static IServiceCollection AddMartenDB(this IServiceCollection services, IConfiguration config)
     {
         var martenOpts = services.AddMarten(opts =>
         {
@@ -38,6 +55,17 @@ public static class Bootstrap
             // Nothing is paid and nothing new runs (invariant 10).
             opts.Storage.ExtendedSchemaObjects.Add(new Extension("pg_trgm"));
             opts.Storage.ExtendedSchemaObjects.Add(new Extension("unaccent"));
+
+            // The knowledge base's table (26c): a flat table with no events and no aggregate,
+            // written by the ingest CLI and read by 26d's provider and 26e's browse endpoint. It is
+            // registered here, after pg_trgm, because its trigram index needs gin_trgm_ops and
+            // Weasel writes extended schema objects in the order they were added.
+            //
+            // The API creates it and the CLI never does. The CLI checks that it exists and stops
+            // with "start the API once" if it does not, so there is one owner for the schema in
+            // every environment rather than two that have to agree. See KnowledgeBaseTable for why
+            // it writes its own SQL instead of being a Weasel Table.
+            opts.Storage.ExtendedSchemaObjects.Add(new KnowledgeBaseTable(opts.DatabaseSchemaName));
 
             // Use system.text.json. Enums are stored as strings so LINQ queries and the
             // JSON bodies agree (Role is also [JsonConverter]-annotated for the API).
@@ -91,11 +119,18 @@ public static class Bootstrap
             // Entry stream -> Entry document. (CampaignId, Kind) serves the wiki's lists; the
             // GIN indexes serve alias lookups and MentionIndex's "articles that mention this
             // entry".
+            //
+            // LinkedItemKeys (27b) is the third GIN index, for one question asked from outside the
+            // API entirely: 26c's prune, run from the ingest CLI, asks "does any entry link to this
+            // row?" before it deletes anything (EntryKnowledgeBaseLinks). The index is what makes
+            // that a probe rather than a scan of every entry in every campaign, and the prune is on
+            // the operator's critical path — a slow answer there is a slow ingest.
             opts.Projections.Snapshot<Entry>(SnapshotLifecycle.Inline);
             opts.Schema.For<Entry>()
                 .Index([x => x.CampaignId, x => x.Kind])
                 .Index(x => x.Aliases, idx => idx.Method = IndexMethod.gin)
-                .Index(x => x.ArticleMentionIds, idx => idx.Method = IndexMethod.gin);
+                .Index(x => x.ArticleMentionIds, idx => idx.Method = IndexMethod.gin)
+                .Index(x => x.LinkedItemKeys, idx => idx.Method = IndexMethod.gin);
 
             // The article prefilter (17a.3): a stored generated tsvector column and a GIN index on
             // it, rather than an expression index. The planner will not choose a GIN index for a
@@ -133,17 +168,122 @@ public static class Bootstrap
                 .AddSubClass<MaintenanceConfig>();
         }).AddAsyncDaemon(DaemonMode.Solo);
 
-        if (IsDevelopment)
+        // Create the schema up front rather than leaning on Marten's implicit
+        // auto-create, which makes a fresh database's behaviour depend on which
+        // endpoint happens to be hit first. A schema conflict now fails startup
+        // loudly; `docker compose -p takeinitiative -f compose.dev.yml down -v`
+        // resets a stale local database.
+        //
+        // This runs in every environment now, not only in Development (26c). The API's
+        // dockerfile sets no ASPNETCORE_ENVIRONMENT, so a container runs as Production,
+        // and while `if (IsDevelopment)` guarded this call, Production applied nothing
+        // at all: measured against a freshly reset database, `select extname from
+        // pg_extension` came back with plpgsql alone and pg_tables was empty. The two
+        // extensions above hang off no document type, so Marten's lazy per-document
+        // auto-create has no reason to ensure them, and ⌘K's word_similarity() would
+        // have failed at query time with "function does not exist". That is a step 17
+        // bug nobody had hit only because nothing is deployed yet.
+        //
+        // Running DDL at boot is safe here because there is exactly one API process.
+        // AddAsyncDaemon(DaemonMode.Solo) above already means only one process may run
+        // the projection daemon, so the deployment must never scale the API past one
+        // replica — and that same single-replica constraint is what removes the "two
+        // startups race on the same CREATE" problem. The migration also finishes before
+        // Kestrel opens the port, so no request can race it.
+        //
+        // What it is not is a no-op on a schema that has drifted. Weasel runs in
+        // CreateOrUpdate, which never drops a table, but it does drop and recreate an
+        // index whose stored definition no longer matches, and it drops a document-table
+        // column it does not know about (see SearchSchemaTests, which asserts a second
+        // start has nothing left to do — that test is what keeps a GIN index over every
+        // note from being rebuilt on every boot). So the cost of a start is bounded by
+        // how far the database has drifted from the configuration, not by its size.
+        //
+        // The default is on, so a fresh deployment works without anyone knowing the
+        // setting exists. ApplySchemaOnStartupKey turns it off, for a database whose DDL
+        // is applied out of band: more than one replica, a blue/green swap, or a change
+        // that is not additive are exactly the cases where startup DDL stops being safe.
+        if (config.GetValue(ApplySchemaOnStartupKey, true))
         {
-            // Create the schema up front rather than leaning on Marten's implicit
-            // auto-create, which makes a fresh database's behaviour depend on which
-            // endpoint happens to be hit first. A schema conflict now fails startup
-            // loudly; `docker compose -p takeinitiative -f compose.dev.yml down -v`
-            // resets a stale local database.
             martenOpts.ApplyAllDatabaseChangesOnStartup();
         }
 
         martenOpts.UseLightweightSessions();
+
+        return services;
+    }
+
+    /// <summary>
+    /// Persists the ASP.NET Core Data Protection key ring to <c>DataProtection:KeyPath</c> when that
+    /// setting has a value, and changes nothing at all when it does not.
+    /// <para>
+    /// Authentication is cookie-based (<c>AddCookieAuth</c>), so every sign-in ticket is encrypted
+    /// with a key from that ring. Nothing used to configure it, which means the ring was written to
+    /// <c>$HOME/.aspnet/DataProtection-Keys</c> inside the container and thrown away with the
+    /// container: <b>every redeploy signed every user out</b>. Production sets
+    /// <c>DataProtection__KeyPath=/keys</c> and mounts a named volume there, so the ring outlives
+    /// the container and a release stops being a mass sign-out.
+    /// </para>
+    /// <para>
+    /// <see cref="DataProtectionApplicationName"/> is pinned because the default discriminator is
+    /// the content-root path: keys written under one content root cannot be read under another, so
+    /// without it a moved <c>WORKDIR</c> would invalidate the ring the volume just preserved.
+    /// </para>
+    /// <para>
+    /// Unset is the dev and test default on purpose. `pnpm dev` and the Alba fixtures then get
+    /// ASP.NET Core's own behaviour, unchanged, rather than a key directory nobody asked for.
+    /// </para>
+    /// </summary>
+    public static IServiceCollection AddDataProtectionKeyRing(this IServiceCollection services, IConfiguration config)
+    {
+        var keyPath = config.GetValue<string>(DataProtectionKeyPathKey);
+        if (string.IsNullOrWhiteSpace(keyPath))
+        {
+            return services;
+        }
+
+        services.AddDataProtection()
+            .PersistKeysToFileSystem(new DirectoryInfo(keyPath))
+            .SetApplicationName(DataProtectionApplicationName);
+
+        return services;
+    }
+
+    /// <summary>
+    /// Configures <c>UseForwardedHeaders</c> for the reverse proxy that terminates TLS in front of
+    /// the API. <c>Program.cs</c> runs the middleware first, before anything can read
+    /// <c>Request.Scheme</c> or the client address.
+    /// <para>
+    /// <c>KnownIPNetworks</c> and <c>KnownProxies</c> are deliberately <b>empty</b>. The middleware
+    /// only honours the headers when the immediate peer is on that list, and its default list is
+    /// loopback alone — but the proxy reaches the API across a Docker network whose address is
+    /// assigned when the network is created and changes when it is recreated, so there is no address
+    /// to put on a list. Emptying both lists is what turns the check off; a list with a guessed
+    /// address in it would silently ignore the headers instead.
+    /// </para>
+    /// <para>
+    /// That is only safe because the API is not reachable except through the proxy: no service in
+    /// <c>compose.prod.yml</c> publishes a host port, the API is on the proxy's internal network,
+    /// and the only route in from the internet is the proxy itself. If the API is ever published
+    /// directly, a client could spoof its own address and scheme, and these two lists have to come
+    /// back.
+    /// </para>
+    /// <para>
+    /// Only the two headers the proxy actually sets are read. <c>X-Forwarded-Host</c> is left off:
+    /// <c>AllowedHosts</c> names the API's real host, and honouring a forwarded host would let the
+    /// header pick the host instead.
+    /// </para>
+    /// </summary>
+    public static IServiceCollection AddForwardedHeaders(this IServiceCollection services)
+    {
+        services.Configure<ForwardedHeadersOptions>(opts =>
+        {
+            opts.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+            // KnownIPNetworks, not KnownNetworks: the latter is [Obsolete] in .NET 10 (ASPDEPR005)
+            // and CI treats warnings as errors. They are two views of the same list.
+            opts.KnownIPNetworks.Clear();
+            opts.KnownProxies.Clear();
+        });
 
         return services;
     }
@@ -286,12 +426,19 @@ public static class Bootstrap
 
     /// <summary>
     /// Reference content (step 20a): the providers, registered in the order the Reference section
-    /// merges them (SRD 5.2 first, then the 5eTools index, 21b), and the catalog that lists them.
-    /// Each provider's data is read once and held, so the catalogs and providers are singletons.
+    /// merges them (SRD 5.2 first, then the 5eTools corpus, 21b), and the catalog that lists them.
     /// <para>
-    /// The 5eTools catalog reads <c>Reference:FiveETools:IndexPath</c> when it is built, not here,
-    /// so a test host's configuration applies. Its provider is always registered; with no index it
-    /// answers nothing, so the Reference section is exactly step 20's.
+    /// <b>The order is the behaviour.</b> <c>ReferenceSearchProvider</c> breaks a tie on the match
+    /// ladder by the provider's position in this list, so SRD 5.2 coming first is what makes it rank
+    /// above a 5eTools row of the same name and the same similarity (step 20). Moving a line here
+    /// changes ⌘K.
+    /// </para>
+    /// <para>
+    /// The SRD's catalogue is read once from the assembly and held, so it and its provider are
+    /// singletons. The knowledge-base provider (26d₂) reads <c>knowledge_base_item</c> through the
+    /// request's Marten session and so is scoped, which <c>ReferenceCatalog</c> was already scoped
+    /// for. Its table may be empty — nothing has been ingested — and that is a state rather than an
+    /// error: it answers no rows and the Reference section is exactly step 20's.
     /// </para>
     /// </summary>
     public static IServiceCollection AddReference(this IServiceCollection services)
@@ -299,13 +446,16 @@ public static class Bootstrap
         services.AddSingleton<SrdCatalog>();
         services.AddSingleton<SrdReferenceProvider>();
         services.AddSingleton<IReferenceProvider>(sp => sp.GetRequiredService<SrdReferenceProvider>());
-        services.AddSingleton(sp => FiveEToolsCatalog.FromConfiguration(
-            sp.GetService<IConfiguration>(),
-            sp.GetService<IHostEnvironment>()?.ContentRootPath,
-            sp.GetService<ILoggerFactory>()?.CreateLogger<FiveEToolsCatalog>()));
-        services.AddSingleton<FiveEToolsReferenceProvider>();
-        services.AddSingleton<IReferenceProvider>(sp => sp.GetRequiredService<FiveEToolsReferenceProvider>());
+        services.AddScoped<KnowledgeBaseQueries>();
+        services.AddScoped<KnowledgeBaseReferenceProvider>();
+        services.AddScoped<IReferenceProvider>(sp => sp.GetRequiredService<KnowledgeBaseReferenceProvider>());
         services.AddScoped<ReferenceCatalog>();
+        // An entry's links (27b), resolved against the corpus on every read. Scoped for the same
+        // reason the catalog is: it reads the request's Marten session through KnowledgeBaseQueries.
+        services.AddScoped<EntryLinkResolver>();
+        // "Does this entry look like a row in the corpus?" (28b): one query, no model. Scoped for the
+        // same reason — it asks KnowledgeBaseQueries, which holds the request's session.
+        services.AddScoped<KnowledgeBaseSuggester>();
         return services;
     }
 

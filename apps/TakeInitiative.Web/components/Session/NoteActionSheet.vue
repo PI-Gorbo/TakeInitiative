@@ -84,7 +84,7 @@
 </template>
 
 <script setup lang="ts">
-    import { BookPlus, Check, ChevronDown, Eye, EyeOff, History, Link, Pencil, Trash2 } from "lucide-vue-next";
+    import { BookPlus, Check, ChevronDown, Eye, EyeOff, History, Link, Pencil, Sparkles, Trash2 } from "lucide-vue-next";
     import type { Component } from "vue";
     import type { SessionNote, Visibility } from "~/utils/api/types";
     import { VISIBILITY_OPTIONS } from "~/utils/composer";
@@ -112,10 +112,10 @@
         return text.length > 140 ? `${text.slice(0, 140)}…` : text;
     });
 
-    // Promote, Edit, Edit history and Delete run once the sheet has closed and let go of
-    // focus, so the editor or dialog they open keeps the focus it takes. The rest run at
-    // once: Copy link must write the clipboard inside the tap (iOS refuses it later).
-    const AFTER_CLOSE: readonly NoteAction[] = ["promote", "edit", "history", "delete"];
+    // Promote, Edit, Find suggestions, Edit history and Delete run once the sheet has closed
+    // and let go of focus, so the editor or dialog they open keeps the focus it takes. The rest
+    // run at once: Copy link must write the clipboard inside the tap (iOS refuses it later).
+    const AFTER_CLOSE: readonly NoteAction[] = ["promote", "edit", "suggest", "history", "delete"];
     let pending: [NoteAction, Visibility?] | null = null;
     let fallback: ReturnType<typeof setTimeout> | undefined;
 
@@ -148,6 +148,7 @@
     const ICONS: Record<NoteAction, Component> = {
         promote: BookPlus,
         edit: Pencil,
+        suggest: Sparkles,
         visibility: Eye,
         hide: EyeOff,
         unhide: Eye,

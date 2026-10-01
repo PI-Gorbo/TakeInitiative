@@ -1,0 +1,206 @@
+# Production. NOTHING HERE BUILDS: every image is pulled from GHCR, which is the whole point of
+# docs/roadmap/29-deploy.md. Add a build key to any service here and you have moved the build onto
+# the VPS, where it is slow, memory-hungry and pointless — a free public runner already did it.
+# The check for that is a grep, and this comment is worded to keep the grep clean: searching this
+# file for the string b-u-i-l-d-colon must find nothing.
+#
+# Coolify runs this file as a Docker Compose resource, git-backed, so the committed file is the
+# truth. Values in ${...} come from the resource's environment variables;
+# docs/deploy/production.env.example lists every one of them, says which are secret, and says where
+# each is set. There are no `container_name:` keys on purpose — Coolify names the containers, and a
+# fixed name collides the moment the same compose runs twice on one host.
+#
+# No service publishes a host port. Traefik (Coolify's proxy) reaches api and web on the compose
+# network and terminates TLS there; the bucket is not reachable from outside at all, and neither is
+# Postgres — which is deliberate, because step 26's knowledge-base ingest reaches it over an
+# `ssh -L` tunnel rather than an open port.
+#
+# WHAT THE OPERATOR MUST CREATE IN COOLIFY BEFORE THIS FILE WILL WORK
+#
+#   1. A PostgreSQL 15 database resource. Postgres is deliberately NOT a service here: as a
+#      Coolify-managed resource its lifecycle is independent of app redeploys, Coolify owns the
+#      volume, and it gets scheduled backups from the UI — which is the entire argument, because
+#      otherwise the only copy of everyone's campaign lives on one unbacked disk. Pin it to 15:
+#      compose.dev.yml and the Alba/Testcontainers fixtures are 15, and `postgres:latest` is 18+,
+#      which moved its data directory, so a dump from dev will not restore into it.
+#      Feed its internal hostname into TAKEDB_CONNECTION.
+#   2. "Connect to predefined network" ENABLED on this compose resource, or it cannot resolve that
+#      database by its internal hostname.
+#   3. Domains, per service: web -> https://takeinitiative.<domain>, api ->
+#      https://api.takeinitiative.<domain>. Keep the API on a SUBDOMAIN of the web app's domain:
+#      that is what lets CookieDomain=.<domain> work with the cookie's default SameSite=Lax. A
+#      genuinely different domain needs SameSite=None, which is a code change nobody needs.
+#   4. Persistent storage, both of them (they are declared as named volumes at the bottom of this
+#      file, so Coolify creates them; check they exist rather than assuming):
+#      takeapi-keys -> /keys and takeminio-data -> /data.
+#   5. The environment variables, with "Is build variable?" OFF for all of them. Nothing here
+#      builds, so a build variable is purely a trap for future-you.
+
+services:
+    api:
+        # A WHOLE image reference in one variable, not `<repo>:${TAG}`. That is what lets a rollback
+        # be pinned to a digest — `ghcr.io/pi-gorbo/takeinitiative-api@sha256:...` — which a
+        # `:${TAG}` form cannot express. Unset, it tracks :latest and the release workflow pings
+        # Coolify to re-pull.
+        image: ${API_IMAGE:-ghcr.io/pi-gorbo/takeinitiative-api:latest}
+        # `latest` moves, so the local copy is always stale. Without this Coolify would happily run
+        # the image it pulled three releases ago.
+        pull_policy: always
+        restart: unless-stopped
+        depends_on:
+            minio:
+                condition: service_healthy
+        expose:
+            - "8080"
+        environment:
+            # `__` throughout, not `:`. ASP.NET reads both, but a `:` in a variable name upsets some
+            # .env parsers and web UIs, and Coolify's is one place not to find out.
+            #
+            # ASPNETCORE_ENVIRONMENT is deliberately absent. Unset means Production, which is what
+            # turns off Swagger, skips appsettings.development.json, and switches the auth cookie to
+            # SecurePolicy.Always.
+            - "ConnectionStrings__TakeDB=${TAKEDB_CONNECTION}"
+            - "CORS__MainApp=${WEB_ORIGIN}"
+            # There is no admin app. Program.cs throws if the key is absent, so it is set to the
+            # same origin rather than to something that would widen CORS.
+            - "CORS__AdminApp=${WEB_ORIGIN}"
+            # Host filtering. Also what the healthcheck below derives its Host header from.
+            - "AllowedHosts=${API_HOST}"
+            - "CookieDomain=${COOKIE_DOMAIN}"
+            - "TakeUrls__Web=${WEB_ORIGIN}"
+            - "Email__Domain=${EMAIL_DOMAIN}"
+            - "SendGrid__ApiKey=${SENDGRID_API_KEY}"
+            # Bound to JWTOptions and never read anywhere — a leftover from the pre-cookie auth. It
+            # is `required` on the options class, so it must be set; expect nothing from it.
+            - "JWTSigningKey=${JWT_SIGNING_KEY}"
+            # The API owns the schema. Marten applies every change before the port opens, which is
+            # also the only thing that creates pg_trgm and unaccent and step 26's knowledge-base
+            # table — they hang off no document type, so lazy auto-create never touches them.
+            # Safe here because AddAsyncDaemon(DaemonMode.Solo) already means exactly ONE api
+            # container, forever. Do not scale this service.
+            - "Marten__ApplySchemaOnStartup=true"
+            # The data-protection key ring, on the volume below. Without it the ring is written
+            # inside the container and thrown away with it, so every single deploy signs everybody
+            # out mid-session. The volume is load-bearing, not tidiness.
+            - "DataProtection__KeyPath=/keys"
+            - "Blobs__ServiceUrl=http://minio:9000"
+            - "Blobs__Bucket=takeinitiative"
+            - "Blobs__Region=us-east-1"
+            # Both of these are what a non-AWS S3 needs. Do not "fix" them.
+            - "Blobs__ForcePathStyle=true"
+            # True because the bucket is self-hosted on a volume that starts empty.
+            # BlobBucketInitializer is idempotent and retries for 30 s while MinIO comes up, then
+            # only logs — so with this wrong the API still starts healthy and the failure surfaces
+            # at the first photo, looking exactly like a credentials problem. Set it false only for
+            # a managed bucket that already exists.
+            - "Blobs__CreateBucket=true"
+            - "Blobs__AccessKey=${BLOBS_ACCESS_KEY}"
+            - "Blobs__SecretKey=${BLOBS_SECRET_KEY}"
+        volumes:
+            - takeapi-keys:/keys
+        healthcheck:
+            # NOT a plain `curl --fail http://localhost:8080/healthz`. /healthz needs no
+            # authentication, but it still passes through ASP.NET Core's host filtering, which is
+            # active whenever AllowedHosts is set — and it is set, right above. Measured: the same
+            # request is 200 as `Host: api.example.test` and 400 as `Host: 127.0.0.1`. `curl --fail`
+            # fails on a 400, so the obvious probe never succeeds, `restart: unless-stopped` flaps
+            # the container forever, and Coolify reports a FAILED DEPLOY while the API behind it
+            # works perfectly. Every log line looks fine. It is the most confusing failure in
+            # docs/roadmap/29-deploy.md.
+            #
+            # So: take the first name out of the container's own AllowedHosts and present that,
+            # exactly as the image's built-in HEALTHCHECK does. `$$` is compose's escape for a
+            # literal `$`, so this expands in the CONTAINER's shell, not at compose-config time —
+            # which means there is one source of truth (AllowedHosts) and nothing to keep in sync.
+            # The `:-localhost` fallback is what makes the same line correct in a local dry run.
+            test: ["CMD-SHELL", 'allowed="$${AllowedHosts:-localhost}"; curl -fsS -H "Host: $${allowed%%;*}" http://127.0.0.1:8080/healthz || exit 1']
+            interval: 30s
+            retries: 5
+            # Generous: the first start of a fresh database applies the whole Marten schema before
+            # the port opens.
+            start_period: 60s
+            timeout: 10s
+
+    web:
+        image: ${WEB_IMAGE:-ghcr.io/pi-gorbo/takeinitiative-web:latest}
+        pull_policy: always
+        restart: unless-stopped
+        depends_on:
+            - api
+        expose:
+            - "3000"
+        environment:
+            # Read at RUNTIME, per request. Nitro re-applies the environment to runtimeConfig on
+            # every request and the SPA shell serializes it into window.__NUXT__.config, so one
+            # image serves any domain and there is no `--build-arg API_URL` anywhere in the
+            # pipeline. The names are the scule snake-case of the config path:
+            # public.axios.baseURL -> NUXT_PUBLIC_AXIOS_BASE_URL, public.webUrl -> NUXT_PUBLIC_WEB_URL.
+            - "NUXT_PUBLIC_AXIOS_BASE_URL=${API_ORIGIN}"
+            - "NUXT_PUBLIC_WEB_URL=${WEB_ORIGIN}"
+            # NUXT_PUBLIC_SUGGESTIONS_BASE_URL is deliberately unset: the GLiNER weights ship inside
+            # this image and are served from its own origin at /models/**. Setting it would move the
+            # download to a third party who then sees your users' requests.
+        healthcheck:
+            # Not host-filtered — this is Nitro, not ASP.NET — so a plain probe is correct here.
+            # busybox wget, because node:24-alpine has no curl.
+            test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3000/healthz || exit 1"]
+            interval: 30s
+            retries: 5
+            start_period: 30s
+            timeout: 10s
+
+    minio:
+        # The image blob store. MinIO stopped publishing community images in 2025 and its own
+        # registries no longer serve them anonymously, so this is pgsty/minio, a community rebuild
+        # of the same server — compose.dev.yml records the same thing. Three consequences:
+        #
+        #   * Pinned by DIGEST as well as tag, so a retag upstream cannot change what runs here.
+        #     This is the multi-platform index digest, verified 2026-10-01 to carry a linux/arm64
+        #     manifest (sha256:1026039c...) alongside amd64 — worth checking, because a community
+        #     rebuild is the base image most likely to be amd64-only.
+        #   * It is the one image not from GHCR. Mirroring it there would make the deployment depend
+        #     on exactly one registry, and is one command from a machine logged in to GHCR:
+        #       docker buildx imagetools create -t ghcr.io/pi-gorbo/minio:RELEASE.2026-08-04T00-00-00Z \
+        #           pgsty/minio@sha256:b6bfe7239bfc83fb90d31612d9704d86039dd714f7904b3f1ad68f211e602372
+        #     It copies the manifest without a local pull. Do that and set MINIO_IMAGE to the
+        #     result; no commit needed, which is why this is a variable. Remember to make that
+        #     package public too, or the VPS needs the registry credentials the app images avoid.
+        #   * The server is AGPL-3.0. Running an unmodified copy to serve your own app triggers no
+        #     obligation. We modify nothing.
+        #
+        # The alternative, noted and not taken: Cloudflare R2 (Blobs__ServiceUrl at the R2 endpoint,
+        # Blobs__Region=auto, Blobs__CreateBucket=false, this service and its volume deleted). It is
+        # free, needs no ops, and stops your friends' photos living on a single unbacked VPS disk —
+        # at the cost of a Cloudflare account with a payment method on file, which brushes against
+        # invariant 10's "no paid services". Garage and SeaweedFS are the self-hosted fallbacks if
+        # pgsty/minio ever becomes unusable; both need a config file, which MinIO does not.
+        image: ${MINIO_IMAGE:-docker.io/pgsty/minio:RELEASE.2026-08-04T00-00-00Z@sha256:b6bfe7239bfc83fb90d31612d9704d86039dd714f7904b3f1ad68f211e602372}
+        # No --console-address: nothing outside reaches this service, and recent community rebuilds
+        # have stripped most of the console anyway. `mc` against the container is the admin route.
+        command: server /data
+        restart: unless-stopped
+        expose:
+            - "9000"
+        environment:
+            # These ARE the bucket credentials: they must match Blobs__AccessKey / Blobs__SecretKey
+            # above, or every upload fails looking like a permissions bug. MinIO refuses to start if
+            # the user is under 3 characters or the password under 8.
+            - "MINIO_ROOT_USER=${BLOBS_ACCESS_KEY}"
+            - "MINIO_ROOT_PASSWORD=${BLOBS_SECRET_KEY}"
+        volumes:
+            - takeminio-data:/data
+        healthcheck:
+            test: ["CMD", "mc", "ready", "local"]
+            interval: 10s
+            retries: 5
+            start_period: 10s
+            timeout: 5s
+
+volumes:
+    # /keys on the api: the data-protection key ring. Delete this volume and everyone is signed out.
+    # The API image mkdir+chowns /keys so a FRESH named volume inherits ownership the unprivileged
+    # user can write — a volume mounted at a path the image does not own arrives root-owned.
+    takeapi-keys:
+    # /data on minio: every image anyone has ever uploaded. Nothing else on the VPS holds them, and
+    # nothing backs this up automatically.
+    takeminio-data:

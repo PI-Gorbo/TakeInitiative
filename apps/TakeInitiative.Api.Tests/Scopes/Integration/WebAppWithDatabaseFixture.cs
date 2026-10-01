@@ -38,7 +38,7 @@ public class WebAppWithDatabaseFixture : IAsyncLifetime, IWebAppClient
                        new ServiceDescriptor(typeof(IDiceRoller), DiceRollerSubstitute)
                     );
                     services.Replace(ServiceDescriptor.Singleton<IBlobStore>(Blobs));
-                    services.AddMartenDB(context.Configuration, IsDevelopment: true);
+                    services.AddMartenDB(context.Configuration);
                 })
         ));
     }

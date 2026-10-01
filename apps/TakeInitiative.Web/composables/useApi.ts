@@ -40,12 +40,17 @@ import { postEntryMergeRequest } from "~/utils/api/entry/postEntryMergeRequest";
 import { putEntryClaimRequest } from "~/utils/api/entry/putEntryClaimRequest";
 import { putEntryStatsRequest } from "~/utils/api/entry/putEntryStatsRequest";
 import { getEntryHistoryRequest } from "~/utils/api/entry/getEntryHistoryRequest";
+import { postEntryLinkRequest } from "~/utils/api/entry/postEntryLinkRequest";
+import { deleteEntryLinkRequest } from "~/utils/api/entry/deleteEntryLinkRequest";
+import { getEntryKnowledgeBaseSuggestionsRequest } from "~/utils/api/entry/getEntryKnowledgeBaseSuggestionsRequest";
+import { postEntrySuggestionDismissRequest } from "~/utils/api/entry/postEntrySuggestionDismissRequest";
 import { postImageRequest } from "~/utils/api/image/postImageRequest";
 import { deleteImageRequest } from "~/utils/api/image/deleteImageRequest";
 import { getSessionImagesRequest } from "~/utils/api/image/getSessionImagesRequest";
 import { getEntryImagesRequest } from "~/utils/api/image/getEntryImagesRequest";
 import { getSearchRequest } from "~/utils/api/search/getSearchRequest";
 import { getReferenceItemRequest } from "~/utils/api/reference/getReferenceItemRequest";
+import { getKnowledgeBaseRequest } from "~/utils/api/knowledgeBase/getKnowledgeBaseRequest";
 import { getCombatsRequest } from "~/utils/api/combat/getCombatsRequest";
 import { getEntryCombatsRequest } from "~/utils/api/combat/getEntryCombatsRequest";
 import { getCombatRequest } from "~/utils/api/combat/getCombatRequest";
@@ -120,6 +125,10 @@ export const useApi = () => {
             putClaim: putEntryClaimRequest($axios),
             putStats: putEntryStatsRequest($axios),
             history: getEntryHistoryRequest($axios),
+            postLink: postEntryLinkRequest($axios),
+            deleteLink: deleteEntryLinkRequest($axios),
+            knowledgeBaseSuggestions: getEntryKnowledgeBaseSuggestionsRequest($axios),
+            dismissSuggestion: postEntrySuggestionDismissRequest($axios),
         },
         image: {
             post: postImageRequest($axios),
@@ -132,6 +141,9 @@ export const useApi = () => {
         },
         reference: {
             get: getReferenceItemRequest($axios),
+        },
+        knowledgeBase: {
+            list: getKnowledgeBaseRequest($axios),
         },
         combat: {
             list: getCombatsRequest($axios),

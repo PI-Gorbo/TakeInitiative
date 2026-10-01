@@ -14,8 +14,10 @@ public class ReferenceCatalog(IEnumerable<IReferenceProvider> providers)
         => Providers.FirstOrDefault(p => string.Equals(p.Key, key, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>The item, or null when the provider or the item is unknown, or the provider is search-only.</summary>
-    public ReferenceItem? GetItem(string provider, string id) => Get(provider)?.Get(id);
+    public Task<ReferenceItem?> GetItem(string provider, string id, CancellationToken ct)
+        => Get(provider) is { } p ? p.Get(id, ct) : Task.FromResult<ReferenceItem?>(null);
 
     /// <summary>The item's summary from any provider, search-only ones included, or null.</summary>
-    public ReferenceSummary? FindItem(string provider, string id) => Get(provider)?.Find(id);
+    public Task<ReferenceSummary?> FindItem(string provider, string id, CancellationToken ct)
+        => Get(provider) is { } p ? p.Find(id, ct) : Task.FromResult<ReferenceSummary?>(null);
 }

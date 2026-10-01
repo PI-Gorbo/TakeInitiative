@@ -1,13 +1,24 @@
-# The API image builds from the repo root so it can see packages/. BuildKit picks
-# this file up because it sits next to the dockerfile. Allowlist only what the
-# build needs; everything else (web, node_modules, .git) stays out.
+# The API image builds from the repo root so it can see packages/. BuildKit picks this file up
+# because it sits next to the dockerfile, and it REPLACES the root .dockerignore for this build.
+# Allowlist only what the build reads; everything else (the web app, node_modules, .git, docs,
+# scripts, the test projects, the KB CLI) stays out.
 *
 !Directory.Build.props
 !apps/TakeInitiative.Api/
+# The two packages the API has a ProjectReference to. KnowledgeBase arrived with 26c and was NOT
+# added here, which broke the image outright: restore skipped the missing project and the publish
+# failed on `CS0234: the type or namespace name 'KnowledgeBase' does not exist`. A new
+# ProjectReference means a new line here.
 !packages/TakeInitiative.Dice/
+!packages/TakeInitiative.KnowledgeBase/
 
+# global.json is deliberately absent: the sdk:10.0 image brings its own SDK, and pinning 10.0.400
+# with rollForward=latestFeature would make the build fail the day that tag moves to 10.1.
+
+# Build output and editor droppings inside the allowlisted trees. bin/ alone is a gigabyte locally.
 **/bin/
 **/obj/
+**/node_modules/
 **/.vs/
 **/.idea/
 **/*.user

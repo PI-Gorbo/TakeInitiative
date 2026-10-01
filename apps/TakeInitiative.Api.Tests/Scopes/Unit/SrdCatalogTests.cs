@@ -1,4 +1,6 @@
+using FakeItEasy;
 using FluentAssertions;
+using Marten;
 using Microsoft.Extensions.DependencyInjection;
 using TakeInitiative.Api.Bootstrap;
 using TakeInitiative.Api.Features.Entries;
@@ -104,30 +106,43 @@ public class SrdCatalogTests
     }
 
     [Fact]
-    public void TheProvider_SearchesAndGets()
+    public async Task TheProvider_SearchesAndGets()
     {
         var provider = new SrdReferenceProvider(Catalog);
         (provider.Key, provider.Label, provider.HasStatBlocks).Should().Be(("srd52", "SRD 5.2", true));
 
-        provider.Search("goblin", 3).Select(m => m.Item.Name).Should().Equal("Goblin Boss", "Goblin Minion", "Goblin Warrior");
-        provider.Search("gobln", 5).Select(m => m.Item.Name).Should().Contain("Goblin Warrior");
+        (await provider.Search("goblin", 3, CancellationToken.None)).Select(m => m.Item.Name).Should().Equal("Goblin Boss", "Goblin Minion", "Goblin Warrior");
+        (await provider.Search("gobln", 5, CancellationToken.None)).Select(m => m.Item.Name).Should().Contain("Goblin Warrior");
 
-        var item = provider.Get("owlbear")!;
+        var item = (await provider.Get("owlbear", CancellationToken.None))!;
         item.StatBlock!.Name.Should().Be("Owlbear");
         item.Attribution.Should().Be(Catalog.Attribution);
-        provider.Get("tarrasque-jr").Should().BeNull();
-        provider.Find("owlbear").Should().Be(item.Summary);
+        (await provider.Get("tarrasque-jr", CancellationToken.None)).Should().BeNull();
+        (await provider.Find("owlbear", CancellationToken.None)).Should().Be(item.Summary);
     }
 
+    /// <summary>
+    /// The registration order, which is behaviour and not bookkeeping: <c>ReferenceSearchProvider</c>
+    /// breaks a tie on the match ladder by a provider's position in this list, so SRD 5.2 being first is
+    /// what makes it rank above a 5eTools row of the same name and the same similarity (step 20). The
+    /// ranking itself is asserted end to end in <c>KnowledgeBaseReferenceTests</c>, which has a corpus
+    /// with two names the SRD also has.
+    /// </summary>
     [Fact]
-    public void AddReference_RegistersTheSrdProvider_ThenTheFiveEToolsOne()
+    public async Task AddReference_RegistersTheSrdProvider_ThenTheKnowledgeBaseOne()
     {
-        using var services = new ServiceCollection().AddReference().BuildServiceProvider();
+        // The knowledge-base provider reads the request's Marten session (26d₂). This test is about the
+        // registrations, not about a database, so the session is a fake and nothing here queries it.
+        using var services = new ServiceCollection()
+            .AddScoped(_ => A.Fake<IQuerySession>())
+            .AddReference()
+            .BuildServiceProvider();
         using var scope = services.CreateScope();
         var catalog = scope.ServiceProvider.GetRequiredService<ReferenceCatalog>();
         catalog.Providers.Select(p => p.Key).Should().Equal("srd52", "5etools");
-        catalog.Providers[1].Search("goblin", 10).Should().BeEmpty("with no index configured the 5eTools provider is off");
-        catalog.GetItem("SRD52", "goblin-warrior")!.Summary.Name.Should().Be("Goblin Warrior");
-        catalog.GetItem("5etools", "goblin-warrior").Should().BeNull();
+        catalog.Providers.Select(p => p.HasStatBlocks).Should().Equal(true, false);
+        (await catalog.GetItem("SRD52", "goblin-warrior", CancellationToken.None))!.Summary.Name.Should().Be("Goblin Warrior");
+        (await catalog.GetItem("5etools", "goblin-warrior", CancellationToken.None))
+            .Should().BeNull("the app never shows 5eTools content, so Get is always null");
     }
 }

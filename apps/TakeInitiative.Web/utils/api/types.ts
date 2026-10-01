@@ -59,6 +59,21 @@ export type EntryQuote = Schemas["EntryQuoteResponse"];
 export type ArticleMention = Schemas["EntryArticleMention"];
 /** A Character's optional stat line (15g). */
 export type Stats = Schemas["StatsResponse"];
+/**
+ * One link on an entry, as the viewer may read it (27b): a knowledge-base row resolved against the
+ * corpus, or a url the member typed. `stale` means the row has gone from the knowledge base.
+ */
+export type EntryLink = Schemas["EntryLinkResponse"];
+export type EntryLinkKind = Schemas["EntryLinkKind"];
+/**
+ * The knowledge-base rows an entry might be (28b), best first and at most three. A row is a
+ * `KnowledgeBaseItem` — the same shape the Knowledge base page lists — so the prompt draws it with
+ * 26f's own row helpers and "Link it" has everything `POST links` needs. There is no score on it: a
+ * trigram match is not a probability, and the row's detail line is what lets the member judge.
+ */
+export type EntryKnowledgeBaseSuggestions = Schemas["EntryKnowledgeBaseSuggestionsResponse"];
+/** A dismissed suggestion as history names it (28b): the row, resolved as the reader sees it now. */
+export type EntrySuggestion = Schemas["EntrySuggestionResponse"];
 /** An entry's history, redacted for the viewer (15g). */
 export type EntryHistory = Schemas["EntryHistoryResponse"];
 export type EntryHistoryItem = Schemas["EntryHistoryItem"];
@@ -129,6 +144,13 @@ export type SearchReferenceHit = Schemas["SearchReferenceHit"];
 export type ReferenceItem = Schemas["ReferenceItemResponse"];
 export type ReferenceSummary = Schemas["ReferenceSummaryResponse"];
 export type ReferenceAttribution = Schemas["ReferenceAttributionResponse"];
+export type ReferenceCategory = Schemas["ReferenceCategory"];
+/** The Knowledge base's browse list (26e, 26f): one page of the corpus and its facet counts. */
+export type KnowledgeBase = Schemas["KnowledgeBaseResponse"];
+export type KnowledgeBaseItem = Schemas["KnowledgeBaseItemResponse"];
+export type KnowledgeBaseFacets = Schemas["KnowledgeBaseFacetsResponse"];
+export type KnowledgeBaseCategoryFacet = Schemas["KnowledgeBaseCategoryFacetResponse"];
+export type KnowledgeBaseBookFacet = Schemas["KnowledgeBaseBookFacetResponse"];
 export type StatBlock = Schemas["StatBlock"];
 /** An entry's source (20b, 20d): left out of the JSON when the viewer cannot read it. */
 export type EntrySource = Schemas["EntrySourceResponse"];

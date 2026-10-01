@@ -40,27 +40,111 @@ public record EntryResponse
     /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public EntrySourceResponse? Source { get; init; }
+    /// <summary>
+    /// The links the caller may read (27b), oldest first, with each knowledge-base link resolved
+    /// against the corpus. The rule is <see cref="EntryLinks"/>' — the same one as
+    /// <see cref="Source"/> — so on an unclaimed Character this is empty for anyone but a DM, and
+    /// "no links" and "not your links" look the same.
+    /// </summary>
+    public required EntryLinkResponse[] Links { get; init; }
 
     /// <summary>
-    /// The entry as <paramref name="viewer"/> sees it. The article, the stats and the source are
-    /// redacted for them; <paramref name="reference"/> names the source's provider and item.
+    /// The entry as <paramref name="viewer"/> sees it. The article, the stats, the source and the
+    /// links are redacted for them; <paramref name="reference"/> names the source's provider and
+    /// item, and <paramref name="links"/> resolves the knowledge-base links in one query.
     /// </summary>
-    public static EntryResponse From(Entry entry, Member viewer, ReferenceCatalog reference) => new()
+    public static async Task<EntryResponse> From(
+        Entry entry, Member viewer, ReferenceCatalog reference, EntryLinkResolver links, CancellationToken ct)
     {
-        Id = entry.Id,
-        Name = entry.Name,
-        Kind = entry.Kind,
-        Aliases = [.. entry.Aliases],
-        Visibility = entry.Visibility,
-        EditAccess = entry.EditAccess,
-        CreatorMemberId = entry.CreatorMemberId,
-        CreatedAt = entry.CreatedAt,
-        UpdatedAt = entry.UpdatedAt,
-        ClaimedByMemberId = entry.ClaimedByMemberId,
-        MergedFromIds = entry.MergedFromIds,
-        Article = ArticleResponse.From(entry, viewer),
-        Stats = EntryStats.For(entry, viewer) is { } stats ? StatsResponse.From(stats) : null,
-        Source = EntrySources.For(entry, viewer) is { } source ? EntrySourceResponse.From(source, reference) : null,
+        var readable = EntryLinks.For(entry, viewer);
+        var items = await links.ResolveAsync(readable, ct);
+        return new EntryResponse
+        {
+            Id = entry.Id,
+            Name = entry.Name,
+            Kind = entry.Kind,
+            Aliases = [.. entry.Aliases],
+            Visibility = entry.Visibility,
+            EditAccess = entry.EditAccess,
+            CreatorMemberId = entry.CreatorMemberId,
+            CreatedAt = entry.CreatedAt,
+            UpdatedAt = entry.UpdatedAt,
+            ClaimedByMemberId = entry.ClaimedByMemberId,
+            MergedFromIds = entry.MergedFromIds,
+            Article = ArticleResponse.From(entry, viewer),
+            Stats = EntryStats.For(entry, viewer) is { } stats ? StatsResponse.From(stats) : null,
+            Source = EntrySources.For(entry, viewer) is { } source ? await EntrySourceResponse.From(source, reference, ct) : null,
+            Links = [.. readable.Select(link => EntryLinkResponse.From(link, items.GetValueOrDefault(link.Id)))],
+        };
+    }
+}
+
+/// <summary>
+/// One link on an entry (27b), as its reader sees it. The two kinds share one shape, flattened the
+/// way <see cref="EntryChange"/> is: <see cref="Kind"/> says which fields are set.
+/// <list type="bullet">
+/// <item><c>External</c>: <see cref="Label"/> and <see cref="Url"/>, exactly as they were typed.
+/// The label is never markdown, and the web opens the url with
+/// <c>rel="noopener noreferrer"</c>.</item>
+/// <item><c>KnowledgeBase</c>: <see cref="Provider"/> and <see cref="ItemId"/> are the stored link;
+/// everything else is read from the corpus on this request, so a re-ingest that corrects a page
+/// number shows here without touching the entry. <see cref="Stale"/> means the row has gone or a
+/// prune marked it, and then <see cref="Url"/> and <see cref="Name"/> are null — the link renders
+/// as "no longer in your knowledge base" and is still removable.</item>
+/// </list>
+/// </summary>
+public record EntryLinkResponse
+{
+    public required Guid Id { get; init; }
+    public required EntryLinkKind Kind { get; init; }
+    public required DateTimeOffset AddedAt { get; init; }
+    public required Guid AddedByMemberId { get; init; }
+    /// <summary>Where the link opens. The member's url for an external link, the row's for a knowledge-base one, null when that row has gone.</summary>
+    public string? Url { get; init; }
+    /// <summary>The member's own label, on an external link only. Never rendered as markdown.</summary>
+    public string? Label { get; init; }
+    /// <summary>The provider's key, on a knowledge-base link: <c>5etools</c>.</summary>
+    public string? Provider { get; init; }
+    /// <summary>What the UI calls that provider, or its key when the provider has gone from the app.</summary>
+    public string? ProviderLabel { get; init; }
+    /// <summary>The row's id within its provider: <c>monster_beholder_mm</c>.</summary>
+    public string? ItemId { get; init; }
+    /// <summary>The row's name now, "Beholder". Null when it has gone.</summary>
+    public string? Name { get; init; }
+    /// <summary>The muted line under the name, "CR 13 · Large Aberration · MM". Null when the row has gone.</summary>
+    public string? Detail { get; init; }
+    /// <summary>The book's full title, for the row's tooltip.</summary>
+    public string? BookTitle { get; init; }
+    /// <summary>The row's artwork (26g), by url.</summary>
+    public string? ImageUrl { get; init; }
+    /// <summary>Whether the web can open the item's card in the app rather than a new tab: its provider draws stat blocks and the row is still there.</summary>
+    public bool HasStatBlock { get; init; }
+    /// <summary>The knowledge-base row is gone, or a prune marked it. Always false for an external link.</summary>
+    public required bool Stale { get; init; }
+
+    /// <summary>
+    /// <paramref name="link"/> as its reader sees it. <paramref name="item"/> is
+    /// <see cref="EntryLinkResolver"/>'s answer for a knowledge-base link, and null for an external
+    /// one — or for a knowledge-base link the resolver was not given, which reads as stale rather
+    /// than as a link with no destination.
+    /// </summary>
+    public static EntryLinkResponse From(EntryLink link, EntryLinkItem? item) => new()
+    {
+        Id = link.Id,
+        Kind = link.Kind,
+        AddedAt = link.AddedAt,
+        AddedByMemberId = link.AddedByMemberId,
+        Url = link.Kind == EntryLinkKind.External ? link.Url : item?.Url,
+        Label = link.Kind == EntryLinkKind.External ? link.Label : null,
+        Provider = link.Provider,
+        ProviderLabel = link.Kind == EntryLinkKind.KnowledgeBase ? item?.ProviderLabel ?? link.Provider : null,
+        ItemId = link.ItemId,
+        Name = item?.Name,
+        Detail = item?.Detail,
+        BookTitle = item?.BookTitle,
+        ImageUrl = item?.ImageUrl,
+        HasStatBlock = item?.HasStatBlock ?? false,
+        Stale = link.Kind == EntryLinkKind.KnowledgeBase && (item?.Stale ?? true),
     };
 }
 
@@ -84,10 +168,10 @@ public record EntrySourceResponse
     /// <summary>Whether the web can link to the item's stat-block card: its provider draws them, and the item is still in the data.</summary>
     public required bool HasStatBlock { get; init; }
 
-    public static EntrySourceResponse From(EntrySource source, ReferenceCatalog reference)
+    public static async Task<EntrySourceResponse> From(EntrySource source, ReferenceCatalog reference, CancellationToken ct)
     {
         var provider = reference.Get(source.Provider);
-        var item = provider?.Find(source.ExternalId);
+        var item = provider is null ? null : await provider.Find(source.ExternalId, ct);
         return new EntrySourceResponse
         {
             Provider = source.Provider,

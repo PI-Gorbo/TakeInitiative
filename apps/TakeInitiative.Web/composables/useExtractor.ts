@@ -1,13 +1,13 @@
 // Step 23b: the suggestion model for the rest of the app. One worker per tab, created only when
 // `ensure()` is first called and the device setting allows it, and kept for the tab's life once
-// loaded. Nothing loads with the app. Results are memoised per (note, text, model version) in
-// memory only. Suggestions only: nothing here creates an entry or a mention.
+// loaded. Nothing loads with the app. Results are memoised per (note, text, model version, pass)
+// in memory only. Suggestions only: nothing here creates an entry or a mention.
 
 import { resolveModelSource, type ModelSource, type SuggestionsConfig } from "~/utils/extraction/modelSource";
 import { hasRoomFor, isCached, pruneModelCache, readCachedIndex, removeModelCache, writeCachedIndex, type CachedIndex } from "~/utils/extraction/modelCache";
 import { decideLoad, isMetered, readSuggestionsSetting, writeSuggestionsSetting, type ConnectionLike, type SuggestionsSetting } from "~/utils/extraction/deviceSetting";
 import type { FromWorker, ToWorker } from "~/utils/extraction/messages";
-import type { ModelSpan } from "~/utils/extraction/spans";
+import { passAt, type ModelSpan, type SuggestionPass } from "~/utils/extraction/spans";
 
 export type ExtractorState = "off" | "idle" | "needsConsent" | "downloading" | "loading" | "ready" | "error";
 
@@ -24,12 +24,27 @@ let settle: ((ok: boolean) => void) | null = null;
 let nextId = 1;
 const waiting = new Map<number, { resolve: (s: ModelSpan[]) => void; reject: (e: Error) => void }>();
 const memo = new Map<string, ModelSpan[]>();
-// One note at a time: `running` is in the worker; `queue` holds the rest by note id, so a newer
-// request for the same note replaces the older one (both callers get the newer result).
-const queue = new Map<string, { text: string; resolvers: ((s: ModelSpan[] | Error) => void)[] }>();
+// One note at a time: `running` is in the worker; `queue` holds the rest by note id **and pass**
+// (23f), so a newer request for the same note at the same depth replaces the older one (both
+// callers get the newer result), while a deeper request queues beside it instead of stealing it.
+const queue = new Map<string, { noteId: string; text: string; pass: SuggestionPass; resolvers: ((s: ModelSpan[] | Error) => void)[] }>();
 let running = false;
 
 const storage = () => (typeof localStorage === "undefined" ? null : localStorage);
+
+let settingRead = false;
+
+/**
+ * The device setting on its own, without the runtime config, the worker or a download: for
+ * deciding whether to offer ✨ at all (the note menu's "Find suggestions", 23f).
+ */
+export function suggestionsSetting(): Readonly<Ref<SuggestionsSetting>> {
+    if (!settingRead && import.meta.client) {
+        settingRead = true;
+        setting.value = readSuggestionsSetting(storage());
+    }
+    return readonly(setting);
+}
 
 /** FNV-1a, for the memo key: the text itself is not kept. */
 function hash(text: string): string {
@@ -49,7 +64,7 @@ export function useExtractor() {
 
     if (!initialised && import.meta.client) {
         initialised = true;
-        setting.value = readSuggestionsSetting(storage());
+        suggestionsSetting();
         cached.value = currentIndex();
         state.value = setting.value === "off" ? "off" : "idle";
     }
@@ -156,23 +171,28 @@ export function useExtractor() {
         state.value = setting.value === "off" ? "off" : "idle";
     }
 
-    function send(text: string): Promise<ModelSpan[]> {
+    function send(text: string, pass: SuggestionPass): Promise<ModelSpan[]> {
         return new Promise((resolve, reject) => {
             const id = nextId++;
             waiting.set(id, { resolve, reject });
-            worker!.postMessage({ type: "extract", id, text } satisfies ToWorker);
+            worker!.postMessage({ type: "extract", id, text, pass } satisfies ToWorker);
         });
     }
+
+    /** The memo and queue key: a note's spans depend on its text, the model version and the pass. */
+    const keyFor = (noteId: string, text: string, pass: SuggestionPass) =>
+        `${noteId}:${hash(text)}:${config.version}:${pass.threshold}:${pass.max}`;
 
     async function pump() {
         if (running) return;
         running = true;
         try {
             while (queue.size && worker && state.value === "ready") {
-                const [noteId, job] = queue.entries().next().value!;
-                queue.delete(noteId);
-                const result = await send(job.text).catch((e: Error) => e);
-                if (!(result instanceof Error)) memo.set(`${noteId}:${hash(job.text)}:${config.version}`, result);
+                const [key, job] = queue.entries().next().value!;
+                queue.delete(key);
+                const result = await send(job.text, job.pass).catch((e: Error) => e);
+                // The job's text may be newer than the key's, so the memo is keyed off the text run.
+                if (!(result instanceof Error)) memo.set(keyFor(job.noteId, job.text, job.pass), result);
                 for (const r of job.resolvers) r(result);
             }
         } finally {
@@ -180,16 +200,21 @@ export function useExtractor() {
         }
     }
 
-    /** The note's spans. Needs `state === "ready"` (call `ensure()` first). */
-    async function extract(noteId: string, text: string): Promise<ModelSpan[]> {
-        const key = `${noteId}:${hash(text)}:${config.version}`;
+    /**
+     * The note's spans. Needs `state === "ready"` (call `ensure()` first). `pass` is 23f's depth;
+     * without one the model's pinned pass applies, which is what every automatic read uses.
+     */
+    async function extract(noteId: string, text: string, pass: SuggestionPass = passAt(0, config.threshold)): Promise<ModelSpan[]> {
+        const key = keyFor(noteId, text, pass);
         const hit = memo.get(key);
         if (hit) return hit;
         if (state.value !== "ready" || !worker) throw new Error("The suggestion model is not loaded.");
+        // Keyed without the text, so a re-request after an edit replaces the queued job.
+        const queueKey = `${noteId}:${pass.threshold}:${pass.max}`;
         return new Promise((resolve, reject) => {
-            const had = queue.get(noteId);
+            const had = queue.get(queueKey);
             const resolver = (r: ModelSpan[] | Error) => (r instanceof Error ? reject(r) : resolve(r));
-            queue.set(noteId, { text, resolvers: [...(had?.resolvers ?? []), resolver] });
+            queue.set(queueKey, { noteId, text, pass, resolvers: [...(had?.resolvers ?? []), resolver] });
             void pump();
         });
     }

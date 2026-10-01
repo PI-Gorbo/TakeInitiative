@@ -36,6 +36,13 @@ public record EntryMergedMessage(Guid FromEntryId, Guid IntoEntryId);
 public record EntryStatsChangedMessage(Guid EntryId);
 
 /// <summary>
+/// <c>entryLinksChanged</c> (27b): the links this member may read changed, so refetch the entry.
+/// No content — the link itself would be the thing we are being careful about — and only to
+/// members whose readable links changed.
+/// </summary>
+public record EntryLinksChangedMessage(Guid EntryId);
+
+/// <summary>
 /// Who an article change is pushed to (15e.7): each member who can see the entry and whose
 /// view of the article (<see cref="ArticleEtag"/>) differs before and after. So an edit inside
 /// a DM secret block reaches the DMs and that block's owner, and nobody else.
@@ -89,6 +96,25 @@ public static class EntryHubContextExtensions
         return groups.Count == 0
             ? Task.CompletedTask
             : hub.Clients.Groups(groups).SendAsync(CampaignHubMessages.EntryStatsChanged, new EntryStatsChangedMessage(after.Id));
+    }
+
+    /// <summary>
+    /// A link added or removed (27b): <c>entryLinksChanged</c> to <c>member:{id}</c> for each member
+    /// whose readable links (<see cref="EntryLinks.For"/>) differ before and after. Nothing when
+    /// nobody's do. So a DM adding "Beholder" to an unclaimed Character pings the DMs and nobody
+    /// else — the push audience is the read rule, not the entry's audience (invariant 5).
+    /// </summary>
+    public static Task NotifyEntryLinksChanged(this IHubContext<CampaignHub> hub, IEnumerable<Member> members, Entry before, Entry after)
+    {
+        var groups = members
+            // SequenceEqual, not !=: the lists are IReadOnlyList, which compares by reference, and
+            // two different lists of the same links are not a change anybody should be pinged about.
+            .Where(m => !EntryLinks.For(before, m).SequenceEqual(EntryLinks.For(after, m)))
+            .Select(m => CampaignGroups.Member(m.MemberId))
+            .ToList();
+        return groups.Count == 0
+            ? Task.CompletedTask
+            : hub.Clients.Groups(groups).SendAsync(CampaignHubMessages.EntryLinksChanged, new EntryLinksChangedMessage(after.Id));
     }
 
     /// <summary>

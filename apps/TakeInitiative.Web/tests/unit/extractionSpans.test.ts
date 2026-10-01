@@ -1,5 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { MAX_SPANS_PER_NOTE, distinct, finalSpans, mask, sentences, tidy, type RawSpan } from "~/utils/extraction/spans";
+import {
+    MAX_SPANS_PER_NOTE,
+    MIN_SUGGESTION_THRESHOLD,
+    SUGGESTION_DEPTH_MAX,
+    distinct,
+    finalSpans,
+    mask,
+    passAt,
+    sentences,
+    tidy,
+    type RawSpan,
+} from "~/utils/extraction/spans";
 
 const at = (text: string, piece: string, kind: RawSpan["kind"] = "Character", confidence = 0.9, from = 0): RawSpan => ({
     start: text.indexOf(piece, from),
@@ -99,5 +110,45 @@ describe("sentences", () => {
             [10, 15],
         ]);
         expect(sentences("")).toEqual([[0, 0]]);
+    });
+});
+
+describe("passAt (23f)", () => {
+    it("starts at the model's own threshold and cap", () => {
+        expect(passAt(0, 0.4)).toEqual({ threshold: 0.4, max: MAX_SPANS_PER_NOTE });
+    });
+
+    it("drops the threshold and raises the cap on each level", () => {
+        const levels = [0, 1, 2].map((l) => passAt(l, 0.4));
+        expect(levels.map((p) => p.threshold)).toEqual([0.4, 0.25, 0.15]);
+        for (let i = 1; i < levels.length; i++) {
+            expect(levels[i].threshold).toBeLessThan(levels[i - 1].threshold);
+            expect(levels[i].max).toBeGreaterThan(levels[i - 1].max);
+        }
+    });
+
+    it("clamps the level, so a tap past the deepest pass changes nothing", () => {
+        expect(passAt(SUGGESTION_DEPTH_MAX + 5, 0.4)).toEqual(passAt(SUGGESTION_DEPTH_MAX, 0.4));
+        expect(passAt(-3, 0.4)).toEqual(passAt(0, 0.4));
+    });
+
+    it("never goes under the floor, however low the model is pinned", () => {
+        expect(passAt(SUGGESTION_DEPTH_MAX, 0.05).threshold).toBe(MIN_SUGGESTION_THRESHOLD);
+    });
+
+    it("lets a deeper pass keep spans the first one threw away", () => {
+        const names = Array.from({ length: 14 }, (_, i) => `Name${String.fromCharCode(65 + i)}`);
+        const text = names.join(" ");
+        // Confidences from 0.18 to 0.57: the automatic pass at 0.4 sees only the top few.
+        const raw = names.map((n, i) => at(text, n, "Character", 0.18 + i * 0.03));
+        const run = (level: number) => {
+            const pass = passAt(level, 0.4);
+            return finalSpans(text, raw, pass.threshold, pass.max);
+        };
+        const shallow = run(0);
+        const deep = run(SUGGESTION_DEPTH_MAX);
+        expect(deep.length).toBeGreaterThan(shallow.length);
+        // Everything the shallow pass found is still there.
+        for (const s of shallow) expect(deep.map((d) => d.text)).toContain(s.text);
     });
 });

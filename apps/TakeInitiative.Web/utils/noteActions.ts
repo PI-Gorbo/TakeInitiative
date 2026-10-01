@@ -4,13 +4,19 @@
 import type { SessionNote, SessionStreamSession } from "./api/types";
 import { isPendingNote } from "./sessionStreamCache";
 
-export type NoteAction = "promote" | "edit" | "visibility" | "hide" | "unhide" | "history" | "copyLink" | "delete";
+export type NoteAction = "promote" | "edit" | "suggest" | "visibility" | "hide" | "unhide" | "history" | "copyLink" | "delete";
 
 export type NoteActionContext = {
     /** The viewer wrote the note. Only the author edits, changes visibility and deletes (invariant 4). */
     isAuthor: boolean;
     /** The viewer is a DM. DMs hide and unhide. */
     isDm: boolean;
+    /**
+     * ✨ may be offered on this note (23f): the suggestion model is not Off on this device, and
+     * this is the stream rather than an entry's timeline. Only the author ever sees it, because
+     * only the author can accept a suggestion (invariant 4).
+     */
+    canSuggest?: boolean;
 };
 
 /**
@@ -18,13 +24,17 @@ export type NoteActionContext = {
  * Hide, Copy link). A note still being posted has none. Promote is for anyone who can
  * see the note (15f); the entry picker then offers only entries they can edit. A DM
  * never hides a `Me` note: only its author can see it. A note with no text (an image
- * note with no caption, 16c) offers no Promote.
+ * note with no caption, 16c) offers no Promote, and nothing for the model to read either (23f).
  */
-export function noteActionsFor(note: SessionNote, { isAuthor, isDm }: NoteActionContext): NoteAction[] {
+export function noteActionsFor(note: SessionNote, { isAuthor, isDm, canSuggest = false }: NoteActionContext): NoteAction[] {
     if (isPendingNote(note.id)) return [];
     // Promote copies text only, so an image note with no caption has nothing to promote (16b).
     const actions: NoteAction[] = note.text.trim() ? ["promote"] : [];
-    if (isAuthor) actions.push("edit", "visibility");
+    if (isAuthor) {
+        actions.push("edit");
+        if (canSuggest && note.text.trim()) actions.push("suggest");
+        actions.push("visibility");
+    }
     if (isDm && note.visibility !== "Me") actions.push(note.isHidden ? "unhide" : "hide");
     if (note.editedAt) actions.push("history");
     actions.push("copyLink");
@@ -35,6 +45,7 @@ export function noteActionsFor(note: SessionNote, { isAuthor, isDm }: NoteAction
 export const NOTE_ACTION_LABELS: Record<NoteAction, string> = {
     promote: "Add to summary",
     edit: "Edit",
+    suggest: "Find suggestions",
     visibility: "Change visibility",
     hide: "Hide",
     unhide: "Unhide",
