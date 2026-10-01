@@ -94,7 +94,7 @@ Steps 08–11 ship as one stack of PRs (`gh stack`), one PR per step.
 | 23 | [In-browser suggestions](23-suggestions.md) | `done` (23a–23f) | 15, 17 | Zero-shot extraction (GLiNER small v2.5, picked by 23a's spike) in the browser; suggestions, never facts. 23f: "✨ Find suggestions" in a note's own menu, with a deeper pass on each "Look again" |
 | 25 | [Wiki redesign](25-wiki-redesign.md) | `done` | 15, 19, 20 | Mobile-first entry page (Summary \| Notes tabs, collapsed sections), a desktop side panel, "Played by" for claims, no "Add a note" on the wiki |
 | 26 | [Knowledge base](26-knowledge-base.md) | `done` | 20, 21 | A .NET ingest CLI, the slim 5eTools index in Postgres with a `tsvector`, and a **browsable Knowledge base surface** so reference rows have somewhere to live |
-| 27 | [Links](27-links.md) | `todo` | 26 | The `EntryLink` seam becomes real: `knowledgebase` and `external` links on an entry, with events, history and visibility |
+| 27 | [Links](27-links.md) | `done` | 26 | The `EntryLink` seam becomes real: `knowledgebase` and `external` links on an entry, with events, history and visibility |
 | 28 | [Knowledge-base match suggestions](28-kb-suggestions.md) | `todo` | 26, 27, 23 | On an entry that looks like a knowledge-base item, offer the link and let the user confirm it |
 | 29 | [Deploy](29-deploy.md) | `todo` | 13–28 | Production images built in GitHub Actions, pushed to GHCR, pulled by Coolify. The app is reachable by other people |
 
