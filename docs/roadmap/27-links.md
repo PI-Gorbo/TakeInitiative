@@ -38,9 +38,9 @@ runnable:
 
 | PR | Branch | Sub-step | Runnable state after merge | Status |
 |---|---|---|---|---|
-| 27a | `v2/27a-links-plan` | This plan | Docs only | [ ] |
-| 27b | `v2/27b-links-model` | The model, the events, the read rule and the read path (API) | 26's app unchanged in the browser. `Entry` projects links, `GET entry` returns the ones the caller may read with knowledge-base rows resolved, and history knows about them. No way to create one yet except in tests | [ ] |
-| 27c | `v2/27c-links-api` | Add and remove (API) | `POST entries/{id}/links` and `DELETE entries/{id}/links/{linkId}` work, validated, authorised and pushed | [ ] |
+| 27a | `v2/27a-links-plan` | This plan | Docs only | [x] |
+| 27b | `v2/27b-links-model` | The model, the events, the read rule and the read path (API) | 26's app unchanged in the browser. `Entry` projects links, `GET entry` returns the ones the caller may read with knowledge-base rows resolved, and history knows about them. No way to create one yet except in tests | [x] built |
+| 27c | `v2/27c-links-api` | Add and remove (API) | `POST entries/{id}/links` and `DELETE entries/{id}/links/{linkId}` work, validated, authorised and pushed | [x] built |
 | 27d | `v2/27d-links-web` | The Links section on the entry page | Add, remove and open links on a phone and a desktop, including the stale state | [ ] |
 | 27e | `v2/27e-ddb-sheet` | D&D Beyond sheet as a preset | "↗ D&D Beyond sheet" under the claim line, added through a host-validated field. The step's Verify passes | [ ] |
 
@@ -84,8 +84,33 @@ already the answer to this exact question for `Source`. A per-link override is i
 for the user" and the default is no.
 
 **Who may write** follows the entry's `EditAccess`, with DMs always able to — the same rule
-as the article (invariant 4). A player can add their own sheet link to the character they
-play because a claimed Character's `EditAccess` already allows its claimer.
+as the article (invariant 4) — **plus a claimer clause for a claimed Character**.
+
+That last part is a correction. An earlier draft of this plan said "a claimed Character's
+`EditAccess` already allows its claimer". It does not: `EntryPermissions.CanEdit` is
+`DM || creator || (EditAccess == Anyone && CanSee)`, with no claimer clause at all. It only
+appears to work because `Anyone` is the default, and a DM who tightens edit access on an entry
+they created would lock a player out of their own character's sheet link — which is the whole
+of 27e.
+
+The fix has a precedent in the codebase rather than being invented: `EntryStats.CanWrite` is
+already `Kind == Character && CanSee && (DM || claimer == viewer)`. Links follow the same
+shape, so "the player who plays this character may maintain its links" is expressed the way
+"the player who plays this character may maintain its stats" already is.
+
+```csharp
+public static bool CanWrite(Entry entry, Member viewer)
+    => EntryPermissions.CanEdit(entry, viewer)
+        || (entry.Kind == EntryKind.Character
+            && entry.ClaimedByMemberId is { } claimer
+            && claimer == viewer.MemberId
+            && EntryVisibility.CanSee(entry, viewer));
+```
+
+27b and 27c shipped with `RequireCanEdit` alone, as the plan then said. **27d/27e adds the
+claimer clause**, with a test for the case that exposed it: a DM creates an NPC, a player
+claims it, the DM restricts edit access, and the player can still add and remove their own
+sheet link but still cannot edit the article.
 
 ## The model
 
@@ -308,6 +333,36 @@ Write this file; update `README.md` and add the note to `22-ddb-link.md`. `gh st
   its first real one, so re-run 26's Verify 3 prune cases after this step.
 - **Label is never markdown.** The article renders markdown; a link label does not. Rendering
   it would make a link label an injection surface for no benefit.
+
+### Errors this plan had, found by building it
+
+1. **`IKnowledgeBaseLinks` could not be "one class in the API".** The ingest CLI is the only
+   caller of `PruneAsync` and references only the package, so an API-side implementation would
+   never have run on the one path the protection exists for. It lives beside the interface,
+   wired from the CLI.
+2. **`?|` cannot index `Entry.Links`.** It addresses top-level strings only, and `Links` is an
+   array of objects. A derived `Entry.LinkedItemKeys` string array carries the index, following
+   `ArticleMentionIds`.
+3. **`srd52` links would have been permanently stale**, because SRD rows are an in-assembly
+   catalogue rather than `knowledge_base_item` rows. The resolver handles both.
+4. **The claimer cannot write links**, per the correction above.
+5. **History's visibility rule was unspecified.** The codebase has both "as it was" (stats) and
+   "as it is now" (source). Links use *now*, because *then* would hide a link from `GET entry`
+   and hand it back through the history after an unclaim.
+6. **The stale rendering contradicted itself** — the Goal paragraph gives a stale link an `↗`,
+   the Layouts section says it has none. Layouts is right: there is nowhere honest to send the
+   reader, so `url` comes back null while the last-known name and detail stay, so the member can
+   tell which link went.
+7. **The 20-cap is a 409 only when the request is otherwise valid.** FastEndpoints validates
+   before the handler, so a 21st link that is also malformed is a 400.
+
+Two gotchas worth knowing for any future endpoint, found here:
+
+- **`ProducesProblemFE(403)` breaks `gen:api`.** FastEndpoints already emits a contentless 403,
+  and a second declaration produces `"application/problem+json": null`, which
+  `openapi-typescript` crashes on — a green `dotnet build` with a broken web pipeline.
+- **`NotEmpty()` inside a `When(...)` is still reported as unconditionally required**, so a
+  conditional field becomes mandatory in the generated types. `Must(Present)` avoids it.
 
 ### Decisions for the user
 
