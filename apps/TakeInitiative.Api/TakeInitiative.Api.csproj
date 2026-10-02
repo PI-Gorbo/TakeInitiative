@@ -29,12 +29,16 @@
              thing: its own description scopes it to compiled-query handler scaffolding for AOT
              publishing (Marten #4405). This project has no ICompiledQuery and does not publish
              AOT, so it would emit nothing. -->
-        <!-- Direct pins that only exist to lift vulnerable transitive versions.
+        <!-- A direct pin that only exists to lift a vulnerable transitive version:
              JwtBearer 8.0.0 (via FastEndpoints.Security) dragged in
-             Microsoft.IdentityModel.* 7.0.3 (GHSA-59j7-ghrg-fj52); Marten 7.31.1
-             dragged in OpenTelemetry.Api 1.8.0 (GHSA-g94r-2vxg-569j). -->
+             Microsoft.IdentityModel.* 7.0.3 (GHSA-59j7-ghrg-fj52).
+
+             The OpenTelemetry.Api pin that sat here is gone (step 30c). It existed because
+             Marten 7.31.1 dragged in OpenTelemetry.Api 1.8.0 (GHSA-g94r-2vxg-569j), and
+             Marten 9.45.0 does not depend on OpenTelemetry at all. No code references it,
+             and nothing pulls it transitively any more, so the package is simply dropped
+             rather than pinned to a version nothing asks for. -->
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.11" />
-        <PackageReference Include="OpenTelemetry.Api" Version="1.15.3" />
         <PackageReference Include="Mjml.Net" Version="3.11.0" />
         <PackageReference Include="SendGrid" Version="9.29.3" />
         <PackageReference Include="SendGrid.Extensions.DependencyInjection" Version="1.0.1" />

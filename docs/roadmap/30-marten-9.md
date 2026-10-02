@@ -23,7 +23,7 @@ repo runnable.
 |---|---|---|---|---|
 | 30a | `v2/30a-marten-9-plan` | This plan | Docs only || [x] |
 | 30b | `v2/30b-marten-9` | Marten 9.45.0, Weasel 9.37.0, Npgsql 9.0.4, Marten 9's defaults, fresh database | The API builds and all tests pass on Marten 9. `schema.d.ts` is byte-identical || [x] |
-| 30c | `v2/30c-marten-9-pins` | The `TakeInitiative.KnowledgeBase` Npgsql pin and the audit-suppression comments | No pin or suppression survives whose stated reason has expired || [ ] |
+| 30c | `v2/30c-marten-9-pins` | The `TakeInitiative.KnowledgeBase` Npgsql pin and the audit-suppression comments | No pin or suppression survives whose stated reason has expired || [x] |
 
 ## Depends on
 
@@ -178,9 +178,47 @@ Two specific assertions beyond the suites:
   Ejecting is not a way out: `EjectAllPendingChanges()` clears the unit of work and not the item
   map, `Eject(document)` and `EjectAllOfType(type)` both leave the next fetch serving the same
   instance, and `EjectAggregateFromIdentityMap` is `internal` to Marten. So the option is the seam.
-  Cost: one document load per aggregate per save, which is what Marten 7 did. **Holding the Marten 9
-  default instead would mean a fresh session per retry attempt — a restructure of both write paths,
-  and a legitimate thing for the review to want, but not this step.**
+  Cost: one document load per aggregate per save, which is what Marten 7 did.
+
+  **What the option is actually worth, measured, so the review argues from numbers.** The option
+  only affects aggregates fetched through `FetchForWriting`/`FetchLatest`, not documents generally.
+  There are exactly five such sites, and every one of them re-reads the same aggregate after
+  `SaveChangesAsync` to see what the inline projection wrote:
+
+  | Site | Re-read after save | Retry loop |
+  |---|---|---|
+  | `PostJoinCampaign` | `LoadAsync<Campaign>` | no |
+  | `PutMemberRole` | `LoadAsync<Campaign>` | no |
+  | `PostEntryMerge` | `LoadAsync<Entry>` | catches `ConcurrencyException`, does **not** retry |
+  | `PutEntryArticle` | `LoadAsync<Entry>` | **yes** |
+  | `CombatWrite` (7 endpoints) | `LoadAsync<Combat>` | **yes** |
+
+  So the default buys **one primary-key document load, in five write paths that already make four
+  or more round trips each** (fetch the stream, save, re-read, notify over SignalR, build the
+  response). Two of the five violate its precondition. Turning it off is not a regression: it is
+  exactly what Marten 7 did, which is the code that shipped and works.
+
+  **What holding the default would cost.** The session is not confined to the retry loop in either
+  broken path. `CombatWrite.Write` takes the endpoint's injected session and is called from seven
+  endpoints, and after the loop that same session serves `LoadAsync<Combat>`,
+  `NotifyCombatChanged(session, …)` and `CombatEntries.ViewFor(session, …)`. `PutEntryArticle.Save`
+  passes the session into `AppendNewEntries`, a helper **shared with `PostSessionNote` and
+  `PutSessionNote`**. A fresh session per attempt therefore means threading a second write session
+  through a helper the note paths also use, and deciding which session owns the read-after-write.
+
+  **`FetchForExclusiveWriting` was considered and rejected.** A row lock removes optimistic
+  concurrency, so no retry exists and the precondition holds without any session work. But it
+  changes behaviour the design specifies: 18b.7 deliberately decides up to `Attempts` times "so
+  every check runs against the state the events land on", and `PutEntryArticle`'s re-merge-once is
+  "a 409 only if the caller's view really changed". `PostEntryMerge` also locks two `Entry` streams
+  in one session, which is a deadlock shape. It is a bigger behavioural change than the option it
+  would let us delete.
+
+  **The standing review item**, if 30d below does not land: step 31's `[Aggregate]` workflow owns
+  the fetch, append, save and concurrency retry, and `UpdatedAggregate` removes the re-read — so all
+  five re-read sites and both retry loops disappear and the precondition stops being ours to
+  satisfy. If the review defers Wolverine indefinitely, this option becomes permanent and the
+  fresh-session refactor is worth doing on its own merits.
 - **Other default flips, taken as-is with no observable effect**: `EnableAdvancedAsyncTracking`
   false → true, `DisableNpgsqlLogging` false → true, and `EnableBigIntEvents` on by default.
 - **Provenance must survive.** `MetadataConfig.CorrelationIdEnabled`, `CausationIdEnabled` and
