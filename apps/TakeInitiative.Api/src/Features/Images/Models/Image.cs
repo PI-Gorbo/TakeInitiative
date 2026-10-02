@@ -1,4 +1,4 @@
-using Marten.Metadata;
+using JasperFx.Metadata;
 
 namespace TakeInitiative.Api.Features.Images;
 

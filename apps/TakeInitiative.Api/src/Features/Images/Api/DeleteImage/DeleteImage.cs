@@ -1,6 +1,6 @@
 using FastEndpoints;
 using Marten;
-using Marten.Exceptions;
+using JasperFx;
 using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Images;

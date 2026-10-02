@@ -1,7 +1,7 @@
 using FastEndpoints;
 using Marten;
-using Marten.Events;
-using Marten.Exceptions;
+using JasperFx.Events;
+using JasperFx;
 using Microsoft.AspNetCore.SignalR;
 
 namespace TakeInitiative.Api.Features.Combats;

@@ -50,7 +50,7 @@ public sealed class GeneratedAlwaysStored(string expression) : ColumnCheck
 /// <c>ApplyAllDatabaseChangesOnStartup</c>, and
 /// <c>AssertDatabaseMatchesConfigurationAsync()</c> never clean again. So the column is added to the
 /// document table Marten builds from the mapping, which is the table Weasel then creates, alters and
-/// compares. Marten 7.31 has no public API for a column on a document table (only
+/// compares. Marten 9.45 still has no public API for a column on a document table (only
 /// <c>DuplicateField</c>, which a generated column cannot be: Marten writes a duplicated column
 /// itself, and a generated column is Postgres's to write), so the table is reached through the
 /// mapping's own schema. It is cached, so there is one
@@ -140,8 +140,17 @@ public sealed class EntryRowFitsInline(DbObjectName table) : ISchemaObject, IFea
 
     private const string Parameter = "toast_tuple_target";
 
-    /// <summary>Not a database object of its own, so it is named after what it configures.</summary>
-    public DbObjectName Identifier { get; } = new PostgresqlObjectName(table.Schema, $"{table.Name}_{Parameter}");
+    /// <summary>
+    /// Not a database object of its own, so it is named after what it configures.
+    /// <para>
+    /// <c>General</c>, not <c>Function</c>: Weasel 9 made the usage explicit because a function's
+    /// name has to be quoted differently from a relation's, and the two-argument constructor it
+    /// replaced is <c>[Obsolete]</c>. <c>General</c> is what that constructor did, so the name this
+    /// produces is byte-for-byte what it produced before.
+    /// </para>
+    /// </summary>
+    public DbObjectName Identifier { get; } =
+        new PostgresqlObjectName(table.Schema, $"{table.Name}_{Parameter}", SchemaUtils.IdentifierUsage.General);
 
     public void WriteCreateStatement(Migrator migrator, TextWriter writer)
         => writer.WriteLine($"ALTER TABLE {table.QualifiedName} SET ({Parameter} = {ToastTupleTarget});");

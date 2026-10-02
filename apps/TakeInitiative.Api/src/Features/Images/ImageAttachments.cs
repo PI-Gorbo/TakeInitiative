@@ -2,7 +2,7 @@ using FastEndpoints;
 using FluentValidation;
 using FluentValidation.Results;
 using Marten;
-using Marten.Exceptions;
+using JasperFx;
 
 namespace TakeInitiative.Api.Features.Images;
 

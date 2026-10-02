@@ -30,7 +30,7 @@ public class CampaignTests(AuthenticatedWebAppWithDatabaseFixture fixture)
         return joined.Value;
     }
 
-    private async Task<IReadOnlyList<Marten.Events.IEvent>> EventsOf(Guid campaignId)
+    private async Task<IReadOnlyList<JasperFx.Events.IEvent>> EventsOf(Guid campaignId)
     {
         using var session = fixture.AlbaHost.Services.GetRequiredService<IDocumentStore>().QuerySession();
         return await session.Events.FetchStreamAsync(campaignId);

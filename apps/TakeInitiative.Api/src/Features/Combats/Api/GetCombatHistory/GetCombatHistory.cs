@@ -1,8 +1,8 @@
 using System.Text.Json.Serialization;
 using FastEndpoints;
 using Marten;
-using Marten.Events;
-using IEvent = Marten.Events.IEvent;
+using JasperFx.Events;
+using IEvent = JasperFx.Events.IEvent;
 using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Combats;

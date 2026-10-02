@@ -6,8 +6,8 @@ using TakeInitiative.Api.Features.Images;
 using TakeInitiative.Api.Identity;
 
 using Marten;
-using Marten.Events.Daemon.Resiliency;
-using Marten.Events.Projections;
+using JasperFx.Events.Daemon;
+using JasperFx.Events.Projections;
 using Marten.Schema;
 using Weasel.Core;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -79,6 +79,34 @@ public static class Bootstrap
             opts.Events.MetadataConfig.CorrelationIdEnabled = true;
             opts.Events.MetadataConfig.CausationIdEnabled = true;
             opts.Events.MetadataConfig.HeadersEnabled = true;
+
+            // The one Marten 9 default this upgrade declines (step 30). Marten 9 turned
+            // UseIdentityMapForAggregates on: the aggregate FetchForWriting returns is put in the
+            // session's item map, and a later read of that type in the same session is served from
+            // there instead of the database. Marten's own documentation states the precondition —
+            // "only safe if you treat the aggregate from FetchForWriting() as read-only and express
+            // every change as an event". This codebase does exactly that, and the precondition it
+            // does not meet is the unwritten one: that an aggregate is fetched once per session.
+            //
+            // Every write here is a retry loop (CombatWrite.Write, PutEntryArticle): read the stream
+            // at its version, decide, append, and on a concurrent write eject what was staged and
+            // decide again on the fresh state. The second FetchForWriting reads the version from
+            // Postgres but takes the document from the item map — and the instance in the item map is
+            // the one the inline projection already applied the failed attempt's events to. Measured
+            // on ArticleTests.LosingTheRaceToAWriteTheCallerCannotSee_ReMergesAndSucceeds, the retry
+            // saw version 3 (correct, the concurrent writer's) with blocks [A2, S, B]: A2 is this
+            // request's own never-committed edit and S is the pre-conflict secret, so the concurrent
+            // writer's edit is missing. That state has never existed in the database, and a save from
+            // it would silently drop the other write. Three tests caught it.
+            //
+            // Ejecting is not a way out: EjectAllPendingChanges clears the unit of work and not the
+            // item map, Eject(document) and EjectAllOfType(type) both leave the fetch serving the
+            // same instance (the generated identity-map storage holds its own reference to the
+            // dictionary EjectAllOfType removes), and EjectAggregateFromIdentityMap — the method that
+            // would do it — is internal to Marten. So the setting is the seam, not the call site.
+            //
+            // What it costs is one document load per aggregate per save, which is what Marten 7 did.
+            opts.Events.UseIdentityMapForAggregates = false;
 
             // Campaign stream -> Campaign document, updated in the same transaction as the append.
             opts.Projections.Snapshot<Campaign>(SnapshotLifecycle.Inline);
