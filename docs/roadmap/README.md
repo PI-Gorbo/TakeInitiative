@@ -96,7 +96,30 @@ Steps 08–11 ship as one stack of PRs (`gh stack`), one PR per step.
 | 26 | [Knowledge base](26-knowledge-base.md) | `done` | 20, 21 | A .NET ingest CLI, the slim 5eTools index in Postgres with a `tsvector`, and a **browsable Knowledge base surface** so reference rows have somewhere to live |
 | 27 | [Links](27-links.md) | `done` | 26 | The `EntryLink` seam becomes real: `knowledgebase` and `external` links on an entry, with events, history and visibility |
 | 28 | [Knowledge-base match suggestions](28-kb-suggestions.md) | `done` | 26, 27, 23 | On an entry that looks like a knowledge-base item, offer the link and let the user confirm it |
-| 29 | [Deploy](29-deploy.md) | `todo` | 13–28 | Production images built in GitHub Actions, pushed to GHCR, pulled by Coolify. The app is reachable by other people |
+| 29 | [Deploy](29-deploy.md) | `todo` | 13–28, 30, the review | Production images built in GitHub Actions, pushed to GHCR, pulled by Coolify. The app is reachable by other people. **Runs last**; see “Order after 28” |
+| 30 | [Marten 7 → 9](30-marten-9.md) | `todo` | 28 | The database settled before anybody's data is in it, on Marten 9's defaults. **Runs first** |
+| 31 | Wolverine (CQRS) | `todo` | 30, the review | `[Aggregate]` handlers and a transactional outbox. Its position relative to 29 is the review's call. Step file unwritten |
+
+### Order after 28 (2026-10-02)
+
+The step numbers are identity, not sequence. After 28 the order is **30 → review → 29**.
+
+1. **30 — Marten 7.31.1 → 9.x.** On FastEndpoints, with nothing else moving, green on both
+   workflows before anything else starts. It goes first because **there is no production
+   database yet**: Marten 9 migrates `mt_version` from `integer` to `bigint` and moves event
+   sequences to `bigint`, which against empty tables is a schema definition and against real
+   campaigns is a data migration. The same asymmetry covers anything the review wants to change
+   about event or document shape. 29b — which makes `ApplyAllDatabaseChangesOnStartup` run
+   outside Development — also gets written against Marten 9 once, instead of written twice.
+2. **The review.** The full architectural and implementation pass, against Marten 9 code.
+3. **29 — Deploy.** Deployment is only ever after a review. This is a standing rule.
+
+**31 — Wolverine** is wanted: the `[Aggregate]` handler workflow suits an API whose 75 endpoints
+already load an aggregate, append events and reload the inline projection by hand, and its
+transactional outbox closes a real gap — every write today calls `SaveChangesAsync` and *then*
+`hub.Notify…`, so a crash between the two commits the event and tells nobody. Whether it lands
+before or after 29 is **deliberately left to the review**, which will scope it against whatever
+else it finds.
 
 ### Bugs found while planning 26–29 (2026-10-01)
 
