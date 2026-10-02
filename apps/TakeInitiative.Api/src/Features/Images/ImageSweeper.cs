@@ -1,5 +1,5 @@
 using Marten;
-using Marten.Exceptions;
+using JasperFx;
 using Microsoft.Extensions.Options;
 
 namespace TakeInitiative.Api.Features.Images;

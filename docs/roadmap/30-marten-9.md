@@ -21,8 +21,8 @@ repo runnable.
 
 | PR | Branch | Sub-step | Runnable state after merge | Status |
 |---|---|---|---|---|
-| 30a | `v2/30a-marten-9-plan` | This plan | Docs only || [ ] |
-| 30b | `v2/30b-marten-9` | Marten 9.45.0, Weasel 9.37.0, Npgsql 9.0.4, Marten 9's defaults, fresh database | The API builds and all tests pass on Marten 9. `schema.d.ts` is byte-identical || [ ] |
+| 30a | `v2/30a-marten-9-plan` | This plan | Docs only || [x] |
+| 30b | `v2/30b-marten-9` | Marten 9.45.0, Weasel 9.37.0, Npgsql 9.0.4, Marten 9's defaults, fresh database | The API builds and all tests pass on Marten 9. `schema.d.ts` is byte-identical || [x] |
 | 30c | `v2/30c-marten-9-pins` | The `TakeInitiative.KnowledgeBase` Npgsql pin and the audit-suppression comments | No pin or suppression survives whose stated reason has expired || [ ] |
 
 ## Depends on
@@ -55,9 +55,15 @@ and `KnowledgeBaseTable` are compile-time dependencies on Weasel, so the branch 
 until they are done.
 
 1. `Marten` 7.31.1 → **9.45.0** in the API csproj. It pulls `JasperFx` / `JasperFx.Events` 2.79.1
-   and `Weasel.Postgresql` / `Weasel.Storage` 9.37.0, and `Npgsql` **9.0.4** arrives transitively
-   through Weasel rather than from Marten directly. Add **`Marten.SourceGenerator` 9.45.0**: it is a
-   separate package and Marten 9.45.0 does not depend on it.
+   and `Weasel.Core` / `Weasel.Postgresql` / `Weasel.Storage` 9.37.0, and `Npgsql` **9.0.4** arrives
+   transitively through Weasel rather than from Marten directly, which unified the KnowledgeBase
+   package's 8.0.3 pin upward with no downgrade error — so 30c does not block 30b.
+   **Add no source-generator package.** `JasperFx.Events.SourceGenerator` is what replaced runtime
+   codegen, and the `Marten` package already ships that analyzer itself under `analyzers/dotnet/cs`;
+   referencing it directly on top is the documented cause of a `CS0433` from two generator copies.
+   `Marten.SourceGenerator` is a different, smaller package scoped to compiled-query scaffolding for
+   AOT publishing, and this project has no `ICompiledQuery` and does not publish AOT, so it emits
+   nothing. (An earlier draft of this plan called it required. It is not.)
 2. Build and work the compiler. Expected, from the migration guide:
    - **Runtime codegen is gone**, replaced by source generators. Mark the five snapshotted
      aggregates `partial` if the generator asks for it. Source-generator diagnostics are build
@@ -84,7 +90,8 @@ until they are done.
    9 omits from new databases, and `mt_version` stays `integer`. A fresh database gets the clean
    9 shape and there is nothing to reconcile.
    > This also destroys `takeminio-data`, so local images go with it. Nothing else does.
-6. Fix the tests. 666 of them across 123 files is the safety net that replaces a staged rollout.
+6. Fix the tests. 666 test methods across 123 files — 1,286 cases once theories expand — are the
+   safety net that replaces a staged rollout.
 
 ### 30c — dependency hygiene (`v2/30c-marten-9-pins`)
 
@@ -100,7 +107,12 @@ when the upgrade is already green.
    delete the `OpenTelemetry.Api` pin and the sentence that justified it. The `JwtBearer` half is
    unrelated to this step and stays. CLAUDE.md requires a suppression to carry the reasoning that
    justifies it, and a stale reason is worse than none.
-3. `dotnet restore` with the audit on, and confirm no new advisories.
+3. **`Directory.Build.props` holds two `NuGetAuditSuppress` entries whose reasons have expired**:
+   `GHSA-vmw2-qwm8-x84c` (Marten ≤ 8.36) and `GHSA-rfx3-98h7-v3xp` (Marten ≥ 7.0.0, ≤ 9.12.0).
+   9.45.0 is outside both ranges and both comments say "Remove this suppression when Marten is
+   upgraded." They produce no warning either way, which is exactly why they would otherwise sit
+   there forever. Delete both.
+4. `dotnet restore` with the audit on, and confirm no new advisories.
 
 ## Verify
 
@@ -142,16 +154,55 @@ Two specific assertions beyond the suites:
   likely to produce a subtle wrong answer rather than a compile error. Every inline projection
   reads event metadata directly — `Apply(IEvent<EntryRenamed> e) => this with { UpdatedAt = e.Timestamp }`
   — and the README already records a flaky test that "compared Postgres microseconds with .NET
-  ticks". The default change moves where that timestamp comes from, on precisely that seam. If
-  `UpdatedAt`, `CreatedAt` or session-note ordering drifts, look here first.
-- **Other default flips to know about**: `EnableAdvancedAsyncTracking` false → true,
-  `UseIdentityMapForAggregates` false → true, `DisableNpgsqlLogging` false → true, and
-  `EnableBigIntEvents` on by default.
+  ticks". The default change moves where that timestamp comes from, on precisely that seam.
+  **Measured, and it does not drift**: with an inline snapshot the mode stays
+  `QuickWithServerTimestamps` (a projection does not escalate it back to `Rich`), and
+  `snapshot.CreatedAt == events[0].Timestamp` and `snapshot.UpdatedAt == events[1].Timestamp`
+  exactly, both matching the `timestamp` column Postgres stored. `SessionNoteTests` already asserts
+  the snapshot and the event-stream history agree to one microsecond, and it passes.
+- **`UseIdentityMapForAggregates` false → true is the one Marten 9 default this step declines**,
+  and it is a correctness decision rather than a preference. Marten 9 puts the aggregate
+  `FetchForWriting` returns into the session's item map. Marten documents the precondition as
+  "treat the aggregate from `FetchForWriting()` as read-only and express every change as an event",
+  which this codebase satisfies — the precondition it does *not* satisfy is the unwritten one, that
+  an aggregate is fetched once per session. Every write here is a retry loop (`CombatWrite.Write`,
+  `PutEntryArticle`), and on the retry the second `FetchForWriting` reads the correct version from
+  Postgres but takes the *document* from the item map, which the inline projection has already
+  applied the failed attempt's events to. Measured: version 3 (the concurrent writer's) paired with
+  blocks `[A2, S, B]`, where `A2` is this request's never-committed edit and the concurrent writer's
+  edit is simply absent — a state that has never existed in the database, from which a save would
+  silently drop the other write. Three tests caught it:
+  `ArticleTests.LosingTheRaceTwice_IsA409`,
+  `ArticleTests.LosingTheRaceToAWriteTheCallerCannotSee_ReMergesAndSucceeds` and
+  `TurnTests.EditsAtTheSameTime_AreRetried_AndAllLand`.
+  Ejecting is not a way out: `EjectAllPendingChanges()` clears the unit of work and not the item
+  map, `Eject(document)` and `EjectAllOfType(type)` both leave the next fetch serving the same
+  instance, and `EjectAggregateFromIdentityMap` is `internal` to Marten. So the option is the seam.
+  Cost: one document load per aggregate per save, which is what Marten 7 did. **Holding the Marten 9
+  default instead would mean a fresh session per retry attempt — a restructure of both write paths,
+  and a legitimate thing for the review to want, but not this step.**
+- **Other default flips, taken as-is with no observable effect**: `EnableAdvancedAsyncTracking`
+  false → true, `DisableNpgsqlLogging` false → true, and `EnableBigIntEvents` on by default.
 - **Provenance must survive.** `MetadataConfig.CorrelationIdEnabled`, `CausationIdEnabled` and
   `HeadersEnabled` are invariant 9, filled in by `CorrelationMiddleware`. Confirm the three are
   still populated after the upgrade; they are configuration, not code, so nothing will fail to
   compile if a name moved.
-- **`partial` on the aggregates is an inference**, from "runtime code generation removed, replaced
+- **The bulk of the diff was a namespace move the plan did not predict.** Marten 9 relocated types
+  into JasperFx: `IEvent`/`IEvent<T>` and `IEventStream<T>` → `JasperFx.Events`,
+  `EventStreamUnexpectedMaxEventIdException` → `JasperFx.Events`, `ConcurrencyException` → `JasperFx`
+  (root), `IVersioned` → `JasperFx.Metadata`, `DaemonMode` → `JasperFx.Events.Daemon`,
+  `SnapshotLifecycle` → `JasperFx.Events.Projections`. `Marten.Exceptions` still exists but no longer
+  holds those exceptions, so imports are replaced rather than added to. Note `GetCombatHistory.cs`
+  carries a `using IEvent = …` alias that exists to disambiguate from `FastEndpoints.IEvent`.
+- **Weasel 9 obsoleted `PostgresqlObjectName(string, string)`**, which under
+  `TreatWarningsAsErrors` is a build failure, not a hint. `SearchSchema.cs` and
+  `KnowledgeBaseTable.cs` pass `SchemaUtils.IdentifierUsage.General` instead, which produces an
+  identical `QualifiedName`/`Name`/`Schema` for these names.
+- **`partial` on the aggregates turned out NOT to be required.** The generator emitted a
+  `file sealed class …Evolver` per aggregate against the plain `public record`s, for all five, with
+  no diagnostics. The inference below was wrong; it is kept because the reasoning behind it was
+  sound and the next JasperFx major could reinstate the requirement.
+- **`partial` on the aggregates was an inference**, from "runtime code generation removed, replaced
   with source generators". The migration guide states it for projection classes marked `partial`;
   this repo owns no projection classes, only self-aggregating snapshots. The compiler settles it.
 - **What this step deliberately does not do**: touch FastEndpoints, add Wolverine, change any

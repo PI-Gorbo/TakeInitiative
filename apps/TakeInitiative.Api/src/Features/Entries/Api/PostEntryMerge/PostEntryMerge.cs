@@ -2,7 +2,7 @@ using FastEndpoints;
 using FluentValidation;
 using FluentValidation.Results;
 using Marten;
-using Marten.Exceptions;
+using JasperFx;
 using Microsoft.AspNetCore.SignalR;
 using TakeInitiative.Utilities.Extensions;
 

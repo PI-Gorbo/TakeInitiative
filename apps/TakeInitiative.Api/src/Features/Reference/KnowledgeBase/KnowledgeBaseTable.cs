@@ -22,7 +22,7 @@ namespace TakeInitiative.Api.Features.Reference.KnowledgeBase;
 /// one creates them, the store writes them, and the CLI checks for them.
 /// </para>
 /// <para>
-/// <b>Why a hand-written <see cref="ISchemaObject" /> and not a Weasel <c>Table</c>.</b> Weasel 7.11
+/// <b>Why a hand-written <see cref="ISchemaObject" /> and not a Weasel <c>Table</c>.</b> Weasel 9.37
 /// models a table well enough to diff it, but not the two things this schema needs: a column's
 /// <c>GENERATED ALWAYS AS … STORED</c> clause — which <c>SearchSchema</c> reaches by
 /// smuggling it through a <c>ColumnCheck</c>, a trick that works because a check is not part of a
@@ -57,9 +57,13 @@ namespace TakeInitiative.Api.Features.Reference.KnowledgeBase;
 /// </param>
 public sealed class KnowledgeBaseTable(string databaseSchema) : ISchemaObject
 {
-    /// <summary>The table, which is what a schema diff names this object by.</summary>
+    /// <summary>
+    /// The table, which is what a schema diff names this object by. <c>General</c> is the usage
+    /// Weasel 9 made explicit when it obsoleted the two-argument constructor; it is a relation, not
+    /// a function, and <c>General</c> produces the name the old constructor produced.
+    /// </summary>
     public DbObjectName Identifier { get; } =
-        new PostgresqlObjectName(databaseSchema, KnowledgeBaseSchema.TableName);
+        new PostgresqlObjectName(databaseSchema, KnowledgeBaseSchema.TableName, SchemaUtils.IdentifierUsage.General);
 
     public void WriteCreateStatement(Migrator migrator, TextWriter writer) =>
         writer.WriteLine(KnowledgeBaseSchema.CreateSql(databaseSchema));

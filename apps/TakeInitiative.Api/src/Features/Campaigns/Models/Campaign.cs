@@ -1,5 +1,5 @@
 using System.Security.Cryptography;
-using Marten.Events;
+using JasperFx.Events;
 
 namespace TakeInitiative.Api.Features.Campaigns;
 

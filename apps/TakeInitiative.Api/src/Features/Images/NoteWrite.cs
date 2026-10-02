@@ -9,11 +9,17 @@ namespace TakeInitiative.Api.Features.Images;
 /// note's events in a second, and both commit together or not at all, sharing the request's
 /// correlation id.
 /// <para>
-/// Why two batches: Marten 7.31.1 reports a false <c>ConcurrencyException</c> for an
+/// Why two batches: Marten reports a false <c>ConcurrencyException</c> for an
 /// optimistic-concurrency document (the <see cref="Image"/>) saved in the same batch as a new
 /// event stream (a note's <c>StartStream</c>, or a new entry's), even when the version matches
 /// (16b's Notes). In a batch of their own the image updates get Marten's real check, and the
 /// row locks they take are held until the commit, so a racing attach waits and then fails.
+/// </para>
+/// <para>
+/// The false conflict was measured on Marten 7.31.1 and <b>has not been re-measured on 9.45</b>
+/// (step 30). The split stays regardless, because the row-lock ordering in the paragraph above is a
+/// reason of its own; whether 9 still mis-reports the conflict only decides whether the first
+/// reason has expired.
 /// </para>
 /// </summary>
 public sealed class NoteWrite : IAsyncDisposable
