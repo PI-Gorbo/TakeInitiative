@@ -24,6 +24,7 @@ repo runnable.
 | 30a | `v2/30a-marten-9-plan` | This plan | Docs only || [x] |
 | 30b | `v2/30b-marten-9` | Marten 9.45.0, Weasel 9.37.0, Npgsql 9.0.4, Marten 9's defaults, fresh database | The API builds and all tests pass on Marten 9. `schema.d.ts` is byte-identical || [x] |
 | 30c | `v2/30c-marten-9-pins` | The `TakeInitiative.KnowledgeBase` Npgsql pin and the audit-suppression comments | No pin or suppression survives whose stated reason has expired || [x] |
+| 30d | `v2/30d-write-session-per-attempt` | A fresh session per retry attempt, so Marten 9's `UseIdentityMapForAggregates` default can be held | Both retry loops satisfy the once-per-session precondition; no Marten 9 default is declined || [ ] |
 
 ## Depends on
 
@@ -114,6 +115,47 @@ when the upgrade is already green.
    there forever. Delete both.
 4. `dotnet restore` with the audit on, and confirm no new advisories.
 
+### 30d — a session per retry attempt (`v2/30d-write-session-per-attempt`)
+
+Holds Marten 9's `UseIdentityMapForAggregates` default instead of declining it, by removing the
+reason it was unsafe. The measurement above says the option is worth one primary-key load in five
+write paths, which is not much — but the precondition it needs ("an aggregate is fetched at most
+once per session") is a property worth having on its own, and 30b's measured failure is what
+happens when a retry loop quietly breaks it.
+
+The fix is not to eject. It is that a failed attempt's session is **thrown away**, so the next
+attempt cannot inherit anything from it.
+
+1. **`CombatWrite.Write`**: open a lightweight session per attempt and do the whole attempt on it —
+   `Open`, `decide`, `AppendMany`, `SaveChangesAsync`. A concurrency failure disposes it and loops;
+   `EjectAllPendingChanges()` goes away, because there is nothing to eject from a session being
+   discarded. The method is an extension on `Endpoint<TRequest, CombatResponse>`, so it gets the
+   store with `endpoint.Resolve<IDocumentStore>()` and **all seven call sites are untouched**. After
+   the loop, the endpoint's own injected session still serves `LoadAsync<Combat>`,
+   `NotifyCombatChanged` and `CombatEntries.ViewFor` — it never fetched an aggregate, so it has
+   nothing stale in it.
+2. **`PutEntryArticle`**: `Save` takes the attempt's session as a parameter; the loop creates one per
+   attempt. `AppendNewEntries` already takes an `IDocumentSession`, so it is passed the attempt
+   session and **the helper does not change, and `PostSessionNote` / `PutSessionNote` are not
+   touched**. The injected session keeps `hub.NotifyCreated` and `EntryResponse.From` after the
+   loop, which must stay after the attempt committed.
+3. Delete `opts.Events.UseIdentityMapForAggregates = false` and its comment from `Bootstrap.cs`,
+   leaving a short note that the invariant the default needs is now held by the call sites.
+
+> **The risk to check before anything else.** The append and everything staged alongside it must
+> stay in **one transaction**. In `PutEntryArticle` that is the article edit plus the new entries
+> from `AppendNewEntries`, and moving both onto the attempt session preserves it. In `CombatWrite`
+> the `decide` callback is supplied by each of the seven endpoints, and if any of them stages
+> session work of its own, that work currently commits in the same transaction as the append and
+> would stop doing so. **Read all seven `decide` callbacks and confirm none writes to the session**
+> before assuming this refactor is behaviour-preserving. If one does, it has to move onto the
+> attempt session too, or 30d stops being a safe refactor and the option stays off.
+
+The three tests that caught 30b's failure are the acceptance criteria, and they must pass with the
+default **on**: `ArticleTests.LosingTheRaceTwice_IsA409`,
+`ArticleTests.LosingTheRaceToAWriteTheCallerCannotSee_ReMergesAndSucceeds` and
+`TurnTests.EditsAtTheSameTime_AreRetried_AndAllLand`.
+
 ## Verify
 
 ```bash
@@ -202,9 +244,14 @@ Two specific assertions beyond the suites:
   broken path. `CombatWrite.Write` takes the endpoint's injected session and is called from seven
   endpoints, and after the loop that same session serves `LoadAsync<Combat>`,
   `NotifyCombatChanged(session, …)` and `CombatEntries.ViewFor(session, …)`. `PutEntryArticle.Save`
-  passes the session into `AppendNewEntries`, a helper **shared with `PostSessionNote` and
-  `PutSessionNote`**. A fresh session per attempt therefore means threading a second write session
-  through a helper the note paths also use, and deciding which session owns the read-after-write.
+  passes the session into `AppendNewEntries`, a helper shared with `PostSessionNote` and
+  `PutSessionNote`.
+  **Corrected while planning 30d:** this was the pessimistic half of the estimate and it was wrong.
+  `AppendNewEntries` already takes `IDocumentSession` as a parameter, so a different session is
+  passed rather than the helper changed, and the note paths are untouched. `CombatWrite.Write` is an
+  extension method on the endpoint, so it can `Resolve<IDocumentStore>()` itself and leave all seven
+  call sites alone. The refactor is materially smaller than this paragraph first claimed, which is
+  why 30d exists.
 
   **`FetchForExclusiveWriting` was considered and rejected.** A row lock removes optimistic
   concurrency, so no retry exists and the precondition holds without any session work. But it
