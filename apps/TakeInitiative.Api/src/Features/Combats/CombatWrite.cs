@@ -3,6 +3,7 @@ using Marten;
 using JasperFx.Events;
 using JasperFx;
 using Microsoft.AspNetCore.SignalR;
+using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Combats;
 
@@ -39,15 +40,33 @@ public static class CombatWrite
     /// Opens the combat, asks <paramref name="decide"/> for the events to append (it may throw
     /// the endpoint's errors), saves them, retrying on a concurrent write, then pushes and
     /// answers with the caller's view. No events is a 200 that appends nothing.
+    /// <para>
+    /// Each attempt runs on a session of its own, opened from the store and carrying the
+    /// request's provenance, and a failed attempt's session is thrown away rather than ejected
+    /// from (30d). That holds the invariant Marten's identity map for aggregates needs — an
+    /// aggregate is fetched at most once per session — which ejecting cannot: it clears the unit
+    /// of work and leaves the item map serving the instance the inline projection has already
+    /// applied the lost attempt's events to.
+    /// </para>
+    /// <para>
+    /// Nothing but the append goes on the attempt's session. <paramref name="decide"/> is the
+    /// endpoint's, and all seven of them only read and compute, so the append is still the whole
+    /// transaction; if one ever needs to stage a write of its own, it has to be given the
+    /// attempt's session rather than the endpoint's. <paramref name="session"/> — the endpoint's
+    /// own, which never fetches an aggregate — serves the read-back, the push and the response
+    /// after the loop, once the attempt has committed.
+    /// </para>
     /// </summary>
     public static async Task Write<TRequest>(
         this Endpoint<TRequest, CombatResponse> endpoint, IDocumentSession session, IHubContext<CampaignHub> hub,
         Campaign campaign, Guid combatId, Member caller, Func<Combat, Task<IReadOnlyList<object>>> decide, CancellationToken ct)
         where TRequest : notnull
     {
+        var store = session.DocumentStore;
         for (var attempt = 1; ; attempt++)
         {
-            var (stream, combat) = await endpoint.Open(session, campaign.Id, combatId, caller, ct);
+            await using var write = store.LightweightSession().WithProvenanceOf(session);
+            var (stream, combat) = await endpoint.Open(write, campaign.Id, combatId, caller, ct);
             var events = await decide(combat);
             if (events.Count == 0)
             {
@@ -56,7 +75,7 @@ public static class CombatWrite
             stream.AppendMany(events);
             try
             {
-                await session.SaveChangesAsync(ct);
+                await write.SaveChangesAsync(ct);
                 break;
             }
             catch (Exception e) when (IsConcurrency(e))
@@ -65,7 +84,6 @@ public static class CombatWrite
                 {
                     endpoint.ThrowError(ConflictMessage, StatusCodes.Status409Conflict);
                 }
-                session.EjectAllPendingChanges();
             }
         }
 

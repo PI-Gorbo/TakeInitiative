@@ -95,9 +95,17 @@ public class PutEntryArticle(IDocumentSession session, IHubContext<CampaignHub> 
 
         for (var attempt = 1; ; attempt++)
         {
+            // One session per attempt (30d). A lost race throws this one away, so the retry
+            // cannot be served the entry that this attempt's never-committed event was applied
+            // to by Marten's identity map for aggregates. Ejecting could not do that: it clears
+            // the unit of work and leaves the item map holding the stale instance.
+            await using var write = session.DocumentStore.LightweightSession().WithProvenanceOf(session);
             try
             {
-                var (before, after, newEntryIds) = await Save(req, entry.Id, edits, text, member, ct);
+                // The article edit and the new entries are both staged on `write`, so they still
+                // commit in one transaction.
+                var (before, after, newEntryIds) = await Save(write, req, entry.Id, edits, text, member, ct);
+                // Past the commit, so the endpoint's own session reads what landed.
                 await hub.NotifyCreated(session, newEntryIds, ct);
                 if (!ReferenceEquals(before, after))
                 {
@@ -108,9 +116,9 @@ public class PutEntryArticle(IDocumentSession session, IHubContext<CampaignHub> 
             }
             catch (ConcurrencyException) when (attempt == 1)
             {
-                // Another write to this entry landed between our read and our append. Drop
-                // what we staged and do it all again against the new version.
-                session.EjectAllPendingChanges();
+                // Another write to this entry landed between our read and our append. This
+                // attempt's session goes with what it staged, and it is all done again against
+                // the new version on a fresh one.
             }
             catch (ConcurrencyException)
             {
@@ -120,15 +128,16 @@ public class PutEntryArticle(IDocumentSession session, IHubContext<CampaignHub> 
     }
 
     /// <summary>
-    /// One try: read the entry at its current version, check the etag, merge and append. It
-    /// returns the same instance as <c>before</c> and <c>after</c> when nothing was appended
-    /// to the article.
+    /// One try, entirely on <paramref name="write"/> — the attempt's own session: read the entry
+    /// at its current version, check the etag, merge and append. It returns the same instance as
+    /// <c>before</c> and <c>after</c> when nothing was appended to the article.
     /// </summary>
     private async Task<(Entry Before, Entry After, IReadOnlyList<Guid> NewEntryIds)> Save(
-        PutEntryArticleRequest req, Guid entryId, IReadOnlyList<ArticleBlockEdit> edits, string text, Member member, CancellationToken ct)
+        IDocumentSession write, PutEntryArticleRequest req, Guid entryId, IReadOnlyList<ArticleBlockEdit> edits,
+        string text, Member member, CancellationToken ct)
     {
         // entryId, not req.EntryId: a merged entry's id redirects to its target (15g).
-        var stream = await session.Events.FetchForWriting<Entry>(entryId, ct);
+        var stream = await write.Events.FetchForWriting<Entry>(entryId, ct);
         var current = stream.Aggregate;
         // The entry may have changed since it was checked: check again at this version.
         if (current is null || current.CampaignId != req.CampaignId || current.MergedIntoId is not null || !EntryVisibility.CanSee(current, member))
@@ -156,8 +165,10 @@ public class PutEntryArticle(IDocumentSession session, IHubContext<CampaignHub> 
                 break;
         }
 
+        // AppendNewEntries already takes the session it stages on, so it is given the attempt's
+        // and the helper, PostSessionNote and PutSessionNote are all left alone.
         var newEntryIds = await this.AppendNewEntries(
-            session, req.CampaignId, member, text, "the article", req.NewEntries,
+            write, req.CampaignId, member, text, "the article", req.NewEntries,
             e => NewEntryVisibility(current, merged.Blocks, e.Id), createdFromNoteId: null, ct);
 
         var changed = !ArticleMerge.SameBlocks(current.Article.Blocks, merged.Blocks);
@@ -167,9 +178,9 @@ public class PutEntryArticle(IDocumentSession session, IHubContext<CampaignHub> 
         }
         if (changed || newEntryIds.Count > 0)
         {
-            await session.SaveChangesAsync(ct);
+            await write.SaveChangesAsync(ct);
         }
-        var after = changed ? (await session.LoadAsync<Entry>(current.Id, ct))! : current;
+        var after = changed ? (await write.LoadAsync<Entry>(current.Id, ct))! : current;
         return (current, after, newEntryIds);
     }
 

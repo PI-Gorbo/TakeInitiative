@@ -1,5 +1,6 @@
 using Marten;
 using Npgsql;
+using TakeInitiative.Utilities.Extensions;
 
 namespace TakeInitiative.Api.Features.Images;
 
@@ -44,13 +45,8 @@ public sealed class NoteWrite : IAsyncDisposable
         var connection = store.Storage.Database.CreateConnection();
         await connection.OpenAsync(ct);
         var transaction = await connection.BeginTransactionAsync(ct);
-        var session = store.LightweightSession(Marten.Services.SessionOptions.ForTransaction(transaction));
-        session.CorrelationId = request.CorrelationId;
-        session.CausationId = request.CausationId;
-        if (request.GetHeader(CorrelationMiddleware.RequestHeaderKey) is { } header)
-        {
-            session.SetHeader(CorrelationMiddleware.RequestHeaderKey, header);
-        }
+        var session = store.LightweightSession(Marten.Services.SessionOptions.ForTransaction(transaction))
+            .WithProvenanceOf(request);
         return new NoteWrite(connection, transaction, session);
     }
 
