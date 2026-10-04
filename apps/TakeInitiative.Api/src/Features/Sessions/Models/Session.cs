@@ -1,5 +1,5 @@
 using Marten;
-using Marten.Events;
+using JasperFx.Events;
 
 namespace TakeInitiative.Api.Features.Sessions;
 

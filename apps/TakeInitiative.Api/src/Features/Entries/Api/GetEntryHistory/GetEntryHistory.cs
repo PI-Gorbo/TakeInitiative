@@ -193,7 +193,7 @@ public class GetEntryHistory(IDocumentSession session, ReferenceCatalog referenc
     /// </para>
     /// </summary>
     private async Task<IReadOnlyDictionary<Guid, EntryLinkResponse>> LinksOf(
-        Entry entry, Member viewer, IReadOnlyList<Marten.Events.IEvent> events, CancellationToken ct)
+        Entry entry, Member viewer, IReadOnlyList<JasperFx.Events.IEvent> events, CancellationToken ct)
     {
         var added = !EntryLinks.CanRead(entry, viewer)
             ? []
@@ -220,7 +220,7 @@ public class GetEntryHistory(IDocumentSession session, ReferenceCatalog referenc
     /// </para>
     /// </summary>
     private async Task<IReadOnlyDictionary<(string Provider, string ItemId), EntrySuggestionResponse>> DismissalsOf(
-        Entry entry, Member viewer, IReadOnlyList<Marten.Events.IEvent> events, CancellationToken ct)
+        Entry entry, Member viewer, IReadOnlyList<JasperFx.Events.IEvent> events, CancellationToken ct)
     {
         var dismissed = !EntryLinks.CanRead(entry, viewer)
             ? []
@@ -258,7 +258,7 @@ public class GetEntryHistory(IDocumentSession session, ReferenceCatalog referenc
     /// </summary>
     public static IEnumerable<EntryHistoryItem> For(
         Entry entry,
-        IReadOnlyList<Marten.Events.IEvent> events,
+        IReadOnlyList<JasperFx.Events.IEvent> events,
         Member viewer,
         EntrySourceResponse? source,
         IReadOnlyDictionary<Guid, EntryLinkResponse> links,

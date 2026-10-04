@@ -1,4 +1,4 @@
-using Marten.Events;
+using JasperFx.Events;
 
 using TakeInitiative.KnowledgeBase.Store;
 

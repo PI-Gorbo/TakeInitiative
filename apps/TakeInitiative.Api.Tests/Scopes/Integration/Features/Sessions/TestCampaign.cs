@@ -65,7 +65,7 @@ public record TestCampaign(Guid Id, Guid DmMemberId, Guid PlayerMemberId, Guid? 
         await session.SaveChangesAsync();
     }
 
-    public static async Task<IReadOnlyList<Marten.Events.IEvent>> EventsOf(AuthenticatedWebAppWithDatabaseFixture fixture, Guid streamId)
+    public static async Task<IReadOnlyList<JasperFx.Events.IEvent>> EventsOf(AuthenticatedWebAppWithDatabaseFixture fixture, Guid streamId)
     {
         using var session = fixture.AlbaHost.Services.GetRequiredService<IDocumentStore>().QuerySession();
         return await session.Events.FetchStreamAsync(streamId);

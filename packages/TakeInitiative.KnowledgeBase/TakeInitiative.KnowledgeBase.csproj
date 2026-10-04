@@ -9,8 +9,10 @@
          has to work with no host, no DI container and no web stack built around it — and
          keeping Marten out also keeps it honest that this table is a flat one with no
          events and no aggregate (see the plan's "It is deliberately not event-sourced").
-         Npgsql 8.0.3 is the version Marten 7.31.1 already pulls into the API, so the two
-         unify on one assembly rather than lifting the API's. -->
+         Npgsql 9.0.4 is the version the API already resolves, so the two unify on one
+         assembly rather than one lifting the other. It arrives there transitively through
+         Weasel.Postgresql 9.37.0 rather than from Marten directly, which is why this number
+         tracks Weasel's choice and not Marten's version. -->
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
@@ -19,7 +21,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Npgsql" Version="8.0.3" />
+        <PackageReference Include="Npgsql" Version="9.0.4" />
     </ItemGroup>
 
 </Project>
