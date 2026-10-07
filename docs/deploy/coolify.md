@@ -1,14 +1,44 @@
 # Coolify: the first deployment, by hand
 
+> ## ⚠️ Sections 5 and 11 are superseded. Read this first.
+>
+> This guide stands the deployment up as **one git-backed Docker Compose resource** running
+> `compose.prod.yml`. The deployment is now **two Docker Image Applications** (api and web) beside
+> Coolify's own Postgres and MinIO resources, because `.github/workflows/deploy.yml` pins
+> `docker_registry_image_name`/`_tag` to an exact image digest and those fields exist on an
+> Application, not on a compose resource.
+>
+> **`docs/deploy/pipeline.md` section 1 is the authority on the resource shape**, and it lists what
+> moved where — env vars, volumes, healthchecks, the MinIO hostname.
+>
+> What is still correct here, and is most of the document: the server (1), DNS (2), the project (3),
+> **Postgres (4)**, **every environment variable and how to generate the secrets (6)**, domains and
+> TLS (7), persistent storage (8), proving it pulled rather than built (9), the end-to-end
+> verification (10), and **all eight failure modes in section 12** — which are about the app and the
+> proxy, not about how Coolify was pointed at the images.
+>
+> What to read differently:
+>
+> | Section | Now |
+> |---|---|
+> | **5. The compose resource** | Replaced. Create two Applications instead; see pipeline.md §1 |
+> | 6. Environment variables | Right list, set **per Application** rather than once on one resource. `Blobs__ServiceUrl` becomes MinIO's resource hostname, not `http://minio:9000` |
+> | 7. Domains and TLS | Per Application rather than per compose service. Everything about Traefik and the subdomain requirement is unchanged |
+> | 8. Persistent storage | Coolify "Persistent Storage" entries on the owning Application, not named volumes in the compose file |
+> | **11. The deploy webhook** | Replaced. The pipeline uses the Coolify API to pin a digest and poll the deployment; the webhook could only re-pull a moving tag. `COOLIFY_DEPLOY_URL`/`COOLIFY_TOKEN` are superseded by `COOLIFY_BASE_URL` + `COOLIFY_API_TOKEN` |
+>
+> The by-hand path this document describes still works, and is deliberately kept: it is the retreat
+> if the pipeline is broken and something has to ship.
+
 This is the walkthrough for standing TakeInitiative up on a Coolify server for the first time. It
 assumes you have never used Coolify before and that you know your way around a Linux box, Docker
 and DNS. Follow it top to bottom; it is written to be done once, in one sitting, without going
 back and forth.
 
 **The one rule.** Coolify **pulls** images from GHCR and runs them. It never builds. GitHub
-Actions already built them on a free runner (`.github/workflows/images.yml`), and
-`compose.prod.yml` contains no build key anywhere, so building is not merely discouraged — it is
-impossible. Step 9 below is how you prove it, and that proof is the point of the whole approach.
+Actions already built them on a free runner (`.github/workflows/images.yml`), and an Application
+whose source is a docker image has nothing to build from, so building is not merely discouraged — it
+is impossible. Step 9 below is how you prove it, and that proof is the point of the whole approach.
 
 **What is settled before you start**, so you do not have to decide it here:
 
@@ -18,7 +48,7 @@ impossible. Step 9 below is how you prove it, and that proof is the point of the
 | Images | `linux/arm64` only, built on `ubuntu-24.04-arm` |
 | Registry | GHCR, **public packages** — so the server needs no registry credentials |
 | Postgres | **Coolify-managed, pinned to 15** — it is deliberately not in `compose.prod.yml` |
-| Object store | MinIO, as a service in `compose.prod.yml`, on a volume |
+| Object store | MinIO, its own Coolify resource, on a volume |
 | API replicas | **exactly one, forever** (see step 12) |
 
 > **A note on Coolify versions.** Coolify's UI moves between releases. Where a field name or a
@@ -189,6 +219,11 @@ Steps:
 > is the reason, and `compose.prod.yml` is written on that assumption.
 
 ## 5. The compose resource
+
+> **Superseded — do not follow this section.** The deployment is two Docker Image Applications now,
+> not one compose resource. See `docs/deploy/pipeline.md` section 1 for what to create instead, and
+> the banner at the top of this file for why. Kept because it is the retreat path, and because
+> points 5 and 6 below are still true of the Applications that replaced it.
 
 One resource holds the API, the web app and the bucket. One resource means one deploy, one
 environment list, and one place to look.
@@ -470,6 +505,13 @@ In order. The last one is the point.
 If all of that passes, you are live.
 
 ## 11. The deploy webhook
+
+> **Superseded — do not follow this section.** A webhook POST can only tell Coolify to re-pull a
+> MOVING tag, so it cannot say which bytes it deployed and leaves a rollback with no artefact to
+> name. `.github/workflows/deploy.yml` pins an exact digest through the Coolify API and polls the
+> deployment instead. The secrets it needs are `COOLIFY_BASE_URL` (a repository **variable**) and
+> `COOLIFY_API_TOKEN` (a `prod` Environment secret) — see `docs/deploy/pipeline.md` section 5.
+> `COOLIFY_DEPLOY_URL` and `COOLIFY_TOKEN` can be deleted once the first pinned deploy has worked.
 
 Last, so that a release can deploy itself.
 

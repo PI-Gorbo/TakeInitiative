@@ -183,24 +183,13 @@ jobs:
                       echo '```'
                   } >> "$GITHUB_STEP_SUMMARY"
 
-    deploy:
-        # Releases only. On a push or a dispatch `inputs` is null, `null != ''` is false, and this
-        # job is skipped — dev pushes publish `edge` and deploy nothing.
-        needs: build
-        if: ${{ inputs.version != '' }}
-        runs-on: ubuntu-latest
-        steps:
-            # Coolify PULLS; it never builds. `force=true` on the webhook is what makes it re-pull a
-            # moving tag rather than reuse the image already on the box. Both secrets arrive in 29g
-            # with the deployment itself; until then this step reports that it skipped and exits 0,
-            # so a release does not go red for want of a server that does not exist yet.
-            - name: Tell Coolify to pull
-              env:
-                  URL: ${{ secrets.COOLIFY_DEPLOY_URL }}
-                  TOKEN: ${{ secrets.COOLIFY_TOKEN }}
-              run: |
-                  if [ -z "$URL" ]; then
-                      echo "No COOLIFY_DEPLOY_URL secret; nothing to notify. Skipping."
-                      exit 0
-                  fi
-                  curl -fsS -X POST -H "Authorization: Bearer $TOKEN" "$URL"
+    # There is deliberately no deploy job here any more. Deploying is `deploy.yml`, triggered by a
+    # push to `main`, which resolves the release's version tag to a digest and pins Coolify to it.
+    #
+    # What used to be here was a single POST to a Coolify deploy webhook with `force=true`, which
+    # made Coolify re-pull a MOVING tag (`:latest`). That works, but it cannot say which bytes it
+    # deployed, so a rollback had no artefact to name and "what is in prod" was only answerable by
+    # reading the box. Pinning a digest is the whole point of the change; see docs/deploy/pipeline.md.
+    #
+    # This workflow's job is now exactly one thing: publish the images, and be the only CI coverage
+    # the two Dockerfiles have.

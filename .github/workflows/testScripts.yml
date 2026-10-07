@@ -1,0 +1,66 @@
+# The deploy pipeline's own tests.
+#
+# These exist because scripts/ci/ holds the decisions a deploy makes — which tag resolves to which
+# digest, whether Coolify needs redeploying, what a disabled app does — and nothing else in CI runs
+# them. Note the gap from the other direction too: testWeb.yml's `**.ts` path filter means editing
+# these files already triggers a full web typecheck, which proves nothing whatsoever about them.
+#
+# TYPECHECKING IS NOT OPTIONAL HERE. Node 24 runs these files by *stripping* the types, so it never
+# checks them: a type error runs happily until the expression depending on it fails — on a deploy.
+# `tsc -p scripts/ci` is what makes that a build failure instead, which is the same bar
+# `-p:TreatWarningsAsErrors=True` sets for the API. It caught one real hole the first time it ran.
+#
+# The tests themselves need no install at all — the scripts import nothing but node builtins and
+# each other — so the install is only there for tsc.
+
+name: Test Scripts
+
+on:
+    push:
+        branches: [dev, main]
+        paths:
+            - ".github/workflows/testScripts.yml"
+            - "scripts/ci/**"
+            - "deploy-targets.json"
+            - "package.json"
+            - "pnpm-lock.yaml"
+    pull_request:
+        branches: [dev, main]
+        paths:
+            - ".github/workflows/testScripts.yml"
+            - "scripts/ci/**"
+            - "deploy-targets.json"
+            - "package.json"
+            - "pnpm-lock.yaml"
+    workflow_dispatch: ~
+
+permissions:
+    contents: read
+
+jobs:
+    test:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: pnpm/action-setup@v4
+
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 24
+                  cache: pnpm
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Typecheck
+              run: pnpm deploy:typecheck
+
+            - name: Unit tests
+              run: pnpm deploy:test
+
+            # deploy-targets.json is parsed strictly at deploy time, so a typo in it should fail
+            # here rather than on the one run that was going to ship a release. This also proves
+            # the committed config and the parser still agree.
+            - name: Check deploy-targets.json parses and resolves
+              run: pnpm deploy:explain

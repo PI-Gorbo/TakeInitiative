@@ -1,0 +1,21 @@
+{
+    "$comment": "Node 24 runs these .ts files by STRIPPING the types, which means it never checks them — a type error would run happily until the expression that depended on it failed at deploy time. So this config exists purely to typecheck them, in testScripts.yml and via `pnpm deploy:typecheck`. It is not a build: nothing emits, and there is no compiled output to keep in step.",
+    "compilerOptions": {
+        "strict": true,
+        "noEmit": true,
+        "target": "es2023",
+        "lib": ["es2023", "dom"],
+        "module": "nodenext",
+        "moduleResolution": "nodenext",
+        // The scripts import each other as `./ghcr.ts`, with the extension, because that is what
+        // node's type stripping requires at runtime.
+        "allowImportingTsExtensions": true,
+        "types": ["node"],
+        "noUncheckedIndexedAccess": true,
+        "noImplicitOverride": true,
+        "noFallthroughCasesInSwitch": true,
+        "verbatimModuleSyntax": true,
+        "skipLibCheck": true
+    },
+    "include": ["*.ts"]
+}

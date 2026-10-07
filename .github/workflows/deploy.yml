@@ -1,0 +1,216 @@
+# Deploys prod. Ported from Ripple's .github/workflows/deploy.yaml, which this repo deliberately
+# mirrors — same tailnet, same Coolify, same digest-pinning primitive. What is different, and why:
+#
+#   ONE ENVIRONMENT. Ripple has dev and prod; a second VPS for TakeInitiative was judged not worth
+#   it. So `main` is the only deploying branch, `dev` publishes images and deploys nothing, and
+#   there is no promotion path to get wrong.
+#
+#   NOTHING BUILDS HERE. Ripple content-addresses its images because it deploys every `dev` push,
+#   where no release version exists yet. Here, release-please publishes an immutable `1.2.3` tag
+#   from `dev` (release.yml -> images.yml), and this workflow resolves that tag to the digest it
+#   points at. The version tag never moves, so it already answers "are these the bytes dev ran?",
+#   which is the only question Ripple's image-key.ts exists to answer. No turbo hashing, no
+#   build job, no rebuild on a release merge.
+#
+#   NO MIGRATE JOB. The API applies the Marten schema at boot, before the port opens
+#   (Marten__ApplySchemaOnStartup=true), which is safe because AddAsyncDaemon(DaemonMode.Solo)
+#   already means exactly one API container. Ripple's migrate job and its database Tailscale
+#   Service have no counterpart here. docs/deploy/pipeline.md records when that stops being true.
+#
+# The decisions live in scripts/ci/deploy-plan.ts, which is unit tested, rather than in `if:`
+# expressions. This file wires jobs together and holds the credentials; it does not decide what to
+# deploy.
+
+name: Deploy
+
+on:
+    push:
+        branches: [main]
+    workflow_dispatch:
+        inputs:
+            force_deploy:
+                description: "Redeploy even when Coolify already runs this digest"
+                type: boolean
+                default: false
+            targets:
+                description: "Comma-separated apps to deploy (blank = all)"
+                type: string
+                default: ""
+            pin_tag:
+                description: "Deploy this published tag instead of the version in package.json (rollback), e.g. 1.0.13 or sha-cca7c15"
+                type: string
+                default: ""
+
+# No `packages: read`: the GHCR packages are public, so scripts/ci/ghcr.ts resolves a digest with
+# an anonymous pull token and no credential at all. `id-token: write` is what lets the Tailscale
+# action use workload identity federation instead of a stored OAuth secret. `packages: write` is
+# only for the promotion tag the deploy job pushes at the end.
+permissions:
+    contents: read
+    packages: write
+    id-token: write
+
+# Never cancel a run: one may be mid-deploy, and Coolify finishing a deploy whose watcher was
+# killed is how you lose track of what is actually live.
+concurrency:
+    group: deploy-${{ github.ref_name }}
+    cancel-in-progress: false
+
+jobs:
+    plan:
+        name: plan
+        runs-on: ubuntu-latest
+        outputs:
+            github-environment: ${{ steps.plan.outputs.github-environment }}
+            deploy-matrix: ${{ steps.plan.outputs.deploy-matrix }}
+            deploy-count: ${{ steps.plan.outputs.deploy-count }}
+            # Surfaced for the report and for reading a run at a glance; the deploy job gets the
+            # tag's resolved digest through the matrix instead, so nothing re-resolves it.
+            tag: ${{ steps.plan.outputs.tag }}
+            force-deploy: ${{ steps.plan.outputs.force-deploy }}
+            # `environment-name` is deliberately NOT surfaced. The script emits it and it shows in
+            # the plan's log and summary, but with one environment nothing downstream would branch
+            # on it — the CI tag and the `prod` promotion tag are literals below. Promoting it to a
+            # job output would imply a second environment exists somewhere.
+        steps:
+            - uses: actions/checkout@v4
+
+            # No pnpm install, deliberately: the CI scripts import nothing but node builtins and
+            # each other, so a dependency tree would be pure latency on the critical path of a
+            # deploy. Node 24 strips the TypeScript natively.
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 24
+
+            - name: Resolve the release tag against GHCR
+              id: plan
+              env:
+                  FORCE_DEPLOY: ${{ inputs.force_deploy == true }}
+                  TARGETS: ${{ inputs.targets }}
+                  PIN_TAG: ${{ inputs.pin_tag }}
+              run: node scripts/ci/deploy-plan.ts plan
+
+    deploy:
+        name: deploy ${{ matrix.app }}
+        needs: plan
+        if: needs.plan.outputs.deploy-count != '0'
+        runs-on: ubuntu-latest
+        # Scopes the Coolify token and the Tailscale client. The Environment's name is what GitHub
+        # puts in the OIDC `sub` claim as `environment:prod`, which is what the Tailscale client is
+        # federated to trust — so this line, `githubEnvironment` in deploy-targets.json and the
+        # federated identity's condition are three statements of one string and must agree.
+        environment: ${{ needs.plan.outputs.github-environment }}
+        strategy:
+            # Not parallel: two Coolify deploys at once on one small VPS is how you turn a deploy
+            # into an outage. api first, then web — the matrix order in deploy-plan.ts.
+            max-parallel: 1
+            fail-fast: false
+            matrix: ${{ fromJSON(needs.plan.outputs.deploy-matrix) }}
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 24
+
+            - name: Join the tailnet
+              uses: tailscale/github-action@v4
+              with:
+                  oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+                  # `audience` is what selects workload identity federation, so no long-lived
+                  # Tailscale secret sits in GitHub. The node is ephemeral and is destroyed when
+                  # the job ends. Do NOT add `args`: --accept-dns already defaults to true and the
+                  # action passes --accept-routes itself, so either one produces
+                  # `flag provided multiple times` and the join fails outright.
+                  audience: ${{ secrets.TS_AUDIENCE }}
+                  tags: tag:ci-takeinitiative-prod
+
+            # A gate, not a report. Reaching Coolify is a precondition for deploying, so failing
+            # here names the cause instead of letting `fetch` report a name lookup three steps
+            # later. Peers and resolver state are printed first, because which of the two failures
+            # you get is the whole diagnosis.
+            - name: Require the Coolify service to be reachable
+              env:
+                  COOLIFY_BASE_URL: ${{ vars.COOLIFY_BASE_URL }}
+              run: |
+                  set -uo pipefail
+                  if [ -z "${COOLIFY_BASE_URL:-}" ]; then
+                    echo "::error::COOLIFY_BASE_URL is not set. It is a repository VARIABLE (not a secret) and must include the https:// scheme — a secret would mask the hostname out of every error below and leave nothing to debug."
+                    exit 1
+                  fi
+                  host=${COOLIFY_BASE_URL#*://}; host=${host%%/*}; host=${host%%:*}
+
+                  echo "::group::tailnet peers"
+                  tailscale status || echo "tailscale status unavailable"
+                  echo "::endgroup::"
+
+                  echo "::group::resolver"
+                  tailscale dns status 2>&1 || echo "tailscale dns status unavailable"
+                  cat /etc/resolv.conf || true
+                  echo "::endgroup::"
+
+                  if ! getent hosts "$host"; then
+                    echo "::error::$host did not resolve on this runner. The node is on the tailnet, so this is name resolution rather than access: check the Service is advertised, and that MagicDNS reached this node (see the resolver group above — it needs 100.100.100.100)."
+                    exit 1
+                  fi
+
+                  if ! curl -sS -o /dev/null --max-time 20 \
+                    -w 'connected, HTTP %{http_code} after %{time_total}s\n' "$COOLIFY_BASE_URL"; then
+                    echo "::error::$host resolved but $COOLIFY_BASE_URL could not be reached. Check the Service is advertised on that port, and that tag:ci-takeinitiative-prod has a grant to it."
+                    exit 1
+                  fi
+
+            - name: Point Coolify at the digest and wait for the deploy
+              env:
+                  COOLIFY_BASE_URL: ${{ vars.COOLIFY_BASE_URL }}
+                  COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
+                  COOLIFY_APPLICATION_UUID: ${{ matrix.uuid }}
+                  IMAGE_REPOSITORY: ${{ matrix.repository }}
+                  IMAGE_DIGEST: ${{ matrix.digest }}
+                  FORCE_DEPLOY: ${{ needs.plan.outputs.force-deploy }}
+              run: node scripts/ci/coolify-deploy.ts
+
+            # Only after the deploy succeeded, so the `prod` tag always names an artefact that
+            # actually shipped. This is what lets the registry answer "what is live right now"
+            # on its own, without opening Coolify over the tailnet.
+            #
+            # Non-fatal: the artefact is already live by this point, and failing the run here
+            # would report a working deploy as broken when only its labelling is.
+            - name: Tag the shipped digest as prod
+              continue-on-error: true
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  ACTOR: ${{ github.actor }}
+                  SOURCE: ${{ matrix.repository }}@${{ matrix.digest }}
+                  TARGET: ${{ matrix.repository }}:prod
+              run: |
+                  set -euo pipefail
+                  echo "$GH_TOKEN" | docker login ghcr.io -u "$ACTOR" --password-stdin
+                  # imagetools, not pull-and-push: this re-points a tag at an existing manifest
+                  # without moving any bytes, so the digest cannot change.
+                  docker buildx imagetools create --tag "$TARGET" "$SOURCE"
+
+    report:
+        name: report
+        needs: [plan, deploy]
+        if: always()
+        runs-on: ubuntu-latest
+        steps:
+            - name: Summarise
+              run: |
+                  {
+                    echo "## Result"
+                    echo
+                    echo "| stage | result |"
+                    echo "| --- | --- |"
+                    echo "| plan | ${{ needs.plan.result }} |"
+                    echo "| deploy | ${{ needs.deploy.result }} |"
+                    echo
+                    echo "Tag: \`${{ needs.plan.outputs.tag }}\`"
+                  } >> "$GITHUB_STEP_SUMMARY"
+
+            # `plan` succeeding with nothing to deploy is the steady state before the Coolify
+            # applications exist, so a skipped deploy is not a failure.
+            - name: Fail if any stage failed
+              if: needs.plan.result == 'failure' || needs.deploy.result == 'failure'
+              run: exit 1
