@@ -1,21 +1,44 @@
-# Production. NOTHING HERE BUILDS: every image is pulled from GHCR, which is the whole point of
+# Production-shaped, and NO LONGER WHAT COOLIFY RUNS. Read this paragraph before trusting the rest
+# of the file.
+#
+# Coolify used to run this as a single git-backed Docker Compose resource. It now runs two Docker
+# Image Applications (api and web) plus its own Postgres and MinIO resources, because the deploy
+# pipeline pins `docker_registry_image_name`/`_tag` to an exact digest and those fields exist on an
+# Application, not on a compose resource. docs/deploy/pipeline.md is the authority on that shape and
+# records what moved where; docs/deploy/coolify.md's section 5 is superseded.
+#
+# What this file is FOR, now: running the production images locally with production-shaped config —
+# the same env var names, the same digest-pinned MinIO, the same host-filtered healthcheck — to smoke
+# test an image before cutting a release. That is a real job and it is why the file was kept rather
+# than deleted. It is also the fallback if the pipeline is ever broken and something has to ship:
+# paste it into a Coolify "Docker Compose Empty" resource and you are back on the old path.
+#
+# Two consequences of no longer being the deployment, so nothing is quietly believed:
+#   * The env var names here are still the truth, but they are set per Application in Coolify now,
+#     not once on a compose resource.
+#   * `Blobs__ServiceUrl=http://minio:9000` is correct HERE, where minio is a compose service on
+#     this network. In Coolify it is MinIO's own resource hostname, like TAKEDB_CONNECTION already is.
+#
+# NOTHING HERE BUILDS: every image is pulled from GHCR, which is the whole point of
 # docs/roadmap/29-deploy.md. Add a build key to any service here and you have moved the build onto
 # the VPS, where it is slow, memory-hungry and pointless — a free public runner already did it.
 # The check for that is a grep, and this comment is worded to keep the grep clean: searching this
 # file for the string b-u-i-l-d-colon must find nothing.
 #
-# Coolify runs this file as a Docker Compose resource, git-backed, so the committed file is the
-# truth. Values in ${...} come from the resource's environment variables;
-# docs/deploy/production.env.example lists every one of them, says which are secret, and says where
-# each is set. There are no `container_name:` keys on purpose — Coolify names the containers, and a
-# fixed name collides the moment the same compose runs twice on one host.
+# Values in ${...} come from the environment; docs/deploy/production.env.example lists every one of
+# them, says which are secret, and says where each is set. There are no `container_name:` keys on
+# purpose — a fixed name collides the moment the same compose runs twice on one host.
 #
 # No service publishes a host port. Traefik (Coolify's proxy) reaches api and web on the compose
 # network and terminates TLS there; the bucket is not reachable from outside at all, and neither is
 # Postgres — which is deliberate, because step 26's knowledge-base ingest reaches it over an
 # `ssh -L` tunnel rather than an open port.
 #
-# WHAT THE OPERATOR MUST CREATE IN COOLIFY BEFORE THIS FILE WILL WORK
+# WHAT STILL APPLIES TO THE COOLIFY DEPLOYMENT, EVEN THOUGH IT NO LONGER RUNS THIS FILE
+#
+# These were written as "create this before this file works". They are properties of the deployment
+# rather than of this file, so they survived the move to Applications unchanged. Set them on the
+# resources instead. docs/deploy/pipeline.md section 1 is the mapping.
 #
 #   1. A PostgreSQL 15 database resource. Postgres is deliberately NOT a service here: as a
 #      Coolify-managed resource its lifecycle is independent of app redeploys, Coolify owns the
@@ -24,24 +47,29 @@
 #      compose.dev.yml and the Alba/Testcontainers fixtures are 15, and `postgres:latest` is 18+,
 #      which moved its data directory, so a dump from dev will not restore into it.
 #      Feed its internal hostname into TAKEDB_CONNECTION.
-#   2. "Connect to predefined network" ENABLED on this compose resource, or it cannot resolve that
-#      database by its internal hostname.
-#   3. Domains, per service: web -> https://takeinitiative.<domain>, api ->
-#      https://api.takeinitiative.<domain>. Keep the API on a SUBDOMAIN of the web app's domain:
-#      that is what lets CookieDomain=.<domain> work with the cookie's default SameSite=Lax. A
-#      genuinely different domain needs SameSite=None, which is a code change nobody needs.
-#   4. Persistent storage, both of them (they are declared as named volumes at the bottom of this
-#      file, so Coolify creates them; check they exist rather than assuming):
-#      takeapi-keys -> /keys and takeminio-data -> /data.
+#   2. "Connect to predefined network" ENABLED on EVERY resource that has to resolve another by its
+#      internal hostname — which is now the api (to reach Postgres and MinIO) as well. This was one
+#      toggle on one compose resource; it is one toggle per Application now, and missing it is still
+#      the single setting the deployment will not work without.
+#   3. Domains: web -> https://takeinitiative.<domain>, api -> https://api.takeinitiative.<domain>,
+#      set per Application rather than per compose service. Keep the API on a SUBDOMAIN of the web
+#      app's domain: that is what lets CookieDomain=.<domain> work with the cookie's default
+#      SameSite=Lax. A genuinely different domain needs SameSite=None, which is a code change nobody
+#      needs.
+#   4. Persistent storage, both of them, as Coolify "Persistent Storage" entries on the owning
+#      Application rather than as the named volumes at the bottom of this file:
+#      /keys on the api and /data on minio. The api one is the data-protection key ring — delete it
+#      and everybody is signed out on every deploy.
 #   5. The environment variables, with "Is build variable?" OFF for all of them. Nothing here
 #      builds, so a build variable is purely a trap for future-you.
 
 services:
     api:
-        # A WHOLE image reference in one variable, not `<repo>:${TAG}`. That is what lets a rollback
-        # be pinned to a digest — `ghcr.io/pi-gorbo/takeinitiative-api@sha256:...` — which a
-        # `:${TAG}` form cannot express. Unset, it tracks :latest and the release workflow pings
-        # Coolify to re-pull.
+        # A WHOLE image reference in one variable, not `<repo>:${TAG}`. That is what lets this be
+        # pointed at a digest — `ghcr.io/pi-gorbo/takeinitiative-api@sha256:...` — which a
+        # `:${TAG}` form cannot express, and it is how you run one exact published artefact locally.
+        # Unset, it tracks :latest. Pinning the deployment is `deploy.yml`'s job now, against the
+        # Coolify application rather than this variable.
         image: ${API_IMAGE:-ghcr.io/pi-gorbo/takeinitiative-api:latest}
         # `latest` moves, so the local copy is always stale. Without this Coolify would happily run
         # the image it pulled three releases ago.

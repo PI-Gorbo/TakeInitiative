@@ -76,14 +76,23 @@ docker compose -p takeinitiative -f compose.dev.yml down -v
 ## Production
 
 Production runs from images built by GitHub Actions and pushed to GHCR
-(`.github/workflows/images.yml`), which Coolify pulls. Nothing on the server builds:
-`compose.prod.yml` has no build key anywhere, so it cannot.
+(`.github/workflows/images.yml`), which Coolify pulls. Nothing on the server builds.
+
+A release and a deploy are two decisions. Merging release-please's PR on `dev` cuts a release and
+publishes `1.2.3`; merging the `release:` PR that then opens into `main` is what ships it, by
+pinning each Coolify application to that version's exact image **digest** over the tailnet.
 
 | File | What it is |
 | --- | --- |
-| `compose.prod.yml` | The committed production spec. Coolify runs it as a git-backed Docker Compose resource |
+| `docs/deploy/pipeline.md` | **Start here.** The deploy pipeline: one-time setup, rollback, and what to do when it fails |
+| `.github/workflows/deploy.yml` | Deploys prod on a push to `main`. Builds nothing |
+| `deploy-targets.json` | Which Coolify application each app is, and the per-app on/off switch |
+| `scripts/ci/` | Every decision a deploy makes, unit tested — `pnpm deploy:test` |
+| `docs/deploy/coolify.md` | How the deployment was built by hand (sections 5 and 11 superseded) |
+| `docs/deploy/operations.md` | Running it afterwards: deploys, rollback, backups, the KB ingest tunnel |
 | `docs/deploy/production.env.example` | Every environment variable production needs, which are secret, and where each is set |
+| `compose.prod.yml` | **No longer what Coolify runs.** Kept to run the production images locally with production-shaped config, and as the retreat if the pipeline breaks |
 
-Postgres is not in that file — it is a Coolify-managed PostgreSQL 15 resource, so its
-lifecycle and its backups are separate from app redeploys. See
-`docs/roadmap/29-deploy.md` for the reasoning behind all of it.
+Postgres is not in any of that — it is a Coolify-managed PostgreSQL 15 resource, so its lifecycle
+and its backups are separate from app redeploys. See `docs/roadmap/29-deploy.md` for the reasoning
+behind all of it, including its 2026-10-07 amendment.

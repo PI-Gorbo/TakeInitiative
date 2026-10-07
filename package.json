@@ -19,11 +19,17 @@
         "sync:version": "node scripts/sync-version.mjs",
         "srd:build": "node scripts/srd/build-srd52.mjs",
         "models:fetch": "node scripts/models/fetch-model.mjs",
-        "models:export": "uv run scripts/gliner/export.py"
+        "models:export": "uv run scripts/gliner/export.py",
+        "___ DEPLOY ___": "",
+        "deploy:test": "node --test \"scripts/ci/*.test.ts\"",
+        "deploy:explain": "node scripts/ci/deploy-plan.ts explain",
+        "deploy:typecheck": "tsc -p scripts/ci"
     },
     "devDependencies": {
+        "@types/node": "^22.20.4",
         "husky": "^9.1.7",
-        "turbo": "2.9.16"
+        "turbo": "2.9.16",
+        "typescript": "^5.9.3"
     },
     "packageManager": "pnpm@10.33.0",
     "volta": {

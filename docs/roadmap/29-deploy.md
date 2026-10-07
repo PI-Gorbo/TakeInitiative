@@ -37,6 +37,49 @@ nothing is deployed until 29g.
 | 29f | `v2/29f-compose-prod` | `compose.prod.yml` and the env example | A committed production spec that references GHCR images and has **no `build:` key anywhere**. `docker compose -f compose.prod.yml config` validates || [ ] |
 | 29g | `v2/29g-coolify` | `docs/deploy/coolify.md`, and the deployment itself | The app is live on its domain with TLS. This step's Verify passes || [ ] |
 | 29h | `v2/29h-operations` | `docs/deploy/operations.md`: rollback, backups, the KB ingest tunnel | A rehearsed rollback, a restored backup, and the documented route for step 26's CLI || [ ] |
+| 29i | `v2/29i-deploy-pipeline` | The deploy pipeline: `deploy.yml`, `scripts/ci/**`, `docs/deploy/pipeline.md` | `main` deploys prod by pinning a digest, over the tailnet. Ships inert — both apps `enabled: false` || [ ] |
+
+### Amendment, 2026-10-07: the deploy half is Ripple's pipeline, ported
+
+This plan was written for a **webhook** deploy: a release POSTs Coolify's deploy URL with
+`force=true` and Coolify re-pulls `:latest`. That works, and it is what 29e's `deploy` job did. It
+has one flaw worth the change: **it cannot say which bytes it deployed.** A moving tag means the
+run summary's digest and what Coolify actually pulled are two different facts, so a rollback has no
+artefact to name and "what is in production" is only answerable by reading the box.
+
+So the deploy half now follows Ripple's release pipeline (`/projects/Ripple`, and its runbook at
+`docs/knowledge/deployment/release-pipeline-runbook.md`), ported in 29i. What changed, and what did
+not:
+
+| | Planned here | Now |
+|---|---|---|
+| Deploy trigger | a release on `dev` | a push to **`main`**, which `merge-to-main.yml` opens a PR for. Cutting a release and shipping it are two decisions |
+| What is deployed | `:latest`, re-pulled | an exact `@sha256:` digest, resolved from the release's immutable version tag |
+| How | one `curl` to a webhook | the Coolify API: PATCH the image, POST the deploy, poll it to `finished` |
+| Reached how | the public internet | **over the tailnet**, as a Tailscale Service. `tag:ci-takeinitiative-prod`, minted by an OAuth client federated to `repo:PI-Gorbo/TakeInitiative:environment:prod` — so the network credential is unmintable except from a prod run |
+| Coolify resource | one git-backed **Docker Compose** resource running `compose.prod.yml` | two **Docker Image Applications**, because `docker_registry_image_name`/`_tag` exist on an Application and not on a compose resource. Postgres and MinIO are their own resources |
+| Migrations | at API boot | **unchanged, deliberately.** No migrate job: one API container, schema applied before the port opens. Ripple's migrate job and its database Service have no counterpart, so CI never reaches the production database |
+| Environments | one | still one. No dev environment; a second VPS was judged not worth it |
+| Content-addressed image keys | — | **not ported.** Ripple hashes turbo inputs because it deploys every `dev` push, where no release version exists. A release-please version tag never moves, so it already answers "are these the bytes dev ran?" |
+
+Consequences for the sub-steps above:
+
+- **29e** keeps its image-publishing job; its `deploy` job is deleted. `release.yml` loses
+  `secrets: inherit` with it.
+- **29f** `compose.prod.yml` is no longer what Coolify runs. It is kept, and re-headed, as the way
+  to run the production images locally with production-shaped config — and as the retreat if the
+  pipeline is broken and something must ship.
+- **29g** creates two Applications rather than one compose resource. `docs/deploy/coolify.md`
+  sections 5 and 11 are marked superseded in place; the other ten sections, including all eight
+  failure modes, are unaffected because they are about the app and the proxy.
+- **29h** rollback becomes `workflow_dispatch` with `pin_tag`, which needs nothing cleared
+  afterwards — the old `API_IMAGE` pin was a value somebody had to remember to remove.
+- The "GitHub Actions secrets" section below is superseded; `docs/deploy/pipeline.md` section 5 is
+  the list.
+
+**29i ships inert.** `deploy-targets.json` has both apps `enabled: false`, so until the Coolify
+applications exist a push to `main` plans, reports "skipped", and exits 0. Flipping each app on is a
+one-line commit and reverting it is a revert.
 
 ## Depends on
 
@@ -524,12 +567,18 @@ All secret. The bucket credentials must match `Blobs__AccessKey` / `Blobs__Secre
 
 ### GitHub Actions secrets
 
+> **Superseded by the 2026-10-07 amendment.** `docs/deploy/pipeline.md` section 5 is the list:
+> `COOLIFY_BASE_URL` (a repository variable), `COOLIFY_API_TOKEN`, `TS_OAUTH_CLIENT_ID` and
+> `TS_AUDIENCE` (all three `prod` Environment secrets). The two below drove the webhook deploy and
+> can be deleted once the first pinned deploy has worked.
+
 | Secret | For |
 |---|---|
 | `COOLIFY_DEPLOY_URL` | the deploy webhook 29e calls on a release |
 | `COOLIFY_TOKEN` | the bearer token for it |
 
-No registry secret: `GITHUB_TOKEN` covers the push.
+No registry secret: `GITHUB_TOKEN` covers the push, and digests resolve with an anonymous ghcr.io
+pull token.
 
 ### Consumers outside the deployment
 

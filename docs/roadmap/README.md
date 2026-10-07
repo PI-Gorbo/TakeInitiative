@@ -96,7 +96,7 @@ Steps 08–11 ship as one stack of PRs (`gh stack`), one PR per step.
 | 26 | [Knowledge base](26-knowledge-base.md) | `done` | 20, 21 | A .NET ingest CLI, the slim 5eTools index in Postgres with a `tsvector`, and a **browsable Knowledge base surface** so reference rows have somewhere to live |
 | 27 | [Links](27-links.md) | `done` | 26 | The `EntryLink` seam becomes real: `knowledgebase` and `external` links on an entry, with events, history and visibility |
 | 28 | [Knowledge-base match suggestions](28-kb-suggestions.md) | `done` | 26, 27, 23 | On an entry that looks like a knowledge-base item, offer the link and let the user confirm it |
-| 29 | [Deploy](29-deploy.md) | `todo` | 13–28, 30, the review | Production images built in GitHub Actions, pushed to GHCR, pulled by Coolify. The app is reachable by other people. **Runs last**; see “Order after 28” |
+| 29 | [Deploy](29-deploy.md) | `todo`; **29i built, inert** | 13–28, 30, the review | Production images built in GitHub Actions, pushed to GHCR, pulled by Coolify. The app is reachable by other people. **Runs last**; see “Order after 28”. The deploy half is now Ripple's pipeline, ported — see 29's 2026-10-07 amendment and [docs/deploy/pipeline.md](../deploy/pipeline.md) |
 | 30 | [Marten 7 → 9](30-marten-9.md) | `todo` | 28 | The database settled before anybody's data is in it, on Marten 9's defaults. **Runs first** |
 | 31 | Wolverine (CQRS) | `todo` | 30, the review | `[Aggregate]` handlers and a transactional outbox. Its position relative to 29 is the review's call. Step file unwritten |
 
@@ -113,6 +113,23 @@ The step numbers are identity, not sequence. After 28 the order is **30 → revi
    outside Development — also gets written against Marten 9 once, instead of written twice.
 2. **The review.** The full architectural and implementation pass, against Marten 9 code.
 3. **29 — Deploy.** Deployment is only ever after a review. This is a standing rule.
+
+### The deploy pipeline landed early, inert (2026-10-07)
+
+29i — `.github/workflows/deploy.yml`, `scripts/ci/**`, `deploy-targets.json` and
+`docs/deploy/pipeline.md` — is **built and committed ahead of its place in the queue**, at the
+user's request, while the Ripple pipeline it ports was fresh. This does not move step 29 or weaken
+"deployment is only ever after a review":
+
+- Nothing is deployed and nothing can be. `deploy-targets.json` ships with both apps
+  `enabled: false`, there is no Coolify application to name, and a push to `main` plans, reports
+  "skipped" and exits 0. The one-time setup in `pipeline.md` — the Tailscale tag, the federated
+  OAuth client, the `prod` Environment — has not been done either.
+- What it buys now: the port was written against Ripple's working pipeline in one sitting rather
+  than reconstructed from it months later, and the decisions live in unit-tested code
+  (`pnpm deploy:test`) rather than in a plan nobody has executed.
+- **29g still runs last**, after Marten 9 and the review, and it is what actually makes the app
+  reachable.
 
 **31 — Wolverine** is wanted: the `[Aggregate]` handler workflow suits an API whose 75 endpoints
 already load an aggregate, append events and reload the inline projection by hand, and its

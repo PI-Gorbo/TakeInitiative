@@ -71,6 +71,10 @@ jobs:
         uses: ./.github/workflows/images.yml
         with:
             version: ${{ needs.release.outputs.version }}
-        # `secrets: inherit` is what lets images.yml see COOLIFY_DEPLOY_URL / COOLIFY_TOKEN.
-        # GITHUB_TOKEN is always available to a called workflow and is not passed here.
-        secrets: inherit
+        # No `secrets: inherit` any more. It existed to pass COOLIFY_DEPLOY_URL / COOLIFY_TOKEN
+        # through to the deploy job images.yml used to carry; deploying is now deploy.yml, on a
+        # push to `main`, holding its own credentials on the `prod` Environment. GITHUB_TOKEN is
+        # always available to a called workflow and never needed passing.
+        #
+        # So this job publishes the release images and stops. What ships them is merging the
+        # `release:` PR that merge-to-main.yml opens — see docs/deploy/pipeline.md.

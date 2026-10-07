@@ -4,9 +4,11 @@ The runbook. `coolify.md` is how the deployment got built; this is what you do w
 shipping a release, undoing one, keeping the data, feeding the knowledge base, and knowing when
 something is wrong.
 
-Everything here assumes the shape `coolify.md` set up: one Coolify compose resource running
-`compose.prod.yml` from this repo, images pulled from public GHCR packages, Postgres as a separate
-Coolify-managed resource on version 15, and no published host ports.
+Everything here assumes the shape `docs/deploy/pipeline.md` describes: two Coolify **Docker Image
+Applications** (api and web) pinned to exact GHCR digests by `.github/workflows/deploy.yml`, beside
+Coolify's own Postgres 15 and MinIO resources, with no published host ports. `coolify.md` built most
+of that and its sections 5 and 11 are superseded; `pipeline.md` is the authority on the resource
+shape and on the pipeline that moves it.
 
 **The short version of the invariants**, because every procedure below respects them:
 
@@ -28,12 +30,15 @@ Coolify-managed resource on version 15, and no published host ports.
 |---|---|
 | 1 | PRs merge into `dev`. Each merge that touches a watched path runs `.github/workflows/images.yml`, which publishes `:edge` and `:sha-<short>` to both GHCR packages. **Nothing deploys.** `:edge` is a thing you can pull and test; it is not what production runs |
 | 2 | `release.yml` runs on the same pushes and keeps a **release PR** open, with release-please's changelog and version bump, plus `scripts/sync-version.mjs` propagating the version into the API's csproj |
-| 3 | **You merge the release PR.** That is the deploy trigger, and the only one |
+| 3 | **You merge the release PR.** This cuts the release and publishes the images. It does **not** deploy — that is step 7 |
 | 4 | On that push, `release.yml`'s `release` job creates the git tag and the GitHub Release, and then — in the *same run*, because a release created with the default `GITHUB_TOKEN` does not trigger other workflows — its `images` job calls `images.yml` with the version |
 | 5 | `images.yml` publishes `1.2.3`, `1.2`, `latest` and `sha-<short>` for both images, and prints each one's digest in the run summary under **"Pin this:"** |
-| 6 | Its `deploy` job POSTs Coolify's deploy webhook with `force=true`, which is what makes Coolify re-pull a moving tag instead of reusing the image already on the box |
-| 7 | Coolify pulls `:latest` (`pull_policy: always`), **stops** the old containers and **starts** the new ones. This is stop-then-start, not a rolling swap, so there is a short outage — seconds to about a minute — and an old and a new container never overlap on the schema |
-| 8 | The API applies any new Marten schema, then opens its port. The web container starts. Both go healthy |
+| 6 | **Nothing has deployed yet.** `merge-to-main.yml` opens a `release:` PR from `dev` into `main`, carrying release-please's notes |
+| 7 | **You merge that PR.** That is the deploy trigger, and the only one. The gap is deliberate: cutting a release and shipping it are two decisions |
+| 8 | On that push to `main`, `deploy.yml` plans — resolving `1.2.3` to the digest it points at, anonymously from GHCR — then joins the tailnet, gates on reaching Coolify, PATCHes each application to `<repo>@sha256:<hex>`, and polls the deployment to `finished` |
+| 9 | Coolify pulls that digest, **stops** the old container and **starts** the new one, one application at a time (`max-parallel: 1`, because two deploys at once on one small VPS is how a deploy becomes an outage). Stop-then-start, not a rolling swap, so there is a short outage — seconds to about a minute — and an old and a new container never overlap on the schema |
+| 10 | The API applies any new Marten schema, then opens its port. Both go healthy, judged by the images' own `HEALTHCHECK` |
+| 11 | The shipped digest is tagged `prod`, so `docker buildx imagetools inspect ghcr.io/pi-gorbo/takeinitiative-api:prod` answers "what is live" without opening Coolify |
 
 **You will see two `Images` runs on that push.** One from the direct `push: dev` trigger (publishing
 `edge` + `sha-…`) and one through `workflow_call` from `release.yml` (publishing the semver tags +
@@ -61,17 +66,22 @@ missing; see `coolify.md` step 12.4.
 ### Deploying without a release
 
 Sometimes you want a specific build on production — testing a fix, or a hotfix that has not been
-released. Set `API_IMAGE` or `WEB_IMAGE` to that build's reference and redeploy, exactly as for a
-rollback (section 2). **Then remember to clear it**, or the next release will publish into a
-production that is pinned to an old image and nobody will understand why.
+released. Dispatch `Deploy` with `pin_tag` set to that build's tag (`sha-<short>`, from the `images`
+run summary), optionally with `targets: api` to move only one of them.
+
+Unlike the old `API_IMAGE` pin, **there is nothing to remember to clear**: the pinned tag applies to
+that run only, and the next push to `main` resolves the version in `package.json` again. That is the
+main practical gain from pinning the application rather than a compose variable — the previous shape
+left a pin on the resource that silently outlived the reason for it.
 
 ---
 
 ## 2. Rollback
 
-`compose.prod.yml` takes `API_IMAGE` and `WEB_IMAGE` as **whole image references** rather than as
-`<repo>:${TAG}`. That is deliberate: a whole reference can be a digest, and a digest is the only
-form that cannot move.
+A rollback is a `workflow_dispatch` of `Deploy` with `pin_tag` set. It deploys an
+already-published artefact **without rebuilding it** — rebuilding is what would make it a different
+artefact — and the pipeline resolves whatever tag you name to a digest before it touches Coolify, so
+what ships is byte-exact and the run summary says which bytes.
 
 | Tag | Published when | Moves? |
 |---|---|---|
@@ -80,30 +90,39 @@ form that cannot move.
 | `1.2` | a release | yes, within the minor |
 | `latest` | a release | yes |
 | `edge` | every push to `dev` | yes |
-| `…@sha256:…` | — | **never, by construction** |
+| `prod` | a successful prod deploy | yes — it follows production |
+
+Only the two that never move are accepted as `pin_tag`: a release version and a `sha-<short>` build
+tag. `latest`, `edge` and `prod` are **refused**, because resolving a moving tag now does not stop it
+moving before Coolify pulls, and then the digest that shipped would not be the one the summary
+showed. There is no need to name a digest by hand; naming the immutable tag is equivalent and
+readable later.
 
 ### The steps
 
-1. **Pick a known-good reference.** A digest if you want certainty, a `sha-…` tag if you want to be
-   able to read it later. Section 2's next subsection is how to find one.
-2. In Coolify, open the compose resource → **Environment Variables**, and add (or uncomment):
+1. **Pick a known-good tag.** The previous release (`1.2.2`) if a release broke production, or a
+   `sha-<short>` build if you need something finer. The next subsection is how to find one.
+2. **Actions → Deploy → Run workflow**, from `main`:
 
    ```
-   API_IMAGE=ghcr.io/pi-gorbo/takeinitiative-api@sha256:<64 hex>
-   WEB_IMAGE=ghcr.io/pi-gorbo/takeinitiative-web@sha256:<64 hex>
+   pin_tag: 1.2.2
+   targets:            # blank for both; `api` or `web` to move only one
+   force_deploy: false
    ```
 
-   Set only the one you are rolling back if only one is at fault — they are independent variables.
-   **But prefer rolling both to the same release**: the web app is generated against the API's
-   OpenAPI document, so a web/API pair from one release is a combination that has actually been
-   tested together.
-
-   Leave **"Is build variable?" off**, as with everything else.
-3. **Redeploy.** Watch the log for `Pulling from` with the digest you pinned.
+   Roll **both** to the same release unless only one is at fault: the web app's types are generated
+   against the API's OpenAPI document, so a web/API pair from one release is a combination that has
+   actually been tested together.
+3. **Read the plan summary** before it deploys. It names the tag, both digests, and marks the run
+   *pinned by dispatch — this is a rollback*.
 4. **Verify**: the three URLs from section 1, and that you are still signed in.
-5. **When the fix ships, remove the pin** and redeploy. A pin is something somebody has to remember
-   to remove — that is why `production.env.example` ships both variables commented out, and why the
-   steady state is unset.
+5. **Nothing to undo.** The pin applies to that run alone; the next push to `main` resolves the
+   version in `package.json` again. So ship the fix as a normal release and production follows it.
+
+> **If the pipeline itself is what is broken**, the retreat is the by-hand path: Coolify →
+> the application → set its image to `ghcr.io/pi-gorbo/takeinitiative-api@sha256:<hex>` and
+> redeploy from the UI. That is exactly what the pipeline does, done manually, so it cannot be out
+> of date. Keep it in mind; it is the only reason to know the Coolify UI at all.
 
 Note how long the whole thing took, the first time you rehearse it. Knowing that the number is "two
 minutes" and not "I have no idea" is most of the value of having rehearsed it.
