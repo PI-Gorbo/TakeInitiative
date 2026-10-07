@@ -5,6 +5,7 @@ import type { GhcrClient } from "./ghcr.ts";
 import {
     type DeployPlan,
     buildPlan,
+    deployingBranch,
     deployMatrix,
     deployable,
     environmentForBranch,
@@ -101,6 +102,17 @@ test("environmentForBranch names the known branches when none matches", () => {
     const parsed = parseDeployTargets(targets());
     assert.equal(environmentForBranch(parsed, "main")[0], "prod");
     assert.throws(() => environmentForBranch(parsed, "dev"), /Known branches: main/);
+});
+
+test("deployingBranch asks the config, so explain works off a PR merge ref", () => {
+    // The regression this exists for: `explain` used to read GITHUB_REF_NAME, which on a
+    // pull_request run is `281/merge`. That matches no environment, so the one CI job meant to
+    // prove deploy-targets.json parses was the job that failed.
+    assert.equal(deployingBranch(parseDeployTargets(targets())), "main");
+    assert.throws(
+        () => deployingBranch(parseDeployTargets(JSON.stringify({ environments: {} }))),
+        /defines no environments/,
+    );
 });
 
 test("selectApps defaults to every app and rejects an unknown one", () => {

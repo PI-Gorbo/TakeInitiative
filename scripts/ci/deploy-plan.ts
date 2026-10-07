@@ -155,6 +155,20 @@ export const environmentForBranch = (
     return found;
 };
 
+/**
+ * The branch a deploy would come from, for tools that are not running on it.
+ *
+ * `explain` must not read the ambient `GITHUB_REF_NAME`: on a `pull_request` run that is
+ * `<number>/merge`, which matches no environment, so the command failed on exactly the CI job meant
+ * to prove the config parses. Asking the config which branch deploys is the right question anyway
+ * — it makes `pnpm deploy:explain` give the same answer from any branch, including a laptop.
+ */
+export const deployingBranch = (targets: DeployTargets): string => {
+    const [first] = Object.values(targets.environments);
+    if (!first) throw new Error(`${TARGETS_FILE} defines no environments.`);
+    return first.branch;
+};
+
 /** A blank `targets` input means every app; otherwise a comma-separated subset. */
 export const selectApps = (raw: string): readonly TiApp[] => {
     const requested = raw
@@ -416,15 +430,20 @@ const runPlan = async (): Promise<void> => {
     writeSummary(summaryMarkdown(plan, recentTags));
 };
 
-/** Prints what the current checkout would deploy, without needing a GitHub run. */
+/**
+ * Prints what the current checkout would deploy, without needing a GitHub run and without
+ * credentials. Takes the branch from `deploy-targets.json` rather than from the environment, so it
+ * answers the same way on `main`, on a PR merge ref, and on a feature branch.
+ */
 const runExplain = async (): Promise<void> => {
+    const targetsRaw = readFileSync(path.join(REPO_ROOT, TARGETS_FILE), "utf8");
     const plan = await buildPlan({
-        branch: process.env.GITHUB_REF_NAME ?? "main",
+        branch: deployingBranch(parseDeployTargets(targetsRaw)),
         sha: process.env.GITHUB_SHA ?? "0000000",
         pinTag: process.env.PIN_TAG ?? "",
         forceDeploy: false,
         targets: process.env.TARGETS ?? "",
-        targetsRaw: readFileSync(path.join(REPO_ROOT, TARGETS_FILE), "utf8"),
+        targetsRaw,
         manifestRaw: readFileSync(path.join(REPO_ROOT, "package.json"), "utf8"),
         client: ghcrClient(fetch),
     });
