@@ -25,7 +25,8 @@ on:
             - "package.json"
             - "pnpm-lock.yaml"
     pull_request:
-        branches: [dev, main]
+        # `v2/**` so a stacked PR is gated too; see testApi.yml.
+        branches: [dev, main, "v2/**"]
         paths:
             - ".github/workflows/testScripts.yml"
             - "scripts/ci/**"
