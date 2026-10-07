@@ -40,12 +40,15 @@
 # rather than of this file, so they survived the move to Applications unchanged. Set them on the
 # resources instead. docs/deploy/pipeline.md section 1 is the mapping.
 #
-#   1. A PostgreSQL 15 database resource. Postgres is deliberately NOT a service here: as a
+#   1. A PostgreSQL 16 database resource. Postgres is deliberately NOT a service here: as a
 #      Coolify-managed resource its lifecycle is independent of app redeploys, Coolify owns the
 #      volume, and it gets scheduled backups from the UI — which is the entire argument, because
-#      otherwise the only copy of everyone's campaign lives on one unbacked disk. Pin it to 15:
-#      compose.dev.yml and the Alba/Testcontainers fixtures are 15, and `postgres:latest` is 18+,
-#      which moved its data directory, so a dump from dev will not restore into it.
+#      otherwise the only copy of everyone's campaign lives on one unbacked disk.
+#      Pin the MAJOR, never `postgres:latest`: compose.dev.yml and all four Alba/Testcontainers
+#      fixtures are 16-alpine, and 16 is inside the matrix Marten's own CI runs. `latest` floats
+#      across majors, and from 18 onward each major also moves the data directory, so `latest`
+#      eventually arrives as a database that refuses to start. docs/deploy/coolify.md step 4 has
+#      the detail, including what to check if this is ever moved to 18+.
 #      Feed its internal hostname into TAKEDB_CONNECTION.
 #   2. "Connect to predefined network" ENABLED on EVERY resource that has to resolve another by its
 #      internal hostname — which is now the api (to reach Postgres and MinIO) as well. This was one

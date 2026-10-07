@@ -36,7 +36,7 @@ public class SchemaOnStartupTests(SchemaOnStartupTests.PostgresFixture fixture) 
     public sealed class PostgresFixture : IAsyncLifetime
     {
         private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder()
-            .WithImage("postgres:15-alpine")
+            .WithImage("postgres:16-alpine")
             .Build();
 
         public string AdminConnectionString => _postgres.GetConnectionString();

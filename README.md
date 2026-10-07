@@ -93,6 +93,6 @@ pinning each Coolify application to that version's exact image **digest** over t
 | `docs/deploy/production.env.example` | Every environment variable production needs, which are secret, and where each is set |
 | `compose.prod.yml` | **No longer what Coolify runs.** Kept to run the production images locally with production-shaped config, and as the retreat if the pipeline breaks |
 
-Postgres is not in any of that — it is a Coolify-managed PostgreSQL 15 resource, so its lifecycle
+Postgres is not in any of that — it is a Coolify-managed PostgreSQL 16 resource, so its lifecycle
 and its backups are separate from app redeploys. See `docs/roadmap/29-deploy.md` for the reasoning
 behind all of it, including its 2026-10-07 amendment.
