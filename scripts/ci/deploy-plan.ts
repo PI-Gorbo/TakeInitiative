@@ -267,6 +267,30 @@ export const planApp = ({
 export const deployable = (plan: DeployPlan): readonly AppPlan[] =>
     plan.apps.filter((app) => app.skipped === undefined);
 
+/**
+ * No two apps being deployed may name the same Coolify application.
+ *
+ * The UUIDs are pasted in by hand from the Coolify dashboard, where they are opaque
+ * 24-character strings, and the applications were created undesignated — so a
+ * copy-paste that duplicates one is entirely plausible. Nothing downstream would
+ * notice: both deploys would succeed against the same application, the second
+ * overwriting the first, leaving one container running whichever image lost the race
+ * and the other application untouched. A duplicate cannot be a legitimate
+ * configuration, so it is an error rather than a warning.
+ */
+export const assertDistinctUuids = (apps: readonly AppPlan[]): void => {
+    const seen = new Map<string, string>();
+    for (const app of apps) {
+        const owner = seen.get(app.uuid);
+        if (owner !== undefined) {
+            throw new Error(
+                `${owner} and ${app.app} both point at Coolify application ${app.uuid} in ${TARGETS_FILE}. Each app needs its own; deploying both here would run one image and silently leave the other application alone.`,
+            );
+        }
+        seen.set(app.uuid, app.app);
+    }
+};
+
 /** `include:` so the matrix carries one object per app rather than a cross product. */
 export const deployMatrix = (plan: DeployPlan): string =>
     JSON.stringify({
@@ -395,6 +419,10 @@ export const buildPlan = async ({
             ...planApp({ app, tag, digest, target: environment.apps[app] }),
         });
     }
+
+    // Only what is actually being deployed: two DISABLED apps may share a placeholder
+    // (or an empty string) without it meaning anything.
+    assertDistinctUuids(apps.filter((app) => app.skipped === undefined));
 
     return {
         environmentName,
