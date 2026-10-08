@@ -74,7 +74,7 @@ git-backed **Docker Compose** resource. The pipeline pins
 | `takeinitiative-api` | Application, "Docker Image" | `ghcr.io/pi-gorbo/takeinitiative-api` | `lvb5hpab49yh618nttvev1fz` |
 | `takeinitiative-web` | Application, "Docker Image" | `ghcr.io/pi-gorbo/takeinitiative-web` | `m1kq4p6ckky1ldfssvio5l6d` |
 | Postgres 16 | Coolify-managed database | — | — |
-| Garage | Application, "Docker Image" | `dxflrs/garage:v1.1.0`, with a mounted `garage.toml` | — |
+| Garage | Coolify **one-click service** | `dxflrs/garage:v2.3.0` | — |
 
 > **Both applications exist and their UUIDs are committed.** They were created undesignated, so
 > **which one is the API and which is the web app is decided by `deploy-targets.json`**, not by
@@ -126,6 +126,34 @@ The recommended order for arming it, including a first run that changes nothing,
 running by hand, enable `api` alone, and dispatch with that tag. A correct pipeline then reports
 `already running this digest and healthy` and deploys nothing, which proves the credentials, the
 tailnet, Coolify reachability and the digest arithmetic in one run without touching production.
+
+### 1a. Bootstrapping Garage
+
+Coolify's Garage service generates the **RPC secret, admin token and metrics token** itself — do not
+generate those. It also publishes S3, Web and Admin URLs on its own subdomains.
+
+Garage still needs a one-off bootstrap: a fresh node refuses every request until a cluster layout
+exists, and it takes no credentials from the environment. In the Garage container:
+
+```sh
+garage status                                     # copy the node id (NO ROLE ASSIGNED)
+garage layout assign -z dc1 -c <size> <node-id>
+garage layout apply --version 1
+
+garage key import "$BLOBS_ACCESS_KEY" "$BLOBS_SECRET_KEY" -n takeinitiative --yes
+garage key allow --create-bucket "$BLOBS_ACCESS_KEY"
+garage bucket create takeinitiative
+garage bucket allow --read --write --owner takeinitiative --key "$BLOBS_ACCESS_KEY"
+```
+
+`BLOBS_ACCESS_KEY` must be `GK` + 24 hex; Garage rejects any other shape. Verified against v2.3.0.
+
+Two things that fail as something else:
+
+- **`s3_region` must match `Blobs__Region`** (`us-east-1`). A mismatch fails SigV4 and reads as bad
+  credentials.
+- **`Blobs__ServiceUrl` should be Garage's internal hostname on the predefined network**, port 3900
+  — not the public S3 URL, which would route uploads out through Traefik and back.
 
 ### 2. One new Tailscale tag
 

@@ -136,10 +136,10 @@ services:
     garage:
         # The S3 blob store. Garage, not MinIO: MinIO changed its deployment model and stopped
         # publishing usable community images. Unlike MinIO it needs a config file and a one-off
-        # CLI bootstrap (layout, key, bucket) — docs/deploy/coolify.md step 5 has the commands.
+        # CLI bootstrap (layout, key, bucket) — docs/deploy/pipeline.md section 1a has the commands.
         # s3_region in that file must match Blobs__Region. AGPL-3.0; running an unmodified copy
         # for your own app triggers no obligation.
-        image: ${GARAGE_IMAGE:-dxflrs/garage:v1.1.0}
+        image: ${GARAGE_IMAGE:-dxflrs/garage:v2.3.0}
         restart: unless-stopped
         expose:
             - "3900"

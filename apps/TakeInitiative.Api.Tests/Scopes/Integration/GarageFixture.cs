@@ -15,7 +15,7 @@ namespace TakeInitiative.Api.Tests.Integration;
 /// </remarks>
 public class GarageFixture : IAsyncLifetime
 {
-    public const string Image = "dxflrs/garage:v1.1.0";
+    public const string Image = "dxflrs/garage:v2.3.0";
 
     /// <summary>A Garage key ID must be <c>GK</c> followed by 24 hex characters; it rejects anything else.</summary>
     public const string AccessKey = "GKb7c1f39a84e2d0516c9ab427";

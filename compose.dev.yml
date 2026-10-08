@@ -33,7 +33,7 @@ services:
         # and stopped publishing usable community images. Unlike MinIO it needs a config file
         # and a CLI bootstrap (cluster layout, access key, bucket) — `pnpm setup:garage` does
         # that, idempotently, and `pnpm dev` runs it.
-        image: dxflrs/garage:v1.1.0
+        image: dxflrs/garage:v2.3.0
         container_name: takegarage
         ports:
             - "7404:3900" # S3 API

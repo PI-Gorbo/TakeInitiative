@@ -1,6 +1,6 @@
 # Garage for local development. Committed secrets are deliberate: this cluster holds nothing
 # but dev uploads and is reachable only on localhost. Production gets its own file with
-# generated values — docs/deploy/coolify.md step 5.
+# generated values — Coolify's Garage service generates them. See docs/deploy/pipeline.md 1a.
 #
 # s3_region must match Blobs:Region (us-east-1), or every request fails SigV4 verification
 # rather than failing as a configuration error.
