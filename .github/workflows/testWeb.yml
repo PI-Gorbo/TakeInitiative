@@ -13,8 +13,8 @@ on:
       - "pnpm-lock.yaml"
       - "turbo.json"
   pull_request:
-    # See testApi.yml: `v2/**` is what gates a stacked PR, whose base is another branch.
-    branches: [ "dev", "main", "v2/**" ]
+    # No `branches:` filter, deliberately: every PR is gated whatever it targets. See
+    # testApi.yml for why a filtered list cannot gate a stacked PR.
     paths:
       - ".github/workflows/testWeb.yml"
       - "**.vue"
