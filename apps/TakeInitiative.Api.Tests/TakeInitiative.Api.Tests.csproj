@@ -42,7 +42,6 @@
              pulled in transitively by Testcontainers. -->
         <PackageReference Include="SSH.NET" Version="2026.0.0" />
         <PackageReference Include="Testcontainers" Version="3.9.0" />
-        <PackageReference Include="Testcontainers.Minio" Version="3.9.0" />
         <PackageReference Include="Testcontainers.PostgreSql" Version="3.9.0" />
         <PackageReference Include="Verify" Version="26.2.0" />
         <PackageReference Include="Verify.Xunit" Version="26.2.0" />

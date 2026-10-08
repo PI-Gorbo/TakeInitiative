@@ -1,5 +1,4 @@
 using System.Text;
-using Amazon.S3.Util;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
@@ -7,16 +6,16 @@ using TakeInitiative.Api.Features.Images;
 
 namespace TakeInitiative.Api.Tests.Integration.Features.Images;
 
-/// <summary>Step 16a.3: <see cref="S3BlobStore"/> and <see cref="BlobBucketInitializer"/> against a real MinIO.</summary>
-public class S3BlobStoreTests(MinioFixture minio) : IClassFixture<MinioFixture>
+/// <summary>Step 16a.3: <see cref="S3BlobStore"/> and <see cref="BlobBucketInitializer"/> against a real Garage.</summary>
+public class S3BlobStoreTests(GarageFixture garage) : IClassFixture<GarageFixture>
 {
     private BlobOptions Options(string bucket) => new()
     {
-        ServiceUrl = minio.Container.GetConnectionString(),
+        ServiceUrl = garage.GetConnectionString(),
         Region = "us-east-1",
         Bucket = bucket,
-        AccessKey = minio.Container.GetAccessKey(),
-        SecretKey = minio.Container.GetSecretKey(),
+        AccessKey = GarageFixture.AccessKey,
+        SecretKey = GarageFixture.SecretKey,
         ForcePathStyle = true,
         CreateBucket = true,
     };
@@ -35,17 +34,17 @@ public class S3BlobStoreTests(MinioFixture minio) : IClassFixture<MinioFixture>
     {
         var options = Options("created-on-start");
         var s3 = S3BlobStore.CreateClient(options);
-        (await AmazonS3Util.DoesS3BucketExistV2Async(s3, options.Bucket)).Should().BeFalse();
+        (await BlobBucketInitializer.BucketExists(s3, options.Bucket)).Should().BeFalse();
 
         var initializer = new BlobBucketInitializer(s3, Microsoft.Extensions.Options.Options.Create(options), NullLogger<BlobBucketInitializer>.Instance)
         {
             Attempts = 1,
         };
         await initializer.StartAsync(CancellationToken.None);
-        (await AmazonS3Util.DoesS3BucketExistV2Async(s3, options.Bucket)).Should().BeTrue();
+        (await BlobBucketInitializer.BucketExists(s3, options.Bucket)).Should().BeTrue();
 
         await initializer.StartAsync(CancellationToken.None);
-        (await AmazonS3Util.DoesS3BucketExistV2Async(s3, options.Bucket)).Should().BeTrue();
+        (await BlobBucketInitializer.BucketExists(s3, options.Bucket)).Should().BeTrue();
     }
 
     [Fact]
@@ -58,7 +57,7 @@ public class S3BlobStoreTests(MinioFixture minio) : IClassFixture<MinioFixture>
         await new BlobBucketInitializer(s3, Microsoft.Extensions.Options.Options.Create(options), NullLogger<BlobBucketInitializer>.Instance)
             .StartAsync(CancellationToken.None);
 
-        (await AmazonS3Util.DoesS3BucketExistV2Async(s3, options.Bucket)).Should().BeFalse();
+        (await BlobBucketInitializer.BucketExists(s3, options.Bucket)).Should().BeFalse();
     }
 
     [Fact]

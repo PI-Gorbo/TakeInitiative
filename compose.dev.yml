@@ -1,10 +1,10 @@
 # Full-stack compose for local development.
 #
-# `pnpm dev` starts ONLY the postgres and minio services from this file and runs
-# the API and web natively. Use `docker compose -p takeinitiative -f compose.dev.yml
+# `pnpm dev` starts ONLY the postgres and garage services from this file, bootstraps Garage,
+# and runs the API and web natively. Use `docker compose -p takeinitiative -f compose.dev.yml
 # up -d --build` when you want everything in containers instead.
 #
-# Ports: postgres 7401, api 7402, web 7403, minio 7404 (S3 API) and 7405 (console).
+# Ports: postgres 7401, api 7402, web 7403, garage 7404 (S3 API) and 7405 (admin API).
 # `docker compose -p takeinitiative -f compose.dev.yml down -v` resets the database
 # and the images together.
 
@@ -28,29 +28,23 @@ services:
             retries: 5
             start_period: 10s
             timeout: 5s
-    minio:
-        # The image blob store (step 16a). MinIO stopped publishing community images in
-        # 2025, and its quay.io and Docker Hub repositories no longer pull anonymously
-        # (the tag Ripple pins, RELEASE.2025-07-18T21-56-31Z, only works where it is
-        # already cached). pgsty/minio is a community build of the same MinIO server,
-        # with the same entrypoint, environment and `mc`. The API only speaks S3, so
-        # swapping it (Garage, SeaweedFS, RustFS) is a change here and in
-        # MinioFixture.Image alone. There is no bucket-creating container: the API
-        # creates its bucket on start (Blobs:CreateBucket), and the bucket stays private.
-        image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
-        container_name: takeminio
-        command: server /data --console-address ":9001"
+    garage:
+        # The S3 blob store (step 16a). Garage, not MinIO: MinIO changed its deployment model
+        # and stopped publishing usable community images. Unlike MinIO it needs a config file
+        # and a CLI bootstrap (cluster layout, access key, bucket) — `pnpm setup:garage` does
+        # that, idempotently, and `pnpm dev` runs it.
+        image: dxflrs/garage:v1.1.0
+        container_name: takegarage
         ports:
-            - "7404:9000" # S3 API
-            - "7405:9001" # console (takeinitiative / takeinitiative-dev)
-        environment:
-            - MINIO_ROOT_USER=takeinitiative
-            - MINIO_ROOT_PASSWORD=takeinitiative-dev
+            - "7404:3900" # S3 API
+            - "7405:3903" # admin API
         volumes:
-            - takeminio-data:/data
+            - ./infra/garage.dev.toml:/etc/garage.toml:ro
+            - takegarage-meta:/var/lib/garage/meta
+            - takegarage-data:/var/lib/garage/data
         restart: always
         healthcheck:
-            test: ["CMD", "mc", "ready", "local"]
+            test: ["CMD", "/garage", "status"]
             interval: 10s
             retries: 5
             start_period: 10s
@@ -68,7 +62,7 @@ services:
         depends_on:
             postgres:
                 condition: service_healthy
-            minio:
+            garage:
                 condition: service_healthy
         ports:
             - "7402:8080"
@@ -81,7 +75,7 @@ services:
             - "AllowedHosts=localhost"
             - "CookieDomain=localhost"
             # The other Blobs:* keys keep their appsettings.json dev defaults.
-            - "Blobs__ServiceUrl=http://minio:9000"
+            - "Blobs__ServiceUrl=http://garage:3900"
         restart: always
         healthcheck:
             test: ["CMD-SHELL", "curl --fail http://localhost:8080/healthz || exit 1"]
@@ -118,4 +112,5 @@ services:
 
 volumes:
     takedb-data:
-    takeminio-data:
+    takegarage-meta:
+    takegarage-data:
