@@ -10,18 +10,12 @@
 
 services:
     postgres:
-        # Pinned, and matched to the image the Alba/Testcontainers suite uses
-        # (apps/TakeInitiative.Api.Tests/Scopes/Integration/*Fixture.cs), so dev
-        # and test run against the same major version. `postgres:latest` is now
-        # 18+, which moved its data directory and stopped mounting at
-        # /var/lib/postgresql/data.
-        image: postgres:15-alpine
+        # Matched to the Testcontainers fixtures; 16 is the newest major Marten's CI covers.
+        image: postgres:16-alpine
         container_name: takedb
         ports:
             - "7401:5432"
         volumes:
-            # A named volume rather than a host bind mount: portable across
-            # machines, and `docker compose down -v` resets it cleanly.
             - takedb-data:/var/lib/postgresql/data
         environment:
             - POSTGRES_PASSWORD=postgres

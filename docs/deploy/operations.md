@@ -6,7 +6,7 @@ something is wrong.
 
 Everything here assumes the shape `docs/deploy/pipeline.md` describes: two Coolify **Docker Image
 Applications** (api and web) pinned to exact GHCR digests by `.github/workflows/deploy.yml`, beside
-Coolify's own Postgres 15 and MinIO resources, with no published host ports. `coolify.md` built most
+Coolify's own Postgres 16 and MinIO resources, with no published host ports. `coolify.md` built most
 of that and its sections 5 and 11 are superseded; `pipeline.md` is the authority on the resource
 shape and on the pipeline that moves it.
 
@@ -231,19 +231,21 @@ with that, the alternative is to run the dump entirely on the VPS and copy the f
 Coolify can also expose the database on a public port — **do not**, unless you firewall it to your
 own IP; an internet-reachable Postgres is a bad trade for the convenience.
 
-**The dump.** Use a Postgres **15** client, or `pg_dump` will refuse on a server/client version
-mismatch. The easiest way to guarantee that is to run the client in a container:
+**The dump.** Use a Postgres **16** client, or `pg_dump` will refuse on a server/client version
+mismatch — it declines to dump from a server newer than itself. The easiest way to guarantee that is
+to run the client in a container, which also means the client major follows this file rather than
+whatever `brew` last upgraded:
 
 ```sh
 # macOS / Docker Desktop. On Linux add: --add-host=host.docker.internal:host-gateway
-docker run --rm -v "$PWD:/out" -e PGPASSWORD='<password>' postgres:15-alpine \
+docker run --rm -v "$PWD:/out" -e PGPASSWORD='<password>' postgres:16-alpine \
     pg_dump -Fc --no-owner --no-privileges \
         -h host.docker.internal -p 55432 -U '<user>' -d '<db>' \
         -f "/out/takedb-$(date +%F-%H%M).dump"
 ```
 
 `-Fc` is the custom format, which `pg_restore` can read selectively and which compresses. Or
-install a local client (`brew install postgresql@15`) and drop the `docker run` wrapper.
+install a local client (`brew install postgresql@16`) and drop the `docker run` wrapper.
 
 **3.2b — without a tunnel**, if the container-IP dance is annoying:
 
@@ -292,14 +294,15 @@ tar, which depends on nothing but `alpine`.
 how backups are taken.
 
 ```sh
-# 1. A throwaway Postgres 15, on a port nothing else uses.
+# 1. A throwaway Postgres 16, on a port nothing else uses. Match the production major:
+#    pg_restore across majors is a different exercise, and this is testing the backup.
 docker run -d --name ti-restore -p 7501:5432 \
-    -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=takeinitiative postgres:15-alpine
+    -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=takeinitiative postgres:16-alpine
 
 # 2. Restore into it, as superuser so CREATE EXTENSION is allowed.
 #    --no-owner --no-privileges because the production role names do not exist here.
 docker run --rm -v "$PWD:/in" --add-host=host.docker.internal:host-gateway \
-    -e PGPASSWORD=postgres postgres:15-alpine \
+    -e PGPASSWORD=postgres postgres:16-alpine \
     pg_restore --no-owner --no-privileges \
         -h host.docker.internal -p 7501 -U postgres -d takeinitiative \
         /in/takedb-<the-file>.dump

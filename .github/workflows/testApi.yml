@@ -11,7 +11,7 @@ on:
       - "**.cs"
       - "**.csproj"
   pull_request:
-    branches: [ "dev" ]
+    # No branch filter: every PR is gated, including stacked ones based on a feature branch.
     paths:
       - ".github/workflows/testApi.yml"
       - "**.cs"

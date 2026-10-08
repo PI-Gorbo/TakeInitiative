@@ -62,7 +62,7 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
 {
     public IAlbaHost AlbaHost { get; private set; } = null!;
     public PostgreSqlContainer PostgreSqlContainer { get; private set; } = new PostgreSqlBuilder()
-        .WithImage("postgres:15-alpine")
+        .WithImage("postgres:16-alpine")
         .Build();
     private Users CurrentUser;
     public AuthenticatedWebAppWithDatabaseFixtureSeededData? SeedData { get; set; }

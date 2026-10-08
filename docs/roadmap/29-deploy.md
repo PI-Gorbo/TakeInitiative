@@ -430,7 +430,7 @@ Every pinned base image was checked for arm64 before settling this:
 
 | Image | arm64 |
 |---|---|
-| `postgres:15-alpine` | yes (`linux/arm64/v8`) |
+| `postgres:16-alpine` | yes (`linux/arm64/v8`) |
 | `node:24-alpine` | yes (`linux/arm64/v8`) |
 | `mcr.microsoft.com/dotnet/aspnet:10.0` | yes |
 | `mcr.microsoft.com/dotnet/sdk:10.0` | yes |
@@ -621,7 +621,7 @@ discouraged but impossible.
 2. **DNS.** `A` records for `takeinitiative.<domain>` and `api.takeinitiative.<domain>` → the
    VPS IP, both proxied off (Coolify issues the certificate itself).
 3. **Project and environment.** One project, one `production` environment.
-4. **Postgres.** Add a PostgreSQL 15 resource. Set a generated password. Note the internal
+4. **Postgres.** Add a PostgreSQL 16 resource. Set a generated password. Note the internal
    hostname it shows. Turn on scheduled backups and point them somewhere off the box if a
    bucket is available.
 5. **The compose resource.** New resource → *Docker Compose* → the public repo, branch `dev`,
@@ -1103,7 +1103,7 @@ later. Then run this step's **Verify** end to end.
    `pg_dump` for the database — and prefer a tunnel-free `docker exec … pg_dump > local file`
    for anything scheduled, since a container IP changes on recreate. A `tar` of the MinIO volume
    for the bucket, rather than `mc mirror`: MinIO publishes no host port and the `pgsty` rebuild's
-   bundled tooling is unverified. Then **restore one** into a local Postgres 15 and start the API
+   bundled tooling is unverified. Then **restore one** into a local Postgres 16 and start the API
    against it — a backup nobody has restored is not a backup, and a dump Postgres accepts but
    Marten cannot read is not a restore.
 3. **The knowledge-base ingest tunnel** (step 26's consumer):
@@ -1259,8 +1259,15 @@ Run in order. Every item is checkable; the last one is the point of the step.
 - **There are no presigned URLs.** `GetImageVariant` streams every image through the API after a
   visibility check, so the bucket must **not** be publicly reachable and needs no CORS
   configuration at all.
-- **Postgres 15, not latest.** `compose.dev.yml` records that `postgres:latest` is 18+, which
-  moved its data directory. Pin 15 in production too, or a dump taken from dev will not restore.
+- **Postgres 16, pinned, not `latest`.** Moved from 15 on 2026-10-07, before any production data
+  existed — the window Marten 9 used, for the same reason. 16 because Marten's own CI runs against
+  15 and 16; 18 was measured and passes too, so it stays an option. All four fixtures and
+  `compose.dev.yml` moved together. Coming from 15 needs a one-time
+  `docker compose -f compose.dev.yml down -v`, since Postgres will not read another major's data
+  directory.
+
+  18+ would also need the mount changed: it made `PGDATA` version specific and moved its `VOLUME`
+  to `/var/lib/postgresql`, and a volume at the old path exits 1. `coolify.md` step 4 records it.
 - **Keep the API on a subdomain of the web app's domain** so `CookieDomain=.<domain>` works with
   the default `SameSite=Lax`. A different domain needs `SameSite=None`, which is a code change.
 - **`CORS:AdminApp` must be set even though there is no admin app**: `Program.cs` throws on the
@@ -1305,7 +1312,7 @@ Each has the default this plan assumes.
    with a payment method on file, which brushes against "no paid services". Garage and SeaweedFS
    are the self-hosted alternatives if `pgsty/minio` ever becomes unusable; both need a config
    file, which MinIO does not.
-5. **Postgres: Coolify-managed or in the compose file.** *Default: Coolify-managed, pinned to 15.*
+5. **Postgres: Coolify-managed or in the compose file.** *Default: Coolify-managed, pinned to 16.*
    Its lifecycle is then independent of app redeploys and it gets Coolify's scheduled backups,
    which is the whole reason. The alternative — Postgres as a service in `compose.prod.yml` —
    makes the committed file the entire deployment and portable to any Docker host, at the cost of

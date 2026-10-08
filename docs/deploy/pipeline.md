@@ -73,7 +73,7 @@ git-backed **Docker Compose** resource. The pipeline pins
 |---|---|---|---|
 | `takeinitiative-api` | Application, "Docker Image" | `ghcr.io/pi-gorbo/takeinitiative-api` | `lvb5hpab49yh618nttvev1fz` |
 | `takeinitiative-web` | Application, "Docker Image" | `ghcr.io/pi-gorbo/takeinitiative-web` | `m1kq4p6ckky1ldfssvio5l6d` |
-| Postgres 15 | Coolify-managed database | — | — |
+| Postgres 16 | Coolify-managed database | — | — |
 | MinIO | Application or one-click service | `pgsty/minio`, pinned as `compose.prod.yml` records | — |
 
 > **Both applications exist and their UUIDs are committed.** They were created undesignated, so

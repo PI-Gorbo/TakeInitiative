@@ -14,7 +14,7 @@ public class WebAppWithDatabaseFixture : IAsyncLifetime, IWebAppClient
 {
     public IAlbaHost AlbaHost { get; private set; } = null!;
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder()
-        .WithImage("postgres:15-alpine")
+        .WithImage("postgres:16-alpine")
         .Build();
     public InMemoryBlobStore Blobs { get; } = new();
     public IDiceRoller DiceRollerSubstitute => Substitute.For<IDiceRoller>();

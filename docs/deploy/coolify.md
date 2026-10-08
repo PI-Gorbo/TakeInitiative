@@ -1,34 +1,22 @@
 # Coolify: the first deployment, by hand
 
-> ## ⚠️ Sections 5 and 11 are superseded. Read this first.
+> ## ⚠️ Sections 5 and 11 are superseded
 >
-> This guide stands the deployment up as **one git-backed Docker Compose resource** running
-> `compose.prod.yml`. The deployment is now **two Docker Image Applications** (api and web) beside
-> Coolify's own Postgres and MinIO resources, because `.github/workflows/deploy.yml` pins
-> `docker_registry_image_name`/`_tag` to an exact image digest and those fields exist on an
-> Application, not on a compose resource.
->
-> **`docs/deploy/pipeline.md` section 1 is the authority on the resource shape**, and it lists what
-> moved where — env vars, volumes, healthchecks, the MinIO hostname.
->
-> What is still correct here, and is most of the document: the server (1), DNS (2), the project (3),
-> **Postgres (4)**, **every environment variable and how to generate the secrets (6)**, domains and
-> TLS (7), persistent storage (8), proving it pulled rather than built (9), the end-to-end
-> verification (10), and **all eight failure modes in section 12** — which are about the app and the
-> proxy, not about how Coolify was pointed at the images.
->
-> What to read differently:
+> This guide builds the deployment as one git-backed Docker Compose resource. It is now **two
+> Docker Image Applications** (api, web) beside Coolify's Postgres and MinIO resources, because
+> `deploy.yml` pins `docker_registry_image_name`/`_tag` and those exist on an Application.
+> **`docs/deploy/pipeline.md` section 1 is the authority**, and lists what moved where.
 >
 > | Section | Now |
 > |---|---|
-> | **5. The compose resource** | Replaced. Create two Applications instead; see pipeline.md §1 |
-> | 6. Environment variables | Right list, set **per Application** rather than once on one resource. `Blobs__ServiceUrl` becomes MinIO's resource hostname, not `http://minio:9000` |
-> | 7. Domains and TLS | Per Application rather than per compose service. Everything about Traefik and the subdomain requirement is unchanged |
-> | 8. Persistent storage | Coolify "Persistent Storage" entries on the owning Application, not named volumes in the compose file |
-> | **11. The deploy webhook** | Replaced. The pipeline uses the Coolify API to pin a digest and poll the deployment; the webhook could only re-pull a moving tag. `COOLIFY_DEPLOY_URL`/`COOLIFY_TOKEN` are superseded by `COOLIFY_BASE_URL` + `COOLIFY_API_TOKEN` |
+> | **5. The compose resource** | Replaced by two Applications |
+> | 6. Environment variables | Right list, set per Application. `Blobs__ServiceUrl` is MinIO's resource hostname |
+> | 7. Domains and TLS | Per Application |
+> | 8. Persistent storage | Coolify "Persistent Storage" entries, not compose volumes |
+> | **11. The deploy webhook** | Replaced by the Coolify API. `COOLIFY_BASE_URL` + `COOLIFY_API_TOKEN` |
 >
-> The by-hand path this document describes still works, and is deliberately kept: it is the retreat
-> if the pipeline is broken and something has to ship.
+> Everything else holds, including all eight failure modes in section 12 — they are about the app
+> and the proxy. The by-hand path is kept deliberately: it is the retreat if the pipeline breaks.
 
 This is the walkthrough for standing TakeInitiative up on a Coolify server for the first time. It
 assumes you have never used Coolify before and that you know your way around a Linux box, Docker
@@ -47,7 +35,7 @@ is impossible. Step 9 below is how you prove it, and that proof is the point of 
 | Target | an Ubuntu box, **arm64** |
 | Images | `linux/arm64` only, built on `ubuntu-24.04-arm` |
 | Registry | GHCR, **public packages** — so the server needs no registry credentials |
-| Postgres | **Coolify-managed, pinned to 15** — it is deliberately not in `compose.prod.yml` |
+| Postgres | **Coolify-managed, pinned to 16** — it is deliberately not in `compose.prod.yml` |
 | Object store | MinIO, its own Coolify resource, on a volume |
 | API replicas | **exactly one, forever** (see step 12) |
 
@@ -176,7 +164,7 @@ In Coolify, create **one project** and use its **`production`** environment. Eve
 this guide lives inside it. There is no staging environment in this plan — that is listed as "not
 in scope" deliberately.
 
-## 4. Postgres 15
+## 4. Postgres 16
 
 Postgres is **not** a service in `compose.prod.yml`. It is a Coolify-managed database resource, and
 the reasons are worth knowing because they are the whole argument for the extra step:
@@ -189,12 +177,15 @@ the reasons are worth knowing because they are the whole argument for the extra 
 Steps:
 
 1. Add a new resource in the project → **Databases → PostgreSQL**.
-2. **Pin the version to 15.** You are looking for the image/version field on the new-database form
-   (or, if your version does not offer one there, the image field in the resource's settings
-   before the first start). `postgres:15` or `postgres:15-alpine`.
+2. **Pin the version to 16 — `postgres:16-alpine`.** The image/version field is on the
+   new-database form, or in the resource's settings before the first start.
 
-   This matters: `postgres:latest` is 18+, which moved its data directory, so a dump taken from
-   dev will not restore into it. `compose.dev.yml` and the Alba/Testcontainers fixtures are all 15.
+   16 because Marten's own CI runs against 15 and 16. Pin a major, never `postgres:latest`.
+
+   > If this ever moves to 18+, the mount has to change with it: 18 made `PGDATA` version
+   > specific (`/var/lib/postgresql/18/docker`) and moved its `VOLUME` to `/var/lib/postgresql`.
+   > A volume left at the old path makes an 18 container exit 1. None of that applies on 16.
+
 3. **Set the database name, user and password**, or note what Coolify generated. Coolify generates
    its own defaults, which are usually *not* `takeinitiative`/`takeinitiative` — whatever they
    are, they are what goes into the connection string in step 6, so copy them exactly. Use a
