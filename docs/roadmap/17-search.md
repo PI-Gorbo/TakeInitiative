@@ -115,7 +115,7 @@ nouns the step puts into code and UI:
 1. **Extensions.** `pg_trgm` (similarity) and `unaccent` (accent folding for names).
    Add them as Weasel `Extension` schema objects in `opts.Storage.ExtendedSchemaObjects`,
    so `ApplyAllDatabaseChangesOnStartup` creates them.
-   - Both come with `postgres:15-alpine`, the image that dev (`compose.dev.yml`) and
+   - Both come with `postgres:16-alpine`, the image that dev (`compose.dev.yml`) and
      both Testcontainers fixtures use. `pg_available_extensions` on `takedb` lists
      `pg_trgm` 1.6 and `unaccent` 1.1, and neither is installed yet.
    - Both are **trusted** extensions from PG 13, so a database owner that is not a
@@ -670,7 +670,7 @@ nouns the step puts into code and UI:
 ## Verify
 
 1. `dotnet test` and `pnpm build` pass, `vitest` passes, `schema.d.ts` is fresh, and
-   CI is green on every PR in the stack. Testcontainers' `postgres:15-alpine` has both
+   CI is green on every PR in the stack. Testcontainers' `postgres:16-alpine` has both
    extensions, so no workflow changes.
 2. `pnpm dev` on an existing dev database starts cleanly. The API creates `pg_trgm`,
    `unaccent` and the two indexes, and a second start changes nothing

@@ -11,7 +11,7 @@ namespace TakeInitiative.KnowledgeBase.Tests;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <c>postgres:15-alpine</c>, which is what <c>compose.dev.yml</c> and the API's Alba fixtures pin
+/// <c>postgres:16-alpine</c>, which is what <c>compose.dev.yml</c> and the API's Alba fixtures pin
 /// (<c>apps/TakeInitiative.Api.Tests/Scopes/Integration/*Fixture.cs</c>). The schema has a generated
 /// column and a <c>gin_trgm_ops</c> index in it; the version those are exercised against should be
 /// the version dev and CI run, not whatever <c>latest</c> is this month.
@@ -33,7 +33,7 @@ namespace TakeInitiative.KnowledgeBase.Tests;
 public sealed class PostgresFixture : IAsyncLifetime
 {
     private readonly PostgreSqlContainer postgres = new PostgreSqlBuilder()
-        .WithImage("postgres:15-alpine")
+        .WithImage("postgres:16-alpine")
         .Build();
 
     /// <summary>The database the store tests write to. Its schema is applied.</summary>

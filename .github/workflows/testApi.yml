@@ -11,7 +11,11 @@ on:
       - "**.cs"
       - "**.csproj"
   pull_request:
-    branches: [ "dev" ]
+    # `v2/**` so a STACKED PR is gated too. Work here often lands as a stack, and
+    # CLAUDE.md requires the gates on each PR in one rather than only on the tip — but a
+    # PR based on another `v2/**` branch matches neither `dev` nor `main`, so it used to
+    # get zero checks and look green by having been asked nothing.
+    branches: [ "dev", "main", "v2/**" ]
     paths:
       - ".github/workflows/testApi.yml"
       - "**.cs"

@@ -47,7 +47,7 @@ is impossible. Step 9 below is how you prove it, and that proof is the point of 
 | Target | an Ubuntu box, **arm64** |
 | Images | `linux/arm64` only, built on `ubuntu-24.04-arm` |
 | Registry | GHCR, **public packages** — so the server needs no registry credentials |
-| Postgres | **Coolify-managed, pinned to 15** — it is deliberately not in `compose.prod.yml` |
+| Postgres | **Coolify-managed, pinned to 16** — it is deliberately not in `compose.prod.yml` |
 | Object store | MinIO, its own Coolify resource, on a volume |
 | API replicas | **exactly one, forever** (see step 12) |
 
@@ -176,7 +176,7 @@ In Coolify, create **one project** and use its **`production`** environment. Eve
 this guide lives inside it. There is no staging environment in this plan — that is listed as "not
 in scope" deliberately.
 
-## 4. Postgres 15
+## 4. Postgres 16
 
 Postgres is **not** a service in `compose.prod.yml`. It is a Coolify-managed database resource, and
 the reasons are worth knowing because they are the whole argument for the extra step:
@@ -189,12 +189,28 @@ the reasons are worth knowing because they are the whole argument for the extra 
 Steps:
 
 1. Add a new resource in the project → **Databases → PostgreSQL**.
-2. **Pin the version to 15.** You are looking for the image/version field on the new-database form
-   (or, if your version does not offer one there, the image field in the resource's settings
-   before the first start). `postgres:15` or `postgres:15-alpine`.
+2. **Pin the version to 16 — `postgres:16-alpine`.** You are looking for the image/version field on
+   the new-database form (or, if your version does not offer one there, the image field in the
+   resource's settings before the first start).
 
-   This matters: `postgres:latest` is 18+, which moved its data directory, so a dump taken from
-   dev will not restore into it. `compose.dev.yml` and the Alba/Testcontainers fixtures are all 15.
+   **Why 16 rather than the newest.** Marten's own CI runs against 15 and 16, so this sits inside
+   the matrix upstream actually tests rather than ahead of it. For an application whose entire
+   persistence layer is Marten — documents, the event store, the async daemon — being in that set is
+   worth more than being current. `compose.dev.yml` and all four Alba/Testcontainers fixtures are
+   `16-alpine`, so dev, CI and production share a major.
+
+   Pin a **major**, never `postgres:latest`. `latest` floats across majors, and a database that
+   silently changes major version between redeploys is not a database you can reason about.
+
+   > **For whenever this does move to 18 or later.** The official image changed at 18: `PGDATA`
+   > became version specific (`/var/lib/postgresql/18/docker`) and the declared `VOLUME` moved up to
+   > `/var/lib/postgresql`, so data lands in a per-major subdirectory and `pg_upgrade --link` has no
+   > mount-point boundary to cross. A volume left at the old `/var/lib/postgresql/data` makes an 18
+   > container **exit 1** with `/var/lib/postgresql/data (unused mount/volume)` — measured
+   > 2026-10-07. None of that applies on 16, which uses `/var/lib/postgresql/data` as every Postgres
+   > compose file written before 2025 does; it is recorded here so the next major bump is a
+   > five-minute change rather than an afternoon.
+
 3. **Set the database name, user and password**, or note what Coolify generated. Coolify generates
    its own defaults, which are usually *not* `takeinitiative`/`takeinitiative` — whatever they
    are, they are what goes into the connection string in step 6, so copy them exactly. Use a

@@ -10,18 +10,45 @@
 
 services:
     postgres:
-        # Pinned, and matched to the image the Alba/Testcontainers suite uses
-        # (apps/TakeInitiative.Api.Tests/Scopes/Integration/*Fixture.cs), so dev
-        # and test run against the same major version. `postgres:latest` is now
-        # 18+, which moved its data directory and stopped mounting at
-        # /var/lib/postgresql/data.
-        image: postgres:15-alpine
+        # Pinned to a MAJOR, and matched to the image the Alba/Testcontainers suite
+        # uses (apps/TakeInitiative.Api.Tests/Scopes/Integration/*Fixture.cs), so dev
+        # and test run against the same major version.
+        #
+        # 16 specifically, and not merely "newer than 15": Marten's own CI runs
+        # against 15 and 16, so this sits inside the matrix upstream actually tests
+        # rather than ahead of it. For a project whose entire persistence layer is
+        # Marten, being in that set is worth more than being current.
+        #
+        # Never `postgres:latest`. `latest` floats across majors, and from 18 onward
+        # each major also changes the data directory (see the volume below), so
+        # `latest` eventually arrives as a container that refuses to start rather
+        # than as a decision anybody made.
+        image: postgres:16-alpine
         container_name: takedb
         ports:
             - "7401:5432"
         volumes:
-            # A named volume rather than a host bind mount: portable across
-            # machines, and `docker compose down -v` resets it cleanly.
+            # /var/lib/postgresql/data is correct for 16, and is the layout every
+            # Postgres compose file written before 2025 uses.
+            #
+            # WHEN THIS EVENTUALLY MOVES TO 18+, THIS LINE HAS TO CHANGE. At 18 the
+            # official image made PGDATA version specific
+            # (`/var/lib/postgresql/18/docker`) and moved its declared VOLUME up to
+            # `/var/lib/postgresql`, so data lands in a per-major subdirectory and
+            # `pg_upgrade --link` has no mount-point boundary to cross. Measured
+            # 2026-10-07: an 18 container with a volume still mounted here exits 1
+            # with "/var/lib/postgresql/data (unused mount/volume)". Staying on 16
+            # is what makes this a note rather than a problem.
+            #
+            # A named volume rather than a host bind mount: portable across machines,
+            # and `docker compose down -v` resets it cleanly.
+            #
+            # ONE-TIME, coming from 15: Postgres will not read another major's data
+            # directory. A 16 server against a 15 volume exits 1 with "database files
+            # are incompatible with server ... initialized by PostgreSQL version 15"
+            # — clear, at least. Dev data is disposable, so reset it once:
+            #     docker compose -p takeinitiative -f compose.dev.yml down -v
+            # then `pnpm dev`, which recreates the schema on API startup.
             - takedb-data:/var/lib/postgresql/data
         environment:
             - POSTGRES_PASSWORD=postgres

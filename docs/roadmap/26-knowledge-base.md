@@ -549,7 +549,7 @@ Deleted:
 - **`stale` is a row's state, not a link's.** Step 27's link renderer reads it. Until 27
   exists there is no way for a row to be link-protected, so 26c's test asserts the query
   shape and 27 adds the real case.
-- **Postgres 15** is what dev and the test fixtures pin (`compose.dev.yml` notes
+- **Postgres 16** is what dev and the test fixtures pin (`compose.dev.yml` notes
   `postgres:latest` is now 18+ and moved its data directory). Nothing in this schema needs
   anything newer.
 
