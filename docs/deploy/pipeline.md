@@ -69,12 +69,26 @@ git-backed **Docker Compose** resource. The pipeline pins
 `docker_registry_image_name` / `docker_registry_image_tag`, and those fields exist on a Coolify
 **Application** sourced from a docker image — not on a compose resource. So:
 
-| Resource | Kind | Image source |
-|---|---|---|
-| `takeinitiative-api` | Application, "Docker Image" | `ghcr.io/pi-gorbo/takeinitiative-api` |
-| `takeinitiative-web` | Application, "Docker Image" | `ghcr.io/pi-gorbo/takeinitiative-web` |
-| Postgres 15 | Coolify-managed database | — |
-| MinIO | Application or one-click service | `pgsty/minio`, pinned as `compose.prod.yml` records |
+| Resource | Kind | Image source | UUID |
+|---|---|---|---|
+| `takeinitiative-api` | Application, "Docker Image" | `ghcr.io/pi-gorbo/takeinitiative-api` | `lvb5hpab49yh618nttvev1fz` |
+| `takeinitiative-web` | Application, "Docker Image" | `ghcr.io/pi-gorbo/takeinitiative-web` | `m1kq4p6ckky1ldfssvio5l6d` |
+| Postgres 15 | Coolify-managed database | — | — |
+| MinIO | Application or one-click service | `pgsty/minio`, pinned as `compose.prod.yml` records | — |
+
+> **Both applications exist and their UUIDs are committed.** They were created undesignated, so
+> **which one is the API and which is the web app is decided by `deploy-targets.json`**, not by
+> Coolify — the table above is now the authority and Coolify has to be made to agree.
+>
+> Do two things in Coolify before enabling either: **name them to match** (`takeinitiative-api`,
+> `takeinitiative-web`), and **set each one's image source to the matching GHCR repository**.
+> Getting this backwards is the one mistake the pipeline cannot catch for you: it would PATCH the
+> web image onto the API's application and deploy it *successfully*, leaving two containers each
+> running the wrong thing behind the right domain. The symptom is a 404-ish mess on both hostnames
+> with two green deploys in the log.
+>
+> What the pipeline *does* catch: a UUID that is empty while the app is enabled, and the same UUID
+> used for both apps. Both fail the plan job, and both are tested.
 
 What moves out of `compose.prod.yml` and where it goes:
 
@@ -101,9 +115,17 @@ What moves out of `compose.prod.yml` and where it goes:
 images locally with production-shaped config before cutting a release. Its header now says so. It is
 simply no longer what Coolify runs.
 
-Copy each Application's UUID into `deploy-targets.json` and flip `enabled` to `true`. An app that is
-`enabled` with no UUID **fails the plan job** rather than deploying nothing quietly; that asymmetry
-is deliberate and is tested.
+The UUIDs are already in `deploy-targets.json`. **`enabled` is still `false` for both, and that is
+the only thing standing between a push to `main` and a real deploy** — so flip it last, after the
+applications are configured and steps 2–6 below are done. A disabled app with a UUID is a valid,
+inert state; an app that is `enabled` with no UUID **fails the plan job** rather than deploying
+nothing quietly. That asymmetry is deliberate and is tested.
+
+The recommended order for arming it, including a first run that changes nothing, is in
+**[Operating it](#operating-it)** — set the api application's image to the digest it is already
+running by hand, enable `api` alone, and dispatch with that tag. A correct pipeline then reports
+`already running this digest and healthy` and deploys nothing, which proves the credentials, the
+tailnet, Coolify reachability and the digest arithmetic in one run without touching production.
 
 ### 2. One new Tailscale tag
 

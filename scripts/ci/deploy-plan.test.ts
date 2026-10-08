@@ -4,6 +4,7 @@ import { test } from "node:test";
 import type { GhcrClient } from "./ghcr.ts";
 import {
     type DeployPlan,
+    assertDistinctUuids,
     buildPlan,
     deployingBranch,
     deployMatrix,
@@ -152,6 +153,38 @@ test("an enabled app with no UUID is an error, not a silent no-op", () => {
                 target: { enabled: true, coolifyApplicationUuid: "" },
             }),
         /has no coolifyApplicationUuid/,
+    );
+});
+
+test("two apps may not point at the same Coolify application", async () => {
+    // The UUIDs are pasted by hand from the dashboard as opaque 24-character strings,
+    // and the applications were created undesignated — so duplicating one is plausible.
+    // Nothing downstream would notice: both deploys succeed against the same
+    // application, the second overwriting the first.
+    await assert.rejects(
+        plan({ targetsRaw: targets({ api: { uuid: "same" }, web: { uuid: "same" } }) }),
+        /both point at Coolify application same/,
+    );
+});
+
+test("a shared UUID is only an error for apps actually being deployed", async () => {
+    // Two DISABLED apps share the empty-string placeholder, which means nothing.
+    const result = await plan({
+        targetsRaw: targets({
+            api: { enabled: false, uuid: "" },
+            web: { enabled: false, uuid: "" },
+        }),
+    });
+
+    assert.equal(deployable(result).length, 0);
+});
+
+test("assertDistinctUuids passes distinct ones through", () => {
+    assert.doesNotThrow(() =>
+        assertDistinctUuids([
+            { app: "api", image: "i", repository: "r", tag: "1.0.0", digest: "d", uuid: "a" },
+            { app: "web", image: "i", repository: "r", tag: "1.0.0", digest: "d", uuid: "b" },
+        ]),
     );
 });
 
