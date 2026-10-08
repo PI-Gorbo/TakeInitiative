@@ -1260,28 +1260,14 @@ Run in order. Every item is checkable; the last one is the point of the step.
   visibility check, so the bucket must **not** be publicly reachable and needs no CORS
   configuration at all.
 - **Postgres 16, pinned, not `latest`.** Moved from 15 on 2026-10-07, before any production data
-  existed — the same window Marten 9 used, and for the same reason: a major version change is a
-  schema definition now and a `pg_upgrade` once friends have campaigns.
+  existed — the window Marten 9 used, for the same reason. 16 because Marten's own CI runs against
+  15 and 16; 18 was measured and passes too, so it stays an option. All four fixtures and
+  `compose.dev.yml` moved together. Coming from 15 needs a one-time
+  `docker compose -f compose.dev.yml down -v`, since Postgres will not read another major's data
+  directory.
 
-  **16 because that is what Marten tests.** Marten supports 13+, but its own CI runs against 15 and
-  16, so 16 sits inside the matrix upstream actually exercises. For an application whose entire
-  persistence layer is Marten, being in that set beats being current. 18 was built and measured
-  first — the full suite passes on it, so it is a live option — and 16 was chosen deliberately over
-  it. `compose.dev.yml` and all four Alba/Testcontainers fixtures moved together, so dev, CI and
-  production share a major.
-
-  **16 also sidesteps a trap that 18 would have imported.** At 18 the official image made `PGDATA`
-  version specific (`/var/lib/postgresql/18/docker`) and moved its declared `VOLUME` up to
-  `/var/lib/postgresql`. A volume at the old path makes an 18 container exit 1 with
-  `/var/lib/postgresql/data (unused mount/volume)` — measured, 2026-10-07 — and Coolify's own
-  PostgreSQL template would have had to be checked by hand before the first start. On 16 the mount
-  is the conventional `/var/lib/postgresql/data` and none of that arises. The finding is recorded in
-  `compose.dev.yml` and `docs/deploy/coolify.md` step 4 so the eventual bump to 18+ is a known
-  five-minute change.
-
-  Coming from 15 still needs a one-time dev reset: Postgres will not read another major's data
-  directory, and a 16 server against a 15 volume exits 1 with `database files are incompatible with
-  server`. `docker compose -p takeinitiative -f compose.dev.yml down -v`.
+  18+ would also need the mount changed: it made `PGDATA` version specific and moved its `VOLUME`
+  to `/var/lib/postgresql`, and a volume at the old path exits 1. `coolify.md` step 4 records it.
 - **Keep the API on a subdomain of the web app's domain** so `CookieDomain=.<domain>` works with
   the default `SameSite=Lax`. A different domain needs `SameSite=None`, which is a code change.
 - **`CORS:AdminApp` must be set even though there is no admin app**: `Program.cs` throws on the

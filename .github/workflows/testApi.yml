@@ -11,16 +11,7 @@ on:
       - "**.cs"
       - "**.csproj"
   pull_request:
-    # NO `branches:` FILTER, DELIBERATELY — every pull request is gated, whatever it
-    # targets. CLAUDE.md requires the gates on each PR in a stack rather than only on the
-    # tip, and a filtered list cannot deliver that: a PR based on another feature branch
-    # matched nothing and got ZERO checks, which reads as green because nothing was asked
-    # of it. Enumerating branch patterns only moves the hole around — this repo already
-    # has `fix/`, `chore/`, `feat/` and `release/` branches that a `v2/**` guess missed.
-    #
-    # The `paths:` filter below still applies, so a docs-only PR still runs nothing, and
-    # `pull_request` (not `pull_request_target`) means a fork's PR gets a read-only token
-    # and no secrets.
+    # No branch filter: every PR is gated, including stacked ones based on a feature branch.
     paths:
       - ".github/workflows/testApi.yml"
       - "**.cs"

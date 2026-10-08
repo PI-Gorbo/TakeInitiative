@@ -183,13 +183,6 @@ jobs:
                       echo '```'
                   } >> "$GITHUB_STEP_SUMMARY"
 
-    # There is deliberately no deploy job here any more. Deploying is `deploy.yml`, triggered by a
-    # push to `main`, which resolves the release's version tag to a digest and pins Coolify to it.
-    #
-    # What used to be here was a single POST to a Coolify deploy webhook with `force=true`, which
-    # made Coolify re-pull a MOVING tag (`:latest`). That works, but it cannot say which bytes it
-    # deployed, so a rollback had no artefact to name and "what is in prod" was only answerable by
-    # reading the box. Pinning a digest is the whole point of the change; see docs/deploy/pipeline.md.
-    #
-    # This workflow's job is now exactly one thing: publish the images, and be the only CI coverage
-    # the two Dockerfiles have.
+    # No deploy job here: deploying is deploy.yml, on a push to main, which pins a digest. The
+    # webhook this used to POST could only re-pull a moving tag, so it could not say which bytes
+    # it deployed. This workflow publishes images and is the only CI coverage the Dockerfiles have.

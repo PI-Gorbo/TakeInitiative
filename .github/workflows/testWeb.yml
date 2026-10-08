@@ -13,8 +13,7 @@ on:
       - "pnpm-lock.yaml"
       - "turbo.json"
   pull_request:
-    # No `branches:` filter, deliberately: every PR is gated whatever it targets. See
-    # testApi.yml for why a filtered list cannot gate a stacked PR.
+    # No branch filter: every PR is gated, including stacked ones.
     paths:
       - ".github/workflows/testWeb.yml"
       - "**.vue"
