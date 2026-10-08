@@ -74,7 +74,7 @@ git-backed **Docker Compose** resource. The pipeline pins
 | `takeinitiative-api` | Application, "Docker Image" | `ghcr.io/pi-gorbo/takeinitiative-api` | `lvb5hpab49yh618nttvev1fz` |
 | `takeinitiative-web` | Application, "Docker Image" | `ghcr.io/pi-gorbo/takeinitiative-web` | `m1kq4p6ckky1ldfssvio5l6d` |
 | Postgres 16 | Coolify-managed database | — | — |
-| MinIO | Application or one-click service | `pgsty/minio`, pinned as `compose.prod.yml` records | — |
+| Garage | Application, "Docker Image" | `dxflrs/garage:v1.1.0`, with a mounted `garage.toml` | — |
 
 > **Both applications exist and their UUIDs are committed.** They were created undesignated, so
 > **which one is the API and which is the web app is decided by `deploy-targets.json`**, not by
@@ -95,18 +95,18 @@ What moves out of `compose.prod.yml` and where it goes:
 - **Environment variables** → onto each Application, per `docs/deploy/production.env.example`. The
   API's list is the long one. `Is build variable?` stays **off** for every single one; nothing here
   builds.
-- **`Blobs__ServiceUrl`** → no longer `http://minio:9000`. With MinIO as its own resource it is
+- **`Blobs__ServiceUrl`** → no longer `http://garage:3900`. With Garage as its own resource it is
   reached by that resource's internal hostname, exactly as `TAKEDB_CONNECTION` already is. Both
   resources need **"Connect to predefined network"** enabled or neither name resolves.
 - **Volumes** → Coolify "Persistent Storage" entries: `/keys` on the API (the data-protection key
-  ring — delete it and everybody is signed out on every deploy) and `/data` on MinIO (every image
-  anyone has ever uploaded).
+  ring — delete it and everybody is signed out on every deploy) and Garage's meta and data
+  directories (every image anyone has ever uploaded).
 - **Healthchecks** → nowhere. Both images carry their own `HEALTHCHECK`, including the API's
   `Host:`-header trick for host-filtered `/healthz`, so **leave Coolify's healthcheck disabled** and
   let the image's own probe be what `running:healthy` means. This is why the split cost nothing
   here; it is the part most likely to have been painful.
-- **`depends_on: minio: service_healthy`** → nothing enforces it any more. `BlobBucketInitializer`
-  is idempotent and retries for 30 s, so a cold boot where MinIO is slower than the API recovers on
+- **`depends_on: garage: service_healthy`** → nothing enforces it any more. `BlobBucketInitializer`
+  is idempotent and retries for 30 s, so a cold boot where Garage is slower than the API recovers on
   the API's next restart. Worth knowing on the very first deploy.
 - **`pull_policy: always`** → irrelevant. A digest reference is immutable; there is no stale tag to
   re-pull.

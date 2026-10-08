@@ -1,5 +1,6 @@
+using System.Net;
 using Amazon.S3;
-using Amazon.S3.Util;
+using Amazon.S3.Model;
 using Microsoft.Extensions.Options;
 
 namespace TakeInitiative.Api.Features.Images;
@@ -7,7 +8,7 @@ namespace TakeInitiative.Api.Features.Images;
 /// <summary>
 /// Creates the bucket on start when <see cref="BlobOptions.CreateBucket"/> is set (dev).
 /// A hosted service, so <c>--export-openapi</c>, which never starts the host, needs no
-/// blob store. MinIO may still be starting when the API does, so it retries for a while,
+/// blob store. The store may still be starting when the API does, so it retries for a while,
 /// and then logs rather than failing the whole API: only images need the bucket.
 /// </summary>
 public class BlobBucketInitializer(IAmazonS3 s3, IOptions<BlobOptions> options, ILogger<BlobBucketInitializer> logger) : IHostedService
@@ -48,9 +49,27 @@ public class BlobBucketInitializer(IAmazonS3 s3, IOptions<BlobOptions> options, 
 
     public static async Task EnsureBucket(IAmazonS3 s3, string bucket)
     {
-        if (!await AmazonS3Util.DoesS3BucketExistV2Async(s3, bucket))
+        if (!await BucketExists(s3, bucket))
         {
             await s3.PutBucketAsync(bucket);
+        }
+    }
+
+    /// <summary>
+    /// Not <c>AmazonS3Util.DoesS3BucketExistV2Async</c>: it probes with <c>GetBucketAcl</c>, and
+    /// Garage implements no ACLs at all, so that call fails with "Unimplemented action:
+    /// GetBucketAcl" against a perfectly healthy store. A zero-key list is the portable probe.
+    /// </summary>
+    public static async Task<bool> BucketExists(IAmazonS3 s3, string bucket)
+    {
+        try
+        {
+            await s3.ListObjectsV2Async(new ListObjectsV2Request { BucketName = bucket, MaxKeys = 1 });
+            return true;
+        }
+        catch (AmazonS3Exception e) when (e.StatusCode == HttpStatusCode.NotFound)
+        {
+            return false;
         }
     }
 }

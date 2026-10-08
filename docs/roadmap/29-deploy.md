@@ -289,7 +289,7 @@ Two things follow:
 ### Cookies across two hostnames
 
 With `https://<web>` and `https://api.<web>` on the same registrable domain, `CookieDomain`
-becomes `.<domain>` and `SameSite=Lax` (the cookie default) still works, because same-registrable-domain
+becomes `.samstack.org` and `SameSite=Lax` (the cookie default) still works, because same-registrable-domain
 requests are *same-site*. No `SameSite=None` is needed. Put the API on a genuinely different
 domain and it breaks: cross-site XHR needs `SameSite=None; Secure`, and that is a code change
 nobody needs. **Keep the API on a subdomain of the web app's domain.**
@@ -533,12 +533,12 @@ Every value is set as a container environment variable. Two notes on form:
 | Variable | Example | Secret | Set where |
 |---|---|---|---|
 | `ConnectionStrings__TakeDB` | `Host=<pg-host>;Port=5432;Database=takeinitiative;User ID=takeinitiative;Password=…;` | **yes** | Coolify env |
-| `CORS__MainApp` | `https://takeinitiative.<domain>` | no | Coolify env |
-| `CORS__AdminApp` | `https://takeinitiative.<domain>` | no | Coolify env — there is no admin app, but `Program.cs` throws if the key is absent |
-| `AllowedHosts` | `api.takeinitiative.<domain>` | no | Coolify env |
-| `CookieDomain` | `.takeinitiative.<domain>` | no | Coolify env |
-| `TakeUrls__Web` | `https://takeinitiative.<domain>` | no | Coolify env — the link in confirmation emails |
-| `Email__Domain` | `takeinitiative.<domain>` | no | Coolify env — becomes `no-reply@…` |
+| `CORS__MainApp` | `https://takeinitiative.samstack.org` | no | Coolify env |
+| `CORS__AdminApp` | `https://takeinitiative.samstack.org` | no | Coolify env — there is no admin app, but `Program.cs` throws if the key is absent |
+| `AllowedHosts` | `api.takeinitiative.samstack.org` | no | Coolify env |
+| `CookieDomain` | `.takeinitiative.samstack.org` | no | Coolify env |
+| `TakeUrls__Web` | `https://takeinitiative.samstack.org` | no | Coolify env — the link in confirmation emails |
+| `Email__Domain` | `takeinitiative.samstack.org` | no | Coolify env — becomes `no-reply@…` |
 | `SendGrid__ApiKey` | `SG.…` | **yes** | Coolify env |
 | `JWTSigningKey` | 64 random chars | **yes** | Coolify env — bound but unread; set it anyway |
 | `Blobs__ServiceUrl` | `http://minio:9000` | no | `compose.prod.yml` (internal) |
@@ -555,8 +555,8 @@ Every value is set as a container environment variable. Two notes on form:
 
 | Variable | Example | Secret |
 |---|---|---|
-| `NUXT_PUBLIC_AXIOS_BASE_URL` | `https://api.takeinitiative.<domain>` | no |
-| `NUXT_PUBLIC_WEB_URL` | `https://takeinitiative.<domain>` | no |
+| `NUXT_PUBLIC_AXIOS_BASE_URL` | `https://api.takeinitiative.samstack.org` | no |
+| `NUXT_PUBLIC_WEB_URL` | `https://takeinitiative.samstack.org` | no |
 | `NUXT_PUBLIC_SUGGESTIONS_BASE_URL` | unset — self-hosted from `/models/**` | no |
 | `HOST`, `PORT`, `NODE_ENV` | already in the image | no |
 
@@ -618,7 +618,7 @@ discouraged but impossible.
    Postgres + MinIO + two small containers; 2 GB will be tight once Postgres has shared buffers
    and the async daemon is running. **Nothing on the VPS ever builds, so the usual "Coolify needs
    4 GB to build Nuxt" advice does not apply.**
-2. **DNS.** `A` records for `takeinitiative.<domain>` and `api.takeinitiative.<domain>` → the
+2. **DNS.** `A` records for `takeinitiative.samstack.org` and `api.takeinitiative.samstack.org` → the
    VPS IP, both proxied off (Coolify issues the certificate itself).
 3. **Project and environment.** One project, one `production` environment.
 4. **Postgres.** Add a PostgreSQL 16 resource. Set a generated password. Note the internal
@@ -626,8 +626,8 @@ discouraged but impossible.
    bucket is available.
 5. **The compose resource.** New resource → *Docker Compose* → the public repo, branch `dev`,
    compose path `compose.prod.yml`.
-6. **Domains per service.** The web service gets `https://takeinitiative.<domain>`, the API
-   `https://api.takeinitiative.<domain>`. Coolify can take these from the UI per service, or from
+6. **Domains per service.** The web service gets `https://takeinitiative.samstack.org`, the API
+   `https://api.takeinitiative.samstack.org`. Coolify can take these from the UI per service, or from
    `SERVICE_FQDN_WEB_3000` / `SERVICE_FQDN_API_8080` magic variables in the compose file —
    the exact spelling drifts between Coolify versions, so set them in the UI first, confirm the
    generated Traefik labels, and only then move them into the file if you prefer. Let's Encrypt
@@ -1102,7 +1102,7 @@ later. Then run this step's **Verify** end to end.
 
    `pg_dump` for the database — and prefer a tunnel-free `docker exec … pg_dump > local file`
    for anything scheduled, since a container IP changes on recreate. A `tar` of the MinIO volume
-   for the bucket, rather than `mc mirror`: MinIO publishes no host port and the `pgsty` rebuild's
+   for the bucket, rather than Garage's admin API: Garage publishes no host port and its CLI
    bundled tooling is unverified. Then **restore one** into a local Postgres 16 and start the API
    against it — a backup nobody has restored is not a backup, and a dump Postgres accepts but
    Marten cannot read is not a restore.
@@ -1169,8 +1169,8 @@ Run in order. Every item is checkable; the last one is the point of the step.
    digests match the Actions run summary, and `buildx du` shows an empty cache. Coolify's deploy
    log contains `Pulling from` and no build output. `grep -rn "build:" compose.prod.yml` is empty.
 
-6. **TLS and the domains.** `https://takeinitiative.<domain>` and
-   `https://api.takeinitiative.<domain>/healthz` both answer over a valid certificate;
+6. **TLS and the domains.** `https://takeinitiative.samstack.org` and
+   `https://api.takeinitiative.samstack.org/healthz` both answer over a valid certificate;
    `http://` redirects.
 
 7. **Schema.** On the production database: `select extname from pg_extension;` includes `pg_trgm`
@@ -1268,7 +1268,7 @@ Run in order. Every item is checkable; the last one is the point of the step.
 
   18+ would also need the mount changed: it made `PGDATA` version specific and moved its `VOLUME`
   to `/var/lib/postgresql`, and a volume at the old path exits 1. `coolify.md` step 4 records it.
-- **Keep the API on a subdomain of the web app's domain** so `CookieDomain=.<domain>` works with
+- **Keep the API on a subdomain of the web app's domain** so `CookieDomain=.samstack.org` works with
   the default `SameSite=Lax`. A different domain needs `SameSite=None`, which is a code change.
 - **`CORS:AdminApp` must be set even though there is no admin app**: `Program.cs` throws on the
   missing key.
@@ -1295,9 +1295,9 @@ Each has the default this plan assumes.
    arm64 (Hetzner CAX, Oracle Ampere), say so and 29e becomes `runs-on: ubuntu-24.04-arm` with
    `platforms: linux/arm64`. Because nothing builds on the box, 2 GB is workable but leaves
    little headroom once Postgres and MinIO are both resident.
-2. **The domain, and the two hostnames.** *Default assumed: `takeinitiative.<your-domain>` for
-   the web app and `api.takeinitiative.<your-domain>` for the API, with
-   `CookieDomain=.takeinitiative.<your-domain>`.* Unknown to this plan. The alternative — one
+2. **The domain, and the two hostnames.** *Default assumed: `takeinitiative.samstack.org` for
+   the web app and `api.takeinitiative.samstack.org` for the API, with
+   `CookieDomain=.takeinitiative.samstack.org`.* Unknown to this plan. The alternative — one
    hostname with the API on `/api` and `/campaignHub` — removes CORS and the cookie-domain
    question entirely and would let `NUXT_PUBLIC_AXIOS_BASE_URL` be empty, but it needs
    hand-written Traefik path rules for two prefixes instead of two tick-boxes.

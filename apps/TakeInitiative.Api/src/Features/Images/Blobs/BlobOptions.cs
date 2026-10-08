@@ -2,7 +2,7 @@ namespace TakeInitiative.Api.Features.Images;
 
 /// <summary>
 /// The <c>Blobs</c> configuration section: any S3-compatible bucket. The dev defaults in
-/// appsettings.json point at the MinIO of compose.dev.yml.
+/// appsettings.json point at the Garage of compose.dev.yml.
 /// </summary>
 public class BlobOptions
 {

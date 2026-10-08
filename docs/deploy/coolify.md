@@ -3,14 +3,14 @@
 > ## ⚠️ Sections 5 and 11 are superseded
 >
 > This guide builds the deployment as one git-backed Docker Compose resource. It is now **two
-> Docker Image Applications** (api, web) beside Coolify's Postgres and MinIO resources, because
+> Docker Image Applications** (api, web) beside Coolify's Postgres and Garage resources, because
 > `deploy.yml` pins `docker_registry_image_name`/`_tag` and those exist on an Application.
 > **`docs/deploy/pipeline.md` section 1 is the authority**, and lists what moved where.
 >
 > | Section | Now |
 > |---|---|
 > | **5. The compose resource** | Replaced by two Applications |
-> | 6. Environment variables | Right list, set per Application. `Blobs__ServiceUrl` is MinIO's resource hostname |
+> | 6. Environment variables | Right list, set per Application. `Blobs__ServiceUrl` is Garage's resource hostname |
 > | 7. Domains and TLS | Per Application |
 > | 8. Persistent storage | Coolify "Persistent Storage" entries, not compose volumes |
 > | **11. The deploy webhook** | Replaced by the Coolify API. `COOLIFY_BASE_URL` + `COOLIFY_API_TOKEN` |
@@ -36,7 +36,7 @@ is impossible. Step 9 below is how you prove it, and that proof is the point of 
 | Images | `linux/arm64` only, built on `ubuntu-24.04-arm` |
 | Registry | GHCR, **public packages** — so the server needs no registry credentials |
 | Postgres | **Coolify-managed, pinned to 16** — it is deliberately not in `compose.prod.yml` |
-| Object store | MinIO, its own Coolify resource, on a volume |
+| Object store | Garage, its own Coolify resource, on a volume |
 | API replicas | **exactly one, forever** (see step 12) |
 
 > **A note on Coolify versions.** Coolify's UI moves between releases. Where a field name or a
@@ -54,7 +54,7 @@ is impossible. Step 9 below is how you prove it, and that proof is the point of 
 
 - [ ] **A domain**, with access to its DNS. You will create two `A` records.
 - [ ] **A VPS** with a public IP, Ubuntu, arm64, and Docker. Coolify's own installer puts Docker
-      on for you. Rough sizing: **2 vCPU / 4 GB is comfortable** for Postgres + MinIO + two small
+      on for you. Rough sizing: **2 vCPU / 4 GB is comfortable** for Postgres + Garage + two small
       containers. 2 GB works but leaves little headroom once Postgres has its shared buffers and
       the Marten async daemon is running. The usual *"Coolify needs 4 GB to build Nuxt"* advice
       does **not** apply, because nothing on this box ever builds.
@@ -84,12 +84,12 @@ Pick them now, because almost every environment variable is derived from them.
 
 | | Default this guide uses | Why |
 |---|---|---|
-| Web app | `https://takeinitiative.<your-domain>` | |
-| API | `https://api.takeinitiative.<your-domain>` | |
-| Cookie domain | `.takeinitiative.<your-domain>` | the leading dot is what makes one auth cookie valid on both |
+| Web app | `https://takeinitiative.samstack.org` | |
+| API | `https://api.takeinitiative.samstack.org` | |
+| Cookie domain | `.takeinitiative.samstack.org` | the leading dot is what makes one auth cookie valid on both |
 
 **Keep the API on a subdomain of the web app's domain.** That is what lets
-`CookieDomain=.takeinitiative.<domain>` work with the cookie's default `SameSite=Lax`, because
+`CookieDomain=.takeinitiative.samstack.org` work with the cookie's default `SameSite=Lax`, because
 same-registrable-domain requests are *same-site*. Put the API on a genuinely different domain and
 cross-site XHR needs `SameSite=None; Secure`, which is a code change nobody needs.
 
@@ -105,19 +105,17 @@ cross-site XHR needs `SameSite=None; Secure`, which is a code change nobody need
 ```
 ghcr.io/pi-gorbo/takeinitiative-api:latest          # the API
 ghcr.io/pi-gorbo/takeinitiative-web:latest          # the web app
-docker.io/pgsty/minio:RELEASE.2026-08-04T00-00-00Z@sha256:b6bfe723…   # the bucket, digest-pinned
+docker.io/dxflrs/garage:v1.1.0                      # the bucket
 ```
 
 GHCR paths are lowercase, so the owner `PI-Gorbo` is `pi-gorbo`. You will also see a
 `:buildcache` tag on each package — that is the registry build cache the workflow writes, not
 something to deploy. Ignore it.
 
-MinIO is the one image not from GHCR, because MinIO stopped publishing community images in 2025
-and `pgsty/minio` is a community rebuild of the same server. It is pinned by digest so a retag
-upstream cannot change what runs. If you would rather depend on exactly one registry, mirror it —
-the command is in the comment above the `minio` service in `compose.prod.yml` — and set
-`MINIO_IMAGE` to the result. Remember to make *that* package public too, or you have just
-reintroduced the registry credentials the app images avoid.
+Garage is the one image not from GHCR. Unlike MinIO it needs a config file and a one-off CLI
+bootstrap — step 5 covers both. If you would rather depend on exactly one registry, mirror it into
+GHCR with `docker buildx imagetools create` and set `GARAGE_IMAGE`; remember to make that package
+public, or you have reintroduced the registry credentials the app images avoid.
 
 ---
 
@@ -142,8 +140,8 @@ anywhere: the packages are public.
 Create two `A` records pointing at the VPS's public IP:
 
 ```
-takeinitiative.<your-domain>       A    <vps-ip>
-api.takeinitiative.<your-domain>   A    <vps-ip>
+takeinitiative.samstack.org       A    <vps-ip>
+api.takeinitiative.samstack.org   A    <vps-ip>
 ```
 
 **If your DNS is Cloudflare, leave the proxy OFF (grey cloud, "DNS only") for both.** Coolify
@@ -154,8 +152,8 @@ app. This is a common and very confusing first failure.
 Wait for both to resolve before you ask Coolify for a certificate:
 
 ```sh
-dig +short takeinitiative.<your-domain>
-dig +short api.takeinitiative.<your-domain>
+dig +short takeinitiative.samstack.org
+dig +short api.takeinitiative.samstack.org
 ```
 
 ## 3. Project and environment
@@ -247,7 +245,7 @@ environment list, and one place to look.
    for a compose service, leave the API at 1. Forever.
 
 At this point Coolify will have parsed the compose file and will be showing you its three
-services: `api`, `web`, `minio`. Do not deploy yet.
+services: `api`, `web`, `garage`. Do not deploy yet.
 
 ## 6. Environment variables
 
@@ -265,18 +263,18 @@ error-prone than fourteen individual rows.
   Swagger, skips `appsettings.development.json`, and switches the auth cookie to
   `SecurePolicy.Always`. Setting it to anything is how you accidentally ship Swagger.
 
-Substituting `<your-domain>` throughout:
+Substituting `samstack.org` throughout:
 
 | Variable | Value | Secret? | Notes |
 |---|---|---|---|
-| `WEB_ORIGIN` | `https://takeinitiative.<your-domain>` | no | Scheme included, **no trailing slash**. Becomes `CORS__MainApp`, `CORS__AdminApp`, `TakeUrls__Web` and `NUXT_PUBLIC_WEB_URL` |
-| `API_ORIGIN` | `https://api.takeinitiative.<your-domain>` | no | Scheme included, no trailing slash. Becomes `NUXT_PUBLIC_AXIOS_BASE_URL` |
-| `API_HOST` | `api.takeinitiative.<your-domain>` | no | **Host name only** — no scheme, no port. Becomes `AllowedHosts` |
-| `COOKIE_DOMAIN` | `.takeinitiative.<your-domain>` | no | **The leading dot is load-bearing** |
-| `EMAIL_DOMAIN` | `takeinitiative.<your-domain>` | no | Becomes `no-reply@<this>`; must be verified with SendGrid |
+| `WEB_ORIGIN` | `https://takeinitiative.samstack.org` | no | Scheme included, **no trailing slash**. Becomes `CORS__MainApp`, `CORS__AdminApp`, `TakeUrls__Web` and `NUXT_PUBLIC_WEB_URL` |
+| `API_ORIGIN` | `https://api.takeinitiative.samstack.org` | no | Scheme included, no trailing slash. Becomes `NUXT_PUBLIC_AXIOS_BASE_URL` |
+| `API_HOST` | `api.takeinitiative.samstack.org` | no | **Host name only** — no scheme, no port. Becomes `AllowedHosts` |
+| `COOKIE_DOMAIN` | `.takeinitiative.samstack.org` | no | **The leading dot is load-bearing** |
+| `EMAIL_DOMAIN` | `takeinitiative.samstack.org` | no | Becomes `no-reply@<this>`; must be verified with SendGrid |
 | `TAKEDB_CONNECTION` | see below | **yes** | |
-| `BLOBS_ACCESS_KEY` | **generate** | **yes** | ≥ 3 characters or MinIO refuses to start |
-| `BLOBS_SECRET_KEY` | **generate** | **yes** | ≥ 8 characters or MinIO refuses to start |
+| `BLOBS_ACCESS_KEY` | **generate** | **yes** | Must be `GK` + 24 hex — Garage rejects any other shape |
+| `BLOBS_SECRET_KEY` | **generate** | **yes** | 32 bytes hex |
 | `SENDGRID_API_KEY` | `SG.…` | **yes** | From your SendGrid account |
 | `JWT_SIGNING_KEY` | **generate**, 64 chars | **yes** | Bound to `JWTOptions`, `required` there, and never actually read. Set it so startup does not fail; expect nothing from it |
 
@@ -294,12 +292,16 @@ openssl rand -hex 16                                 # BLOBS_ACCESS_KEY
 openssl rand -base64 36 | tr -d '/+='                # BLOBS_SECRET_KEY
 ```
 
-`BLOBS_ACCESS_KEY` / `BLOBS_SECRET_KEY` are **one pair used twice**: they are MinIO's root
-credentials *and* the API's `Blobs__AccessKey` / `Blobs__SecretKey`. `compose.prod.yml` wires both
-sides from the same variables so they cannot drift. Keep a copy — you will want them if you ever
-run `mc` against the bucket.
+`BLOBS_ACCESS_KEY` / `BLOBS_SECRET_KEY` are the API's `Blobs__AccessKey` / `Blobs__SecretKey`, and
+the same pair you `garage key import` in step 5. Garage takes no credentials from the environment,
+so unlike MinIO these two live in both places by hand. Keep a copy.
 
-**Leave `API_IMAGE`, `WEB_IMAGE` and `MINIO_IMAGE` unset.** Unset is the steady state:
+```sh
+echo "GK$(openssl rand -hex 12)"   # BLOBS_ACCESS_KEY — the GK prefix is mandatory
+openssl rand -hex 32               # BLOBS_SECRET_KEY
+```
+
+**Leave `API_IMAGE`, `WEB_IMAGE` and `GARAGE_IMAGE` unset.** Unset is the steady state:
 `compose.prod.yml`'s `:latest` default applies and the release workflow tells Coolify to re-pull.
 A value in any of them is a **pin** that somebody has to remember to remove. They exist for
 rollback, and `operations.md` is where that is written down.
@@ -321,13 +323,13 @@ So, for a compose resource, there is a **domain field per service**:
 
 | Service | Domain | Container port |
 |---|---|---|
-| `web` | `https://takeinitiative.<your-domain>` | 3000 |
-| `api` | `https://api.takeinitiative.<your-domain>` | 8080 |
-| `minio` | **none — leave it blank** | — |
+| `web` | `https://takeinitiative.samstack.org` | 3000 |
+| `api` | `https://api.takeinitiative.samstack.org` | 8080 |
+| `garage` | **none — leave it blank** | — |
 
 Coolify infers the container port from the service's exposed port when there is only one, and both
 of these services expose exactly one. If your version asks for it, or routes to the wrong port,
-Coolify's domain field accepts a **`https://host:port`** form — `https://api.takeinitiative.<your-domain>:8080`
+Coolify's domain field accepts a **`https://host:port`** form — `https://api.takeinitiative.samstack.org:8080`
 — where the port is the *container's* port, not a published host port. (*Unverified for your
 version; it is the convention in the versions this was written against.*)
 
@@ -425,9 +427,9 @@ In order. The last one is the point.
 1. **TLS and the domains.**
 
    ```sh
-   curl -sI https://takeinitiative.<your-domain>/ | head -1
-   curl -s  https://api.takeinitiative.<your-domain>/healthz
-   curl -sI http://takeinitiative.<your-domain>/ | head -1    # expect a 3xx redirect to https
+   curl -sI https://takeinitiative.samstack.org/ | head -1
+   curl -s  https://api.takeinitiative.samstack.org/healthz
+   curl -sI http://takeinitiative.samstack.org/ | head -1    # expect a 3xx redirect to https
    ```
 
    Both over a valid certificate. Note that `/healthz` answers **200 through Traefik** because
@@ -438,9 +440,9 @@ In order. The last one is the point.
 
    | | |
    |---|---|
-   | `https://takeinitiative.<your-domain>/` | the landing page — **server-rendered** |
-   | `https://takeinitiative.<your-domain>/login` | **server-rendered** |
-   | `https://takeinitiative.<your-domain>/app` | the SPA (`ssr: false`) |
+   | `https://takeinitiative.samstack.org/` | the landing page — **server-rendered** |
+   | `https://takeinitiative.samstack.org/login` | **server-rendered** |
+   | `https://takeinitiative.samstack.org/app` | the SPA (`ssr: false`) |
 
    **Check all three, deliberately.** A bug that broke exactly `/` and `/login` while `/app` was
    perfectly fine was fixed in `d6f7f53` (*"fix(web): declare pinia, so production SSR stops
@@ -449,7 +451,7 @@ In order. The last one is the point.
    but is missing its content.
 
 3. **The runtime API URL reached the browser.** View source on `/app` (or
-   `curl -s https://takeinitiative.<your-domain>/app | grep -o 'https://api[^"]*'`) and find your
+   `curl -s https://takeinitiative.samstack.org/app | grep -o 'https://api[^"]*'`) and find your
    API origin inside `window.__NUXT__.config`. That is `NUXT_PUBLIC_AXIOS_BASE_URL` being applied
    per request. If it is empty or wrong, the variable is wrong — it is **not** a rebuild.
 
@@ -569,7 +571,7 @@ the container's own `AllowedHosts` and presents it as the `Host` header, falling
 docker inspect --format '{{json .State.Health}}' <api-container> | head -c 2000
 
 docker exec <api-container> sh -c 'curl -s -o /dev/null -w "%{http_code}\n" \
-    -H "Host: api.takeinitiative.<your-domain>" http://127.0.0.1:8080/healthz'   # expect 200
+    -H "Host: api.takeinitiative.samstack.org" http://127.0.0.1:8080/healthz'   # expect 200
 docker exec <api-container> sh -c 'curl -s -o /dev/null -w "%{http_code}\n" \
     http://127.0.0.1:8080/healthz'                                               # expect 400
 ```
@@ -585,7 +587,7 @@ causes:
   interferes, the probe will be looking for a variable that is empty.
   (*Unverified — it works under plain `docker compose`; check it here if the symptom above shows
   up with a correct `API_HOST`.*) The workaround, if so, is to add `localhost` to `AllowedHosts`
-  (`API_HOST=api.takeinitiative.<domain>;localhost` — note the probe uses the **first** name, so
+  (`API_HOST=api.takeinitiative.samstack.org;localhost` — note the probe uses the **first** name, so
   put the real host first and this will still work).
 
 **Anyone editing a healthcheck on this API must know this**, or they will chase a phantom failure

@@ -1,0 +1,24 @@
+# Garage for local development. Committed secrets are deliberate: this cluster holds nothing
+# but dev uploads and is reachable only on localhost. Production gets its own file with
+# generated values — docs/deploy/coolify.md step 5.
+#
+# s3_region must match Blobs:Region (us-east-1), or every request fails SigV4 verification
+# rather than failing as a configuration error.
+
+metadata_dir = "/var/lib/garage/meta"
+data_dir = "/var/lib/garage/data"
+db_engine = "sqlite"
+replication_factor = 1
+
+rpc_bind_addr = "[::]:3901"
+rpc_public_addr = "127.0.0.1:3901"
+rpc_secret = "5f8c2a91e46b73d0c1f8a52e9b7d3604af1c85926de430bf7a2c619d84e05f3b"
+
+[s3_api]
+s3_region = "us-east-1"
+api_bind_addr = "[::]:3900"
+root_domain = ".s3.garage.localhost"
+
+[admin]
+api_bind_addr = "[::]:3903"
+admin_token = "dev-admin-token"

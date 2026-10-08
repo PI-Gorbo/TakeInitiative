@@ -6,7 +6,7 @@ something is wrong.
 
 Everything here assumes the shape `docs/deploy/pipeline.md` describes: two Coolify **Docker Image
 Applications** (api and web) pinned to exact GHCR digests by `.github/workflows/deploy.yml`, beside
-Coolify's own Postgres 16 and MinIO resources, with no published host ports. `coolify.md` built most
+Coolify's own Postgres 16 and Garage resources, with no published host ports. `coolify.md` built most
 of that and its sections 5 and 11 are superseded; `pipeline.md` is the authority on the resource
 shape and on the pipeline that moves it.
 
@@ -49,9 +49,9 @@ cancel each other, they publish disjoint tag sets, and the second reuses the fir
 ### Afterwards, every time
 
 ```sh
-curl -s https://api.takeinitiative.<domain>/healthz            # 200
-curl -sI https://takeinitiative.<domain>/      | head -1       # 200
-curl -sI https://takeinitiative.<domain>/login | head -1       # 200
+curl -s https://api.takeinitiative.samstack.org/healthz            # 200
+curl -sI https://takeinitiative.samstack.org/      | head -1       # 200
+curl -sI https://takeinitiative.samstack.org/login | head -1       # 200
 ```
 
 Then open `/`, `/login` and `/app` in a browser. **Check `/` and `/login`, not just `/app`** — they
@@ -179,7 +179,7 @@ read section 3 before you touch anything.
 | The knowledge base (`knowledge_base_item`) | **yes** — re-run the ingest from the 5eTools folder on your machine (section 4) | Nothing to back up |
 | `takeapi-keys` (`/keys`) | **yes** — a new key ring generates itself | Losing it signs everybody out once. Annoying, not data loss |
 | **Postgres** | **no** | **The event store is the campaign.** Every note, every session, every roll, every account |
-| **`takeminio-data`** (`/data`) | **no** | **Every photo anybody has ever uploaded.** Nothing else on the box holds them |
+| **Garage's meta + data** | **no** | **Every photo anybody has ever uploaded.** Nothing else on the box holds them |
 
 The plan's framing is that Postgres is the thing that cannot be rebuilt, and that is the right
 emphasis — but **the bucket is the second irreplaceable thing and the plan does not specify a backup
@@ -259,34 +259,34 @@ one worth putting in a cron job on your own machine.
 
 ### 3.3 The bucket
 
-Not specified by the plan. The straightforward route is to copy the Docker volume, from the VPS:
+Copy Garage's volumes, from the VPS. Both are needed: `data` holds the object blocks and `meta`
+holds the index that makes sense of them.
 
 ```sh
-docker volume ls | grep takeminio-data          # Coolify may prefix the name; use the real one
+docker volume ls | grep takegarage              # Coolify may prefix the names; use the real ones
 
-docker run --rm -v <real-volume-name>:/data:ro -v /tmp:/backup alpine \
-    tar czf "/backup/minio-$(date +%F).tar.gz" -C /data .
+for v in takegarage-meta takegarage-data; do
+    docker run --rm -v "$v":/data:ro -v /tmp:/backup alpine \
+        tar czf "/backup/$v-$(date +%F).tar.gz" -C /data .
+done
 ```
 
-then pull it down with `scp`. Restoring is the same `tar` in reverse into a fresh volume.
+then pull them down with `scp`. Restoring is the same `tar` in reverse into fresh volumes.
 
-**Be aware this is a hot copy.** MinIO writes each object as immutable files on disk, so objects
-that were already fully uploaded come across intact; an upload in flight at that moment may not.
-For four friends that is an acceptable trade. The only fully consistent copy is one taken with the
-`minio` container stopped, which costs a minute of "photos do not load" and is worth doing for the
-copy you actually care about.
+**Be aware this is a hot copy**, and more so than with MinIO: Garage's metadata is a database, so
+a copy taken while it is writing can be internally inconsistent in a way a tree of immutable
+object files cannot. The consistent copy is one taken with the Garage container **stopped**, which
+costs a minute of "photos do not load". Do that for the copy you actually care about.
 
-An `mc mirror` out of the running container would be tidier, but the `pgsty/minio` rebuild's
-tooling and entrypoint are not something this file has verified — **unverified**; use the volume
-tar, which depends on nothing but `alpine`.
+`garage bucket info` and the admin API on :3903 are the tidier route once you trust them, but the
+volume tar depends on nothing but `alpine`.
 
 > **Decision, yours to make.** If this is the part you would rather not operate, **Cloudflare R2**
 > is the alternative: set `Blobs__ServiceUrl` to the R2 endpoint, `Blobs__Region=auto`,
-> `Blobs__CreateBucket=false`, and delete the `minio` service and its volume. It is free at this
-> scale, needs no ops, and stops your friends' photos living on a single unbacked disk — at the
-> cost of a Cloudflare account with a payment method on file, which brushes against the project's
-> "no paid services" invariant. **Recommendation: stay on MinIO** until the volume tar above starts
-> feeling like a chore, then move.
+> `Blobs__CreateBucket=false`, and delete the `garage` service and its volumes. Free at this scale,
+> no ops, and your friends' photos stop living on a single unbacked disk — at the cost of a
+> Cloudflare account with a payment method on file, which brushes the project's "no paid services"
+> invariant. **Recommendation: stay on Garage** until the volume tar starts feeling like a chore.
 
 ### 3.4 Testing a restore
 
@@ -476,7 +476,7 @@ An external HTTP check, from outside the VPS, on a schedule. Either:
 - **a free hosted ping** (there are several with a free tier adequate for two URLs) — it *can* tell
   you the box is gone, which is the failure that matters most.
 
-Whichever you pick, **check `https://takeinitiative.<domain>/` and not only `/healthz`.**
+Whichever you pick, **check `https://takeinitiative.samstack.org/` and not only `/healthz`.**
 
 That is not fussiness. The web `/healthz` is a Nitro route that answers before any page renders, so
 it stays green while the server-rendered pages 500 — which is exactly the bug that shipped and was
@@ -484,12 +484,12 @@ fixed in `d6f7f53` (an undeclared `pinia` dependency). A check on `/` that asser
 string from the landing page's
 content catches a class of failure that a liveness probe structurally cannot.
 
-The API side is simpler than it looks: `https://api.takeinitiative.<domain>/healthz` works fine
+The API side is simpler than it looks: `https://api.takeinitiative.samstack.org/healthz` works fine
 from an external monitor, because Traefik passes the real `Host` header. The host-filtering trap
 only affects probes made *inside* the container.
 
 > **Decision, yours to make.** **Recommendation:** Coolify notifications now (two minutes), plus one
-> external check on `https://takeinitiative.<domain>/` whenever you next have an idle half hour.
+> external check on `https://takeinitiative.samstack.org/` whenever you next have an idle half hour.
 > Skip metrics, log shipping and error tracking until something has actually gone wrong twice.
 
 ---
@@ -500,7 +500,7 @@ only affects probes made *inside* the container.
 
 **In Coolify**, on the compose resource:
 
-- a **Logs** tab, with a picker for which container's output to stream — `api`, `web` or `minio`.
+- a **Logs** tab, with a picker for which container's output to stream — `api`, `web` or `garage`.
   This is the application log.
 - a **Deployments** / deployment-history view, where each deploy has its own log. This is where
   `Pulling from` lives, and where a failed deploy explains itself.
