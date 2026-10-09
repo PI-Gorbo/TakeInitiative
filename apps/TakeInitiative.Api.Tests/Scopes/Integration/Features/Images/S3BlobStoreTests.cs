@@ -12,7 +12,7 @@ public class S3BlobStoreTests(GarageFixture garage) : IClassFixture<GarageFixtur
     private BlobOptions Options(string bucket) => new()
     {
         ServiceUrl = garage.GetConnectionString(),
-        Region = "us-east-1",
+        Region = GarageFixture.Region,
         Bucket = bucket,
         AccessKey = GarageFixture.AccessKey,
         SecretKey = GarageFixture.SecretKey,

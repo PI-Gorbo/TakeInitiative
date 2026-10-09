@@ -74,7 +74,7 @@ git-backed **Docker Compose** resource. The pipeline pins
 | `takeinitiative-api` | Application, "Docker Image" | `ghcr.io/pi-gorbo/takeinitiative-api` | `lvb5hpab49yh618nttvev1fz` |
 | `takeinitiative-web` | Application, "Docker Image" | `ghcr.io/pi-gorbo/takeinitiative-web` | `m1kq4p6ckky1ldfssvio5l6d` |
 | Postgres 16 | Coolify-managed database | — | — |
-| Garage | Coolify **one-click service** | `dxflrs/garage:v2.3.0` | — |
+| Garage | Coolify **one-click service** | `dxflrs/garage:v2.3.0`, self-bootstrapping | — |
 
 > **Both applications exist and their UUIDs are committed.** They were created undesignated, so
 > **which one is the API and which is the web app is decided by `deploy-targets.json`**, not by
@@ -127,43 +127,39 @@ running by hand, enable `api` alone, and dispatch with that tag. A correct pipel
 `already running this digest and healthy` and deploys nothing, which proves the credentials, the
 tailnet, Coolify reachability and the digest arithmetic in one run without touching production.
 
-### 1a. Bootstrapping Garage
+### 1a. Garage — Coolify bootstraps it, you just match its settings
 
-Coolify's Garage service generates the **RPC secret, admin token and metrics token** itself — do
-not generate those. You generate only `BLOBS_ACCESS_KEY` (`GK` + 24 hex) and `BLOBS_SECRET_KEY`.
+**Run no `garage` commands.** Coolify's one-click template starts it with
+`server --single-node --default-bucket`, which assigns the cluster layout and creates the access
+key and bucket. It also generates the RPC secret, admin token and metrics token. Confirm with
+`garage layout show`: version ≥ 1 and your node listed means it is done.
 
-Garage still needs a one-off bootstrap: a fresh node refuses every request until a cluster layout
-exists, and it takes no credentials from the environment.
+(The image has no shell — only the `/garage` binary — so Coolify's container terminal cannot attach
+to it. `docker exec <container> /garage …` over SSH works if you ever need it.)
 
-**You cannot do it from Coolify's terminal.** The official image contains the `/garage` binary and
-nothing else — no `sh`, no `bash`, no busybox — so there is nothing for a terminal to attach to.
-`docker exec <container> /garage …` does work, because it execs the binary rather than a shell, but
-that needs SSH onto the host.
+What you set on the **api** Application, taken from the Garage service's own variables:
 
-The admin API needs neither, so run the script against the Admin URL from the service page:
+| Setting | Value |
+|---|---|
+| `BLOBS_ACCESS_KEY` | Coolify's `SERVICE_USER_GARAGE` |
+| `BLOBS_SECRET_KEY` | Coolify's `SERVICE_PASSWORD_64_GARAGE` |
+| `Blobs__Region` | **`garage`** |
+| `Blobs__ServiceUrl` | Garage's internal hostname, port 3900 |
 
-```sh
-GARAGE_ADMIN_URL=https://admin-xxxx.samstack.org \
-GARAGE_ADMIN_TOKEN=<the Admin Token Coolify generated> \
-BLOBS_ACCESS_KEY=GK… BLOBS_SECRET_KEY=… \
-node scripts/setup-garage.mjs
-```
+**`Blobs__Region` must be `garage`.** The template sets `s3_region = "garage"`, not `us-east-1`, and
+a mismatch fails with `AuthorizationHeaderMalformed … expected '…/garage/s3/aws4_request'` — which
+reads as a credentials problem and sends you checking the key. Measured against v2.3.0.
 
-It is idempotent — it assigns the layout only when the node has no role, and tolerates the `409`s a
-second run produces — so it is safe to re-run. The same script with no arguments bootstraps the dev
-container. Verified against v2.3.0, including an upload through the resulting credentials.
+The bucket needs no setup: the template's key is created with `createBucket` permission, so the
+API's `Blobs__CreateBucket=true` makes `takeinitiative` on first boot. Coolify's own `default`
+bucket is unused and harmless.
 
-Two things that fail as something else:
+`compose.dev.yml` and `GarageFixture` use the same flags, config and region, so dev, CI and
+production bootstrap identically.
 
-- **`s3_region` must match `Blobs__Region`** (`us-east-1`). A mismatch fails SigV4 and reads as bad
-  credentials.
-- **`Blobs__ServiceUrl` should be Garage's internal hostname on the predefined network**, port 3900
-  — not the public S3 URL, which would route uploads out through Traefik and back.
-
-**Leave all three of Garage's domains blank.** The bucket is private: `IBlobStore` has no
-URL-generating method and the API streams every byte after a visibility check, so nothing needs the
-S3, Web or Admin URL to be publicly reachable. If Coolify's template attached domains, remove them —
-once the bootstrap is done, the Admin URL is only a way in.
+**Leave all three Garage domains blank.** `IBlobStore` has no URL-generating method and the API
+streams every byte after a visibility check, so nothing needs the S3, Web or Admin URL publicly
+reachable. Remove them if the template attached any.
 
 ### 2. One new Tailscale tag
 

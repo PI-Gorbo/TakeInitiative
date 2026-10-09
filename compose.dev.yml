@@ -1,7 +1,7 @@
 # Full-stack compose for local development.
 #
-# `pnpm dev` starts ONLY the postgres and garage services from this file, bootstraps Garage,
-# and runs the API and web natively. Use `docker compose -p takeinitiative -f compose.dev.yml
+# `pnpm dev` starts ONLY the postgres and garage services from this file and runs
+# the API and web natively. Use `docker compose -p takeinitiative -f compose.dev.yml
 # up -d --build` when you want everything in containers instead.
 #
 # Ports: postgres 7401, api 7402, web 7403, garage 7404 (S3 API) and 7405 (admin API).
@@ -30,14 +30,26 @@ services:
             timeout: 5s
     garage:
         # The S3 blob store (step 16a). Garage, not MinIO: MinIO changed its deployment model
-        # and stopped publishing usable community images. Unlike MinIO it needs a config file
-        # and a CLI bootstrap (cluster layout, access key, bucket) — `pnpm setup:garage` does
-        # that, idempotently, and `pnpm dev` runs it.
+        # and stopped publishing usable community images.
+        #
+        # Flags and env match Coolify's one-click Garage template, so dev and production
+        # bootstrap identically: --single-node assigns the cluster layout and --default-bucket
+        # creates the key and bucket. Nothing else has to run.
         image: dxflrs/garage:v2.3.0
         container_name: takegarage
+        command: ["/garage", "server", "--single-node", "--default-bucket"]
         ports:
             - "7404:3900" # S3 API
             - "7405:3903" # admin API
+        environment:
+            # Dev-only values, committed deliberately: this cluster holds nothing but local
+            # uploads and listens on localhost.
+            - GARAGE_RPC_SECRET=5f8c2a91e46b73d0c1f8a52e9b7d3604af1c85926de430bf7a2c619d84e05f3b
+            - GARAGE_ADMIN_TOKEN=dev-admin-token
+            - GARAGE_ALLOW_WORLD_READABLE_SECRETS=true
+            - GARAGE_DEFAULT_ACCESS_KEY=takeinitiative
+            - GARAGE_DEFAULT_SECRET_KEY=takeinitiative-dev-secret
+            - GARAGE_DEFAULT_BUCKET=takeinitiative
         volumes:
             - ./infra/garage.dev.toml:/etc/garage.toml:ro
             - takegarage-meta:/var/lib/garage/meta

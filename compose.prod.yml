@@ -69,7 +69,9 @@ services:
             - "DataProtection__KeyPath=/keys"
             - "Blobs__ServiceUrl=http://garage:3900"
             - "Blobs__Bucket=takeinitiative"
-            - "Blobs__Region=us-east-1"
+            # Must match Garage's s3_region. Coolify's template sets "garage"; a mismatch
+            # fails SigV4 with AuthorizationHeaderMalformed, which reads as bad credentials.
+            - "Blobs__Region=garage"
             # Both of these are what a non-AWS S3 needs. Do not "fix" them.
             - "Blobs__ForcePathStyle=true"
             # True because the bucket is self-hosted on a volume that starts empty.
