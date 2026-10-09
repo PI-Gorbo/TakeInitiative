@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.2.0](https://github.com/PI-Gorbo/TakeInitiative/compare/takeinitiative-v1.1.0...takeinitiative-v1.2.0) (2026-10-09)
+
+
+### Features
+
+* **api:** bootstrap Garage over its admin API, not a shell ([d3a2376](https://github.com/PI-Gorbo/TakeInitiative/commit/d3a2376872f2c50988b7cc0c8338ab4e79b896be))
+* **api:** swap MinIO for Garage, and set the real domains ([c791e30](https://github.com/PI-Gorbo/TakeInitiative/commit/c791e3032de440354e9ba4d7fec73d3066ff5244))
+* **api:** swap MinIO for Garage, and set the real domains ([4c7c298](https://github.com/PI-Gorbo/TakeInitiative/commit/4c7c29884afb01dd9a272d9bb4e568dcf3fe7255))
+
+
+### Bug Fixes
+
+* **api:** let Coolify bootstrap Garage, and match its region ([1128f67](https://github.com/PI-Gorbo/TakeInitiative/commit/1128f675a056edee9f91447252db1581575f849a))
+* **api:** pin Garage v2.3.0 to match Coolify, and correct the bootstrap docs ([ef2c346](https://github.com/PI-Gorbo/TakeInitiative/commit/ef2c3460f7ae3aeaafd8c7ef61068e534feaf2b2))
+
 ## [1.1.0](https://github.com/PI-Gorbo/TakeInitiative/compare/takeinitiative-v1.0.14...takeinitiative-v1.1.0) (2026-10-08)
 
 
