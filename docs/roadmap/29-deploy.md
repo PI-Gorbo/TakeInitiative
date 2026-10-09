@@ -414,7 +414,24 @@ the last N untagged versions.
 
 ---
 
-## Architecture: arm64 (settled, 2026-10-01)
+## Architecture: amd64 (amended 2026-10-09; was arm64)
+
+> **Amended 2026-10-09.** The deployment server turned out to be **x86_64**, not arm64 — it is a
+> separate box managed by the Coolify on the Pi, not the Pi itself. So `images.yml` now builds
+> `linux/amd64` on `ubuntu-latest`. Both Dockerfiles already cross-build through `$TARGETARCH`, so
+> this was the one-line change they were written to make.
+>
+> What changed with it: the dev machine (Apple Silicon) no longer matches the target, so a local
+> `docker run` of a *published* image emulates. Build locally for a native rehearsal. Every
+> `no --platform flag` instruction below is inverted — the images are amd64-only now.
+>
+> arm64 is not built at all. A second architecture would mean two native runners pushing by digest
+> and a merge job, never one emulated build.
+
+The original reasoning is kept below, because the base-image checks and the size measurements still
+hold and the cross-build structure is what made the switch cheap.
+
+### Originally: arm64 (settled, 2026-10-01)
 
 **The target is an Ubuntu box with an arm64 CPU** (the user, 2026-10-01). So:
 
@@ -1149,8 +1166,8 @@ Run in order. Every item is checkable; the last one is the point of the step.
    healthy.
 
 3. **The images are real.** On the Mac:
-   `docker pull ghcr.io/pi-gorbo/takeinitiative-web:latest` (**no `--platform` flag**: the images
-   are arm64-only, so forcing amd64 fails outright, and an arm64 Mac runs them natively), run it with
+   `docker pull ghcr.io/pi-gorbo/takeinitiative-web:latest` (the images are **amd64-only**, so on
+   an Apple Silicon Mac this runs under emulation — fine for a smoke test), run it with
    `NUXT_PUBLIC_AXIOS_BASE_URL` pointing at a local API, and sign in. Same image, different URL,
    no rebuild.
 

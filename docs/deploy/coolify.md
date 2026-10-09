@@ -32,8 +32,8 @@ is impossible. Step 9 below is how you prove it, and that proof is the point of 
 
 | | |
 |---|---|
-| Target | an Ubuntu box, **arm64** |
-| Images | `linux/arm64` only, built on `ubuntu-24.04-arm` |
+| Target | an Ubuntu box, **x86_64** |
+| Images | `linux/amd64` only, built on `ubuntu-latest` |
 | Registry | GHCR, **public packages** — so the server needs no registry credentials |
 | Postgres | **Coolify-managed, pinned to 16** — it is deliberately not in `compose.prod.yml` |
 | Object store | Garage, its own Coolify resource, on a volume |
@@ -53,7 +53,7 @@ is impossible. Step 9 below is how you prove it, and that proof is the point of 
 ### Have these in hand
 
 - [ ] **A domain**, with access to its DNS. You will create two `A` records.
-- [ ] **A VPS** with a public IP, Ubuntu, arm64, and Docker. Coolify's own installer puts Docker
+- [ ] **A VPS** with a public IP, Ubuntu, x86_64, and Docker. Coolify's own installer puts Docker
       on for you. Rough sizing: **2 vCPU / 4 GB is comfortable** for Postgres + Garage + two small
       containers. 2 GB works but leaves little headroom once Postgres has its shared buffers and
       the Marten async daemon is running. The usual *"Coolify needs 4 GB to build Nuxt"* advice
@@ -123,8 +123,8 @@ public, or you have reintroduced the registry credentials the app images avoid.
 
 Install Coolify per its own documentation and get to its dashboard. Then, before anything else:
 
-1. **Check the architecture.** `uname -m` must print `aarch64`. The published images are
-   `linux/arm64` only; on an amd64 box they will not run at all, and the error
+1. **Check the architecture.** `uname -m` must print `x86_64`. The published images are
+   `linux/amd64` only; on an arm64 box they will not run at all, and the error
    (`exec format error`) is clear but only after a confusing pull.
 2. **Set up a notification channel** — Coolify has email, Discord, Telegram and generic webhook
    notifications under its global settings (*Settings → Notifications* in the versions this was
