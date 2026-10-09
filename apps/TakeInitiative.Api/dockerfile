@@ -6,8 +6,8 @@
 # Written to cross-build. The SDK stage is pinned to the BUILDER's platform and publishes for
 # $TARGETARCH, so adding a second architecture later is a `platforms:` line rather than a rewrite,
 # and QEMU — which makes a `dotnet publish` 10-20x slower — never enters into it. Today's target is
-# linux/arm64 (an Ubuntu box on arm, and an Apple Silicon dev machine), so nothing runs emulated and
-# a local `docker run` is a genuine rehearsal.
+# linux/amd64 (the deployment server is x86_64). The dev machine is Apple Silicon, so a local
+# `docker run` of a published image emulates; build locally for a native rehearsal.
 #
 # Publishing WITH a RID is also what keeps the native assets honest. Measured on this repo: a
 # publish with no RID writes 17 runtimes/ folders totalling 485 MB — 13 linux-*, an osx and three
