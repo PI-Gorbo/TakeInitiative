@@ -1,0 +1,395 @@
+import { describe, expect, it } from "vitest";
+import type { CombatCard, Session, SessionList, SessionNote, SessionStream } from "~/utils/api/types";
+import {
+    dropPendingCopy,
+    flattenSessions,
+    isPendingNote,
+    newPendingNoteId,
+    noteMatchesFilter,
+    removeNote,
+    upsertCombatCard,
+    upsertNote,
+    upsertSession,
+    upsertSessionInList,
+    type SessionStreamData,
+} from "~/utils/sessionStreamCache";
+
+const ME = "member-me";
+const OTHER = "member-other";
+
+function session(number: number, extra: Partial<Session> = {}): Session {
+    return {
+        id: `s${number}`,
+        number,
+        title: null,
+        startedAt: `2026-09-${String(number).padStart(2, "0")}T18:00:00Z`,
+        startedByMemberId: ME,
+        isCurrent: false,
+        ...extra,
+    };
+}
+
+function note(id: string, sessionNumber: number, minute: number, extra: Partial<SessionNote> = {}): SessionNote {
+    return {
+        id,
+        sessionId: `s${sessionNumber}`,
+        authorMemberId: OTHER,
+        text: `note ${id}`,
+        visibility: "Everyone",
+        isRecap: false,
+        postedAt: `2026-09-${String(sessionNumber).padStart(2, "0")}T19:${String(minute).padStart(2, "0")}:00Z`,
+        images: [],
+        addedLater: false,
+        editedAt: null,
+        isHidden: false,
+        hiddenByMemberId: null,
+        ...extra,
+    };
+}
+
+/** Page 0 holds Sessions 3 and 4 (current); page 1 holds Sessions 1 and 2. */
+function stream(): SessionStreamData {
+    const page0: SessionStream = {
+        sessions: [
+            { session: session(3), notes: [note("a", 3, 0), note("b", 3, 10)], combats: [] },
+            { session: session(4, { isCurrent: true }), notes: [note("c", 4, 5)], combats: [] },
+        ],
+        currentSessionId: "s4",
+        suggestNextSession: true,
+        hasOlder: true,
+    };
+    const page1: SessionStream = {
+        sessions: [
+            { session: session(1), notes: [], combats: [] },
+            { session: session(2), notes: [note("d", 2, 0)], combats: [] },
+        ],
+        currentSessionId: "s4",
+        suggestNextSession: true,
+        hasOlder: false,
+    };
+    return { pages: [page0, page1], pageParams: [undefined, 3] };
+}
+
+/** A campaign whose first session has not started: one empty page, no current session. */
+function empty(): SessionStreamData {
+    const page: SessionStream = {
+        sessions: [],
+        currentSessionId: null,
+        suggestNextSession: false,
+        hasOlder: false,
+    };
+    return { pages: [page], pageParams: [undefined] };
+}
+
+const ids = (data: SessionStreamData | undefined, sessionNumber: number) =>
+    flattenSessions(data)
+        .find((s) => s.session.number === sessionNumber)!
+        .notes.map((n) => n.id);
+
+describe("upsertNote", () => {
+    it("appends a new note at the end of its session", () => {
+        const next = upsertNote(stream(), note("e", 4, 30), "All", ME);
+        expect(ids(next, 4)).toEqual(["c", "e"]);
+    });
+
+    it("places a note by postedAt, so a back-posted note lands at the end", () => {
+        const data = stream();
+        expect(ids(upsertNote(data, note("e", 3, 5), "All", ME), 3)).toEqual(["a", "e", "b"]);
+        expect(ids(upsertNote(data, note("f", 3, 59, { addedLater: true }), "All", ME), 3)).toEqual(["a", "b", "f"]);
+    });
+
+    it("reaches sessions on older pages", () => {
+        expect(ids(upsertNote(stream(), note("e", 2, 30), "All", ME), 2)).toEqual(["d", "e"]);
+    });
+
+    it("is idempotent: the same push twice leaves one copy and the same object", () => {
+        const once = upsertNote(stream(), note("e", 4, 30), "All", ME);
+        const twice = upsertNote(once, note("e", 4, 30), "All", ME);
+        expect(ids(twice, 4)).toEqual(["c", "e"]);
+        expect(twice).toBe(once);
+    });
+
+    it("replaces an existing note in place", () => {
+        const edited = note("a", 3, 0, { text: "edited", editedAt: "2026-09-03T20:00:00Z" });
+        const next = upsertNote(stream(), edited, "All", ME);
+        expect(ids(next, 3)).toEqual(["a", "b"]);
+        expect(flattenSessions(next)[2].notes[0].text).toBe("edited");
+    });
+
+    it("leaves untouched pages as the same objects", () => {
+        const data = stream();
+        const next = upsertNote(data, note("e", 4, 30), "All", ME)!;
+        expect(next.pages[1]).toBe(data.pages[1]);
+        expect(next.pages[0]).not.toBe(data.pages[0]);
+    });
+
+    it("is a no-op when the note's session is not loaded", () => {
+        const data = stream();
+        const orphan = { ...note("e", 9, 0), sessionId: "s-unknown" };
+        expect(upsertNote(data, orphan, "All", ME)).toBe(data);
+    });
+
+    it("does nothing without data", () => {
+        expect(upsertNote(undefined, note("e", 4, 0), "All", ME)).toBeUndefined();
+    });
+
+    it("removes a note that no longer matches the filter", () => {
+        const recaps: SessionStreamData = stream();
+        recaps.pages[0].sessions[0].notes = [note("a", 3, 0, { isRecap: true })];
+        const next = upsertNote(recaps, note("a", 3, 0, { isRecap: false }), "Recaps", ME);
+        expect(ids(next, 3)).toEqual([]);
+    });
+
+    it("adds only matching notes under a filter", () => {
+        expect(ids(upsertNote(stream(), note("e", 4, 30), "Mine", ME), 4)).toEqual(["c"]);
+        expect(ids(upsertNote(stream(), note("e", 4, 30, { authorMemberId: ME }), "Mine", ME), 4)).toEqual([
+            "c",
+            "e",
+        ]);
+        expect(ids(upsertNote(stream(), note("e", 4, 30), "Images", ME), 4)).toEqual(["c"]);
+    });
+});
+
+describe("removeNote", () => {
+    it("removes a note from any page", () => {
+        expect(ids(removeNote(stream(), "d"), 2)).toEqual([]);
+        expect(ids(removeNote(stream(), "b"), 3)).toEqual(["a"]);
+    });
+
+    it("is a no-op for an unknown note", () => {
+        const data = stream();
+        expect(removeNote(data, "nope")).toBe(data);
+    });
+});
+
+describe("upsertSession", () => {
+    it("appends a newly started session as current and marks the others not current", () => {
+        const next = upsertSession(stream(), session(5, { isCurrent: true }))!;
+        const all = flattenSessions(next);
+        expect(all.map((s) => s.session.number)).toEqual([1, 2, 3, 4, 5]);
+        expect(all.filter((s) => s.session.isCurrent).map((s) => s.session.number)).toEqual([5]);
+        expect(next.pages.every((p) => p.currentSessionId === "s5")).toBe(true);
+        expect(next.pages[0].suggestNextSession).toBe(false);
+        expect(ids(next, 5)).toEqual([]);
+    });
+
+    it("is idempotent for sessionStarted", () => {
+        const once = upsertSession(stream(), session(5, { isCurrent: true }));
+        const twice = upsertSession(once, session(5, { isCurrent: true }));
+        expect(twice).toBe(once);
+        expect(flattenSessions(twice)).toHaveLength(5);
+    });
+
+    it("changes a loaded session's title and keeps its notes", () => {
+        const next = upsertSession(stream(), session(3, { title: "The Triboar Trail" }));
+        const s3 = flattenSessions(next).find((s) => s.session.number === 3)!;
+        expect(s3.session.title).toBe("The Triboar Trail");
+        expect(s3.notes.map((n) => n.id)).toEqual(["a", "b"]);
+    });
+
+    it("ignores an older session that is not loaded", () => {
+        const data = stream();
+        data.pages.pop();
+        expect(upsertSession(data, session(1, { title: "x" }))).toBe(data);
+    });
+
+    // A campaign has no session until a member starts Session 1.
+    it("takes Session 1 into an empty stream and makes it current", () => {
+        const next = upsertSession(empty(), session(1, { isCurrent: true }))!;
+        expect(flattenSessions(next).map((s) => s.session.number)).toEqual([1]);
+        expect(next.pages[0].currentSessionId).toBe("s1");
+        expect(next.pages[0].suggestNextSession).toBe(false);
+    });
+});
+
+describe("flattenSessions", () => {
+    it("draws every loaded session oldest first", () => {
+        expect(flattenSessions(stream()).map((s) => s.session.number)).toEqual([1, 2, 3, 4]);
+    });
+});
+
+describe("noteMatchesFilter", () => {
+    it("follows the server's filters", () => {
+        const recap = note("r", 1, 0, { isRecap: true, authorMemberId: ME });
+        const plain = note("p", 1, 0);
+        expect(noteMatchesFilter(plain, "All", ME)).toBe(true);
+        expect(noteMatchesFilter(plain, "Text", ME)).toBe(true);
+        expect(noteMatchesFilter(plain, "Recaps", ME)).toBe(false);
+        expect(noteMatchesFilter(recap, "Recaps", ME)).toBe(true);
+        expect(noteMatchesFilter(recap, "Mine", ME)).toBe(true);
+        expect(noteMatchesFilter(plain, "Mine", ME)).toBe(false);
+        expect(noteMatchesFilter(recap, "Mine", undefined)).toBe(false);
+        expect(noteMatchesFilter(recap, "Images", ME)).toBe(false);
+        expect(noteMatchesFilter(recap, "Combats", ME)).toBe(false);
+    });
+
+    it("splits Text and Images by whether the note has images (16c)", () => {
+        const image = { id: "i1", width: 640, height: 480 };
+        const text = note("t", 1, 0);
+        const pictured = note("i", 1, 0, { images: [image] });
+        const captionless = note("c", 1, 0, { images: [image], text: "" });
+        expect(noteMatchesFilter(text, "Text", ME)).toBe(true);
+        expect(noteMatchesFilter(text, "Images", ME)).toBe(false);
+        expect(noteMatchesFilter(pictured, "Text", ME)).toBe(false);
+        expect(noteMatchesFilter(pictured, "Images", ME)).toBe(true);
+        expect(noteMatchesFilter(captionless, "Images", ME)).toBe(true);
+        expect(noteMatchesFilter(pictured, "All", ME)).toBe(true);
+    });
+
+    it("moves a note edited from text to images between the filtered streams (16c)", () => {
+        const edited = { ...note("e", 4, 30), images: [{ id: "i1", width: 10, height: 10 }] };
+        expect(ids(upsertNote(stream(), edited, "Images", ME), 4)).toContain("e");
+        const textStream = upsertNote(stream(), note("e", 4, 30), "Text", ME);
+        expect(ids(textStream, 4)).toContain("e");
+        expect(ids(upsertNote(textStream, edited, "Text", ME), 4)).not.toContain("e");
+    });
+
+    it("sees a change of images as a change", () => {
+        const before = note("e", 4, 30);
+        const data = upsertNote(stream(), before, "All", ME);
+        const after = upsertNote(data, { ...before, images: [{ id: "i1", width: 10, height: 10 }] }, "All", ME);
+        expect(after).not.toBe(data);
+        expect(upsertNote(after, { ...before, images: [{ id: "i1", width: 10, height: 10 }] }, "All", ME)).toBe(after);
+    });
+});
+
+describe("optimistic notes (14d)", () => {
+    it("pending ids are recognisable and unique", () => {
+        const a = newPendingNoteId();
+        const b = newPendingNoteId();
+        expect(isPendingNote(a)).toBe(true);
+        expect(a).not.toBe(b);
+        expect(isPendingNote("0b6f5c1e-8a8b-4e36-9f5e-0c2f6a1d2b3c")).toBe(false);
+    });
+
+    it("a post shown optimistically and then answered leaves exactly one note", () => {
+        const temp = note(newPendingNoteId(), 4, 30, { authorMemberId: ME, text: "hello" });
+        const real = note("real", 4, 31, { authorMemberId: ME, text: "hello" });
+        const shown = upsertNote(stream(), temp, "All", ME);
+        const answered = upsertNote(removeNote(shown, temp.id), real, "All", ME);
+        expect(ids(answered, 4)).toEqual(["c", "real"]);
+        // The push for the same note is a no-op afterwards.
+        expect(upsertNote(answered, real, "All", ME)).toBe(answered);
+    });
+
+    it("a push that beats the POST's answer replaces the optimistic copy", () => {
+        const temp = note(newPendingNoteId(), 4, 30, { authorMemberId: ME, text: "hello" });
+        const real = note("real", 4, 31, { authorMemberId: ME, text: "hello" });
+        const shown = upsertNote(stream(), temp, "All", ME);
+        const pushed = upsertNote(dropPendingCopy(shown, real), real, "All", ME);
+        expect(ids(pushed, 4)).toEqual(["c", "real"]);
+        // Then the answer: removing the (gone) temp and upserting the same note changes nothing.
+        expect(upsertNote(removeNote(pushed, temp.id), real, "All", ME)).toBe(pushed);
+    });
+
+    it("dropPendingCopy leaves other people's and other text's pending notes alone", () => {
+        const temp = note(newPendingNoteId(), 4, 30, { authorMemberId: ME, text: "hello" });
+        const shown = upsertNote(stream(), temp, "All", ME);
+        expect(dropPendingCopy(shown, note("x", 4, 31, { authorMemberId: OTHER, text: "hello" }))).toBe(shown);
+        expect(dropPendingCopy(shown, note("x", 4, 31, { authorMemberId: ME, text: "other" }))).toBe(shown);
+    });
+
+    it("dropPendingCopy tells two captionless image notes apart by their images (16c)", () => {
+        const temp = note(newPendingNoteId(), 4, 30, { authorMemberId: ME, text: "", images: [{ id: "i1", width: 1, height: 1 }] });
+        const shown = upsertNote(stream(), temp, "All", ME);
+        const other = note("x", 4, 31, { authorMemberId: ME, text: "", images: [{ id: "i2", width: 1, height: 1 }] });
+        expect(dropPendingCopy(shown, other)).toBe(shown);
+        const same = note("y", 4, 31, { authorMemberId: ME, text: "", images: [{ id: "i1", width: 1, height: 1 }] });
+        expect(ids(dropPendingCopy(shown, same), 4)).toEqual(["c"]);
+    });
+});
+
+describe("upsertSessionInList", () => {
+    const list = (): SessionList => ({
+        sessions: [session(2, { isCurrent: true }), session(1)],
+        currentSessionId: "s2",
+        suggestNextSession: true,
+    });
+
+    it("adds a new current session first, clears the old current one and the gap prompt", () => {
+        const next = upsertSessionInList(list(), session(3, { isCurrent: true }))!;
+        expect(next.sessions.map((s) => [s.number, s.isCurrent])).toEqual([
+            [3, true],
+            [2, false],
+            [1, false],
+        ]);
+        expect(next.currentSessionId).toBe("s3");
+        expect(next.suggestNextSession).toBe(false);
+    });
+
+    it("replaces a renamed session in place and keeps the gap prompt", () => {
+        const next = upsertSessionInList(list(), session(1, { title: "Neverwinter" }))!;
+        expect(next.sessions[1].title).toBe("Neverwinter");
+        expect(next.suggestNextSession).toBe(true);
+    });
+
+    it("is a no-op for a repeated push, and for no data", () => {
+        const data = list();
+        expect(upsertSessionInList(data, session(2, { isCurrent: true }))).toBe(data);
+        expect(upsertSessionInList(undefined, session(3))).toBeUndefined();
+    });
+
+    it("takes Session 1 into a list with no session yet", () => {
+        const next = upsertSessionInList(
+            { sessions: [], currentSessionId: null, suggestNextSession: false },
+            session(1, { isCurrent: true })
+        )!;
+        expect(next.sessions.map((s) => s.number)).toEqual([1]);
+        expect(next.currentSessionId).toBe("s1");
+    });
+});
+
+describe("upsertCombatCard (18e)", () => {
+    const card = (sessionNumber: number, minute: number, extra: Partial<CombatCard> = {}): CombatCard => ({
+        id: "combat-1",
+        sessionId: `s${sessionNumber}`,
+        name: "Goblin Ambush",
+        status: "Active",
+        round: 1,
+        createdAt: `2026-09-${String(sessionNumber).padStart(2, "0")}T19:${String(minute).padStart(2, "0")}:00Z`,
+        startedAt: null,
+        finishedAt: null,
+        combatants: [],
+        ...extra,
+    });
+    const cardsOf = (data: SessionStreamData | undefined, id: string) =>
+        flattenSessions(data).find((s) => s.session.id === id)?.combats ?? [];
+
+    it("adds a card to its loaded session and replaces it in place", () => {
+        const added = upsertCombatCard(stream(), card(3, 5), "All");
+        expect(cardsOf(added, "s3").map((c) => c.round)).toEqual([1]);
+        const updated = upsertCombatCard(added, card(3, 5, { round: 2 }), "All");
+        expect(cardsOf(updated, "s3").map((c) => c.round)).toEqual([2]);
+    });
+
+    it("is a no-op for a repeated push, and under a filter with no cards", () => {
+        const added = upsertCombatCard(stream(), card(3, 5), "Combats")!;
+        expect(upsertCombatCard(added, card(3, 5), "Combats")).toBe(added);
+        const data = stream();
+        expect(upsertCombatCard(data, card(3, 5), "Recaps")).toBe(data);
+        expect(upsertCombatCard(data, card(3, 5), "Mine")).toBe(data);
+    });
+
+    it("moves the card when a first roll moves the combat to another session", () => {
+        const draft = upsertCombatCard(stream(), card(3, 5, { status: "Draft", round: 0 }), "All");
+        const started = upsertCombatCard(draft, card(4, 5, { startedAt: "2026-09-04T19:30:00Z" }), "All");
+        expect(cardsOf(started, "s3")).toEqual([]);
+        expect(cardsOf(started, "s4").map((c) => c.sessionId)).toEqual(["s4"]);
+    });
+
+    it("drops a card whose session is not loaded", () => {
+        const added = upsertCombatCard(stream(), card(3, 5), "All");
+        const elsewhere = upsertCombatCard(added, card(9, 5), "All");
+        expect(flattenSessions(elsewhere).flatMap((s) => s.combats)).toEqual([]);
+    });
+
+    it("keeps cards in time order, started ones by startedAt", () => {
+        const first = upsertCombatCard(stream(), card(3, 30, { id: "late" }), "All");
+        const both = upsertCombatCard(
+            first,
+            card(3, 50, { id: "early", startedAt: "2026-09-03T19:10:00Z" }),
+            "All"
+        );
+        expect(cardsOf(both, "s3").map((c) => c.id)).toEqual(["early", "late"]);
+    });
+});

@@ -1,4 +1,4 @@
-import type { AxiosError, AxiosResponse } from "axios";
+import type { AxiosError } from "axios";
 import type { extendNuxtSchema } from "nuxt/kit";
 import type { Path } from "vee-validate";
 import { z } from "zod";
@@ -41,17 +41,13 @@ export function parseAsApiError<TRequest extends {}>(
     }
 }
 
-export function validateResponse<T extends {}>(
-    resp: AxiosResponse<T, any>,
-    schema: {
-        parse: (data: any) => T;
-    },
-): T {
-    try {
-        const data = schema.parse(resp.data);
-        return data;
-    } catch (e) {
-        console.error(`Failed to validate response. ${e}`);
-        throw e;
-    }
+/** The first validation or general error the API sent, for a toast; `fallback` otherwise. */
+export function apiErrorMessage(error: unknown, fallback: string): string {
+    const parsed = apiErrorSchema.safeParse((error as AxiosError<any> | undefined)?.response?.data);
+    if (!parsed.success) return fallback;
+    return Object.values(parsed.data.errors).flat()[0] ?? fallback;
 }
+
+/** The HTTP status of a failed request, if it got an answer. */
+export const apiErrorStatus = (error: unknown): number | undefined =>
+    (error as AxiosError | undefined)?.response?.status;

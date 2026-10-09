@@ -1,16 +1,9 @@
-import { validateResponse } from "~/utils/apiErrorParser";
 import type { AxiosInstance } from "axios";
-import { z } from "zod";
+import type { ApiResponse } from "../types";
 
-export const MaintenanceConfigValidator = z.object({
-    inMaintenanceMode: z.boolean(),
-    reason: z.string().nullable(),
-});
-export type MaintenanceConfig = z.infer<typeof MaintenanceConfigValidator>;
+export type MaintenanceConfig = ApiResponse<"GetMaintenanceConfig">;
 
 export function getMaintenanceRequest(axios: AxiosInstance) {
     return (): Promise<MaintenanceConfig> =>
-        axios
-            .get("/api/admin/maintenance")
-            .then((resp) => validateResponse(resp, MaintenanceConfigValidator));
+        axios.get<MaintenanceConfig>("/api/admin/maintenance").then((resp) => resp.data);
 }

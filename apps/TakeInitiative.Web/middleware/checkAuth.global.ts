@@ -13,7 +13,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
         return navigateTo({
             path: "/login",
             query: {
-                redirectTo: to.path,
+                // The whole URL, so a share (`/app/share?id=`, 16e) survives logging in.
+                redirectTo: to.fullPath,
             },
         });
     }

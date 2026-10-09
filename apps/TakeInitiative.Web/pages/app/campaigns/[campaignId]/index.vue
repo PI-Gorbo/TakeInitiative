@@ -1,252 +1,142 @@
 <template>
-    <LoadingFallback
-        container="main"
-        :isLoading="campaignQuery.isLoading.value"
-        class="">
-        <template v-if="screenSize.isLargeScreen.value">
-            <div class="grid grid-cols-3 pb-2 gap-4 h-full max-h-full">
-                <div
-                    class="col-span-2 col-start-2 flex flex-col gap-4 max-h-full h-full overflow-auto">
-                    <Card
-                        v-if="
-                            campaignQuery.data.value?.userCampaignMember
-                                .isDungeonMaster ||
-                            (campaignQuery.data.value?.campaign
-                                ?.campaignDescription != '' &&
-                                campaignQuery.data.value?.campaign
-                                    ?.campaignDescription != null)
-                        "
-                        class="p-4 border-primary/50"
-                        :class="{
-                            'border-2 border-dashed':
-                                campaignQuery.data.value?.campaign
-                                    ?.campaignDescription == null ||
-                                campaignQuery.data.value?.campaign
-                                    ?.campaignDescription == '',
-                        }">
-                        <CampaignEditIntroductionForm />
-                    </Card>
-
-                    <Card class="border-primary/50 overflow-auto">
-                        <CardContent class="p-4">
-                            <CampaignCombatHistorySection
-                                :campaignId="route.params.campaignId" />
-                        </CardContent>
-                    </Card>
-                </div>
-                <div
-                    class="col-span-1 col-start-1 row-start-1 flex flex-col gap-4">
-                    <CampaignCombatJoinBanner
-                        :campaignId="route.params.campaignId"
-                        :combatInfo="
-                            campaignQuery.data.value?.currentCombatInfo ?? null
-                        " />
-                    <Card class="p-4 border-primary/50">
-                        <header>
-                            <FontAwesomeIcon :icon="faUsers" /> Players
-                        </header>
-                        <Accordion
-                            type="single"
-                            class="w-full"
-                            collapsible
-                            v-model:modelValue="openAccordionValue">
-                            <AccordionItem
-                                v-for="item in membersToDisplay"
-                                :key="item.userId"
-                                :value="item.userId">
-                                <AccordionTrigger>
-                                    <div class="flex gap-2">
-                                        <FontAwesomeIcon
-                                            :class="
-                                                item.userId ===
-                                                campaignQuery.data.value
-                                                    ?.campaign.ownerId
-                                                    ? 'text-gold'
-                                                    : 'text-primary'
-                                            "
-                                            :icon="
-                                                !(
-                                                    item.userId ===
-                                                    campaignQuery.data.value
-                                                        ?.campaign.ownerId
-                                                )
-                                                    ? faUserLarge
-                                                    : faCrown
-                                            " />
-                                        <label class="select-none">
-                                            {{ item.username }}
-                                        </label>
-                                    </div>
-                                </AccordionTrigger>
-                                <AccordionContent class="pl-4">
-                                    <CampaignPlayerResourcesSection
-                                        :userId="item.userId"
-                                        :characters="item.characters"
-                                        :resources="item.resources" />
-                                </AccordionContent>
-                            </AccordionItem>
-                        </Accordion>
-                    </Card>
-                </div>
+    <div class="flex h-full w-full flex-col">
+        <!-- The Campaign tab is the session stream (design §3). The root stays one
+             element while the campaign loads: the page transition animates it. -->
+        <template v-if="campaign">
+            <!-- The filter chips and the members button. -->
+            <div class="shrink-0 border-b">
+                <PageContainer class="flex items-center gap-2 px-2">
+                    <SessionStreamFilters v-model="filter" />
+                    <button
+                        type="button"
+                        class="flex h-11 min-w-11 items-center justify-center gap-2 rounded-md px-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                        :aria-label="`Members (${campaign.members.length})`"
+                        @click="openMembers?.()">
+                        <Users class="size-5" />
+                        <span>{{ campaign.members.length }}</span>
+                        <span class="hidden sm:inline">Members</span>
+                    </button>
+                </PageContainer>
             </div>
-        </template>
-        <template v-else>
-            <div class="w-full flex flex-col gap-4 pb-2">
-                <CampaignCombatJoinBanner
-                    :campaignId="route.params.campaignId"
-                    :combatInfo="
-                        campaignQuery.data.value?.currentCombatInfo ?? null
-                    " />
-                <Card
-                    v-if="
-                        campaignQuery.data.value?.userCampaignMember
-                            .isDungeonMaster ||
-                        (campaignQuery.data.value?.campaign
-                            ?.campaignDescription != '' &&
-                            campaignQuery.data.value?.campaign
-                                ?.campaignDescription != null)
-                    "
-                    class="p-4 border-primary/50"
-                    :class="{
-                        'border-2 border-dashed':
-                            campaignQuery.data.value?.campaign
-                                ?.campaignDescription == null ||
-                            campaignQuery.data.value?.campaign
-                                ?.campaignDescription == '',
-                    }">
-                    <CampaignEditIntroductionForm />
-                </Card>
+            <!-- While a combat is live (18e.3). -->
+            <CombatJoinCombatBanner :campaignId="campaign.id" />
 
-                <Card class="p-4 border-primary/50">
-                    <header><FontAwesomeIcon :icon="faUsers" /> Players</header>
-                    <Accordion
-                        type="single"
-                        class="w-full"
-                        collapsible
-                        v-model:modelValue="openAccordionValue">
-                        <AccordionItem
-                            v-for="item in membersToDisplay"
-                            :key="item.userId"
-                            :value="item.userId">
-                            <AccordionTrigger>
-                                <div class="flex gap-2">
-                                    <FontAwesomeIcon
-                                        :class="
-                                            item.userId ===
-                                            campaignQuery.data.value?.campaign
-                                                .ownerId
-                                                ? 'text-gold'
-                                                : 'text-primary'
-                                        "
-                                        :icon="
-                                            !(
-                                                item.userId ===
-                                                campaignQuery.data.value
-                                                    ?.campaign.ownerId
-                                            )
-                                                ? faUserLarge
-                                                : faCrown
-                                        " />
-                                    <label class="select-none">
-                                        {{ item.username }}
-                                    </label>
-                                </div>
-                            </AccordionTrigger>
-                            <AccordionContent class="pl-4">
-                                <CampaignPlayerResourcesSection
-                                    :userId="item.userId"
-                                    :characters="item.characters"
-                                    :resources="item.resources" />
-                            </AccordionContent>
-                        </AccordionItem>
-                    </Accordion>
-                </Card>
-
-                <Card class="border-primary/50 overflow-auto">
-                    <CardContent class="p-4">
-                        <CampaignCombatHistorySection
-                            :campaignId="route.params.campaignId" />
-                    </CardContent>
-                </Card>
-            </div>
+            <PageContainer class="flex min-h-0 flex-1 flex-col">
+                <SessionStream
+                    ref="stream"
+                    :campaignId="campaign.id"
+                    :campaign="campaign"
+                    :filter="filter"
+                    :focusNoteId="focusNoteId"
+                    :focusSessionNumber="focusSessionNumber"
+                    @noteOpened="clearNoteLink"
+                    @sessionOpened="clearParam(SESSION_LINK_PARAM)" />
+                <Composer
+                    :key="campaign.id"
+                    :campaign="campaign"
+                    :filter="filter"
+                    :about="aboutEntry"
+                    :share="shareId"
+                    :compose="composeText"
+                    @aboutUsed="clearParam(ABOUT_PARAM)"
+                    @shareUsed="clearParam(SHARE_PARAM)"
+                    @composeUsed="clearParam(COMPOSE_PARAM)" />
+            </PageContainer>
         </template>
-    </LoadingFallback>
+    </div>
 </template>
+
 <script setup lang="ts">
-    import {
-        faCrown,
-        faUserLarge,
-        faUsers,
-    } from "@fortawesome/free-solid-svg-icons";
-    import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
     import { useQuery } from "@tanstack/vue-query";
-    import { useLocalStorage } from "@vueuse/core";
-    import type { CampaignMemberDto } from "~/utils/api/campaign/getCampaignRequest";
+    import { Users } from "lucide-vue-next";
+    import type { SessionStreamFilter } from "~/utils/api/types";
+    import { ABOUT_PARAM, entryDirectory, resolveEntry } from "~/utils/entries";
+    import { NOTE_LINK_PARAM } from "~/utils/noteActions";
+    import { FILTER_PARAM, filterFromQuery, filterToQuery } from "~/utils/streamFilters";
     import { getCampaignQuery } from "~/utils/queries/campaign";
-    import { getAllCombatsQuery } from "~/utils/queries/combats";
-
-    const screenSize = useScreenSize();
-    const route = useRoute("app-campaigns-campaignId");
-    const userStore = useUserStore();
-    const campaignQuery = useQuery(
-        getCampaignQuery(() => route.params.campaignId as string)
-    );
-
-    const openAccordionValue = useLocalStorage(
-        `campaigns-${route.params.campaignId}-accordion-current-user`,
-        userStore.state?.userId
-    );
+    import { getEntriesQuery } from "~/utils/queries/entries";
+    import { OPEN_MEMBERS, SESSION_LINK_PARAM, sessionFromQuery } from "~/utils/search";
+    import { COMPOSE_PARAM, composeFromQuery } from "~/utils/searchActions";
+    import { SHARE_PARAM, validShareId } from "~/utils/shareTarget";
 
     definePageMeta({
         layout: "campaign",
         requiresAuth: true,
     });
 
-    // Member Details
-    const memberDtos: ComputedRef<CampaignMemberDto[]> = computed(() => {
-        if (!campaignQuery.isSuccess.value) {
-            return [];
-        }
+    const route = useRoute("app-campaigns-campaignId");
+    const router = useRouter();
+    const campaignQuery = useQuery(getCampaignQuery(() => route.params.campaignId as string));
+    const campaign = computed(() => campaignQuery.data.value);
 
-        return [
-            ...campaignQuery.data.value!.campaignMembers,
-            {
-                ...campaignQuery.data.value!.userCampaignMember,
-                username: userStore.state?.username!,
-            },
-        ] satisfies CampaignMemberDto[];
+    // The panel lives in the campaign layout, so ⌘K's Share opens it from any tab.
+    const openMembers = inject(OPEN_MEMBERS);
+
+    // The filter lives in the URL (`?filter=recaps`), so a reload or a shared link
+    // keeps it. Changing it replaces the entry rather than adding history.
+    const filter = computed<SessionStreamFilter>({
+        get: () => filterFromQuery(route.query[FILTER_PARAM]),
+        set: (value) => {
+            const { [FILTER_PARAM]: _, ...query } = route.query;
+            const param = filterToQuery(value);
+            void router.replace({ query: param ? { ...query, [FILTER_PARAM]: param } : query });
+        },
     });
 
-    const membersToDisplay = computed(() =>
-        memberDtos.value.sort((a, b) => {
-            // Player should be first
-            if (a.userId === userStore.state?.userId) {
-                return -1;
-            }
+    // A copied note link: `?note={noteId}`. The stream opens at the note, then the
+    // parameter is dropped so a reload opens at the bottom again.
+    const focusNoteId = computed(() => {
+        const value = route.query[NOTE_LINK_PARAM];
+        return typeof value === "string" && value ? value : undefined;
+    });
+    function clearParam(name: string) {
+        const { [name]: _, ...query } = route.query;
+        void router.replace({ query });
+    }
+    const clearNoteLink = () => clearParam(NOTE_LINK_PARAM);
 
-            if (b.userId === userStore.state?.userId) {
-                return 1;
-            }
+    // A session from ⌘K: `?session={number}` (17b). The stream opens at its divider,
+    // then the parameter is dropped, as `?note=` is.
+    const focusSessionNumber = computed(() => sessionFromQuery(route.query[SESSION_LINK_PARAM]));
+    watch(
+        () => route.query[SESSION_LINK_PARAM],
+        (value) => {
+            if (value !== undefined && !sessionFromQuery(value)) clearParam(SESSION_LINK_PARAM);
+        },
+        { immediate: true }
+    );
 
-            // Then dungeon master
-            const aIsDm =
-                a.userId === campaignQuery.data.value?.campaign.ownerId;
-            const bIsDm =
-                b.userId === campaignQuery.data.value?.campaign.ownerId;
-            if (aIsDm && !bIsDm) {
-                return -1;
-            }
+    // "Add a note about X" from an entry page: `?about={entryId}` (15c). The composer
+    // uses it once and the page drops it. An id the viewer's directory does not hold
+    // (unknown, or hidden from them) is dropped without a word.
+    const entriesQuery = useQuery(getEntriesQuery(() => route.params.campaignId as string));
+    const aboutId = computed(() => {
+        const value = route.query[ABOUT_PARAM];
+        return typeof value === "string" && value ? value : undefined;
+    });
+    const aboutEntry = computed(() =>
+        aboutId.value ? resolveEntry(entryDirectory(entriesQuery.data.value), aboutId.value) : undefined
+    );
+    watch(
+        [aboutId, aboutEntry, () => entriesQuery.isSuccess.value],
+        ([id, entry, loaded]) => {
+            if (id && !entry && loaded) clearParam(ABOUT_PARAM);
+        },
+        { immediate: true }
+    );
 
-            if (!aIsDm && bIsDm) {
-                return 1;
-            }
+    // A share from the phone (16e): `/app/share` sends `?share={id}`, and the composer
+    // takes the images once and drops the parameter.
+    const shareId = computed(() => validShareId(route.query[SHARE_PARAM]));
 
-            // Then order alphabetically
-            if (a.username > b.username) {
-                return -1;
-            }
-
-            return 1;
-        })
+    // "New note mentioning X" from ⌘K: `?compose=@X` (17c). The composer takes it once,
+    // into an empty draft only, and the page drops it. A blank value is dropped here.
+    const composeText = computed(() => composeFromQuery(route.query[COMPOSE_PARAM]));
+    watch(
+        () => route.query[COMPOSE_PARAM],
+        (value) => {
+            if (value !== undefined && composeFromQuery(value) === undefined) clearParam(COMPOSE_PARAM);
+        },
+        { immediate: true }
     );
 </script>

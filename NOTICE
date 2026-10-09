@@ -1,0 +1,68 @@
+TakeInitiative
+==============
+
+System Reference Document 5.2
+-----------------------------
+
+This work includes material from the System Reference Document 5.2 ("SRD 5.2") by
+Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. The SRD 5.2 is
+licensed under the Creative Commons Attribution 4.0 International License, available at
+https://creativecommons.org/licenses/by/4.0/legalcode.
+
+The SRD 5.2 material is the monster data in
+apps/TakeInitiative.Api/Reference/Srd52/monsters.json.
+
+Changes made: the material was converted into TakeInitiative's own JSON format by
+scripts/srd/build-srd52.mjs, and edited. The script restores the "Hit:" label after an
+attack roll's reach or range, removes stray link markup and writes "+4, reach 5 ft."
+the SRD's way, moves usage limits such as "Recharge 5–6" and "2/Day" into the action's
+name, capitalises sizes, types, alignments and damage and condition names, and derives
+each monster's XP and proficiency bonus from its challenge rating with the SRD's tables.
+The rules text is otherwise unchanged.
+
+TakeInitiative is not affiliated with, endorsed, sponsored or approved by Wizards of the
+Coast. No trademarks, logos or trade dress of Wizards of the Coast or of Dungeons &
+Dragons are used or licensed.
+
+Transcription
+-------------
+
+The machine-readable transcription the script reads is Open5e's
+(https://github.com/open5e/open5e-api, data/v2/wizards-of-the-coast/srd-2024/), at the
+commit named in apps/TakeInitiative.Api/Reference/Srd52/source.json. Thanks to the
+Open5e project. Only the SRD's text and numbers are taken from it: none of Open5e's code,
+identifiers or artwork is included in TakeInitiative.
+
+5eTools
+-------
+
+TakeInitiative can link out to 5etools (https://5e.tools). A deployment may also hold an
+index, built on the deployer's own machine by scripts/5etools/build-5etools-index.mjs from
+a copy of the 5etools data the deployer supplies. The index holds only item names,
+categories, source-book abbreviations and titles, page numbers, short labels (challenge
+rating, size and type; spell level and school; item rarity and type), a link to the item's
+5etools page, and for monsters their armor class, hit dice and initiative bonus. It is
+git-ignored (.data/) and is not part of this repository, its builds or its images.
+
+No 5eTools or Wizards of the Coast content is distributed with TakeInitiative. The
+script's test fixtures (scripts/5etools/fixture/) are invented. TakeInitiative is not
+affiliated with, endorsed, sponsored or approved by 5etools or by Wizards of the Coast.
+
+GLiNER (the suggestion model)
+-----------------------------
+
+The in-browser suggestion model is GLiNER small v2.5 (gliner-community/gliner_small-v2.5,
+https://huggingface.co/gliner-community/gliner_small-v2.5, revision
+f227d3cd637bd4e6757ae143935316d062393341), by Urchade Zaratiana et al. of the GLiNER project
+(https://github.com/urchade/GLiNER), licensed under the Apache License, Version 2.0
+(https://www.apache.org/licenses/LICENSE-2.0).
+
+Changes made: the model is converted to ONNX (opset 19) with the GLiNER package's own export and
+its weights quantised to int8 with onnxruntime's dynamic quantiser, by
+scripts/gliner/export.py. The model is not fine-tuned or otherwise changed.
+
+The weights are not in this repository. `pnpm models:fetch` places them, checked by sha256,
+in apps/TakeInitiative.Web/public/models/ (git-ignored) together with the licence text and a
+NOTICE (scripts/models/gliner_small-v2.5/), and the web app serves them from there. The
+runtime is onnxruntime-web (MIT, Microsoft) and the tokenizer @huggingface/tokenizers
+(Apache-2.0, Hugging Face), both npm dependencies of the web app.

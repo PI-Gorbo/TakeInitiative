@@ -1,0 +1,80 @@
+name: Release
+
+on:
+    push:
+        branches:
+            - dev
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+permissions:
+    contents: write
+    pull-requests: write
+
+jobs:
+    release:
+        name: Generate release PR
+        runs-on: ubuntu-latest
+        # Surfaced for the `images` job below. `release_created` is true only on the run where the
+        # release PR MERGES and the tag and GitHub Release appear — not on the run that opens the PR.
+        outputs:
+            release_created: ${{ steps.release.outputs.release_created }}
+            version: ${{ steps.release.outputs.version }}
+        steps:
+            - name: Create release pull request
+              uses: googleapis/release-please-action@v4
+              id: release
+              with:
+                  config-file: release-please-config.json
+                  manifest-file: .release-please-manifest.json
+
+            # release-please only bumps package.json. Everything else that
+            # carries the version is written here, onto the same PR branch.
+            - name: Checkout the release-please branch
+              if: ${{ steps.release.outputs.prs_created == 'true' }}
+              uses: actions/checkout@v4
+              with:
+                  ref: ${{ fromJSON(steps.release.outputs.pr).headBranchName }}
+
+            - name: Setup node
+              if: ${{ steps.release.outputs.prs_created == 'true' }}
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 24
+
+            - name: Propagate the version
+              if: ${{ steps.release.outputs.prs_created == 'true' }}
+              run: |
+                  node scripts/sync-version.mjs
+
+                  git config user.name "github-actions[bot]"
+                  git config user.email "github-actions[bot]@users.noreply.github.com"
+                  git add apps/TakeInitiative.Api/TakeInitiative.Api.csproj
+                  if ! git diff --cached --quiet; then
+                    git commit -m "chore(root): sync the version into the csproj"
+                    git push
+                  fi
+
+    # The release GitHub creates above is created with the default GITHUB_TOKEN, and a release
+    # created that way does NOT trigger other workflows. An `on: release` image build would
+    # silently never run, forever. So the image build is a job in THIS run instead, gated on
+    # release-please's own output. See .github/workflows/images.yml for the rest of the reasoning.
+    images:
+        name: Publish release images
+        needs: release
+        if: ${{ needs.release.outputs.release_created == 'true' }}
+        # Permissions are NOT inherited by a called workflow; the calling job has to declare them.
+        # This narrows the workflow-level `contents: write` to what an image build actually needs.
+        permissions:
+            contents: read
+            packages: write
+        uses: ./.github/workflows/images.yml
+        with:
+            version: ${{ needs.release.outputs.version }}
+        # No `secrets: inherit` any more. It existed to pass COOLIFY_DEPLOY_URL / COOLIFY_TOKEN
+        # through to the deploy job images.yml used to carry; deploying is now deploy.yml, on a
+        # push to `main`, holding its own credentials on the `prod` Environment. GITHUB_TOKEN is
+        # always available to a called workflow and never needed passing.
+        #
+        # So this job publishes the release images and stops. What ships them is merging the
+        # `release:` PR that merge-to-main.yml opens — see docs/deploy/pipeline.md.

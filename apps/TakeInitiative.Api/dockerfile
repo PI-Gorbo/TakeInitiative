@@ -1,38 +1,88 @@
-# Create a layer to build the image.
-# Use the official .NET Core SDK as a parent image
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR ./app
+# The API image (29c). Built from the REPO ROOT — compose.dev.yml and 29e's workflow both do —
+# because the API references packages/TakeInitiative.Dice and packages/TakeInitiative.KnowledgeBase.
+# dockerfile.dockerignore next door allowlists what is sent; BuildKit picks it up because it sits
+# beside this file and it REPLACES the root .dockerignore for this build.
+#
+# Written to cross-build. The SDK stage is pinned to the BUILDER's platform and publishes for
+# $TARGETARCH, so adding a second architecture later is a `platforms:` line rather than a rewrite,
+# and QEMU — which makes a `dotnet publish` 10-20x slower — never enters into it. Today's target is
+# linux/arm64 (an Ubuntu box on arm, and an Apple Silicon dev machine), so nothing runs emulated and
+# a local `docker run` is a genuine rehearsal.
+#
+# Publishing WITH a RID is also what keeps the native assets honest. Measured on this repo: a
+# publish with no RID writes 17 runtimes/ folders totalling 485 MB — 13 linux-*, an osx and three
+# win-* from SkiaSharp's runtime packs — of which exactly one is ever loaded. `-a $TARGETARCH` keeps
+# that one and drops 473 MB.
 
-# Add Nuget Source.
-ARG personal_github_token
-RUN dotnet nuget add source --store-password-in-clear-text --name "GitHubPackages" --username "PI-Gorbo" --password "$personal_github_token" "https://nuget.pkg.github.com/PI-Gorbo/index.json"
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+# Set by BuildKit from the --platform being built (arm64, amd64). Declared per stage.
+ARG TARGETARCH
+WORKDIR /src
 
-# Copy the project file and restore any dependencies (use .csproj for the project name)
-# Copying from working directory into the layer.
-COPY *.csproj ./ 
-RUN dotnet restore
+# Project files first, so the restore layer is cached until a dependency changes.
+COPY Directory.Build.props ./
+COPY packages/TakeInitiative.Dice/TakeInitiative.Dice.csproj packages/TakeInitiative.Dice/
+COPY packages/TakeInitiative.KnowledgeBase/TakeInitiative.KnowledgeBase.csproj packages/TakeInitiative.KnowledgeBase/
+COPY apps/TakeInitiative.Api/TakeInitiative.Api.csproj apps/TakeInitiative.Api/
+# -a here as well as on publish: restore is what resolves the runtime packs, so a restore without it
+# would leave publish with nothing to narrow and --no-restore would fail.
+RUN dotnet restore apps/TakeInitiative.Api/TakeInitiative.Api.csproj -a $TARGETARCH
 
-# Copy the rest of the application code
-COPY . ./
+COPY packages/TakeInitiative.Dice/ packages/TakeInitiative.Dice/
+COPY packages/TakeInitiative.KnowledgeBase/ packages/TakeInitiative.KnowledgeBase/
+COPY apps/TakeInitiative.Api/ apps/TakeInitiative.Api/
+# --no-self-contained is explicit: the runtime comes from the aspnet image below, and -a is only
+# here to pick the RID. Since .NET 6 a RID no longer implies self-contained, but saying so means a
+# future default cannot quietly double the image size.
+RUN dotnet publish apps/TakeInitiative.Api/TakeInitiative.Api.csproj \
+        -c Release -a $TARGETARCH --no-self-contained --no-restore -o /app/out
 
-# Publish the application
-RUN dotnet publish -c Release -o out
+# ---
+# Runtime. Per target platform, and nothing in it but the framework, curl and the publish output.
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 
-# Now, from the published layer, we take the artifacts and place them into their own layer for running.
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
-WORKDIR ./app
+# curl is only here for the HEALTHCHECK below (and compose.dev.yml's copy of it). Installed BEFORE
+# the COPY so the apt layer stays cached across code changes, and --no-install-recommends keeps it
+# to about 10 MB. Losing it means moving the probe out to whatever runs the container; see
+# docs/roadmap/29-deploy.md, Decision 11, for the chiseled alternative.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# The data-protection key ring (29b). Docker copies the image's ownership of a mount point onto a
+# FRESH named volume, so this mkdir + chown is the whole reason `takeapi-keys:/keys` is writable by
+# the unprivileged user: a volume mounted at a path the image does not own arrives root-owned, and
+# the first sign-in then fails on a directory it cannot write.
+#
+# $APP_UID is 1654, and the base image creates a matching GROUP of the same id
+# (`groupadd --gid=$APP_UID app && useradd --gid=$APP_UID app`), so `$APP_UID:$APP_UID` is app:app
+# and USER $APP_UID lands in a real group. That is worth stating because the web image got it wrong
+# the other way round: `adduser --system --uid 1001 nuxtjs` with no --ingroup left the process in
+# nogroup. Nothing here creates a user, so there is nothing to get wrong.
+RUN mkdir -p /keys && chown $APP_UID:$APP_UID /keys
+
+WORKDIR /app
+# Left owned by root: the unprivileged user can read it and cannot modify its own code.
 COPY --from=build /app/out ./
 
-# Expose the port the application will run on
-
-# Install python below.
-RUN apt-get update && apt-get install python3 python3-dev python3-pip libffi-dev -y
-RUN rm /usr/lib/python3.11/EXTERNALLY-MANAGED
-RUN pip install d20
-
-ENV PythonDLL=null
 ENV ASPNETCORE_HTTP_PORTS=8080
 EXPOSE 8080
 
-# Start the application
+# A liveness probe, deliberately: /healthz is AddHealthChecks() with no registered checks, so it
+# answers 200 as soon as Kestrel is listening. A probe that also checked Postgres would have the
+# orchestrator restart a healthy API every time the database blipped.
+#
+# The Host header is not decoration. /healthz needs no authentication, but it still sits behind
+# ASP.NET Core's host filtering, which is on whenever AllowedHosts is set — measured: the same
+# request is 200 as `Host: localhost` and 400 as `Host: 127.0.0.1`. So the probe presents the first
+# name from AllowedHosts when the deployment sets one, and falls back to localhost, which
+# appsettings.json allows. A probe that hardcoded localhost would report a production container
+# unhealthy forever.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=5 \
+    CMD allowed="${AllowedHosts:-localhost}"; curl -fsS -H "Host: ${allowed%%;*}" http://127.0.0.1:8080/healthz || exit 1
+
+# Non-root: a container escape stops being a root escape. Last, so the RUNs above still needed no
+# privilege juggling.
+USER $APP_UID
+
 ENTRYPOINT ["dotnet", "TakeInitiative.Api.dll"]

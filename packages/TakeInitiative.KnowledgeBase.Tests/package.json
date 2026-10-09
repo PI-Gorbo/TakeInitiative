@@ -1,0 +1,7 @@
+{
+    "name": "@ti/knowledge-base-tests",
+    "private": true,
+    "scripts": {
+        "test": "dotnet test"
+    }
+}

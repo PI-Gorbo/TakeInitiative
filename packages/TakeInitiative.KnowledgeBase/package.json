@@ -1,0 +1,7 @@
+{
+    "name": "@ti/knowledge-base",
+    "private": true,
+    "scripts": {
+        "build": "dotnet build"
+    }
+}

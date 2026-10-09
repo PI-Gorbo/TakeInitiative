@@ -1,14 +1,9 @@
 import type { AxiosInstance } from "axios";
-import { z } from "zod";
+import type { ApiRequestBody } from "../types";
 
-export const putUsernameRequest = z
-    .object({
-        newUsername: z.string(),
-    })
-    .required();
-export type PutUsernameRequest = z.infer<typeof putUsernameRequest>;
+export type PutUsernameRequest = ApiRequestBody<"PutUsername">;
 export function putUsername(axios: AxiosInstance) {
-    return async function (request: PutUsernameRequest): Promise<PutUsernameRequest> {
-        return axios.put("/api/user/username", request)
+    return async function (request: PutUsernameRequest) {
+        return await axios.put("/api/user/username", request);
     };
 }

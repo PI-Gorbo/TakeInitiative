@@ -1,0 +1,54 @@
+# Opens the dev -> main pull request that deploys a release, once release-please's own PR merges.
+#
+# Why a workflow and not a habit: `main` is the deploying branch, so the gap between "a release was
+# cut" and "it is in production" is a step somebody has to remember. This makes it a PR that shows
+# up on its own, carrying the release notes release-please just wrote, and merging it is the
+# shipping decision.
+#
+# Ported from Ripple's merge-to-main.yaml. The title match is the difference, and it is worth
+# getting exactly right because a wrong match means this silently never runs. release-please titles
+# its PR here `chore(dev): release takeinitiative <version>` — verified against commit 5a46829,
+# the 1.1.0 release PR. Ripple's is `chore: release dev`, so its `startsWith` does not port.
+#
+# Matched on `: release takeinitiative` rather than the full prefix: the `(dev)` scope is the target
+# branch, so a `startsWith('chore(dev):')` would break the day this is run from another branch,
+# and it would break the same silent way.
+
+name: Merge Dev to Main
+
+on:
+    pull_request:
+        types: [closed]
+        branches: [dev]
+
+permissions:
+    contents: write
+    pull-requests: write
+
+jobs:
+    create-merge-pr:
+        name: Open the release PR into main
+        # `merged`, not just closed: a release PR that was closed unmerged must not open this.
+        if: >-
+            github.event.pull_request.merged == true
+            && contains(github.event.pull_request.title, ': release takeinitiative')
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  # The action compares the two branches, so a shallow clone would find no
+                  # common history and report an empty diff.
+                  fetch-depth: 0
+
+            - name: Create the pull request
+              uses: repo-sync/pull-request@v2
+              with:
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+                  source_branch: dev
+                  destination_branch: main
+                  pr_title: "release: deploy the release from dev to main"
+                  # The release notes release-please wrote, so the PR that ships a version says
+                  # what is in it.
+                  pr_body: ${{ github.event.pull_request.body }}
+                  # Nothing to ship is not a failure; it just means dev and main already agree.
+                  pr_allow_empty: false

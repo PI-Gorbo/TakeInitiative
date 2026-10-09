@@ -1,33 +1,8 @@
 import { createCampaignRequest } from "~/utils/api/campaign/createCampaignRequest";
-import { createPlayerCharacterRequest } from "~/utils/api/campaign/createPlayerCharacterRequest";
-import { deleteCampaignRequest } from "~/utils/api/campaign/deleteCampaignRequest";
-import { deletePlayerCharacterRequest } from "~/utils/api/campaign/deletePlayerCharacterRequest";
-
 import { getCampaignRequest } from "~/utils/api/campaign/getCampaignRequest";
+import { getCampaignsRequest } from "~/utils/api/campaign/getCampaignsRequest";
 import { joinCampaignRequest } from "~/utils/api/campaign/joinCampaignRequest";
-import { updateCampaignDetailsRequest } from "~/utils/api/campaign/updateCampaignDetailsRequest";
-import { updatePlayerCharacterRequest } from "~/utils/api/campaign/updatePlayerCharacterRequest";
-import { deleteInitiativeCharacterRequest } from "~/utils/api/combat/deleteInitiativeCharacterRequest";
-import { deleteStagedCharacter } from "~/utils/api/combat/deleteStagedCharacterRequest";
-import { getCombatRequest } from "~/utils/api/combat/getCombatRequest";
-import { openCombatRequest } from "~/utils/api/combat/openCombatRequest.js";
-import { postFinishCombatRequest } from "~/utils/api/combat/postFinishCombatRequest";
-import { postEndTurnRequest } from "~/utils/api/combat/postNextTurn";
-import { postRollStagedCharactersIntoInitiativeRequest } from "~/utils/api/combat/postRollStagedCharactersIntoInitiative";
-import { postStagedPlannedCharactersRequest } from "~/utils/api/combat/postStagePlannedCharactersRequest";
-import { postStagePlayerCharactersRequest as postStagePlayerCharactersRequest } from "~/utils/api/combat/postStagePlayerCharactersRequest";
-import { postStartCombatRequest } from "~/utils/api/combat/postStartCombat";
-import { putUpdateInitiativeCharacterRequest } from "~/utils/api/combat/putUpdateInitiativeCharacterRequest";
-import { putUpdateStagedCharacter } from "~/utils/api/combat/putUpsertStagedCharacter";
-import { createPlannedCombatRequest } from "~/utils/api/plannedCombat/createPlannedCombatRequest";
-import { deletePlannedCombatRequest } from "~/utils/api/plannedCombat/deletePlannedCombatRequest";
-import { getCombatsRequest } from "~/utils/api/combat/getCombatsRequest";
-import { createPlannedCombatStageRequest } from "~/utils/api/plannedCombat/stages/createPlannedCombatStageRequest";
-import { deletePlannedCombatStageRequest } from "~/utils/api/plannedCombat/stages/deletePlannedCombatStageRequest";
-import { createPlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/createPlannedCombatNpcRequest";
-import { deletePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/deletePlannedCombatNpcRequest";
-import { updatePlannedCombatNpcRequest } from "~/utils/api/plannedCombat/stages/npcs/updatePlannedCombatNpcRequest";
-import { updatePlannedCombatStageRequest } from "~/utils/api/plannedCombat/stages/updatePlannedCombatStageRequest";
+import { putMemberRoleRequest } from "~/utils/api/campaign/putMemberRoleRequest";
 import { getUserRequest } from "~/utils/api/user/getUserRequest";
 import { loginRequest } from "~/utils/api/user/loginRequest";
 import { logoutRequest } from "~/utils/api/user/logoutRequest";
@@ -37,12 +12,65 @@ import { postSendConfirmEmailRequest } from "~/utils/api/user/postSendConfirmEma
 import { putSendResetPasswordRequest } from "~/utils/api/user/putSendResetPasswordRequest";
 import { putResetPassword } from "~/utils/api/user/putResetPasswordRequest";
 import { getMaintenanceRequest } from "~/utils/api/admin/getMaintainenceRequest";
-import { putCampaignMemberResourcesRequest } from "~/utils/api/campaign/putCampaignMemberResourcesRequest";
-import { getCombatHistory } from "~/utils/api/combat/getCombatHistoryRequest";
-import { postAddStagedCharacter } from "~/utils/api/combat/postAddStagedCharacter";
-import { getPlannedCombatRequest } from "~/utils/api/plannedCombat/getPlannedCombatRequest";
-import { updatePlannedCombatRequest } from "~/utils/api/plannedCombat/updatePlannedCombatRequest";
 import { putUsername } from "~/utils/api/user/putUsernameRequest";
+import { getSessionsRequest } from "~/utils/api/session/getSessionsRequest";
+import { getSessionStreamRequest } from "~/utils/api/session/getSessionStreamRequest";
+import { postStartSessionRequest } from "~/utils/api/session/postStartSessionRequest";
+import { putSessionTitleRequest } from "~/utils/api/session/putSessionTitleRequest";
+import { deleteSessionNoteRequest } from "~/utils/api/sessionNote/deleteSessionNoteRequest";
+import { getSessionNoteHistoryRequest } from "~/utils/api/sessionNote/getSessionNoteHistoryRequest";
+import { getSessionNoteRequest } from "~/utils/api/sessionNote/getSessionNoteRequest";
+import { postSessionNoteRequest } from "~/utils/api/sessionNote/postSessionNoteRequest";
+import { putSessionNoteHiddenRequest } from "~/utils/api/sessionNote/putSessionNoteHiddenRequest";
+import { putSessionNoteRequest } from "~/utils/api/sessionNote/putSessionNoteRequest";
+import { putSessionNoteVisibilityRequest } from "~/utils/api/sessionNote/putSessionNoteVisibilityRequest";
+import { getEntriesRequest } from "~/utils/api/entry/getEntriesRequest";
+import { getEntryRequest } from "~/utils/api/entry/getEntryRequest";
+import { getEntryTimelineRequest } from "~/utils/api/entry/getEntryTimelineRequest";
+import { postEntryFromReferenceRequest } from "~/utils/api/entry/postEntryFromReferenceRequest";
+import { postEntryRequest } from "~/utils/api/entry/postEntryRequest";
+import { postEntryQuoteRequest } from "~/utils/api/entry/postEntryQuoteRequest";
+import { putEntryAliasesRequest } from "~/utils/api/entry/putEntryAliasesRequest";
+import { putEntryArticleRequest } from "~/utils/api/entry/putEntryArticleRequest";
+import { putEntryEditAccessRequest } from "~/utils/api/entry/putEntryEditAccessRequest";
+import { putEntryKindRequest } from "~/utils/api/entry/putEntryKindRequest";
+import { putEntryNameRequest } from "~/utils/api/entry/putEntryNameRequest";
+import { putEntryVisibilityRequest } from "~/utils/api/entry/putEntryVisibilityRequest";
+import { postEntryMergeRequest } from "~/utils/api/entry/postEntryMergeRequest";
+import { putEntryClaimRequest } from "~/utils/api/entry/putEntryClaimRequest";
+import { putEntryStatsRequest } from "~/utils/api/entry/putEntryStatsRequest";
+import { getEntryHistoryRequest } from "~/utils/api/entry/getEntryHistoryRequest";
+import { postEntryLinkRequest } from "~/utils/api/entry/postEntryLinkRequest";
+import { deleteEntryLinkRequest } from "~/utils/api/entry/deleteEntryLinkRequest";
+import { getEntryKnowledgeBaseSuggestionsRequest } from "~/utils/api/entry/getEntryKnowledgeBaseSuggestionsRequest";
+import { postEntrySuggestionDismissRequest } from "~/utils/api/entry/postEntrySuggestionDismissRequest";
+import { postImageRequest } from "~/utils/api/image/postImageRequest";
+import { deleteImageRequest } from "~/utils/api/image/deleteImageRequest";
+import { getSessionImagesRequest } from "~/utils/api/image/getSessionImagesRequest";
+import { getEntryImagesRequest } from "~/utils/api/image/getEntryImagesRequest";
+import { getSearchRequest } from "~/utils/api/search/getSearchRequest";
+import { getReferenceItemRequest } from "~/utils/api/reference/getReferenceItemRequest";
+import { getKnowledgeBaseRequest } from "~/utils/api/knowledgeBase/getKnowledgeBaseRequest";
+import { getCombatsRequest } from "~/utils/api/combat/getCombatsRequest";
+import { getEntryCombatsRequest } from "~/utils/api/combat/getEntryCombatsRequest";
+import { getCombatRequest } from "~/utils/api/combat/getCombatRequest";
+import { postCombatRequest } from "~/utils/api/combat/postCombatRequest";
+import { postCombatantsRequest } from "~/utils/api/combat/postCombatantsRequest";
+import { putCombatantRequest } from "~/utils/api/combat/putCombatantRequest";
+import { deleteCombatantRequest } from "~/utils/api/combat/deleteCombatantRequest";
+import { postCombatRollRequest } from "~/utils/api/combat/postCombatRollRequest";
+import { postCombatEndTurnRequest } from "~/utils/api/combat/postCombatEndTurnRequest";
+import { postCombatFinishRequest } from "~/utils/api/combat/postCombatFinishRequest";
+import { putCombatantPositionRequest } from "~/utils/api/combat/putCombatantPositionRequest";
+import { getCombatHistoryRequest } from "~/utils/api/combat/getCombatHistoryRequest";
+import { getEntryConnectionsRequest } from "~/utils/api/connection/getEntryConnectionsRequest";
+import { getConnectionEvidenceRequest } from "~/utils/api/connection/getConnectionEvidenceRequest";
+import { getConnectionGraphRequest } from "~/utils/api/connection/getConnectionGraphRequest";
+import { getLooseEndsRequest } from "~/utils/api/looseEnd/getLooseEndsRequest";
+import { getLooseEndCountsRequest } from "~/utils/api/looseEnd/getLooseEndCountsRequest";
+import { postSuggestionMatchRequest } from "~/utils/api/suggestion/postSuggestionMatchRequest";
+import { getSuggestionModelsRequest } from "~/utils/api/suggestion/getSuggestionModelsRequest";
+import { postSuggestionRevertRequest } from "~/utils/api/suggestion/postSuggestionRevertRequest";
 
 export const useApi = () => {
     const { $axios } = useNuxtApp();
@@ -61,59 +89,89 @@ export const useApi = () => {
         campaign: {
             create: createCampaignRequest($axios),
             join: joinCampaignRequest($axios),
-            update: updateCampaignDetailsRequest($axios),
             get: getCampaignRequest($axios),
-            delete: deleteCampaignRequest($axios),
-            playerCharacters: {
-                create: createPlayerCharacterRequest($axios),
-                update: updatePlayerCharacterRequest($axios),
-                delete: deletePlayerCharacterRequest($axios),
-            },
-            member: {
-                setResources: putCampaignMemberResourcesRequest($axios),
-            },
+            list: getCampaignsRequest($axios),
+            putMemberRole: putMemberRoleRequest($axios),
         },
-        draftCombat: {
-            create: createPlannedCombatRequest($axios),
-            delete: deletePlannedCombatRequest($axios),
-            get: getPlannedCombatRequest($axios),
-            update: updatePlannedCombatRequest($axios),
-            stage: {
-                create: createPlannedCombatStageRequest($axios),
-                delete: deletePlannedCombatStageRequest($axios),
-                update: updatePlannedCombatStageRequest($axios),
-                npc: {
-                    create: createPlannedCombatNpcRequest($axios),
-                    update: updatePlannedCombatNpcRequest($axios),
-                    delete: deletePlannedCombatNpcRequest($axios),
-                },
-            },
+        session: {
+            list: getSessionsRequest($axios),
+            start: postStartSessionRequest($axios),
+            putTitle: putSessionTitleRequest($axios),
+            getStream: getSessionStreamRequest($axios),
+        },
+        note: {
+            post: postSessionNoteRequest($axios),
+            get: getSessionNoteRequest($axios),
+            put: putSessionNoteRequest($axios),
+            putVisibility: putSessionNoteVisibilityRequest($axios),
+            putHidden: putSessionNoteHiddenRequest($axios),
+            delete: deleteSessionNoteRequest($axios),
+            history: getSessionNoteHistoryRequest($axios),
+        },
+        entry: {
+            list: getEntriesRequest($axios),
+            get: getEntryRequest($axios),
+            create: postEntryRequest($axios),
+            createFromReference: postEntryFromReferenceRequest($axios),
+            timeline: getEntryTimelineRequest($axios),
+            putName: putEntryNameRequest($axios),
+            putKind: putEntryKindRequest($axios),
+            putAliases: putEntryAliasesRequest($axios),
+            putVisibility: putEntryVisibilityRequest($axios),
+            putEditAccess: putEntryEditAccessRequest($axios),
+            putArticle: putEntryArticleRequest($axios),
+            promote: postEntryQuoteRequest($axios),
+            merge: postEntryMergeRequest($axios),
+            putClaim: putEntryClaimRequest($axios),
+            putStats: putEntryStatsRequest($axios),
+            history: getEntryHistoryRequest($axios),
+            postLink: postEntryLinkRequest($axios),
+            deleteLink: deleteEntryLinkRequest($axios),
+            knowledgeBaseSuggestions: getEntryKnowledgeBaseSuggestionsRequest($axios),
+            dismissSuggestion: postEntrySuggestionDismissRequest($axios),
+        },
+        image: {
+            post: postImageRequest($axios),
+            delete: deleteImageRequest($axios),
+            sessionGallery: getSessionImagesRequest($axios),
+            entryGallery: getEntryImagesRequest($axios),
+        },
+        search: {
+            get: getSearchRequest($axios),
+        },
+        reference: {
+            get: getReferenceItemRequest($axios),
+        },
+        knowledgeBase: {
+            list: getKnowledgeBaseRequest($axios),
         },
         combat: {
-            getAll: getCombatsRequest($axios),
+            list: getCombatsRequest($axios),
             get: getCombatRequest($axios),
-            history: getCombatHistory($axios),
-            start: postStartCombatRequest($axios),
-            finish: postFinishCombatRequest($axios),
-            open: openCombatRequest($axios),
-            endTurn: postEndTurnRequest($axios),
-            stage: {
-                character: {
-                    update: putUpdateStagedCharacter($axios),
-                    add: postAddStagedCharacter($axios),
-                    delete: deleteStagedCharacter($axios),
-                },
-                planned: postStagedPlannedCharactersRequest($axios),
-                rollIntoInitiative:
-                    postRollStagedCharactersIntoInitiativeRequest($axios),
-                playerCharacters: postStagePlayerCharactersRequest($axios),
-            },
-            initiative: {
-                character: {
-                    update: putUpdateInitiativeCharacterRequest($axios),
-                    delete: deleteInitiativeCharacterRequest($axios),
-                },
-            },
+            create: postCombatRequest($axios),
+            addCombatants: postCombatantsRequest($axios),
+            putCombatant: putCombatantRequest($axios),
+            deleteCombatant: deleteCombatantRequest($axios),
+            roll: postCombatRollRequest($axios),
+            endTurn: postCombatEndTurnRequest($axios),
+            finish: postCombatFinishRequest($axios),
+            putPosition: putCombatantPositionRequest($axios),
+            history: getCombatHistoryRequest($axios),
+            forEntry: getEntryCombatsRequest($axios),
+        },
+        connection: {
+            forEntry: getEntryConnectionsRequest($axios),
+            evidence: getConnectionEvidenceRequest($axios),
+            graph: getConnectionGraphRequest($axios),
+        },
+        looseEnd: {
+            list: getLooseEndsRequest($axios),
+            counts: getLooseEndCountsRequest($axios),
+        },
+        suggestion: {
+            match: postSuggestionMatchRequest($axios),
+            models: getSuggestionModelsRequest($axios),
+            revert: postSuggestionRevertRequest($axios),
         },
         admin: {
             getMaintenance: getMaintenanceRequest($axios),

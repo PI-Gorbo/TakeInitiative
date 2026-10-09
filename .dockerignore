@@ -1,0 +1,3 @@
+# The suggestion model's weights (23b): the web Dockerfile fetches them itself.
+apps/TakeInitiative.Web/public/models/
+.data/

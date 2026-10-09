@@ -1,47 +1,26 @@
 import type { AxiosInstance } from "axios";
-import { z } from "zod";
-import { CombatState, draftCombatValidator } from "../../types/models";
-import { validateResponse } from "~/utils/apiErrorParser";
+import type { ApiPathParams, ApiResponse, CombatStatus } from "../types";
 
-// Get User
-export type GetCombatsRequest = {
-    campaignId: string;
+// Get Combats (members): summaries of the combats the caller can see, newest first.
+// `status` narrows them; the server takes a comma list. Players never get a Draft.
+export type GetCombatsRequest = ApiPathParams<"GetCombats"> & {
+    status?: readonly CombatStatus[];
 };
-const combatHistoryDto = z.array(
-    z
-        .object({
-            combatId: z.string(),
-            combatName: z.string(),
-            state: z.nativeEnum(CombatState),
-            finishedTimestamp: z.string().nullable(),
-        })
-        .required({
-            combatId: true,
-            combatName: true,
-        })
-)
-export type CombatHistoryDto = z.infer<typeof combatHistoryDto>;
-
-export const getCombatsResponseValidator = z.object({
-    plannedCombats: z.array(z.object({
-        id: z.string().uuid(),
-        name: z.string()
-    })),
-    combats: combatHistoryDto,
-});
-
-export type GetCombatsResponse = z.infer<typeof getCombatsResponseValidator>;
-
+export type GetCombatsResponse = ApiResponse<"GetCombats">;
 export function getCombatsRequest(axios: AxiosInstance) {
-    return function (request: GetCombatsRequest): Promise<GetCombatsResponse> {
-        return axios
-            .get("/api/combats", {
-                params: {
-                    campaignId: request.campaignId,
-                },
-            })
-            .then((response) =>
-                validateResponse(response, getCombatsResponseValidator)
-            );
+    return async function ({
+        campaignId,
+        status,
+    }: GetCombatsRequest): Promise<GetCombatsResponse> {
+        const response = await axios.get<GetCombatsResponse>(
+            `/api/campaigns/${encodeURIComponent(campaignId)}/combats`,
+            {
+                params:
+                    status && status.length > 0
+                        ? { status: status.join(",") }
+                        : undefined,
+            }
+        );
+        return response.data;
     };
 }

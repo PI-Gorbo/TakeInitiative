@@ -1,77 +1,14 @@
-import { validateResponse } from "~/utils/apiErrorParser";
 import type { AxiosInstance } from "axios";
-import { z } from "zod";
-import {
-    CombatState,
-    campaignMemberResourceValidator,
-    campaignMemberValidator,
-    campaignValidator,
-    draftCombatValidator,
-    playerCharacterValidator,
-    playerDtoValidator,
-} from "../../types/models";
+import type { ApiPathParams, ApiResponse } from "../types";
 
-// Create Campaign
-export type GetCampaignRequest = {
-    campaignId: string;
-};
-
-const campaignMemberDtoValidator = z
-    .object({
-        userId: z.string(),
-        username: z.string(),
-        resources: z.array(campaignMemberResourceValidator),
-        characters: z.array(playerCharacterValidator)
-    })
-    .required();
-
-const combatDtoValidator = z
-    .object({
-        id: z.string(),
-        state: z.nativeEnum(CombatState),
-        combatName: z.string(),
-        dungeonMaster: z.string(),
-        currentPlayers: z.array(playerDtoValidator),
-    })
-    .required();
-
-const finishedCombatDtoValidator = z
-    .object({
-        combatId: z.string(),
-        name: z.string(),
-    })
-    .required();
-export type FinishedCombatDto = z.infer<typeof finishedCombatDtoValidator>;
-
-export type CombatDto = z.infer<typeof combatDtoValidator>;
-export type CampaignMemberDto = z.infer<typeof campaignMemberDtoValidator>;
-const getCampaignResponseSchema = z
-    .object({
-        campaign: campaignValidator,
-        userCampaignMember: campaignMemberValidator,
-        campaignMembers: z.array(campaignMemberDtoValidator),
-        joinCode: z.string(),
-        currentCombatInfo: combatDtoValidator.nullable(),
-        combatHistory: z.array(
-            z
-                .object({
-                    combatId: z.string().uuid(),
-                    combatName: z.string(),
-                    finishedOn: z.string(),
-                })
-                .required()
-        ),
-    })
-    .required();
-export type GetCampaignResponse = z.infer<typeof getCampaignResponseSchema>;
+// Get Campaign (members only)
+export type GetCampaignRequest = ApiPathParams<"GetCampaign">;
+export type GetCampaignResponse = ApiResponse<"GetCampaign">;
 export function getCampaignRequest(axios: AxiosInstance) {
-    return async function (
-        request: GetCampaignRequest
-    ): Promise<GetCampaignResponse> {
-        return await axios
-            .get(`/api/campaign/${encodeURI(request.campaignId)}`)
-            .then(async (response) =>
-                validateResponse(response, getCampaignResponseSchema)
-            );
+    return async function (request: GetCampaignRequest): Promise<GetCampaignResponse> {
+        const response = await axios.get<GetCampaignResponse>(
+            `/api/campaigns/${encodeURIComponent(request.campaignId)}`
+        );
+        return response.data;
     };
 }

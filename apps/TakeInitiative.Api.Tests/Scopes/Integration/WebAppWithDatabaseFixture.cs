@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using NSubstitute;
 using TakeInitiative.Api.Bootstrap;
+using TakeInitiative.Api.Features.Images;
 using TakeInitiative.Utilities;
 using Testcontainers.PostgreSql;
 namespace TakeInitiative.Api.Tests.Integration;
@@ -13,20 +14,22 @@ public class WebAppWithDatabaseFixture : IAsyncLifetime, IWebAppClient
 {
     public IAlbaHost AlbaHost { get; private set; } = null!;
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder()
-        .WithImage("postgres:15-alpine")
+        .WithImage("postgres:16-alpine")
         .Build();
+    public InMemoryBlobStore Blobs { get; } = new();
     public IDiceRoller DiceRollerSubstitute => Substitute.For<IDiceRoller>();
 
     public async Task InitializeAsync()
     {
         await _postgres.StartAsync();
-        AlbaHost = await Alba.AlbaHost.For<Program>(x =>
+        AlbaHost = await HostStartup.Start(() => Alba.AlbaHost.For<Program>(x =>
             x.ConfigureAppConfiguration((context, configBuilder) =>
                 {
                     configBuilder.AddInMemoryCollection(
                         new Dictionary<string, string?>
                         {
-                            ["ConnectionStrings:TakeDB"] = _postgres.GetConnectionString()
+                            ["ConnectionStrings:TakeDB"] = _postgres.GetConnectionString(),
+                            ["Blobs:CreateBucket"] = "false",
                         });
                 })
            .ConfigureServices((context, services) =>
@@ -34,9 +37,10 @@ public class WebAppWithDatabaseFixture : IAsyncLifetime, IWebAppClient
                     services.Replace(
                        new ServiceDescriptor(typeof(IDiceRoller), DiceRollerSubstitute)
                     );
-                    services.AddMartenDB(context.Configuration, IsDevelopment: true);
+                    services.Replace(ServiceDescriptor.Singleton<IBlobStore>(Blobs));
+                    services.AddMartenDB(context.Configuration);
                 })
-        );
+        ));
     }
     public async Task DisposeAsync()
     {

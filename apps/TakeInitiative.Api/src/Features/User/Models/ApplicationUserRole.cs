@@ -1,6 +1,6 @@
 using System.Security.Claims;
 
-using GP.MartenIdentity;
+using TakeInitiative.Api.Identity;
 
 namespace TakeInitiative.Api.Features.Users;
 public class ApplicationUserRole : MartenIdentityRole

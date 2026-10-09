@@ -1,0 +1,32 @@
+{
+    "$comment": "Step 23b: the suggestion model, pinned. Read by nuxt.config.ts (runtimeConfig.public.suggestions) and scripts/models/fetch-model.mjs. The sha256s are those of scripts/gliner/export.py's output; see docs/roadmap/23-suggestions.md, 'As built, 23b'.",
+    "id": "gliner_small-v2.5",
+    "name": "GLiNER small v2.5",
+    "version": "gliner-community/gliner_small-v2.5@f227d3cd637bd4e6757ae143935316d062393341+onnx-int8",
+    "revision": "f227d3cd637bd4e6757ae143935316d062393341",
+    "upstream": "https://huggingface.co/gliner-community/gliner_small-v2.5",
+    "licence": "Apache-2.0",
+    "attribution": "GLiNER by Urchade Zaratiana et al. (github.com/urchade/GLiNER)",
+    "threshold": 0.4,
+    "maxWidth": 12,
+    "maxWords": 768,
+    "maxTokens": 512,
+    "files": [
+        {
+            "path": "model_quantized.onnx",
+            "bytes": 196786385,
+            "sha256": "60f2f4da1ccad2230626ecc00cbbb18474b5415d3a9fddfca8078f52c2ab2930"
+        },
+        {
+            "path": "tokenizer.json",
+            "bytes": 8332739,
+            "sha256": "08bb5853718f4a829fa9ce773d7984f7f3f6a7073fdc82a07a382675c5061ba6"
+        },
+        {
+            "path": "tokenizer_config.json",
+            "bytes": 531,
+            "sha256": "54121ac6feec6b4d5bf85245a54c3c5b1ff05ef2318cf83e45340849b8981566"
+        }
+    ],
+    "mirror": "https://huggingface.co/GG-QandV/gliner_small-v2.5-onnx/resolve/a748820c906f7af707a25bb52411b21b999f8de9"
+}

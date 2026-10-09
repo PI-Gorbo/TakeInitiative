@@ -11,7 +11,7 @@ on:
       - "**.cs"
       - "**.csproj"
   pull_request:
-    branches: [ "dev" ]
+    # No branch filter: every PR is gated, including stacked ones based on a feature branch.
     paths:
       - ".github/workflows/testApi.yml"
       - "**.cs"
@@ -27,18 +27,11 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - name: Add Gorbo Packages Nuget Source.
-        run: dotnet nuget add source --store-password-in-clear-text --name "GitHubPackages" --username "PI-Gorbo" --password "${{ secrets.GORBO_PACKAGES_GITHUB_TOKEN }}" "https://nuget.pkg.github.com/PI-Gorbo/index.json" 
+          dotnet-version: 10.0.x
       - name: Restore dependencies
         run: dotnet restore
       - name: Build
         run: |
           dotnet build --configuration Release --no-restore -p:TreatWarningsAsErrors=True
       - name: Test
-        run: |
-          export PythonDLL=/opt/hostedtoolcache/Python/3.11.9/x64/lib/libpython3.11.so
-          dotnet test -- --verbosity normal
+        run: dotnet test -- --verbosity normal

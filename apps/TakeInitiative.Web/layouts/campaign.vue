@@ -1,229 +1,233 @@
 <template>
-    <div class="h-full w-full max-h-full">
-        <NuxtLayout name="main-app">
-            <LoadingFallback
-                :isLoading="campaignQuery.isLoading.value"
-                class="flex w-full justify-center">
-                <div class="w-page flex flex-col gap-4">
-                    <header class="flex flex-col gap-4">
-                        <div class="flex justify-between">
-                            <Tabs
-                                class="sticky"
-                                :modelValue="currentTab"
-                                @update:modelValue="
-                                    (currentTab) => {
-                                        navigateTo({
-                                            name: currentTab as RoutesNamesList,
-                                        });
-                                    }
-                                ">
-                                <TabsList>
-                                    <template
-                                        v-for="(tab, index) in tabValues"
-                                        :key="index">
-                                        <TabsTrigger
-                                            :value="tab.routeName"
-                                            v-if="
-                                                !tab.shouldHideTab ||
-                                                tab.shouldHideTab() === false
-                                            ">
-                                            <FontAwesomeIcon
-                                                v-if="tab.icon"
-                                                :icon="tab.icon" />
-                                            <span v-if="tab.label">{{
-                                                tab.label
-                                            }}</span>
-                                        </TabsTrigger>
-                                    </template>
-                                </TabsList>
-                            </Tabs>
-
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                        variant="outline"
-                                        class="interactable"
-                                        v-if="
-                                            baseLayoutRoute.name ===
-                                            'app-campaigns-campaignId'
-                                        ">
-                                        <FontAwesomeIcon :icon="faPlus" />
-                                        <span>Add Players</span>
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent>
-                                    <header class="font-semibold">
-                                        Add Players
-                                    </header>
-                                    <p class="text-muted-foreground">
-                                        Players can join by visting the join
-                                        link below, or entering the join code
-                                        when prompted.
-                                    </p>
-                                    <CampaignShare />
-                                </PopoverContent>
-                            </Popover>
-                        </div>
-                    </header>
-
-                    <div class="overflow-auto flex-1">
-                        <slot />
+    <div class="flex h-full w-full flex-col">
+        <!-- Not wrapped in the default layout: the layout transition can only animate an
+             element root, not a nested <NuxtLayout>. So its Toaster is repeated below. -->
+        <!-- One responsive shell: tabs sit at the bottom on a phone and move to a
+             side rail on desktop. The same <nav> does both. -->
+        <div class="flex h-full w-full flex-col bg-background md:flex-row">
+            <div class="flex min-h-0 min-w-0 flex-1 flex-col">
+                <header
+                    class="sticky top-0 z-10 border-b bg-background/95 pt-safe px-safe backdrop-blur">
+                    <div class="flex h-14 items-center gap-1 px-1">
+                        <CampaignSwitcher
+                            :campaignId="campaignId"
+                            :name="campaignQuery.data.value?.name ?? ''" />
+                        <button
+                            type="button"
+                            class="flex h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-md px-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                            aria-label="Search"
+                            aria-keyshortcuts="Meta+K Control+K"
+                            @click="openSearch($event.currentTarget as HTMLElement)">
+                            <Search class="size-5" />
+                            <kbd
+                                class="hidden rounded border px-1.5 text-xs md:inline"
+                                >{{ shortcutLabel }}</kbd
+                            >
+                        </button>
                     </div>
-                </div>
-            </LoadingFallback>
-        </NuxtLayout>
-        <Dialog v-model:open="shareModalOpen">
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Add Players</DialogTitle>
-                    <DialogDescription>
-                        Players can join by visting the join link below, or
-                        entering the join code when prompted.
-                    </DialogDescription>
-                    <CampaignShare />
-                </DialogHeader>
-            </DialogContent>
-        </Dialog>
+                </header>
+
+                <main class="min-h-0 flex-1 overflow-y-auto px-safe">
+                    <LoadingFallback
+                        :isLoading="campaignQuery.isLoading.value"
+                        :isError="campaignQuery.isError.value"
+                        iconSize="3x"
+                        class="pt-8">
+                        <slot />
+                    </LoadingFallback>
+                </main>
+            </div>
+
+            <!-- On a phone the tab bar hides while the composer is pinned above the
+                 keyboard, so nothing sits between them (14e, invariant 11). -->
+            <nav
+                aria-label="Campaign sections"
+                :class="[
+                    'order-last shrink-0 border-t bg-background pb-safe px-safe md:order-first md:w-56 md:border-r md:border-t-0 md:pr-0 md:pt-safe',
+                    hideTabBar && 'max-md:hidden',
+                ]">
+                <NuxtLink
+                    to="/app/campaigns"
+                    class="hidden h-14 items-center gap-2 px-4 font-NovaCut text-lg text-gold md:flex">
+                    <img
+                        src="/yellowDice.png"
+                        alt=""
+                        class="size-8" />
+                    Take Initiative
+                </NuxtLink>
+                <ul class="grid grid-cols-3 md:flex md:flex-col md:gap-1 md:p-2">
+                    <li
+                        v-for="tab in tabs"
+                        :key="tab.name">
+                        <NuxtLink
+                            :to="{ name: tab.name, params: { campaignId } }"
+                            :aria-current="isCurrentTab(tab) ? 'page' : undefined"
+                            :class="[
+                                'flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs transition-colors md:min-h-11 md:flex-row md:justify-start md:gap-3 md:rounded-md md:px-3 md:text-sm',
+                                isCurrentTab(tab)
+                                    ? 'text-gold md:bg-accent'
+                                    : 'text-muted-foreground hover:text-foreground md:hover:bg-accent/60',
+                            ]">
+                            <!-- The Combat tab's icon pulses while a combat is live (18e.3). -->
+                            <component
+                                :is="tab.icon"
+                                :class="[
+                                    'size-6 md:size-5',
+                                    tab.name === COMBAT_TAB && combatLive && 'text-gold motion-safe:animate-pulse',
+                                ]" />
+                            <span
+                                v-if="tab.name === COMBAT_TAB && combatLive"
+                                class="sr-only"
+                                >(a combat is live)</span
+                            >
+                            {{ tab.label }}
+                        </NuxtLink>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+        <SearchSheet
+            v-model:open="searchOpen"
+            :campaignId="campaignId"
+            :returnFocus="returnFocus"
+            @addToWiki="openAddToWiki"
+            @openMembers="openMembers" />
+        <!-- On every tab: the Campaign tab's Members button and ⌘K's Share open it. -->
+        <CampaignMembersPanel
+            v-if="campaignQuery.data.value"
+            v-model:open="membersOpen"
+            :campaign="campaignQuery.data.value" />
+        <!-- + Wiki from a ⌘K reference row (20d); the card page has its own. -->
+        <ReferenceAddToWikiDialog
+            v-model:open="addToWikiOpen"
+            :campaignId="campaignId"
+            :item="addToWikiItem" />
+        <!-- iOS raises the keyboard only for a focus made during the tap, and the sheet's
+             input mounts after it: this holds the focus (and the keyboard) until then. -->
+        <input
+            ref="focusProxy"
+            type="text"
+            tabindex="-1"
+            aria-hidden="true"
+            class="pointer-events-none fixed left-0 top-0 size-px opacity-0 text-base" />
+        <ClientOnly>
+            <Toaster :position="'top-right'" :duration="1000" />
+        </ClientOnly>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {
-        faHome,
-        faPlus,
-        type IconDefinition,
-    } from "@fortawesome/free-solid-svg-icons";
-    import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-    import { useQuery, useQueryClient } from "@tanstack/vue-query";
-    import {
-        helpers,
-        type RoutesNamesList,
-        type RoutesParamsRecord,
-    } from "@typed-router";
-    import { Axios, AxiosError } from "axios";
-    import {
-        getCampaignQuery,
-        getCampaignQueryKey,
-    } from "~/utils/queries/campaign";
-    import * as signalR from "@microsoft/signalr";
+    import { useEventListener } from "@vueuse/core";
+    import { useQuery } from "@tanstack/vue-query";
+    import { BookOpen, Castle, Search, Swords } from "lucide-vue-next";
+    import { getCampaignQuery } from "~/utils/queries/campaign";
+    import { getCombatsQuery } from "~/utils/queries/combats";
+    import type { SearchReferenceHit } from "~/utils/api/types";
+    import { addToWikiItemFromHit, type AddToWikiItem } from "~/utils/reference";
+    import { OPEN_MEMBERS, OPEN_SEARCH } from "~/utils/search";
+    import { rememberCampaign, rememberRecentCampaign } from "~/utils/shareTarget";
 
     const route = useRoute();
-    const baseLayoutRoute = useRoute("app-campaigns-campaignId");
-
-    const queryClient = useQueryClient();
-    const campaignQuery = useQuery(
-        getCampaignQuery(
-            () => baseLayoutRoute.params.campaignId as string,
-            () => navigateTo(helpers.route({ name: "app-campaigns" }))
-        )
+    const campaignId = computed(
+        () => (route.params as { campaignId?: string }).campaignId ?? ""
     );
 
-    const shareModalOpen = ref(false);
-    const tabValues: {
-        label?: string;
-        icon?: IconDefinition;
-        routeName: RoutesNamesList;
-        shouldHideTab?: () => boolean;
-    }[] = [
-        {
-            icon: faHome,
-            routeName: "app-campaigns-campaignId",
-        },
-        {
-            label: "Combats",
-            routeName: "app-campaigns-campaignId-combats",
-        },
-        {
-            label: "Settings",
-            routeName: "app-campaigns-campaignId-settings",
-            shouldHideTab: () => {
-                if (
-                    campaignQuery.data.value?.userCampaignMember.isDungeonMaster
-                ) {
-                    return false;
-                }
+    const campaignQuery = useQuery(
+        getCampaignQuery(campaignId, () => navigateTo("/app/campaigns"))
+    );
 
-                return true;
-            },
-        },
+    useHead({
+        title: () =>
+            campaignQuery.data.value
+                ? `${campaignQuery.data.value.name} · Take Initiative`
+                : "Take Initiative",
+    });
+
+    // Glossary (§1): the three tabs are Campaign, Wiki and Combat.
+    const tabs = [
+        { name: "app-campaigns-campaignId", label: "Campaign", icon: Castle },
+        { name: "app-campaigns-campaignId-wiki", label: "Wiki", icon: BookOpen },
+        { name: "app-campaigns-campaignId-combat", label: "Combat", icon: Swords },
     ] as const;
 
-    const currentTab = computed(() => {
-        if (route?.name === tabValues[0].routeName) {
-            return route?.name;
-        }
+    // The live combats (18e.3), which pushes keep current: the Combat tab pulses while
+    // there is one. `motion-safe:` leaves it still under `prefers-reduced-motion`.
+    const COMBAT_TAB = "app-campaigns-campaignId-combat";
+    const liveCombatsQuery = useQuery(getCombatsQuery(campaignId, { status: ["Active"] }));
+    const combatLive = computed(() => (liveCombatsQuery.data.value?.combats.length ?? 0) > 0);
 
-        if (route?.name.startsWith(tabValues[1].routeName)) {
-            return tabValues[1].routeName;
-        }
+    // The Wiki and Combat tabs stay current on their child pages (an entry page is
+    // `app-campaigns-campaignId-wiki-entryId`). The Campaign tab matches exactly, since
+    // every campaign route name starts with its own.
+    //
+    // The Knowledge base (26f) is the one page that belongs to a tab it is not under: it sits
+    // at `/app/campaigns/{id}/knowledge-base` rather than under `wiki/` because it is global
+    // rather than campaign content, but it is reached from the Wiki's toolbar and goes back
+    // there, and a tab bar with nothing current reads as "you have left the app".
+    const WIKI_TAB = "app-campaigns-campaignId-wiki";
+    const WIKI_OWNED = ["app-campaigns-campaignId-knowledge-base"];
+    const isCurrentTab = (tab: (typeof tabs)[number]) => {
+        const name = String(route.name ?? "");
+        if (tab.name === WIKI_TAB && WIKI_OWNED.includes(name)) return true;
+        return name === tab.name || (tab.name !== tabs[0].name && name.startsWith(`${tab.name}-`));
+    };
 
-        if (route?.name.startsWith(tabValues[2].routeName)) {
-            return tabValues[2].routeName;
-        }
-    });
+    const hideTabBar = useComposerPinned();
 
-    // Signal R
-    // Start the connection.
-    const joinedCampaignId = ref<string | null>(null);
-    const connection = new signalR.HubConnectionBuilder()
-        .withUrl(`${useRuntimeConfig().public.axios.baseURL}/campaignHub`, {
-            accessTokenFactory: () => useCookie(".AspNetCore.Cookies").value!,
-        })
-        .withAutomaticReconnect()
-        .configureLogging(signalR.LogLevel.Debug)
-        .build();
-    connection.on("campaignStateUpdated", async () => {
-        queryClient.invalidateQueries({
-            queryKey: getCampaignQueryKey(joinedCampaignId.value),
-        });
-    });
-    connection.on("campaignMemberStateUpdated", async () => {
-        queryClient.invalidateQueries({
-            queryKey: getCampaignQueryKey(joinedCampaignId.value),
-        });
-    });
-    connection.onreconnected(async () => {
-        // Join the campaign hub.
-        await connection.send("Join", joinedCampaignId.value); // rejoin as you leave all groups on disconnect.
-        queryClient.invalidateQueries({
-            queryKey: getCampaignQueryKey(joinedCampaignId.value),
-        });
-    });
- 
+    // The share page (16e) goes straight to the last opened campaign, and the
+    // campaign switcher offers the recent ones.
     watch(
-        () => baseLayoutRoute.params.campaignId,
-        async (newCampaignId) => {
-            if (!newCampaignId) return;
-
-            if (joinedCampaignId.value) {
-                await leaveCampaignHub();
+        campaignId,
+        (id) => {
+            try {
+                rememberCampaign(window.localStorage, id);
+                rememberRecentCampaign(window.localStorage, id);
+            } catch {
+                // No storage: the share page lists the campaigns instead.
             }
-
-            await joinCampaignHub(newCampaignId);
         },
-        {
-            immediate: true,
-        }
+        { immediate: true }
     );
 
-    onUnmounted(async () => {
-        await leaveCampaignHub();
-        await connection.stop();
-    });
+    // Live updates for every tab.
+    useCampaignHub(campaignId);
 
-    async function joinCampaignHub(id: string) {
-        if (connection.state !== signalR.HubConnectionState.Connected) {
-            await connection.start();
+    // Search: the 🔍 button, or ⌘K / Ctrl+K.
+    const searchOpen = ref(false);
+    const returnFocus = shallowRef<HTMLElement | null>(null);
+    const focusProxy = useTemplateRef<HTMLInputElement>("focusProxy");
+    function openSearch(trigger: HTMLElement | null) {
+        returnFocus.value = trigger;
+        focusProxy.value?.focus({ preventScroll: true });
+        searchOpen.value = true;
+    }
+    provide(OPEN_SEARCH, openSearch);
+
+    const membersOpen = ref(false);
+    const openMembers = () => (membersOpen.value = true);
+    provide(OPEN_MEMBERS, openMembers);
+
+    // + Wiki from ⌘K (20d): the sheet has closed; the dialog opens on the next tick.
+    const addToWikiOpen = ref(false);
+    const addToWikiItem = shallowRef<AddToWikiItem | null>(null);
+    function openAddToWiki(hit: SearchReferenceHit) {
+        addToWikiItem.value = addToWikiItemFromHit(hit);
+        void nextTick(() => (addToWikiOpen.value = true));
+    }
+    const shortcutLabel = computed(() =>
+        /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘K" : "Ctrl K"
+    );
+    useEventListener(window, "keydown", (event: KeyboardEvent) => {
+        // In the composer, ⌘K is its `@` picker, and the editor has taken the key.
+        if (event.defaultPrevented) return;
+        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+            event.preventDefault();
+            if (searchOpen.value) searchOpen.value = false;
+            else {
+                returnFocus.value = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+                searchOpen.value = true;
+            }
         }
-
-        return await connection
-            .send("Join", id)
-            .then(() => (joinedCampaignId.value = id));
-    }
-
-    async function leaveCampaignHub() {
-        return await connection
-            .send("Leave", joinedCampaignId.value)
-            .finally(() => (joinedCampaignId.value = null));
-    }
+    });
 </script>

@@ -5,6 +5,10 @@
 
 # dotenv files
 .env
+# A filled-in copy of docs/deploy/production.env.example holds production secrets. The example
+# itself lives under docs/ and is not matched here.
+.env.*
+!.env.example
 
 # User-specific files
 *.rsuser
@@ -206,6 +210,8 @@ PublishScripts/
 **/[Pp]ackages/*
 # except build/, which is used as an MSBuild target.
 !**/[Pp]ackages/build/
+# ...but the repo-root packages/ is the pnpm workspace folder, not a NuGet cache.
+!/packages/*
 # Uncomment if necessary however generally it will be regenerated when needed
 #!**/[Pp]ackages/repositories.config
 # NuGet v3's project.json files produces more ignorable files
@@ -485,3 +491,14 @@ $RECYCLE.BIN/
 
 apps/TakeInitiative.Api/appsettings.Development.json
 nuget.config
+
+# Turborepo
+.turbo/
+
+
+# Verify snapshot artifacts - only *.verified.* belongs in the repo
+*.received.*
+
+# 5eTools index (step 21): built locally from data the deployer supplies, never committed
+/.data/
+5etools-src/

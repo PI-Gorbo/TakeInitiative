@@ -1,0 +1,7 @@
+{
+    "name": "@ti/api-tests",
+    "private": true,
+    "scripts": {
+        "test": "dotnet test"
+    }
+}

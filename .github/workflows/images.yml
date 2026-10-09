@@ -1,0 +1,188 @@
+# Builds the two application images and pushes them to GHCR. Nothing on the VPS ever builds —
+# see docs/roadmap/29-deploy.md, "GHCR, since the point is partly to learn it".
+#
+# Three ways in, and the middle one is the one that needs explaining:
+#
+#   push to dev      · publishes `edge` and `sha-<short>`. This is ALSO the only CI coverage the
+#                      two Dockerfiles have: nothing else in the pipeline builds them, which is
+#                      how a broken API image (a ProjectReference added without the matching
+#                      dockerfile.dockerignore allowlist entry) survived several commits. A merge
+#                      that breaks an image now turns this workflow red instead of turning up as
+#                      a failed deploy weeks later.
+#   workflow_call    · from release.yml, gated on release-please's `release_created`, with the
+#                      version passed in. It has to be this way round: a release (or tag) created
+#                      by a workflow using the default GITHUB_TOKEN does NOT trigger other
+#                      workflows, so an `on: release` image workflow would silently never run.
+#                      Making the build a job in release.yml's OWN run is the fix; a reusable
+#                      workflow keeps release.yml from becoming a wall of YAML. A PAT would also
+#                      work and is worse — another secret, another rotation.
+#   workflow_dispatch· build a Dockerfile change from its own branch before merging it. `edge` is
+#                      deliberately not published from a branch (see the tag rules below), so the
+#                      only thing a dispatch moves is nothing: it publishes `sha-<short>` alone.
+#
+# If the ~5 minute web build on every merge ever becomes annoying, drop the `push:` trigger and
+# keep workflow_dispatch — but that gives the Dockerfiles no automatic coverage at all again.
+
+name: Images
+
+on:
+    push:
+        branches: [dev]
+        # Path-filtered so a docs-only merge builds nothing. Everything either Dockerfile's build
+        # context can read belongs here, including the package.json files the web image copies for
+        # `pnpm install --frozen-lockfile` — a new workspace member is exactly the kind of change
+        # that breaks an image build and nothing else.
+        paths:
+            - ".github/workflows/images.yml"
+            - "apps/TakeInitiative.Api/**"
+            - "apps/TakeInitiative.Api.Tests/package.json"
+            - "apps/TakeInitiative.Web/**"
+            - "packages/**"
+            - "scripts/models/**"
+            - "Directory.Build.props"
+            - "global.json"
+            - "package.json"
+            - "pnpm-lock.yaml"
+            - "pnpm-workspace.yaml"
+    workflow_call:
+        inputs:
+            version:
+                description: The release version, e.g. 1.0.15. Empty for an edge build.
+                required: false
+                type: string
+                default: ""
+    workflow_dispatch: ~
+
+concurrency:
+    # The version is part of the group on purpose. A push to dev that merges the release PR
+    # triggers this workflow directly AND triggers release.yml, which calls it again through
+    # workflow_call — same `github.ref` both times, because a called workflow sees the caller's
+    # context. Without the version in the key those two runs would share a group and cancel each
+    # other, and the loser could be the release publish. So both run: they publish disjoint tag sets
+    # (edge + sha-… versus the semver tags + latest) and the second reuses the first's :buildcache,
+    # so the duplicate costs a few minutes of a free runner and nothing else.
+    group: images-${{ github.ref }}-${{ inputs.version || 'edge' }}
+    # Superseding an edge build is fine; superseding a release publish is not.
+    cancel-in-progress: ${{ inputs.version == '' }}
+
+# This is the whole authentication story. A job with `packages: write` gets a GITHUB_TOKEN minted
+# for this run, scoped to this repository and expiring with it — which is all docker/login-action
+# needs to push to ghcr.io/<this owner>. No PAT, no stored registry secret, nothing to rotate.
+# A PAT is only needed where there is no GITHUB_TOKEN: pulling a PRIVATE package from a laptop or
+# the VPS. The packages here are public, so even that does not arise.
+#
+# Declared at the workflow level for the push/dispatch triggers. For the workflow_call path these
+# are a ceiling, not a grant: permissions are NOT inherited, so the calling job in release.yml has
+# to declare the same two itself.
+permissions:
+    contents: read
+    packages: write
+
+jobs:
+    build:
+        # arm64, natively. The target is an Ubuntu box on arm and the dev machine is Apple Silicon,
+        # so there is exactly one architecture in play and no manifest list to assemble. GitHub's
+        # arm runners are free for public repositories, and PI-Gorbo/TakeInitiative is public.
+        # Never reach for QEMU here: emulating `dotnet publish` or `nuxt build` is 10-20x slower.
+        runs-on: ubuntu-24.04-arm
+        strategy:
+            # Not fail-fast: if the API image breaks, still find out whether the web image does too.
+            fail-fast: false
+            matrix:
+                include:
+                    - image: takeinitiative-api
+                      dockerfile: apps/TakeInitiative.Api/dockerfile
+                    - image: takeinitiative-web
+                      dockerfile: apps/TakeInitiative.Web/Dockerfile
+        steps:
+            - uses: actions/checkout@v4
+
+            # `github.repository_owner` is `PI-Gorbo`, and an OCI repository name must be lowercase.
+            # docker/metadata-action lowercases its `images` input for us, but the buildcache refs
+            # below are passed straight to buildx, which rejects `ghcr.io/PI-Gorbo/...` outright.
+            # So lowercase it once, here, and use it everywhere.
+            - name: Lowercase the registry owner
+              id: owner
+              env:
+                  OWNER: ${{ github.repository_owner }}
+              run: echo "value=$(echo "$OWNER" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
+            - uses: docker/setup-buildx-action@v3
+
+            - uses: docker/login-action@v3
+              with:
+                  registry: ghcr.io
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+
+            - id: meta
+              uses: docker/metadata-action@v5
+              with:
+                  images: ghcr.io/${{ steps.owner.outputs.value }}/${{ matrix.image }}
+                  # sha-<short>  every build, never moves — this is the one to pin for a rollback.
+                  # edge         every push to dev. NOT from a dispatch on a feature branch, or a
+                  #              one-off build would quietly move the tag `dev` owns.
+                  # 1.2.3        a release-please release, never moves.
+                  # 1.2          a release, moves within the minor.
+                  # latest       a release. compose.prod.yml's default points here.
+                  tags: |
+                      type=sha,format=short,prefix=sha-
+                      type=raw,value=edge,enable=${{ inputs.version == '' && github.ref == 'refs/heads/dev' }}
+                      type=semver,pattern={{version}},value=${{ inputs.version }},enable=${{ inputs.version != '' }}
+                      type=semver,pattern={{major}}.{{minor}},value=${{ inputs.version }},enable=${{ inputs.version != '' }}
+                      type=raw,value=latest,enable=${{ inputs.version != '' }}
+
+            - id: build
+              uses: docker/build-push-action@v6
+              with:
+                  # The repo root for both: the API reaches packages/**, the web build needs the
+                  # workspace lockfile. Each Dockerfile has its own <name>.dockerignore beside it,
+                  # which BuildKit picks up and which REPLACES the root .dockerignore.
+                  context: .
+                  file: ${{ matrix.dockerfile }}
+                  platforms: linux/arm64
+                  push: true
+                  tags: ${{ steps.meta.outputs.tags }}
+                  # org.opencontainers.image.source comes from here, filled in from
+                  # github.repository. That label is what LINKS the GHCR package to this repo —
+                  # it is a label, not a setting: get it right and the repo appears on the package
+                  # page, collaborators inherit access, and the repo's workflows can push without a
+                  # per-package permission grant. The package still starts private; flipping each
+                  # one to Public is a one-time click (docs/roadmap/29-deploy.md, "Visibility").
+                  labels: ${{ steps.meta.outputs.labels }}
+                  # Registry cache, not type=gha, and the reason is arithmetic: the Actions cache is
+                  # 10 GB per repository and evicts least-recently-used, while the web image alone
+                  # carries a 196 MB model layer and a pnpm store. A few builds would evict the .NET
+                  # restore layer and the cache would become a coin flip. A :buildcache tag in GHCR
+                  # is free on a public package and is never evicted. The cost is one extra tag per
+                  # package on the page, which is noise worth the determinism.
+                  cache-from: type=registry,ref=ghcr.io/${{ steps.owner.outputs.value }}/${{ matrix.image }}:buildcache
+                  cache-to: type=registry,ref=ghcr.io/${{ steps.owner.outputs.value }}/${{ matrix.image }}:buildcache,mode=max
+
+            # The digest, not the tags: tags move and a digest does not, so this is what a rollback
+            # is written against (docs/deploy/production.env.example, API_IMAGE / WEB_IMAGE).
+            - name: Record what was published
+              env:
+                  IMAGE: ghcr.io/${{ steps.owner.outputs.value }}/${{ matrix.image }}
+                  DIGEST: ${{ steps.build.outputs.digest }}
+                  TAGS: ${{ steps.meta.outputs.tags }}
+              run: |
+                  {
+                      echo "### \`${IMAGE}\`"
+                      echo
+                      echo "Pin this:"
+                      echo
+                      echo '```'
+                      echo "${IMAGE}@${DIGEST}"
+                      echo '```'
+                      echo
+                      echo "Tags pushed:"
+                      echo
+                      echo '```'
+                      echo "${TAGS}"
+                      echo '```'
+                  } >> "$GITHUB_STEP_SUMMARY"
+
+    # No deploy job here: deploying is deploy.yml, on a push to main, which pins a digest. The
+    # webhook this used to POST could only re-pull a moving tag, so it could not say which bytes
+    # it deployed. This workflow publishes images and is the only CI coverage the Dockerfiles have.

@@ -1,0 +1,75 @@
+using System.Net;
+using FastEndpoints;
+using Marten;
+
+namespace TakeInitiative.Api.Features.Entries;
+
+/// <summary>
+/// Loads and checks for the entry endpoints, after <see cref="CampaignAccess.RequireMember"/>.
+/// The order is the 14a one: load, read rule (404), then permission (403).
+/// </summary>
+public static class EntryAccess
+{
+    /// <summary>How many merges a redirect follows before giving up. Chains are short: each merge is a deliberate act.</summary>
+    private const int MaxMergeHops = 32;
+
+    /// <summary>
+    /// An entry of this campaign that the viewer can see. Anything else is a 404, never a
+    /// 403, so an entry's existence does not leak (invariant 5).
+    /// <para>
+    /// A merged entry's id redirects (15g): with <paramref name="followMerge"/> (the default)
+    /// this returns the entry it was merged into, following a chain, and the read rule is the
+    /// target's. So a read, a timeline or a write to an old id acts on the target, and a
+    /// caller who cannot see the target gets a 404.
+    /// </para>
+    /// </summary>
+    public static async Task<Entry> RequireVisibleEntry<TRequest, TResponse>(
+        this Endpoint<TRequest, TResponse> endpoint, IQuerySession session, Guid campaignId, Guid entryId, Member viewer, CancellationToken ct,
+        bool followMerge = true)
+        where TRequest : notnull
+    {
+        var entry = await session.LoadAsync<Entry>(entryId, ct);
+        for (var hops = 0; followMerge && entry?.MergedIntoId is { } into && hops < MaxMergeHops; hops++)
+        {
+            entry = await session.LoadAsync<Entry>(into, ct);
+        }
+        if (entry is null || entry.CampaignId != campaignId || !EntryVisibility.CanSee(entry, viewer))
+        {
+            endpoint.ThrowError("There is no entry with the given id.", (int)HttpStatusCode.NotFound);
+        }
+        return entry;
+    }
+
+    /// <summary>Name, kind and aliases: see <see cref="EntryPermissions.CanEdit"/>.</summary>
+    public static void RequireCanEdit<TRequest, TResponse>(this Endpoint<TRequest, TResponse> endpoint, Entry entry, Member caller)
+        where TRequest : notnull
+    {
+        if (!EntryPermissions.CanEdit(entry, caller))
+        {
+            endpoint.ThrowError("Only its creator and the DMs can edit this entry.", (int)HttpStatusCode.Forbidden);
+        }
+    }
+
+    /// <summary>
+    /// Links (27d): see <see cref="EntryLinks.CanWrite"/> — who may edit, plus the member who plays
+    /// a claimed Character, so restricting edit access cannot take a player's own sheet link away.
+    /// </summary>
+    public static void RequireCanWriteLinks<TRequest, TResponse>(this Endpoint<TRequest, TResponse> endpoint, Entry entry, Member caller)
+        where TRequest : notnull
+    {
+        if (!EntryLinks.CanWrite(entry, caller))
+        {
+            endpoint.ThrowError("Only its creator, its player and the DMs can change this entry's links.", (int)HttpStatusCode.Forbidden);
+        }
+    }
+
+    /// <summary>Visibility and edit access: see <see cref="EntryPermissions.CanChangeAccess"/>.</summary>
+    public static void RequireCreatorOrDm<TRequest, TResponse>(this Endpoint<TRequest, TResponse> endpoint, Entry entry, Member caller)
+        where TRequest : notnull
+    {
+        if (!EntryPermissions.CanChangeAccess(entry, caller))
+        {
+            endpoint.ThrowError("Only the entry's creator and the DMs can change who sees or edits it.", (int)HttpStatusCode.Forbidden);
+        }
+    }
+}

@@ -1,0 +1,168 @@
+# NOT what Coolify runs. Coolify runs two Docker Image Applications (api, web) plus its own
+# Postgres and Garage resources, pinned to digests by .github/workflows/deploy.yml — see
+# docs/deploy/pipeline.md, which supersedes coolify.md sections 5 and 11.
+#
+# This file is kept to run the production images locally with production-shaped config, and as
+# the fallback if the pipeline breaks (paste into a "Docker Compose Empty" resource).
+# Blobs__ServiceUrl=http://garage:3900 is correct here; in Coolify it is Garage's own hostname.
+#
+# NOTHING HERE BUILDS. Adding a build key moves the build onto the VPS. The check is a grep, so
+# this comment avoids the literal string: b-u-i-l-d-colon must find nothing.
+#
+# Values in ${...} come from the environment; docs/deploy/production.env.example lists them all.
+# No service publishes a host port, and no container_name: keys — a fixed name collides.
+#
+# Properties of the deployment that survived the move to Applications, set on the resources now
+# (docs/deploy/pipeline.md section 1 maps them):
+#   1. Postgres 16 as a Coolify-managed resource, not a service here: its lifecycle is
+#      independent of app redeploys and it gets scheduled backups. Pin the major, never :latest.
+#      Its internal hostname feeds TAKEDB_CONNECTION.
+#   2. "Connect to predefined network" on every resource that resolves another by hostname.
+#   3. Domains per Application. Keep the API on a SUBDOMAIN of the web domain, or
+#      CookieDomain=.<domain> needs SameSite=None.
+#   4. Persistent storage: /keys on api (the data-protection key ring — lose it and everyone is
+#      signed out) and Garage's meta and data volumes.
+#   5. "Is build variable?" OFF for every environment variable.
+
+services:
+    api:
+        # A whole reference, so it can be a digest. Unset, it tracks :latest.
+        image: ${API_IMAGE:-ghcr.io/pi-gorbo/takeinitiative-api:latest}
+        # :latest moves, so the local copy is always stale.
+        pull_policy: always
+        restart: unless-stopped
+        depends_on:
+            garage:
+                condition: service_healthy
+        expose:
+            - "8080"
+        environment:
+            # `__` throughout, not `:`. ASP.NET reads both, but a `:` in a variable name upsets some
+            # .env parsers and web UIs, and Coolify's is one place not to find out.
+            #
+            # ASPNETCORE_ENVIRONMENT is deliberately absent. Unset means Production, which is what
+            # turns off Swagger, skips appsettings.development.json, and switches the auth cookie to
+            # SecurePolicy.Always.
+            - "ConnectionStrings__TakeDB=${TAKEDB_CONNECTION}"
+            - "CORS__MainApp=${WEB_ORIGIN}"
+            # There is no admin app. Program.cs throws if the key is absent, so it is set to the
+            # same origin rather than to something that would widen CORS.
+            - "CORS__AdminApp=${WEB_ORIGIN}"
+            # Host filtering. Also what the healthcheck below derives its Host header from.
+            - "AllowedHosts=${API_HOST}"
+            - "CookieDomain=${COOKIE_DOMAIN}"
+            - "TakeUrls__Web=${WEB_ORIGIN}"
+            - "Email__Domain=${EMAIL_DOMAIN}"
+            - "SendGrid__ApiKey=${SENDGRID_API_KEY}"
+            # Bound to JWTOptions and never read anywhere — a leftover from the pre-cookie auth. It
+            # is `required` on the options class, so it must be set; expect nothing from it.
+            - "JWTSigningKey=${JWT_SIGNING_KEY}"
+            # The API owns the schema. Marten applies every change before the port opens, which is
+            # also the only thing that creates pg_trgm and unaccent and step 26's knowledge-base
+            # table — they hang off no document type, so lazy auto-create never touches them.
+            # Safe here because AddAsyncDaemon(DaemonMode.Solo) already means exactly ONE api
+            # container, forever. Do not scale this service.
+            - "Marten__ApplySchemaOnStartup=true"
+            # The data-protection key ring, on the volume below. Without it the ring is written
+            # inside the container and thrown away with it, so every single deploy signs everybody
+            # out mid-session. The volume is load-bearing, not tidiness.
+            - "DataProtection__KeyPath=/keys"
+            - "Blobs__ServiceUrl=http://garage:3900"
+            - "Blobs__Bucket=takeinitiative"
+            # Must match Garage's s3_region. Coolify's template sets "garage"; a mismatch
+            # fails SigV4 with AuthorizationHeaderMalformed, which reads as bad credentials.
+            - "Blobs__Region=garage"
+            # Both of these are what a non-AWS S3 needs. Do not "fix" them.
+            - "Blobs__ForcePathStyle=true"
+            # True because the bucket is self-hosted on a volume that starts empty.
+            # BlobBucketInitializer is idempotent and retries for 30 s while Garage comes up, then
+            # only logs — so with this wrong the API still starts healthy and the failure surfaces
+            # at the first photo, looking exactly like a credentials problem. Set it false only for
+            # a managed bucket that already exists.
+            - "Blobs__CreateBucket=true"
+            - "Blobs__AccessKey=${BLOBS_ACCESS_KEY}"
+            - "Blobs__SecretKey=${BLOBS_SECRET_KEY}"
+        volumes:
+            - takeapi-keys:/keys
+        healthcheck:
+            # NOT a plain `curl --fail http://localhost:8080/healthz`. /healthz needs no
+            # authentication, but it still passes through ASP.NET Core's host filtering, which is
+            # active whenever AllowedHosts is set — and it is set, right above. Measured: the same
+            # request is 200 as `Host: api.example.test` and 400 as `Host: 127.0.0.1`. `curl --fail`
+            # fails on a 400, so the obvious probe never succeeds, `restart: unless-stopped` flaps
+            # the container forever, and Coolify reports a FAILED DEPLOY while the API behind it
+            # works perfectly. Every log line looks fine. It is the most confusing failure in
+            # docs/roadmap/29-deploy.md.
+            #
+            # So: take the first name out of the container's own AllowedHosts and present that,
+            # exactly as the image's built-in HEALTHCHECK does. `$$` is compose's escape for a
+            # literal `$`, so this expands in the CONTAINER's shell, not at compose-config time —
+            # which means there is one source of truth (AllowedHosts) and nothing to keep in sync.
+            # The `:-localhost` fallback is what makes the same line correct in a local dry run.
+            test: ["CMD-SHELL", 'allowed="$${AllowedHosts:-localhost}"; curl -fsS -H "Host: $${allowed%%;*}" http://127.0.0.1:8080/healthz || exit 1']
+            interval: 30s
+            retries: 5
+            # Generous: the first start of a fresh database applies the whole Marten schema before
+            # the port opens.
+            start_period: 60s
+            timeout: 10s
+
+    web:
+        image: ${WEB_IMAGE:-ghcr.io/pi-gorbo/takeinitiative-web:latest}
+        pull_policy: always
+        restart: unless-stopped
+        depends_on:
+            - api
+        expose:
+            - "3000"
+        environment:
+            # Read at RUNTIME, per request. Nitro re-applies the environment to runtimeConfig on
+            # every request and the SPA shell serializes it into window.__NUXT__.config, so one
+            # image serves any domain and there is no `--build-arg API_URL` anywhere in the
+            # pipeline. The names are the scule snake-case of the config path:
+            # public.axios.baseURL -> NUXT_PUBLIC_AXIOS_BASE_URL, public.webUrl -> NUXT_PUBLIC_WEB_URL.
+            - "NUXT_PUBLIC_AXIOS_BASE_URL=${API_ORIGIN}"
+            - "NUXT_PUBLIC_WEB_URL=${WEB_ORIGIN}"
+            # NUXT_PUBLIC_SUGGESTIONS_BASE_URL is deliberately unset: the GLiNER weights ship inside
+            # this image and are served from its own origin at /models/**. Setting it would move the
+            # download to a third party who then sees your users' requests.
+        healthcheck:
+            # Not host-filtered — this is Nitro, not ASP.NET — so a plain probe is correct here.
+            # busybox wget, because node:24-alpine has no curl.
+            test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3000/healthz || exit 1"]
+            interval: 30s
+            retries: 5
+            start_period: 30s
+            timeout: 10s
+
+    garage:
+        # The S3 blob store. Garage, not MinIO: MinIO changed its deployment model and stopped
+        # publishing usable community images. Unlike MinIO it needs a config file and a one-off
+        # CLI bootstrap (layout, key, bucket) — docs/deploy/pipeline.md section 1a has the commands.
+        # s3_region in that file must match Blobs__Region. AGPL-3.0; running an unmodified copy
+        # for your own app triggers no obligation.
+        image: ${GARAGE_IMAGE:-dxflrs/garage:v2.3.0}
+        restart: unless-stopped
+        expose:
+            - "3900"
+        volumes:
+            # The dev config: this file runs production IMAGES locally, not production data. The
+            # Coolify Garage resource gets its own garage.toml with generated secrets.
+            - ./infra/garage.dev.toml:/etc/garage.toml:ro
+            - takegarage-meta:/var/lib/garage/meta
+            - takegarage-data:/var/lib/garage/data
+        healthcheck:
+            test: ["CMD", "/garage", "status"]
+            interval: 10s
+            retries: 5
+            start_period: 10s
+            timeout: 5s
+
+volumes:
+    # /keys on the api: the data-protection key ring. Delete this volume and everyone is signed out.
+    # The API image mkdir+chowns /keys so a FRESH named volume inherits ownership the unprivileged
+    # user can write — a volume mounted at a path the image does not own arrives root-owned.
+    takeapi-keys:
+    # Every image anyone has ever uploaded. Nothing backs these up automatically.
+    takegarage-meta:
+    takegarage-data:

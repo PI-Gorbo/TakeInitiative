@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!-- The knowledge-base ingest (roadmap step 26c). One command: read a 5eTools data
+         folder, parse it, diff it against Postgres, and upsert.
+
+         It is a console app, not a web project and not a hosted service, because it is run
+         by hand by the operator who has the 5eTools data — on a dev machine against the
+         local database, and in production with an explicit connection string over an SSH
+         tunnel. No image carries the corpus, nothing is fetched at runtime, and step 29's
+         deployment does not need this project at all.
+
+         It creates no tables. The API owns the schema (KnowledgeBaseTable); if this runs
+         against a database the API has never started against, it says so and writes
+         nothing. -->
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>TakeInitiative.KnowledgeBase.Cli</RootNamespace>
+        <AssemblyName>TakeInitiative.KnowledgeBase.Cli</AssemblyName>
+        <!-- The report right-aligns thousands-separated counts, and every number it writes
+             goes through CultureInfo.InvariantCulture, so the output is the same on every
+             machine an operator runs it from. -->
+        <InvariantGlobalization>true</InvariantGlobalization>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.11" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.11" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.11" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.11" />
+        <PackageReference Include="System.CommandLine" Version="2.0.12" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\packages\TakeInitiative.KnowledgeBase\TakeInitiative.KnowledgeBase.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Update="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+
+</Project>

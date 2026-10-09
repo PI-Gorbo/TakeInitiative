@@ -1,0 +1,22 @@
+<Project>
+
+    <!--
+        NuGet audit suppressions.
+
+        Everything here is a deliberate, documented exception. Prefer bumping the
+        package; only suppress when the roadmap says the upgrade is out of scope.
+    -->
+    <!--
+        There are no suppressions right now, and that is the point: both that used to live
+        here were Marten advisories, and step 30 removed them by fixing the cause.
+
+        GHSA-vmw2-qwm8-x84c (SQL injection via the full-text `regConfig` parameter, fixed
+        in Marten 8.37.0) and GHSA-rfx3-98h7-v3xp (SQL injection via unescaped string
+        literals in the LINQ provider and tenant management, fixed in Marten 9.13.0) were
+        both suppressed while 03-retarget-net10.md deliberately held Marten at 7.31.1. Each
+        carried an argument that it was not exploitable here, and each said "Remove this
+        suppression when Marten is upgraded." Marten is now 9.45.0, past both fixes, so the
+        arguments are no longer load-bearing and the audit is free to fail on them again.
+    -->
+
+</Project>

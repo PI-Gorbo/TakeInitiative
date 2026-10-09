@@ -1,0 +1,26 @@
+# Garage for local development, matching Coolify's one-click template so dev and production
+# behave the same. The secrets come from the environment in compose.dev.yml.
+#
+# s3_region is "garage", NOT us-east-1 — that is what Coolify's template sets, and a client
+# using a different region fails SigV4 with AuthorizationHeaderMalformed, which reads as bad
+# credentials. Blobs:Region must match it.
+
+metadata_dir = "/var/lib/garage/meta"
+data_dir = "/var/lib/garage/data"
+db_engine = "lmdb"
+
+replication_factor = 1
+consistency_mode = "consistent"
+
+rpc_bind_addr = "[::]:3901"
+rpc_secret_file = "env:GARAGE_RPC_SECRET"
+bootstrap_peers = []
+
+[s3_api]
+s3_region = "garage"
+api_bind_addr = "[::]:3900"
+root_domain = ".s3.garage.localhost"
+
+[admin]
+api_bind_addr = "[::]:3903"
+admin_token_file = "env:GARAGE_ADMIN_TOKEN"

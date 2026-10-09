@@ -1,0 +1,44 @@
+# The web image builds from the repo root, because pnpm needs the workspace lockfile.
+# BuildKit picks this file up because it sits next to the Dockerfile — and, importantly,
+# it REPLACES the root .dockerignore for this build. Anything the root file excluded has
+# to be re-excluded here, which is why public/models/ and .data/ appear again below.
+#
+# Allowlist: deny everything, then name what the build actually reads.
+*
+
+# pnpm needs the root manifests and EVERY workspace member's package.json.
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!apps/TakeInitiative.Api/package.json
+!apps/TakeInitiative.Api.Tests/package.json
+!packages/TakeInitiative.Dice/package.json
+!packages/TakeInitiative.Dice.Tests/package.json
+!packages/TakeInitiative.KnowledgeBase/package.json
+!packages/TakeInitiative.KnowledgeBase.Tests/package.json
+
+# The app itself, and the model fetcher it runs (23b).
+!apps/TakeInitiative.Web/
+!scripts/models/
+
+# --- Re-exclusions. These win because they come after the allowlist. ---
+
+# The suggestion model's weights: 196 MB that the build fetches itself into its own
+# cached layer. A developer's local copy must not ride along in the context.
+apps/TakeInitiative.Web/public/models/
+.data/
+
+# Build output and local state inside the web app.
+**/node_modules/
+**/.nuxt/
+**/.output/
+**/.turbo/
+**/bin/
+**/obj/
+
+# Local secrets and editor droppings. .env would otherwise be read by nuxt at build
+# time and quietly override the build args.
+**/.env
+**/.env.*
+**/.DS_Store
+**/*.user

@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!-- The knowledge base's 5eTools parser (roadmap step 26b) and its Postgres store
+         (26c). The parser is a port of scripts/5etools/build-5etools-index.mjs and needs
+         nothing but System.Text.Json, which ships in the shared framework.
+
+         The store adds Npgsql and nothing else: no Marten, no Weasel, no ASP.NET. The
+         ingest is a command-line tool run from an operator's machine, so the write path
+         has to work with no host, no DI container and no web stack built around it — and
+         keeping Marten out also keeps it honest that this table is a flat one with no
+         events and no aggregate (see the plan's "It is deliberately not event-sourced").
+         Npgsql 9.0.4 is the version the API already resolves, so the two unify on one
+         assembly rather than one lifting the other. It arrives there transitively through
+         Weasel.Postgresql 9.37.0 rather than from Marten directly, which is why this number
+         tracks Weasel's choice and not Marten's version. -->
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>TakeInitiative.KnowledgeBase</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Npgsql" Version="9.0.4" />
+    </ItemGroup>
+
+</Project>

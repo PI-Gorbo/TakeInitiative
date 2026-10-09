@@ -1,0 +1,52 @@
+# Tests and typechecks scripts/ci/. Node strips TypeScript without checking it, so
+# `tsc -p scripts/ci` is the gate; the install exists only for tsc.
+
+name: Test Scripts
+
+on:
+    push:
+        branches: [dev, main]
+        paths:
+            - ".github/workflows/testScripts.yml"
+            - "scripts/ci/**"
+            - "deploy-targets.json"
+            - "package.json"
+            - "pnpm-lock.yaml"
+    pull_request:
+        # No branch filter: every PR is gated, including stacked ones.
+        paths:
+            - ".github/workflows/testScripts.yml"
+            - "scripts/ci/**"
+            - "deploy-targets.json"
+            - "package.json"
+            - "pnpm-lock.yaml"
+    workflow_dispatch: ~
+
+permissions:
+    contents: read
+
+jobs:
+    test:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: pnpm/action-setup@v4
+
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 24
+                  cache: pnpm
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Typecheck
+              run: pnpm deploy:typecheck
+
+            - name: Unit tests
+              run: pnpm deploy:test
+
+            # A typo in deploy-targets.json should fail here, not on a release run.
+            - name: Check deploy-targets.json parses and resolves
+              run: pnpm deploy:explain

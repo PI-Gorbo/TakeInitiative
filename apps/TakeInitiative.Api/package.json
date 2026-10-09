@@ -1,0 +1,9 @@
+{
+    "name": "@ti/api",
+    "private": true,
+    "scripts": {
+        "dev": "dotnet watch run",
+        "build": "dotnet build",
+        "gen:openapi": "dotnet run --no-launch-profile -- --export-openapi ../TakeInitiative.Web/openapi.json"
+    }
+}

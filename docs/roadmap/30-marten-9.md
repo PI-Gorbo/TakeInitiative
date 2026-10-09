@@ -1,0 +1,330 @@
+# 30 — Marten 7 → 9
+
+## Goal
+
+The API runs on **Marten 9** with Marten 9's defaults, on a database created by Marten 9, with
+`0 Warning(s), 0 Error(s)` in `Release` and all tests green. Nothing else moves: still
+FastEndpoints, still the same endpoints, same OpenAPI document, same `schema.d.ts`.
+
+This step exists **before the review and before step 29** for one reason: there is no production
+database yet. Marten 9 migrates `mt_version` from `integer` to `bigint` and moves event sequences
+to `bigint`. Against empty tables that is a schema definition. Against a friend's campaign it is a
+data migration. The window where this is free closes at 29g and never reopens.
+
+"Running" at the end: `pnpm dev` from a **destroyed and recreated** database → sign up → create a
+campaign → create an entry → rename it → `@mention` it in a session note → ⌘K finds it by a fuzzy
+match → start a combat → roll initiative. Then restart the API and `SearchSchemaTests` still
+asserts that a second start has nothing left to do.
+
+The step ships as three PRs stacked on `dev`, starting with this file's docs PR. Each PR leaves the
+repo runnable.
+
+| PR | Branch | Sub-step | Runnable state after merge | Status |
+|---|---|---|---|---|
+| 30a | `v2/30a-marten-9-plan` | This plan | Docs only || [x] |
+| 30b | `v2/30b-marten-9` | Marten 9.45.0, Weasel 9.37.0, Npgsql 9.0.4, Marten 9's defaults, fresh database | The API builds and all tests pass on Marten 9. `schema.d.ts` is byte-identical || [x] |
+| 30c | `v2/30c-marten-9-pins` | The `TakeInitiative.KnowledgeBase` Npgsql pin and the audit-suppression comments | No pin or suppression survives whose stated reason has expired || [x] |
+| 30d | `v2/30d-write-session-per-attempt` | A fresh session per retry attempt, so Marten 9's `UseIdentityMapForAggregates` default can be held | Both retry loops satisfy the once-per-session precondition; no Marten 9 default is declined || [x] |
+
+## Depends on
+
+- **28**, which is done. Nothing in 26–28 is at risk from this beyond the KB table (below).
+- Not blocked by anything. This is the first thing after 28.
+
+**There is no backwards-compatibility obligation.** No stored events, documents or dev databases
+are preserved. The roadmap already took this stance for stored roll expressions in Stage 2; it
+applies in full here. Anything that wants to break, breaks now, because after 29g it cannot.
+
+## Files touched
+
+| Path | Why |
+|---|---|
+| `apps/TakeInitiative.Api/TakeInitiative.Api.csproj` | `Marten` 7.31.1 → 9.x; the audit-suppression comment names 7.31.1 |
+| `packages/TakeInitiative.KnowledgeBase/TakeInitiative.KnowledgeBase.csproj` | `Npgsql` 8.0.3 → 9.x, and the comment that justifies the pin by naming Marten 7.31.1 |
+| `apps/TakeInitiative.Api/src/boostrap/Bootstrap.cs` | `AddMartenDB`: defaults, `UseLightweightSessions`, `ApplyAllDatabaseChangesOnStartup` |
+| `apps/TakeInitiative.Api/src/Features/Search/Sql/SearchSchema.cs` | `ExtendedSchemaObjects` / `IFeatureSchema` against the new Weasel |
+| `apps/TakeInitiative.Api/src/Features/Reference/KnowledgeBase/KnowledgeBaseTable.cs` | Same, and it writes its own SQL |
+| `apps/TakeInitiative.Api/src/Features/*/Models/{Campaign,Session,SessionNote,Entry,Combat}.cs` | `partial` for the source generator, if required |
+| `apps/TakeInitiative.Api.Tests/**` | Any sync data access, and the session helpers in `Scopes/Integration` |
+
+## Steps
+
+### 30b — the upgrade (`v2/30b-marten-9`)
+
+The package bump and everything that must move with it. These cannot be separated: `SearchSchema`
+and `KnowledgeBaseTable` are compile-time dependencies on Weasel, so the branch does not compile
+until they are done.
+
+1. `Marten` 7.31.1 → **9.45.0** in the API csproj. It pulls `JasperFx` / `JasperFx.Events` 2.79.1
+   and `Weasel.Core` / `Weasel.Postgresql` / `Weasel.Storage` 9.37.0, and `Npgsql` **9.0.4** arrives
+   transitively through Weasel rather than from Marten directly, which unified the KnowledgeBase
+   package's 8.0.3 pin upward with no downgrade error — so 30c does not block 30b.
+   **Add no source-generator package.** `JasperFx.Events.SourceGenerator` is what replaced runtime
+   codegen, and the `Marten` package already ships that analyzer itself under `analyzers/dotnet/cs`;
+   referencing it directly on top is the documented cause of a `CS0433` from two generator copies.
+   `Marten.SourceGenerator` is a different, smaller package scoped to compiled-query scaffolding for
+   AOT publishing, and this project has no `ICompiledQuery` and does not publish AOT, so it emits
+   nothing. (An earlier draft of this plan called it required. It is not.)
+2. Build and work the compiler. Expected, from the migration guide:
+   - **Runtime codegen is gone**, replaced by source generators. Mark the five snapshotted
+     aggregates `partial` if the generator asks for it. Source-generator diagnostics are build
+     failures here — CI passes `-p:TreatWarningsAsErrors=True`.
+   - **`OperationRole` and `BulkInsertMode` moved to `Weasel.Core`.**
+   - **Renames**: `ProjectionName` → `Name`, `LastModifiedBy` → `CurrentUserName`,
+     `EventSlice<T>.Aggregate` → `Snapshot`.
+   - **Sync data access throws `NotSupportedException`**, and sync LINQ operators are gone. A grep
+     found no `Query<T>().ToList()`/`.First()`, but 49 sites match `session.Load<`/`session.Query<`
+     without `Async` and were not read individually. Confirm, don't assume.
+3. **Take Marten 9's defaults.** Do *not* call `RestoreV8Defaults()`. The staged-defaults path is
+   for an upgrade that has data to protect; this one does not. Three of the defaults are already
+   the configuration, so they are no-ops:
+   - `UseSystemTextJsonForSerialization(EnumStorage.AsString)` — 9 makes STJ the default anyway
+   - `UseLightweightSessions()` — 9 makes the injected session lightweight anyway
+   - `Apply`/`Create` are already `public` methods on the aggregate, not registration lambdas
+4. `ExtendedSchemaObjects` against the new Weasel: the two `Extension` objects (`pg_trgm`,
+   `unaccent`), `KnowledgeBaseTable`, and `SearchSchema`. **Order still matters** — the KB table's
+   trigram index needs `gin_trgm_ops`, and Weasel writes extended schema objects in the order they
+   were added, so `pg_trgm` stays first.
+5. **Destroy the database rather than migrate it**:
+   `docker compose -f compose.dev.yml down -v`, then `pnpm dev`. `CreateOrUpdate` never drops a
+   table, so a database created under Marten 7 keeps the `mt_streams.snapshot` columns that Marten
+   9 omits from new databases, and `mt_version` stays `integer`. A fresh database gets the clean
+   9 shape and there is nothing to reconcile.
+   > This also destroys `takeminio-data`, so local images go with it. Nothing else does.
+6. Fix the tests. 666 test methods across 123 files — 1,286 cases once theories expand — are the
+   safety net that replaces a staged rollout.
+
+### 30c — dependency hygiene (`v2/30c-marten-9-pins`)
+
+Separate because it is comment-and-pin work with no behaviour in it, and it is easier to review
+when the upgrade is already green.
+
+1. `packages/TakeInitiative.KnowledgeBase`: `Npgsql` 8.0.3 → 9.x, and rewrite the comment. It
+   currently justifies the pin as "the version Marten 7.31.1 already pulls into the API" — the
+   version is wrong after 30a and the sentence is the whole point of the pin.
+2. The API csproj's audit-suppression comment names `Marten 7.31.1 dragged in OpenTelemetry.Api
+   1.8.0 (GHSA-g94r-2vxg-569j)`. **Marten 9.45.0 declares no `OpenTelemetry.Api` dependency at
+   all** (checked against the published nuspec), so that half of the pin has no reason left:
+   delete the `OpenTelemetry.Api` pin and the sentence that justified it. The `JwtBearer` half is
+   unrelated to this step and stays. CLAUDE.md requires a suppression to carry the reasoning that
+   justifies it, and a stale reason is worse than none.
+3. **`Directory.Build.props` holds two `NuGetAuditSuppress` entries whose reasons have expired**:
+   `GHSA-vmw2-qwm8-x84c` (Marten ≤ 8.36) and `GHSA-rfx3-98h7-v3xp` (Marten ≥ 7.0.0, ≤ 9.12.0).
+   9.45.0 is outside both ranges and both comments say "Remove this suppression when Marten is
+   upgraded." They produce no warning either way, which is exactly why they would otherwise sit
+   there forever. Delete both.
+4. `dotnet restore` with the audit on, and confirm no new advisories.
+
+### 30d — a session per retry attempt (`v2/30d-write-session-per-attempt`)
+
+Holds Marten 9's `UseIdentityMapForAggregates` default instead of declining it, by removing the
+reason it was unsafe. The measurement above says the option is worth one primary-key load in five
+write paths, which is not much — but the precondition it needs ("an aggregate is fetched at most
+once per session") is a property worth having on its own, and 30b's measured failure is what
+happens when a retry loop quietly breaks it.
+
+The fix is not to eject. It is that a failed attempt's session is **thrown away**, so the next
+attempt cannot inherit anything from it.
+
+1. **`CombatWrite.Write`**: open a lightweight session per attempt and do the whole attempt on it —
+   `Open`, `decide`, `AppendMany`, `SaveChangesAsync`. A concurrency failure disposes it and loops;
+   `EjectAllPendingChanges()` goes away, because there is nothing to eject from a session being
+   discarded. The method is an extension on `Endpoint<TRequest, CombatResponse>`, so it gets the
+   store with `endpoint.Resolve<IDocumentStore>()` and **all seven call sites are untouched**. After
+   the loop, the endpoint's own injected session still serves `LoadAsync<Combat>`,
+   `NotifyCombatChanged` and `CombatEntries.ViewFor` — it never fetched an aggregate, so it has
+   nothing stale in it.
+2. **`PutEntryArticle`**: `Save` takes the attempt's session as a parameter; the loop creates one per
+   attempt. `AppendNewEntries` already takes an `IDocumentSession`, so it is passed the attempt
+   session and **the helper does not change, and `PostSessionNote` / `PutSessionNote` are not
+   touched**. The injected session keeps `hub.NotifyCreated` and `EntryResponse.From` after the
+   loop, which must stay after the attempt committed.
+3. Delete `opts.Events.UseIdentityMapForAggregates = false` and its comment from `Bootstrap.cs`,
+   leaving a short note that the invariant the default needs is now held by the call sites.
+
+> **The risk to check before anything else.** The append and everything staged alongside it must
+> stay in **one transaction**. In `PutEntryArticle` that is the article edit plus the new entries
+> from `AppendNewEntries`, and moving both onto the attempt session preserves it. In `CombatWrite`
+> the `decide` callback is supplied by each of the seven endpoints, and if any of them stages
+> session work of its own, that work currently commits in the same transaction as the append and
+> would stop doing so. **Read all seven `decide` callbacks and confirm none writes to the session**
+> before assuming this refactor is behaviour-preserving. If one does, it has to move onto the
+> attempt session too, or 30d stops being a safe refactor and the option stays off.
+
+The three tests that caught 30b's failure are the acceptance criteria, and they must pass with the
+default **on**: `ArticleTests.LosingTheRaceTwice_IsA409`,
+`ArticleTests.LosingTheRaceToAWriteTheCallerCannotSee_ReMergesAndSucceeds` and
+`TurnTests.EditsAtTheSameTime_AreRetried_AndAllLand`.
+
+#### What 30d found that this plan missed
+
+**A provenance hazard, and it would have been silent.** `CorrelationMiddleware.InvokeAsync` takes
+the **request-scoped** `IDocumentSession` and stamps the correlation id and the `request` header on
+that one. A session opened from the store carries neither, so every event appended through an
+attempt session would have lost invariant 9's provenance — configuration rather than code, so
+nothing would fail to compile. `NoteWrite.Begin` already had this problem and solved it inline;
+30d lifted those five lines into `IDocumentSessionExtensions.WithProvenanceOf` and routes both the
+attempt sessions and `NoteWrite` through it. `EntryTests.EveryEvent_CarriesAnActorAndACorrelationId`
+and `ArticleTests.ArticleEdits_LeaveUpdatedAtAlone_AndCarryAnActorAndACorrelationId` are the tests
+that would have caught it.
+
+**The transaction risk was checked and is clear.** All seven `decide` callbacks only read and
+compute. The single session touch in any of them is `PostCombatants` → `PlayerPick` →
+`RequireVisibleEntry`, which takes an **`IQuerySession`** and therefore cannot stage a write, and
+`DmPicks` is already hoisted outside the loop. So the append remains the whole transaction. The
+doc comment on `CombatWrite.Write` now says that a future callback needing to write must be given
+the attempt's session, so the next person does not have to re-derive it.
+
+**The store comes from `session.DocumentStore`, not `endpoint.Resolve<IDocumentStore>()`** as this
+plan said. Same singleton, no DI lookup, guaranteed to be the store the injected session came from,
+and it matches `NoteWrite.Begin`'s existing `request.DocumentStore`. The property the plan actually
+required — all seven call sites untouched — holds either way.
+
+**Green was not taken on trust.** With the three tests passing, both `await using var write`
+declarations were temporarily hoisted out of their loops (one session shared across attempts,
+everything else identical) and all three then **failed**, with
+`LosingTheRaceToAWriteTheCallerCannotSee` failing as the 409 this plan predicted. So the default is
+genuinely on, the tests genuinely detect a violated precondition, and the session per attempt is
+what satisfies it.
+
+## Verify
+
+```bash
+# From the repo root, with the database destroyed first
+docker compose -f compose.dev.yml down -v
+
+dotnet restore
+dotnet build --configuration Release --no-restore -p:TreatWarningsAsErrors=True   # 0 Warning(s), 0 Error(s)
+dotnet test -- --verbosity normal
+
+# **.cs changed, so the web pipeline runs too
+pnpm install --frozen-lockfile
+pnpm turbo run gen:api --filter=@ti/web
+git diff --exit-code -- apps/TakeInitiative.Web/utils/api/schema.d.ts   # must be clean: no API surface changed
+pnpm --filter @ti/web exec nuxi typecheck
+pnpm --filter @ti/web test
+```
+
+Then by hand, on the fresh database: sign up, create a campaign, create an entry, rename it,
+`@mention` it in a session note, find it in ⌘K by a misspelling, start a combat, roll initiative.
+
+Two specific assertions beyond the suites:
+
+- **`SearchSchemaTests` must still pass on a second start.** It asserts that a restart has no DDL
+  left to do, and it is what keeps a GIN index over every note from being rebuilt on every boot.
+  If Marten 9's generated schema does not converge to what `CreateOrUpdate` produces, this is the
+  test that says so. Treat a failure here as the headline finding of the step, not a flaky test.
+- **`psql` the new database**: `mt_version` is `bigint`, and the event sequence is `bigint`.
+
+## Notes / gotchas
+
+- **Postgres is fine.** Marten 8 requires PG 13+ and drops 12; `compose.dev.yml` runs
+  `postgres:15-alpine`. No image change, and the comment pinning 15 so dev and test share a major
+  still holds.
+- **`net10.0` is fine.** Marten 9 targets .NET 9 and 10. Marten 8 dropped .NET 6/7, which this
+  repo left in step 03.
+- **`AppendMode` default flips `Rich` → `QuickWithServerTimestamps`.** This is the change most
+  likely to produce a subtle wrong answer rather than a compile error. Every inline projection
+  reads event metadata directly — `Apply(IEvent<EntryRenamed> e) => this with { UpdatedAt = e.Timestamp }`
+  — and the README already records a flaky test that "compared Postgres microseconds with .NET
+  ticks". The default change moves where that timestamp comes from, on precisely that seam.
+  **Measured, and it does not drift**: with an inline snapshot the mode stays
+  `QuickWithServerTimestamps` (a projection does not escalate it back to `Rich`), and
+  `snapshot.CreatedAt == events[0].Timestamp` and `snapshot.UpdatedAt == events[1].Timestamp`
+  exactly, both matching the `timestamp` column Postgres stored. `SessionNoteTests` already asserts
+  the snapshot and the event-stream history agree to one microsecond, and it passes.
+- **`UseIdentityMapForAggregates` false → true was the one Marten 9 default 30b declined, and 30d
+  holds it instead.** What follows is the measurement that justified 30d; the decision it describes
+  was reversed by it, and the history is kept because the failure it records is the reason the
+  call sites are shaped the way they are.
+  and it is a correctness decision rather than a preference. Marten 9 puts the aggregate
+  `FetchForWriting` returns into the session's item map. Marten documents the precondition as
+  "treat the aggregate from `FetchForWriting()` as read-only and express every change as an event",
+  which this codebase satisfies — the precondition it does *not* satisfy is the unwritten one, that
+  an aggregate is fetched once per session. Every write here is a retry loop (`CombatWrite.Write`,
+  `PutEntryArticle`), and on the retry the second `FetchForWriting` reads the correct version from
+  Postgres but takes the *document* from the item map, which the inline projection has already
+  applied the failed attempt's events to. Measured: version 3 (the concurrent writer's) paired with
+  blocks `[A2, S, B]`, where `A2` is this request's never-committed edit and the concurrent writer's
+  edit is simply absent — a state that has never existed in the database, from which a save would
+  silently drop the other write. Three tests caught it:
+  `ArticleTests.LosingTheRaceTwice_IsA409`,
+  `ArticleTests.LosingTheRaceToAWriteTheCallerCannotSee_ReMergesAndSucceeds` and
+  `TurnTests.EditsAtTheSameTime_AreRetried_AndAllLand`.
+  Ejecting is not a way out: `EjectAllPendingChanges()` clears the unit of work and not the item
+  map, `Eject(document)` and `EjectAllOfType(type)` both leave the next fetch serving the same
+  instance, and `EjectAggregateFromIdentityMap` is `internal` to Marten. So the option is the seam.
+  Cost of declining it: one document load per aggregate per save, which is what Marten 7 did. **30d
+  removed the need to decline it** — see that sub-step.
+
+  **What the option is actually worth, measured, so the review argues from numbers.** The option
+  only affects aggregates fetched through `FetchForWriting`/`FetchLatest`, not documents generally.
+  There are exactly five such sites, and every one of them re-reads the same aggregate after
+  `SaveChangesAsync` to see what the inline projection wrote:
+
+  | Site | Re-read after save | Retry loop |
+  |---|---|---|
+  | `PostJoinCampaign` | `LoadAsync<Campaign>` | no |
+  | `PutMemberRole` | `LoadAsync<Campaign>` | no |
+  | `PostEntryMerge` | `LoadAsync<Entry>` | catches `ConcurrencyException`, does **not** retry |
+  | `PutEntryArticle` | `LoadAsync<Entry>` | **yes** |
+  | `CombatWrite` (7 endpoints) | `LoadAsync<Combat>` | **yes** |
+
+  So the default buys **one primary-key document load, in five write paths that already make four
+  or more round trips each** (fetch the stream, save, re-read, notify over SignalR, build the
+  response). Two of the five violate its precondition. Turning it off is not a regression: it is
+  exactly what Marten 7 did, which is the code that shipped and works.
+
+  **What holding the default would cost.** The session is not confined to the retry loop in either
+  broken path. `CombatWrite.Write` takes the endpoint's injected session and is called from seven
+  endpoints, and after the loop that same session serves `LoadAsync<Combat>`,
+  `NotifyCombatChanged(session, …)` and `CombatEntries.ViewFor(session, …)`. `PutEntryArticle.Save`
+  passes the session into `AppendNewEntries`, a helper shared with `PostSessionNote` and
+  `PutSessionNote`.
+  **Corrected while planning 30d:** this was the pessimistic half of the estimate and it was wrong.
+  `AppendNewEntries` already takes `IDocumentSession` as a parameter, so a different session is
+  passed rather than the helper changed, and the note paths are untouched. `CombatWrite.Write` is an
+  extension method on the endpoint, so it can `Resolve<IDocumentStore>()` itself and leave all seven
+  call sites alone. The refactor is materially smaller than this paragraph first claimed, which is
+  why 30d exists.
+
+  **`FetchForExclusiveWriting` was considered and rejected.** A row lock removes optimistic
+  concurrency, so no retry exists and the precondition holds without any session work. But it
+  changes behaviour the design specifies: 18b.7 deliberately decides up to `Attempts` times "so
+  every check runs against the state the events land on", and `PutEntryArticle`'s re-merge-once is
+  "a 409 only if the caller's view really changed". `PostEntryMerge` also locks two `Entry` streams
+  in one session, which is a deadlock shape. It is a bigger behavioural change than the option it
+  would let us delete.
+
+  **Resolved by 30d, so this is no longer a review item.** It would have been: step 31's
+  `[Aggregate]` workflow owns the fetch, append, save and concurrency retry, and `UpdatedAggregate`
+  removes the re-read, so all five re-read sites and both retry loops disappear there anyway. 30d
+  made that irrelevant to correctness — step 31 now inherits call sites that already hold the
+  once-per-session invariant, rather than inheriting a declined default.
+- **Other default flips, taken as-is with no observable effect**: `EnableAdvancedAsyncTracking`
+  false → true, `DisableNpgsqlLogging` false → true, and `EnableBigIntEvents` on by default.
+- **Provenance must survive.** `MetadataConfig.CorrelationIdEnabled`, `CausationIdEnabled` and
+  `HeadersEnabled` are invariant 9, filled in by `CorrelationMiddleware`. Confirm the three are
+  still populated after the upgrade; they are configuration, not code, so nothing will fail to
+  compile if a name moved.
+- **The bulk of the diff was a namespace move the plan did not predict.** Marten 9 relocated types
+  into JasperFx: `IEvent`/`IEvent<T>` and `IEventStream<T>` → `JasperFx.Events`,
+  `EventStreamUnexpectedMaxEventIdException` → `JasperFx.Events`, `ConcurrencyException` → `JasperFx`
+  (root), `IVersioned` → `JasperFx.Metadata`, `DaemonMode` → `JasperFx.Events.Daemon`,
+  `SnapshotLifecycle` → `JasperFx.Events.Projections`. `Marten.Exceptions` still exists but no longer
+  holds those exceptions, so imports are replaced rather than added to. Note `GetCombatHistory.cs`
+  carries a `using IEvent = …` alias that exists to disambiguate from `FastEndpoints.IEvent`.
+- **Weasel 9 obsoleted `PostgresqlObjectName(string, string)`**, which under
+  `TreatWarningsAsErrors` is a build failure, not a hint. `SearchSchema.cs` and
+  `KnowledgeBaseTable.cs` pass `SchemaUtils.IdentifierUsage.General` instead, which produces an
+  identical `QualifiedName`/`Name`/`Schema` for these names.
+- **`partial` on the aggregates turned out NOT to be required.** The generator emitted a
+  `file sealed class …Evolver` per aggregate against the plain `public record`s, for all five, with
+  no diagnostics. The inference below was wrong; it is kept because the reasoning behind it was
+  sound and the next JasperFx major could reinstate the requirement.
+- **`partial` on the aggregates was an inference**, from "runtime code generation removed, replaced
+  with source generators". The migration guide states it for projection classes marked `partial`;
+  this repo owns no projection classes, only self-aggregating snapshots. The compiler settles it.
+- **What this step deliberately does not do**: touch FastEndpoints, add Wolverine, change any
+  route, request, response or the OpenAPI document. `schema.d.ts` must come back byte-identical.
+  That is what makes this step's diff readable, and it is why step 31 is a separate step.

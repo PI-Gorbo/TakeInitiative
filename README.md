@@ -1,79 +1,98 @@
 # TakeInitiative
 
-s
-A webapp designed to help dungeon masters to create combats and track initiative for those combats.
+A webapp designed to help dungeon masters to create combats and track initiative
+for those combats.
 
 ## Technologies
 
 -   C# ASP.NET WebAPI for the backend
 -   Nuxt Frontend (BFF pattern)
+-   `packages/TakeInitiative.Dice` — the dice roll language (Parlot parser, type
+    checker, evaluator); see `docs/roadmap/08-dice-language-spec.md`
+-   pnpm workspace driven by Turborepo
 
 ## Requirements for local development
 
-1. Have `Docker` Installed
-2. Have `make` installed
-3. If you are developing the API:
-    - The `dotnet 8 SDK` is required
-    - Python3 is required and the d20 package
-4. If you are developing the Frontend, then `node` / `npm` is required (>= v18)
+1. `Docker` (for Postgres, and for the full-stack compose setup)
+2. `Node` 24 — via [Volta](https://volta.sh), which reads the pinned version
+   from `package.json`
+3. `pnpm` 10 — `corepack enable` picks up the pinned version
+4. The `.NET 10 SDK`
+
+You do **not** need `make`, `bun`, or Python.
 
 ## QuickStart
 
-If you want to just get all resources up and running on your computer, without having to install any extra SDKs, run `make docker.dev.compose`
+```bash
+pnpm install
+pnpm dev
+```
 
-This will:
+`pnpm dev` will:
 
--   Build a local image of the API and Frontend, with all requirements.
--   Run 3 docker containers, with the Database, API and Frontend.
+1. Install node dependencies.
+2. Create `apps/TakeInitiative.Web/.env` from `TEMPLATE.env` if it is missing.
+3. Start Postgres in Docker.
+4. Run the API and the web app side by side in a Turborepo TUI.
+
+| Service  | URL                     |
+| -------- | ----------------------- |
+| Web      | http://localhost:3000   |
+| API      | http://localhost:5010   |
+| Postgres | `localhost:7401`        |
 
 ## Working on individual projects
 
-### API
+-   `pnpm api` — Postgres plus the API only
+-   `pnpm web` — Postgres plus the web app only
+-   `pnpm build` — build everything through turbo
+-   `pnpm test` — run the dice language tests and the API test suite
+    (Alba + Testcontainers; needs Docker)
 
-1. Run the in an individual container using `make docker.isolated.database`
-2. Go to the folder `./apps/TakeInitiative.Api/`
-3. Set the path for the python3 dll. `appsettings.json` has an example path, but that can be overriden in `appsettings.Development.json`
+## Running everything in containers
 
-    An example is as follows:
-
-    `appsettings.Development.json`
-
-    ```
-    {
-        "Logging": {
-            "LogLevel": {
-                "Default": "Information",
-                "Microsoft.AspNetCore": "Warning"
-            }
-        },
-        "PythonDLL": "my own custom value"
-    }
-    ```
-
-4. Install the d20 package from python
-5. Run `make api` (Runs `dotnet run`)
-
-## Nuget
-
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<configuration>
-    <packageSources>
-        <add key="github" value="https://nuget.pkg.github.com/PI-Gorbo/index.json" />
-    </packageSources>
-    <packageSourceCredentials>
-        <github>
-            <add key="Username" value="PI-Gorbo" />
-            <add key="ClearTextPassword" value="%peronsal_github_token%" />
-        </github>
-    </packageSourceCredentials>
-</configuration>
+```bash
+docker compose -p takeinitiative -f compose.dev.yml up -d --build
 ```
 
-### Web
+This builds and runs Postgres, the API and the web app.
 
-1. Go to the folder `./apps/TakeInitiative.Web`
-2. Run `npm i` to install all relevant packages.
-3. Make a copy of the file `TEMPLATE.env`, and rename it `.env`. This file serves the same utility as the `appsettings.development.json` file on the API.
-4. Run `npm run dev` to launch the web.
+| Service  | URL                     |
+| -------- | ----------------------- |
+| Web      | http://localhost:7403   |
+| API      | http://localhost:7402   |
+| Postgres | `localhost:7401`        |
 
+## Resetting the database
+
+The API applies all Marten schema changes on startup in every environment, so a
+stale local database can block startup. (`Marten:ApplySchemaOnStartup=false` turns
+that off, for a database whose DDL is applied out of band.) To wipe it:
+
+```bash
+docker compose -p takeinitiative -f compose.dev.yml down -v
+```
+
+## Production
+
+Production runs from images built by GitHub Actions and pushed to GHCR
+(`.github/workflows/images.yml`), which Coolify pulls. Nothing on the server builds.
+
+A release and a deploy are two decisions. Merging release-please's PR on `dev` cuts a release and
+publishes `1.2.3`; merging the `release:` PR that then opens into `main` is what ships it, by
+pinning each Coolify application to that version's exact image **digest** over the tailnet.
+
+| File | What it is |
+| --- | --- |
+| `docs/deploy/pipeline.md` | **Start here.** The deploy pipeline: one-time setup, rollback, and what to do when it fails |
+| `.github/workflows/deploy.yml` | Deploys prod on a push to `main`. Builds nothing |
+| `deploy-targets.json` | Which Coolify application each app is, and the per-app on/off switch |
+| `scripts/ci/` | Every decision a deploy makes, unit tested — `pnpm deploy:test` |
+| `docs/deploy/coolify.md` | How the deployment was built by hand (sections 5 and 11 superseded) |
+| `docs/deploy/operations.md` | Running it afterwards: deploys, rollback, backups, the KB ingest tunnel |
+| `docs/deploy/production.env.example` | Every environment variable production needs, which are secret, and where each is set |
+| `compose.prod.yml` | **No longer what Coolify runs.** Kept to run the production images locally with production-shaped config, and as the retreat if the pipeline breaks |
+
+Postgres is not in any of that — it is a Coolify-managed PostgreSQL 16 resource, so its lifecycle
+and its backups are separate from app redeploys. See `docs/roadmap/29-deploy.md` for the reasoning
+behind all of it, including its 2026-10-07 amendment.
