@@ -150,6 +150,35 @@ should see them as "found and fixed", not discovered again.
 | **Every server-rendered route 500s in a production build**, the landing page included. The SSR bundle emits `import require$$0 … from 'vue'`, a dead Rollup CJS-interop artifact, and Vue's ESM build has no default export. `/app/**` survives only because it is `ssr: false`. `pnpm dev` is unaffected, which is why it went unseen | building the web image in 29d | `in progress` |
 | **Two flaky tests.** `SessionNoteTests.AnEdit_SetsEditedAt_…` compared Postgres microseconds with .NET ticks (fixed in #205, and it is what kept step 14 open). `EntryHistoryTests.AnNpcsStats_…` asserted a raw body lacked `"5d8"`, which a hex member id hits about one run in 70 | #205; the schema measurement | `fixed` |
 
+### The admin feature is gone (2026-10-10)
+
+The V1 admin surface — `Features/Admin`, maintenance mode and the `AdminApp` CORS keys — was
+deleted. There has never been an admin frontend in this repo; step 05 noted that in passing and
+kept the API half. V2 does not use any of it.
+
+It also closed a hole that step 29 would have shipped. `Program.cs` gave every route under
+`/api/admin` `AllowAnonymous(["GET", "POST", "PUT", "DELETE"])`, and `PUT /api/admin/maintenance`
+wrote `MaintenanceConfig.InMaintenanceMode`, which the `NotInMaintenanceMode` policy enforced on
+**every other authenticated endpoint**. Any unauthenticated caller could therefore lock the whole
+app, and the only way back out was the same anonymous endpoint or the database. Nothing was
+exposed, because nothing is deployed yet.
+
+Removed with it, all verified unreferenced first:
+
+| Thing | Why it went |
+|---|---|
+| `Features/Admin/**` | The endpoints, `MaintenanceConfig` and `IAdminConfig`, plus its Marten document hierarchy |
+| `RequireNotInMaintenanceMode*`, `TakePolicies.NotInMaintenanceMode` | The policy had one source of truth and it is gone |
+| `JWTOptions`, `JWTSigningKey`, `JWT_SIGNING_KEY` | Bound and never read since auth went cookie-based. `29-deploy.md` and `coolify.md` both said so in prose; now they do not have to |
+| `CORS:AdminApp`, `MainAppAndAdminApp` | Origins for an app that does not exist |
+| `ImmutableListExtensions`, `LoadAdminConfig` | No callers |
+| `utils/styles.ts`, `utils/types/{FormInputBase,HelperTypes}.ts` | V1 web leftovers; no importers and nothing auto-imported them |
+| `public/img/` | `redDice.png` unreferenced, `yellowDice.png` a byte-identical duplicate of `public/yellowDice.png` |
+
+A maintenance mode is still a reasonable thing to want before 29. If it comes back it should be
+an operator concern — a flag the deploy sets, or a Traefik middleware — not an anonymous write
+endpoint in the application.
+
 **MVP line.** Everything below is post-MVP (design §11 and §11a).
 
 | # | Step | Status | Depends on | Goal |

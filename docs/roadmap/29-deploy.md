@@ -268,10 +268,9 @@ keys stay valid even if the container's working directory changes. Production se
 `DataProtection__KeyPath=/keys` and mounts a named volume there; 29c makes `/keys` writable by
 the non-root user.
 
-`JWTSigningKey` is bound to `JWTOptions` and **never read anywhere else** — it is a leftover from
-the pre-cookie auth. Production should still set a long random value (it is `required` on the
-options class and `appsettings.json` ships a dev string), but it protects nothing today. Do not
-spend thought on it.
+> **Amended 2026-10-10.** `JWTSigningKey`/`JWTOptions` and the `CORS__AdminApp` key are **gone**,
+> along with the admin feature itself. Nothing below needs either any more; the tables and the
+> compose excerpt in this file have been corrected in place.
 
 ### Behind Traefik
 
@@ -551,13 +550,11 @@ Every value is set as a container environment variable. Two notes on form:
 |---|---|---|---|
 | `ConnectionStrings__TakeDB` | `Host=<pg-host>;Port=5432;Database=takeinitiative;User ID=takeinitiative;Password=…;` | **yes** | Coolify env |
 | `CORS__MainApp` | `https://takeinitiative.samstack.org` | no | Coolify env |
-| `CORS__AdminApp` | `https://takeinitiative.samstack.org` | no | Coolify env — there is no admin app, but `Program.cs` throws if the key is absent |
 | `AllowedHosts` | `api-takeinitiative.samstack.org` | no | Coolify env |
 | `CookieDomain` | `.samstack.org` | no | Coolify env |
 | `TakeUrls__Web` | `https://takeinitiative.samstack.org` | no | Coolify env — the link in confirmation emails |
 | `Email__Domain` | `takeinitiative.samstack.org` | no | Coolify env — becomes `no-reply@…` |
 | `SendGrid__ApiKey` | `SG.…` | **yes** | Coolify env |
-| `JWTSigningKey` | 64 random chars | **yes** | Coolify env — bound but unread; set it anyway |
 | `Blobs__ServiceUrl` | `http://minio:9000` | no | `compose.prod.yml` (internal) |
 | `Blobs__Bucket` | `takeinitiative` | no | `compose.prod.yml` |
 | `Blobs__Region` | `us-east-1` (`auto` for R2) | no | `compose.prod.yml` |
@@ -716,13 +713,11 @@ services:
         environment:
             - "ConnectionStrings__TakeDB=${TAKEDB_CONNECTION}"
             - "CORS__MainApp=${WEB_ORIGIN}"
-            - "CORS__AdminApp=${WEB_ORIGIN}"
             - "AllowedHosts=${API_HOST}"
             - "CookieDomain=${COOKIE_DOMAIN}"
             - "TakeUrls__Web=${WEB_ORIGIN}"
             - "Email__Domain=${EMAIL_DOMAIN}"
             - "SendGrid__ApiKey=${SENDGRID_API_KEY}"
-            - "JWTSigningKey=${JWT_SIGNING_KEY}"
             - "Marten__ApplySchemaOnStartup=true"
             - "DataProtection__KeyPath=/keys"
             - "Blobs__ServiceUrl=http://minio:9000"
@@ -1287,9 +1282,6 @@ Run in order. Every item is checkable; the last one is the point of the step.
   to `/var/lib/postgresql`, and a volume at the old path exits 1. `coolify.md` step 4 records it.
 - **Keep the API on a subdomain of the web app's domain** so `CookieDomain=.samstack.org` works with
   the default `SameSite=Lax`. A different domain needs `SameSite=None`, which is a code change.
-- **`CORS:AdminApp` must be set even though there is no admin app**: `Program.cs` throws on the
-  missing key.
-- **`JWTSigningKey` is bound and never read.** Set a random value; expect nothing from it.
 - **The web Dockerfile copies only four `package.json` files** (root, api, api.tests, web) but
   the lockfile has six importers. It works because
   `packages/TakeInitiative.Dice{,.Tests}` are `{}` — empty importers. The moment a workspace

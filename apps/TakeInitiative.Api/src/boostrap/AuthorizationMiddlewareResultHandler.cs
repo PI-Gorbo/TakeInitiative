@@ -15,20 +15,6 @@ public class AuthorizationMiddlewareResultHandler(ILogger<AuthorizationMiddlewar
             message
         );
 
-        if (authorizationFailureReason?.Handler is RequireNotInMaintenanceModeAuthorizationHandler)
-        {
-            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            await Results.Json(new
-            {
-                StatusCode = StatusCodes.Status401Unauthorized,
-                Message = message,
-                Errors = new { },
-            }).ExecuteAsync(context);
-        }
-        else
-        {
-            // Fall back to the default implementation.
-            await _defaultHandler.HandleAsync(next, context, policy, authorizeResult);
-        }
+        await _defaultHandler.HandleAsync(next, context, policy, authorizeResult);
     }
 }

@@ -87,19 +87,6 @@ internal class Program
                                 .AllowAnyHeader()
                                 .AllowAnyMethod()
                                 .AllowCredentials());
-
-                var adminAppCors = (builder.Configuration.GetValue<string>("CORS:AdminApp") ?? throw new MissingMemberException("Missing configuration for value 'CORS:AdminApp'.")).Split(";").ToArray();
-                opts.AddPolicy("AdminAppCors", corsBuilder => corsBuilder
-                                .WithOrigins(adminAppCors)
-                                .AllowAnyHeader()
-                                .AllowAnyMethod()
-                                .AllowCredentials());
-
-                opts.AddPolicy("MainAppAndAdminApp", corsBuilder => corsBuilder
-                                .WithOrigins([.. mainAppCors, .. adminAppCors])
-                                .AllowAnyHeader()
-                                .AllowAnyMethod()
-                                .AllowCredentials());
             });
         
         var app = builder.Build();
@@ -129,19 +116,14 @@ internal class Program
                 cfg.Endpoints.ShortNames = true;
                 cfg.Endpoints.Configurator = (endpoint) =>
                 {
-                    if (endpoint.Routes?.Any(route => route.StartsWith("/api/admin")) ?? false)
-                    {
-                        endpoint.Options(opts => opts.RequireCors("AdminAppCors"));
-                        endpoint.AllowAnonymous(["GET", "POST", "PUT", "DELETE"]);
-                    }
-                    else if (endpoint.EndpointTags?.Any(tag => tag == "AllowAnonymous") ?? false)
+                    if (endpoint.EndpointTags?.Any(tag => tag == "AllowAnonymous") ?? false)
                     {
                         endpoint.AllowAnonymous();
                     }
                     else
                     {
                         endpoint.AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
-                        endpoint.Policies(TakePolicies.NotInMaintenanceMode, TakePolicies.UserExists);
+                        endpoint.Policies(TakePolicies.UserExists);
                     }
                 };
 
