@@ -238,6 +238,11 @@ public static class WebAppClientExtensions
     public static Task<Result<EntryHistoryResponse>> GetEntryHistory(this IWebAppClient client, Guid campaignId, Guid entryId)
         => client.Get<EntryHistoryResponse>(EntryUrl(campaignId, entryId, "history"));
 
+    // The primary image (SAM-12).
+
+    public static Task<Result<EntryResponse>> PutEntryPrimaryImage(this IWebAppClient client, Guid campaignId, Guid entryId, Guid? imageId)
+        => client.Put<object, EntryResponse>(new { imageId }, EntryUrl(campaignId, entryId, "primary-image"));
+
     // Links (step 27).
 
     public static string LinksUrl(Guid campaignId, Guid entryId) => EntryUrl(campaignId, entryId, "links");

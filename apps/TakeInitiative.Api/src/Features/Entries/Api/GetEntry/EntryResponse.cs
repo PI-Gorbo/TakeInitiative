@@ -25,6 +25,11 @@ public record EntryResponse
     public Guid? ClaimedByMemberId { get; init; }
     /// <summary>Every entry merged into this one (15g): mentions of these ids mean this entry.</summary>
     public required Guid[] MergedFromIds { get; init; }
+    /// <summary>
+    /// The image that stands for the entry (SAM-12), or null. Not redacted, unlike
+    /// <see cref="Stats"/>: only an image everyone can see may be primary.
+    /// </summary>
+    public Guid? PrimaryImageId { get; init; }
     /// <summary>The article as the caller can see it (15e): hidden blocks are absent.</summary>
     public required ArticleResponse Article { get; init; }
     /// <summary>
@@ -71,6 +76,7 @@ public record EntryResponse
             UpdatedAt = entry.UpdatedAt,
             ClaimedByMemberId = entry.ClaimedByMemberId,
             MergedFromIds = entry.MergedFromIds,
+            PrimaryImageId = entry.PrimaryImageId,
             Article = ArticleResponse.From(entry, viewer),
             Stats = EntryStats.For(entry, viewer) is { } stats ? StatsResponse.From(stats) : null,
             Source = EntrySources.For(entry, viewer) is { } source ? await EntrySourceResponse.From(source, reference, ct) : null,

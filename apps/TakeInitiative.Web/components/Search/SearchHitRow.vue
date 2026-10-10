@@ -3,10 +3,20 @@
          reference item (20c). -->
     <div class="flex min-w-0 flex-1 items-start gap-3">
         <template v-if="hit.entry">
+            <!-- The entry's primary image where its kind glyph goes (SAM-12). The glyph is the
+                 slot's background, so an image that fails to load leaves it in place. -->
             <span
-                class="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-lg"
+                class="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted text-lg"
                 aria-hidden="true">
-                {{ ENTRY_KIND_ICONS[hit.entry.entry.kind] }}
+                <img
+                    v-if="hit.entry.entry.primaryImageId && !imageFailed"
+                    :src="imageSrc(campaignId, hit.entry.entry.primaryImageId, 'thumb')"
+                    alt=""
+                    class="size-9 object-cover"
+                    loading="lazy"
+                    decoding="async"
+                    @error="imageFailed = true" />
+                <template v-else>{{ ENTRY_KIND_ICONS[hit.entry.entry.kind] }}</template>
             </span>
             <span class="flex min-w-0 flex-1 flex-col">
                 <span class="flex min-w-0 items-baseline gap-2">
@@ -143,6 +153,11 @@
     }>();
 
     const imageSrc = useImageUrl();
+    const imageFailed = ref(false);
+    watch(
+        () => props.hit.entry?.entry.primaryImageId,
+        () => (imageFailed.value = false)
+    );
 
     // "Live · Round 3 · Goblin 2": the line, then the combatant that matched when it
     // was not the combat's own name.

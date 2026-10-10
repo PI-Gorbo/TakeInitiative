@@ -1,9 +1,10 @@
 <template>
-    <!-- One combatant (18c.4): initiative, name (a link to its entry when the viewer can
-         see it), HP, AC in a shield and conditions. The turn's row is highlighted. A DM's
-         hidden row is dimmed, with what players would see. Tapping the row opens its sheet
-         when the viewer may edit it (18d.1): a button under the row's content, so the
-         entry link and the drag handle keep their own taps. -->
+    <!-- One combatant (18c.4): initiative, its entry's primary image when it has one
+         (SAM-12), name (a link to its entry when the viewer can see it), HP, AC in a shield
+         and conditions. The turn's row is highlighted. A DM's hidden row is dimmed, with what
+         players would see. Tapping the row opens its sheet when the viewer may edit it
+         (18d.1): a button under the row's content, so the entry link and the drag handle keep
+         their own taps. -->
     <li
         :id="rowId"
         :data-reorder-id="combatant.id"
@@ -51,6 +52,19 @@
             ">
             {{ combatant.initiative ?? "–" }}
         </span>
+
+        <!-- Only drawn when there is one, so a table of combatants without portraits keeps
+             the width it had. -->
+        <img
+            v-if="primaryImageId && !imageFailed"
+            :src="src(campaignId, primaryImageId, 'thumb')"
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+            decoding="async"
+            class="pointer-events-none relative size-8 shrink-0 rounded-md bg-muted object-cover"
+            :class="combatant.hidden && 'opacity-60'"
+            @error="imageFailed = true" />
 
         <span
             :class="[
@@ -140,6 +154,8 @@
         isTurn: boolean;
         isDm: boolean;
         viewerMemberId: string;
+        /** Its entry's primary image (SAM-12), resolved by the list from the entry directory. */
+        primaryImageId?: string | null;
         /** The viewer may open its sheet (18d.1). */
         canOpen?: boolean;
         /** A DM's drag handle (18d.6). */
@@ -154,6 +170,13 @@
         dragStart: [event: PointerEvent];
         move: [by: -1 | 1];
     }>();
+
+    const src = useImageUrl();
+    const imageFailed = ref(false);
+    watch(
+        () => props.primaryImageId,
+        () => (imageFailed.value = false)
+    );
 
     const rowId = computed(() => combatantRowId(props.combatant.id));
     const isMine = computed(

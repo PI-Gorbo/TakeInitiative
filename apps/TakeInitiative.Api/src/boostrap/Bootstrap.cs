@@ -141,7 +141,9 @@ public static class Bootstrap
                 .Index([x => x.CampaignId, x => x.Kind])
                 .Index(x => x.Aliases, idx => idx.Method = IndexMethod.gin)
                 .Index(x => x.ArticleMentionIds, idx => idx.Method = IndexMethod.gin)
-                .Index(x => x.LinkedItemKeys, idx => idx.Method = IndexMethod.gin);
+                .Index(x => x.LinkedItemKeys, idx => idx.Method = IndexMethod.gin)
+                // Serves one query: the entries to clear when an image stops being public (SAM-12).
+                .Index(x => x.PrimaryImageId!);
 
             // The article prefilter (17a.3): a stored generated tsvector column and a GIN index on
             // it, rather than an expression index. The planner will not choose a GIN index for a

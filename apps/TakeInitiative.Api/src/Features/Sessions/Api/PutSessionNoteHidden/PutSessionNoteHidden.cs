@@ -34,9 +34,15 @@ public class PutSessionNoteHidden(IDocumentSession session, IHubContext<Campaign
         {
             var actor = Actor.Member(member.MemberId);
             session.Events.Append(note.Id, req.Hidden ? new SessionNoteHidden(actor) : new SessionNoteUnhidden(actor));
+            // Hiding takes its images out of public view, so no entry may keep one as its
+            // primary image (SAM-12). Unhiding does not put them back: the pick was explicit.
+            IReadOnlyList<Guid> cleared = req.Hidden
+                ? await EntryPrimaryImages.ClearStaleFor(session, note, actor, ct)
+                : [];
             await session.SaveChangesAsync(ct);
             var before = note;
             note = (await session.LoadAsync<SessionNote>(note.Id, ct))!;
+            await EntryPrimaryImages.NotifyCleared(hub, session, cleared, ct);
             if (req.Hidden)
             {
                 // Players lose the note (removed); DMs and the author keep it, now marked.
