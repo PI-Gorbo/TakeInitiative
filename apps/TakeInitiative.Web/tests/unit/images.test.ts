@@ -7,6 +7,7 @@ import {
     attachmentsBusy,
     attachmentsFailed,
     attachmentsFromImages,
+    backdropCloses,
     captionNudge,
     draftImages,
     failUploads,
@@ -559,5 +560,12 @@ describe("the viewer", () => {
         expect(swipeStep(120, 10)).toBe(-1);
         expect(swipeStep(-30, 0)).toBe(0);
         expect(swipeStep(-80, 100)).toBe(0);
+    });
+
+    it("closes on a tap on the letterbox, but not after a swipe or while zoomed in", () => {
+        expect(backdropCloses(false, 1)).toBe(true);
+        expect(backdropCloses(true, 1)).toBe(false);
+        expect(backdropCloses(false, 2.5)).toBe(false);
+        expect(backdropCloses(false, 1.005)).toBe(true);
     });
 });
