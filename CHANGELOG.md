@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.1](https://github.com/PI-Gorbo/TakeInitiative/compare/takeinitiative-v1.2.0...takeinitiative-v1.2.1) (2026-10-10)
+
+
+### Bug Fixes
+
+* **web:** resize content for the keyboard, app-wide ([6fc66e4](https://github.com/PI-Gorbo/TakeInitiative/commit/6fc66e41b5b919b7dde23e201a2a5ec889995283))
+* **web:** resize content for the keyboard, app-wide ([46fd913](https://github.com/PI-Gorbo/TakeInitiative/commit/46fd9132ef408a4e65866608e82d06d7f2bed5e5))
+
 ## [1.2.0](https://github.com/PI-Gorbo/TakeInitiative/compare/takeinitiative-v1.1.0...takeinitiative-v1.2.0) (2026-10-09)
 
 
