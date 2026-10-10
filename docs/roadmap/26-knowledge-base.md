@@ -613,12 +613,43 @@ Each has the default this plan uses.
    `--connection` over an SSH tunnel.* The alternative is a one-off container in Coolify
    with the data mounted, which is tidier to repeat and more to set up; step 29 can add it
    later without changing the CLI.
-5. **`--download`.** *Default: still out, as step 21 decided.* The CLI reads a folder you
+5. ~~**`--download`.** *Default: still out, as step 21 decided.* The CLI reads a folder you
    supply. A flag that fetches their data would put automation for retrieving book content
-   into a public repo.
+   into a public repo.~~ **Reversed 2026-10-10 — see below.**
 6. **The prune threshold.** *Default: 20% of a provider's rows, overridable with `--force`.*
 7. **21d is still yours to run**: delete `origin/bestiary`, `origin/Bestiary_2025`,
    `origin/Bestiary_2025_CopyParsing`, `origin/Bestiary_2025_project_refactor`, then file
    the GitHub Support request to purge the cached commits. Deleting the refs does not stop
    GitHub serving those shas by id, and the repo is public. This step does not depend on it,
    but it is the natural moment.
+
+### Amendment, 2026-10-10: `--download` is in, without a committed default
+
+Decision 5 is reversed at the user's request, after the ingest was run for the first time against
+a real corpus and the prerequisite — *have a 5eTools data folder* — turned out to be the only part
+of the procedure that could not be followed from the repository.
+
+`ingest --download` resolves the **latest release** of `--repository`, fetches its zip, unpacks it,
+ingests it and **deletes it again**. What the original decision was protecting is kept, and it is
+worth being precise about which half that is:
+
+- **There is no committed default repository.** `appsettings.json` ships
+  `KnowledgeBase:Source:Repository` empty, exactly as it ships `Source:Path` empty, and a
+  `--download` with nothing set fails with a message that says the absence is deliberate. The
+  capability is "fetch a release archive from a forge and unpack it"; *which corpus* is the
+  operator's to state. So this repository still does not name somebody else's content as a thing
+  to go and get, which is the part of decision 5 that was actually load-bearing.
+- **Only `data/` and `package.json` are written to disk.** A release archive is a whole website —
+  157 MB of it, of which the data is 120 MB. Their HTML, scripts and styles are skipped. The ingest
+  has never needed them, and a tool of ours is not putting their site on an operator's machine.
+- **Nothing is retained.** A completed run deletes the corpus. A dry run keeps it, because
+  dry-run-then-run is the documented way to use this and making that pair cost two downloads would
+  be silly; a *failed* run also keeps it, so that fixing the cause and retrying does not re-fetch.
+- **A re-run fetches nothing.** The cache is stamped with the release tag, and a tag never moves,
+  so "do I already have this?" is a string comparison. `--keep-download` makes that reuse the
+  normal case.
+
+What genuinely changed, and should be read as a decision rather than drift: the repository now
+contains the automation, and only the target is absent. If that line ever stops feeling like the
+right one, the thing to delete is `GitHubArchiveSource` — the package below it has no network of
+its own, by construction (`IFiveEToolsArchiveSource`).

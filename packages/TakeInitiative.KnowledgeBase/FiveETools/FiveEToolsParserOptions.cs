@@ -17,9 +17,10 @@ public sealed record FiveEToolsParserOptions
     public const int DefaultMinMonsters = 1000;
 
     /// <summary>
-    /// A local copy of the 5eTools source data the operator supplies: either a checkout, or its
-    /// <c>data/</c> folder. Nothing is ever downloaded — getting a copy of the data is the
-    /// operator's own choice, and their content is not licensed for redistribution.
+    /// A local copy of the 5eTools source data: either a checkout, or its <c>data/</c> folder.
+    /// The operator supplies it, or <see cref="FiveEToolsDownload" /> fetches a release of a
+    /// repository the operator names into a folder of its own. A parse itself never fetches
+    /// anything, and never reaches further than this folder.
     /// </summary>
     public required string From { get; init; }
 
