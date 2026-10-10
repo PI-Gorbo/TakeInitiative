@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.2.2](https://github.com/PI-Gorbo/TakeInitiative/compare/takeinitiative-v1.2.1...takeinitiative-v1.2.2) (2026-10-10)
+
+
+### Bug Fixes
+
+* **web:** action a note's suggestions in the sheet, not a modal ([e2e8533](https://github.com/PI-Gorbo/TakeInitiative/commit/e2e8533b9795cfba8b5b8f467f682a0e680eb0a0))
+* **web:** cycle the kind inline on the mention strip ([a2ceae5](https://github.com/PI-Gorbo/TakeInitiative/commit/a2ceae5f024f523596a85ed26a1792aa271e78e7))
+* **web:** cycle the kind inline on the mention strip ([c7a8225](https://github.com/PI-Gorbo/TakeInitiative/commit/c7a8225743ef98ce0ac9831c58293ee10e9693b9))
+* **web:** keep the suggestions sheet's chips clickable after a create ([9170760](https://github.com/PI-Gorbo/TakeInitiative/commit/9170760b132ca73f28373cf3402220febbc30fec))
+
 ## [1.2.1](https://github.com/PI-Gorbo/TakeInitiative/compare/takeinitiative-v1.2.0...takeinitiative-v1.2.1) (2026-10-10)
 
 
