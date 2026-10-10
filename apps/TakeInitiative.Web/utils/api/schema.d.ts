@@ -1044,6 +1044,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/campaigns/{campaignId}/name": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["PutCampaignName"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/campaigns/{campaignId}/members/{memberId}/role": {
         parameters: {
             query?: never;
@@ -2135,6 +2151,9 @@ export interface components {
         };
         PostJoinCampaignRequest: {
             joinCode: string;
+        };
+        PutCampaignNameRequest: {
+            name: string;
         };
         PutMemberRoleRequest: {
             role: components["schemas"]["Role"];
@@ -4842,6 +4861,46 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["PostJoinCampaignRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CampaignResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PutCampaignName: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PutCampaignNameRequest"];
             };
         };
         responses: {

@@ -3,6 +3,7 @@ import { getCampaignRequest } from "~/utils/api/campaign/getCampaignRequest";
 import { getCampaignsRequest } from "~/utils/api/campaign/getCampaignsRequest";
 import { joinCampaignRequest } from "~/utils/api/campaign/joinCampaignRequest";
 import { putMemberRoleRequest } from "~/utils/api/campaign/putMemberRoleRequest";
+import { putCampaignNameRequest } from "~/utils/api/campaign/putCampaignNameRequest";
 import { getUserRequest } from "~/utils/api/user/getUserRequest";
 import { loginRequest } from "~/utils/api/user/loginRequest";
 import { logoutRequest } from "~/utils/api/user/logoutRequest";
@@ -92,6 +93,7 @@ export const useApi = () => {
             get: getCampaignRequest($axios),
             list: getCampaignsRequest($axios),
             putMemberRole: putMemberRoleRequest($axios),
+            putName: putCampaignNameRequest($axios),
         },
         session: {
             list: getSessionsRequest($axios),
