@@ -8,6 +8,7 @@ import type { ModelSpan } from "~/utils/extraction/spans";
 import { looseEndRowLabel, suggestionCountLabel } from "~/utils/looseEnds";
 import {
     acceptBody,
+    actionedLabel,
     batches,
     createDefaults,
     depthLabel,
@@ -27,6 +28,7 @@ import {
     inlineSuggestions,
     INLINE_QUEUE_MAX,
     mentionsInNotesLabel,
+    modelSuggestionKey,
     revertQuestion,
     suggestedByLabel,
     withQueued,
@@ -460,5 +462,22 @@ describe("asking again, deeper (23f)", () => {
             "Cole",
             "Eska",
         ]);
+    });
+});
+
+describe("actioning a suggestion in the sheet (SAM-13)", () => {
+    it("keys a chip by where the span is and what it says", () => {
+        expect(modelSuggestionKey(span("Rellan", 4))).toBe("4-Rellan");
+        // Two chips over the same words in one note are still two chips.
+        expect(modelSuggestionKey(span("Rellan", 40))).not.toBe(
+            modelSuggestionKey(span("Rellan", 4))
+        );
+    });
+
+    it("says what the tap did, so the sheet can stay where it is", () => {
+        expect(actionedLabel("Rellan Ashvale")).toBe("Linked @Rellan Ashvale.");
+        expect(actionedLabel("Greyhollow Keep", true)).toBe(
+            "Created and linked @Greyhollow Keep."
+        );
     });
 });

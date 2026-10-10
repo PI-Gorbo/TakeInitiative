@@ -3,7 +3,10 @@
          `md`, like the evidence sheet. The note, then the same chips as on the loose-ends page
          (23d), then Edit to finish by hand. Nothing happens until the author taps.
          23f: "Look again" asks the model for a deeper pass over this one note. This component
-         stays presentational — the chip decides what each tap does and what `status` says. -->
+         stays presentational — the chip decides what each tap does and what `status` says.
+         SAM-13: "+ Create" opens its form here, under the chip, instead of closing this panel
+         for a dialog. Linking, creating and dismissing all leave the author where they are, so
+         they can work through a note's suggestions without the panel going anywhere. -->
     <DialogRoot v-model:open="open">
         <DialogPortal>
             <DialogOverlay
@@ -58,12 +61,33 @@
                     </p>
                     <LooseEndsModelSuggestions
                         v-else-if="suggestions.length > 0"
+                        ref="chips"
                         :suggestions="suggestions"
-                        :disabled="busy"
+                        :disabled="busy || !!createFor"
                         :unsureBelow="unsureBelow"
+                        :expandedKey="expandedKey"
                         @link="(s) => emit('link', s)"
                         @create="(s) => emit('create', s)"
-                        @dismiss="(s) => emit('dismiss', s)" />
+                        @dismiss="(s) => emit('dismiss', s)">
+                        <!-- The chip the author tapped, opened out in place. -->
+                        <template #create="{ suggestion }">
+                            <div
+                                class="flex flex-col gap-3 rounded-md border border-gold/40 p-3">
+                                <p class="text-sm text-muted-foreground">
+                                    “{{ suggestion.text }}” in your note becomes
+                                    a mention of the new entry.
+                                </p>
+                                <SuggestionsCreateSuggestionForm
+                                    :campaignId="campaignId"
+                                    :note="note"
+                                    :suggestion="suggestion"
+                                    :model="model"
+                                    autofocus
+                                    @cancel="cancelCreate(suggestion)"
+                                    @done="(r) => emit('created', r)" />
+                            </div>
+                        </template>
+                    </LooseEndsModelSuggestions>
                     <p
                         v-if="!canLookAgain && suggestions.length > 0"
                         class="text-xs text-muted-foreground">
@@ -81,7 +105,7 @@
                         v-if="canLookAgain"
                         variant="ghost"
                         class="h-11 gap-1 text-gold md:h-9"
-                        :disabled="busy || working"
+                        :disabled="busy || working || !!createFor"
                         :aria-label="`${LOOK_AGAIN_LABEL}: read this note again, looking harder`"
                         @click="emit('lookAgain')">
                         <span aria-hidden="true">✨</span>
@@ -91,7 +115,7 @@
                     <Button
                         variant="ghost"
                         class="h-11 gap-1 md:h-9"
-                        :disabled="busy"
+                        :disabled="busy || !!createFor"
                         aria-label="Edit this note to link it by hand"
                         @click="emit('edit')">
                         <Pencil
@@ -120,13 +144,17 @@
     import {
         LOOK_AGAIN_LABEL,
         NOTHING_DEEPER_LABEL,
+        modelSuggestionKey,
         type ModelSuggestion,
+        type SuggestionModel,
     } from "~/utils/suggestions";
 
-    defineProps<{
+    const props = defineProps<{
         campaignId: string;
-        note: Pick<SessionNote, "id" | "text">;
+        note: SessionNote;
         suggestions: readonly ModelSuggestion[];
+        /** The model an accepted suggestion records (23c's provenance). */
+        model: SuggestionModel;
         /** While a link is being saved. */
         busy?: boolean;
         /** 23f: what the model is doing, or what went wrong. */
@@ -137,13 +165,31 @@
         canLookAgain?: boolean;
         /** 23f: the pinned threshold, on a deeper pass: under it a chip is marked "unsure". */
         unsureBelow?: number;
+        /** SAM-13: the suggestion whose create form is open under its chip, if any. */
+        createFor?: ModelSuggestion | null;
     }>();
     const open = defineModel<boolean>("open", { required: true });
     const emit = defineEmits<{
         link: [suggestion: ModelSuggestion];
         create: [suggestion: ModelSuggestion];
         dismiss: [suggestion: ModelSuggestion];
+        cancelCreate: [];
+        created: [result: { name: string; created: boolean }];
         edit: [];
         lookAgain: [];
     }>();
+
+    const chips = useTemplateRef<{
+        focusChip: (s: ModelSuggestion) => void;
+    }>("chips");
+    const expandedKey = computed(() =>
+        props.createFor ? modelSuggestionKey(props.createFor) : undefined
+    );
+
+    /** Cancel closes the form and hands the focus back to the chip it came from. */
+    async function cancelCreate(suggestion: ModelSuggestion) {
+        emit("cancelCreate");
+        await nextTick();
+        chips.value?.focusChip(suggestion);
+    }
 </script>
