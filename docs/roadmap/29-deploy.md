@@ -552,8 +552,8 @@ Every value is set as a container environment variable. Two notes on form:
 | `ConnectionStrings__TakeDB` | `Host=<pg-host>;Port=5432;Database=takeinitiative;User ID=takeinitiative;Password=…;` | **yes** | Coolify env |
 | `CORS__MainApp` | `https://takeinitiative.samstack.org` | no | Coolify env |
 | `CORS__AdminApp` | `https://takeinitiative.samstack.org` | no | Coolify env — there is no admin app, but `Program.cs` throws if the key is absent |
-| `AllowedHosts` | `api.takeinitiative.samstack.org` | no | Coolify env |
-| `CookieDomain` | `.takeinitiative.samstack.org` | no | Coolify env |
+| `AllowedHosts` | `api-takeinitiative.samstack.org` | no | Coolify env |
+| `CookieDomain` | `.samstack.org` | no | Coolify env |
 | `TakeUrls__Web` | `https://takeinitiative.samstack.org` | no | Coolify env — the link in confirmation emails |
 | `Email__Domain` | `takeinitiative.samstack.org` | no | Coolify env — becomes `no-reply@…` |
 | `SendGrid__ApiKey` | `SG.…` | **yes** | Coolify env |
@@ -572,7 +572,7 @@ Every value is set as a container environment variable. Two notes on form:
 
 | Variable | Example | Secret |
 |---|---|---|
-| `NUXT_PUBLIC_AXIOS_BASE_URL` | `https://api.takeinitiative.samstack.org` | no |
+| `NUXT_PUBLIC_AXIOS_BASE_URL` | `https://api-takeinitiative.samstack.org` | no |
 | `NUXT_PUBLIC_WEB_URL` | `https://takeinitiative.samstack.org` | no |
 | `NUXT_PUBLIC_SUGGESTIONS_BASE_URL` | unset — self-hosted from `/models/**` | no |
 | `HOST`, `PORT`, `NODE_ENV` | already in the image | no |
@@ -635,7 +635,7 @@ discouraged but impossible.
    Postgres + MinIO + two small containers; 2 GB will be tight once Postgres has shared buffers
    and the async daemon is running. **Nothing on the VPS ever builds, so the usual "Coolify needs
    4 GB to build Nuxt" advice does not apply.**
-2. **DNS.** `A` records for `takeinitiative.samstack.org` and `api.takeinitiative.samstack.org` → the
+2. **DNS.** `A` records for `takeinitiative.samstack.org` and `api-takeinitiative.samstack.org` → the
    VPS IP, both proxied off (Coolify issues the certificate itself).
 3. **Project and environment.** One project, one `production` environment.
 4. **Postgres.** Add a PostgreSQL 16 resource. Set a generated password. Note the internal
@@ -644,7 +644,7 @@ discouraged but impossible.
 5. **The compose resource.** New resource → *Docker Compose* → the public repo, branch `dev`,
    compose path `compose.prod.yml`.
 6. **Domains per service.** The web service gets `https://takeinitiative.samstack.org`, the API
-   `https://api.takeinitiative.samstack.org`. Coolify can take these from the UI per service, or from
+   `https://api-takeinitiative.samstack.org`. Coolify can take these from the UI per service, or from
    `SERVICE_FQDN_WEB_3000` / `SERVICE_FQDN_API_8080` magic variables in the compose file —
    the exact spelling drifts between Coolify versions, so set them in the UI first, confirm the
    generated Traefik labels, and only then move them into the file if you prefer. Let's Encrypt
@@ -1187,7 +1187,7 @@ Run in order. Every item is checkable; the last one is the point of the step.
    log contains `Pulling from` and no build output. `grep -rn "build:" compose.prod.yml` is empty.
 
 6. **TLS and the domains.** `https://takeinitiative.samstack.org` and
-   `https://api.takeinitiative.samstack.org/healthz` both answer over a valid certificate;
+   `https://api-takeinitiative.samstack.org/healthz` both answer over a valid certificate;
    `http://` redirects.
 
 7. **Schema.** On the production database: `select extname from pg_extension;` includes `pg_trgm`
@@ -1313,8 +1313,8 @@ Each has the default this plan assumes.
    `platforms: linux/arm64`. Because nothing builds on the box, 2 GB is workable but leaves
    little headroom once Postgres and MinIO are both resident.
 2. **The domain, and the two hostnames.** *Default assumed: `takeinitiative.samstack.org` for
-   the web app and `api.takeinitiative.samstack.org` for the API, with
-   `CookieDomain=.takeinitiative.samstack.org`.* Unknown to this plan. The alternative — one
+   the web app and `api-takeinitiative.samstack.org` for the API, with
+   `CookieDomain=.samstack.org`.* Unknown to this plan. The alternative — one
    hostname with the API on `/api` and `/campaignHub` — removes CORS and the cookie-domain
    question entirely and would let `NUXT_PUBLIC_AXIOS_BASE_URL` be empty, but it needs
    hand-written Traefik path rules for two prefixes instead of two tick-boxes.

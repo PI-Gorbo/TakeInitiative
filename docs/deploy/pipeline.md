@@ -141,14 +141,21 @@ What you set on the **api** Application, taken from the Garage service's own var
 
 | Setting | Value |
 |---|---|
-| `BLOBS_ACCESS_KEY` | Coolify's `SERVICE_USER_GARAGE` |
-| `BLOBS_SECRET_KEY` | Coolify's `SERVICE_PASSWORD_64_GARAGE` |
+| `Blobs__AccessKey` | Coolify's `SERVICE_USER_GARAGE` |
+| `Blobs__SecretKey` | Coolify's `SERVICE_PASSWORD_64_GARAGE` — **not** `SERVICE_PASSWORD_GARAGE`, which is the admin token |
 | `Blobs__Region` | **`garage`** |
-| `Blobs__ServiceUrl` | Garage's internal hostname, port 3900 |
+| `Blobs__ServiceUrl` | `http://garage-<uuid>:3900` — the **container** name from `docker ps`, not the service UUID |
 
-**`Blobs__Region` must be `garage`.** The template sets `s3_region = "garage"`, not `us-east-1`, and
-a mismatch fails with `AuthorizationHeaderMalformed … expected '…/garage/s3/aws4_request'` — which
-reads as a credentials problem and sends you checking the key. Measured against v2.3.0.
+These are the container's own variable names. `BLOBS_ACCESS_KEY` / `BLOBS_SECRET_KEY` exist only as
+compose interpolation and mean nothing to an Application.
+
+Three ways this fails, each looking like something else (all measured against v2.3.0):
+
+| Error | Cause |
+|---|---|
+| `AuthorizationHeaderMalformed … expected '…/garage/…'` | `Blobs__Region` is not `garage`. The template sets `s3_region = "garage"`, not `us-east-1` |
+| `Forbidden: Invalid signature` | wrong secret — usually the admin token instead of `SERVICE_PASSWORD_64_GARAGE` |
+| `Resource temporarily unavailable` | `Blobs__ServiceUrl` names the service UUID rather than the container, or the two resources are not on the predefined network |
 
 The bucket needs no setup: the template's key is created with `createBucket` permission, so the
 API's `Blobs__CreateBucket=true` makes `takeinitiative` on first boot. Coolify's own `default`
