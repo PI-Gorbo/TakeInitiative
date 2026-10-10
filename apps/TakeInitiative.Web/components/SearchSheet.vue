@@ -41,7 +41,7 @@
                         class="absolute inset-x-0 -bottom-px h-0.5 overflow-hidden"
                         role="progressbar"
                         aria-label="Searching">
-                        <div class="h-full w-1/3 animate-[search-bar_1s_ease-in-out_infinite] bg-gold" />
+                        <div class="h-full w-1/3 animate-search-bar bg-gold" />
                     </div>
                 </div>
 
@@ -524,14 +524,3 @@
         { immediate: true }
     );
 </script>
-
-<style>
-    @keyframes search-bar {
-        from {
-            transform: translateX(-100%);
-        }
-        to {
-            transform: translateX(300%);
-        }
-    }
-</style>
