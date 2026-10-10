@@ -85,13 +85,26 @@ Pick them now, because almost every environment variable is derived from them.
 | | Default this guide uses | Why |
 |---|---|---|
 | Web app | `https://takeinitiative.samstack.org` | |
-| API | `https://api.takeinitiative.samstack.org` | |
-| Cookie domain | `.takeinitiative.samstack.org` | the leading dot is what makes one auth cookie valid on both |
+| API | `https://api-takeinitiative.samstack.org` | |
+| Cookie domain | `.samstack.org` | the leading dot is what makes one auth cookie valid on both |
 
-**Keep the API on a subdomain of the web app's domain.** That is what lets
-`CookieDomain=.takeinitiative.samstack.org` work with the cookie's default `SameSite=Lax`, because
-same-registrable-domain requests are *same-site*. Put the API on a genuinely different domain and
-cross-site XHR needs `SameSite=None; Secure`, which is a code change nobody needs.
+**Keep both hostnames on one registrable domain.** `SameSite=Lax` then treats requests between
+them as same-site. A genuinely different domain needs `SameSite=None; Secure`, which is a code
+change nobody needs.
+
+> **Behind Cloudflare, the API cannot be a second-level subdomain.** Cloudflare's free Universal SSL
+> certificate covers `example.org` and `*.example.org` — one label, no more. So
+> `api.takeinitiative.example.org` has no certificate and fails the TLS handshake before any HTTP
+> happens; `curl` reports `sslv3 alert handshake failure` and a browser shows a privacy warning.
+> Hence `api-takeinitiative`, a sibling of the web host rather than a child. Measured 2026-10-09.
+>
+> **That changes `COOKIE_DOMAIN`.** Siblings share only the registrable domain, so the cookie has to
+> be `.example.org` rather than `.takeinitiative.example.org`. The cost is real: the auth cookie is
+> then sent to *every* host under that domain. Fine if the domain is only this project. If it is
+> not, the one-hostname shape below avoids the question entirely.
+>
+> Getting this wrong is quiet — login succeeds and every subsequent call 401s, because the browser
+> simply never sends the cookie.
 
 > **Decision, yours to make.** The alternative shape is **one hostname**, with the API reverse-proxied
 > under `/api` and `/campaignHub` on the same origin. That removes CORS and the cookie-domain
@@ -141,7 +154,7 @@ Create two `A` records pointing at the VPS's public IP:
 
 ```
 takeinitiative.samstack.org       A    <vps-ip>
-api.takeinitiative.samstack.org   A    <vps-ip>
+api-takeinitiative.samstack.org   A    <vps-ip>
 ```
 
 **If your DNS is Cloudflare, leave the proxy OFF (grey cloud, "DNS only") for both.** Coolify
@@ -153,7 +166,7 @@ Wait for both to resolve before you ask Coolify for a certificate:
 
 ```sh
 dig +short takeinitiative.samstack.org
-dig +short api.takeinitiative.samstack.org
+dig +short api-takeinitiative.samstack.org
 ```
 
 ## 3. Project and environment
@@ -268,9 +281,9 @@ Substituting `samstack.org` throughout:
 | Variable | Value | Secret? | Notes |
 |---|---|---|---|
 | `WEB_ORIGIN` | `https://takeinitiative.samstack.org` | no | Scheme included, **no trailing slash**. Becomes `CORS__MainApp`, `CORS__AdminApp`, `TakeUrls__Web` and `NUXT_PUBLIC_WEB_URL` |
-| `API_ORIGIN` | `https://api.takeinitiative.samstack.org` | no | Scheme included, no trailing slash. Becomes `NUXT_PUBLIC_AXIOS_BASE_URL` |
-| `API_HOST` | `api.takeinitiative.samstack.org` | no | **Host name only** — no scheme, no port. Becomes `AllowedHosts` |
-| `COOKIE_DOMAIN` | `.takeinitiative.samstack.org` | no | **The leading dot is load-bearing** |
+| `API_ORIGIN` | `https://api-takeinitiative.samstack.org` | no | Scheme included, no trailing slash. Becomes `NUXT_PUBLIC_AXIOS_BASE_URL` |
+| `API_HOST` | `api-takeinitiative.samstack.org` | no | **Host name only** — no scheme, no port. Becomes `AllowedHosts` |
+| `COOKIE_DOMAIN` | `.samstack.org` | no | **The leading dot is load-bearing** |
 | `EMAIL_DOMAIN` | `takeinitiative.samstack.org` | no | Becomes `no-reply@<this>`; must be verified with SendGrid |
 | `TAKEDB_CONNECTION` | see below | **yes** | |
 | `BLOBS_ACCESS_KEY` | **generate** | **yes** | Must be `GK` + 24 hex — Garage rejects any other shape |
@@ -324,12 +337,12 @@ So, for a compose resource, there is a **domain field per service**:
 | Service | Domain | Container port |
 |---|---|---|
 | `web` | `https://takeinitiative.samstack.org` | 3000 |
-| `api` | `https://api.takeinitiative.samstack.org` | 8080 |
+| `api` | `https://api-takeinitiative.samstack.org` | 8080 |
 | `garage` | **none — leave it blank** | — |
 
 Coolify infers the container port from the service's exposed port when there is only one, and both
 of these services expose exactly one. If your version asks for it, or routes to the wrong port,
-Coolify's domain field accepts a **`https://host:port`** form — `https://api.takeinitiative.samstack.org:8080`
+Coolify's domain field accepts a **`https://host:port`** form — `https://api-takeinitiative.samstack.org:8080`
 — where the port is the *container's* port, not a published host port. (*Unverified for your
 version; it is the convention in the versions this was written against.*)
 
@@ -428,7 +441,7 @@ In order. The last one is the point.
 
    ```sh
    curl -sI https://takeinitiative.samstack.org/ | head -1
-   curl -s  https://api.takeinitiative.samstack.org/healthz
+   curl -s  https://api-takeinitiative.samstack.org/healthz
    curl -sI http://takeinitiative.samstack.org/ | head -1    # expect a 3xx redirect to https
    ```
 
@@ -538,6 +551,25 @@ nothing to notify. Skipping."* and exits 0, so a release does not go red for wan
 There is deliberately **no registry secret** anywhere: `GITHUB_TOKEN` covers the push, and the
 packages are public so nothing on the VPS needs credentials to pull.
 
+## 11a. Cloudflare Tunnel, if the server has no public IP
+
+Coolify's one-click **cloudflared** template works as-is. Two things its guide does not spell out
+for a multi-server setup:
+
+- **It goes on the server running the resources**, not on the Coolify control plane. The tunnel has
+  to reach the Traefik that holds your hostnames' routes. On the control plane it would reach a
+  proxy with no route for them.
+- **`http://localhost:80`, not https.** Traefik serves plain HTTP on 80; Cloudflare terminates TLS
+  at the edge. Pointing `https://` at it fails the handshake and surfaces as a 502. This works
+  because the template sets `network_mode: host` — a cloudflared without it would resolve
+  `localhost` to its own container and every route would dead-end.
+
+One tunnel serves every hostname: add a **Public Hostname** entry per domain, all pointing at
+`http://localhost:80`, and Traefik routes by `Host` from there.
+
+Leave Coolify's Let's Encrypt off for these domains. With no inbound :80 the ACME challenge cannot
+complete, and Cloudflare already provides the public certificate.
+
 ## 12. When it does not work
 
 The failure modes in rough order of likelihood. Each has a **distinguishing symptom** — use that
@@ -571,7 +603,7 @@ the container's own `AllowedHosts` and presents it as the `Host` header, falling
 docker inspect --format '{{json .State.Health}}' <api-container> | head -c 2000
 
 docker exec <api-container> sh -c 'curl -s -o /dev/null -w "%{http_code}\n" \
-    -H "Host: api.takeinitiative.samstack.org" http://127.0.0.1:8080/healthz'   # expect 200
+    -H "Host: api-takeinitiative.samstack.org" http://127.0.0.1:8080/healthz'   # expect 200
 docker exec <api-container> sh -c 'curl -s -o /dev/null -w "%{http_code}\n" \
     http://127.0.0.1:8080/healthz'                                               # expect 400
 ```
@@ -587,7 +619,7 @@ causes:
   interferes, the probe will be looking for a variable that is empty.
   (*Unverified — it works under plain `docker compose`; check it here if the symptom above shows
   up with a correct `API_HOST`.*) The workaround, if so, is to add `localhost` to `AllowedHosts`
-  (`API_HOST=api.takeinitiative.samstack.org;localhost` — note the probe uses the **first** name, so
+  (`API_HOST=api-takeinitiative.samstack.org;localhost` — note the probe uses the **first** name, so
   put the real host first and this will still work).
 
 **Anyone editing a healthcheck on this API must know this**, or they will chase a phantom failure
@@ -705,6 +737,82 @@ or an image whose `RepoDigests` is empty.
 This should be impossible: there is no build context anywhere in `compose.prod.yml`, and `grep -n
 "build:" compose.prod.yml` finds nothing. If it happens, the resource is not reading the committed
 file — check the compose file path and whether somebody pasted an edited copy.
+
+### 9. Deployment fails at `docker compose pull` with "context not found"
+
+```
+unable to resolve docker endpoint: context "desktop-linux": context not found:
+open /root/.docker/contexts/meta/<sha>/meta.json: no such file or directory
+```
+
+Nothing to do with the images or the app — it fails before the pull. A Docker Desktop leftover: a
+`config.json` carries `"currentContext": "desktop-linux"` while that context does not exist.
+
+**The path is inside the helper container, not on the host.** Coolify bind-mounts the
+**connecting user's** `~/.docker/config.json` to `/root/.docker/config.json` in the helper — and it
+connects as the SSH user, not root. So checking root's config proves nothing. Find the real one:
+
+```sh
+docker inspect <helper-container> --format '{{json .Mounts}}'
+```
+
+Then remove `currentContext` (and `credsStore: "desktop"`, another Desktop leftover that points at
+a binary the helper does not have) from whatever file that names. `docker context ls` shows a broken
+`currentContext` as a row with an ERROR, so a clean listing means you are looking at the wrong file.
+
+### 10. `Blob store bucket … Resource temporarily unavailable`
+
+`Blobs__ServiceUrl` names the Coolify **service UUID** rather than the container. The UUID appears
+in Coolify's generated URLs but resolves to nothing on the Docker network. Get the real name:
+
+```sh
+docker ps --format '{{.Names}}' | grep -i garage
+```
+
+It looks like `garage-<uuid>`. Keep port 3900. If it still will not resolve, the two resources are
+not on the same network — enable **Connect to predefined network** on both.
+
+### 11. `Blob store bucket … Forbidden: Invalid signature`
+
+The credentials reach Garage but the secret is wrong. Coolify's Garage template has two
+similarly-named variables and only one is the S3 secret:
+
+```yaml
+GARAGE_ADMIN_TOKEN=$SERVICE_PASSWORD_GARAGE            # NOT this one
+GARAGE_DEFAULT_SECRET_KEY=${SERVICE_PASSWORD_64_GARAGE} # this one
+```
+
+Compare what each container actually holds:
+
+```sh
+docker inspect <garage> --format '{{range .Config.Env}}{{println .}}{{end}}' | grep GARAGE_DEFAULT
+docker inspect <api>    --format '{{range .Config.Env}}{{println .}}{{end}}' | grep Blobs__
+```
+
+A *region* mismatch is a different error — `AuthorizationHeaderMalformed … unexpected scope` — and
+means `Blobs__Region` is not `garage`.
+
+### 12. The hostname works on the server but not from your machine
+
+```sh
+curl -H "Host: api-takeinitiative.example.org" http://localhost/healthz   # 200 on the server
+curl https://api-takeinitiative.example.org/healthz                       # could not resolve
+```
+
+A cached `NXDOMAIN` from querying the name before its DNS record existed. `dig` and `host` bypass
+the OS resolver cache, so they succeed while `curl` and browsers fail — that split is the symptom.
+
+```sh
+sudo dscacheutil -flushcache && sudo killall -HUP mDNSResponder   # macOS
+sudo resolvectl flush-caches                                      # systemd
+```
+
+Browsers cache separately (`chrome://net-internals/#dns`). To prove the server is fine meanwhile,
+bypass DNS entirely:
+
+```sh
+curl --resolve api-takeinitiative.example.org:443:<cloudflare-ip> https://api-takeinitiative.example.org/healthz
+```
 
 ---
 

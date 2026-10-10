@@ -49,7 +49,7 @@ cancel each other, they publish disjoint tag sets, and the second reuses the fir
 ### Afterwards, every time
 
 ```sh
-curl -s https://api.takeinitiative.samstack.org/healthz            # 200
+curl -s https://api-takeinitiative.samstack.org/healthz            # 200
 curl -sI https://takeinitiative.samstack.org/      | head -1       # 200
 curl -sI https://takeinitiative.samstack.org/login | head -1       # 200
 ```
@@ -484,7 +484,7 @@ fixed in `d6f7f53` (an undeclared `pinia` dependency). A check on `/` that asser
 string from the landing page's
 content catches a class of failure that a liveness probe structurally cannot.
 
-The API side is simpler than it looks: `https://api.takeinitiative.samstack.org/healthz` works fine
+The API side is simpler than it looks: `https://api-takeinitiative.samstack.org/healthz` works fine
 from an external monitor, because Traefik passes the real `Host` header. The host-filtering trap
 only affects probes made *inside* the container.
 
