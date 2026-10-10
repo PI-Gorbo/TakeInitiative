@@ -27,13 +27,13 @@ export default defineNuxtConfig({
                 },
             ],
             meta: [
-                // From Ripple: `viewport-fit=cover` lets the shell pad itself with
-                // the safe-area insets, and `interactive-widget=overlays-content`
-                // keeps the layout still when the on-screen keyboard opens.
+                // `viewport-fit=cover` lets the shell pad itself with the safe-area insets.
+                // `interactive-widget=resizes-content` is the whole app's default: the keyboard
+                // shrinks the layout viewport. iOS ignores it, which `useKeyboardInset` carries.
                 {
                     name: "viewport",
                     content:
-                        "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=overlays-content",
+                        "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content",
                 },
                 { name: "theme-color", content: "#030712" },
                 { name: "apple-mobile-web-app-capable", content: "yes" },

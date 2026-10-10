@@ -390,6 +390,16 @@ This PR adds the nouns the step puts into code and UI:
    The composer is `position: fixed` with `bottom: inset` while it has focus on
    a phone, and the tab bar hides so nothing sits between the composer and the
    keyboard (invariant 11). Where `visualViewport` is missing, the inset is 0.
+
+   **Changed 2026-10-10 (SAM-11).** The viewport meta now asks for
+   `interactive-widget=resizes-content` for the whole app, so a browser that honours
+   it shrinks the layout viewport and the keyboard never overlays anything. The inset
+   machinery stays: it is what carries iOS Safari, which ignores `interactive-widget`
+   and always overlays. Where the hint is honoured the inset collapses to 0 on its own
+   (`innerHeight` shrinks with `visualViewport.height`), so every consumer —
+   the composer's `bottom: inset`, the sheets' `padding-bottom` and `--keyboard-inset`
+   — lands at 0 and the resized layout does the work. Nothing opts out; Ripple's
+   per-page `mobile.keyboardResizesContent` flag has no counterpart here.
 2. **Toolbar above the keyboard** on a phone, as §3a draws it: the session and
    visibility row on top, the text box, then the toolbar row. 44px targets.
 3. **Commands, each with a touch control** (`useComposerCommands`). A command is

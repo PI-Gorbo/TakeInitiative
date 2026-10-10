@@ -1,6 +1,7 @@
-// The on-screen keyboard's height (14e, design §3a). 13d set
-// `interactive-widget=overlays-content`, and iOS always overlays, so the keyboard
-// covers the page instead of resizing it. `useKeyboardInset` feeds these rules from
+// The on-screen keyboard's height (14e, design §3a). The viewport asks for
+// `interactive-widget=resizes-content`, so where that is honoured the layout shrinks with
+// the keyboard and the inset is 0. iOS Safari ignores it and always overlays, and there the
+// inset is the keyboard's height. `useKeyboardInset` feeds these rules from
 // `visualViewport`; the composer is then pinned `inset` pixels above the bottom.
 
 export type ViewportMetrics = {

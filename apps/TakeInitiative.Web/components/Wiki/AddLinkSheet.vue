@@ -5,8 +5,8 @@
          other: the API ignores the fields the chosen `kind` does not use.
 
          It sits `inset` pixels above the bottom so the on-screen keyboard never covers it
-         (invariant 11): 13d set `interactive-widget=overlays-content`, so a keyboard overlays
-         the page instead of resizing it, and `useKeyboardInset` is how tall it is. -->
+         (invariant 11). The inset is 0 where `interactive-widget=resizes-content` is honoured
+         and the layout already shrank; on iOS it is how tall the overlaying keyboard is. -->
     <Sheet v-model:open="open">
         <SheetContent
             side="bottom"
