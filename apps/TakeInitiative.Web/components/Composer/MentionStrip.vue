@@ -1,6 +1,6 @@
 <template>
     <!-- The `@` suggestions (15d, design §3 and §3a). On a phone this is the mention
-         strip: a row of chips between the text box and the toolbar, so it stays above
+         strip: one row of chips between the text box and the toolbar, so it stays above
          the keyboard with the pinned composer. `docked` pins it above the keyboard by
          itself, for an editor that is not pinned (15f's article editor). From md it is a popover at the caret. Every control uses
          `mousedown.prevent`, so the text box keeps focus and the keyboard stays up. -->
@@ -30,7 +30,7 @@
                         : 'hover:bg-accent/60',
                 ]"
                 @mousedown.prevent
-                @click="picker.choose(index)">
+                @click="picker.pick(index)">
                 <template v-if="suggestion.kind === 'entry'">
                     <span aria-hidden="true">{{ ENTRY_KIND_ICONS[suggestion.entryKind] }}</span>
                     <span class="max-w-48 truncate font-medium">{{ suggestion.name }}</span>
@@ -49,29 +49,35 @@
                     <Plus
                         class="size-4 shrink-0"
                         aria-hidden="true" />
-                    <span class="max-w-48 truncate">Create "{{ suggestion.name }}"</span>
-                    <!-- Desktop: the kind, cycled by Tab or a click (design §3). -->
+                    <span class="max-w-32 truncate md:max-w-48">Create "{{ suggestion.name }}"</span>
+                    <!-- The kind, inline with Create (design §3a): a tap takes the next of the
+                         six, round and round; Tab does the same on a keyboard. -->
                     <span
-                        class="ml-auto hidden shrink-0 items-center gap-1 rounded border px-1.5 text-xs text-muted-foreground md:flex"
-                        :title="`Kind: ${picker.kind.value}. Tab to change it.`"
+                        class="ml-auto flex h-9 shrink-0 items-center gap-1 rounded-md border bg-muted/60 px-2 text-xs text-muted-foreground md:h-auto md:bg-transparent md:px-1.5"
+                        :title="kindHint"
+                        :aria-label="kindHint"
                         @mousedown.prevent
                         @click.stop="picker.cycleKind(1)">
-                        {{ ENTRY_KIND_ICONS[picker.kind.value] }} {{ picker.kind.value }} ⇥
+                        <span aria-hidden="true">{{ ENTRY_KIND_ICONS[picker.kind.value] }}</span>
+                        {{ picker.kind.value }}
+                        <ChevronRight
+                            class="size-3 shrink-0 md:hidden"
+                            aria-hidden="true" />
+                        <span
+                            class="hidden md:inline"
+                            aria-hidden="true"
+                            >⇥</span
+                        >
                     </span>
                 </template>
             </button>
         </div>
-        <ComposerKindChips
-            v-if="picker.creating.value"
-            class="md:hidden"
-            :modelValue="picker.kind.value"
-            @pick="picker.createAs" />
     </div>
 </template>
 
 <script setup lang="ts">
     import { useMediaQuery } from "@vueuse/core";
-    import { Plus } from "lucide-vue-next";
+    import { ChevronRight, Plus } from "lucide-vue-next";
     import type { MentionPicker } from "~/composables/useMentionPicker";
     import { ENTRY_KIND_ICONS } from "~/utils/entries";
 
@@ -89,6 +95,10 @@
 
     const desktop = useMediaQuery("(min-width: 768px)");
     const inset = useKeyboardInset();
+
+    const kindHint = computed(
+        () => `Kind: ${props.picker.kind.value}. Tap to change it, or Tab on a keyboard.`
+    );
 
     const style = computed(() => {
         const anchor = props.picker.anchor.value;
