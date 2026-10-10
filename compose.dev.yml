@@ -81,9 +81,6 @@ services:
         environment:
             - "ConnectionStrings:TakeDB=User ID=postgres;Password=postgres;Host=postgres;Port=5432;Database=postgres;"
             - "CORS:MainApp=http://localhost:7403;https://localhost:7403"
-            # There is no admin frontend in this repo; this only exists because
-            # Program.cs requires the key to be present.
-            - "CORS:AdminApp=http://localhost:3001;https://localhost:3001"
             - "AllowedHosts=localhost"
             - "CookieDomain=localhost"
             # The other Blobs:* keys keep their appsettings.json dev defaults.

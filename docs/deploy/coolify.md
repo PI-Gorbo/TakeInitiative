@@ -280,7 +280,7 @@ Substituting `samstack.org` throughout:
 
 | Variable | Value | Secret? | Notes |
 |---|---|---|---|
-| `WEB_ORIGIN` | `https://takeinitiative.samstack.org` | no | Scheme included, **no trailing slash**. Becomes `CORS__MainApp`, `CORS__AdminApp`, `TakeUrls__Web` and `NUXT_PUBLIC_WEB_URL` |
+| `WEB_ORIGIN` | `https://takeinitiative.samstack.org` | no | Scheme included, **no trailing slash**. Becomes `CORS__MainApp`, `TakeUrls__Web` and `NUXT_PUBLIC_WEB_URL` |
 | `API_ORIGIN` | `https://api-takeinitiative.samstack.org` | no | Scheme included, no trailing slash. Becomes `NUXT_PUBLIC_AXIOS_BASE_URL` |
 | `API_HOST` | `api-takeinitiative.samstack.org` | no | **Host name only** — no scheme, no port. Becomes `AllowedHosts` |
 | `COOKIE_DOMAIN` | `.samstack.org` | no | **The leading dot is load-bearing** |
@@ -289,7 +289,6 @@ Substituting `samstack.org` throughout:
 | `BLOBS_ACCESS_KEY` | **generate** | **yes** | Must be `GK` + 24 hex — Garage rejects any other shape |
 | `BLOBS_SECRET_KEY` | **generate** | **yes** | 32 bytes hex |
 | `SENDGRID_API_KEY` | `SG.…` | **yes** | From your SendGrid account |
-| `JWT_SIGNING_KEY` | **generate**, 64 chars | **yes** | Bound to `JWTOptions`, `required` there, and never actually read. Set it so startup does not fail; expect nothing from it |
 
 `TAKEDB_CONNECTION`, using the hostname, database, user and password from step 4:
 
@@ -297,10 +296,9 @@ Substituting `samstack.org` throughout:
 Host=<pg-internal-host>;Port=5432;Database=<db>;User ID=<user>;Password=<password>;
 ```
 
-**Generate, do not choose**, the three marked *generate* plus the Postgres password:
+**Generate, do not choose**, the two marked *generate* plus the Postgres password:
 
 ```sh
-openssl rand -base64 48 | tr -d '/+=' | cut -c1-64   # JWT_SIGNING_KEY
 openssl rand -hex 16                                 # BLOBS_ACCESS_KEY
 openssl rand -base64 36 | tr -d '/+='                # BLOBS_SECRET_KEY
 ```
@@ -664,10 +662,6 @@ a name or auth error, append `SSL Mode=Disable;` to the connection string.
 the right scheme, no trailing slash, no `www` if you did not use `www`. Compare it against what the
 browser's network tab shows as the `Origin` header on the failed request. Those two strings being
 different in a way you cannot see is the whole bug.
-
-`CORS__AdminApp` must also be set even though there is no admin app: `Program.cs` throws on the
-missing key. `compose.prod.yml` sets it to the same origin rather than to something that would
-widen CORS.
 
 ### 4. Everybody is signed out after every deploy
 

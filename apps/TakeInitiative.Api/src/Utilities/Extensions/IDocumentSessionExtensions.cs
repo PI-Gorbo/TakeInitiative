@@ -1,6 +1,5 @@
 using Marten;
 using TakeInitiative.Api.Bootstrap;
-using TakeInitiative.Api.Features.Admin;
 
 namespace TakeInitiative.Utilities.Extensions;
 public static class IDocumentSessionExtensions
@@ -42,10 +41,5 @@ public static class IDocumentSessionExtensions
             .Where(c => c.Members.Any(m => m.UserId == userId))
             .OrderBy(c => c.Name)
             .ToListAsync(ct);
-    }
-
-    public static async Task<T?> LoadAdminConfig<T>(this IDocumentSession session, T? defaultIfNull = null) where T : class, IAdminConfig
-    {
-        return await session.Query<T>().FirstOrDefaultAsync() ?? defaultIfNull;
     }
 }

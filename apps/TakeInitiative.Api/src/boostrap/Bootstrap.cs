@@ -17,7 +17,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using SendGrid.Extensions.DependencyInjection;
 using Serilog;
-using TakeInitiative.Api.Features.Admin;
 using TakeInitiative.Api.Features.Reference.KnowledgeBase;
 using TakeInitiative.Utilities;
 using Weasel.Postgresql;
@@ -175,9 +174,6 @@ public static class Bootstrap
                 .Metadata(m => m.CorrelationId.Enabled = true)
                 .Index([x => x.CampaignId, x => x.UploaderMemberId, x => x.NoteId!])
                 .Index(x => x.NoteId!);
-
-            opts.Schema.For<IAdminConfig>()
-                .AddSubClass<MaintenanceConfig>();
         }).AddAsyncDaemon(DaemonMode.Solo);
 
         // Create the schema up front rather than leaning on Marten's implicit
@@ -345,7 +341,6 @@ public static class Bootstrap
 
         builder.Services
             .AddTransient<IAuthorizationHandler, RequireUserToExistInDatabaseAuthorizationHandler>()
-            .AddTransient<IAuthorizationHandler, RequireNotInMaintenanceModeAuthorizationHandler>()
             .AddCookieAuth(validFor: TimeSpan.FromHours(24), opts =>
             {
                 opts.SlidingExpiration = true; // Reissue new cookies when the cookie is half or more through its timespan.
@@ -373,12 +368,6 @@ public static class Bootstrap
                     new AuthorizationPolicyBuilder()
                         .RequireAuthenticatedUser() // Requires JWT to exist and be signed by the api
                         .AddRequirements(new RequireUserToExistInDatabaseAuthorizationRequirement())
-                        .Build()
-                );
-
-                opts.AddPolicy(TakePolicies.NotInMaintenanceMode,
-                    new AuthorizationPolicyBuilder()
-                        .AddRequirements(new RequireNotInMaintenanceModeAuthorizationRequirement())
                         .Build()
                 );
             })
@@ -411,7 +400,6 @@ public static class Bootstrap
         builder.Configure<SendGridOptions>(config.GetSection(SendGridOptions.SendGridOptionsKey));
         builder.Configure<EmailOptions>(config.GetSection(EmailOptions.EmailOptionsKey));
         builder.Configure<UrlsOptions>(config.GetSection(UrlsOptions.UrlsOptionsKey));
-        builder.Configure<JWTOptions>(config);
         return builder;
     }
 
