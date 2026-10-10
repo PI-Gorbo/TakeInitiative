@@ -14,7 +14,10 @@ public class PostCreateCampaignRequestValidator : Validator<PostCreateCampaignRe
 {
     public PostCreateCampaignRequestValidator()
     {
-        RuleFor(x => x.Name).NotEmpty().MaximumLength(100);
+        RuleFor(x => Campaign.NormaliseName(x.Name))
+            .NotEmpty()
+            .MaximumLength(Campaign.NameMaxLength)
+            .OverridePropertyName(nameof(PostCreateCampaignRequest.Name));
     }
 }
 
@@ -37,7 +40,7 @@ public class PostCreateCampaign(IDocumentSession session) : Endpoint<PostCreateC
 
         session.Events.StartStream<Campaign>(campaignId, new CampaignCreated(
             Actor: Actor.Member(ownerMemberId),
-            Name: req.Name.Trim(),
+            Name: Campaign.NormaliseName(req.Name),
             OwnerMemberId: ownerMemberId,
             OwnerUserId: userId,
             JoinCode: joinCode));

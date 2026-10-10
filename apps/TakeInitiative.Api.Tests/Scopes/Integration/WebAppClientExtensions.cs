@@ -79,6 +79,9 @@ public static class WebAppClientExtensions
     public static Task<Result<CampaignResponse>> PutMemberRole(this IWebAppClient client, Guid campaignId, Guid memberId, Role role)
         => client.Put<object, CampaignResponse>(new { role = role.ToString() }, $"/api/campaigns/{campaignId}/members/{memberId}/role");
 
+    public static Task<Result<CampaignResponse>> PutCampaignName(this IWebAppClient client, Guid campaignId, string name)
+        => client.Put<object, CampaignResponse>(new { name }, $"/api/campaigns/{campaignId}/name");
+
     public static Task<Result<CampaignResponse>> GetCampaign(this IWebAppClient client, Guid campaignId)
         => client.Get<CampaignResponse>($"/api/campaigns/{campaignId}");
 
