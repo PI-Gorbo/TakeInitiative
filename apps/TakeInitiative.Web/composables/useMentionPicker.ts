@@ -36,8 +36,8 @@ type PickerAnchor = { left: number; top: number; lineHeight: number };
  * - Desktop (from md): a popover at the caret. ↑/↓ move, Enter or Tab picks, and on a
  *   Create row Tab cycles the kind and Shift+Tab goes back. Esc dismisses.
  * - Phone: the mention strip, which the caller places above the keyboard (the
- *   composer's strip slot, or `docked` for an editor that is not pinned). Tapping
- *   Create shows the kind chips; tapping a kind creates the entry.
+ *   composer's strip slot, or `docked` for an editor that is not pinned). One row: a
+ *   tap picks, and the Create row carries the kind inline, cycled by a tap on it.
  */
 function useMentionSuggestions(args: {
     campaignId: RefOrGetter<string>;
@@ -67,10 +67,13 @@ function useMentionSuggestions(args: {
     const kind = ref<EntryKind>("Character");
     watch(
         () => args.query()?.query,
-        () => {
-            highlighted.value = 0;
-            kind.value = "Character";
-        }
+        () => (highlighted.value = 0)
+    );
+    // The kind holds while one `@` query is open, so choosing it before the name is
+    // finished survives the rest of the typing. Another `@` starts at Character again.
+    watch(
+        () => args.query()?.start ?? null,
+        () => (kind.value = "Character")
     );
     watch(suggestions, (list) => {
         if (highlighted.value >= list.length) highlighted.value = 0;
@@ -80,26 +83,6 @@ function useMentionSuggestions(args: {
     function pick(index: number, withKind: EntryKind = kind.value) {
         const suggestion = suggestions.value[index];
         if (suggestion) args.commit(suggestion, withKind);
-    }
-
-    /**
-     * A click or tap on a suggestion. On a phone, the first tap on Create chooses it
-     * and shows the kind chips; the next tap (or a kind chip) creates.
-     */
-    function choose(index: number) {
-        const suggestion = suggestions.value[index];
-        if (suggestion?.kind === "create" && !desktop.value && highlighted.value !== index) {
-            highlighted.value = index;
-            return;
-        }
-        pick(index);
-    }
-
-    /** A kind chip: create the chosen Create row with that kind. */
-    function createAs(entryKind: EntryKind) {
-        kind.value = entryKind;
-        const index = suggestions.value.findIndex((s) => s.kind === "create");
-        if (index >= 0) pick(index, entryKind);
     }
 
     function cycleKind(step: 1 | -1) {
@@ -149,8 +132,6 @@ function useMentionSuggestions(args: {
         creating,
         anchor,
         pick,
-        choose,
-        createAs,
         cycleKind,
         trigger: args.trigger,
         onKeydown,

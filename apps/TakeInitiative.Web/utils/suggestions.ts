@@ -157,6 +157,18 @@ export const modelSuggestionAriaLabel = (s: ModelSuggestion, unsure = false) =>
         : `Suggestion: “${s.text}” looks like ${kindWithArticle(s.kind)}. Create it and link it`) +
     (unsure ? ". The model is unsure of this one" : "");
 
+/** A ✨ chip's key: the span's place and its words, unique among one note's suggestions. */
+export const modelSuggestionKey = (
+    s: Pick<ModelSuggestion, "start" | "text">
+) => `${s.start}-${s.text}`;
+
+/**
+ * What the sheet says once a tap has landed (SAM-13): the author stays where they are, so the
+ * line is the only thing that tells them it worked.
+ */
+export const actionedLabel = (name: string, created = false) =>
+    `${created ? "Created and linked" : "Linked"} @${name}.`;
+
 /** "✨ Looking at 12 notes…". */
 export const lookingAtLabel = (count: number) =>
     `Looking at ${count} ${count === 1 ? "note" : "notes"}…`;

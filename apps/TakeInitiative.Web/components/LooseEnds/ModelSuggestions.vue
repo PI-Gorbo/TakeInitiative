@@ -1,9 +1,16 @@
 <template>
     <!-- Model suggestions (23d, glossary §1): spans the suggestion model found in the viewer's
          own note, marked ✨. A match links the span on one tap; a new entry opens the create
-         dialog. ✕ hides one on this device. Nothing happens until the author taps.
+         form. ✕ hides one on this device. Nothing happens until the author taps.
          With `unsureBelow` (23f's deeper passes) a span under that confidence is marked
-         "unsure", so a span the automatic pass would have thrown away says so. -->
+         "unsure", so a span the automatic pass would have thrown away says so.
+         With `expandedKey` (the stream's suggestions sheet, SAM-13) the chip it names is the
+         disclosure for a create form the parent renders itself, and stays live while the rest
+         are `disabled` so it can close that form again. The form is deliberately not a slot in
+         here: a create takes its own suggestion out of `suggestions`, which would unmount the
+         form mid-write, and Vue throws away an unmounted component's emit. Without
+         `expandedKey` the chips are exactly as they were, and the loose-ends page keeps its
+         dialog. -->
     <div
         v-if="suggestions.length > 0"
         role="group"
@@ -11,13 +18,20 @@
         class="flex flex-wrap gap-1.5">
         <div
             v-for="s in suggestions"
-            :key="`${s.start}-${s.text}`"
-            class="flex min-h-11 items-stretch overflow-hidden rounded-full border border-dashed border-gold/50 md:min-h-8">
+            :key="modelSuggestionKey(s)"
+            class="flex min-h-11 items-stretch overflow-hidden rounded-full border border-dashed border-gold/50 md:min-h-8"
+            :class="isExpanded(s) ? 'border-solid bg-gold/10' : undefined">
             <button
+                :id="chipId(s)"
                 type="button"
-                :disabled="disabled"
+                :disabled="disabled && !isExpanded(s)"
                 class="flex items-center gap-1 pl-3 pr-1 text-left text-sm hover:bg-gold/10 disabled:opacity-50"
                 :aria-label="modelSuggestionAriaLabel(s, isUnsureHere(s))"
+                :aria-expanded="
+                    expandedKey !== undefined && !s.match
+                        ? isExpanded(s)
+                        : undefined
+                "
                 @click="s.match ? emit('link', s) : emit('create', s)">
                 <span aria-hidden="true">
                     ✨ <strong class="font-semibold">{{ s.text }}</strong>
@@ -61,6 +75,7 @@
         isUnsure,
         kindWithArticle,
         modelSuggestionAriaLabel,
+        modelSuggestionKey,
         type ModelSuggestion,
     } from "~/utils/suggestions";
 
@@ -73,13 +88,27 @@
          * marked "unsure". Left out on the automatic pass, where nothing is under it.
          */
         unsureBelow?: number;
+        /** SAM-13: the `modelSuggestionKey` of the chip whose create form the parent has open. */
+        expandedKey?: string;
     }>();
 
+    const id = useId();
     const isUnsureHere = (s: ModelSuggestion) =>
         props.unsureBelow !== undefined && isUnsure(s, props.unsureBelow);
+    const isExpanded = (s: ModelSuggestion) =>
+        props.expandedKey !== undefined &&
+        props.expandedKey === modelSuggestionKey(s);
+    const chipId = (s: ModelSuggestion) => `${id}-${s.start}`;
+
     const emit = defineEmits<{
         link: [suggestion: ModelSuggestion];
         create: [suggestion: ModelSuggestion];
         dismiss: [suggestion: ModelSuggestion];
     }>();
+
+    /** Puts the focus back on a chip whose form has just closed, which the form took it from. */
+    function focusChip(s: ModelSuggestion) {
+        document.getElementById(chipId(s))?.focus();
+    }
+    defineExpose({ focusChip });
 </script>

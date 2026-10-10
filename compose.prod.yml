@@ -45,18 +45,12 @@ services:
             # SecurePolicy.Always.
             - "ConnectionStrings__TakeDB=${TAKEDB_CONNECTION}"
             - "CORS__MainApp=${WEB_ORIGIN}"
-            # There is no admin app. Program.cs throws if the key is absent, so it is set to the
-            # same origin rather than to something that would widen CORS.
-            - "CORS__AdminApp=${WEB_ORIGIN}"
             # Host filtering. Also what the healthcheck below derives its Host header from.
             - "AllowedHosts=${API_HOST}"
             - "CookieDomain=${COOKIE_DOMAIN}"
             - "TakeUrls__Web=${WEB_ORIGIN}"
             - "Email__Domain=${EMAIL_DOMAIN}"
             - "SendGrid__ApiKey=${SENDGRID_API_KEY}"
-            # Bound to JWTOptions and never read anywhere — a leftover from the pre-cookie auth. It
-            # is `required` on the options class, so it must be set; expect nothing from it.
-            - "JWTSigningKey=${JWT_SIGNING_KEY}"
             # The API owns the schema. Marten applies every change before the port opens, which is
             # also the only thing that creates pg_trgm and unaccent and step 26's knowledge-base
             # table — they hang off no document type, so lazy auto-create never touches them.

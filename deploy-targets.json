@@ -1,5 +1,5 @@
 {
-    "$comment": "Which branch deploys where, and which Coolify application each app is. Coolify application UUIDs are identifiers, not secrets, so committing them makes the binding reviewable instead of living only in the dashboard. `enabled` is the cut-over switch and the ONLY thing that arms a deploy: turning the pipeline on for one app is a one-line commit and turning it off again is a revert. Both are still false — the applications exist but are not configured, and the one-time setup in docs/deploy/pipeline.md has not been done. An app that is enabled with no UUID fails the plan job rather than deploying nothing quietly, and two enabled apps may not share a UUID. There is only `prod`: a dev environment was judged not worth the second VPS, so `main` is the only deploying branch and `dev` publishes images without deploying them.",
+    "$comment": "Which branch deploys where, and which Coolify application each app is. Coolify application UUIDs are identifiers, not secrets, so committing them makes the binding reviewable instead of living only in the dashboard. `enabled` is the cut-over switch and the ONLY thing that arms a deploy: turning the pipeline on for one app is a one-line commit and turning it off again is a revert. Both are now true — the Coolify applications are configured and the one-time setup in docs/deploy/pipeline.md is done, so a push to `main` deploys for real. An app that is enabled with no UUID fails the plan job rather than deploying nothing quietly, and two enabled apps may not share a UUID. There is only `prod`: a dev environment was judged not worth the second VPS, so `main` is the only deploying branch and `dev` publishes images without deploying them.",
     "$uuidAssignment": "The two Coolify applications were created undesignated, so WHICH IS WHICH IS DECIDED HERE and Coolify must be made to agree. Name them `takeinitiative-api` and `takeinitiative-web` in Coolify to match, and set each one's image source to the matching GHCR repository. Getting this backwards is not a failure the pipeline can detect: it would PATCH the web image onto the API's application and deploy it successfully, leaving two containers each running the wrong thing behind the right domain.",
     "environments": {
         "prod": {
@@ -7,11 +7,11 @@
             "githubEnvironment": "prod",
             "apps": {
                 "api": {
-                    "enabled": false,
+                    "enabled": true,
                     "coolifyApplicationUuid": "lvb5hpab49yh618nttvev1fz"
                 },
                 "web": {
-                    "enabled": false,
+                    "enabled": true,
                     "coolifyApplicationUuid": "m1kq4p6ckky1ldfssvio5l6d"
                 }
             }

@@ -31,7 +31,6 @@ export type Campaign = Schemas["CampaignResponse"];
 export type CampaignMember = Schemas["CampaignMemberResponse"];
 export type CampaignSummary = Schemas["CampaignSummary"];
 export type User = Schemas["GetUserResponse"];
-export type MaintenanceConfig = Schemas["MaintenanceConfig"];
 export type Visibility = Schemas["Visibility"];
 export type Session = Schemas["SessionResponse"];
 export type SessionNote = Schemas["SessionNoteResponse"];

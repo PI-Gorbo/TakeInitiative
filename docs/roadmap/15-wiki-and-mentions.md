@@ -415,8 +415,9 @@ This PR adds the nouns the step puts into code and UI:
    text box. ↑/↓ move, Enter or Tab picks, and on a Create row Tab cycles the kind
    and Shift+Tab goes back (§3). Esc dismisses.
 5. **Phone** (§3a): `MentionStrip` in the composer's `strip` slot, between the text
-   box and the toolbar, so it stays above the keyboard. It holds suggestion chips,
-   and `KindChips` appears below it only while a Create row is chosen. The
+   box and the toolbar, so it stays above the keyboard. One row of suggestion chips:
+   a tap picks, and the Create chip carries the kind inline, cycled one way by a tap
+   on it. There is no second row of kind chips. The
    toolbar gains an `@` item, first, which inserts `@` (with a space before it
    when needed) and opens the strip. Chips use `mousedown.prevent` (14e) so the
    keyboard stays up. The `/` strip and the `@` strip are never shown together:

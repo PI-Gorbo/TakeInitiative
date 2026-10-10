@@ -3,7 +3,9 @@
          this tab, and only once it has read the note (the card is in view). A tap opens the
          sheet; nothing is linked or created until a tap in there.
          23f: the card's menu calls `ask()` here for "✨ Find suggestions", which loads the model
-         on the tap (the chip alone never downloads), reads this one note, and opens the sheet. -->
+         on the tap (the chip alone never downloads), reads this one note, and opens the sheet.
+         SAM-13: every tap is actioned inside the sheet, which stays open and says what landed.
+         Only Edit, which hands the note to the composer, still closes it. -->
     <span class="contents">
         <button
             v-if="suggestions.length > 0"
@@ -20,23 +22,20 @@
             :campaignId="campaignId"
             :note="note"
             :suggestions="suggestions"
+            :model="model"
             :busy="busy"
             :status="status"
             :working="working"
             :canLookAgain="canLookAgain"
             :unsureBelow="unsureBelow"
+            :createFor="createFrom"
             @link="acceptMatch"
             @create="startCreate"
             @dismiss="dismiss"
+            @cancelCreate="createFrom = null"
+            @created="created"
             @lookAgain="lookAgain"
             @edit="edit" />
-        <SuggestionsCreateFromSuggestion
-            v-if="createOpened"
-            v-model:open="creating"
-            :campaignId="campaignId"
-            :note="note"
-            :suggestion="createFrom"
-            :model="model" />
         <!-- The first download on this device: "✨ Find suggestions" asks before it starts. -->
         <SuggestionsDownloadPrompt
             v-if="promptOpened"
@@ -49,8 +48,10 @@
     import type { SessionNote } from "~/utils/api/types";
     import { formatMegabytes } from "~/utils/extraction/modelSource";
     import {
+        actionedLabel,
         depthLabel,
         inlineChipAriaLabel,
+        modelSuggestionKey,
         type ModelSuggestion,
     } from "~/utils/suggestions";
 
@@ -78,13 +79,16 @@
     // Mounted on first open only, so the stream does not hold a sheet per note.
     const sheetOpen = ref(false);
     const sheetOpened = ref(false);
-    const creating = ref(false);
-    const createOpened = ref(false);
+    /** The suggestion whose create form is open in the sheet (SAM-13). */
     const createFrom = ref<ModelSuggestion | null>(null);
+    /** What the last tap did, so the sheet says so without closing (SAM-13). */
+    const actioned = ref<string | null>(null);
     const prompt = ref(false);
     const promptOpened = ref(false);
 
     function openSheet() {
+        actioned.value = null;
+        createFrom.value = null;
         sheetOpened.value = true;
         sheetOpen.value = true;
     }
@@ -104,7 +108,10 @@
         () => extractor.state.value === "error" || phase.value === "error"
     );
 
-    /** One line in the sheet about what the model is doing, or what went wrong. */
+    /**
+     * One line in the sheet about what the model is doing, what went wrong, or — once it has
+     * nothing to say — what the author's last tap did (SAM-13).
+     */
     const status = computed<{ text: string; isError?: boolean } | null>(() => {
         const state = extractor.state.value;
         if (state === "downloading" || state === "loading")
@@ -124,6 +131,7 @@
                 isError: true,
             };
         if (phase.value === "working") return { text: "Reading your note…" };
+        if (actioned.value) return { text: actioned.value };
         if (phase.value === "done")
             return { text: depthLabel(level.value, suggestions.value.length) };
         return null;
@@ -165,6 +173,7 @@
 
     /** The sheet's "Look again": a deeper pass, or the same one again after a failure. */
     function lookAgain() {
+        actioned.value = null;
         if (extractor.state.value === "error") {
             void loadThenAsk();
             return;
@@ -178,15 +187,26 @@
     /** "✨ Rellan → @Rellan Ashvale?": one tap links it, with the model on the edit (23c). */
     async function acceptMatch(s: ModelSuggestion) {
         if (!s.match || busy.value) return;
-        await accept(props.note, s, s.match.entry.id, model);
+        if (await accept(props.note, s, s.match.entry.id, model))
+            actioned.value = actionedLabel(s.match.entry.name);
     }
 
-    /** "+ Create": the sheet makes way for the create dialog; nothing is created until its tap. */
+    /**
+     * "+ Create": the form opens under the chip in the sheet, and a second tap on the same chip
+     * closes it again. Nothing is created until its own tap (SAM-13).
+     */
     function startCreate(s: ModelSuggestion) {
-        sheetOpen.value = false;
-        createFrom.value = s;
-        createOpened.value = true;
-        creating.value = true;
+        const open = createFrom.value;
+        createFrom.value =
+            open && modelSuggestionKey(open) === modelSuggestionKey(s)
+                ? null
+                : s;
+    }
+
+    /** The form created the entry and linked the span: the sheet stays, and says so. */
+    function created(result: { name: string; created: boolean }) {
+        createFrom.value = null;
+        actioned.value = actionedLabel(result.name, result.created);
     }
 
     /** Finish by hand in the composer, with the `@` picker (step 17). */

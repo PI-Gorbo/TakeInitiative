@@ -96,8 +96,8 @@ Steps 08–11 ship as one stack of PRs (`gh stack`), one PR per step.
 | 26 | [Knowledge base](26-knowledge-base.md) | `done` | 20, 21 | A .NET ingest CLI, the slim 5eTools index in Postgres with a `tsvector`, and a **browsable Knowledge base surface** so reference rows have somewhere to live |
 | 27 | [Links](27-links.md) | `done` | 26 | The `EntryLink` seam becomes real: `knowledgebase` and `external` links on an entry, with events, history and visibility |
 | 28 | [Knowledge-base match suggestions](28-kb-suggestions.md) | `done` | 26, 27, 23 | On an entry that looks like a knowledge-base item, offer the link and let the user confirm it |
-| 29 | [Deploy](29-deploy.md) | `todo`; **29i built, inert** | 13–28, 30, the review | Production images built in GitHub Actions, pushed to GHCR, pulled by Coolify. The app is reachable by other people. **Runs last**; see “Order after 28”. The deploy half is now Ripple's pipeline, ported — see 29's 2026-10-07 amendment and [docs/deploy/pipeline.md](../deploy/pipeline.md) |
-| 30 | [Marten 7 → 9](30-marten-9.md) | `todo` | 28 | The database settled before anybody's data is in it, on Marten 9's defaults. **Runs first** |
+| 29 | [Deploy](29-deploy.md) | `done` — **live 2026-10-09**, pipeline armed 2026-10-10 | 13–28; **shipped ahead of 30 and the review** | Production images built in GitHub Actions, pushed to GHCR, pulled by Coolify. The app is reachable by other people. Ran before its place in the queue — see 29's 2026-10-10 amendment for what that cost. 29h is docs only: the rollback is unrehearsed and no backup has been restored |
+| 30 | [Marten 7 → 9](30-marten-9.md) | `todo` | 28 | The database settled before anybody's data is in it, on Marten 9's defaults. **Runs next, and the clock is running**: 29 went first, so “before anybody's data is in it” is now a window rather than a given |
 | 31 | Wolverine (CQRS) | `todo` | 30, the review | `[Aggregate]` handlers and a transactional outbox. Its position relative to 29 is the review's call. Step file unwritten |
 
 ### Order after 28 (2026-10-02)
@@ -112,24 +112,28 @@ The step numbers are identity, not sequence. After 28 the order is **30 → revi
    about event or document shape. 29b — which makes `ApplyAllDatabaseChangesOnStartup` run
    outside Development — also gets written against Marten 9 once, instead of written twice.
 2. **The review.** The full architectural and implementation pass, against Marten 9 code.
-3. **29 — Deploy.** Deployment is only ever after a review. This is a standing rule.
+3. ~~**29 — Deploy.** Deployment is only ever after a review. This is a standing rule.~~
+
+> **Overtaken by events, 2026-10-10.** 29 shipped first: prod was stood up on 2026-10-09 and the pipeline armed on 2026-10-10. The remaining order is **30 → review**, and 30 is now time-sensitive rather than merely first — its reason for going first was an empty production database, and there is a populated one now. See 29's 2026-10-10 amendment.
 
 ### The deploy pipeline landed early, inert (2026-10-07)
 
 29i — `.github/workflows/deploy.yml`, `scripts/ci/**`, `deploy-targets.json` and
 `docs/deploy/pipeline.md` — is **built and committed ahead of its place in the queue**, at the
-user's request, while the Ripple pipeline it ports was fresh. This does not move step 29 or weaken
-"deployment is only ever after a review":
+user's request, while the Ripple pipeline it ports was fresh. It was argued at the time that this
+did not move step 29 or weaken "deployment is only ever after a review". **That held for three
+days.** What the section recorded, and what happened:
 
-- Nothing is deployed and nothing can be. `deploy-targets.json` ships with both apps
-  `enabled: false`, there is no Coolify application to name, and a push to `main` plans, reports
-  "skipped" and exits 0. The one-time setup in `pipeline.md` — the Tailscale tag, the federated
-  OAuth client, the `prod` Environment — has not been done either.
+- ~~Nothing is deployed and nothing can be.~~ **Armed 2026-10-10.** It shipped with both apps
+  `enabled: false` and no Coolify application to name, so a push to `main` planned, reported
+  "skipped" and exited 0. The one-time setup in `pipeline.md` — the Tailscale tag, the federated
+  OAuth client, the `prod` Environment — is now done and both apps are `enabled: true`, so `main`
+  deploys. Step 29's remaining work is unaffected; this was always the last switch in it.
 - What it buys now: the port was written against Ripple's working pipeline in one sitting rather
   than reconstructed from it months later, and the decisions live in unit-tested code
   (`pnpm deploy:test`) rather than in a plan nobody has executed.
-- **29g still runs last**, after Marten 9 and the review, and it is what actually makes the app
-  reachable.
+- ~~**29g still runs last**, after Marten 9 and the review, and it is what actually makes the
+  app reachable.~~ **It did not.** 29g ran on 2026-10-09, before both. The app is reachable.
 
 **31 — Wolverine** is wanted: the `[Aggregate]` handler workflow suits an API whose 75 endpoints
 already load an aggregate, append events and reload the inline projection by hand, and its
@@ -149,6 +153,35 @@ should see them as "found and fixed", not discovered again.
 | **The Marten schema was never applied outside Development.** `ApplyAllDatabaseChangesOnStartup()` sat behind `if (IsDevelopment)` and the API container sets no `ASPNETCORE_ENVIRONMENT`. Document tables would still appear lazily, but `pg_trgm` and `unaccent` are `ExtendedSchemaObjects` that hang off no document type, so ⌘K's `word_similarity()` would have failed on the server while working on every laptop. A step 17 bug | planning 29, fixed in 26c | `fixed` |
 | **Every server-rendered route 500s in a production build**, the landing page included. The SSR bundle emits `import require$$0 … from 'vue'`, a dead Rollup CJS-interop artifact, and Vue's ESM build has no default export. `/app/**` survives only because it is `ssr: false`. `pnpm dev` is unaffected, which is why it went unseen | building the web image in 29d | `in progress` |
 | **Two flaky tests.** `SessionNoteTests.AnEdit_SetsEditedAt_…` compared Postgres microseconds with .NET ticks (fixed in #205, and it is what kept step 14 open). `EntryHistoryTests.AnNpcsStats_…` asserted a raw body lacked `"5d8"`, which a hex member id hits about one run in 70 | #205; the schema measurement | `fixed` |
+
+### The admin feature is gone (2026-10-10)
+
+The V1 admin surface — `Features/Admin`, maintenance mode and the `AdminApp` CORS keys — was
+deleted. There has never been an admin frontend in this repo; step 05 noted that in passing and
+kept the API half. V2 does not use any of it.
+
+It also closed a hole that step 29 would have shipped. `Program.cs` gave every route under
+`/api/admin` `AllowAnonymous(["GET", "POST", "PUT", "DELETE"])`, and `PUT /api/admin/maintenance`
+wrote `MaintenanceConfig.InMaintenanceMode`, which the `NotInMaintenanceMode` policy enforced on
+**every other authenticated endpoint**. Any unauthenticated caller could therefore lock the whole
+app, and the only way back out was the same anonymous endpoint or the database. Nothing was
+exposed, because nothing is deployed yet.
+
+Removed with it, all verified unreferenced first:
+
+| Thing | Why it went |
+|---|---|
+| `Features/Admin/**` | The endpoints, `MaintenanceConfig` and `IAdminConfig`, plus its Marten document hierarchy |
+| `RequireNotInMaintenanceMode*`, `TakePolicies.NotInMaintenanceMode` | The policy had one source of truth and it is gone |
+| `JWTOptions`, `JWTSigningKey`, `JWT_SIGNING_KEY` | Bound and never read since auth went cookie-based. `29-deploy.md` and `coolify.md` both said so in prose; now they do not have to |
+| `CORS:AdminApp`, `MainAppAndAdminApp` | Origins for an app that does not exist |
+| `ImmutableListExtensions`, `LoadAdminConfig` | No callers |
+| `utils/styles.ts`, `utils/types/{FormInputBase,HelperTypes}.ts` | V1 web leftovers; no importers and nothing auto-imported them |
+| `public/img/` | `redDice.png` unreferenced, `yellowDice.png` a byte-identical duplicate of `public/yellowDice.png` |
+
+A maintenance mode is still a reasonable thing to want before 29. If it comes back it should be
+an operator concern — a flag the deploy sets, or a Traefik middleware — not an anonymous write
+endpoint in the application.
 
 **MVP line.** Everything below is post-MVP (design §11 and §11a).
 

@@ -298,6 +298,24 @@ public static partial class FiveEToolsParser
     }
 
     /// <summary>
+    /// The two files a folder has to have before it is worth parsing, relative to its <c>data/</c>
+    /// directory.
+    /// </summary>
+    /// <remarks>
+    /// 5eTools' data folder is asymmetric and 26b reproduces that deliberately: these two are
+    /// required, while <c>items.json</c>, <c>items-base.json</c>, <c>books.json</c> and
+    /// <c>adventures.json</c> are optional and simply yield nothing. It is stated here, once,
+    /// because three callers need to mean the same thing by "a complete folder" — the CLI's
+    /// partial-folder report, <see cref="FiveEToolsDownloadCache.IsComplete" />, and a reader of
+    /// this class.
+    /// </remarks>
+    public static IReadOnlyList<string> RequiredIndexes { get; } =
+    [
+        Path.Combine("bestiary", "index.json"),
+        Path.Combine("spells", "index.json"),
+    ];
+
+    /// <summary>
     /// A 5eTools checkout, or its <c>data/</c> folder. The checkout is worth finding on its own: its
     /// <c>package.json</c> is where the version in the index comes from.
     /// </summary>

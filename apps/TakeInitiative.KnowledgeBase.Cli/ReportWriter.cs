@@ -31,6 +31,52 @@ public sealed class ReportWriter(TextWriter output, TextWriter error)
     /// </summary>
     public void File(string relativePath) => output.WriteLine($"  read      {relativePath}");
 
+    /// <summary>Which release a download resolved to, before anything is fetched.</summary>
+    public void Release(FiveEToolsRelease release) => output.WriteLine(
+        $"  release   {release.Tag} · {release.Asset}"
+        + (release.Bytes is { } bytes ? $" · {Megabytes(bytes)}" : string.Empty));
+
+    /// <summary>The cache already held that release, so nothing was fetched.</summary>
+    public void Reused(string checkout) => output.WriteLine($"  reused    {checkout}");
+
+    /// <summary>About to fetch the archive, which is the slow part of the run.</summary>
+    public void Downloading(Uri url) => output.WriteLine($"  download  {url}");
+
+    /// <summary>What came out of the archive, and where.</summary>
+    public void Unpacked(int files, string checkout) =>
+        output.WriteLine($"  unpacked  {Number(files)} files · {checkout}");
+
+    /// <summary>The download was deleted, which is what a completed run does with it.</summary>
+    public void Cleaned(string root) => output.WriteLine($"  cleaned   {root}");
+
+    /// <summary>The download was left in place, and why it is worth knowing that it was.</summary>
+    public void Kept(string root, string because) =>
+        output.WriteLine($"  kept      {root} ({because})");
+
+    /// <summary>
+    /// A download that did not happen. Separate from <see cref="ParseFailed" /> only in its hint:
+    /// nothing is wrong with the data, because there is no data yet.
+    /// </summary>
+    public void DownloadFailed(string message)
+    {
+        error.WriteLine($"  error   · {message}");
+        error.WriteLine(
+            "            Nothing was written, and any partial download was left for the next run to "
+            + "replace.");
+    }
+
+    /// <summary>
+    /// Both <c>--download</c> and <c>--from</c>. Refused rather than resolved, because either
+    /// answer silently ignores something the operator asked for.
+    /// </summary>
+    public void SourceConflict(string from)
+    {
+        error.WriteLine($"  error   · --download and --from ({from}) are both set.");
+        error.WriteLine(
+            "            --download decides the folder; --from names one. Pass one of them.");
+        error.WriteLine("            Nothing was written.");
+    }
+
     /// <summary>What the parse skipped, and why. Only the counts that are not zero.</summary>
     public void Skipped(FiveEToolsBuildReport report)
     {
@@ -207,4 +253,8 @@ public sealed class ReportWriter(TextWriter output, TextWriter error)
         $"  {label.PadRight(LabelWidth)}{Number(count).PadLeft(CountWidth)}";
 
     private static string Number(int value) => value.ToString("N0", CultureInfo.InvariantCulture);
+
+    /// <summary>An archive's size, in the unit an operator waiting for it is thinking in.</summary>
+    private static string Megabytes(long bytes) =>
+        (bytes / 1_000_000d).ToString("0.0", CultureInfo.InvariantCulture) + " MB";
 }

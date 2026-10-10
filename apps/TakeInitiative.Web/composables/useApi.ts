@@ -11,7 +11,6 @@ import { postConfirmEmailRequest as confirmEmailRequest } from "~/utils/api/user
 import { postSendConfirmEmailRequest } from "~/utils/api/user/postSendConfirmEmailRequest";
 import { putSendResetPasswordRequest } from "~/utils/api/user/putSendResetPasswordRequest";
 import { putResetPassword } from "~/utils/api/user/putResetPasswordRequest";
-import { getMaintenanceRequest } from "~/utils/api/admin/getMaintainenceRequest";
 import { putUsername } from "~/utils/api/user/putUsernameRequest";
 import { getSessionsRequest } from "~/utils/api/session/getSessionsRequest";
 import { getSessionStreamRequest } from "~/utils/api/session/getSessionStreamRequest";
@@ -174,7 +173,6 @@ export const useApi = () => {
             revert: postSuggestionRevertRequest($axios),
         },
         admin: {
-            getMaintenance: getMaintenanceRequest($axios),
         },
     };
 };
