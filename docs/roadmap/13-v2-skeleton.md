@@ -209,6 +209,8 @@ so on.
    is out of scope per §12).
 3. Viewport meta from Ripple (`interactive-widget=overlays-content`), plus
    safe-area insets on the header and tab bar.
+   **Changed 2026-10-10 (SAM-11): the default is now `resizes-content`, app-wide.**
+   See the note in [14e](14-sessions-and-notes.md#14e-mobile-composer-commands-and-filters).
 4. **Shell.** One responsive layout: a header with the campaign name and a 🔍
    button, the tab content, and bottom tabs **Campaign · Wiki · Combat** with
    touch targets of at least 44px. On desktop the tabs can move to the side, and
