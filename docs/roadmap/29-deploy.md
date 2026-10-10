@@ -23,21 +23,50 @@ and sees it appear on the owner's screen without a refresh. On the VPS,
 images — proof they were pulled, not built — and that digest matches the one in the GitHub
 Actions run summary. `docker buildx du` on the VPS is empty.
 
-The step ships as eight PRs stacked on `dev`, starting with this file's docs PR. Each PR leaves
+The step ships as thirteen PRs stacked on `dev`, starting with this file's docs PR — eight as planned, then 29i–29m as the deployment met reality. Each PR leaves
 the repo runnable: `pnpm dev`, `dotnet test` and the web suite keep working at every point, and
 nothing is deployed until 29g.
 
 | PR | Branch | Sub-step | Runnable state after merge | Status |
 |---|---|---|---|---|
-| 29a | `v2/29a-deploy-plan` | This plan | Docs only || [ ] |
-| 29b | `v2/29b-api-production-ready` | Schema on startup, data-protection keys, proxy headers | The API applies its Marten schema in every environment behind `Marten:ApplySchemaOnStartup`, keeps its cookie keys on a volume, and trusts Traefik's `X-Forwarded-*`. Dev behaviour is unchanged || [ ] |
-| 29c | `v2/29c-api-image` | Harden `apps/TakeInitiative.Api/dockerfile` | Non-root, one RID's native assets instead of thirteen, `/app`, a healthcheck, OCI labels. `compose.dev.yml` still builds and runs || [ ] |
-| 29d | `v2/29d-web-image` | Harden `apps/TakeInitiative.Web/Dockerfile`, and make the API URL a **runtime** setting | The same image works for any domain: `NUXT_PUBLIC_AXIOS_BASE_URL` at container start replaces `--build-arg API_URL`. `/healthz` exists. The build context is allowlisted || [ ] |
-| 29e | `v2/29e-ghcr-workflow` | `.github/workflows/images.yml` and the release hook | Every push to `dev` publishes `…:edge` and `…:sha-<short>` to GHCR; every release publishes `…:1.2.3`, `…:1.2`, `…:latest` || [ ] |
-| 29f | `v2/29f-compose-prod` | `compose.prod.yml` and the env example | A committed production spec that references GHCR images and has **no `build:` key anywhere**. `docker compose -f compose.prod.yml config` validates || [ ] |
-| 29g | `v2/29g-coolify` | `docs/deploy/coolify.md`, and the deployment itself | The app is live on its domain with TLS. This step's Verify passes || [ ] |
-| 29h | `v2/29h-operations` | `docs/deploy/operations.md`: rollback, backups, the KB ingest tunnel | A rehearsed rollback, a restored backup, and the documented route for step 26's CLI || [ ] |
+| 29a | `v2/29a-deploy-plan` | This plan | Docs only || [x] |
+| 29b | `v2/29b-api-production-ready` | Schema on startup, data-protection keys, proxy headers | The API applies its Marten schema in every environment behind `Marten:ApplySchemaOnStartup`, keeps its cookie keys on a volume, and trusts Traefik's `X-Forwarded-*`. Dev behaviour is unchanged || [x] |
+| 29c | `v2/29c-api-image` | Harden `apps/TakeInitiative.Api/dockerfile` | Non-root, one RID's native assets instead of thirteen, `/app`, a healthcheck, OCI labels. `compose.dev.yml` still builds and runs || [x] |
+| 29d | `v2/29d-web-image` | Harden `apps/TakeInitiative.Web/Dockerfile`, and make the API URL a **runtime** setting | The same image works for any domain: `NUXT_PUBLIC_AXIOS_BASE_URL` at container start replaces `--build-arg API_URL`. `/healthz` exists. The build context is allowlisted || [x] |
+| 29e | `v2/29e-ghcr-workflow` | `.github/workflows/images.yml` and the release hook | Every push to `dev` publishes `…:edge` and `…:sha-<short>` to GHCR; every release publishes `…:1.2.3`, `…:1.2`, `…:latest` || [x] |
+| 29f | `v2/29f-compose-prod` | `compose.prod.yml` and the env example | A committed production spec that references GHCR images and has **no `build:` key anywhere**. `docker compose -f compose.prod.yml config` validates || [x] |
+| 29g | `v2/29g-coolify` | `docs/deploy/coolify.md`, and the deployment itself | The app is live on its domain with TLS. This step's Verify passes || [x] |
+| 29h | `v2/29h-operations` | `docs/deploy/operations.md`: rollback, backups, the KB ingest tunnel | A rehearsed rollback, a restored backup, and the documented route for step 26's CLI || [x] **docs only** — the rollback is unrehearsed and no backup has been restored |
 | 29i | `v2/29i-deploy-pipeline` | The deploy pipeline: `deploy.yml`, `scripts/ci/**`, `docs/deploy/pipeline.md` | `main` deploys prod by pinning a digest, over the tailnet. Armed 2026-10-10 — both apps `enabled: true` || [x] |
+| 29j | `v2/29j-postgres-18` | Settle the Postgres major before any data exists | Pinned across dev, test and prod. Landed as `16-alpine` — the newest major Marten's CI covers — despite the branch name | [x] |
+| 29k | `v2/29k-garage-and-domains` | Garage in place of MinIO, and the real domains | MinIO changed its deployment model and stopped publishing usable community images. Garage v2.3.0, pinned to match Coolify's template, bootstrapped over its admin API rather than a shell | [x] |
+| 29l | `v2/29l-build-amd64` | Build `linux/amd64` | The deployment server turned out to be x86_64, not the arm64 this plan assumed. See the 2026-10-09 amendment | [x] |
+| 29m | `v2/29m-deployment-findings` | Record what the first deployment taught us | Five findings in `docs/deploy/coolify.md`, each of which cost real time and none recoverable from the code: Cloudflare Universal SSL covers one subdomain label, Coolify mounts the *connecting user's* Docker config, Garage's three indistinguishable failures, where `cloudflared` goes, and cached NXDOMAIN | [x] |
+| — | `feat/EnableDeployments` | Arm the pipeline | `deploy-targets.json` both apps `enabled: true`. `main` now deploys on push | [x] |
+
+### Amendment, 2026-10-10: it is deployed, ahead of its place in the queue
+
+**The app is live.** Prod was stood up by hand on **2026-10-09** following
+`docs/deploy/coolify.md`, and the pipeline was armed on **2026-10-10**: `deploy-targets.json` has
+both apps `enabled: true`, and `deploy.yml` has three successful runs on `main`, each pinning an
+exact digest.
+
+This **ran ahead of the standing rule** that "deployment is only ever after a review" — "Order
+after 28" in the roadmap README said 30 → review → 29, and 29 went first. Two consequences that
+are now facts rather than plans:
+
+- **Step 30 stopped being a schema definition.** Its entire argument for going first was that
+  *there is no production database yet*, so Marten 9's `mt_version` `integer` → `bigint` and its
+  event-sequence widening would land against empty tables. There is a production database now, so
+  the cost of 30 is no longer fixed — it rises with whatever is in it. Doing 30 **next**, before
+  the campaigns hold anything anyone would miss, is what keeps it a schema change instead of a data
+  migration over other people's notes.
+- **The review now reviews deployed code.** Worse for changing event or document shape than the
+  plan assumed; better in that there is a running system to look at rather than a description of
+  one.
+
+Neither is a reason to undo anything, and nothing here is a defect. It does mean the order the
+README now carries is 30 → review, with 29 already behind it.
 
 ### Amendment, 2026-10-07: the deploy half is Ripple's pipeline, ported
 
