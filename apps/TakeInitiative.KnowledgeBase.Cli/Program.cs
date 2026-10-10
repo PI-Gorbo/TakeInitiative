@@ -8,9 +8,14 @@ using TakeInitiative.KnowledgeBase.Cli;
 //       --from ~/5etools-src/data [--connection "Host=…"] [--dry-run] [--prune] [--force]
 //
 // Production is the same command with --connection, run from the machine that has the
-// 5eTools data over an SSH tunnel. Nothing is ever downloaded: the operator supplies the
-// folder, because 5eTools' content is not ours to redistribute and a --download flag would
-// put automation for fetching book content into a public repository.
+// 5eTools data over an SSH tunnel.
+//
+// --download (2026-10-10) fetches the latest release of --repository, ingests it and deletes
+// it again. It reverses half of a decision this header used to state absolutely: a flag that
+// fetches book content was rejected because it would put that automation into a public repo.
+// What survives of that reason is the half that was load-bearing — THERE IS NO COMMITTED
+// DEFAULT REPOSITORY. The code knows how to fetch a release archive; nothing committed here
+// names whose. See roadmap step 26's decision 5 and its 2026-10-10 amendment.
 //
 // It writes rows and nothing else. The API owns the schema.
 var root = new RootCommand("The TakeInitiative knowledge-base ingest.")

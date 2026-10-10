@@ -355,18 +355,118 @@ Nothing on the VPS except what the commands above copy. Specifically, as the pla
 
 Step 26's ingest is a **consumer** of this deployment, not part of it. The operator runs
 `apps/TakeInitiative.KnowledgeBase.Cli` from **their own machine** against the production database
-over an SSH tunnel, because the operator is the person who has the 5eTools data folder and because
-nothing in this repo downloads book content. No image carries the corpus and nothing is fetched at
-runtime.
+over an SSH tunnel, because the operator is the person who has the 5eTools data folder. **No image
+carries the corpus and the API fetches nothing at runtime** — that part has not changed and is not
+going to. Since 2026-10-10 the CLI can fetch the corpus itself (`--download`), to a repository the
+operator names; see step 26's amendment for why there is no committed default.
 
 ### Before you run it
 
 - **The API must have started against that database at least once.** The API owns the schema; the
   CLI writes rows and nothing else. If the table is missing the CLI fails cleanly with a
   schema-missing message rather than creating anything.
-- **Have the 5eTools data folder** — a checkout, or its `data/` directory. The CLI needs
+- **Have the 5eTools data folder** — a checkout, or its `data/` directory; *Getting the data
+  folder* below is where it comes from and which repositories you can skip. The CLI needs
   `bestiary/index.json` and `spells/index.json` to exist, and reports a *partial folder* if they do
   not, because the parser's own error for that case reads like a missing optional file.
+
+### Getting the data folder
+
+**The short way, and the one to use: let the CLI do it.**
+
+```sh
+dotnet run --project apps/TakeInitiative.KnowledgeBase.Cli -- ingest \
+    --download --repository 5etools-mirror-3/5etools-src
+```
+
+That resolves their latest release, fetches its zip (49 MB), unpacks the data out of it, ingests it
+and **deletes it again**. Measured end to end on 2026-10-10: **8 seconds**, against 202 MB and a
+couple of minutes for the clone below. Set `KnowledgeBase__Source__Repository` in your own
+environment and `--repository` stops being needed; nothing committed here carries a default, on
+purpose (step 26's 2026-10-10 amendment).
+
+Two flags worth knowing:
+
+- **`--keep-download`** leaves the corpus in
+  `~/Library/Application Support/takeinitiative/knowledge-base/5etools` (macOS;
+  `$XDG_DATA_HOME`-shaped elsewhere) so the next run reuses it. Reuse is keyed on the release tag,
+  so a re-run fetches nothing at all — 1.3 s rather than 8 s — until upstream cuts a new release.
+- **`--cache <path>`** puts it somewhere else.
+
+A dry run keeps the download whatever you pass, so the dry-run-then-run ladder below costs one
+fetch and not two. So does a *failed* run, so fixing the cause and retrying does not re-fetch.
+
+**The long way**, if you would rather hold the corpus yourself — and the one to use if you want a
+checkout you can `git pull` rather than a release:
+
+```sh
+git clone --depth 1 --single-branch \
+    https://github.com/5etools-mirror-3/5etools-src.git ~/5etools-src
+```
+
+202 MB and a couple of minutes. `--depth 1` because nothing here wants their history; a later
+refresh is `git -C ~/5etools-src fetch --depth 1 origin && git -C ~/5etools-src reset --hard
+origin/HEAD`. The [install guide](https://wiki.tercept.net/en/5eTools/InstallGuide) names four
+repositories; **only this one matters here.**
+
+The other three are **not needed**, which is worth knowing before downloading the >5 GB the guide
+warns about:
+
+- **`5etools-img`** — the artwork bytes. `FiveEToolsImages` reads an image's *path* out of the
+  `fluff-*` JSON, which is in the src repo, and stores `https://5e.tools/img/<path>`. The bytes are
+  served by them to the reader's browser; nothing here ever opens a local image file.
+- **`5etools-2014-src` / `-2014-img`** — the 2014 ruleset. The src repo already carries both: 111
+  bestiary sources, including `MM`, `PHB` and `DMG` alongside `XMM`, `XPHB` and `XDMG`.
+
+The parse opens `package.json` at the checkout root and, under `data/`: `books.json`,
+`adventures.json`, `bestiary/`, `spells/`, `items.json`, `items-base.json` and the `fluff-*` files.
+`data/book/` and `data/adventure/` — the actual book text — are never read, which is §11's rule
+holding at the file level. `--from` takes either the checkout or its `data/` folder.
+
+Both rulesets being present means **one creature yields two rows**: `Beholder · MM p. 28` and
+`Beholder · XMM p. 36`, with different stats (`19d10+76` against `20d10+80`). That is correct, and
+it is also something a DM sees twice in ⌘K.
+
+### Rehearse it locally first
+
+Run the whole thing against the dev database before pointing it at production. On a dev machine the
+connection string needs no argument: `appsettings.json` already holds the one the API uses
+(`localhost:7401`). With `pnpm dev`'s Postgres up, from the repo root:
+
+```sh
+# 1. The chain, with nothing downloaded yet: the committed fixture corpus. Writes nothing.
+dotnet run --project apps/TakeInitiative.KnowledgeBase.Cli -- ingest \
+    --from packages/TakeInitiative.KnowledgeBase.Tests/Fixture/data --min-monsters 8 --dry-run
+
+# 2. The real folder, still writing nothing.
+dotnet run --project apps/TakeInitiative.KnowledgeBase.Cli -- ingest --from ~/5etools-src --dry-run
+
+# 3. For real.
+dotnet run --project apps/TakeInitiative.KnowledgeBase.Cli -- ingest --from ~/5etools-src
+```
+
+With `--download` in place of `--from ~/5etools-src`, steps 2 and 3 are the same ladder and the
+fetch happens once: step 2 leaves the corpus behind because it is a dry run, step 3 reuses it and
+then deletes it. `--download` and `--from` together are refused rather than resolved — either
+answer would quietly ignore one of them.
+
+Step 1 earns its ten seconds: it proves the CLI builds, the database is reachable and the schema is
+there, and it is the only one of the three that can tell you so before a 200 MB download.
+`--min-monsters 8` is not optional there — the fixture holds eight monsters against a floor of
+1,000.
+
+What a healthy run of `5etools-src` printed on 2026-10-10, as a baseline to compare a future run
+against:
+
+```
+  skipped   336 already in the SRD · 5 with no hit points
+  no stats  62 monsters
+  parsed     7,930 items  (4,219 monsters · 969 spells · 2,742 items)
+```
+
+Then **run step 3 twice**. The second run must report `unchanged 7,930` and write nothing. That is
+the idempotence 26 promises, and it is the cheapest check that the content hash is stable across
+runs.
 
 ### The tunnel
 

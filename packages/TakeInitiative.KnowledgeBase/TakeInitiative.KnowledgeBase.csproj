@@ -2,7 +2,10 @@
 
     <!-- The knowledge base's 5eTools parser (roadmap step 26b) and its Postgres store
          (26c). The parser is a port of scripts/5etools/build-5etools-index.mjs and needs
-         nothing but System.Text.Json, which ships in the shared framework.
+         nothing but System.Text.Json and System.IO.Compression, both of which ship in the
+         shared framework. The compression is FiveEToolsDownload unpacking a release archive;
+         the HTTP that fetches one is in the CLI, behind IFiveEToolsArchiveSource, so this
+         package still makes no outbound call of its own.
 
          The store adds Npgsql and nothing else: no Marten, no Weasel, no ASP.NET. The
          ingest is a command-line tool run from an operator's machine, so the write path
