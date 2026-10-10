@@ -823,11 +823,17 @@ a thing meant to be worked through a note at a time. The sheet is now the only s
   with no chrome of its own. `CreateFromSuggestion.vue` is now just the loose-ends page's dialog
   around it; the stream's sheet opens the same form inline. Nothing about what a create *does*
   changed: still one `PUT notes/{id}` with `newEntries`, still nothing created until its tap.
-- **Under the chip, in place.** `LooseEnds/ModelSuggestions.vue` takes an `expandedKey` and a
-  `create` slot: a parent that fills the slot gets the form full-width under the chip it names,
-  and that chip becomes a disclosure (`aria-expanded`, a second tap closes it). The key is the
-  span's offset and words (`modelSuggestionKey`), not the object, so a re-read mid-form keeps the
-  form where it is. No slot, no `expandedKey`: the loose-ends rows are untouched.
+- **Under the chips, as their sibling.** `LooseEnds/ModelSuggestions.vue` takes an `expandedKey`:
+  the chip it names becomes a disclosure (`aria-expanded`, a second tap closes it) for a form the
+  sheet renders itself, right under the chip group. The key is the span's offset and words
+  (`modelSuggestionKey`), not the object, so a re-read mid-form keeps the form on the same span.
+  No `expandedKey`: the loose-ends rows are untouched.
+  The form was a slot inside the chip list first, so it sat directly under its own chip. That is
+  wrong, and it shipped broken: a create turns its span into a mention, so `inlineSuggestions`
+  drops that suggestion, which unmounted the form **mid-write** — and Vue throws away an emit
+  from an unmounted component, so `done` never arrived. The sheet kept the other chips disabled
+  until it was reopened. An open form cannot live inside a list the model rewrites underneath it,
+  so it now hangs off `createFor`, which only the chip's own taps change.
 - **One thing at a time.** While a form is open the sheet disables the other chips, so a tap
   elsewhere cannot put a second write on the same note — what the dialog used to enforce by
   covering everything. The expanded chip itself stays live so it can close its own form, and

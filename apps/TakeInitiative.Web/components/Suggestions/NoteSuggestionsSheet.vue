@@ -4,7 +4,7 @@
          (23d), then Edit to finish by hand. Nothing happens until the author taps.
          23f: "Look again" asks the model for a deeper pass over this one note. This component
          stays presentational — the chip decides what each tap does and what `status` says.
-         SAM-13: "+ Create" opens its form here, under the chip, instead of closing this panel
+         SAM-13: "+ Create" opens its form here, under the chips, instead of closing this panel
          for a dialog. Linking, creating and dismissing all leave the author where they are, so
          they can work through a note's suggestions without the panel going anywhere. -->
     <DialogRoot v-model:open="open">
@@ -68,26 +68,26 @@
                         :expandedKey="expandedKey"
                         @link="(s) => emit('link', s)"
                         @create="(s) => emit('create', s)"
-                        @dismiss="(s) => emit('dismiss', s)">
-                        <!-- The chip the author tapped, opened out in place. -->
-                        <template #create="{ suggestion }">
-                            <div
-                                class="flex flex-col gap-3 rounded-md border border-gold/40 p-3">
-                                <p class="text-sm text-muted-foreground">
-                                    “{{ suggestion.text }}” in your note becomes
-                                    a mention of the new entry.
-                                </p>
-                                <SuggestionsCreateSuggestionForm
-                                    :campaignId="campaignId"
-                                    :note="note"
-                                    :suggestion="suggestion"
-                                    :model="model"
-                                    autofocus
-                                    @cancel="cancelCreate(suggestion)"
-                                    @done="(r) => emit('created', r)" />
-                            </div>
-                        </template>
-                    </LooseEndsModelSuggestions>
+                        @dismiss="(s) => emit('dismiss', s)" />
+                    <!-- The chip the author tapped, opened out under the chips. It is a sibling
+                         of them, not one of them: a create takes its own suggestion out of the
+                         list, and a form unmounted mid-write never reports what it did. -->
+                    <div
+                        v-if="createFor"
+                        class="flex flex-col gap-3 rounded-md border border-gold/40 p-3">
+                        <p class="text-sm text-muted-foreground">
+                            “{{ createFor.text }}” in your note becomes a
+                            mention of the new entry.
+                        </p>
+                        <SuggestionsCreateSuggestionForm
+                            :campaignId="campaignId"
+                            :note="note"
+                            :suggestion="createFor"
+                            :model="model"
+                            autofocus
+                            @cancel="cancelCreate(createFor)"
+                            @done="(r) => emit('created', r)" />
+                    </div>
                     <p
                         v-if="!canLookAgain && suggestions.length > 0"
                         class="text-xs text-muted-foreground">
