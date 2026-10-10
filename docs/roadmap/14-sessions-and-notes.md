@@ -422,6 +422,17 @@ This PR adds the nouns the step puts into code and UI:
    (`?filter=recaps`) and is part of the query key. Under a filter, sessions with
    no matching note have no divider, except the current one. Images and Combats
    show an empty state naming steps 16 and 18.
+
+   **Changed 2026-10-10 (SAM-30).** The chip row is now a single `Filter: All ▾`
+   dropdown, on every screen size. The row sat in a bordered bar directly under the
+   layout's own bordered header, six pills with one in `bg-gold/15 text-gold` — the
+   same visual grammar as the Campaign · Wiki · Combat tab bar, so it read as a second
+   level of navigation rather than as a filter. A `DropdownMenu` modelled on
+   `Composer/VisibilityPicker.vue` puts the word "Filter" and the active value on
+   screen, and `Mine` is spelled out as "Authored by me". Everything behind the control
+   is unchanged: the `?filter=` contract, the query key, the divider rule and the empty
+   states. `Wiki/KindFilter.vue` and the other chip rows keep their chips — this step's
+   row was the one being mistaken for tabs.
 5. **Long-press** (`useLongPress`, 500ms, cancelled by movement) opens
    `NoteActionSheet` with the same actions as the desktop menu. Promote to wiki is
    step 15.
@@ -757,7 +768,7 @@ This PR adds the nouns the step puts into code and UI:
   - The sheet closes if its note leaves the stream (deleted, hidden, or filtered out).
 - **Filters.**
   - `?filter=` holds the lower-case name. `All` is written as no parameter, and an unknown value reads as `All`. Changing the filter uses `router.replace`, so it adds no history entry.
-  - The chip row is the slim row above the stream's scroller, outside it. It stays put without `position: sticky`.
+  - The filter sits in the slim row above the stream's scroller, outside it. It stays put without `position: sticky`. (SAM-30 made it a dropdown; it was a chip row.)
   - Each filter has its own empty text. Images and Combats name steps 16 and 18.
 - **Verify, as run in 14e** (no browser; the UI was not looked at on a device):
   - `nuxi typecheck` is clean and `nuxt build` succeeds.

@@ -5,6 +5,7 @@ import type { SessionStreamSession } from "~/utils/api/types";
 import {
     filterEmptyState,
     filterFromQuery,
+    filterLabel,
     filterToQuery,
     STREAM_FILTERS,
     visibleStreamSessions,
@@ -71,6 +72,12 @@ describe("stream filters", () => {
         expect(filterToQuery("All")).toBeUndefined();
         expect(filterToQuery("Combats")).toBe("combats");
         for (const { value } of STREAM_FILTERS) expect(filterFromQuery(filterToQuery(value))).toBe(value);
+    });
+
+    it("labels the filter button, spelling Mine out as \"Authored by me\" (SAM-30)", () => {
+        expect(filterLabel("All")).toBe("All");
+        expect(filterLabel("Recaps")).toBe("Recaps");
+        expect(filterLabel("Mine")).toBe("Authored by me");
     });
 
     it("points at 🖼 in the Images empty state, and names step 18 in the Combats one", () => {
