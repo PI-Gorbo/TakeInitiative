@@ -762,7 +762,8 @@ checks them); none are committed.
 - **The sheet** (`Suggestions/NoteSuggestionsSheet.vue`, reka-ui like `EvidenceSheet`): the
   note, 23d's `LooseEnds/ModelSuggestions.vue` chips, and Edit (`useComposerEdit().start`).
   A match links in one tap (`composables/useAcceptSuggestion.ts`, now shared with
-  `LooseEndRow`); "+ Create" closes the sheet and opens 23d's `CreateFromSuggestion`.
+  `LooseEndRow`); "+ Create" closed the sheet and opened 23d's `CreateFromSuggestion`, until
+  SAM-13 brought that form into the sheet (see **As built, SAM-13**).
 - **History**: `Session/NoteHistoryDialog.vue` shows "✨ suggested by gliner_small-v2.5 (0.87)"
   on a version with a `model`, the provenance version in its tooltip. The plan's "Linked
   @Rellan Ashvale ·" prefix is not shown: the version's text already has the mention.
@@ -809,6 +810,38 @@ checks them); none are committed.
   unsure aria label and the raised cap (`suggestions.test.ts`); the menu item's placement and
   who never sees it (`noteActions.test.ts`). 743 web tests pass. **Not run against the real
   model or in a browser**, like 23b–23e.
+
+### As built, SAM-13
+
+Actioning a suggestion from the stream used to cost the author three moves: the chip opened the
+sheet, "+ Create" closed the sheet for a centred dialog, and the dialog closed on success,
+leaving them with nothing open and the note's other suggestions unreached. Too much movement for
+a thing meant to be worked through a note at a time. The sheet is now the only surface.
+
+- **The create form moved out of the dialog.** `Suggestions/CreateSuggestionForm.vue` is 23d.5's
+  fields — the name, the kind chips, the note's visibility, "Link to @… instead" on a clash —
+  with no chrome of its own. `CreateFromSuggestion.vue` is now just the loose-ends page's dialog
+  around it; the stream's sheet opens the same form inline. Nothing about what a create *does*
+  changed: still one `PUT notes/{id}` with `newEntries`, still nothing created until its tap.
+- **Under the chip, in place.** `LooseEnds/ModelSuggestions.vue` takes an `expandedKey` and a
+  `create` slot: a parent that fills the slot gets the form full-width under the chip it names,
+  and that chip becomes a disclosure (`aria-expanded`, a second tap closes it). The key is the
+  span's offset and words (`modelSuggestionKey`), not the object, so a re-read mid-form keeps the
+  form where it is. No slot, no `expandedKey`: the loose-ends rows are untouched.
+- **One thing at a time.** While a form is open the sheet disables the other chips, so a tap
+  elsewhere cannot put a second write on the same note — what the dialog used to enforce by
+  covering everything. The expanded chip itself stays live so it can close its own form, and
+  "Look again" and "Edit" are held back until the form is done with.
+- **The sheet says what landed.** `actionedLabel` puts "Linked @Rellan Ashvale." or "Created and
+  linked @Greyhollow Keep." on the sheet's existing status line, under the model's own news and
+  cleared by the next ask. With the sheet staying open, the note at its top re-rendering with
+  the new mention, and the actioned chip gone, that line is the whole of the feedback a close
+  used to stand in for.
+- **Still the only way out.** Edit hands the note to the composer, so it alone closes the sheet.
+- **Tests**: `modelSuggestionKey` and `actionedLabel` (`suggestions.test.ts`); 820 web tests
+  pass. The sheet and the form are **not** covered by a mounted-component test — there is no
+  harness for one here — and this was **not run against the real model or in a browser**, like
+  23b–23f.
 
 ### Where the weights come from
 
