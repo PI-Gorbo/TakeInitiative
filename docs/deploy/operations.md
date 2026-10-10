@@ -60,8 +60,9 @@ renders, so a health check cannot see them break. A bug that did exactly that wa
 `d6f7f53`, *"fix(web): declare pinia, so production SSR stops returning 500"* — production SSR
 returned 500 on every server-rendered route while `/app` and `/healthz` were both perfectly fine.
 
-And confirm you are **still signed in**. If a deploy signs you out, the `/keys` volume has gone
-missing; see `coolify.md` step 12.4.
+And confirm you are **still signed in**. If a deploy signs you out, either
+`DataProtection__KeyPath` is unset on the API application or the `/keys` volume has gone missing —
+check the variable first, which is what SAM-27 turned out to be; see `coolify.md` step 12.4.
 
 ### Deploying without a release
 
@@ -554,7 +555,7 @@ described, the hosted-service ordering has changed; it is not worth chasing, bec
 |---|---|
 | `Npgsql… Name or service not known` / `No such host is known` | the API cannot resolve Postgres. "Connect to predefined network" is off, or the internal hostname is wrong. `coolify.md` 12.2 |
 | `Npgsql… password authentication failed` / `database "…" does not exist` | the connection string's credentials do not match what Coolify generated |
-| anything about **not being able to persist keys** / an **ephemeral key ring** | the `/keys` volume. Everyone is about to be signed out on the next deploy. `coolify.md` 12.4 |
+| anything about **not being able to persist keys** / an **ephemeral key ring** | `DataProtection__KeyPath` is unset, or the `/keys` volume is missing. Everyone is about to be signed out on the next deploy. `coolify.md` 12.4 |
 | `NoSuchBucket`, `SignatureDoesNotMatch`, `The AWS Access Key Id you provided does not exist` | the bucket. All three read like a credentials problem whichever cause it is. `coolify.md` 12.5 |
 | `function word_similarity(…) does not exist` at search time | `pg_trgm` was never created, which means the schema was not applied on startup |
 | a healthcheck log showing curl exit 22 against `/healthz` while the app works on its domain | the host-filtered probe. `coolify.md` 12.1 — and read that before touching any healthcheck on this API |

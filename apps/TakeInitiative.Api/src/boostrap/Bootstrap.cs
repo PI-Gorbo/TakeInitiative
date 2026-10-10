@@ -245,12 +245,34 @@ public static class Bootstrap
     /// Unset is the dev and test default on purpose. `pnpm dev` and the Alba fixtures then get
     /// ASP.NET Core's own behaviour, unchanged, rather than a key directory nobody asked for.
     /// </para>
+    /// <para>
+    /// Unset in <b>Production</b> throws instead (SAM-27). It used to no-op there too, and a
+    /// silent ephemeral ring is how the bug above came back. See <c>docs/deploy/coolify.md</c> 12.4.
+    /// </para>
     /// </summary>
-    public static IServiceCollection AddDataProtectionKeyRing(this IServiceCollection services, IConfiguration config)
+    /// <param name="willServeRequests">
+    /// False for <c>--export-openapi</c>, which runs as Production — no launch profile — but exits
+    /// without serving, so a ring it will never use must not fail `pnpm gen:api`.
+    /// </param>
+    public static IServiceCollection AddDataProtectionKeyRing(
+        this IServiceCollection services,
+        IConfiguration config,
+        IHostEnvironment environment,
+        bool willServeRequests)
     {
         var keyPath = config.GetValue<string>(DataProtectionKeyPathKey);
         if (string.IsNullOrWhiteSpace(keyPath))
         {
+            // Blank, not just absent: an empty environment variable is how a deployment "unsets" one.
+            if (environment.IsProduction() && willServeRequests)
+            {
+                throw new InvalidOperationException(
+                    $"Required configuration '{DataProtectionKeyPathKey}' is missing. Cookie tickets are " +
+                    "Data Protection payloads, so without a persisted key ring every redeploy signs every " +
+                    "user out. Set DataProtection__KeyPath=/keys on the API application and give it a /keys " +
+                    "persistent storage mount. See docs/deploy/coolify.md section 12.4.");
+            }
+
             return services;
         }
 

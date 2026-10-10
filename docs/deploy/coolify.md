@@ -321,9 +321,18 @@ rollback, and `operations.md` is where that is written down.
 
 Everything else is fixed inside `compose.prod.yml` because it is a property of the deployment
 rather than of the environment: `Blobs__ServiceUrl`, `Blobs__Bucket`, `Blobs__Region`,
-`Blobs__ForcePathStyle`, `Blobs__CreateBucket`, `Marten__ApplySchemaOnStartup` and
-`DataProtection__KeyPath`. Do not re-declare them here, and in particular do not "fix"
-`Blobs__ForcePathStyle=true` — that is what a non-AWS S3 needs.
+`Blobs__ForcePathStyle`, `Blobs__CreateBucket` and `Marten__ApplySchemaOnStartup`. Do not
+re-declare them here, and in particular do not "fix" `Blobs__ForcePathStyle=true` — that is what a
+non-AWS S3 needs. They each also have an `appsettings.json` default, which is what makes omitting
+them survivable on a deployment that does not run `compose.prod.yml`.
+
+> **`DataProtection__KeyPath=/keys` is the exception, and must be set.** It was in the list above
+> until SAM-27, where it cost a release: it is the only one of these with no `appsettings.json`
+> default, so on a Coolify **application** — which does not read `compose.prod.yml` at all — it was
+> simply absent, the key ring went back inside the container, and every deploy signed everybody out.
+> Set it on the API application, with the `/keys` persistent storage of section 8. The API now
+> refuses to boot in Production without it, so the failure is a failed deploy rather than a silent
+> mass sign-out.
 
 ## 7. Domains and TLS
 
@@ -363,14 +372,15 @@ a working deploy, and only move them into the file later if you prefer that — 
 
 ## 8. Persistent storage
 
-Two volumes, both declared at the bottom of `compose.prod.yml`, so Coolify should create them from
-the file. **Check that they exist rather than assuming** — the resource's Persistent Storage tab
-per service is where to look.
+`compose.prod.yml` declares these volumes at the bottom, but **nothing creates them for you**: the
+deployment is two Docker Image applications plus Coolify's own resources, and that compose file is
+never read (`docs/deploy/pipeline.md` section 1). Add each one by hand as a **Persistent Storage**
+entry on the resource that needs it, and **check that it is there rather than assuming**.
 
-| Service | Volume | Mount | What breaks without it |
-|---|---|---|---|
-| `api` | `takeapi-keys` | `/keys` | **Every single deploy signs everybody out, mid-session.** The auth cookie is an ASP.NET Core Data Protection payload; with no volume the key ring is written inside the container and thrown away with it. This was a real bug. The volume is the fix, not tidiness |
-| `minio` | `takeminio-data` | `/data` | **Every image anyone has ever uploaded is gone.** Nothing else on the box holds them and nothing backs this up automatically |
+| Resource | Mount | What breaks without it |
+|---|---|---|
+| API application | `/keys` | **Every single deploy signs everybody out, mid-session.** The auth cookie is an ASP.NET Core Data Protection payload; with no volume the key ring is written inside the container and thrown away with it. Twice a real bug — see the `DataProtection__KeyPath` note in section 6, which is the other half of it and the half that is easier to miss |
+| Garage service | `/var/lib/garage/meta` and `/var/lib/garage/data` | **Every image anyone has ever uploaded is gone.** Nothing else on the box holds them and nothing backs this up automatically |
 
 Two things worth knowing:
 
@@ -383,7 +393,7 @@ Two things worth knowing:
   names once, on the box, and write them down — `operations.md` needs them for the bucket backup:
 
   ```sh
-  docker volume ls | grep -E 'takeapi-keys|takeminio-data'
+  docker volume ls | grep -E 'keys|garage'
   ```
 
 ## 9. The first deploy, and proving it pulled
@@ -673,15 +683,25 @@ widen CORS.
 
 **Symptom:** sign-in works; after a redeploy, every session is gone. Nothing errors.
 
-The `/keys` volume (step 8) is missing, or is mounted but root-owned so the unprivileged user
-cannot write it. The log will usually carry a Data Protection warning about not being able to
-persist keys to the file system, or about using an ephemeral key ring.
+**Check the environment variable first.** This has happened twice, and both times it was
+`DataProtection__KeyPath` never having been set on the API application rather than anything wrong
+with the volume — see the note in section 6 for why the docs themselves caused that. Unset, the API
+configures no key ring at all and ASP.NET Core writes it to `$HOME/.aspnet/DataProtection-Keys`
+inside the container, which is thrown away with the container.
+
+Failing that, the `/keys` volume (section 8) is missing, or is mounted but root-owned so the
+unprivileged user cannot write it. The log will usually carry a Data Protection warning about not
+being able to persist keys to the file system, or about using an ephemeral key ring.
 
 ```sh
+docker exec <api-container> printenv DataProtection__KeyPath   # must print /keys — check this FIRST
 docker exec <api-container> ls -ld /keys        # must be owned by uid 1654
 docker exec <api-container> ls -l  /keys        # must contain a key-*.xml after a first sign-in
-docker exec <api-container> printenv DataProtection__KeyPath   # must print /keys
 ```
+
+On a current image the variable cannot be silently absent: the API refuses to boot in Production
+without it, so a deploy that gets this wrong fails visibly instead. A container that *starts* has a
+key path; what it may still lack is a volume under it.
 
 If `/keys` is root-owned, the volume was created before the image's `chown` could apply to it.
 Delete the (empty) volume and redeploy so Docker initialises a fresh one from the image's

@@ -65,8 +65,9 @@ internal class Program
         builder.Services.AddOptionObjects(builder.Configuration);
         builder.Services.AddMartenDB(builder.Configuration);
         // Cookie tickets are Data Protection payloads, so the key ring has to outlive the
-        // container or a redeploy signs everybody out. No-op unless DataProtection:KeyPath is set.
-        builder.Services.AddDataProtectionKeyRing(builder.Configuration);
+        // container or a redeploy signs everybody out. Required in Production; no-op elsewhere.
+        builder.Services.AddDataProtectionKeyRing(
+            builder.Configuration, builder.Environment, willServeRequests: exportOpenApiPath is null);
         // The reverse proxy in front of the API terminates TLS; see AddForwardedHeaders.
         builder.Services.AddForwardedHeaders();
         builder.Services.AddSerilog();

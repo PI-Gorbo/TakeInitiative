@@ -94,7 +94,11 @@ What moves out of `compose.prod.yml` and where it goes:
 
 - **Environment variables** → onto each Application, per `docs/deploy/production.env.example`. The
   API's list is the long one. `Is build variable?` stays **off** for every single one; nothing here
-  builds.
+  builds. **`DataProtection__KeyPath=/keys` is on that list and is easy to miss**, because
+  `compose.prod.yml` hardcodes it and the env file used to say it was fixed there — that was SAM-27,
+  and unset it means every deploy signs everybody out. It is the only value of its kind with no
+  `appsettings.json` default to fall back on, so the API now refuses to boot in Production without
+  it.
 - **`Blobs__ServiceUrl`** → no longer `http://garage:3900`. With Garage as its own resource it is
   reached by that resource's internal hostname, exactly as `TAKEDB_CONNECTION` already is. Both
   resources need **"Connect to predefined network"** enabled or neither name resolves.

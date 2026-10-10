@@ -565,7 +565,7 @@ Every value is set as a container environment variable. Two notes on form:
 | `Blobs__ForcePathStyle` | `true` | no | `compose.prod.yml` |
 | `Blobs__CreateBucket` | `true` for a self-hosted bucket, `false` for a managed one | no | `compose.prod.yml` |
 | `Marten__ApplySchemaOnStartup` | `true` | no | `compose.prod.yml` (new in 29b) |
-| `DataProtection__KeyPath` | `/keys` | no | `compose.prod.yml` (new in 29b) |
+| `DataProtection__KeyPath` | `/keys` | no | **Coolify env, on the API application.** Was `compose.prod.yml` (new in 29b), which Coolify stopped running when 29e moved to two Docker Image applications. It is the only value here with no `appsettings.json` default, so the move made it silently absent and every deploy signed everybody out again — SAM-27. The API now refuses to boot in Production without it |
 | `Images__*` | defaults | no | — `appsettings.json`'s 20 MB upload cap and sweeper timings are fine |
 
 ### Web

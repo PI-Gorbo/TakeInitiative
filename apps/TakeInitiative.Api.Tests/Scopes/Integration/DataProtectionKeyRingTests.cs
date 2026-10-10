@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.AspNetCore.DataProtection.Repositories;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using TakeInitiative.Api.Bootstrap;
 
@@ -23,6 +25,12 @@ namespace TakeInitiative.Api.Tests.Integration;
 /// <c>AddDataProtection()</c> itself. That second call must not undo the first — it would leave the
 /// ring back inside the container, which is exactly the bug — so
 /// <see cref="TheSetting_Set_SurvivesAddAuthentication"/> pins it.
+/// </para>
+/// <para>
+/// Unset used to no-op everywhere, which is how the bug came back a release later (SAM-27), so it
+/// now throws in Production and the facts below name their environment.
+/// <see cref="TheSetting_Absent_InProduction_ExportingOpenApi_ConfiguresNothing"/> is the one that
+/// keeps `pnpm gen:api` working.
 /// </para>
 /// </summary>
 public class DataProtectionKeyRingTests
@@ -110,13 +118,60 @@ public class DataProtectionKeyRingTests
     }
 
     [Fact]
+    public void TheSetting_Absent_InProduction_FailsStartup()
+    {
+        // The whole of SAM-27. Unset here means an ephemeral ring, which means the next release is a
+        // mass sign-out that nothing logs. A failed boot is the cheaper failure, and the message has
+        // to be enough to fix it from.
+        var start = () => Build(keyPath: null, Environments.Production);
+
+        start.Should().Throw<InvalidOperationException>()
+            .WithMessage($"*{ApiBootstrap.DataProtectionKeyPathKey}*")
+            .And.Message.Should().Contain("DataProtection__KeyPath=/keys")
+            .And.Contain("docs/deploy/coolify.md");
+    }
+
+    [Fact]
+    public void TheSetting_Blank_InProduction_FailsStartup()
+    {
+        var start = () => Build("   ", Environments.Production);
+
+        start.Should().Throw<InvalidOperationException>(
+            "an environment variable set to an empty string is how a deployment unsets one");
+    }
+
+    [Fact]
+    public void TheSetting_Absent_InProduction_ExportingOpenApi_ConfiguresNothing()
+    {
+        // `pnpm gen:api` runs `dotnet run --no-launch-profile -- --export-openapi`, which reads no
+        // launch profile and so is Production too. It builds the app and exits without serving, so
+        // the key ring it will never use must not fail a CI gate.
+        var services = Build(keyPath: null, Environments.Production, willServeRequests: false);
+
+        services.GetService<IDataProtectionProvider>().Should().BeNull();
+    }
+
+    [Fact]
+    public void TheSetting_Set_InProduction_PersistsToThatDirectory()
+    {
+        using var directory = new TempDirectory();
+
+        var services = Build(directory.Path, Environments.Production);
+
+        services.GetRequiredService<IOptions<KeyManagementOptions>>().Value.XmlRepository
+            .Should().BeOfType<FileSystemXmlRepository>()
+            .Which.Directory.FullName.Should().Be(directory.Path);
+    }
+
+    [Fact]
     public void TheSetting_Set_SurvivesAddAuthentication()
     {
         using var directory = new TempDirectory();
 
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddDataProtectionKeyRing(Config(directory.Path));
+        services.AddDataProtectionKeyRing(
+            Config(directory.Path), new HostEnvironment(Environments.Development), willServeRequests: true);
         // Program.cs reaches this a few lines later, and it calls AddDataProtection() again.
         services.AddAuthentication();
 
@@ -129,11 +184,16 @@ public class DataProtectionKeyRingTests
             .Should().Be(ApiBootstrap.DataProtectionApplicationName);
     }
 
-    private static ServiceProvider Build(string? keyPath)
+    private static ServiceProvider Build(
+        string? keyPath,
+        // The literal, not Environments.Development, which is static readonly rather than const.
+        string environmentName = "Development",
+        bool willServeRequests = true)
     {
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddDataProtectionKeyRing(Config(keyPath));
+        services.AddDataProtectionKeyRing(
+            Config(keyPath), new HostEnvironment(environmentName), willServeRequests);
         return services.BuildServiceProvider();
     }
 
@@ -145,6 +205,15 @@ public class DataProtectionKeyRingTests
             settings[ApiBootstrap.DataProtectionKeyPathKey] = keyPath;
         }
         return new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
+    }
+
+    /// <summary>Just enough <see cref="IHostEnvironment"/> to name an environment.</summary>
+    private sealed class HostEnvironment(string environmentName) : IHostEnvironment
+    {
+        public string EnvironmentName { get; set; } = environmentName;
+        public string ApplicationName { get; set; } = "TakeInitiative.Api.Tests";
+        public string ContentRootPath { get; set; } = Directory.GetCurrentDirectory();
+        public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
     }
 
     private sealed class TempDirectory : IDisposable
