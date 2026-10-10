@@ -60,6 +60,10 @@ public enum EntryChangeType
     LinkRemoved,
     /// <summary><see cref="EntryChange.Suggestion"/>: the knowledge-base row the entry was told it is not (28b).</summary>
     SuggestionDismissed,
+    /// <summary><see cref="EntryChange.ImageId"/>: the entry's new primary image (SAM-12).</summary>
+    PrimaryImageSet,
+    /// <summary>The entry has no primary image again (SAM-12), by hand or because its image stopped being one everyone can see.</summary>
+    PrimaryImageCleared,
 }
 
 /// <summary>
@@ -79,6 +83,11 @@ public record EntryChange
     public Guid? MergedEntryId { get; init; }
     public Guid? MemberId { get; init; }
     public StatsResponse? Stats { get; init; }
+    /// <summary>
+    /// The image a <c>PrimaryImageSet</c> chose (SAM-12). Shown to everyone who can see the entry:
+    /// only an image everyone can see may be primary, so naming it reveals nothing.
+    /// </summary>
+    public Guid? ImageId { get; init; }
     /// <summary>The reference item an entry was made from (20b), on <c>Created</c> only, under <see cref="EntrySources"/>' rule.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public EntrySourceResponse? Source { get; init; }
@@ -345,6 +354,10 @@ public class GetEntryHistory(IDocumentSession session, ReferenceCatalog referenc
                 // caller may not read this entry's links (28b, DismissalsOf).
                 EntryKnowledgeBaseSuggestionDismissed e when dismissals.TryGetValue((e.Provider, e.ItemId), out var dismissed)
                     => new() { Type = EntryChangeType.SuggestionDismissed, Suggestion = dismissed },
+                // The primary image rows (SAM-12) need no rule: the image was one everyone could
+                // see when it was chosen, so its id is no more private than the entry's name.
+                EntryPrimaryImageSet e => new() { Type = EntryChangeType.PrimaryImageSet, ImageId = e.ImageId },
+                EntryPrimaryImageCleared => new() { Type = EntryChangeType.PrimaryImageCleared },
                 _ => null,
             };
             if (change is not null)

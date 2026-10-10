@@ -252,6 +252,12 @@ export function describeChange(change: EntryChange, nameOf: (memberId: string) =
             return `removed a link${linkSuffix(change.link)}`;
         case "SuggestionDismissed":
             return `dismissed a suggestion${suggestionSuffix(change.suggestion)}`;
+        case "PrimaryImageSet":
+            return "set the primary image";
+        // Also appended when the image stops being one everyone can see, with that member as
+        // the actor, so the line reads the same whether it was deliberate or a consequence.
+        case "PrimaryImageCleared":
+            return "removed the primary image";
     }
 }
 

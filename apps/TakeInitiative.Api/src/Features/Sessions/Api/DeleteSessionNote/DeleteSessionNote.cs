@@ -36,15 +36,20 @@ public class DeleteSessionNote(
         var note = await this.RequireVisibleNote(session, req.CampaignId, req.NoteId, member, ct);
         this.RequireAuthor(note, member);
 
+        var actor = Actor.Member(member.MemberId);
         IReadOnlyList<Image> images;
+        IReadOnlyList<Guid> cleared;
         await using (var write = await NoteWrite.Begin(session, ct))
         {
             images = await ImageAttachments.StageNoteDeleted(write.Session, note.Id, clock.GetUtcNow(), ct);
             await this.SaveImagesAsync(write.Session, ct);
-            write.Session.Events.Append(note.Id, new SessionNoteDeleted(Actor.Member(member.MemberId)));
+            // Its images go, so no entry may keep one as its primary image (SAM-12).
+            cleared = await EntryPrimaryImages.ClearStaleFor(write.Session, note, actor, ct);
+            write.Session.Events.Append(note.Id, new SessionNoteDeleted(actor));
             await write.Session.SaveChangesAsync(ct);
             await write.CommitAsync(ct);
         }
+        await EntryPrimaryImages.NotifyCleared(hub, session, cleared, ct);
         await hub.NotifySessionNoteRemoved(note);
         await sweeper.PurgeRemoved(images, logger, ct);
 

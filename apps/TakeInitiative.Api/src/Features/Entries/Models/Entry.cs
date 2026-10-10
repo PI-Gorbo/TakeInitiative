@@ -82,6 +82,14 @@ public record Entry
     /// <summary>The stat line (glossary: Stats). Read through <see cref="EntryStats"/>, never as is.</summary>
     public Stats? Stats { get; init; }
 
+    /// <summary>
+    /// The one image that stands for the entry (SAM-12), or null. Only an image everyone can see
+    /// may be here (<see cref="EntryPrimaryImages"/>), so unlike <see cref="Stats"/> it needs no
+    /// redaction and goes out on the summary. Indexed: the one query that reads it is the clear
+    /// that runs when a note stops being public.
+    /// </summary>
+    public Guid? PrimaryImageId { get; init; }
+
     /// <summary>The ids whose mentions mean this entry: its own and every merged one.</summary>
     public Guid[] MentionIds() => [Id, .. MergedFromIds];
 
@@ -148,6 +156,14 @@ public record Entry
     // Stats leave UpdatedAt alone: on an unclaimed entry only the DMs may read them, and
     // UpdatedAt is on the summary everyone who sees the entry receives.
     public Entry Apply(EntryStatsChanged e) => this with { Stats = e.Stats };
+
+    // The primary image does move UpdatedAt, unlike stats and links: everyone who can see the
+    // entry can see it change, so it is a visible edit, like a rename.
+    public Entry Apply(IEvent<EntryPrimaryImageSet> @event)
+        => this with { PrimaryImageId = @event.Data.ImageId, UpdatedAt = @event.Timestamp };
+
+    public Entry Apply(IEvent<EntryPrimaryImageCleared> @event)
+        => this with { PrimaryImageId = null, UpdatedAt = @event.Timestamp };
 
     // Article events leave UpdatedAt alone. It is on the summary every member who can see
     // the entry receives, so moving it on an edit inside a secret block would tell them that
