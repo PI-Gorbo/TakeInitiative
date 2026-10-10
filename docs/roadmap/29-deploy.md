@@ -37,7 +37,7 @@ nothing is deployed until 29g.
 | 29f | `v2/29f-compose-prod` | `compose.prod.yml` and the env example | A committed production spec that references GHCR images and has **no `build:` key anywhere**. `docker compose -f compose.prod.yml config` validates || [ ] |
 | 29g | `v2/29g-coolify` | `docs/deploy/coolify.md`, and the deployment itself | The app is live on its domain with TLS. This step's Verify passes || [ ] |
 | 29h | `v2/29h-operations` | `docs/deploy/operations.md`: rollback, backups, the KB ingest tunnel | A rehearsed rollback, a restored backup, and the documented route for step 26's CLI || [ ] |
-| 29i | `v2/29i-deploy-pipeline` | The deploy pipeline: `deploy.yml`, `scripts/ci/**`, `docs/deploy/pipeline.md` | `main` deploys prod by pinning a digest, over the tailnet. Ships inert — both apps `enabled: false` || [ ] |
+| 29i | `v2/29i-deploy-pipeline` | The deploy pipeline: `deploy.yml`, `scripts/ci/**`, `docs/deploy/pipeline.md` | `main` deploys prod by pinning a digest, over the tailnet. Armed 2026-10-10 — both apps `enabled: true` || [x] |
 
 ### Amendment, 2026-10-07: the deploy half is Ripple's pipeline, ported
 
@@ -77,9 +77,9 @@ Consequences for the sub-steps above:
 - The "GitHub Actions secrets" section below is superseded; `docs/deploy/pipeline.md` section 5 is
   the list.
 
-**29i ships inert.** `deploy-targets.json` has both apps `enabled: false`, so until the Coolify
-applications exist a push to `main` plans, reports "skipped", and exits 0. Flipping each app on is a
-one-line commit and reverting it is a revert.
+**29i is armed (2026-10-10).** It shipped inert — both apps `enabled: false`, so a push to `main`
+planned, reported "skipped", and exited 0. The Coolify applications are now configured and both apps
+are `enabled: true`, so a push to `main` deploys. Turning an app back off is still a one-line commit.
 
 ## Depends on
 

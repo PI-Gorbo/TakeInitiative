@@ -58,9 +58,12 @@ production database** — the only thing it reaches over the tailnet is Coolify.
 
 ## One-time setup
 
-Nothing in this list is reversible-by-accident, and the whole pipeline ships inert:
-`deploy-targets.json` has both apps `enabled: false`, so until you flip them a push to `main` plans,
-reports "skipped: disabled in deploy-targets.json" and exits 0.
+Nothing in this list is reversible-by-accident. **All of it is done** — this section is kept as the
+record of what was set up, and as the checklist to re-run against a rebuilt VPS or a second
+environment. Both apps are now `enabled: true` in `deploy-targets.json`, so a push to `main`
+deploys. While an app is `enabled: false` the same push plans, reports
+"skipped: disabled in deploy-targets.json" and exits 0, which is how to park one app without
+reverting the pipeline.
 
 ### 1. Two Coolify applications
 
@@ -115,17 +118,18 @@ What moves out of `compose.prod.yml` and where it goes:
 images locally with production-shaped config before cutting a release. Its header now says so. It is
 simply no longer what Coolify runs.
 
-The UUIDs are already in `deploy-targets.json`. **`enabled` is still `false` for both, and that is
-the only thing standing between a push to `main` and a real deploy** — so flip it last, after the
-applications are configured and steps 2–6 below are done. A disabled app with a UUID is a valid,
-inert state; an app that is `enabled` with no UUID **fails the plan job** rather than deploying
-nothing quietly. That asymmetry is deliberate and is tested.
+The UUIDs are in `deploy-targets.json` and **both apps are now `enabled: true`** (2026-10-10),
+which is the only thing standing between a push to `main` and a real deploy. A disabled app with a
+UUID is a valid, inert state; an app that is `enabled` with no UUID **fails the plan job** rather
+than deploying nothing quietly. That asymmetry is deliberate and is tested.
 
-The recommended order for arming it, including a first run that changes nothing, is in
-**[Operating it](#operating-it)** — set the api application's image to the digest it is already
-running by hand, enable `api` alone, and dispatch with that tag. A correct pipeline then reports
-`already running this digest and healthy` and deploys nothing, which proves the credentials, the
-tailnet, Coolify reachability and the digest arithmetic in one run without touching production.
+Both were armed in one commit rather than `api` first, so the first run to exercise the tailnet,
+the Coolify credentials and the digest arithmetic was also the first run to deploy both apps for
+real. If that run misbehaved, the cheap diagnostic is still the one this doc originally recommended
+for arming it: set an application's image to the digest it is already running, dispatch with
+`targets: api` and that `pin_tag`, and a correct pipeline reports
+`already running this digest and healthy` and deploys nothing — proving credentials, tailnet,
+Coolify reachability and digest arithmetic without touching production.
 
 ### 1a. Garage — Coolify bootstraps it, you just match its settings
 
