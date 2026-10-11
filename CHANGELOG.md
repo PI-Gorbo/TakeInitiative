@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/PI-Gorbo/TakeInitiative/compare/takeinitiative-v1.3.0...takeinitiative-v1.4.0) (2026-10-11)
+
+
+### Features
+
+* **web:** resume a session on the homepage ([#312](https://github.com/PI-Gorbo/TakeInitiative/issues/312)) ([7bc74e8](https://github.com/PI-Gorbo/TakeInitiative/commit/7bc74e8efb6515a5e6073d2e6d7536c005cb0afa))
+
 ## [1.3.0](https://github.com/PI-Gorbo/TakeInitiative/compare/takeinitiative-v1.2.2...takeinitiative-v1.3.0) (2026-10-11)
 
 
