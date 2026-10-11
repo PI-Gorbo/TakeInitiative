@@ -27,6 +27,15 @@
                     <DropdownMenuSeparator />
                 </template>
                 <DropdownMenuItem
+                    v-if="canManage"
+                    asChild
+                    class="min-h-11 md:min-h-8">
+                    <NuxtLink :to="`/app/campaigns/${encodeURIComponent(campaignId)}/settings`">
+                        <Settings aria-hidden="true" />
+                        Campaign settings
+                    </NuxtLink>
+                </DropdownMenuItem>
+                <DropdownMenuItem
                     asChild
                     class="min-h-11 md:min-h-8">
                     <NuxtLink to="/app/campaigns">
@@ -40,10 +49,10 @@
 </template>
 
 <script setup lang="ts">
-    import { ChevronDown, LayoutGrid } from "lucide-vue-next";
+    import { ChevronDown, LayoutGrid, Settings } from "lucide-vue-next";
     import { pickRecentCampaigns, recentCampaigns } from "~/utils/shareTarget";
 
-    const props = defineProps<{ campaignId: string; name: string }>();
+    const props = defineProps<{ campaignId: string; name: string; canManage: boolean }>();
 
     const userStore = useUserStore();
     const recentIds = ref<string[]>([]);

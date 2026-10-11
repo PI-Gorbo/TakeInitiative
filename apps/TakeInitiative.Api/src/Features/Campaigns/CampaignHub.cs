@@ -28,6 +28,7 @@ public static class CampaignHubMessages
 {
     public const string MemberJoined = "memberJoined";
     public const string MemberRoleChanged = "memberRoleChanged";
+    public const string CampaignRenamed = "campaignRenamed";
 
     // Sessions and notes (step 14b). Note messages go only to the note's audience.
     public const string SessionStarted = "sessionStarted";
@@ -106,6 +107,10 @@ public static class CampaignHubContextExtensions
     public static Task NotifyMemberJoined(this IHubContext<CampaignHub> hub, Guid campaignId, Guid memberId)
         => hub.Clients.Group(CampaignGroups.Campaign(campaignId))
             .SendAsync(CampaignHubMessages.MemberJoined, new { campaignId, memberId });
+
+    public static Task NotifyCampaignRenamed(this IHubContext<CampaignHub> hub, Guid campaignId, string name)
+        => hub.Clients.Group(CampaignGroups.Campaign(campaignId))
+            .SendAsync(CampaignHubMessages.CampaignRenamed, new { campaignId, name });
 
     /// <summary>
     /// Moves the member's connections in or out of the DM group, then tells the campaign.
