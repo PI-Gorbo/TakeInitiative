@@ -11,7 +11,7 @@ export const STREAM_FILTERS = [
     { value: "Images", label: "Images" },
     { value: "Recaps", label: "Recaps" },
     { value: "Combats", label: "Combats" },
-    { value: "Mine", label: "Mine" },
+    { value: "Mine", label: "Authored by me" },
 ] as const satisfies readonly { value: SessionStreamFilter; label: string }[];
 
 /** `?filter=recaps` → `Recaps`. Missing or unknown values are `All`. */
@@ -20,6 +20,11 @@ export function filterFromQuery(value: unknown): SessionStreamFilter {
     if (typeof raw !== "string") return "All";
     const match = STREAM_FILTERS.find((f) => f.value.toLowerCase() === raw.toLowerCase());
     return match?.value ?? "All";
+}
+
+/** What the filter button shows, and what its accessible name reads (SAM-30). */
+export function filterLabel(filter: SessionStreamFilter): string {
+    return (STREAM_FILTERS.find((f) => f.value === filter) ?? STREAM_FILTERS[0]).label;
 }
 
 /** `Recaps` → "recaps". `All` is no parameter, so the plain URL stays plain. */

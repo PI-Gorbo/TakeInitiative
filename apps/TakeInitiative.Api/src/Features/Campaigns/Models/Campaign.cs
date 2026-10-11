@@ -71,9 +71,16 @@ public record Campaign
         };
     }
 
+    public Campaign Apply(CampaignRenamed e) => this with { Name = e.Name };
+
     public Member? MemberForUser(Guid userId) => Members.SingleOrDefault(m => m.UserId == userId);
     public Member? MemberById(Guid memberId) => Members.SingleOrDefault(m => m.MemberId == memberId);
     public bool IsOwner(Guid memberId) => OwnerMemberId == memberId;
+
+    public const int NameMaxLength = 100;
+
+    /// <summary>A name is trimmed. Blank is rejected by the validator, never stored.</summary>
+    public static string NormaliseName(string name) => name.Trim();
 
     private const string JoinCodeAlphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"; // no 0/O, 1/I/L
     public const int JoinCodeLength = 8;

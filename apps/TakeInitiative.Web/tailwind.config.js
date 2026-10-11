@@ -89,10 +89,21 @@ export default {
                         height: "0",
                     },
                 },
+                // The bar that runs under ⌘K's input and the Knowledge base's header while an
+                // answer is in flight: a third of the width, crossing the whole of it.
+                "search-bar": {
+                    from: {
+                        transform: "translateX(-100%)",
+                    },
+                    to: {
+                        transform: "translateX(300%)",
+                    },
+                },
             },
             animation: {
                 "accordion-down": "accordion-down 0.2s ease-out",
                 "accordion-up": "accordion-up 0.2s ease-out",
+                "search-bar": "search-bar 1s ease-in-out infinite",
             },
             boxShadow: {
                 "solid-sm": "0 0.2rem",

@@ -3,13 +3,13 @@
         <!-- The Campaign tab is the session stream (design §3). The root stays one
              element while the campaign loads: the page transition animates it. -->
         <template v-if="campaign">
-            <!-- The filter chips and the members button. -->
+            <!-- The filter button and the members button. -->
             <div class="shrink-0 border-b">
                 <PageContainer class="flex items-center gap-2 px-2">
                     <SessionStreamFilters v-model="filter" />
                     <button
                         type="button"
-                        class="flex h-11 min-w-11 items-center justify-center gap-2 rounded-md px-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                        class="ml-auto flex h-11 min-w-11 items-center justify-center gap-2 rounded-md px-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                         :aria-label="`Members (${campaign.members.length})`"
                         @click="openMembers?.()">
                         <Users class="size-5" />

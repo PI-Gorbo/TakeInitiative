@@ -85,6 +85,11 @@ export function useCampaignHub(campaignId: MaybeRefOrGetter<string | undefined>)
     connection.on("memberJoined", () => {
         void refreshCampaign();
     });
+    connection.on("campaignRenamed", () => {
+        void refreshCampaign();
+        // The campaign list and the switcher's Recent menu show the name too.
+        void queryClient.invalidateQueries({ queryKey: getCampaignsQueryKey() });
+    });
     connection.on("memberRoleChanged", (message: MemberRoleChangedMessage) => {
         const id = joinedCampaignId.value;
         const me = id ? queryClient.getQueryData<Campaign>(getCampaignQueryKey(id))?.currentMemberId : undefined;

@@ -11,7 +11,8 @@
                     <div class="flex h-14 items-center gap-1 px-1">
                         <CampaignSwitcher
                             :campaignId="campaignId"
-                            :name="campaignQuery.data.value?.name ?? ''" />
+                            :name="campaignQuery.data.value?.name ?? ''"
+                            :canManage="canManage" />
                         <button
                             type="button"
                             class="flex h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-md px-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
@@ -125,6 +126,7 @@
     import { getCombatsQuery } from "~/utils/queries/combats";
     import type { SearchReferenceHit } from "~/utils/api/types";
     import { addToWikiItemFromHit, type AddToWikiItem } from "~/utils/reference";
+    import { canManageCampaign } from "~/utils/campaign";
     import { OPEN_MEMBERS, OPEN_SEARCH } from "~/utils/search";
     import { rememberCampaign, rememberRecentCampaign } from "~/utils/shareTarget";
 
@@ -143,6 +145,8 @@
                 ? `${campaignQuery.data.value.name} · Take Initiative`
                 : "Take Initiative",
     });
+
+    const canManage = computed(() => canManageCampaign(campaignQuery.data.value));
 
     // Glossary (§1): the three tabs are Campaign, Wiki and Combat.
     const tabs = [
@@ -167,9 +171,13 @@
     // there, and a tab bar with nothing current reads as "you have left the app".
     const WIKI_TAB = "app-campaigns-campaignId-wiki";
     const WIKI_OWNED = ["app-campaigns-campaignId-knowledge-base"];
+    // Campaign settings (SAM-22) is not a fourth tab, so the Campaign tab owns it. The Campaign
+    // tab matches exactly — every campaign route name starts with its own — hence the list.
+    const CAMPAIGN_OWNED = ["app-campaigns-campaignId-settings"];
     const isCurrentTab = (tab: (typeof tabs)[number]) => {
         const name = String(route.name ?? "");
         if (tab.name === WIKI_TAB && WIKI_OWNED.includes(name)) return true;
+        if (tab.name === tabs[0].name && CAMPAIGN_OWNED.includes(name)) return true;
         return name === tab.name || (tab.name !== tabs[0].name && name.startsWith(`${tab.name}-`));
     };
 

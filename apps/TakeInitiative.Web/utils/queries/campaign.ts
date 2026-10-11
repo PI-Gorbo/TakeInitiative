@@ -38,3 +38,17 @@ export const putMemberRoleMutation = () => {
         },
     });
 };
+
+// DMs: rename the campaign (SAM-22).
+export const putCampaignNameMutation = () => {
+    const api = useApi();
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: api.campaign.putName,
+        onSuccess: (campaign) => {
+            queryClient.setQueryData(getCampaignQueryKey(campaign.id), campaign);
+            // The list page and the switcher's Recent menu read ["campaigns"], staleTime 5 min.
+            void queryClient.invalidateQueries({ queryKey: getCampaignsQueryKey() });
+        },
+    });
+};

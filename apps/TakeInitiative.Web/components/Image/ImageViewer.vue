@@ -2,9 +2,10 @@
     <!-- The full-screen image viewer (16c). It follows `?image={imageId}`, so the
          phone's back gesture closes it. The `display` variant, with swipe and the
          arrow keys through the note's images, pinch zoom, the caption with chips,
-         "S12 · Sam · 8:15pm" linking to the note, and ✕. The note's actions stay on
-         its card. With `sequence` (a gallery, 16d) the swipe runs through every
-         image of every item, not just the note's. -->
+         "S12 · Sam · 8:15pm" linking to the note, and ✕. A click on the letterbox
+         around the image closes it too. The note's actions stay on its card. With
+         `sequence` (a gallery, 16d) the swipe runs through every image of every
+         item, not just the note's. -->
     <DialogRoot
         :open="!!current"
         @update:open="(open) => !open && viewer.close()">
@@ -42,6 +43,7 @@
 
                 <div
                     class="relative flex min-h-0 flex-1 items-center justify-center"
+                    @click.self="onBackdrop"
                     @touchstart.passive="onTouchStart"
                     @touchend.passive="onTouchEnd">
                     <img
@@ -105,7 +107,12 @@
         DialogTitle,
     } from "reka-ui";
     import type { SessionNote } from "~/utils/api/types";
-    import { imageAlt, stepImage, swipeStep } from "~/utils/images";
+    import {
+        backdropCloses,
+        imageAlt,
+        stepImage,
+        swipeStep,
+    } from "~/utils/images";
     import { NOTE_LINK_PARAM } from "~/utils/noteActions";
     import { formatNoteTime } from "~/utils/sessionDates";
 
@@ -198,7 +205,10 @@
 
     // Swipe with one finger; a pinch, or a swipe while zoomed in, is the browser's.
     let start: { x: number; y: number } | null = null;
+    // A swipe's touchend can be followed by a click, which must not also close.
+    let swiped = false;
     function onTouchStart(event: TouchEvent) {
+        swiped = false;
         start =
             event.touches.length === 1
                 ? { x: event.touches[0].clientX, y: event.touches[0].clientY }
@@ -214,7 +224,17 @@
             touch.clientX - from.x,
             touch.clientY - from.y
         );
-        if (direction !== 0) step(direction);
+        if (direction !== 0) {
+            swiped = true;
+            step(direction);
+        }
+    }
+
+    // The letterbox around the image closes the viewer, as ✕ does.
+    function onBackdrop() {
+        const close = backdropCloses(swiped, window.visualViewport?.scale ?? 1);
+        swiped = false;
+        if (close) viewer.close();
     }
 
     // A link to an image that is not on screen (deleted, hidden, or not loaded).

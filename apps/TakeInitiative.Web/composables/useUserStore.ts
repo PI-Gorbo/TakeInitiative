@@ -12,7 +12,7 @@ type User = GetUserResponse;
 export const useUserStore = defineStore("userStore", () => {
 
     const queryClient = useQueryClient()
-    const userDetails = useQuery({ ...getUserQuery(), retry: false })
+    const userDetails = useQuery(getUserQuery())
     const state = computed(() => userDetails.data.value)
 
     // Stores
@@ -41,32 +41,33 @@ export const useUserStore = defineStore("userStore", () => {
     }
 
     // Mutations
+    /** Resolves who the caller is, from cache when it is already known. */
     async function init(): Promise<void> {
-        await fetchUser()
+        await queryClient.ensureQueryData(getUserQuery());
     }
 
-    async function fetchUser(): Promise<User> {
-        // fetch the user.
-        await userDetails.refetch();
-        return userDetails.data.value!
+    /** Goes to the API for the user, whatever is cached. For after a login or a sign up. */
+    async function refetchUser(): Promise<User | null> {
+        const { data } = await userDetails.refetch();
+        return data ?? null;
     }
 
     const isLoggedIn = computed(() => userDetails.data.value != null)
 
     async function login(request: LoginRequest): Promise<void> {
         await api.user.login(request).then(async () => {
-            return await fetchUser();
+            return await refetchUser();
         });
     }
 
     async function signUp(signUpRequest: SignUpRequest): Promise<unknown> {
-        return await api.user.signUp(signUpRequest).then(fetchUser);
+        return await api.user.signUp(signUpRequest).then(refetchUser);
     }
 
     async function confirmEmail(code: string): Promise<unknown> {
         return await api.user
             .confirmEmailWithToken(code)
-            .then((user) => (userDetails.data.value = user));
+            .then((user) => queryClient.setQueryData(getUserQueryKey(), user));
     }
 
     async function logout(): Promise<void> {
@@ -114,7 +115,7 @@ export const useUserStore = defineStore("userStore", () => {
     return {
         state,
         init,
-        refetchUser: fetchUser,
+        refetchUser,
         ConfirmEmail: confirmEmail,
         login,
         signUp,

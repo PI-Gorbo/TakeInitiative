@@ -1,4 +1,4 @@
-import { infiniteQueryOptions, queryOptions } from "@tanstack/vue-query";
+import { infiniteQueryOptions, keepPreviousData, queryOptions } from "@tanstack/vue-query";
 import type { KnowledgeBase } from "~/utils/api/types";
 import {
     KNOWLEDGE_BASE_PAGE_SIZE,
@@ -28,6 +28,10 @@ export const knowledgeBaseKey = (campaignId: MaybeRefOrGetter<string>) => ["know
  *
  * The key holds the filters, so going back to a filter combination already loaded shows it
  * at once, with every page the reader had opened still there.
+ *
+ * The text is part of the key and this page does not debounce, so without `keepPreviousData`
+ * every keystroke would blank the list, the count and the facets and collapse the page to a
+ * spinner. ⌘K keeps its previous answer on screen for the same reason (`search.ts`).
  */
 export const getKnowledgeBaseQuery = (campaignId: RefOrGetter<string>, filters: RefOrGetter<KnowledgeBaseFilters>) =>
     infiniteQueryOptions({
@@ -56,6 +60,7 @@ export const getKnowledgeBaseQuery = (campaignId: RefOrGetter<string>, filters: 
                 lastPage.total
             ),
         enabled: () => !!toValue(campaignId),
+        placeholderData: keepPreviousData,
         staleTime: CORPUS_STALE_TIME,
     });
 
