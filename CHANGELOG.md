@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.3.0](https://github.com/PI-Gorbo/TakeInitiative/compare/takeinitiative-v1.2.2...takeinitiative-v1.3.0) (2026-10-11)
+
+
+### Features
+
+* **kb:** fetch the 5eTools corpus, ingest it, and delete it again ([#303](https://github.com/PI-Gorbo/TakeInitiative/issues/303)) ([a933a9a](https://github.com/PI-Gorbo/TakeInitiative/commit/a933a9a7f23b3fbd3f2ad2244d9ec45f44c0e957))
+* rename a campaign (SAM-22) ([#308](https://github.com/PI-Gorbo/TakeInitiative/issues/308)) ([4220a77](https://github.com/PI-Gorbo/TakeInitiative/commit/4220a77a84f9610edc3ebf9825a9c285badeb3cd))
+* **web:** make the stream's filter a dropdown, not a chip row ([#309](https://github.com/PI-Gorbo/TakeInitiative/issues/309)) ([f019f1c](https://github.com/PI-Gorbo/TakeInitiative/commit/f019f1c53192f6223e21f3c700e02ed9780b4088))
+
+
+### Bug Fixes
+
+* **web:** close the image viewer on a letterbox click ([#305](https://github.com/PI-Gorbo/TakeInitiative/issues/305)) ([fd85b35](https://github.com/PI-Gorbo/TakeInitiative/commit/fd85b350ae13019d59e00efbe9cbe17aae44b50d))
+* **web:** keep the knowledge base's rows up while the next search loads ([#304](https://github.com/PI-Gorbo/TakeInitiative/issues/304)) ([a5b9b37](https://github.com/PI-Gorbo/TakeInitiative/commit/a5b9b371fd017635daf411f686ece79f3bed6844))
+* **web:** stop refetching the user on every navigation ([#307](https://github.com/PI-Gorbo/TakeInitiative/issues/307)) ([b8d2616](https://github.com/PI-Gorbo/TakeInitiative/commit/b8d26164e6fc98e8590bc0a8d714eaee8fc66152))
+
+
+### Code Refactoring
+
+* delete the V1 admin feature and its leftovers ([65dbd68](https://github.com/PI-Gorbo/TakeInitiative/commit/65dbd6876ee611caa124f15e5d1c04f2ccadc27d))
+* delete the V1 admin feature and its leftovers ([b5296ab](https://github.com/PI-Gorbo/TakeInitiative/commit/b5296abcead0f4139e1ea6d287a0ddf366eb7eef))
+
 ## [1.2.2](https://github.com/PI-Gorbo/TakeInitiative/compare/takeinitiative-v1.2.1...takeinitiative-v1.2.2) (2026-10-10)
 
 
