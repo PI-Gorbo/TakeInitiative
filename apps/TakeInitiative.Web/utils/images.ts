@@ -455,3 +455,7 @@ export function swipeStep(dx: number, dy: number, threshold = 50): -1 | 0 | 1 {
     if (Math.abs(dx) < threshold || Math.abs(dx) < Math.abs(dy) * 1.5) return 0;
     return dx < 0 ? 1 : -1;
 }
+
+/** A tap on the letterbox closes the viewer, unless it ended a swipe or a pan while zoomed. */
+export const backdropCloses = (swiped: boolean, scale: number) =>
+    !swiped && scale <= 1.01;
