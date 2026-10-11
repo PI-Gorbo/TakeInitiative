@@ -1,6 +1,6 @@
 <template>
     <!-- The wiki's kind chips (15c, design §4): All plus the six kinds. A chip row that
-         scrolls sideways on a narrow phone, like the stream's filters. -->
+         scrolls sideways on a narrow phone (25's 44px convention). -->
     <div
         role="group"
         aria-label="Show entries of a kind"
