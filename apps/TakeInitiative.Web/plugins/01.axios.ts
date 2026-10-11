@@ -1,5 +1,6 @@
 import type { AxiosError, AxiosInstance, CreateAxiosDefaults } from "axios";
 import axios from "axios";
+import { AUTH_COOKIE_NAME } from "~/utils/session";
 export default defineNuxtPlugin((nuxtApp) => {
     // Destructure the environment variables to get axios config
     const {
@@ -13,11 +14,11 @@ export default defineNuxtPlugin((nuxtApp) => {
     const Axios: AxiosInstance = axios.create(defaultAxios);
 
     // Register to use an auth token if there is one.
-    const aspNetCoreCookie = useCookie(".AspNetCore.Cookies"); // Axios does not attach the cookie on the first request. so we have to manually do it.
+    const aspNetCoreCookie = useCookie(AUTH_COOKIE_NAME); // Axios does not attach the cookie on the first request. so we have to manually do it.
     Axios.interceptors.request.use((config) => {
         if (aspNetCoreCookie.value) {
             config.headers["Cookie"] =
-                `.AspNetCore.Cookies=${aspNetCoreCookie.value}`;
+                `${AUTH_COOKIE_NAME}=${aspNetCoreCookie.value}`;
         }
         config.withCredentials = true; // Automatically adds cookies to every request.
         return config;
