@@ -10,11 +10,15 @@
             <div
                 v-if="props.isLoading"
                 :class="cn(['h-full w-full flex flex-col items-center gap-2', $attrs.class])">
-                <FontAwesomeIcon
-                    :icon="faDiceD20"
-                    class="fa-spin"
-                    :size="props.iconSize" />
-                <div>loading...</div>
+                <!-- `loading`: a skeleton of what is coming, where one holds the page's size
+                     better than a spinner does (the Knowledge base's list). -->
+                <slot name="loading">
+                    <FontAwesomeIcon
+                        :icon="faDiceD20"
+                        class="fa-spin"
+                        :size="props.iconSize" />
+                    <div>loading...</div>
+                </slot>
             </div>
             <div
                 v-else-if="props.isError"

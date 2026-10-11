@@ -62,6 +62,11 @@ export function useKnowledgeBase(campaignId: () => string) {
     const total = computed(() => pages.value[0]?.total ?? 0);
     const loaded = computed(() => !!list.data.value);
 
+    // A new search or filter is in flight while the previous rows are still up (⌘K's pattern):
+    // the page says so with a thin bar rather than by emptying itself. `Load more` is left out —
+    // that button carries its own spinner.
+    const searching = computed(() => loaded.value && list.isFetching.value && !list.isFetchingNextPage.value);
+
     // Facets come from the first page; each drops its own filter, so the number beside a
     // value is what choosing it would show rather than what this page holds.
     const categoryFacets = computed<KnowledgeBaseCategoryFacet[]>(() => pages.value[0]?.facets.categories ?? []);
@@ -96,6 +101,7 @@ export function useKnowledgeBase(campaignId: () => string) {
         items,
         total,
         loaded,
+        searching,
         categoryFacets,
         bookFacets,
         providerLabels,

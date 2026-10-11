@@ -12,7 +12,7 @@
              Nothing here shows 5eTools' content. A row is a name, a category, the parser's
              label, a book and a page; a reader who wants the rules follows the link to the
              people who wrote them. -->
-        <div class="shrink-0 border-b">
+        <div class="relative shrink-0 border-b">
             <PageContainer class="flex flex-col gap-2 px-3 pb-2 pt-3 md:px-4">
                 <NuxtLink
                     :to="`/app/campaigns/${encodeURIComponent(campaignId)}/wiki`"
@@ -47,6 +47,15 @@
                     :categoryFacets="categoryFacets"
                     :bookFacets="bookFacets" />
             </PageContainer>
+            <!-- Searching: a thin bar; the rows that answered the last search stay under it,
+                 as ⌘K's do. Emptying the page on every keystroke was SAM-29. -->
+            <div
+                v-if="searching"
+                class="absolute inset-x-0 -bottom-px h-0.5 overflow-hidden"
+                role="progressbar"
+                aria-label="Searching">
+                <div class="h-full w-1/3 animate-search-bar bg-gold" />
+            </div>
         </div>
 
         <!-- At `lg` the filters become a sticky rail to the left of the same capped column. -->
@@ -59,13 +68,18 @@
                 layout="rail"
                 :categoryFacets="categoryFacets"
                 :bookFacets="bookFacets" />
-            <div class="min-w-0">
+            <div
+                class="min-w-0"
+                :aria-busy="searching">
                 <LoadingFallback
                     v-if="!loaded"
                     :isLoading="list.isLoading.value"
                     :isError="list.isError.value"
-                    iconSize="2x"
-                    class="pt-8" />
+                    iconSize="2x">
+                    <template #loading>
+                        <KnowledgeBaseListSkeleton />
+                    </template>
+                </LoadingFallback>
                 <KnowledgeBaseEmpty
                     v-else-if="emptyState"
                     :state="emptyState"
@@ -107,6 +121,7 @@
         items,
         total,
         loaded,
+        searching,
         categoryFacets,
         bookFacets,
         providerLabels,
