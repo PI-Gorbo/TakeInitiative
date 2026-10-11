@@ -6,7 +6,11 @@
                 problem of the past
             </p>
             <div class="flex flex-col gap-2">
-                <template v-if="!userStore.isLoggedIn">
+                <template v-if="resumingSession">
+                    <Skeleton class="h-9 w-full" />
+                    <Skeleton class="h-9 w-full" />
+                </template>
+                <template v-else-if="!userStore.isLoggedIn">
                     <NuxtLink
                         class="w-full"
                         to="/signup">
@@ -57,8 +61,33 @@
     import { faDiscord } from "@fortawesome/free-brands-svg-icons";
     import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
     import Button from "~/components/ui/button/Button.vue";
+    import Skeleton from "~/components/ui/skeleton/Skeleton.vue";
 
     const userStore = useUserStore();
+
+    // `checkAuth.global` skips `/`, so a returning visitor's session is resumed here instead.
+    // The auth cookie is HttpOnly: only the server render can see it, and `useState` carries
+    // the answer across hydration.
+    const hasSessionCookie = useState("homeHasSessionCookie", () =>
+        hasAuthCookie(useRequestHeaders(["cookie"]).cookie)
+    );
+
+    // Server-rendered as loading, so the anonymous buttons never flash for a returning visitor.
+    const resumingSession = ref(hasSessionCookie.value);
+
+    onMounted(async () => {
+        if (!resumingSession.value) {
+            return;
+        }
+
+        // A stale or revoked cookie just 401s, which leaves the user null.
+        await userStore.init().catch(() => {});
+        resumingSession.value = false;
+
+        if (userStore.isLoggedIn) {
+            await useNavigator().toCampaignsList();
+        }
+    });
 
     useHead({
         title: "Take Initiative",
