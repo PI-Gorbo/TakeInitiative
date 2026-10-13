@@ -466,6 +466,15 @@ export const putEntryStatsMutation = () => {
     });
 };
 
+// The entry's editors: its primary image (SAM-12). `imageId` null removes it.
+export const putEntryPrimaryImageMutation = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: useApi().entry.putPrimaryImage,
+        onSuccess: (entry, { campaignId }) => applyEntryResponse(queryClient, campaignId, entry),
+    });
+};
+
 // ── Links (27d) ───────────────────────────────────────────────────────────────
 
 /**

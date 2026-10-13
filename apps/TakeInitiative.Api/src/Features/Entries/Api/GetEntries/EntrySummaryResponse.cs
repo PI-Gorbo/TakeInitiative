@@ -23,6 +23,12 @@ public record EntrySummaryResponse
     public Guid? ClaimedByMemberId { get; init; }
     /// <summary>Every entry merged into this one (15g): mentions of these ids mean this entry.</summary>
     public required Guid[] MergedFromIds { get; init; }
+    /// <summary>
+    /// The image that stands for the entry (SAM-12), or null. Its bytes are at
+    /// <c>GET images/{id}/{thumb|display}</c>. It is not a per-viewer field: only an image
+    /// everyone can see may be primary, so it is safe on a payload the whole audience receives.
+    /// </summary>
+    public Guid? PrimaryImageId { get; init; }
 
     public static EntrySummaryResponse From(Entry entry) => new()
     {
@@ -37,5 +43,6 @@ public record EntrySummaryResponse
         UpdatedAt = entry.UpdatedAt,
         ClaimedByMemberId = entry.ClaimedByMemberId,
         MergedFromIds = entry.MergedFromIds,
+        PrimaryImageId = entry.PrimaryImageId,
     };
 }

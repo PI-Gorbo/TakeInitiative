@@ -1,10 +1,25 @@
 <template>
     <!-- An entry's header (design §4, 15c, 25e): its kind, name and "aka …" (the first three,
          a tap shows the rest), a 🔒 badge for DM and Me, and a player character's "Played by"
-         chip. The ⋯ menu holds Edit details (for someone who can change something), History
-         (for everyone) and Merge into… (for editors). Edit access now lives in Details. -->
+         chip. Its primary image (SAM-12) sits left of the kind and name, and opens the gallery's
+         viewer; it falls back to nothing if the bytes will not load. The ⋯ menu holds Edit details
+         (for someone who can change something), Set primary image (for editors), History (for
+         everyone) and Merge into… (for editors). Edit access now lives in Details. -->
     <header class="flex flex-col gap-1.5">
         <div class="flex items-start gap-2">
+            <button
+                v-if="entry.primaryImageId && !imageFailed"
+                type="button"
+                class="size-14 shrink-0 overflow-hidden rounded-md bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                :aria-label="`Open the primary image of ${entry.name}`"
+                @click="openPrimaryImage">
+                <img
+                    :src="src(campaignId, entry.primaryImageId, 'thumb')"
+                    :alt="`${entry.name}'s primary image`"
+                    class="size-full object-cover"
+                    decoding="async"
+                    @error="imageFailed = true" />
+            </button>
             <div class="flex min-w-0 flex-1 flex-col gap-0.5">
                 <p class="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     <span aria-hidden="true">{{ ENTRY_KIND_ICONS[entry.kind] }}</span>
@@ -39,6 +54,15 @@
                             class="size-4"
                             aria-hidden="true" />
                         Edit details
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                        v-if="canEdit"
+                        class="min-h-11 gap-2 md:min-h-8"
+                        @select="emit('primaryImage')">
+                        <ImageIcon
+                            class="size-4"
+                            aria-hidden="true" />
+                        {{ entry.primaryImageId ? "Change primary image" : "Set primary image" }}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                         class="min-h-11 gap-2 md:min-h-8"
@@ -87,12 +111,14 @@
 </template>
 
 <script setup lang="ts">
-    import { History, Merge, MoreHorizontal, Pencil, UserCheck } from "lucide-vue-next";
+    import { History, Image as ImageIcon, Merge, MoreHorizontal, Pencil, UserCheck } from "lucide-vue-next";
     import type { Entry } from "~/utils/api/types";
     import { ENTRY_KIND_ICONS } from "~/utils/entries";
     import { aliasPreview } from "~/utils/entrySections";
+    import { GALLERY_VIEWER_SOURCE } from "~/utils/gallery";
 
     const props = defineProps<{
+        campaignId: string;
         entry: Entry;
         viewerMemberId: string;
         canEdit: boolean;
@@ -100,12 +126,25 @@
         /** The player's name, for a player character's chip (15g, 25c). */
         claimerName?: string;
     }>();
-    const emit = defineEmits<{ edit: []; history: []; merge: [] }>();
+    const emit = defineEmits<{ edit: []; history: []; merge: []; primaryImage: [] }>();
+
+    const src = useImageUrl();
+    const imageViewer = useImageViewer();
+    // The entry's Gallery section owns that viewer, and the primary image is one of its tiles.
+    const openPrimaryImage = () => {
+        if (props.entry.primaryImageId) imageViewer.open(props.entry.primaryImageId, GALLERY_VIEWER_SOURCE);
+    };
 
     const aliasesOpen = ref(false);
+    const imageFailed = ref(false);
     watch(
         () => props.entry.id,
         () => (aliasesOpen.value = false)
+    );
+    // A new id, or a new image on the same entry, deserves another try at the bytes.
+    watch(
+        () => props.entry.primaryImageId,
+        () => (imageFailed.value = false)
     );
     const aliases = computed(() => aliasPreview(props.entry.aliases, aliasesOpen.value));
 

@@ -39,10 +39,17 @@ public class PutSessionNoteVisibility(IDocumentSession session, IHubContext<Camp
 
         if (note.Visibility != req.Visibility)
         {
-            session.Events.Append(note.Id, new SessionNoteVisibilityChanged(Actor.Member(member.MemberId), req.Visibility));
+            var actor = Actor.Member(member.MemberId);
+            session.Events.Append(note.Id, new SessionNoteVisibilityChanged(actor, req.Visibility));
+            // Leaving Everyone takes its images out of public view, so no entry may keep one as
+            // its primary image (SAM-12). Coming back to Everyone does not restore it.
+            IReadOnlyList<Guid> cleared = req.Visibility == Visibility.Everyone
+                ? []
+                : await EntryPrimaryImages.ClearStaleFor(session, note, actor, ct);
             await session.SaveChangesAsync(ct);
             var before = note;
             note = (await session.LoadAsync<SessionNote>(note.Id, ct))!;
+            await EntryPrimaryImages.NotifyCleared(hub, session, cleared, ct);
             await hub.NotifySessionNoteMoved(before, note);
         }
 

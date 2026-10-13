@@ -18,6 +18,7 @@
                 :isTurn="combatant.id === turnCombatantId"
                 :isDm="isDm"
                 :viewerMemberId="viewerMemberId"
+                :primaryImageId="primaryImageOf(combatant)"
                 :canOpen="canOpen(combatant)"
                 :reorderable="reorderable"
                 :dragging="drag.draggingId.value === combatant.id"
@@ -43,6 +44,7 @@
 <script setup lang="ts">
     import type { Combatant } from "~/utils/api/types";
     import { combatantRowId, dropPosition, moveByOne } from "~/utils/combat";
+    import { useEntryDirectory } from "~/utils/queries/entries";
 
     const props = defineProps<{
         campaignId: string;
@@ -59,6 +61,16 @@
         open: [combatantId: string];
         reorder: [combatantId: string, afterId: string | null];
     }>();
+
+    // A combatant's portrait is its entry's primary image (SAM-12), read from the cached
+    // entry directory the wiki already keeps, so combat asks the API for nothing extra. An
+    // entry the viewer cannot see is not in the directory, and the row keeps its initiative
+    // badge alone.
+    const directory = useEntryDirectory(() => props.campaignId);
+    const primaryImageOf = (combatant: Combatant) =>
+        combatant.entryId
+            ? (directory.value.byId.get(combatant.entryId.toLowerCase())?.entry.primaryImageId ?? null)
+            : null;
 
     const list = ref<HTMLElement | null>(null);
     const ids = computed(() => props.combatants.map((c) => c.id));

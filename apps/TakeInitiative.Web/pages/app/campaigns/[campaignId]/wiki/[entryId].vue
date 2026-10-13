@@ -48,6 +48,7 @@
                         @done="editing = false" />
                     <WikiEntryHeader
                         v-else
+                        :campaignId="campaignId"
                         :entry="entry"
                         :viewerMemberId="campaign.currentMemberId"
                         :canEdit="canEdit"
@@ -55,7 +56,8 @@
                         :claimerName="entry.claimedByMemberId ? memberName(entry.claimedByMemberId) : undefined"
                         @edit="editing = true"
                         @history="historyOpen = true"
-                        @merge="mergeOpen = true" />
+                        @merge="mergeOpen = true"
+                        @primaryImage="primaryImageOpen = true" />
 
                     <template v-if="!desktop">
                         <WikiStatsEditor
@@ -218,6 +220,12 @@
                         :canEdit="canEdit"
                         :nameOf="memberName"
                         @restore="restoreVersion" />
+                    <WikiPrimaryImagePicker
+                        v-if="canEdit"
+                        v-model:open="primaryImageOpen"
+                        :campaignId="campaignId"
+                        :entry="entry"
+                        :authorName="memberName" />
                     <WikiMergeDialog
                         v-if="canEdit"
                         v-model:open="mergeOpen"
@@ -476,6 +484,7 @@
     // ── History, restore and merge (15g) ─────────────────────────────────────
     const historyOpen = ref(false);
     const mergeOpen = ref(false);
+    const primaryImageOpen = ref(false);
     function restoreVersion(version: { blocks: readonly ArticleBlock[]; label: string }) {
         if (!canEdit.value) return;
         focusBlockId.value = undefined;
@@ -501,6 +510,7 @@
         closeArticleEditor();
         historyOpen.value = false;
         mergeOpen.value = false;
+        primaryImageOpen.value = false;
     });
     // `?edit={blockId}` is used once, when the entry has loaded, then dropped.
     watch(

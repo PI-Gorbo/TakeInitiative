@@ -756,6 +756,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/campaigns/{campaignId}/entries/{entryId}/primary-image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["PutEntryPrimaryImage"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/campaigns/{campaignId}/entries/{entryId}/stats": {
         parameters: {
             query?: never;
@@ -1146,6 +1162,8 @@ export interface components {
             /** Format: guid */
             claimedByMemberId?: string | null;
             mergedFromIds: string[];
+            /** Format: guid */
+            primaryImageId?: string | null;
         };
         /** @enum {string} */
         EntryKind: "Character" | "Place" | "Faction" | "Item" | "Event" | "Other";
@@ -1640,6 +1658,8 @@ export interface components {
             /** Format: guid */
             claimedByMemberId?: string | null;
             mergedFromIds: string[];
+            /** Format: guid */
+            primaryImageId?: string | null;
             article: components["schemas"]["ArticleResponse"];
             stats?: components["schemas"]["StatsResponse"] | null;
             source?: components["schemas"]["EntrySourceResponse"] | null;
@@ -1745,12 +1765,14 @@ export interface components {
             /** Format: guid */
             memberId?: string | null;
             stats?: components["schemas"]["StatsResponse"] | null;
+            /** Format: guid */
+            imageId?: string | null;
             source?: components["schemas"]["EntrySourceResponse"] | null;
             link?: components["schemas"]["EntryLinkResponse"] | null;
             suggestion?: components["schemas"]["EntrySuggestionResponse"] | null;
         };
         /** @enum {string} */
-        EntryChangeType: "Created" | "Renamed" | "KindChanged" | "AliasAdded" | "AliasRemoved" | "VisibilityChanged" | "EditAccessChanged" | "ArticleEdited" | "QuotePromoted" | "Merged" | "Claimed" | "Unclaimed" | "StatsChanged" | "LinkAdded" | "LinkRemoved" | "SuggestionDismissed";
+        EntryChangeType: "Created" | "Renamed" | "KindChanged" | "AliasAdded" | "AliasRemoved" | "VisibilityChanged" | "EditAccessChanged" | "ArticleEdited" | "QuotePromoted" | "Merged" | "Claimed" | "Unclaimed" | "StatsChanged" | "LinkAdded" | "LinkRemoved" | "SuggestionDismissed" | "PrimaryImageSet" | "PrimaryImageCleared";
         EntrySuggestionResponse: {
             provider: string;
             providerLabel?: string | null;
@@ -1841,6 +1863,10 @@ export interface components {
         };
         PutEntryNameRequest: {
             name: string;
+        };
+        PutEntryPrimaryImageRequest: {
+            /** Format: guid */
+            imageId?: string | null;
         };
         PutEntryStatsRequest: {
             initiativeRoll?: string | null;
@@ -4029,6 +4055,47 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["PutEntryNameRequest"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PutEntryPrimaryImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaignId: string;
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PutEntryPrimaryImageRequest"];
             };
         };
         responses: {

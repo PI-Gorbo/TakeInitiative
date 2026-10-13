@@ -635,6 +635,11 @@ Add each sub-step on top with `gh stack add v2/16a-blob-store` and so on.
   editing or cropping, alt text separate from the caption, a campaign-wide gallery
   page (the Images filter is that), storage quotas per campaign, and offline
   (§12).
+- **An entry's primary image** shipped later, under SAM-12: one image from the
+  entry's gallery stands for it on its page, in the wiki list, in search hits and on
+  a combat row. Only an image everyone can see may be one, and it is cleared when its
+  note stops being public, so the id rides `entryUpserted` with no per-viewer
+  redaction (`EntryPrimaryImages`).
 - **Share target limits.** Web Share Target works only in an installed PWA, and not
   on iOS Safari. iOS users attach with 🖼, which also handles HEIC through the
   browser's own conversion or `prepareImage`. The service worker's handler must

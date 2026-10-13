@@ -72,6 +72,7 @@ public class PutSessionNote(
             ? await this.SuggestionActor(session, req, note, member, text, suggestion, ct)
             : Actor.Member(member.MemberId);
         IReadOnlyList<Guid> newEntryIds;
+        IReadOnlyList<Guid> cleared = [];
         ImageAttachments.Staged? images;
         bool edited;
         await using (var write = await NoteWrite.Begin(session, ct))
@@ -87,6 +88,9 @@ public class PutSessionNote(
             if (imagesChanged)
             {
                 await this.SaveImagesAsync(write.Session, ct);
+                // A removed image is deleted, so no entry may keep it as its primary one (SAM-12).
+                cleared = await EntryPrimaryImages.ClearStale(
+                    write.Session, req.CampaignId, [.. images!.Removed.Select(i => i.Id)], actor, ct);
             }
 
             newEntryIds = await this.AppendNewEntries(
@@ -105,6 +109,7 @@ public class PutSessionNote(
             await write.CommitAsync(ct);
         }
         await sweeper.PurgeRemoved(images?.Removed ?? [], logger, ct);
+        await EntryPrimaryImages.NotifyCleared(hub, session, cleared, ct);
 
         if (edited)
         {
