@@ -637,8 +637,8 @@ The sequence to expect:
    ```
 
    **`Hosting environment: Production` is worth reading every time.** If it ever says anything else,
-   `ASPNETCORE_ENVIRONMENT` has been set, which means Swagger is exposed and the auth cookie is no
-   longer unconditionally `Secure`.
+   `ASPNETCORE_ENVIRONMENT` has been set, which means Swagger is exposed and, in `Development`,
+   `SamstackAuth__DevUser` would sign every request in.
 3. Then the container goes healthy and the async daemon starts working through projections.
 
 The thing that matters is **the DDL finishing before the port opens**, which is the ordering the

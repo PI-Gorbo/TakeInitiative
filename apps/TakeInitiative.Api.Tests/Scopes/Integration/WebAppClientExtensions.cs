@@ -1,6 +1,5 @@
 using CSharpFunctionalExtensions;
 using FluentAssertions;
-using Microsoft.Extensions.Primitives;
 using TakeInitiative.Api.Features.Campaigns;
 using TakeInitiative.Api.Features.Entries;
 using TakeInitiative.Api.Features.Images;
@@ -56,18 +55,6 @@ public static class WebAppClientExtensions
                 });
 
                 return await result.ReadAsJsonAsync<GetUserResponse>() ?? throw new InvalidCastException($"Could not cast response to type of {typeof(GetUserResponse).Name}");
-            });
-
-    public static Task<Result<StringValues>> SignUp(this IWebAppClient client, PostSignUpRequest request)
-        => Result.Try(async () =>
-            {
-                var result = await client.AlbaHost.Scenario(_ =>
-                {
-                    _.Post.Json(request).ToUrl("/api/signup");
-                    _.StatusCodeShouldBe(200);
-                });
-                var cookie = result.Context.Response.Headers.SetCookie;
-                return cookie;
             });
 
     public static Task<Result<CampaignResponse>> PostCreateCampaign(this IWebAppClient client, PostCreateCampaignRequest request)

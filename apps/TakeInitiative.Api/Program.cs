@@ -56,22 +56,19 @@ internal class Program
         builder.Services.AddSignalR();
         builder.Services.AddSingleton<CampaignConnections>();
         // The gap prompt's clock. Keyed so tests can move it without also moving the
-        // clock cookie authentication reads (an unkeyed TimeProvider), which would expire
-        // the test users' cookies.
+        // unkeyed TimeProvider the framework itself reads.
         builder.Services.AddKeyedSingleton(SessionGap.ClockKey, TimeProvider.System);
 
         // Custom Injection
-        builder.Services.AddOptionObjects(builder.Configuration);
         builder.Services.AddMartenDB(builder.Configuration);
-        // Cookie tickets are Data Protection payloads, so the key ring has to outlive the
-        // container or a redeploy signs everybody out. No-op unless DataProtection:KeyPath is set.
+        // Nothing uses Data Protection since SAM-73; see AddDataProtectionKeyRing for why it stays.
+        // No-op unless DataProtection:KeyPath is set.
         builder.Services.AddDataProtectionKeyRing(builder.Configuration);
         // The reverse proxy in front of the API terminates TLS; see AddForwardedHeaders.
         builder.Services.AddForwardedHeaders();
         builder.Services.AddSerilog();
         builder.AddIdentityAuthenticationAndAuthorization();
         builder.Services.AddDiceRollers(builder.Configuration);
-        builder.Services.AddSendGrid(builder.Configuration);
         builder.Services.AddImages(builder.Configuration);
         builder.Services.AddSearch();
         builder.Services.AddReference();
@@ -121,7 +118,7 @@ internal class Program
                     }
                     else
                     {
-                        endpoint.AuthSchemes(SamstackAuthenticationHandler.SessionOrCookie);
+                        endpoint.AuthSchemes(SamstackAuthenticationHandler.SchemeName);
                         endpoint.Policies(TakePolicies.UserExists);
                     }
                 };

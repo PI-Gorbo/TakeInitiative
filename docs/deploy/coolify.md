@@ -59,9 +59,6 @@ is impossible. Step 9 below is how you prove it, and that proof is the point of 
       the Marten async daemon is running. The usual *"Coolify needs 4 GB to build Nuxt"* advice
       does **not** apply, because nothing on this box ever builds.
 - [ ] **Coolify installed**, reachable over HTTPS on its own hostname, and an admin login.
-- [ ] **A SendGrid API key** from an account with a sender verified on your sending domain. Without
-      it, password reset and email confirmation silently do nothing. Sign-up still works:
-      `PostSignUp` logs the send failure and signs the user in anyway.
 - [ ] **The images, public on GHCR.** Confirm before you touch Coolify:
 
       ```sh
@@ -76,7 +73,7 @@ is impossible. Step 9 below is how you prove it, and that proof is the point of 
       created by a workflow push starts private; this is a one-time click per package.
 
 - [ ] **A password manager or a scratch file** for the values you generate in step 6. You will
-      generate five secrets and you will need some of them again.
+      generate a handful of secrets and you will need some of them again.
 
 ### The two hostnames
 
@@ -86,11 +83,10 @@ Pick them now, because almost every environment variable is derived from them.
 |---|---|---|
 | Web app | `https://takeinitiative.samstack.org` | |
 | API | `https://api-takeinitiative.samstack.org` | |
-| Cookie domain | `.samstack.org` | the leading dot is what makes one auth cookie valid on both |
 
-**Keep both hostnames on one registrable domain.** `SameSite=Lax` then treats requests between
-them as same-site. A genuinely different domain needs `SameSite=None; Secure`, which is a code
-change nobody needs.
+**Keep both hostnames under `.samstack.org`.** Sign-in is SamStack's session cookie, which
+auth.samstack.org sets on `.samstack.org`, so the browser only sends it to hosts under that domain.
+The API asks auth.samstack.org about it on every request (cached for a minute).
 
 > **Behind Cloudflare, the API cannot be a second-level subdomain.** Cloudflare's free Universal SSL
 > certificate covers `example.org` and `*.example.org` — one label, no more. So
@@ -98,17 +94,11 @@ change nobody needs.
 > happens; `curl` reports `sslv3 alert handshake failure` and a browser shows a privacy warning.
 > Hence `api-takeinitiative`, a sibling of the web host rather than a child. Measured 2026-10-09.
 >
-> **That changes `COOKIE_DOMAIN`.** Siblings share only the registrable domain, so the cookie has to
-> be `.example.org` rather than `.takeinitiative.example.org`. The cost is real: the auth cookie is
-> then sent to *every* host under that domain. Fine if the domain is only this project. If it is
-> not, the one-hostname shape below avoids the question entirely.
->
-> Getting this wrong is quiet — login succeeds and every subsequent call 401s, because the browser
-> simply never sends the cookie.
+> Getting the domain wrong is quiet — sign-in succeeds and every API call 401s, because the browser
+> simply never sends the session cookie.
 
 > **Decision, yours to make.** The alternative shape is **one hostname**, with the API reverse-proxied
-> under `/api` and `/campaignHub` on the same origin. That removes CORS and the cookie-domain
-> question entirely and would let `NUXT_PUBLIC_AXIOS_BASE_URL` be empty — at the cost of
+> under `/api` and `/campaignHub` on the same origin. That removes CORS entirely and would let `NUXT_PUBLIC_AXIOS_BASE_URL` be empty — at the cost of
 > hand-written Traefik path rules for two prefixes instead of two domain fields in a UI.
 > **Recommendation: two hostnames**, as above. It is two tick-boxes versus hand-written routing,
 > and everything in this repo is already written for it.
@@ -273,22 +263,18 @@ error-prone than fourteen individual rows.
 - **Leave "Is build variable?" OFF for every single one.** Nothing in this deployment builds, so a
   build variable is purely a trap for future-you.
 - **Do not set `ASPNETCORE_ENVIRONMENT`.** Unset means `Production`, which is what turns off
-  Swagger, skips `appsettings.development.json`, and switches the auth cookie to
-  `SecurePolicy.Always`. Setting it to anything is how you accidentally ship Swagger.
+  Swagger, skips `appsettings.development.json`, and ignores `SamstackAuth__DevUser`. Setting it to anything is how you accidentally ship Swagger.
 
 Substituting `samstack.org` throughout:
 
 | Variable | Value | Secret? | Notes |
 |---|---|---|---|
-| `WEB_ORIGIN` | `https://takeinitiative.samstack.org` | no | Scheme included, **no trailing slash**. Becomes `CORS__MainApp`, `TakeUrls__Web` and `NUXT_PUBLIC_WEB_URL` |
+| `WEB_ORIGIN` | `https://takeinitiative.samstack.org` | no | Scheme included, **no trailing slash**. Becomes `CORS__MainApp` and `NUXT_PUBLIC_WEB_URL` |
 | `API_ORIGIN` | `https://api-takeinitiative.samstack.org` | no | Scheme included, no trailing slash. Becomes `NUXT_PUBLIC_AXIOS_BASE_URL` |
 | `API_HOST` | `api-takeinitiative.samstack.org` | no | **Host name only** — no scheme, no port. Becomes `AllowedHosts` |
-| `COOKIE_DOMAIN` | `.samstack.org` | no | **The leading dot is load-bearing** |
-| `EMAIL_DOMAIN` | `takeinitiative.samstack.org` | no | Becomes `no-reply@<this>`; must be verified with SendGrid |
 | `TAKEDB_CONNECTION` | see below | **yes** | |
 | `BLOBS_ACCESS_KEY` | **generate** | **yes** | Must be `GK` + 24 hex — Garage rejects any other shape |
 | `BLOBS_SECRET_KEY` | **generate** | **yes** | 32 bytes hex |
-| `SENDGRID_API_KEY` | `SG.…` | **yes** | From your SendGrid account |
 
 `TAKEDB_CONNECTION`, using the hostname, database, user and password from step 4:
 
@@ -367,7 +353,7 @@ per service is where to look.
 
 | Service | Volume | Mount | What breaks without it |
 |---|---|---|---|
-| `api` | `takeapi-keys` | `/keys` | **Every single deploy signs everybody out, mid-session.** The auth cookie is an ASP.NET Core Data Protection payload; with no volume the key ring is written inside the container and thrown away with it. This was a real bug. The volume is the fix, not tidiness |
+| `api` | `takeapi-keys` | `/keys` | The ASP.NET Core Data Protection key ring. Nothing uses it since sign-in moved to SamStack (SAM-73); it was the fix for the old auth cookie, whose every deploy signed everybody out, and it stays so the next thing that uses Data Protection cannot lose its keys the same way |
 | `minio` | `takeminio-data` | `/data` | **Every image anyone has ever uploaded is gone.** Nothing else on the box holds them and nothing backs this up automatically |
 
 Two things worth knowing:
@@ -478,23 +464,19 @@ In order. The last one is the point.
    fuzzy matching will fail at query time with *function does not exist*. Those two extensions hang
    off no document type, so nothing in a request path would ever create them.
 
-5. **Sign up, as yourself.** Create an account, create a campaign, post a note. Then:
+5. **Sign in, as yourself,** through SamStack. Create a campaign, post a note. Then:
 
 6. **Sessions survive a deploy.** Stay signed in, hit **Redeploy** in Coolify, wait, reload.
-   **You must still be signed in.** If you are not, the `/keys` volume is not doing its job — step
-   8, and step 12's row on it. This is the single easiest thing in the whole deployment to get
-   wrong and the easiest to not notice.
+   **You must still be signed in.** The session is SamStack's, so a redeploy of this app cannot
+   end it; if it does, something is clearing cookies.
 
 7. **A photo.** Post a note with an image. It must render. That proves the bucket exists, the
    credentials match, and the API can stream it back out.
 
-8. **Email.** Trigger a password reset. It must arrive, from `no-reply@<EMAIL_DOMAIN>`, with a link
-   on the real web domain.
-
-9. **A friend, on their phone.** The actual finish line. Send the URL to somebody who has never
+8. **A friend, on their phone.** The actual finish line. Send the URL to somebody who has never
    seen the app:
 
-   1. They sign up and land in the app.
+   1. They sign in through SamStack and land in the app.
    2. They join the campaign with the join code.
    3. They post a note in the current session with an `@mention` and a photo from their camera
       roll, and the photo renders.

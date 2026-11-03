@@ -1,5 +1,4 @@
 using Amazon.S3;
-using FastEndpoints.Security;
 using Microsoft.Extensions.Options;
 using TakeInitiative.Api.Features.Images;
 
@@ -11,12 +10,10 @@ using JasperFx.Events.Projections;
 using Marten.Schema;
 using Weasel.Core;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using SendGrid.Extensions.DependencyInjection;
 using Serilog;
 using TakeInitiative.Api.Features.Reference.KnowledgeBase;
 using TakeInitiative.Utilities;
@@ -228,12 +225,12 @@ public static class Bootstrap
     /// Persists the ASP.NET Core Data Protection key ring to <c>DataProtection:KeyPath</c> when that
     /// setting has a value, and changes nothing at all when it does not.
     /// <para>
-    /// Authentication is cookie-based (<c>AddCookieAuth</c>), so every sign-in ticket is encrypted
-    /// with a key from that ring. Nothing used to configure it, which means the ring was written to
-    /// <c>$HOME/.aspnet/DataProtection-Keys</c> inside the container and thrown away with the
-    /// container: <b>every redeploy signed every user out</b>. Production sets
-    /// <c>DataProtection__KeyPath=/keys</c> and mounts a named volume there, so the ring outlives
-    /// the container and a release stops being a mass sign-out.
+    /// It was added when sign-in was the API's own cookie, whose tickets are encrypted with a key from
+    /// that ring: unconfigured, the ring lived inside the container and every redeploy signed every
+    /// user out. Since SAM-73 nothing in the API protects anything with it (sign-in is SamStack's
+    /// session, which auth.samstack.org signs), so it is kept only so that the next thing that does
+    /// use Data Protection does not quietly bring that problem back. Removing it means removing
+    /// <c>DataProtection__KeyPath</c> and the <c>/keys</c> volume from the deployment with it.
     /// </para>
     /// <para>
     /// <see cref="DataProtectionApplicationName"/> is pinned because the default discriminator is
@@ -322,76 +319,31 @@ public static class Bootstrap
 
     public static WebApplicationBuilder AddIdentityAuthenticationAndAuthorization(this WebApplicationBuilder builder)
     {
-
+        // Identity is only the user store now, with no password, sign-in manager or tokens: PutUsername
+        // goes through UserManager for its user name validation, and SamstackUserLinker's
+        // ILookupNormalizer is Identity's upper-invariant one, which is what every NormalizedEmail
+        // already in the database was written with.
         builder.Services
-            .AddIdentityCore<ApplicationUser>(opts =>
-            {
-                opts.SignIn.RequireConfirmedAccount = false;
-                opts.Password = new PasswordOptions()
-                {
-                    RequireDigit = true,
-                    RequiredLength = 6,
-                    RequireLowercase = true,
-                    RequireUppercase = true,
-                    RequireNonAlphanumeric = true
-                };
-            })
+            .AddIdentityCore<ApplicationUser>()
             .AddRoles<ApplicationUserRole>()
             .AddUserStore<MartenUserStore<ApplicationUser, ApplicationUserRole>>()
-            .AddRoleStore<MartenRoleStore<ApplicationUserRole>>()
-            .AddSignInManager() // Sign in manager allows users to sign in and out, and validates these operations.
-            .AddDefaultTokenProviders(); // Default token providers for password changes and other temporary auth needs.
+            .AddRoleStore<MartenRoleStore<ApplicationUserRole>>();
 
         builder.Services
             .AddTransient<IAuthorizationHandler, RequireUserToExistInDatabaseAuthorizationHandler>()
-            .AddCookieAuth(validFor: TimeSpan.FromHours(24), opts =>
-            {
-                opts.SlidingExpiration = true; // Reissue new cookies when the cookie is half or more through its timespan.
-
-                opts.Events.OnRedirectToLogin = ctx =>
-                {
-                    ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                    return Task.CompletedTask;
-                };
-
-                opts.Events.OnRedirectToAccessDenied = ctx =>
-                {
-                    ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                    return Task.CompletedTask;
-                };
-                opts.Cookie.Domain = builder.Configuration.GetValue<string>("CookieDomain") ?? throw new InvalidOperationException("Attempted to find configuration for the value CookieDomain but there was none provided.");
-
-                opts.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
-                    ? CookieSecurePolicy.SameAsRequest
-                    : CookieSecurePolicy.Always;
-            })
             .AddAuthorization(opts =>
             {
                 opts.AddPolicy(TakePolicies.UserExists,
                     new AuthorizationPolicyBuilder()
-                        .RequireAuthenticatedUser() // Requires JWT to exist and be signed by the api
+                        .RequireAuthenticatedUser()
                         .AddRequirements(new RequireUserToExistInDatabaseAuthorizationRequirement())
                         .Build()
                 );
             })
             .AddSingleton<IAuthorizationMiddlewareResultHandler, AuthorizationMiddlewareResultHandler>() // Order matters, needs to be after add authorization.
-            .AddAuthentication(opts =>
-            {
-                opts.DefaultAuthenticateScheme = SamstackAuthenticationHandler.SessionOrCookie;
-                opts.DefaultChallengeScheme = SamstackAuthenticationHandler.SessionOrCookie;
-                opts.DefaultScheme = SamstackAuthenticationHandler.SessionOrCookie;
-            })
-            .AddScheme<AuthenticationSchemeOptions, SamstackAuthenticationHandler>(SamstackAuthenticationHandler.SchemeName, _ => { })
-            // Both sign-ins work while players move to SamStack: a request with a SamStack session is
-            // SamStack's, and anything else falls back to the password sign-in's cookie.
-            .AddPolicyScheme(SamstackAuthenticationHandler.SessionOrCookie, "SamStack session or password cookie", opts =>
-            {
-                opts.ForwardDefaultSelector = ctx =>
-                    SamstackAuthenticationHandler.SessionCookie(ctx.Request) is not null
-                    || ctx.RequestServices.GetRequiredService<IOptions<SamstackAuthOptions>>().Value.DevUser is not null
-                        ? SamstackAuthenticationHandler.SchemeName
-                        : CookieAuthenticationDefaults.AuthenticationScheme;
-            });
+            // A SamStack session is the only way in (SAM-73), so it is every endpoint's and the hub's scheme.
+            .AddAuthentication(SamstackAuthenticationHandler.SchemeName)
+            .AddScheme<AuthenticationSchemeOptions, SamstackAuthenticationHandler>(SamstackAuthenticationHandler.SchemeName, _ => { });
 
         builder.Services.Configure<SamstackAuthOptions>(builder.Configuration.GetSection(SamstackAuthOptions.SectionKey));
         var isDevelopment = builder.Environment.IsDevelopment();
@@ -399,9 +351,6 @@ public static class Bootstrap
         builder.Services.AddMemoryCache();
         builder.Services.AddHttpClient<ISamstackSessions, SamstackSessions>(http => http.Timeout = TimeSpan.FromSeconds(10));
         builder.Services.AddScoped<SamstackUserLinker>();
-
-        builder.Services.AddTransient<ConfirmEmailSender>();
-        builder.Services.AddTransient<ResetPasswordEmailSender>();
         return builder;
     }
 
@@ -414,14 +363,6 @@ public static class Bootstrap
 
         services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog()); // Uses the static logger.
         return services;
-    }
-
-    public static IServiceCollection AddOptionObjects(this IServiceCollection builder, IConfiguration config)
-    {
-        builder.Configure<SendGridOptions>(config.GetSection(SendGridOptions.SendGridOptionsKey));
-        builder.Configure<EmailOptions>(config.GetSection(EmailOptions.EmailOptionsKey));
-        builder.Configure<UrlsOptions>(config.GetSection(UrlsOptions.UrlsOptionsKey));
-        return builder;
     }
 
     /// <summary>
@@ -484,17 +425,6 @@ public static class Bootstrap
     {
         // Random.Shared is thread-safe; a single shared `new Random()` is not.
         services.AddSingleton<IDiceRoller>(new DiceRoller(Random.Shared));
-        return services;
-    }
-
-    public static IServiceCollection AddSendGrid(this IServiceCollection services, IConfiguration configuration)
-    {
-        services.AddSendGrid((_) =>
-        {
-            _.ApiKey = configuration.GetValue<string>("SendGrid:ApiKey");
-        });
-
-        services.AddTransient<IEmailSender, SendGridEmailSender>();
         return services;
     }
 }
