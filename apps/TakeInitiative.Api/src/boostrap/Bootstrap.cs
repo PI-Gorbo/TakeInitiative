@@ -10,6 +10,7 @@ using JasperFx.Events.Daemon;
 using JasperFx.Events.Projections;
 using Marten.Schema;
 using Weasel.Core;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -72,6 +73,8 @@ public static class Bootstrap
 
             // Registers the identity documents and enforces a unique index on NormalizedEmail.
             opts.RegisterIdentityModels<ApplicationUser, ApplicationUserRole>();
+            // One user per SamStack account; unlinked users (null) are not compared.
+            opts.Schema.For<ApplicationUser>().UniqueIndex(UniqueIndexType.Computed, x => x.AuthUserId!);
 
             // Provenance (design §9, invariant 9): correlation, causation and headers are
             // stored on every event. CorrelationMiddleware fills them in per request.
@@ -374,10 +377,24 @@ public static class Bootstrap
             .AddSingleton<IAuthorizationMiddlewareResultHandler, AuthorizationMiddlewareResultHandler>() // Order matters, needs to be after add authorization.
             .AddAuthentication(opts =>
             {
-                opts.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                opts.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                opts.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                opts.DefaultAuthenticateScheme = SamstackAuthenticationHandler.SessionOrCookie;
+                opts.DefaultChallengeScheme = SamstackAuthenticationHandler.SessionOrCookie;
+                opts.DefaultScheme = SamstackAuthenticationHandler.SessionOrCookie;
+            })
+            .AddScheme<AuthenticationSchemeOptions, SamstackAuthenticationHandler>(SamstackAuthenticationHandler.SchemeName, _ => { })
+            // Both sign-ins work while players move to SamStack: a request with a SamStack session is
+            // SamStack's, and anything else falls back to the password sign-in's cookie.
+            .AddPolicyScheme(SamstackAuthenticationHandler.SessionOrCookie, "SamStack session or password cookie", opts =>
+            {
+                opts.ForwardDefaultSelector = ctx => SamstackAuthenticationHandler.SessionCookie(ctx.Request) is null
+                    ? CookieAuthenticationDefaults.AuthenticationScheme
+                    : SamstackAuthenticationHandler.SchemeName;
             });
+
+        builder.Services.Configure<SamstackAuthOptions>(builder.Configuration.GetSection(SamstackAuthOptions.SectionKey));
+        builder.Services.AddMemoryCache();
+        builder.Services.AddHttpClient<ISamstackSessions, SamstackSessions>(http => http.Timeout = TimeSpan.FromSeconds(10));
+        builder.Services.AddScoped<SamstackUserLinker>();
 
         builder.Services.AddTransient<ConfirmEmailSender>();
         builder.Services.AddTransient<ResetPasswordEmailSender>();
