@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/PI-Gorbo/TakeInitiative/compare/takeinitiative-v1.4.0...takeinitiative-v1.5.0) (2026-11-03)
+
+
+### Features
+
+* **api:** sign in through SamStack auth, linking players by email (SAM-70) ([#316](https://github.com/PI-Gorbo/TakeInitiative/issues/316)) ([ab10687](https://github.com/PI-Gorbo/TakeInitiative/commit/ab1068780ca313acffef253151a3f81c9c652940))
+
 ## [1.4.0](https://github.com/PI-Gorbo/TakeInitiative/compare/takeinitiative-v1.3.0...takeinitiative-v1.4.0) (2026-10-11)
 
 
