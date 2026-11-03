@@ -2,8 +2,6 @@ import { useQuery, useQueryClient } from "@tanstack/vue-query";
 import type { CreateCampaignRequest } from "../utils/api/campaign/createCampaignRequest";
 import type { JoinCampaignRequest } from "../utils/api/campaign/joinCampaignRequest";
 import type { GetUserResponse } from "../utils/api/user/getUserRequest";
-import type { LoginRequest } from "../utils/api/user/loginRequest";
-import type { SignUpRequest } from "../utils/api/user/signUpRequest";
 import type { Campaign } from "../utils/api/types";
 import { getUserQuery, getUserQueryKey } from "~/utils/queries/user";
 import { getCampaignsQuery, getCampaignsQueryKey } from "~/utils/queries/campaign";
@@ -46,38 +44,15 @@ export const useUserStore = defineStore("userStore", () => {
         await queryClient.ensureQueryData(getUserQuery());
     }
 
-    /** Goes to the API for the user, whatever is cached. For after a login or a sign up. */
-    async function refetchUser(): Promise<User | null> {
-        const { data } = await userDetails.refetch();
-        return data ?? null;
-    }
-
     const isLoggedIn = computed(() => userDetails.data.value != null)
 
-    async function login(request: LoginRequest): Promise<void> {
-        await api.user.login(request).then(async () => {
-            return await refetchUser();
-        });
-    }
-
-    async function signUp(signUpRequest: SignUpRequest): Promise<unknown> {
-        return await api.user.signUp(signUpRequest).then(refetchUser);
-    }
-
-    async function confirmEmail(code: string): Promise<unknown> {
-        return await api.user
-            .confirmEmailWithToken(code)
-            .then((user) => queryClient.setQueryData(getUserQueryKey(), user));
-    }
-
+    /** Signs out of SamStack, which comes back to the homepage. */
     async function logout(): Promise<void> {
-        await api.user
-            .logout()
-            .then(() => {
-                queryClient.setQueryData(getUserQueryKey(), () => null)
-                queryClient.removeQueries({ queryKey: getCampaignsQueryKey() })
-            })
-            .then(async () => await navigateTo("/login"))
+        // Clears the password sign-in's cookie too, or the API would still let them in with it.
+        await api.user.logout().catch(() => {});
+        queryClient.setQueryData(getUserQueryKey(), () => null);
+        queryClient.removeQueries({ queryKey: getCampaignsQueryKey() });
+        signOut(new URL("/", window.location.origin).href);
     }
 
     async function createCampaign(
@@ -115,10 +90,6 @@ export const useUserStore = defineStore("userStore", () => {
     return {
         state,
         init,
-        refetchUser,
-        ConfirmEmail: confirmEmail,
-        login,
-        signUp,
         isLoggedIn,
         createCampaign,
         fetchCampaigns,

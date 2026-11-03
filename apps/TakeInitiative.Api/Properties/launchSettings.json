@@ -16,7 +16,10 @@
             "launchUrl": "swagger",
             "applicationUrl": "https://localhost:7010;http://localhost:5010",
             "environmentVariables": {
-                "ASPNETCORE_ENVIRONMENT": "Development"
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "SamstackAuth__DevUser__Id": "dev-user",
+                "SamstackAuth__DevUser__Email": "dev@takeinitiative.local",
+                "SamstackAuth__DevUser__Name": "Dev"
             }
         },
         "IIS Express": {

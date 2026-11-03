@@ -26,6 +26,7 @@
         "@pinia/nuxt": "^0.10.1",
         "@tanstack/vue-query": "^5.103.2",
         "@tanstack/vue-table": "^8.21.2",
+        "@thesamstack/nuxt-auth": "^0.1.2",
         "@tiptap/core": "^3.31.3",
         "@tiptap/extension-mention": "^3.31.3",
         "@tiptap/extension-placeholder": "^3.31.3",

@@ -122,7 +122,17 @@ export default defineNuxtConfig({
         "v-wave/nuxt",
         "@nuxtjs/device",
         "@vite-pwa/nuxt",
+        "@thesamstack/nuxt-auth",
     ],
+
+    // Sign-in is SamStack's (auth.samstack.org); this module provides its links.
+    samstackAuth: {
+        app: "takeinitiative",
+        // Nothing is gated by the module: `/app/**` renders client-side only, where it has no
+        // signed-in user to check. The API is the gate, and checkAuth.global and the axios
+        // plugin send a 401 to `signInUrl()`.
+        protect: { include: [] },
+    },
 
     // Ripple's PWA config (apps/pwa-nuxt): installable, with a hand-written
     // service worker and no precaching or offline support (design §3a, §12).
