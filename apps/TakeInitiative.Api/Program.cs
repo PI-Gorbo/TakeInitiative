@@ -1,6 +1,5 @@
 using FastEndpoints;
 using FastEndpoints.Swagger;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Text.Json.Serialization;
 using NSwag.Generation;
 
@@ -122,7 +121,7 @@ internal class Program
                     }
                     else
                     {
-                        endpoint.AuthSchemes(CookieAuthenticationDefaults.AuthenticationScheme);
+                        endpoint.AuthSchemes(SamstackAuthenticationHandler.SessionOrCookie);
                         endpoint.Policies(TakePolicies.UserExists);
                     }
                 };
