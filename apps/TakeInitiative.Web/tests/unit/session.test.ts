@@ -33,6 +33,10 @@ describe("authCookies", () => {
     it("keeps only the auth cookies, as sent", () => {
         expect(
             authCookies("theme=dark; __Secure-samstack.session_token=tok.sig%3D; .AspNetCore.Cookies=abc"),
-        ).toEqual(["__Secure-samstack.session_token=tok.sig%3D", ".AspNetCore.Cookies=abc"]);
+        ).toEqual(["__Secure-samstack.session_token=tok.sig%3D"]);
+    });
+
+    it("no longer counts the old password sign-in's cookie", () => {
+        expect(hasAuthCookie(".AspNetCore.Cookies=abc")).toBe(false);
     });
 });

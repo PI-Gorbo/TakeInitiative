@@ -48,8 +48,6 @@ export const useUserStore = defineStore("userStore", () => {
 
     /** Signs out of SamStack, which comes back to the homepage. */
     async function logout(): Promise<void> {
-        // Clears the password sign-in's cookie too, or the API would still let them in with it.
-        await api.user.logout().catch(() => {});
         queryClient.setQueryData(getUserQueryKey(), () => null);
         queryClient.removeQueries({ queryKey: getCampaignsQueryKey() });
         signOut(new URL("/", window.location.origin).href);

@@ -5,13 +5,6 @@ import { joinCampaignRequest } from "~/utils/api/campaign/joinCampaignRequest";
 import { putMemberRoleRequest } from "~/utils/api/campaign/putMemberRoleRequest";
 import { putCampaignNameRequest } from "~/utils/api/campaign/putCampaignNameRequest";
 import { getUserRequest } from "~/utils/api/user/getUserRequest";
-import { loginRequest } from "~/utils/api/user/loginRequest";
-import { logoutRequest } from "~/utils/api/user/logoutRequest";
-import { signUpRequest } from "~/utils/api/user/signUpRequest";
-import { postConfirmEmailRequest as confirmEmailRequest } from "~/utils/api/user/postConfirmEmailRequest";
-import { postSendConfirmEmailRequest } from "~/utils/api/user/postSendConfirmEmailRequest";
-import { putSendResetPasswordRequest } from "~/utils/api/user/putSendResetPasswordRequest";
-import { putResetPassword } from "~/utils/api/user/putResetPasswordRequest";
 import { putUsername } from "~/utils/api/user/putUsernameRequest";
 import { getSessionsRequest } from "~/utils/api/session/getSessionsRequest";
 import { getSessionStreamRequest } from "~/utils/api/session/getSessionStreamRequest";
@@ -77,13 +70,6 @@ export const useApi = () => {
     return {
         user: {
             getUser: getUserRequest($axios),
-            signUp: signUpRequest($axios),
-            login: loginRequest($axios),
-            logout: logoutRequest($axios),
-            confirmEmailWithToken: confirmEmailRequest($axios),
-            sendConfirmationEmail: postSendConfirmEmailRequest($axios),
-            sendResetPasswordEmail: putSendResetPasswordRequest($axios),
-            resetPasswordWithToken: putResetPassword($axios),
             updateUsername: putUsername($axios)
         },
         campaign: {

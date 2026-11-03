@@ -1,11 +1,7 @@
-// The API's auth cookies: SamStack's session (set on `.samstack.org`, `__Secure-` in front on
-// https) and, until it is removed, the password sign-in's. HttpOnly, so client-side JavaScript can
-// never read them — only the server render sees them, in the request's `Cookie` header.
-export const AUTH_COOKIE_NAMES = [
-    "__Secure-samstack.session_token",
-    "samstack.session_token",
-    ".AspNetCore.Cookies",
-];
+// The API's auth cookie: SamStack's session, set on `.samstack.org` (`__Secure-` in front on
+// https). HttpOnly, so client-side JavaScript can never read it — only the server render sees it,
+// in the request's `Cookie` header.
+export const AUTH_COOKIE_NAMES = ["__Secure-samstack.session_token", "samstack.session_token"];
 
 /** The `name=value` pairs of a `Cookie` header that are non-empty auth cookies. */
 export function authCookies(header: string | null | undefined): string[] {
