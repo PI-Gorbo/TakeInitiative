@@ -386,12 +386,16 @@ public static class Bootstrap
             // SamStack's, and anything else falls back to the password sign-in's cookie.
             .AddPolicyScheme(SamstackAuthenticationHandler.SessionOrCookie, "SamStack session or password cookie", opts =>
             {
-                opts.ForwardDefaultSelector = ctx => SamstackAuthenticationHandler.SessionCookie(ctx.Request) is null
-                    ? CookieAuthenticationDefaults.AuthenticationScheme
-                    : SamstackAuthenticationHandler.SchemeName;
+                opts.ForwardDefaultSelector = ctx =>
+                    SamstackAuthenticationHandler.SessionCookie(ctx.Request) is not null
+                    || ctx.RequestServices.GetRequiredService<IOptions<SamstackAuthOptions>>().Value.DevUser is not null
+                        ? SamstackAuthenticationHandler.SchemeName
+                        : CookieAuthenticationDefaults.AuthenticationScheme;
             });
 
         builder.Services.Configure<SamstackAuthOptions>(builder.Configuration.GetSection(SamstackAuthOptions.SectionKey));
+        var isDevelopment = builder.Environment.IsDevelopment();
+        builder.Services.PostConfigure<SamstackAuthOptions>(opts => opts.DevUser = SamstackAuthOptions.DevUserFor(opts.DevUser, isDevelopment));
         builder.Services.AddMemoryCache();
         builder.Services.AddHttpClient<ISamstackSessions, SamstackSessions>(http => http.Timeout = TimeSpan.FromSeconds(10));
         builder.Services.AddScoped<SamstackUserLinker>();

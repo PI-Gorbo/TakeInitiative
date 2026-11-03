@@ -146,3 +146,27 @@ public class SamstackSignInTests(SamstackSessionsFixture fixture) : IClassFixtur
         response.Should().Succeed();
     }
 }
+
+public class SamstackDevUserFixture : AuthenticatedWebAppWithDatabaseFixture
+{
+    protected override void ConfigureTestServices(IServiceCollection services)
+        => services.Configure<SamstackAuthOptions>(opts =>
+            opts.DevUser = new SamstackDevUser { Id = "dev-user", Email = "dev@takeinitiative.local", Name = "Dev" });
+}
+
+/// <summary>Local development: the .samstack.org cookie never reaches localhost, so the API signs in a fixed user.</summary>
+public class SamstackDevUserTests(SamstackDevUserFixture fixture) : IClassFixture<SamstackDevUserFixture>
+{
+    [Fact]
+    public async Task ARequestWithoutASessionIsTheDevUser()
+    {
+        var result = await fixture.AlbaHost.Scenario(_ =>
+        {
+            _.Get.Url("/api/user");
+            _.ConfigureHttpContext(c => c.Request.Headers.Cookie = Microsoft.Extensions.Primitives.StringValues.Empty);
+            _.StatusCodeShouldBe(200);
+        });
+
+        (await result.ReadAsJsonAsync<GetUserResponse>())!.Username.Should().Be("Dev");
+    }
+}

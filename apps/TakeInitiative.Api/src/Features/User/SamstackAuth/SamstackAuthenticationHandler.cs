@@ -16,7 +16,8 @@ public partial class SamstackAuthenticationHandler(
     ILoggerFactory loggerFactory,
     UrlEncoder encoder,
     ISamstackSessions sessions,
-    SamstackUserLinker linker) : AuthenticationHandler<AuthenticationSchemeOptions>(options, loggerFactory, encoder)
+    SamstackUserLinker linker,
+    IOptions<SamstackAuthOptions> authOptions) : AuthenticationHandler<AuthenticationSchemeOptions>(options, loggerFactory, encoder)
 {
     public const string SchemeName = "Samstack";
 
@@ -44,7 +45,9 @@ public partial class SamstackAuthenticationHandler(
         var cookie = SessionCookie(Request);
         if (cookie is null)
         {
-            return AuthenticateResult.NoResult();
+            return authOptions.Value.DevUser is { } devUser
+                ? await SignIn(devUser.ToUser())
+                : AuthenticateResult.NoResult();
         }
 
         SamstackSession session;
@@ -61,14 +64,7 @@ public partial class SamstackAuthenticationHandler(
         switch (session)
         {
             case SamstackSession.SignedIn(var user):
-                var userId = await linker.Resolve(user, Context.RequestAborted);
-                if (userId.IsFailure)
-                {
-                    return AuthenticateResult.Fail(userId.Error);
-                }
-
-                var identity = new ClaimsIdentity([new Claim("UserId", userId.Value.ToString())], SchemeName);
-                return AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(identity), SchemeName));
+                return await SignIn(user);
             case SamstackSession.SignedOut:
                 return AuthenticateResult.NoResult();
             case SamstackSession.Denied:
@@ -77,6 +73,18 @@ public partial class SamstackAuthenticationHandler(
             default:
                 throw new InvalidOperationException($"Unhandled SamStack session {session.GetType().Name}.");
         }
+    }
+
+    private async Task<AuthenticateResult> SignIn(SamstackUser user)
+    {
+        var userId = await linker.Resolve(user, Context.RequestAborted);
+        if (userId.IsFailure)
+        {
+            return AuthenticateResult.Fail(userId.Error);
+        }
+
+        var identity = new ClaimsIdentity([new Claim("UserId", userId.Value.ToString())], SchemeName);
+        return AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(identity), SchemeName));
     }
 
     /// <summary>
