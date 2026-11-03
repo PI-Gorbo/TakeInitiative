@@ -18,8 +18,8 @@
 #      independent of app redeploys and it gets scheduled backups. Pin the major, never :latest.
 #      Its internal hostname feeds TAKEDB_CONNECTION.
 #   2. "Connect to predefined network" on every resource that resolves another by hostname.
-#   3. Domains per Application. Keep the API on a SUBDOMAIN of the web domain, or
-#      CookieDomain=.<domain> needs SameSite=None.
+#   3. Domains per Application. Keep both under the domain SamStack's session cookie is set on
+#      (.samstack.org), or the browser never sends it to the API.
 #   4. Persistent storage: /keys on api (the data-protection key ring — lose it and everyone is
 #      signed out) and Garage's meta and data volumes.
 #   5. "Is build variable?" OFF for every environment variable.
@@ -41,25 +41,20 @@ services:
             # .env parsers and web UIs, and Coolify's is one place not to find out.
             #
             # ASPNETCORE_ENVIRONMENT is deliberately absent. Unset means Production, which is what
-            # turns off Swagger, skips appsettings.development.json, and switches the auth cookie to
-            # SecurePolicy.Always.
+            # turns off Swagger, skips appsettings.development.json, and ignores SamstackAuth__DevUser.
             - "ConnectionStrings__TakeDB=${TAKEDB_CONNECTION}"
             - "CORS__MainApp=${WEB_ORIGIN}"
             # Host filtering. Also what the healthcheck below derives its Host header from.
             - "AllowedHosts=${API_HOST}"
-            - "CookieDomain=${COOKIE_DOMAIN}"
-            - "TakeUrls__Web=${WEB_ORIGIN}"
-            - "Email__Domain=${EMAIL_DOMAIN}"
-            - "SendGrid__ApiKey=${SENDGRID_API_KEY}"
             # The API owns the schema. Marten applies every change before the port opens, which is
             # also the only thing that creates pg_trgm and unaccent and step 26's knowledge-base
             # table — they hang off no document type, so lazy auto-create never touches them.
             # Safe here because AddAsyncDaemon(DaemonMode.Solo) already means exactly ONE api
             # container, forever. Do not scale this service.
             - "Marten__ApplySchemaOnStartup=true"
-            # The data-protection key ring, on the volume below. Without it the ring is written
-            # inside the container and thrown away with it, so every single deploy signs everybody
-            # out mid-session. The volume is load-bearing, not tidiness.
+            # The data-protection key ring, on the volume below. Nothing uses it since sign-in moved
+            # to SamStack (SAM-73); it stays so the next thing that does cannot lose its keys on a
+            # deploy. See Bootstrap.AddDataProtectionKeyRing.
             - "DataProtection__KeyPath=/keys"
             - "Blobs__ServiceUrl=http://garage:3900"
             - "Blobs__Bucket=takeinitiative"

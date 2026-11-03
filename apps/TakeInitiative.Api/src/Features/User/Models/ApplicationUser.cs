@@ -3,6 +3,7 @@ using TakeInitiative.Api.Identity;
 namespace TakeInitiative.Api.Features.Users;
 public class ApplicationUser : MartenIdentityUser<ApplicationUserRole>
 {
+    // Unused since SAM-73 removed the confirmation and reset emails; kept so stored users round-trip unchanged.
     public DateTimeOffset? EmailConfirmationLastSent { get; set; } = null;
     public DateTimeOffset? ResetPasswordLastSent { get; set; } = null;
 

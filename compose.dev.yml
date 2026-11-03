@@ -82,7 +82,6 @@ services:
             - "ConnectionStrings:TakeDB=User ID=postgres;Password=postgres;Host=postgres;Port=5432;Database=postgres;"
             - "CORS:MainApp=http://localhost:7403;https://localhost:7403"
             - "AllowedHosts=localhost"
-            - "CookieDomain=localhost"
             # The other Blobs:* keys keep their appsettings.json dev defaults.
             - "Blobs__ServiceUrl=http://garage:3900"
         restart: always

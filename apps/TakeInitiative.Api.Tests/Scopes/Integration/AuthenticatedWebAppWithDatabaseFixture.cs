@@ -1,6 +1,5 @@
 
 using System.Collections.Concurrent;
-using System.Net;
 using Alba;
 using FakeItEasy;
 using FluentAssertions;
@@ -23,7 +22,6 @@ namespace TakeInitiative.Api.Tests.Integration;
 public record UserSeedData
 {
     public required string Username { get; set; }
-    public required string Password { get; set; }
     public required string Email { get; set; }
     public required StringValues Cookie { get; set; }
 }
@@ -76,6 +74,8 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
     /// so a test can assert that nothing logged what should never be logged.
     /// </summary>
     public ConcurrentQueue<LoggedRecord> Logs { get; } = new();
+    /// <summary>Auth.samstack.org. Every seeded user has a session in it; a test can add more.</summary>
+    public FakeSamstackSessions Auth { get; } = new();
 
     /// <summary>Lets a derived fixture swap services in the host (for example the hub context).</summary>
     protected virtual void ConfigureTestServices(IServiceCollection services) { }
@@ -113,6 +113,7 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
                     services.AddKeyedSingleton<TimeProvider>(SessionGap.ClockKey, Clock);
                     services.Replace(ServiceDescriptor.Singleton<IBlobStore>(Blobs));
                     services.AddSingleton<ILoggerProvider>(new CapturingLoggerProvider(Logs));
+                    services.Replace(ServiceDescriptor.Singleton<ISamstackSessions>(Auth));
                     services.AddMartenDB(context.Configuration);
                     ConfigureTestServices(services);
                 })
@@ -123,42 +124,12 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
         // be there for the first request a test makes.
         await SeedDatabaseAsync(PostgreSqlContainer.GetConnectionString());
 
-        // Seed database with tiny seed.
-        // Sign Up With User1 Credentials.
-        var DmCookie = await CreateUserWithData(new PostSignUpRequest()
-        {
-            Email = "testing@testingk.com",
-            Password = "Besbing!99",
-            Username = "TESTING"
-        });
-
-        var PlayerCookie = await CreateUserWithData(new PostSignUpRequest()
-        {
-            Email = "testing2@testingk.com",
-            Password = "Besbing!100",
-            Username = "TESTING2"
-        });
-
-        var OutsiderCookie = await CreateUserWithData(new PostSignUpRequest()
-        {
-            Email = "testing3@testingk.com",
-            Password = "Besbing!101",
-            Username = "TESTING3"
-        });
-
-        var Player2Cookie = await CreateUserWithData(new PostSignUpRequest()
-        {
-            Email = "testing4@testingk.com",
-            Password = "Besbing!102",
-            Username = "TESTING4"
-        });
-
-        var StrangerCookie = await CreateUserWithData(new PostSignUpRequest()
-        {
-            Email = "testing5@testingk.com",
-            Password = "Besbing!103",
-            Username = "TESTING5"
-        });
+        // Each seeded user signs in through SamStack, and their first request creates them.
+        var DmCookie = await CreateUser("dm", "testing@testingk.com", "TESTING");
+        var PlayerCookie = await CreateUser("player", "testing2@testingk.com", "TESTING2");
+        var OutsiderCookie = await CreateUser("outsider", "testing3@testingk.com", "TESTING3");
+        var Player2Cookie = await CreateUser("player2", "testing4@testingk.com", "TESTING4");
+        var StrangerCookie = await CreateUser("stranger", "testing5@testingk.com", "TESTING5");
 
         // Temporary authentication fixed to dm to create the campaign.
         AlbaHost.BeforeEach((c) =>
@@ -177,35 +148,30 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
             DMUserData = new UserSeedData()
             {
                 Email = "testing@testingk.com",
-                Password = "Besbing!99",
                 Username = "TESTING",
                 Cookie = DmCookie
             },
             PlayerUserData = new UserSeedData()
             {
                 Email = "testing2@testingk.com",
-                Password = "Besbing!100",
                 Username = "TESTING2",
                 Cookie = PlayerCookie
             },
             OutsiderUserData = new UserSeedData()
             {
                 Email = "testing3@testingk.com",
-                Password = "Besbing!101",
                 Username = "TESTING3",
                 Cookie = OutsiderCookie
             },
             Player2UserData = new UserSeedData()
             {
                 Email = "testing4@testingk.com",
-                Password = "Besbing!102",
                 Username = "TESTING4",
                 Cookie = Player2Cookie
             },
             StrangerUserData = new UserSeedData()
             {
                 Email = "testing5@testingk.com",
-                Password = "Besbing!103",
                 Username = "TESTING5",
                 Cookie = StrangerCookie
             }
@@ -228,64 +194,22 @@ public class AuthenticatedWebAppWithDatabaseFixture : IAsyncLifetime, IWebAppCli
         });
     }
 
-    private async Task<StringValues> CreateUserWithData(PostSignUpRequest seedData)
+    private async Task<StringValues> CreateUser(string name, string email, string username)
     {
-        // Seed database with tiny seed.
-        // Sign Up With User1 Credentials.
-        var cookieResult = await this.SignUp(seedData);
-        cookieResult.Should().Succeed();
-        return cookieResult.Value;
+        var cookie = Auth.SignIn(name, new SamstackUser($"auth-{name}", email, username));
+        await AlbaHost.Scenario(_ =>
+        {
+            _.Get.Url("/api/user");
+            _.ConfigureHttpContext(c => c.Request.Headers.Cookie = cookie);
+            _.StatusCodeShouldBe(200);
+        });
+        return cookie;
     }
 
     public AuthenticatedWebAppWithDatabaseFixture LoginAsUser(Users user)
     {
         CurrentUser = user;
         return this;
-    }
-
-    public Cookie ParseCookieString(string cookieString)
-    {
-        var parts = cookieString.Split(';');
-        var cookieValue = parts[0].Trim();
-        var cookie = new Cookie(".AspNetCore.Cookies", cookieValue);
-
-        foreach (var part in parts[1..])
-        {
-            var keyValue = part.Split('=');
-
-            if (keyValue.Length == 2)
-            {
-                var key = keyValue[0].Trim();
-                var value = keyValue[1].Trim();
-
-                switch (key.ToLower())
-                {
-                    case "expires":
-                        if (DateTime.TryParse(value, out var expires))
-                        {
-                            cookie.Expires = expires;
-                        }
-                        break;
-                    case "max-age":
-                        // Max-Age is generally not needed if Expires is set
-                        break;
-                    case "domain":
-                        cookie.Domain = value;
-                        break;
-                    case "path":
-                        cookie.Path = value;
-                        break;
-                    case "samesite":
-                        // SameSite is not directly supported in the Cookie class; it might require custom handling
-                        break;
-                    case "httponly":
-                        cookie.HttpOnly = true;
-                        break;
-                }
-            }
-        }
-
-        return cookie;
     }
 
     public async Task DisposeAsync()

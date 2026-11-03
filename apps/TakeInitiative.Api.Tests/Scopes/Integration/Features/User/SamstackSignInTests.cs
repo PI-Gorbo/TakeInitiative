@@ -1,53 +1,30 @@
-using System.Collections.Concurrent;
 using System.Net;
 using Alba;
 using FluentAssertions;
 using Marten;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using TakeInitiative.Api.Features.Users;
 
 namespace TakeInitiative.Api.Tests.Integration.Features.User;
 
-/// <summary>Auth.samstack.org, played by the test: each session cookie answers what the test set.</summary>
-public class FakeSamstackSessions : ISamstackSessions
-{
-    public ConcurrentDictionary<string, SamstackSession> Sessions { get; } = new();
-
-    public Task<SamstackSession> Get(string sessionCookie, CancellationToken ct)
-        => Sessions.TryGetValue(sessionCookie, out var session)
-            ? Task.FromResult(session)
-            : throw new HttpRequestException("auth.samstack.org is down");
-}
-
-public class SamstackSessionsFixture : AuthenticatedWebAppWithDatabaseFixture
-{
-    public FakeSamstackSessions Auth { get; } = new();
-
-    protected override void ConfigureTestServices(IServiceCollection services)
-        => services.Replace(ServiceDescriptor.Singleton<ISamstackSessions>(Auth));
-}
-
 /// <summary>
 /// Signing in through SamStack (SAM-70): existing players are linked by email on their first request
-/// and keep their user id; anyone else is a new player.
+/// and keep their user id; anyone else is a new player. The fixture's seeded users are SamStack users
+/// already, so an unlinked player from the password days is written straight to the database.
 /// </summary>
-public class SamstackSignInTests(SamstackSessionsFixture fixture) : IClassFixture<SamstackSessionsFixture>
+public class SamstackSignInTests(AuthenticatedWebAppWithDatabaseFixture fixture) : IClassFixture<AuthenticatedWebAppWithDatabaseFixture>
 {
     private static string CookieFor(string token) => $"__Secure-samstack.session_token={token}";
 
     private string SignIn(string token, string authUserId, string email, string name = "Someone")
-    {
-        fixture.Auth.Sessions[CookieFor(token)] = new SamstackSession.SignedIn(new SamstackUser(authUserId, email, name));
-        return CookieFor(token);
-    }
+        => fixture.Auth.SignIn(token, new SamstackUser(authUserId, email, name));
 
     private async Task<(HttpStatusCode Status, GetUserResponse? User)> GetUser(string cookie)
     {
         var result = await fixture.AlbaHost.Scenario(_ =>
         {
             _.Get.Url("/api/user");
-            // Replaces the fixture's password cookie, so only the SamStack session is sent.
+            // Replaces the fixture's seeded user's cookie, so only this session is sent.
             _.ConfigureHttpContext(c => c.Request.Headers.Cookie = $"theme=dark; {cookie}");
             _.IgnoreStatusCode();
         });
@@ -55,10 +32,29 @@ public class SamstackSignInTests(SamstackSessionsFixture fixture) : IClassFixtur
         return (status, status == HttpStatusCode.OK ? await result.ReadAsJsonAsync<GetUserResponse>() : null);
     }
 
-    private async Task<Guid> PasswordUserId(Users user)
+    private async Task<Guid> SeededUserId(Users user)
     {
         var response = await fixture.LoginAsUser(user).GetUser();
         return response.Value.UserId;
+    }
+
+    /// <summary>A player who signed up with a password and has never signed in through SamStack.</summary>
+    private async Task<Guid> UnlinkedPlayer(string email)
+    {
+        var user = new ApplicationUser
+        {
+            Id = Guid.NewGuid(),
+            Email = email,
+            // Identity's upper-invariant normalisation, which is what the password sign-up stored.
+            NormalizedEmail = email.ToUpperInvariant(),
+            UserName = "Old Timer",
+            NormalizedUserName = "OLD TIMER",
+            SecurityStamp = Guid.NewGuid().ToString(),
+        };
+        await using var session = fixture.AlbaHost.Services.GetRequiredService<IDocumentStore>().LightweightSession();
+        session.Store(user);
+        await session.SaveChangesAsync();
+        return user.Id;
     }
 
     private async Task<ApplicationUser> Load(Guid userId)
@@ -70,22 +66,21 @@ public class SamstackSignInTests(SamstackSessionsFixture fixture) : IClassFixtur
     [Fact]
     public async Task AnExistingPlayerIsLinkedByEmailOnTheirFirstSignIn()
     {
-        var dmId = await PasswordUserId(Users.DM);
+        var oldTimerId = await UnlinkedPlayer("old.timer@testingk.com");
 
-        // Different case from the address the DM signed up with.
-        var (status, user) = await GetUser(SignIn("dm", "auth-dm", "TESTING@testingk.com"));
+        // Different case from the address they signed up with.
+        var (status, user) = await GetUser(SignIn("old-timer", "auth-old-timer", "Old.Timer@TestingK.com"));
 
         status.Should().Be(HttpStatusCode.OK);
-        user!.UserId.Should().Be(dmId, "the player keeps their user id, and with it their campaigns");
-        (await Load(dmId)).AuthUserId.Should().Be("auth-dm");
-        fixture.Logs.Should().Contain(l => l.Message.Contains($"Linked user {dmId} to SamStack user auth-dm"));
+        user!.UserId.Should().Be(oldTimerId, "the player keeps their user id, and with it their campaigns");
+        (await Load(oldTimerId)).AuthUserId.Should().Be("auth-old-timer");
+        fixture.Logs.Should().Contain(l => l.Message.Contains($"Linked user {oldTimerId} to SamStack user auth-old-timer"));
     }
 
     [Fact]
     public async Task ALinkedPlayerStaysLinkedWhenTheirEmailChanges()
     {
-        var playerId = await PasswordUserId(Users.Player);
-        (await GetUser(SignIn("player", "auth-player", "testing2@testingk.com"))).User!.UserId.Should().Be(playerId);
+        var playerId = await SeededUserId(Users.Player);
 
         var (status, user) = await GetUser(SignIn("player-later", "auth-player", "renamed@gmail.com"));
 
@@ -110,8 +105,7 @@ public class SamstackSignInTests(SamstackSessionsFixture fixture) : IClassFixtur
     [Fact]
     public async Task AnEmailAlreadyLinkedToAnotherSamstackAccountIsRefused()
     {
-        var player2Id = await PasswordUserId(Users.Player2);
-        (await GetUser(SignIn("player2", "auth-player2", "testing4@testingk.com"))).User!.UserId.Should().Be(player2Id);
+        var player2Id = await SeededUserId(Users.Player2);
 
         var (status, _) = await GetUser(SignIn("imposter", "auth-imposter", "testing4@testingk.com"));
 
@@ -140,11 +134,8 @@ public class SamstackSignInTests(SamstackSessionsFixture fixture) : IClassFixtur
     }
 
     [Fact]
-    public async Task ThePasswordSignInStillWorks()
-    {
-        var response = await fixture.LoginAsUser(Users.Stranger).GetUser();
-        response.Should().Succeed();
-    }
+    public async Task TheOldPasswordCookieNoLongerSignsAnyoneIn()
+        => (await GetUser(".AspNetCore.Cookies=a-ticket-from-before-SAM-73")).Status.Should().Be(HttpStatusCode.Unauthorized);
 }
 
 public class SamstackDevUserFixture : AuthenticatedWebAppWithDatabaseFixture

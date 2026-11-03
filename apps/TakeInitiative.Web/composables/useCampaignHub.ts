@@ -58,9 +58,8 @@ export function useCampaignHub(campaignId: MaybeRefOrGetter<string | undefined>)
     const joinedCampaignId = ref<string | null>(null);
 
     const connection = new signalR.HubConnectionBuilder()
-        .withUrl(`${useRuntimeConfig().public.axios.baseURL}/campaignHub`, {
-            accessTokenFactory: () => useCookie(".AspNetCore.Cookies").value!,
-        })
+        // No token: the browser sends the SamStack session cookie with the negotiate and the socket.
+        .withUrl(`${useRuntimeConfig().public.axios.baseURL}/campaignHub`)
         .withAutomaticReconnect()
         .configureLogging(signalR.LogLevel.Warning)
         .build();
