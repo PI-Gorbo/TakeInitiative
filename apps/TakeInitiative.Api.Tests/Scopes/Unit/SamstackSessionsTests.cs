@@ -67,4 +67,12 @@ public class SamstackSessionsTests
         var act = () => Client(new StubAuth(status, body)).Get(Cookie, default);
         await act.Should().ThrowAsync<HttpRequestException>();
     }
+
+    [Fact]
+    public void TheDevUserIsDroppedOutsideDevelopment()
+    {
+        var devUser = new SamstackDevUser { Id = "dev-user", Email = "dev@takeinitiative.local", Name = "Dev" };
+        SamstackAuthOptions.DevUserFor(devUser, isDevelopment: true).Should().BeSameAs(devUser);
+        SamstackAuthOptions.DevUserFor(devUser, isDevelopment: false).Should().BeNull();
+    }
 }

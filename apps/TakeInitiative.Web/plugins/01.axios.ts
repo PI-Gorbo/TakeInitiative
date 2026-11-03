@@ -1,6 +1,6 @@
-import type { AxiosError, AxiosInstance, CreateAxiosDefaults } from "axios";
+import type { AxiosInstance, CreateAxiosDefaults } from "axios";
 import axios from "axios";
-import { AUTH_COOKIE_NAME } from "~/utils/session";
+import { authCookies } from "~/utils/session";
 export default defineNuxtPlugin((nuxtApp) => {
     // Destructure the environment variables to get axios config
     const {
@@ -13,14 +13,16 @@ export default defineNuxtPlugin((nuxtApp) => {
     const defaultAxios: CreateAxiosDefaults = { ...axiosConfig };
     const Axios: AxiosInstance = axios.create(defaultAxios);
 
-    // Register to use an auth token if there is one.
-    const aspNetCoreCookie = useCookie(AUTH_COOKIE_NAME); // Axios does not attach the cookie on the first request. so we have to manually do it.
+    // During the server render, pass the visitor's auth cookies on to the API: nothing else
+    // would. In the browser, `withCredentials` sends them (and a Cookie header can't be set).
+    const serverCookies = import.meta.server
+        ? authCookies(useRequestHeaders(["cookie"]).cookie).join("; ")
+        : "";
     Axios.interceptors.request.use((config) => {
-        if (aspNetCoreCookie.value) {
-            config.headers["Cookie"] =
-                `${AUTH_COOKIE_NAME}=${aspNetCoreCookie.value}`;
+        if (serverCookies) {
+            config.headers["Cookie"] = serverCookies;
         }
-        config.withCredentials = true; // Automatically adds cookies to every request.
+        config.withCredentials = true;
         return config;
     });
 
@@ -30,13 +32,7 @@ export default defineNuxtPlugin((nuxtApp) => {
         },
         async (error) => {
             if (error?.response?.status == 401 && routeInfo.meta.requiresAuth) {
-                const axiosError: AxiosError = error as AxiosError;
-                await navigateTo({
-                    path: "/login",
-                    query: {
-                        redirectTo: useRoute().path,
-                    },
-                });
+                await goToSignIn(useRoute().fullPath);
                 throw error;
             }
 

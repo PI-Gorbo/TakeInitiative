@@ -11,22 +11,14 @@
                     <Skeleton class="h-9 w-full" />
                 </template>
                 <template v-else-if="!userStore.isLoggedIn">
-                    <NuxtLink
+                    <!-- SamStack's sign-in page signs people in or up, and comes back to the app. -->
+                    <a
                         class="w-full"
-                        to="/signup">
+                        :href="signInHref">
                         <Button class="w-full">
-                            <span>Sign up for free</span>
+                            <span>Sign in or sign up for free</span>
                         </Button>
-                    </NuxtLink>
-                    <NuxtLink
-                        class="w-full"
-                        to="/login">
-                        <Button
-                            class="w-full"
-                            variant="outline">
-                            Got an account? Login
-                        </Button>
-                    </NuxtLink>
+                    </a>
                 </template>
                 <template v-else>
                     <NuxtLink
@@ -64,6 +56,7 @@
     import Skeleton from "~/components/ui/skeleton/Skeleton.vue";
 
     const userStore = useUserStore();
+    const signInHref = signInUrl(new URL("/app", useRequestURL().origin).href);
 
     // `checkAuth.global` skips `/`, so a returning visitor's session is resumed here instead.
     // The auth cookie is HttpOnly: only the server render can see it, and `useState` carries

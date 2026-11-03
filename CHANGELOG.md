@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/PI-Gorbo/TakeInitiative/compare/takeinitiative-v1.5.0...takeinitiative-v1.6.0) (2026-11-03)
+
+
+### Features
+
+* **web:** sign in and out through SamStack (SAM-72) ([#319](https://github.com/PI-Gorbo/TakeInitiative/issues/319)) ([36778e4](https://github.com/PI-Gorbo/TakeInitiative/commit/36778e447450c7ea6b086cded745a7eeff8b88ca))
+
 ## [1.5.0](https://github.com/PI-Gorbo/TakeInitiative/compare/takeinitiative-v1.4.0...takeinitiative-v1.5.0) (2026-11-03)
 
 

@@ -16,6 +16,25 @@ public class SamstackAuthOptions
 
     /// <summary>This app's id in SamStack's app registry (packages/apps in the SamStack repo).</summary>
     public required string AppId { get; set; }
+
+    /// <summary>
+    /// Local development only: every request without a SamStack session is this user, since the
+    /// <c>.samstack.org</c> cookie never reaches localhost. Set in launchSettings.json, and dropped
+    /// outside Development (<see cref="DevUserFor"/>).
+    /// </summary>
+    public SamstackDevUser? DevUser { get; set; }
+
+    public static SamstackDevUser? DevUserFor(SamstackDevUser? devUser, bool isDevelopment)
+        => isDevelopment ? devUser : null;
+}
+
+public class SamstackDevUser
+{
+    public required string Id { get; set; }
+    public required string Email { get; set; }
+    public required string Name { get; set; }
+
+    public SamstackUser ToUser() => new(Id, Email, Name);
 }
 
 /// <summary>Who auth.samstack.org says is signed in. Its sessions only ever carry a confirmed email.</summary>
